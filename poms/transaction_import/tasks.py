@@ -1,30 +1,27 @@
+import json
 import logging
 import traceback
 
-from celery import shared_task
-
 from poms.celery_tasks import finmars_task
-from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
 
-_l = logging.getLogger('poms.transaction_import')
+_l = logging.getLogger("poms.transaction_import")
 
 
-@finmars_task(name='transaction_import.transaction_import', bind=True)
+@finmars_task(name="transaction_import.transaction_import", bind=True)
 def transaction_import(self, task_id, procedure_instance_id=None):
-
     try:
-
         try:
-
-            instance = TransactionImportProcess(task_id=task_id, procedure_instance_id=procedure_instance_id)
+            instance = TransactionImportProcess(
+                task_id=task_id, procedure_instance_id=procedure_instance_id
+            )
 
             self.finmars_task.update_progress(
                 {
-                    'current': 0,
-                    'total': len(instance.raw_items),
-                    'percent': 0,
-                    'description': 'Going to parse raw items'
+                    "current": 0,
+                    "total": len(instance.raw_items),
+                    "percent": 0,
+                    "description": "Going to parse raw items",
                 }
             )
 
@@ -32,61 +29,61 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
             if instance.scheme.data_preprocess_expression:
                 try:
-
-                    _l.info("Going to execute %s" % instance.scheme.data_preprocess_expression)
+                    _l.info(
+                        f"Going to execute {instance.scheme.data_preprocess_expression}"
+                    )
 
                     new_file_items = instance.whole_file_preprocess()
                     instance.file_items = new_file_items
 
                 except Exception as e:
-                    _l.error('transaction_import.preprocess errors %s' % e)
-                    raise Exception ("Could not preprocess raw items %s" % e)
-
+                    err_msg = f"transaction_import.preprocess errors {repr(e)}"
+                    _l.error(err_msg)
+                    raise RuntimeError(err_msg) from e
 
             instance.fill_with_raw_items()
 
             self.finmars_task.update_progress(
                 {
-                    'current': 0,
-                    'total': len(instance.raw_items),
-                    'percent': 0,
-                    'description': 'Parse raw items'
+                    "current": 0,
+                    "total": len(instance.raw_items),
+                    "percent": 0,
+                    "description": "Parse raw items",
                 }
             )
             instance.apply_conversion_to_raw_items()
             self.finmars_task.update_progress(
                 {
-                    'current': 0,
-                    'total': len(instance.raw_items),
-                    'percent': 0,
-                    'description': 'Apply Conversion'
+                    "current": 0,
+                    "total": len(instance.raw_items),
+                    "percent": 0,
+                    "description": "Apply Conversion",
                 }
             )
             instance.preprocess()
             self.finmars_task.update_progress(
                 {
-                    'current': 0,
-                    'total': len(instance.raw_items),
-                    'percent': 0,
-                    'description': 'Preprocess items'
+                    "current": 0,
+                    "total": len(instance.raw_items),
+                    "percent": 0,
+                    "description": "Preprocess items",
                 }
             )
             instance.process()
 
-            return {"message": "import finished"}
-            # return instance
+            _l.info(f"instance.import_result {instance.import_result}")
+
+            return json.dumps(instance.import_result, default=str)
 
         except Exception as e:
-
-            _l.error("transaction_import error %s" % e)
-            _l.error("transaction_import traceback %s" % traceback.format_exc())
-
-            self.finmars_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
-            self.finmars_task.status = CeleryTask.STATUS_ERROR
-            self.finmars_task.mark_task_as_finished()
-            self.finmars_task.save()
+            _l.error(
+                f"transaction_import error {repr(e)} traceback {traceback.format_exc()}"
+            )
+            raise e
 
     except Exception as e:
-
-        _l.error('transaction_import.General Exception occurred %s' % e)
-        _l.error(traceback.format_exc())
+        _l.error(
+            f"transaction_import.General Exception occurred {repr(e)} "
+            f"traceback {traceback.format_exc()}"
+        )
+        raise e

@@ -5,12 +5,11 @@ import re
 import time
 import zipfile
 
-
 import requests
 from django.apps import apps
+from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.http import FileResponse
-from django.core.exceptions import FieldDoesNotExist
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
@@ -103,6 +102,7 @@ def remove_object_keys(d: dict) -> dict:
             filtered_dict[key] = value
     return filtered_dict
 
+
 def model_has_field(model, field_name):
     try:
         model._meta.get_field(field_name)
@@ -120,7 +120,8 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
     dash = configuration_code + ':' + '-'
 
     if model_has_field(model, 'is_deleted'):
-        filtered_objects = model.objects.filter(configuration_code=configuration_code, is_deleted=False).exclude(user_code=dash)
+        filtered_objects = model.objects.filter(configuration_code=configuration_code, is_deleted=False).exclude(
+            user_code=dash)
     else:
         filtered_objects = model.objects.filter(configuration_code=configuration_code).exclude(user_code=dash)
 
@@ -174,12 +175,12 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
 
         save_json_to_file(path, serialized_data)
 
+
 def save_serialized_layout(content_type, configuration_code, source_directory, context):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
         raise Exception("Could not find model for content type: %s" % content_type)
-
 
     filtered_objects = model.objects.filter(configuration_code=configuration_code,
                                             member=context['member'])
@@ -224,6 +225,12 @@ def save_serialized_entity_layout(content_type, configuration_code, content_type
         serialized_data = serializer.data
 
         serialized_data.pop('id')
+
+        if 'reportOptions' in serialized_data['data']:
+            serialized_data['data']['reportOptions']['accounts'] = []
+            serialized_data['data']['reportOptions']['accounts_object'] = []
+            serialized_data['data']['reportOptions']['portfolios'] = []
+            serialized_data['data']['reportOptions']['portfolios_object'] = []
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 

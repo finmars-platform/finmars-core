@@ -8,3 +8,14 @@ class OwnerByCurrencyFilter(BaseFilterBackend):
         return queryset.filter(
             currency__in=Currency.objects.filter(master_user=request.user.master_user)
         )
+
+
+class ListDatesFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        dates = request.query_params.get('dates', None)
+
+        if dates:
+            return queryset.filter(date__in=dates.split(','))
+
+        return queryset

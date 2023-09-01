@@ -91,16 +91,10 @@ admin.site.register(EcosystemDefault, EcosystemDefaultAdmin)
 class MemberAdmin(AbstractModelAdmin):
     model = Member
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'username', 'user', 'is_deleted', 'is_owner', 'is_admin']
+    list_display = ['id', 'master_user', 'username', 'user',  'is_owner', 'is_admin']
     list_select_related = ['master_user', 'user']
     list_filter = ['is_deleted', 'is_owner', 'is_admin']
     raw_id_fields = ['master_user', 'user', ]
-
-    # def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-    #     if db_field.name == 'permissions':
-    #         qs = kwargs.get('queryset', db_field.remote_field.model.objects)
-    #         kwargs['queryset'] = qs.select_related('content_type')
-    #     return super(MemberAdmin, self).formfield_for_manytomany(db_field, request=request, **kwargs)
 
 
 admin.site.register(Member, MemberAdmin)

@@ -210,28 +210,42 @@ class MasterUser(models.Model):
 
         for i in range(20):
             num = str(i + 1)
+            key = f"user_text_{num}"
             ComplexTransactionUserField.objects.create(
-                master_user=self, key=f"user_text_{num}", name=f"User Text {num}"
+                master_user=self,
+                key=key,
+                name=f"User Text {num}",
+                user_code=key,
             )
 
         for i in range(20):
             num = str(i + 1)
+            key = f"user_number_{num}"
             ComplexTransactionUserField.objects.create(
                 master_user=self,
-                key=f"user_number_{num}",
+                key=key,
                 name=f"User Number {num}",
+                user_code=key,
             )
 
         for i in range(5):
             num = str(i + 1)
+            key = f"user_date_{num}"
             ComplexTransactionUserField.objects.create(
-                master_user=self, key=f"user_date_{num}", name=f"User Date {num}"
+                master_user=self,
+                key=key,
+                name=f"User Date {num}",
+                user_code=key,
             )
 
         for i in range(3):
             num = str(i + 1)
+            key = f"user_text_{num}"
             InstrumentUserField.objects.create(
-                master_user=self, key=f"user_text_{num}", name=f"User Text {num}"
+                master_user=self,
+                key=key,
+                name=f"User Text {num}",
+                user_code=key,
             )
 
     def create_entity_tooltips(self):
@@ -450,30 +464,28 @@ class MasterUser(models.Model):
         }
 
         for i in range(1):
+            user_code = "Default Palette" if i == 0 else f"Palette {str(i)}"
             try:
-                user_code = "Default Palette" if i == 0 else f"Palette {str(i)}"
                 palette = ColorPalette.objects.get(
-                    master_user=self, user_code=user_code
+                    master_user=self,
+                    user_code=user_code,
                 )
 
             except ColorPalette.DoesNotExist:
-                palette = ColorPalette.objects.create(master_user=self)
+                palette = ColorPalette.objects.create(
+                    master_user=self,
+                    user_code=user_code,
+                )
 
-                if i == 0:
-                    palette.name = "Default Palette"
-                    palette.user_code = "Default Palette"
-                    palette.is_default = True
-
-                else:
-                    palette.name = f"Palette {str(i)}"
-                    palette.user_code = f"Palette {str(i)}"
-
+                palette.name = user_code
+                palette.is_default = (i == 0)
                 palette.save()
 
             for x in range(16):
                 try:
                     color = ColorPaletteColor.objects.get(
-                        color_palette=palette, order=x
+                        color_palette=palette,
+                        order=x,
                     )
 
                     if not color.value:
@@ -482,7 +494,8 @@ class MasterUser(models.Model):
 
                 except ColorPaletteColor.DoesNotExist:
                     color = ColorPaletteColor.objects.create(
-                        color_palette=palette, order=x
+                        color_palette=palette,
+                        order=x,
                     )
 
                     color.name = f"Color {str(x + 1)}"
@@ -1066,11 +1079,25 @@ class Member(FakeDeletableModel):
     SHOW_AND_EMAIL = 2
     EMAIL_ONLY = 3
     SHOW_ONLY = 4
-    STATUS_CHOICES = (
+    NOTIFICATION_STATUS_CHOICES = (
         (DO_NOT_NOTIFY, gettext_lazy("Do not notify")),
         (SHOW_AND_EMAIL, gettext_lazy("Show & Email notifications")),
         (EMAIL_ONLY, gettext_lazy("Email notifications")),
         (SHOW_ONLY, gettext_lazy("Show notifications")),
+    )
+
+    STATUS_ACTIVE = 'active'
+    STATUS_BLOCKED = 'blocked'
+    STATUS_DELETED = 'deleted'
+    STATUS_INVITED = 'invited'
+    STATUS_INVITE_DECLINED = 'invite_declined'
+
+    MEMBER_STATUS_CHOICES = (
+        (STATUS_ACTIVE, gettext_lazy("Active")),
+        (STATUS_BLOCKED, gettext_lazy("Blocked")),
+        (STATUS_DELETED, gettext_lazy("Deleted")),
+        (STATUS_INVITED, gettext_lazy("Invited")),
+        (STATUS_INVITE_DECLINED, gettext_lazy("Invite Declined")),
     )
 
     master_user = models.ForeignKey(
@@ -1116,7 +1143,7 @@ class Member(FakeDeletableModel):
     )
     notification_level = models.PositiveSmallIntegerField(
         default=SHOW_ONLY,
-        choices=STATUS_CHOICES,
+        choices=NOTIFICATION_STATUS_CHOICES,
         db_index=True,
         verbose_name=gettext_lazy("notification level"),
     )
@@ -1143,6 +1170,8 @@ class Member(FakeDeletableModel):
         verbose_name=gettext_lazy("json data"),
     )
 
+    status = models.CharField(max_length=255, choices=MEMBER_STATUS_CHOICES, default='active')
+
     @property
     def data(self):
         if not self.json_data:
@@ -1158,7 +1187,6 @@ class Member(FakeDeletableModel):
             self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_data = None
-
 
     class Meta(FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("member")
@@ -1196,7 +1224,7 @@ class Member(FakeDeletableModel):
         return self.username
 
     def fake_delete(self):
-        self.user = None
+        # self.user = None # WTF, why we need this?, user should be keeped with member (since 2023-01-01)
         self.is_deleted = True
         self.save()
 

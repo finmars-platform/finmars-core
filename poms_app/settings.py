@@ -48,6 +48,11 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = (
 )
 ALLOWED_HOSTS = ["*"]
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -446,7 +451,7 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication", # needs for workflow auth
         "poms.common.authentication.KeycloakAuthentication",
         # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),

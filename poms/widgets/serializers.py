@@ -4,6 +4,7 @@ from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyField
 from poms.instruments.fields import PricingPolicyField, CostMethodField
 from poms.portfolios.fields import PortfolioField
+from poms.portfolios.serializers import PortfolioSerializer
 from poms.widgets.models import WidgetStats
 
 
@@ -27,15 +28,24 @@ class CollectStatsSerializer(serializers.Serializer):
 
     portfolio = PortfolioField(required=False, allow_null=True, allow_empty=True)
 
+
     benchmark = serializers.CharField(required=False, allow_null=True, initial='sp_500', default='sp_500')
 
     segmentation_type = serializers.CharField(required=False, allow_null=True, initial='months', default='months')
 
 
 class WidgetStatsSerializer(serializers.ModelSerializer):
+
+    date = serializers.DateField(required=False, allow_null=True, default=date_now)
+    benchmark = serializers.CharField(required=False, allow_null=True, initial='sp_500', default='sp_500')
+    portfolio = PortfolioField(required=False, allow_null=True, allow_empty=True)
+    portfolio_object = PortfolioSerializer(source="portfolio", read_only=True)
     class Meta():
         model = WidgetStats
-        fields = ['date', 'portfolio', 'benchmark',
+        fields = ['date',
+                  'portfolio',
+                  'portfolio_object',
+                  'benchmark',
                   'nav', 'total',
 
                   'cumulative_return', 'annualized_return',

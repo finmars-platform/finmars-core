@@ -1,10 +1,10 @@
-import contextlib
 import json
 import logging
 import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
 
+from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
@@ -14,10 +14,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from dateutil import relativedelta, rrule
-
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
-from poms.common.formula_accruals import f_duration, f_xirr, get_coupon
+from poms.common.formula_accruals import f_duration, get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
@@ -293,6 +291,15 @@ class AccrualCalculationModel(AbstractClassModel):
 
     DEFAULT = 25
 
+    # NEW DAY COUNT CONVENTION
+    # 2023-08-21
+
+    AFB = 26
+    FIXED = 27
+
+    BOND_BASIS_30_360 = 28
+    EUROBOND_BASIS_30E_360 = 29
+
     CLASSES = (
         (NONE, "NONE", gettext_lazy("none")),
         (ACT_ACT, "ACT_ACT", gettext_lazy("ACT/ACT")),
@@ -335,7 +342,48 @@ class AccrualCalculationModel(AbstractClassModel):
         (REVERSED_ACT_365, "REVERSED_ACT_365", gettext_lazy("Reversed ACT/365")),
         (C_30E_P_360, "C_30E_P_360", gettext_lazy("30E+/360")),
         (DEFAULT, "-", gettext_lazy("Default")),
+        # NEW DAY COUNT CONVENTION
+        (AFB, "AFB", gettext_lazy("Actual/Actual (AFB)")),
+        (FIXED, "FIXED", gettext_lazy("Actual/365 (Fixed)")),
+        (BOND_BASIS_30_360, "BOND_BASIS_30_360", gettext_lazy("30/360 (Bond Basis)")),
+        (
+            EUROBOND_BASIS_30E_360,
+            "EUROBOND_BASIS_30E_360",
+            gettext_lazy("30E/360 (Eurobond Basis)"),
+        ),
     )
+
+    @staticmethod
+    def get_quantlib_day_count(finmars_accrual_calculation_model):
+        import QuantLib as ql
+
+        default = ql.SimpleDayCounter()
+
+        map_daycount_convention = {
+            AccrualCalculationModel.ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.ACT_ACT: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.ACT_365_366: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.FIXED: ql.Actual365Fixed(),
+            AccrualCalculationModel.ACT_360: ql.Actual360(),
+            AccrualCalculationModel.BOND_BASIS_30_360: ql.Thirty360(
+                ql.Thirty360.BondBasis
+            ),
+            AccrualCalculationModel.EUROBOND_BASIS_30E_360: ql.Thirty360(
+                ql.Thirty360.EurobondBasis
+            ),
+            # TODO possibly add new day count conventions
+            # TODO add later EOM/NO EOM in quantilib
+            # "30/360 (Italian)": ql.Thirty360(ql.Thirty360.Italian),
+            # "30/360 (German)": ql.Thirty360(ql.Thirty360.German),
+            # "30/360 US": ql.Thirty360(ql.Thirty360.BondBasis),
+            AccrualCalculationModel.ACT_365: ql.Thirty365(),
+            AccrualCalculationModel.DEFAULT: ql.SimpleDayCounter(),
+        }
+
+        result = map_daycount_convention.get(finmars_accrual_calculation_model, default)
+
+        return result
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -397,6 +445,27 @@ class Periodicity(AbstractClassModel):
         (ANNUALLY, "ANNUALLY", gettext_lazy("Annually")),
         (DEFAULT, "-", gettext_lazy("-")),
     )
+
+    @staticmethod
+    def get_quantlib_periodicity(finmars_periodicity):
+        import QuantLib as ql
+
+        default = ql.Period(12, ql.Months)  # default semi-annually
+
+        mapping = {
+            # TODO probably add mapping for other finmars periodicities
+            Periodicity.N_DAY: ql.Period(1, ql.Days),
+            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
+            Periodicity.MONTHLY: ql.Period(1, ql.Months),
+            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
+            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
+            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
+            Periodicity.ANNUALLY: ql.Period(12, ql.Months),
+        }
+
+        result = mapping.get(finmars_periodicity, default)
+
+        return result
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("periodicity")
@@ -1658,6 +1727,207 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             self.master_user.instrument_id == self.id if self.master_user_id else False
         )
 
+    date_pattern = "%Y-%m-%d"  # YYYY-MM-DD, used in calculate_ytm method
+
+    def get_first_accrual(self):
+        result = None
+
+        accruals = self.accrual_calculation_schedules.all()
+        if len(accruals):
+            result = accruals[0]
+
+        return result
+
+    def get_quantlib_bond(self):
+        import QuantLib as ql
+
+        bond = None
+
+        face_value = (
+            100.0  # TODO OG commented: probably we need to add parameter notional
+        )
+        calendar = ql.TARGET()
+
+        if self.maturity_date:
+
+            _l.info('get_quantlib_bond.self.type maturity_date %s' % type(self.maturity_date))
+            _l.info('get_quantlib_bond.self.maturity_date %s' % self.maturity_date)
+            _l.info('get_quantlib_bond.self.date_pattern %s' % self.date_pattern)
+
+            maturity = ql.Date(str(self.maturity_date), self.date_pattern)
+
+            if self.has_factor_schedules():
+                factor_schedules = self.get_factors()
+
+                factor_dates = [ql.Date(str(item.effective_date), self.date_pattern) for item in factor_schedules]
+                factor_values = [item.factor_value for item in factor_schedules]
+
+                # TODO OG commented: we need issue date
+
+                first_accrual = self.get_first_accrual()
+
+                business_convention = ql.Following
+
+                periodicity = Periodicity.get_quantlib_periodicity(
+                    first_accrual.periodicity
+                )
+
+                start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
+                float_accrual_size = float(first_accrual.accrual_size) / 100
+                # yield_guess = 0.1
+                day_count = AccrualCalculationModel.get_quantlib_day_count(
+                    first_accrual.accrual_calculation_model
+                )
+                # build accrual schedule
+                # schedule = ql.MakeSchedule(start_date, maturity_date, period )
+
+                schedule = ql.Schedule(
+                    start_date,
+                    maturity,
+                    periodicity,
+                    calendar,
+                    business_convention,
+                    business_convention,
+                    ql.DateGeneration.Backward,
+                    False,
+                )
+
+                # cast to dates list
+                schedule_dates = list(schedule)
+
+                notionals = []
+
+                # TODO probably need to move somewhere else
+                def active_factor(date, factors, factor_dates):
+                    tmp_list = {idate for idate in factor_dates if idate <= date}
+                    factor = 1
+                    if len(tmp_list) > 0:
+                        active_date = max(tmp_list)
+                        index = factor_dates.index(active_date)
+                        factor = factors[index]
+                    return factor
+
+                # we need notinals (factors) list to be of same length as accrual schedule
+                for date in schedule_dates:
+                    val = (
+                        active_factor(
+                            date=date, factors=factor_values, factor_dates=factor_dates
+                        )
+                        * face_value
+                    )
+
+                    notionals.append(val)
+
+                bond = ql.AmortizingFixedRateBond(
+                    0, notionals, schedule, [float_accrual_size], day_count
+                )
+
+            else:
+                first_accrual = self.get_first_accrual()
+
+                settlementDays = 0
+
+                if first_accrual:
+                    start = ql.Date(
+                        str(first_accrual.accrual_start_date), self.date_pattern
+                    )  # Start accrual date
+                    periodicity = Periodicity.get_quantlib_periodicity(
+                        first_accrual.periodicity
+                    )
+
+                    schedule = ql.MakeSchedule(
+                        start, maturity, periodicity
+                    )  # period - semiannual
+
+                    float_accrual_size = float(first_accrual.accrual_size) / 100
+                    day_count = AccrualCalculationModel.get_quantlib_day_count(
+                        first_accrual.accrual_calculation_model
+                    )
+
+                    interest = ql.FixedRateLeg(
+                        schedule, day_count, [face_value], [float_accrual_size]
+                    )
+
+                    bond = ql.Bond(settlementDays, calendar, start, interest)
+
+                else:
+                    bond = ql.ZeroCouponBond(
+                        settlementDays=settlementDays,
+                        calendar=calendar,
+                        faceAmount=face_value,
+                        maturityDate=maturity,
+                    )
+                    _l.info("ZeroCouponBond %s" % bond)
+
+        return bond
+
+    # Important function for calculating YTM
+    # 2023-08-21
+    def calculate_quantlib_ytm(self, date, price):
+        import QuantLib as ql
+
+        ytm = 0
+
+        bond = self.get_quantlib_bond()
+
+        # _l.info('calculate_quantlib_ytm %s ' % bond)
+        # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
+        # _l.info('calculate_quantlib_ytm price %s ' % price)
+
+        if bond:
+            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+
+            try:
+                frequency = bond.frequency()
+            except Exception as e:
+                _l.error("Could not take frequency from bond %s" % e)
+                frequency = 1
+            # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
+            # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
+            # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
+            _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
+            _l.info('calculate_quantlib_ytm frequency %s ' % frequency)
+
+
+            ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
+
+        return ytm
+
+    def calculate_quantlib_modified_duration(self, date, ytm):
+        import QuantLib as ql
+
+        modified_duration = 0
+
+        bond = self.get_quantlib_bond()
+
+        if bond:
+            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+
+            try:
+                frequency = bond.frequency()
+            except Exception as e:
+                _l.error("Could not take frequency from bond %s" % e)
+                frequency = 1
+            # first_cashflow = bond.cashflows()[0]
+            # day_count_convention = first_cashflow.dayCounter()
+            day_count_convention = bond.dayCounter()
+
+            # Macaulay Duration
+            # TODO probably do not need right now
+            # macaulay_duration = ql.BondFunctions.duration(amort_bond, ytm, day_count, ql.Compounded, frequency, ql.Duration.Macaulay)
+
+            # Modified Duration
+            modified_duration = ql.BondFunctions.duration(
+                bond,
+                ytm,
+                day_count_convention,
+                ql.Compounded,
+                frequency,
+                ql.Duration.Modified,
+            )
+
+        return modified_duration
+
     def rebuild_event_schedules(self):
         from poms.transactions.models import EventClass, NotificationClass
 
@@ -2120,6 +2390,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         return res
 
+    # Need in new ytm calculation
+    # 2023-08-21
+    def has_factor_schedules(self):
+        factors = list(self.factor_schedules.all())
+
+        return bool(len(factors))
+
     def get_factors(self):
         factors = list(self.factor_schedules.all())
         factors.sort(key=lambda x: x.effective_date)
@@ -2136,6 +2413,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
+        from poms.configuration.utils import get_default_configuration_code
 
         content_type = ContentType.objects.get(
             app_label="instruments", model="instrument"
@@ -2144,20 +2422,18 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             instrument=self
         )
 
+        configuration_code = get_default_configuration_code()
+
         for ipp in instrument_pricing_policies:
             pp = ipp.pricing_policy
 
-            user_code_scheme = f"pricing_policy_scheme_{pp.user_code}"
-            user_code_parameter = f"pricing_policy_parameter_{pp.user_code}"
-            user_code_notes = f"pricing_policy_notes_{pp.user_code}"
+            user_code_scheme = f"{configuration_code}:pricing_policy_scheme_{pp.user_code}"
+            user_code_parameter = f"{configuration_code}:pricing_policy_parameter_{pp.user_code}"
+            user_code_notes = f"{configuration_code}:pricing_policy_notes_{pp.user_code}"
 
             name_scheme = f"Pricing Policy Scheme: {pp.user_code}"
             name_parameter = f"Pricing Policy Parameter: {pp.user_code}"
             name_notes = f"Pricing Policy Notes: {pp.user_code}"
-
-            attr_type_scheme = None
-            attr_type_parameter = None
-            attr_type_notes = None
 
             try:
                 attr_type_scheme = GenericAttributeType.objects.get(
@@ -2166,15 +2442,15 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     user_code=user_code_scheme,
                 )
             except GenericAttributeType.DoesNotExist:
-                with contextlib.suppress(Exception):
-                    attr_type_scheme = GenericAttributeType.objects.create(
-                        master_user=self.master_user,
-                        content_type=content_type,
-                        value_type=GenericAttributeType.STRING,
-                        user_code=user_code_scheme,
-                        name=name_scheme,
-                        kind=GenericAttributeType.SYSTEM,
-                    )
+                attr_type_scheme = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_scheme,
+                    name=name_scheme,
+                    kind=GenericAttributeType.SYSTEM,
+                    configuration_code=configuration_code,
+                )
 
             try:
                 attr_type_parameter = GenericAttributeType.objects.get(
@@ -2183,15 +2459,15 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     user_code=user_code_parameter,
                 )
             except GenericAttributeType.DoesNotExist:
-                with contextlib.suppress(Exception):
-                    attr_type_parameter = GenericAttributeType.objects.create(
-                        master_user=self.master_user,
-                        content_type=content_type,
-                        value_type=GenericAttributeType.STRING,
-                        user_code=user_code_parameter,
-                        name=name_parameter,
-                        kind=GenericAttributeType.SYSTEM,
-                    )
+                attr_type_parameter = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_parameter,
+                    name=name_parameter,
+                    kind=GenericAttributeType.SYSTEM,
+                    configuration_code=configuration_code,
+                )
 
             try:
                 attr_type_notes = GenericAttributeType.objects.get(
@@ -2200,15 +2476,15 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     user_code=user_code_notes,
                 )
             except GenericAttributeType.DoesNotExist:
-                with contextlib.suppress(Exception):
-                    attr_type_notes = GenericAttributeType.objects.create(
-                        master_user=self.master_user,
-                        content_type=content_type,
-                        value_type=GenericAttributeType.STRING,
-                        user_code=user_code_notes,
-                        name=name_notes,
-                        kind=GenericAttributeType.SYSTEM,
-                    )
+                attr_type_notes = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_notes,
+                    name=name_notes,
+                    kind=GenericAttributeType.SYSTEM,
+                    configuration_code=configuration_code,
+                )
 
             try:
                 attr_scheme = GenericAttribute.objects.get(
@@ -2218,12 +2494,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 )
 
             except GenericAttribute.DoesNotExist:
-                with contextlib.suppress(Exception):
-                    attr_scheme = GenericAttribute.objects.create(
-                        attribute_type=attr_type_scheme,
-                        object_id=self.pk,
-                        content_type=content_type,
-                    )
+                attr_scheme = GenericAttribute.objects.create(
+                    attribute_type=attr_type_scheme,
+                    object_id=self.pk,
+                    content_type=content_type,
+                    user_code=user_code_scheme,
+                    configuration_code=configuration_code,
+                )
 
             if ipp.pricing_scheme:
                 attr_scheme.value_string = ipp.pricing_scheme.name
@@ -2240,11 +2517,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 )
 
             except GenericAttribute.DoesNotExist:
-                with contextlib.suppress(Exception):
                     attr_parameter = GenericAttribute.objects.create(
                         attribute_type=attr_type_parameter,
                         object_id=self.pk,
                         content_type=content_type,
+                        user_code=user_code_parameter,
+                        configuration_code=configuration_code,
                     )
 
             if ipp.attribute_key:
@@ -2297,11 +2575,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 )
 
             except GenericAttribute.DoesNotExist:
-                with contextlib.suppress(Exception):
                     attr_notes = GenericAttribute.objects.create(
                         attribute_type=attr_type_notes,
                         object_id=self.pk,
                         content_type=content_type,
+                        user_code=user_code_notes,
+                        configuration_code=configuration_code,
                     )
 
             attr_notes.value_string = ipp.notes or ""
@@ -2312,7 +2591,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         _l.info("generate_instrument_system_attributes done")
 
     def save(self, *args, **kwargs):
-        super(Instrument, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         try:
             self.generate_instrument_system_attributes()
@@ -2630,50 +2909,60 @@ class PriceHistory(DataTimeStampedModel):
             _l.error(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
-    def calculate_ytm(self, dt):
-        _l.debug(f"Calculating ytm for {self.instrument.name} for {self.date}")
+    def calculate_ytm(self, date):
+        _l.debug(f"Calculating ytm for {self.instrument.name} for {date}")
 
-        if (
-            self.instrument.maturity_date is None
-            or self.instrument.maturity_date == date.max
-            or str(self.instrument.maturity_date) == "2999-01-01"
-            or str(self.instrument.maturity_date) == "2099-01-01"
-        ):
-            try:
-                accrual_size = self.instrument.get_accrual_size(dt)
-                ytm = (
-                    (accrual_size * self.instrument.accrued_multiplier)
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                    / (self.principal_price * self.instrument.price_multiplier)
-                )
+        ytm = self.instrument.calculate_quantlib_ytm(
+            date=date, price=self.principal_price
+        )
 
-            except Exception as e:
-                _l.error(f"calculate_ytm error {repr(e)}")
-                ytm = 0
-            return ytm
-
-        x0 = self.get_instr_ytm_x0(dt)
-        _l.debug("get_instr_ytm: x0=%s", x0)
-
-        data = self.get_instr_ytm_data(dt)
-        _l.debug("get_instr_ytm: data=%s", data)
-
-        ytm = f_xirr(data, x0=x0) if data else 0.0
+        # if (
+        #     self.instrument.maturity_date is None
+        #     or self.instrument.maturity_date == date.max
+        #     or str(self.instrument.maturity_date) == "2999-01-01"
+        #     or str(self.instrument.maturity_date) == "2099-01-01"
+        # ):
+        #     try:
+        #         accrual_size = self.instrument.get_accrual_size(dt)
+        #         ytm = (
+        #             (accrual_size * self.instrument.accrued_multiplier)
+        #             * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+        #             / (self.principal_price * self.instrument.price_multiplier)
+        #         )
+        #
+        #     except Exception as e:
+        #         _l.error(f"calculate_ytm error {repr(e)}")
+        #         ytm = 0
+        #     return ytm
+        #
+        # x0 = self.get_instr_ytm_x0(dt)
+        # _l.debug("get_instr_ytm: x0=%s", x0)
+        #
+        # data = self.get_instr_ytm_data(dt)
+        # _l.debug("get_instr_ytm: data=%s", data)
+        #
+        # ytm = f_xirr(data, x0=x0) if data else 0.0
         return ytm
 
-    def calculate_duration(self, dt):
-        if (
-            self.instrument.maturity_date is None
-            or self.instrument.maturity_date == date.max
-        ):
-            try:
-                duration = 1 / self.ytm
-            except ArithmeticError:
-                duration = 0
+    def calculate_duration(self, date, ytm):
+        duration = self.instrument.calculate_quantlib_modified_duration(
+            date=date, ytm=ytm
+        )
 
-            return duration
-        data = self.get_instr_ytm_data(dt)
-        return f_duration(data, ytm=self.ytm) if data else 0
+        # if (
+        #         self.instrument.maturity_date is None
+        #         or self.instrument.maturity_date == date.max
+        # ):
+        #     try:
+        #         duration = 1 / self.ytm
+        #     except ArithmeticError:
+        #         duration = 0
+        #
+        #     return duration
+        # data = self.get_instr_ytm_data(dt)
+        # return f_duration(data, ytm=self.ytm) if data else 0
+
+        return duration
 
     def save(self, *args, **kwargs):
         # TODO make readable exception if currency history is missing
@@ -2714,10 +3003,10 @@ class PriceHistory(DataTimeStampedModel):
                     ).fx_rate
 
             self.ytm = self.calculate_ytm(self.date)
-            self.modified_duration = self.calculate_duration(self.date)
+            self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
-            _l.debug(f"PriceHistory save ytm error {repr(e)} {traceback.print_exc()}")
+            _l.info(f"PriceHistory save ytm error {repr(e)} {traceback.format_exc()}")
 
         if not self.factor:
             try:
@@ -2725,7 +3014,7 @@ class PriceHistory(DataTimeStampedModel):
             except Exception as e:
                 _l.debug(
                     f"PriceHistory factor save ytm error {repr(e)}"
-                    f" {traceback.print_exc()}"
+                    f" {traceback.format_exc()}"
                 )
 
         super().save(*args, **kwargs)

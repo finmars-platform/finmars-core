@@ -122,6 +122,7 @@ EXPECTED_PRICE_HISTORY = {
     "short_delta": 2968.0,
     "is_temporary_price": False,
     "ytm": 3.0,
+    "modified_duration": 3.0,
     "meta": {
         "content_type": "instruments.pricehistory",
         "app_label": "instruments",

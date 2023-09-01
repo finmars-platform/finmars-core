@@ -40,7 +40,7 @@ def handle_task_failure(**kwargs):
         einfo = kwargs['einfo']
 
         # Handle the exception in any way you want. For example, you could log it:
-        _l.error(f'Task {task_id} raised exception: {einfo.exception} \n {einfo.traceback}')
+        # _l.error(f'Task {task_id} raised exception: {einfo.exception} \n {einfo.traceback}')
 
         try:
 

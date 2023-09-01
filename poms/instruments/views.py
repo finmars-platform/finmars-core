@@ -45,8 +45,8 @@ from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentSelectSpecialQueryFilter,
-    OwnerByInstrumentFilter,
-    PriceHistoryObjectPermissionFilter,
+    ListDatesFilter,
+    PriceHistoryObjectPermissionFilter, InstrumentsUserCodeFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -1334,7 +1334,8 @@ class PriceHistoryViewSet(AbstractModelViewSet):
     )
     serializer_class = PriceHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByInstrumentFilter,
+        ListDatesFilter,
+        InstrumentsUserCodeFilter,
         PriceHistoryObjectPermissionFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -1504,7 +1505,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
     )
     serializer_class = GeneratedEventSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByInstrumentFilter,
+
         GeneratedEventPermissionFilter,
     ]
     filter_class = GeneratedEventFilterSet

@@ -10,10 +10,12 @@ from rest_framework.response import Response
 from rest_framework.schemas import ManualSchema
 from rest_framework.schemas import coreapi as coreapi_schema
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
-    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
+    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer, \
+    AcceptInviteSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.users.models import MasterUser, Member, UserProfile
@@ -248,6 +250,94 @@ class CreateUser(APIView):
             _l.error("Could not create member Error %s" % e)
 
         return Response({'status': 'ok'})
+
+
+class AcceptInvite(APIView):
+    permission_classes = (AllowAny,) # TODO consider change, maybe add more sophisticated permissions
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    authentication_classes = (JWTAuthentication,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = AcceptInviteSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        member = Member.objects.get(username="finmars_bot")
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {
+            'request': proxy_request,
+            'master_user': master_user,
+            'member': member
+        }
+
+        serializer = self.get_serializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data['username']
+
+        target_member = Member.objects.get(username=username)
+        target_member.status = Member.STATUS_ACTIVE
+        target_member.is_deleted = False
+        target_member.save()
+
+        return Response({'status': 'ok'})
+
+class DeclineInvite(APIView):
+    permission_classes = (AllowAny,) # TODO consider change, maybe add more sophisticated permissions
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    authentication_classes = (JWTAuthentication,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = AcceptInviteSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        member = Member.objects.get(username="finmars_bot")
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {
+            'request': proxy_request,
+            'master_user': master_user,
+            'member': member
+        }
+
+        serializer = self.get_serializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data['username']
+
+        target_member = Member.objects.get(username=username)
+        target_member.status = Member.STATUS_INVITE_DECLINED
+        target_member.save()
+
+        return Response({'status': 'ok'})
+
+
 
 
 class CreateMasterUser(APIView):

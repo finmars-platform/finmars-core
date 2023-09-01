@@ -1,12 +1,12 @@
 import cProfile
 import io
+import json
 import pstats
 import sys
 
-from django.utils.timezone import now
-
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
+from django.utils.timezone import now
 
 logger = get_task_logger(__name__)
 
@@ -133,7 +133,7 @@ class BaseTask(_Task):
         return task
 
     def before_start(self, task_id, args, kwargs):
-        logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
+        # logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
 
         if kwargs:
             self.finmars_task = self._update_celery_task_with_run_info(kwargs)
@@ -153,15 +153,22 @@ class BaseTask(_Task):
         self.finmars_task.save()
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        logger.info(
-            f"on_failure exc={exc} task_id={task_id} args={args} "
-            f"kwargs={kwargs} einfo={einfo}"
-        )
+        # logger.info(
+        #     f"on_failure exc={exc} task_id={task_id} args={args} "
+        #     f"kwargs={kwargs} einfo={einfo}"
+        # )
 
         if self.finmars_task:
             self._update_celery_task_with_error(exc, einfo)
 
         super().on_failure(exc, task_id, args, kwargs, einfo)
+
+    def is_valid_json(self, retval):
+        try:
+            json.loads(retval)
+            return True
+        except json.JSONDecodeError:
+            return False
 
     def _update_celery_task_with_success(self, retval, task_id):
         from poms.celery_tasks.models import CeleryTask
@@ -172,14 +179,28 @@ class BaseTask(_Task):
                 "message": f"Task {task_id} finished successfully. No results"
             }
             self.finmars_task.result_object = result_object
+        else:
+            try:
+                if self.is_valid_json(retval):
+                    self.finmars_task.result_object = json.loads(
+                        retval)  ## TODO strange logic, probably refactor # but we can pass only string in celery
+                else:
+                    result_object = {
+                        "message": f"Task {task_id} returned result is not JSON"
+                    }
+                    self.finmars_task.result_object = result_object
+            except Exception as e:
+                pass
+
+        # self.finmars_task.result_object = result_object
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()
 
     def on_success(self, retval, task_id, args, kwargs):
-        logger.info(
-            f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
-        )
+        # logger.info(
+        #     f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
+        # )
 
         if self.finmars_task:
             self._update_celery_task_with_success(retval, task_id)

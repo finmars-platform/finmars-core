@@ -9,12 +9,6 @@ from poms.obj_attrs.models import GenericAttributeType
 _l = logging.getLogger("poms.instruments")
 
 
-class OwnerByInstrumentFilter(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        instruments = Instrument.objects.filter(master_user=request.user.master_user)
-        return queryset.filter(instrument__in=instruments)
-
-
 class OwnerByPermissionedInstrumentFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         instruments = Instrument.objects.filter(master_user=request.user.master_user)
@@ -96,5 +90,28 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
             options.add(Q(instrument_type__user_code=instrument_type), Q.AND)
 
         queryset = queryset.filter(options)
+
+        return queryset
+
+class ListDatesFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        dates = request.query_params.getlist('dates', None)
+
+        print('dates %s' % dates )
+
+        if dates:
+            return queryset.filter(date__in=dates)
+
+        return queryset
+
+
+class InstrumentsUserCodeFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        user_codes = request.query_params.getlist('user_codes', None)
+
+        if user_codes:
+            return queryset.filter(instrument__user_code__in=user_codes)
 
         return queryset

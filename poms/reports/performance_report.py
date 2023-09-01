@@ -759,7 +759,7 @@ class PerformanceReportBuilder:
 
             previous_date = item_date
 
-        print('table %s' % table)
+        # print('table %s' % table)
 
         return table
 

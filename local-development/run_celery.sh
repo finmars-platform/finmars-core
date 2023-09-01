@@ -7,13 +7,14 @@ DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
 LOCAL=True \
+DEBUG=False \
 PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
 AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \
 AWS_S3_SECRET_ACCESS_KEY=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 \
 MEDIATOR_URL=http://localhost:8082/ \
-DJANGO_LOG_LEVEL=DEBUG \
+DJANGO_LOG_LEVEL=INFO \
 SERVER_TYPE=local \
 USE_WEBSOCKETS=False \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
@@ -21,4 +22,5 @@ SECRET_KEY=mv83o5mq \
 FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
-celery --app=poms_app worker --autoscale=4,2 -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend
+CELERY_WORKER_CONCURRENCY=8 \
+celery --app=poms_app worker  -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend
