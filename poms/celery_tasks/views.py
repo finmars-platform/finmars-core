@@ -104,6 +104,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None):
+
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
