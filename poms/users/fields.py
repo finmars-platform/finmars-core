@@ -4,7 +4,7 @@ from rest_framework.fields import CurrentUserDefault
 
 from poms_app import settings
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.iam.models import AccessPolicy, Group, Role
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import MasterUser, Member
@@ -94,13 +94,13 @@ class UserField(PrimaryKeyRelatedFilteredField):
     queryset = User.objects.all()
 
 
-class GroupField(PrimaryKeyRelatedFilteredField):
+class GroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Group.objects.all()
 
 
-class RoleField(PrimaryKeyRelatedFilteredField):
+class RoleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Role.objects.all()
 
 
-class AccessPolicyField(PrimaryKeyRelatedFilteredField):
+class AccessPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = AccessPolicy.objects.all()
