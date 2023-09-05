@@ -657,11 +657,11 @@ class MasterUser(models.Model):
         pricing_policy = PricingPolicy.objects.create(
             master_user=self, name="-", expr="(ask+bid)/2"
         )
-        pricing_policy_dft = PricingPolicy.objects.create(
-            master_user=self,
-            name="DFT",
-            expr="(ask+bid)/2",
-        )
+        # pricing_policy_dft = PricingPolicy.objects.create(
+        #     master_user=self,
+        #     name="DFT",
+        #     expr="(ask+bid)/2",
+        # )
         instrument_pricing_scheme = InstrumentPricingScheme.objects.create(
             master_user=self,
             name="-",
