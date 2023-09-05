@@ -228,6 +228,11 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/layouts/context-menu',
                                context)
 
+        save_serialized_layout('ui.mobilelayout',
+                               configuration.configuration_code,
+                               source_directory + '/ui/layouts/mobile-layout',
+                               context)
+
         # TODO Need to add user_code
         # save_serialized_entity('ui.complextransactionuserfieldmodel',
         #                                configuration.configuration_code,
