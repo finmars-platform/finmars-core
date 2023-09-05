@@ -257,6 +257,18 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         save_serialized_entity_layout('ui.listlayout',
                                       configuration.configuration_code,
+                                      'portfolios.portfolioregister',
+                                      source_directory + '/ui/layouts/portfolio-register',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolioregisterrecord',
+                                      source_directory + '/ui/layouts/portfolio-register-record',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
                                       'accounts.accounttype',
                                       source_directory + '/ui/layouts/account-type',
                                       context)

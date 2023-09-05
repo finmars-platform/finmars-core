@@ -12,6 +12,8 @@ from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
 import pandas as pd
+
+
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -541,6 +543,9 @@ def get_serializer(content_type_key):
         TransactionUserFieldSerializer,
     )
 
+    from poms.portfolios.serializers import PortfolioRegisterSerializer, PortfolioRegisterRecordSerializer
+    from poms.ui.serializers import MobileLayoutSerializer
+
     from poms.integrations.serializers import MappingTableSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
@@ -551,6 +556,8 @@ def get_serializer(content_type_key):
         "accounts.account": AccountSerializer,
         "accounts.accounttype": AccountTypeSerializer,
         "portfolios.portfolio": PortfolioSerializer,
+        "portfolios.portfolioregister": PortfolioRegisterSerializer,
+        "portfolios.portfolioregisterrecord": PortfolioRegisterRecordSerializer,
         "instruments.pricehistory": PriceHistorySerializer,
         "currencies.currencyhistory": CurrencyHistorySerializer,
         "counterparties.counterparty": CounterpartySerializer,
@@ -569,6 +576,7 @@ def get_serializer(content_type_key):
         "obj_attrs.genericattributetype": GenericAttributeTypeSerializer,
         "ui.dashboardlayout": DashboardLayoutSerializer,
         "ui.memberlayout": MemberLayoutSerializer,
+        "ui.mobilelayout": MobileLayoutSerializer,
         "ui.listlayout": ListLayoutSerializer,
         "ui.editlayout": EditLayoutSerializer,
         "ui.contextmenulayout": ContextMenuLayoutSerializer,
