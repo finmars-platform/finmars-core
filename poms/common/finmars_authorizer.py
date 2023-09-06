@@ -12,6 +12,8 @@ _l = getLogger('poms.authorizer')
 
 class AuthorizerService():
 
+    # ?space_code=... needs for JWT Auth purpose
+
     def kick_member(self, member):
         User = get_user_model()
 
@@ -93,7 +95,7 @@ class AuthorizerService():
             "worker_name": worker.worker_name,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/start-worker/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/start-worker/?space_code=%s' % settings.BASE_API_URL
 
         response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
@@ -120,7 +122,7 @@ class AuthorizerService():
             "worker_name": worker.worker_name,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/stop-worker/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/stop-worker/?space_code=%s' % settings.BASE_API_URL
 
         response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
@@ -147,7 +149,7 @@ class AuthorizerService():
             "worker_name": worker.worker_name,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/restart-worker/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/restart-worker/?space_code=%s' % settings.BASE_API_URL
 
         response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
@@ -174,7 +176,7 @@ class AuthorizerService():
             "worker_name": worker.worker_name,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/delete-worker/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/delete-worker/?space_code=%s' % settings.BASE_API_URL
 
         response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
@@ -229,7 +231,7 @@ class AuthorizerService():
             "queue": worker.queue,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/create-worker/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/create-worker/?space_code=%s' % settings.BASE_API_URL
 
         response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
