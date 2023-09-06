@@ -230,7 +230,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
         return Response({"status": "ok"})
 
-    @action(detail=True, methods=["PUT"], url_path="status")
+    @action(detail=True, methods=["GET"], url_path="status")
     def status(self, request, pk=None):
         worker = self.get_object()
 
