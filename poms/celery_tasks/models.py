@@ -364,7 +364,13 @@ class CeleryWorker(TimeStampedModel):
 
         status = authorizer_service.get_worker_status(self)
 
-        self.status = status
+        try:
+            self.status = json.dumps(status)
+        except Exception as e:
+            self.status = json.dumps({
+                "status": "unknown",
+                "error_message": str(e)
+            })
 
         self.save()
 
