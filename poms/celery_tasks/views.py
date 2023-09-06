@@ -238,7 +238,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
         return Response({"status": "ok"})
 
-    def perform_destroy(self, instance, request):
+    def perform_destroy(self, instance):
         instance.delete_worker()
-
         return super(CeleryWorkerViewSet, self).perform_destroy(instance)
