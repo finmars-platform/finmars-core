@@ -39,3 +39,8 @@ router.register(
     portfolios.PortfolioBundleViewSet,
     "portfoliobundle",
 )
+router.register(
+    r"first-transaction-date",
+    portfolios.PortfolioFirstTransactionViewSet,
+    "firsttransactiondate",
+)
