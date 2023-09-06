@@ -198,11 +198,11 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         # Consider delete and creating new
         raise PermissionDenied()
 
-    @action(detail=True, methods=["PUT"], url_path="create")
-    def create(self, request, pk=None):
+    @action(detail=True, methods=["PUT"], url_path="create-worker")
+    def create_worker(self, request, pk=None):
         worker = self.get_object()
 
-        worker.create()
+        worker.create_worker()
 
         return Response({"status": "ok"})
 
