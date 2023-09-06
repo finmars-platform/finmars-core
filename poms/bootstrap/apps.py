@@ -11,7 +11,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
-from poms.celery_tasks.models import CeleryWorker
+
 from poms_app import settings
 
 _l = logging.getLogger('provision')
@@ -286,6 +286,7 @@ class BootstrapConfig(AppConfig):
 
             from poms.common.finmars_authorizer import AuthorizerService
             authorizer_service = AuthorizerService()
+            from poms.celery_tasks.models import CeleryWorker
 
             workers = CeleryWorker.objects.all()
 
