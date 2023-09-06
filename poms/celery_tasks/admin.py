@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from poms.celery_tasks.models import CeleryTask
+from poms.celery_tasks.models import CeleryTask, CeleryWorker
+from poms.common.admin import AbstractModelAdmin
 
 
 @admin.register(CeleryTask)
@@ -24,3 +25,19 @@ class CeleryTaskAdmin(admin.ModelAdmin):
     raw_id_fields = [
         "master_user",
     ]
+
+
+
+
+class CeleryWorkerAdmin(AbstractModelAdmin):
+    model = CeleryWorker
+    list_display = [
+        "id",
+        "worker_name",
+        "queue",
+        "memory_limit",
+        "status"
+    ]
+
+
+admin.site.register(CeleryWorker, CeleryWorkerAdmin)

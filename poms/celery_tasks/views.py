@@ -1,19 +1,17 @@
 from logging import getLogger
 
+from celery.result import AsyncResult
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from celery.result import AsyncResult
-
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
-
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
-from .models import CeleryTask
-from .serializers import CeleryTaskLightSerializer, CeleryTaskSerializer
+from .models import CeleryTask, CeleryWorker
+from .serializers import CeleryTaskLightSerializer, CeleryTaskSerializer, CeleryWorkerSerializer
 
 _l = getLogger("poms.celery_tasks")
 
@@ -104,7 +102,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None):
-
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
@@ -173,3 +170,56 @@ class CeleryStatsViewSet(AbstractViewSet):
         stats = i.stats()
 
         return Response(stats)
+
+
+class CeleryWorkerFilterSet(FilterSet):
+    id = CharFilter()
+    worker_name = CharFilter()
+    queue = CharFilter()
+    worker_type = CharFilter()
+    notes = CharFilter()
+
+    class Meta:
+        model = CeleryWorker
+        fields = []
+
+
+class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
+    queryset = CeleryWorker.objects.all()
+    serializer_class = CeleryWorkerSerializer
+    filter_class = CeleryWorkerFilterSet
+    filter_backends = [
+
+    ]
+
+    @action(detail=True, methods=["PUT"], url_path="start")
+    def start(self, request, pk=None):
+        task = CeleryTask.objects.get(pk=pk)
+
+        task.cancel()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="stop")
+    def stop(self, request, pk=None):
+        task = CeleryTask.objects.get(pk=pk)
+
+        task.cancel()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="restart")
+    def restart(self, request, pk=None):
+        task = CeleryTask.objects.get(pk=pk)
+
+        task.cancel()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="status")
+    def status(self, request, pk=None):
+        task = CeleryTask.objects.get(pk=pk)
+
+        task.cancel()
+
+        return Response({"status": "ok"})

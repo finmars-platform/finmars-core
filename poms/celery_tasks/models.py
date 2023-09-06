@@ -2,12 +2,11 @@ import json
 import logging
 from datetime import timedelta
 
+from celery.result import AsyncResult
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-
-from celery.result import AsyncResult
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
@@ -286,4 +285,50 @@ class CeleryTaskAttachment(models.Model):
         null=True,
         verbose_name=gettext_lazy("file report"),
         on_delete=models.SET_NULL,
+    )
+
+
+class CeleryWorker(TimeStampedModel):
+    worker_name = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name="worker name",
+        help_text="Name that will be used in celery worker command"
+    )
+
+    worker_type = models.CharField(
+        default="worker",
+        max_length=255,
+        verbose_name="worker type",
+        help_text="worker or scheduler"
+    )
+
+    status = models.CharField(
+        null=True,
+        blank=True,
+        default="unknown",
+        max_length=255,
+        verbose_name="status",
+        help_text="Status of worker container"
+    )
+
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("notes"),
+    )
+
+    memory_limit = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name="Memory Limit",
+        help_text="Memory limit for celery worker e.g. 2Gi"
+    )
+
+    queue = models.TextField(
+        null=True,
+        blank=True,
+        default="backend-general-queue,backend-background-queue",
+        verbose_name=gettext_lazy("Queue"),
+        help_text="Comma separated list of queues that worker will listen to"
     )

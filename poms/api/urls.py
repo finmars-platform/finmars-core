@@ -77,6 +77,13 @@ router.register(
     celery_tasks.CeleryTaskViewSet,
     "CeleryTask",
 )
+
+router.register(
+    r"tasks/worker",
+    celery_tasks.CeleryWorkerViewSet,
+    "CeleryWorker",
+)
+
 router.register(
     r"tasks/stats",
     celery_tasks.CeleryStatsViewSet,

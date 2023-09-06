@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
 from poms.users.fields import MasterUserField, MemberField
-
-from .models import CeleryTask, CeleryTaskAttachment
+from .models import CeleryTask, CeleryTaskAttachment, CeleryWorker
 
 
 class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
@@ -112,3 +111,9 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
         self.fields["member_object"] = MemberViewSerializer(
             source="member", read_only=True
         )
+
+
+class CeleryWorkerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CeleryWorker
+        fields = ["id", "worker_name", "worker_type", "notes", "memory_limit", "queue", "status"]

@@ -77,9 +77,7 @@ chmod 777 /var/log/finmars/backend/django.log
 # Default value is "backend"
 : "${INSTANCE_TYPE:=backend}"
 
-# Environment variables for the worker
-: "${WORKER_NAME:=worker1}"
-: "${QUEUES:=backend-general-queue,backend-background-queue}"
+
 
 if [ "$INSTANCE_TYPE" = "backend" ]; then
 
@@ -89,7 +87,6 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Migration Done 💚"
 
-  #
   #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
@@ -121,7 +118,20 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
   gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
 
 elif [ "$INSTANCE_TYPE" = "worker" ]; then
-  cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
+
+  # Environment variables for the worker
+  : "${WORKER_NAME:=worker1}"
+  : "${QUEUES:=backend-general-queue,backend-background-queue}"
+
+  : "${WORKER_TYPE:=worker}"
+  if [ "$WORKER_TYPE" = "worker" ]; then
+      cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
+  elif [ "$WORKER_TYPE" = "scheduler" ]; then
+      cd /var/app && celery --app poms_app beat --loglevel=ERROR --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    else
+      echo "Unsupported value for WORKER_TYPE environment variable. Exiting."
+      exit 1
+    fi
 else
   echo "Missing or unsupported value for INSTANCE_TYPE environment variable. Exiting."
   exit 1
