@@ -43,96 +43,69 @@ chmod 777 /var/log/finmars/backend/django.log
 
 ############################################
 
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Migrating..."
+python /var/app/manage.py migrate
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Migration Done 💚"
 
 
-#echo "[${timestamp}] Start celery"
+#
+#/var/app-venv/bin/python /var/app/manage.py createcachetable
+
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Clear sessions"
+
+python /var/app/manage.py clearsessions
+
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Collect static"
+
+python /var/app/manage.py collectstatic -c --noinput
+
+
+
+export DJANGO_SETTINGS_MODULE=poms_app.settings
+export C_FORCE_ROOT='true'
+
+echo "[${timestamp}] Start celery"
 
 #!/bin/bash
 
-#: "${WORKERS:="2"}"
-#
-#
-#if [ "$WORKERS" = "4" ]
-#then
-#    rm /etc/supervisor/conf.d/celery_2_workers.conf
-#elif [ "$WORKERS" = "2" ]
-#then
-#    rm /etc/supervisor/conf.d/celery_4_workers.conf
-#else
-#    echo "Invalid number of workers specified"
-#    exit 1
-#fi
-#
-#echo "Number of workers: $WORKERS"
-#
-#supervisord
+: "${WORKERS:="2"}"
+
+
+if [ "$WORKERS" = "4" ]
+then
+    rm /etc/supervisor/conf.d/celery_2_workers.conf
+elif [ "$WORKERS" = "2" ]
+then
+    rm /etc/supervisor/conf.d/celery_4_workers.conf
+else
+    echo "Invalid number of workers specified"
+    exit 1
+fi
+
+echo "Number of workers: $WORKERS"
+
+supervisord
 
 #supervisorctl start worker1
 #supervisorctl start worker2
 #supervisorctl start celerybeat
 
+python manage.py clear_celery
+python manage.py download_init_configuration
+
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Create admin user"
+
+python /var/app/manage.py generate_super_user
+
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+echo "[${timestamp}] Run Gunicorn Web Server"
+
+python /var/app/poms_app/print_finmars.py
+
 #uwsgi /etc/uwsgi/apps-enabled/finmars.ini
-#gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
-
-# Default value is "backend"
-: "${INSTANCE_TYPE:=backend}"
-
-
-
-if [ "$INSTANCE_TYPE" = "backend" ]; then
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migrating..."
-  python /var/app/manage.py migrate
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migration Done 💚"
-
-  #/var/app-venv/bin/python /var/app/manage.py createcachetable
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Clear sessions"
-
-  python /var/app/manage.py clearsessions
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Collect static"
-
-  python /var/app/manage.py collectstatic -c --noinput
-
-  export DJANGO_SETTINGS_MODULE=poms_app.settings
-  export C_FORCE_ROOT='true'
-
-  python manage.py clear_celery
-#  python manage.py download_init_configuration
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Create admin user"
-
-  python /var/app/manage.py generate_super_user
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Run Gunicorn Web Server"
-
-  python /var/app/poms_app/print_finmars.py
-
-  gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
-
-elif [ "$INSTANCE_TYPE" = "worker" ]; then
-
-  # Environment variables for the worker
-  : "${WORKER_NAME:=worker1}"
-  : "${QUEUES:=backend-general-queue,backend-background-queue}"
-
-  : "${WORKER_TYPE:=worker}"
-  if [ "$WORKER_TYPE" = "worker" ]; then
-      cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
-  elif [ "$WORKER_TYPE" = "scheduler" ]; then
-      cd /var/app && celery --app poms_app beat --loglevel=ERROR --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    else
-      echo "Unsupported value for WORKER_TYPE environment variable. Exiting."
-      exit 1
-    fi
-else
-  echo "Missing or unsupported value for INSTANCE_TYPE environment variable. Exiting."
-  exit 1
-fi
+gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
