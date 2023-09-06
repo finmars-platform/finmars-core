@@ -4,6 +4,7 @@ import django_filters
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 
 from poms.common.filters import (
@@ -29,6 +30,8 @@ from poms.portfolios.serializers import (
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
+    FirstTransactionDateRequestSerializer,
+    FirstTransactionDateResponseSerializer,
 )
 from poms.portfolios.tasks import calculate_portfolio_register_price_history
 from poms.users.filters import OwnerByMasterUserFilter
@@ -207,17 +210,18 @@ class PortfolioViewSet(AbstractModelViewSet):
         url_path="get-inception-date",
     )
     def get_inception_date(self, request, *args, **kwargs):
-
-        result = {
-            "date": None
-        }
+        result = {"date": None}
 
         portfolio = self.get_object()
 
-        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+        first_record = (
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
+        )
 
         if first_record:
-            result['date'] = first_record.transaction_date
+            result["date"] = first_record.transaction_date
 
         return Response(result)
 
@@ -227,22 +231,23 @@ class PortfolioViewSet(AbstractModelViewSet):
         url_path="get-inception-date",
     )
     def get_inception_date(self, request, *args, **kwargs):
-
-        user_code = request.query_params.get('user_code', None)
+        user_code = request.query_params.get("user_code", None)
 
         if not user_code:
-            raise Exception('user_code is required')
+            raise Exception("user_code is required")
 
-        result = {
-            "date": None
-        }
+        result = {"date": None}
 
         portfolio = Portfolio.objects.get(user_code=user_code)
 
-        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+        first_record = (
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
+        )
 
         if first_record:
-            result['date'] = first_record.transaction_date
+            result["date"] = first_record.transaction_date
 
         return Response(result)
 
@@ -351,9 +356,7 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related(
-        "master_user",
-    )
+    queryset = PortfolioRegisterRecord.objects.select_related("master_user")
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioRegisterRecordFilterSet
@@ -369,10 +372,44 @@ class PortfolioBundleFilterSet(FilterSet):
 
 
 class PortfolioBundleViewSet(AbstractModelViewSet):
-    queryset = PortfolioBundle.objects.select_related(
-        "master_user",
-    )
+    queryset = PortfolioBundle.objects.select_related("master_user")
     serializer_class = PortfolioBundleSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioBundleFilterSet
     ordering_fields = []
+
+
+class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
+    queryset = Portfolio.objects
+    serializer_class = FirstTransactionDateRequestSerializer
+    http_method_names = ["get"]
+    response_serializer_class = FirstTransactionDateResponseSerializer
+
+    def list(self, request, *args, **kwargs):
+
+        request_serializer = self.serializer_class(
+            data=request.query_params,
+            context={"request": request, "member": request.user.member}
+        )
+        request_serializer.is_valid(raise_exception=True)
+
+        portfolios: list = request_serializer.validated_data["portfolio"]
+        date_field: str = request_serializer.validated_data["date_field"]
+        response_data = []
+        for portfolio in portfolios:
+            first_date = portfolio.first_transaction_date(date_field)
+            response_data.append(
+                {
+                    "portfolio": portfolio,
+                    "first_transaction": {
+                        "date_field": date_field,
+                        "date": first_date,
+                    }
+                }
+            )
+
+        response_serializer = self.response_serializer_class(response_data, many=True)
+        return Response(response_serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed("retrieve", "not allowed", "405")

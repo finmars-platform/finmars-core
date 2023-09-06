@@ -1,7 +1,9 @@
 from logging import getLogger
+from typing import Type
 
-from django.db import transaction
+from django.db import models, transaction
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
@@ -15,6 +17,7 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.portfolios.fields import PortfolioField
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -508,3 +511,68 @@ class PortfolioEvalSerializer(
         ]
 
         read_only_fields = fields
+
+
+def belongs_to_model(field: str, model: Type[models.Model]) -> bool:
+    model_fields = model._meta.get_fields()
+    field_names = [  # Exclude relation fields
+        field.name for field in model_fields if field.is_relation is False
+    ]
+    return field in field_names
+
+
+class FirstTransactionDateRequestSerializer(serializers.Serializer):
+    portfolio = PortfolioField(required=False)
+    date_field = serializers.CharField(default="transaction_date")
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Portfolio
+        fields = [
+            "portfolio",
+            "date_field",
+            "master_user",
+        ]
+        read_only_fields = fields
+
+    def validate(self, attrs: dict) -> dict:
+        from poms.transactions.models import Transaction
+
+        if "portfolio" in attrs:
+            attrs["portfolio"] = [
+                attrs["portfolio"],
+            ]
+        else:
+            attrs["portfolio"] = list(Portfolio.objects.all())
+
+        date_field = attrs["date_field"]
+        if not belongs_to_model(date_field, Transaction) or "date" not in date_field:
+            raise ValidationError(f"Transaction has no such date field {date_field}!")
+
+        return attrs
+
+
+class FirstTransactionSerializer(serializers.Serializer):
+    date_field = serializers.CharField()
+    date = serializers.DateField()
+
+
+class BasicPortfolioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portfolio
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_default",
+            "is_deleted",
+            "is_enabled",
+        ]
+
+
+class FirstTransactionDateResponseSerializer(serializers.Serializer):
+    portfolio = BasicPortfolioSerializer()
+    first_transaction = FirstTransactionSerializer()
