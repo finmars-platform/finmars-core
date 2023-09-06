@@ -24,15 +24,15 @@ class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
         OwnerByMasterUserFilter,
     ]
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, value):
         queryset = self.get_queryset()
         try:
-            if isinstance(data, str):
-                return queryset.get(user_code=data).user_code
+            if isinstance(value, str):
+                return queryset.get(user_code=value).user_code
             else:
-                return queryset.get(pk=data).user_code
+                return queryset.get(pk=value).user_code
         except Exception as e:
-            return data
+            return value
         # except ObjectDoesNotExist:
         #     self.fail("does_not_exist", value=str(data))
         # except (TypeError, ValueError):

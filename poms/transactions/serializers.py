@@ -4730,12 +4730,12 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
 
 
 class PhantomInstrumentField(InstrumentField):
-    def to_internal_value(self, data):
-        pk = data
+    def to_internal_value(self, value):
+        pk = value
         if self.pk_field is not None:
-            pk = self.pk_field.to_internal_value(data)
+            pk = self.pk_field.to_internal_value(value)
 
-        return Instrument(id=pk) if pk and pk < 0 else super().to_internal_value(data)
+        return Instrument(id=pk) if pk and pk < 0 else super().to_internal_value(value)
 
 
 class PhantomTransactionSerializer(TransactionSerializer):

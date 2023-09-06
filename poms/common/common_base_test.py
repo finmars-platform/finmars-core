@@ -598,9 +598,11 @@ class DbInitializer:
             short_name=name,
         )
 
-    def cash_in_transaction(self, portfolio: Portfolio, amount: int = 1000) -> tuple:
+    def cash_in_transaction(
+        self, portfolio: Portfolio, amount: int = 1000, day=None
+    ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
-        op_date = date.today()
+        op_date = day or date.today()
         complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
             date=op_date,
