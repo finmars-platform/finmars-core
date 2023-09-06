@@ -334,6 +334,11 @@ class CeleryWorker(TimeStampedModel):
         help_text="Comma separated list of queues that worker will listen to"
     )
 
+    def create(self):
+
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.create_worker(self)
 
     def start(self):
 

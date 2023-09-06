@@ -3,6 +3,7 @@ from logging import getLogger
 from celery.result import AsyncResult
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -191,6 +192,19 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     filter_backends = [
 
     ]
+
+    def update(self, request, *args, **kwargs):
+        # Workers could not be updated for now,
+        # Consider delete and creating new
+        raise PermissionDenied()
+
+    @action(detail=True, methods=["PUT"], url_path="create")
+    def create(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.create()
+
+        return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="start")
     def start(self, request, pk=None):
