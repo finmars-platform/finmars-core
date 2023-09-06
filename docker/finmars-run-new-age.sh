@@ -123,15 +123,12 @@ elif [ "$INSTANCE_TYPE" = "worker" ]; then
   : "${WORKER_NAME:=worker1}"
   : "${QUEUES:=backend-general-queue,backend-background-queue}"
 
-  : "${WORKER_TYPE:=worker}"
-  if [ "$WORKER_TYPE" = "worker" ]; then
-      cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
-  elif [ "$WORKER_TYPE" = "scheduler" ]; then
-      cd /var/app && celery --app poms_app beat --loglevel=ERROR --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    else
-      echo "Unsupported value for WORKER_TYPE environment variable. Exiting."
-      exit 1
-    fi
+  cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
+
+elif [ "$INSTANCE_TYPE" = "scheduler" ]; then
+
+  cd /var/app && celery --app poms_app beat --loglevel=INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
 else
   echo "Missing or unsupported value for INSTANCE_TYPE environment variable. Exiting."
   exit 1

@@ -72,3 +72,139 @@ class AuthorizerService():
 
         if response.status_code != 200:
             raise Exception("Error inviting member %s" % response.text)
+
+    def start_worker(self, worker):
+        User = get_user_model()
+
+        # Probably need to come up with something more smart
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        refresh["space_code"] = settings.BASE_API_URL
+
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token
+                   }
+
+        data = {
+            "space_code": settings.BASE_API_URL,
+            "worker_name": worker.worker_name,
+            "worker_type": worker.worker_type,
+            "memory_limit": worker.memory_limit,
+            "queue": worker.queue,
+        }
+
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/start-worker/'
+
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+
+        if response.status_code != 200:
+            raise Exception("Error starting worker %s" % response.text)
+
+    def stop_worker(self, worker):
+        User = get_user_model()
+
+        # Probably need to come up with something more smart
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        refresh["space_code"] = settings.BASE_API_URL
+
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token
+                   }
+
+        data = {
+            "space_code": settings.BASE_API_URL,
+            "worker_name": worker.worker_name,
+        }
+
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/stop-worker/'
+
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+
+        if response.status_code != 200:
+            raise Exception("Error stopping worker %s" % response.text)
+
+    def restart_worker(self, worker):
+        User = get_user_model()
+
+        # Probably need to come up with something more smart
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        refresh["space_code"] = settings.BASE_API_URL
+
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token
+                   }
+
+        data = {
+            "space_code": settings.BASE_API_URL,
+            "worker_name": worker.worker_name,
+        }
+
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/restart-worker/'
+
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+
+        if response.status_code != 200:
+            raise Exception("Error restarting worker %s" % response.text)
+
+    def delete_worker(self, worker):
+        User = get_user_model()
+
+        # Probably need to come up with something more smart
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        refresh["space_code"] = settings.BASE_API_URL
+
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token
+                   }
+
+        data = {
+            "space_code": settings.BASE_API_URL,
+            "worker_name": worker.worker_name,
+        }
+
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/delete-worker/'
+
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+
+        if response.status_code != 200:
+            raise Exception("Error restarting worker %s" % response.text)
+
+    def get_worker_status(self, worker):
+        User = get_user_model()
+
+        # Probably need to come up with something more smart
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        refresh["space_code"] = settings.BASE_API_URL
+
+        headers = {'Content-type': 'application/json',
+                   'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token
+                   }
+
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/worker-status/?space_code=%s&worker_name=%s' % (
+        settings.BASE_API_URL, worker.worker_name)
+
+        response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
+
+        if response.status_code != 200:
+            raise Exception("Error getting worker status %s" % response.text)
+
+        return response.json()

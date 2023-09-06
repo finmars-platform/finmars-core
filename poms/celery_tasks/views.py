@@ -194,32 +194,37 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="start")
     def start(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
+        worker = self.get_object()
 
-        task.cancel()
+        worker.start()
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="stop")
     def stop(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
+        worker = self.get_object()
 
-        task.cancel()
+        worker.stop()
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="restart")
     def restart(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
+        worker = self.get_object()
 
-        task.cancel()
+        worker.restart()
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="status")
     def status(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
+        worker = self.get_object()
 
-        task.cancel()
+        worker.get_status()
 
         return Response({"status": "ok"})
+
+    def perform_destroy(self, instance, request):
+        instance.delete_worker()
+
+        return super(CeleryWorkerViewSet, self).perform_destroy(instance)
