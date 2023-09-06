@@ -421,20 +421,36 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         # # shutil.copytree(src_with_root, local_destination_path, dirs_exist_ok=True)
         # shutil.copytree(src_with_root, local_destination_path)
 
-        for path in src:
+        # _l.info('download_directory. src %s' % src)
+        # _l.info('download_directory. local_destination_path %s' % local_destination_path)
+
+        directory_content = self.listdir(src)
+        _l.info(directory_content)
+
+        directories = directory_content[0]
+        files = directory_content[1]
+
+        for file in files:
+
+            path = src + '/' + file
+
             local_filename = local_destination_path + '/' + path
-            if path.endswith('/'):  # Assuming the path is a directory
 
-                if path[0] == '/':
-                    self.download_directory(settings.BASE_API_URL + path, local_filename)
-                else:
-                    self.download_directory(settings.BASE_API_URL + '/' + path, local_filename)
+            self.download_file_and_save_locally(path, local_filename)
 
-            else:
-                if path[0] == '/':
-                    self.download_file_and_save_locally(settings.BASE_API_URL + path, local_filename)
-                else:
-                    self.download_file_and_save_locally(settings.BASE_API_URL + '/' + path, local_filename)
+            # _l.info('download_directory.path %s' % path)
+
+        for directory in directories:
+
+            path = src + '/' + directory
+
+            local_filename = local_destination_path + '/' + path
+
+            self.download_directory(settings.BASE_API_URL + path, local_filename)
+
+
+
+
 
     def download_directory_as_zip(self, folder_path):
         path = os.path.join(settings.MEDIA_ROOT, folder_path)
