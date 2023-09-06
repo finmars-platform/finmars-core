@@ -293,7 +293,7 @@ class BootstrapConfig(AppConfig):
                 try:
                     worker_status = authorizer_service.get_worker_status(worker)
 
-                    if worker_status['status'] == 'not found':
+                    if worker_status['status'] == 'not_found':
                         authorizer_service.create_worker(worker)
                 except Exception as e:
                     _l.error("sync_celery_workers: worker %s error %s" % (worker, e))
