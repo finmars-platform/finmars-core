@@ -17,7 +17,7 @@ class BaseReport:
     )
 
     def __init__(
-        self, id=None, master_user=None, member=None, task_id=None, task_status=None
+            self, id=None, master_user=None, member=None, task_id=None, task_status=None
     ):
         self.id = id
         self.task_id = task_id
@@ -40,49 +40,50 @@ class Report(BaseReport):
     )
 
     def __init__(
-        self,
-        id=None,
-        master_user=None,
-        member=None,
-        task_id=None,
-        task_status=None,
-        report_instance_name=None,
-        save_report=False,
-        pl_first_date=None,
-        report_type=TYPE_BALANCE,
-        report_date=None,
-        report_currency=None,
-        pricing_policy=None,
-        cost_method=None,
-        portfolio_mode=BaseReport.MODE_INDEPENDENT,
-        account_mode=BaseReport.MODE_INDEPENDENT,
-        strategy1_mode=BaseReport.MODE_INDEPENDENT,
-        strategy2_mode=BaseReport.MODE_INDEPENDENT,
-        strategy3_mode=BaseReport.MODE_INDEPENDENT,
-        allocation_mode=BaseReport.MODE_INDEPENDENT,
-        show_transaction_details=False,
-        show_balance_exposure_details=False,
-        approach_multiplier=0.5,
-        expression_iterations_count=1,
-        allocation_detailing=True,
-        pl_include_zero=True,
-        instruments=None,
-        portfolios=None,
-        accounts=None,
-        accounts_position=None,
-        accounts_cash=None,
-        strategies1=None,
-        strategies2=None,
-        strategies3=None,
-        transaction_classes=None,
-        date_field=None,
-        custom_fields=None,
-        custom_fields_to_calculate=None,
-        calculate_pl=True,
-        only_numbers=False,
-        items=None,
-        execution_time=None,
-        serialization_time=None,
+            self,
+            id=None,
+            master_user=None,
+            member=None,
+            task_id=None,
+            task_status=None,
+            report_instance_name=None,
+            save_report=False,
+            pl_first_date=None,
+            report_type=TYPE_BALANCE,
+            report_date=None,
+            report_currency=None,
+            pricing_policy=None,
+            cost_method=None,
+            portfolio_mode=BaseReport.MODE_INDEPENDENT,
+            account_mode=BaseReport.MODE_INDEPENDENT,
+            strategy1_mode=BaseReport.MODE_INDEPENDENT,
+            strategy2_mode=BaseReport.MODE_INDEPENDENT,
+            strategy3_mode=BaseReport.MODE_INDEPENDENT,
+            allocation_mode=BaseReport.MODE_INDEPENDENT,
+            show_transaction_details=False,
+            show_balance_exposure_details=False,
+            approach_multiplier=0.5,
+            expression_iterations_count=1,
+            allocation_detailing=True,
+            pl_include_zero=True,
+            instruments=None,
+            portfolios=None,
+            accounts=None,
+            accounts_position=None,
+            accounts_cash=None,
+            strategies1=None,
+            strategies2=None,
+            strategies3=None,
+            transaction_classes=None,
+            date_field=None,
+            custom_fields=None,
+            custom_fields_to_calculate=None,
+            calculate_pl=True,
+            only_numbers=False,
+            items=None,
+            execution_time=None,
+            serialization_time=None,
+            frontend_request_options=None
     ):
         super(Report, self).__init__(
             id=id,
@@ -135,8 +136,8 @@ class Report(BaseReport):
         if date_field:
             self.date_field = date_field
         elif (
-            self.report_type == Report.TYPE_BALANCE
-            or self.report_type != Report.TYPE_PL
+                self.report_type == Report.TYPE_BALANCE
+                or self.report_type != Report.TYPE_PL
         ):
             self.date_field = "transaction_date"
         else:
@@ -159,6 +160,8 @@ class Report(BaseReport):
         self.item_instrument_pricings = []
         self.item_instrument_accruals = []
         self.calculate_pl = calculate_pl
+
+        self.frontend_request_options = frontend_request_options  # For Backend Report Calculation
 
     def __str__(self):
         return (
@@ -201,30 +204,30 @@ class ReportItem:
 
 class TransactionReport(BaseReport):
     def __init__(
-        self,
-        id=None,
-        task_id=None,
-        task_status=None,
-        master_user=None,
-        member=None,
-        begin_date=None,
-        end_date=None,
-        portfolios=None,
-        bundle=None,
-        accounts=None,
-        accounts_position=None,
-        accounts_cash=None,
-        strategies1=None,
-        strategies2=None,
-        strategies3=None,
-        custom_fields=None,
-        custom_fields_to_calculate=None,
-        complex_transaction_statuses_filter=None,
-        items=None,
-        date_field=None,
-        depth_level=None,
-        expression_iterations_count=1,
-        filters=None,
+            self,
+            id=None,
+            task_id=None,
+            task_status=None,
+            master_user=None,
+            member=None,
+            begin_date=None,
+            end_date=None,
+            portfolios=None,
+            bundle=None,
+            accounts=None,
+            accounts_position=None,
+            accounts_cash=None,
+            strategies1=None,
+            strategies2=None,
+            strategies3=None,
+            custom_fields=None,
+            custom_fields_to_calculate=None,
+            complex_transaction_statuses_filter=None,
+            items=None,
+            date_field=None,
+            depth_level=None,
+            expression_iterations_count=1,
+            filters=None,
     ):
         super().__init__(
             id=id,
@@ -248,7 +251,7 @@ class TransactionReport(BaseReport):
         self.custom_fields = custom_fields or []
         self.custom_fields_to_calculate = custom_fields_to_calculate or ""
         self.complex_transaction_statuses_filter = (
-            complex_transaction_statuses_filter or ""
+                complex_transaction_statuses_filter or ""
         )
 
         self.items = items
@@ -303,40 +306,40 @@ class PerformanceReport(BaseReport):
     )
 
     def __init__(
-        self,
-        id=None,
-        task_id=None,
-        task_status=None,
-        name=None,
-        report_instance_name=None,
-        save_report=False,
-        calculation_type=None,
-        segmentation_type=None,
-        registers=None,
-        bundle=None,
-        master_user=None,
-        member=None,
-        begin_date=None,
-        end_date=None,
-        report_currency=None,
-        pricing_policy=None,
-        periods=None,
-        portfolio_mode=BaseReport.MODE_INDEPENDENT,
-        account_mode=BaseReport.MODE_INDEPENDENT,
-        strategy1_mode=BaseReport.MODE_INDEPENDENT,
-        strategy2_mode=BaseReport.MODE_INDEPENDENT,
-        strategy3_mode=BaseReport.MODE_INDEPENDENT,
-        cost_method=None,
-        approach_multiplier=0.5,
-        portfolios=None,
-        accounts=None,
-        accounts_position=None,
-        accounts_cash=None,
-        strategies1=None,
-        strategies2=None,
-        strategies3=None,
-        custom_fields=None,
-        items=None,
+            self,
+            id=None,
+            task_id=None,
+            task_status=None,
+            name=None,
+            report_instance_name=None,
+            save_report=False,
+            calculation_type=None,
+            segmentation_type=None,
+            registers=None,
+            bundle=None,
+            master_user=None,
+            member=None,
+            begin_date=None,
+            end_date=None,
+            report_currency=None,
+            pricing_policy=None,
+            periods=None,
+            portfolio_mode=BaseReport.MODE_INDEPENDENT,
+            account_mode=BaseReport.MODE_INDEPENDENT,
+            strategy1_mode=BaseReport.MODE_INDEPENDENT,
+            strategy2_mode=BaseReport.MODE_INDEPENDENT,
+            strategy3_mode=BaseReport.MODE_INDEPENDENT,
+            cost_method=None,
+            approach_multiplier=0.5,
+            portfolios=None,
+            accounts=None,
+            accounts_position=None,
+            accounts_cash=None,
+            strategies1=None,
+            strategies2=None,
+            strategies3=None,
+            custom_fields=None,
+            items=None,
     ):
         super().__init__(
             id=id,

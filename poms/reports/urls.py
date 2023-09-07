@@ -4,6 +4,7 @@ import poms.reports.views as reports
 
 router = routers.DefaultRouter()
 router.register(r'summary', reports.SummaryViewSet, 'Summary')
+router.register(r'backend-balance-report', reports.BackendBalanceReportViewSet, "BackendBalanceReport")
 router.register(r'balance-report', reports.BalanceReportViewSet, "BalanceReport")
 router.register(r'balance-report-sql', reports.BalanceReportViewSet, "BalanceReportSyncSql")  # deprecated
 router.register(r'balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,

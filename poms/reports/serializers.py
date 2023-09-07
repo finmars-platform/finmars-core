@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 import time
 import traceback
@@ -24,6 +25,7 @@ from poms.instruments.models import CostMethod
 from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
+from poms.reports.backend_reports_utils import get_unique_groups, convert_helper_dict, flatten_and_convert_item
 from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
     ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
     ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
@@ -247,6 +249,9 @@ class ReportSerializer(ReportSerializerWithLogs):
     # item_instrument_pricings = ReportPriceHistorySerializer(many=True, read_only=True)
     # item_instrument_accruals = ReportAccrualCalculationScheduleSerializer(many=True, read_only=True)
 
+
+    frontend_request_options = serializers.JSONField(allow_null=True, required=False) # for backend report calculation mode
+
     def __init__(self, *args, **kwargs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
@@ -378,6 +383,8 @@ class ReportSerializer(ReportSerializerWithLogs):
                         self._set_object(names, name, item_dict)
 
                     names = formula.value_prepare(names)
+
+
 
                     cfv = []
 
@@ -842,7 +849,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     item_responsibles = ReportResponsibleSerializer(many=True, read_only=True)
     item_counterparties = ReportCounterpartySerializer(many=True, read_only=True)
 
-    filters = serializers.JSONField(allow_null=True, required=False)
+    filters = serializers.JSONField(allow_null=True, required=False) # for backend filters in transactions report
+    frontend_request_options = serializers.JSONField(allow_null=True, required=False) # for backend report calculation mode
 
     def __init__(self, *args, **kwargs):
         super(TransactionReportSerializer, self).__init__(*args, **kwargs)
@@ -1228,3 +1236,77 @@ class PriceHistoryCheckSerializer(ReportSerializer):
             result.append(serialize_price_checker_item_instrument(item))
 
         return result
+
+
+
+class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
+
+    def get_items(self, obj):
+
+        result = []
+
+        for item in obj.items:
+            result.append(item)
+
+        return result
+
+    def to_representation(self, instance):
+
+        to_representation_st = time.perf_counter()
+
+        data = super(BackendBalanceReportGroupsSerializer, self).to_representation(instance)
+
+        original_items = [] # probably we missing custom columns
+
+        helper_dicts = {
+            'pricing_currency': convert_helper_dict(data['item_currencies']),
+            'portfolio': convert_helper_dict(data['item_portfolios']),
+            'instrument': convert_helper_dict(data['item_instruments']),
+            'account': convert_helper_dict(data['item_accounts']),
+        }
+
+        for item in data['items']:
+            original_item = flatten_and_convert_item(item, helper_dicts)
+            original_items.append(original_item)
+
+        groups = []
+
+        _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
+        _l.info('original_items0 %s' % original_items[0])
+
+        if instance.frontend_request_options:
+
+            groups_types = instance.frontend_request_options['groups_types']
+
+            group_type = groups_types[len(groups_types) - 1]
+
+            unique_groups = get_unique_groups(original_items, group_type)
+
+            _l.info('unique_groups %s' % unique_groups)
+
+            groups = unique_groups
+
+        data['items'] = groups
+
+        _l.info("BackendBalanceReportGroupsSerializer.to_representation")
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+
+        _l.info('data items %s ' % data['items'])
+
+        return data
+
+
+class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
+
+    def to_representation(self, instance):
+
+        to_representation_st = time.perf_counter()
+
+        data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+
+        _l.info("BackendBalanceReportItemsSerializer.to_representation")
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+
+        return data
