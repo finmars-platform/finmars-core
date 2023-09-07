@@ -93,6 +93,16 @@ def import_configuration(self, task_id):
 
         file_path = task.options_object["file_path"]
 
+        output_directory = os.path.join(settings.BASE_DIR,
+                                        'tmp/task_' + str(task.id) + '/')
+
+        if not os.path.exists(output_directory):
+            os.makedirs(output_directory, exist_ok=True)
+
+        local_file_path = storage.download_file_and_save_locally(file_path,
+                                                                 output_directory + 'file.zip')
+
+
         _l.info("import_configuration got %s" % file_path)
 
         output_directory = os.path.join(
@@ -106,7 +116,7 @@ def import_configuration(self, task_id):
         ):
             os.makedirs(output_directory, exist_ok=True)
 
-        unzip_to_directory(file_path, output_directory)
+        unzip_to_directory(local_file_path, output_directory)
 
         _l.info("import_configuration unzip_to_directory %s" % output_directory)
 
