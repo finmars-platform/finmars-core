@@ -41,13 +41,15 @@ class ConfigurationImportSerializer(serializers.Serializer):
 
         # file_path = '%s/public/configurations/%s' % (settings.BASE_API_URL, file_name)
         file_path = os.path.join(settings.BASE_DIR,
-                                 'configurations/%s' % file_name)
+                                 'public/import-configurations/%s' % file_name)
 
-        if not os.path.exists(os.path.join(settings.BASE_DIR, 'configurations/')):
-            os.makedirs(os.path.join(settings.BASE_DIR, 'configurations/'), exist_ok=True)
-
-        shutil.copyfile(file.temporary_file_path(), file_path)
+        # if not os.path.exists(os.path.join(settings.BASE_DIR, 'configurations/')):
+        #     os.makedirs(os.path.join(settings.BASE_DIR, 'configurations/'), exist_ok=True)
+        #
+        # shutil.copyfile(file.temporary_file_path(), file_path)
         # storage.save(file_path, file)
+
+        storage.save(file_path, file)
 
         _l.info("Save file to %s" % file_path)
 
