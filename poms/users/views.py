@@ -926,7 +926,9 @@ class MemberViewSet(AbstractModelViewSet):
 
         member = self.get_object()
 
-        if not member.is_deleted or member.status != Member.STATUS_INVITE_DECLINED:  # Only deleted members can be invited
+        if member.is_deleted or member.status == Member.STATUS_INVITE_DECLINED:
+            pass # Only deleted members can be invited
+        else:
             raise PermissionDenied()
 
         member.status = Member.STATUS_INVITED
