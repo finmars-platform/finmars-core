@@ -228,8 +228,13 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
                 type="install_initial_configuration"
             )
 
+            true_storage_path = new_member_setup_configuration.file_url
+
+            if settings.BASE_API_URL in true_storage_path:
+                true_storage_path = true_storage_path.replace(settings.BASE_API_URL, '')
+
             options_object = {
-                'file_path': new_member_setup_configuration.file_url,
+                'file_path': true_storage_path,
             }
 
             celery_task.options_object = options_object
