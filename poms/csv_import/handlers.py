@@ -558,7 +558,7 @@ def handler_instrument_object(
                     else:
                         accrual[
                             "accrual_calculation_model"
-                        ] = AccrualCalculationModel.DEFAULT
+                        ] = AccrualCalculationModel.DAY_COUNT_NONE
 
                 if (
                     "accrual_start_date"

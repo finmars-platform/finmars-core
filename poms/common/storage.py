@@ -219,6 +219,7 @@ class FinmarsStorage(EncryptedStorage):
 
         for path in paths:
             local_filename = temp_dir_path + '/' + path
+
             if path.endswith('/'):  # Assuming the path is a directory
 
                 if path[0] == '/':
@@ -447,10 +448,6 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
             local_path = local_destination_path + '/' + path
 
             self.download_directory(path, local_path)
-
-
-
-
 
     def download_directory_as_zip(self, folder_path):
         path = os.path.join(settings.MEDIA_ROOT, folder_path)
