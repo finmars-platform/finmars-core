@@ -300,7 +300,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return Country.objects.get(name=name)
 
     @staticmethod
-    def get_accrual_calculation_model(model_id=AccrualCalculationModel.ACT_ACT):
+    def get_accrual_calculation_model(model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA):
         return AccrualCalculationModel.objects.get(id=model_id)
 
     @staticmethod
