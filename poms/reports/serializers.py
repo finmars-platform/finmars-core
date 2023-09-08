@@ -1284,6 +1284,12 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             _l.info('unique_groups %s' % unique_groups)
 
+            for group in unique_groups:
+                group["subtotal"] = {
+                    "market_value": 8012830.788852158,
+                    "market_value_percent": 69.1293255611
+                }
+
             groups = unique_groups
 
         data['items'] = groups

@@ -421,8 +421,8 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         # # shutil.copytree(src_with_root, local_destination_path, dirs_exist_ok=True)
         # shutil.copytree(src_with_root, local_destination_path)
 
-        # _l.info('download_directory. src %s' % src)
-        # _l.info('download_directory. local_destination_path %s' % local_destination_path)
+        _l.info('download_directory. src %s' % src)
+        _l.info('download_directory. local_destination_path %s' % local_destination_path)
 
         directory_content = self.listdir(src)
         _l.info(directory_content)
@@ -432,21 +432,21 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         for file in files:
 
-            path = src + '/' + file
+            path = src + file
 
-            local_filename = local_destination_path + '/' + path
+            local_path = local_destination_path + '/' + path
 
-            self.download_file_and_save_locally(path, local_filename)
+            self.download_file_and_save_locally(path, local_path)
 
             # _l.info('download_directory.path %s' % path)
 
         for directory in directories:
 
-            path = src + '/' + directory
+            path = src + directory
 
-            local_filename = local_destination_path + '/' + path
+            local_path = local_destination_path + '/' + path
 
-            self.download_directory(settings.BASE_API_URL + path, local_filename)
+            self.download_directory(path, local_path)
 
 
 

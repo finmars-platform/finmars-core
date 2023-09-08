@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
-from poms.common.formula_accruals import f_duration, get_coupon
+from poms.common.formula_accruals import get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
@@ -264,93 +264,69 @@ class ShortUnderlyingExposure(AbstractClassModel):
 
 
 class AccrualCalculationModel(AbstractClassModel):
-    NONE = 1
-    ACT_ACT = 2
-    ACT_ACT_ISDA = 3
-    ACT_360 = 4
-    ACT_365 = 5
-    ACT_365_25 = 6
-    ACT_365_366 = 7
-    ACT_1_365 = 8
-    ACT_1_360 = 9
-    # C_30_ACT = 10
-    C_30_360 = 11
-    C_30_360_NO_EOM = 12
-    C_30E_P_360 = 24
-    C_30E_P_360_ITL = 13
-    NL_365 = 14
-    NL_365_NO_EOM = 15
-    ISMA_30_360 = 16
-    ISMA_30_360_NO_EOM = 17
-    US_MINI_30_360_EOM = 18
-    US_MINI_30_360_NO_EOM = 19
-    BUS_DAYS_252 = 20
-    GERMAN_30_360_EOM = 21
-    GERMAN_30_360_NO_EOM = 22
-    REVERSED_ACT_365 = 23
 
-    DEFAULT = 25
+    DAY_COUNT_NONE = 1  # Probably dont used
+    DAY_COUNT_ACT_ACT_ISMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
+    DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
+    DAY_COUNT_ACT_360 = 4  # Actual/360: Actual days in the period divided by 360.
+    DAY_COUNT_ACT_365 = 5  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
+    # ACT_365_25 = 6 # DEPRECATED
+    DAY_COUNT_ACT_365L = 7  # Actual/365L: Similar to Actual/365, but uses 366 for leap years.
+    # ACT_1_365 = 8 # DEPRECATED
+    # ACT_1_360 = 9 # DEPRECATED
+    # C_30_ACT = 10 # DEPRECATED
+    DAY_COUNT_30_360_ISDA = 11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
+    # C_30_360_NO_EOM = 12 # DEPRECATED
+    DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
+    # C_30E_P_360_ITL = 13 # DEPRECATED
+    DAY_COUNT_NL_365 = 14  # NL/365: Uses actual days but assumes 365 days in year, even for leap years.
+    # NL_365_NO_EOM = 15 # DEPRECATED
+    DAY_COUNT_30_360_ISMA = 16 # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
+    # ISMA_30_360_NO_EOM = 17 DEPRECATED
+    DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
+    #US_MINI_30_360_NO_EOM = 19 #DEPRECATED
+    DAY_COUNT_BD_252 = 20 # # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
+    DAY_COUNT_30_360_GERMAN = 21 # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
+    # GERMAN_30_360_NO_EOM = 22 #DEPRECATED
+    #REVERSED_ACT_365 = 23 #DEPRECATED
 
     # NEW DAY COUNT CONVENTION
-    # 2023-08-21
+    # 2023-09-07
 
-    AFB = 26
-    FIXED = 27
+    DAY_COUNT_ACT_ACT_AFB = 26 # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
+    DAY_COUNT_ACT_365_FIXED = 27 # Actual/365: Assumes a fixed 365-day year.
 
-    BOND_BASIS_30_360 = 28
-    EUROBOND_BASIS_30E_360 = 29
+    DAY_COUNT_30E_360 = 28  # 30E/360: European version. Assumes 30 days per month, 360 days per year, but doesn't adjust end-month dates.
+    DAY_COUNT_ACT_365A = 29  # Actual/365A: Year fraction is actual days in period over average of 365 and 366 if leap year included.
+    DAY_COUNT_ACT_366 = 30  # Actual/366: Assumes a fixed 366-day year.
+    DAY_COUNT_ACT_364 = 31  # Actual/364: Assumes a fixed 364-day year.
+    DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
+
+    DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
+
 
     CLASSES = (
-        (NONE, "NONE", gettext_lazy("none")),
-        (ACT_ACT, "ACT_ACT", gettext_lazy("ACT/ACT")),
-        (ACT_ACT_ISDA, "ACT_ACT_ISDA", gettext_lazy("ACT/ACT - ISDA")),
-        (ACT_360, "ACT_360", gettext_lazy("ACT/360")),
-        (ACT_365, "ACT_365", gettext_lazy("ACT/365")),
-        (ACT_365_25, "ACT_365_25", gettext_lazy("Act/365.25")),
-        (ACT_365_366, "ACT_365_366", gettext_lazy("Act/365(366)")),
-        (ACT_1_365, "ACT_1_365", gettext_lazy("Act+1/365")),
-        (ACT_1_360, "ACT_1_360", gettext_lazy("Act+1/360")),
-        # (C_30_ACT, 'C_30_ACT', gettext_lazy("30/ACT")),
-        (C_30_360, "C_30_360", gettext_lazy("30/360")),
-        (C_30_360_NO_EOM, "C_30_360_NO_EOM", gettext_lazy("30/360 (NO EOM)")),
-        (C_30E_P_360_ITL, "C_30E_P_360_ITL", gettext_lazy("30E+/360.ITL")),
-        (NL_365, "NL_365", gettext_lazy("NL/365")),
-        (NL_365_NO_EOM, "NL_365_NO_EOM", gettext_lazy("NL/365 (NO-EOM)")),
-        (ISMA_30_360, "ISMA_30_360", gettext_lazy("ISMA-30/360")),
-        (
-            ISMA_30_360_NO_EOM,
-            "ISMA_30_360_NO_EOM",
-            gettext_lazy("ISMA-30/360 (NO EOM)"),
-        ),
-        (
-            US_MINI_30_360_EOM,
-            "US_MINI_30_360_EOM",
-            gettext_lazy("US MUNI-30/360 (EOM)"),
-        ),
-        (
-            US_MINI_30_360_NO_EOM,
-            "US_MINI_30_360_NO_EOM",
-            gettext_lazy("US MUNI-30/360 (NO EOM)"),
-        ),
-        (BUS_DAYS_252, "BUS_DAYS_252", gettext_lazy("BUS DAYS/252")),
-        (GERMAN_30_360_EOM, "GERMAN_30_360_EOM", gettext_lazy("GERMAN-30/360 (EOM)")),
-        (
-            GERMAN_30_360_NO_EOM,
-            "GERMAN_30_360_NO_EOM",
-            gettext_lazy("GERMAN-30/360 (NO EOM)"),
-        ),
-        (REVERSED_ACT_365, "REVERSED_ACT_365", gettext_lazy("Reversed ACT/365")),
-        (C_30E_P_360, "C_30E_P_360", gettext_lazy("30E+/360")),
-        (DEFAULT, "-", gettext_lazy("Default")),
-        # NEW DAY COUNT CONVENTION
-        (AFB, "AFB", gettext_lazy("Actual/Actual (AFB)")),
-        (FIXED, "FIXED", gettext_lazy("Actual/365 (Fixed)")),
-        (BOND_BASIS_30_360, "BOND_BASIS_30_360", gettext_lazy("30/360 (Bond Basis)")),
-        (
-            EUROBOND_BASIS_30E_360,
-            "EUROBOND_BASIS_30E_360",
-            gettext_lazy("30E/360 (Eurobond Basis)"),
-        ),
+        (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
+        (DAY_COUNT_ACT_ACT_ISMA, "DAY_COUNT_ACT_ACT_ISMA", gettext_lazy("Actual/Actual (ICMA)")),
+        (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
+        (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
+        (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
+        (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
+        (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
+        (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
+        (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
+        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
+        (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
+        (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
+        (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
+        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
+        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365")),
+        (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
+        (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
+        (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
+        (DAY_COUNT_ACT_364, "DAY_COUNT_ACT_364", gettext_lazy("Actual/364")),
+        (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
+        (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
     )
 
     @staticmethod
@@ -360,25 +336,25 @@ class AccrualCalculationModel(AbstractClassModel):
         default = ql.SimpleDayCounter()
 
         map_daycount_convention = {
-            AccrualCalculationModel.ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
-            AccrualCalculationModel.ACT_ACT: ql.ActualActual(ql.ActualActual.ISMA),
-            AccrualCalculationModel.ACT_365_366: ql.ActualActual(ql.ActualActual.ISMA),
-            AccrualCalculationModel.AFB: ql.ActualActual(ql.ActualActual.AFB),
-            AccrualCalculationModel.FIXED: ql.Actual365Fixed(),
-            AccrualCalculationModel.ACT_360: ql.Actual360(),
-            AccrualCalculationModel.BOND_BASIS_30_360: ql.Thirty360(
-                ql.Thirty360.BondBasis
-            ),
-            AccrualCalculationModel.EUROBOND_BASIS_30E_360: ql.Thirty360(
-                ql.Thirty360.EurobondBasis
-            ),
-            # TODO possibly add new day count conventions
-            # TODO add later EOM/NO EOM in quantilib
-            # "30/360 (Italian)": ql.Thirty360(ql.Thirty360.Italian),
-            # "30/360 (German)": ql.Thirty360(ql.Thirty360.German),
-            # "30/360 US": ql.Thirty360(ql.Thirty360.BondBasis),
-            AccrualCalculationModel.ACT_365: ql.Thirty365(),
-            AccrualCalculationModel.DEFAULT: ql.SimpleDayCounter(),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
+            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365A: ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
+            AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
+            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
+            AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
         }
 
         result = map_daycount_convention.get(finmars_accrual_calculation_model, default)
@@ -1810,10 +1786,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 # we need notinals (factors) list to be of same length as accrual schedule
                 for date in schedule_dates:
                     val = (
-                        active_factor(
-                            date=date, factors=factor_values, factor_dates=factor_dates
-                        )
-                        * face_value
+                            active_factor(
+                                date=date, factors=factor_values, factor_dates=factor_dates
+                            )
+                            * face_value
                     )
 
                     notionals.append(val)
@@ -1887,7 +1863,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
             _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
             _l.info('calculate_quantlib_ytm frequency %s ' % frequency)
-
 
             ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
 
@@ -2028,10 +2003,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             eold = None
             for e0 in events:
                 if (
-                    e0.is_auto_generated
-                    and e0.event_class_id == EventClass.ONE_OFF
-                    and e0.accrual_calculation_schedule_id is None
-                    and e0.factor_schedule_id is None
+                        e0.is_auto_generated
+                        and e0.event_class_id == EventClass.ONE_OFF
+                        and e0.accrual_calculation_schedule_id is None
+                        and e0.factor_schedule_id is None
                 ):
                     eold = e0
                     break
@@ -2517,13 +2492,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 )
 
             except GenericAttribute.DoesNotExist:
-                    attr_parameter = GenericAttribute.objects.create(
-                        attribute_type=attr_type_parameter,
-                        object_id=self.pk,
-                        content_type=content_type,
-                        user_code=user_code_parameter,
-                        configuration_code=configuration_code,
-                    )
+                attr_parameter = GenericAttribute.objects.create(
+                    attribute_type=attr_type_parameter,
+                    object_id=self.pk,
+                    content_type=content_type,
+                    user_code=user_code_parameter,
+                    configuration_code=configuration_code,
+                )
 
             if ipp.attribute_key:
                 if "attributes." in ipp.attribute_key:
@@ -2575,13 +2550,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 )
 
             except GenericAttribute.DoesNotExist:
-                    attr_notes = GenericAttribute.objects.create(
-                        attribute_type=attr_type_notes,
-                        object_id=self.pk,
-                        content_type=content_type,
-                        user_code=user_code_notes,
-                        configuration_code=configuration_code,
-                    )
+                attr_notes = GenericAttribute.objects.create(
+                    attribute_type=attr_type_notes,
+                    object_id=self.pk,
+                    content_type=content_type,
+                    user_code=user_code_notes,
+                    configuration_code=configuration_code,
+                )
 
             attr_notes.value_string = ipp.notes or ""
             _l.info(f"attr_notes={attr_notes.value_string}")
@@ -2707,6 +2682,12 @@ class AccrualCalculationSchedule(models.Model):
         verbose_name=gettext_lazy("notes"),
     )
 
+    eom = models.BooleanField(
+        default=False,
+        verbose_name=gettext_lazy("EOM"),
+        help_text="If the start date of a bond is at the end of a month (e.g., January 30 or 31), the date is adjusted to the end of February for a semi-annual or full annual coupon. "
+    )
+
     def save(self, *args, **kwargs):
         from dateutil.parser import parse
 
@@ -2822,13 +2803,13 @@ class PriceHistory(DataTimeStampedModel):
 
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
-            self.principal_price
-            * self.instrument.price_multiplier
-            * self.instrument.get_factor(dt)
-            + self.accrued_price
-            * self.instrument.accrued_multiplier
-            * self.instrument.get_factor(dt)
-            * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                self.principal_price
+                * self.instrument.price_multiplier
+                * self.instrument.get_factor(dt)
+                + self.accrued_price
+                * self.instrument.accrued_multiplier
+                * self.instrument.get_factor(dt)
+                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
         )
 
         return dt, v0
@@ -2842,9 +2823,9 @@ class PriceHistory(DataTimeStampedModel):
         if instr.maturity_date is None or instr.maturity_date == date.max:
             return []
         if (
-            instr.maturity_price is None
-            or isnan(instr.maturity_price)
-            or isclose(instr.maturity_price, 0.0)
+                instr.maturity_price is None
+                or isnan(instr.maturity_price)
+                or isclose(instr.maturity_price, 0.0)
         ):
             return []
 
@@ -2856,14 +2837,14 @@ class PriceHistory(DataTimeStampedModel):
         data = [(d0, v0)]
 
         for cpn_date, cpn_val in instr.get_future_coupons(
-            begin_date=d0, with_maturity=False
+                begin_date=d0, with_maturity=False
         ):
             try:
                 factor = instr.get_factor(cpn_date)
                 k = (
-                    instr.accrued_multiplier
-                    * factor
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                        instr.accrued_multiplier
+                        * factor
+                        * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
                 )
             except ArithmeticError:
                 k = 0
@@ -2872,8 +2853,8 @@ class PriceHistory(DataTimeStampedModel):
         prev_factor = None
         for factor in instr.factor_schedules.all():
             if (
-                factor.effective_date < d0
-                or factor.effective_date > instr.maturity_date
+                    factor.effective_date < d0
+                    or factor.effective_date > instr.maturity_date
             ):
                 prev_factor = factor
                 continue
@@ -2901,9 +2882,9 @@ class PriceHistory(DataTimeStampedModel):
             accrual_size = self.instrument.get_accrual_size(dt)
 
             return (
-                (accrual_size * self.instrument.accrued_multiplier)
-                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                / (self.principal_price * self.instrument.price_multiplier)
+                    (accrual_size * self.instrument.accrued_multiplier)
+                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                    / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
             _l.error(f"get_instr_ytm_x0 {repr(e)}")
@@ -2981,8 +2962,8 @@ class PriceHistory(DataTimeStampedModel):
 
         try:
             if (
-                self.instrument.accrued_currency_id
-                == self.instrument.pricing_currency_id
+                    self.instrument.accrued_currency_id
+                    == self.instrument.pricing_currency_id
             ):
                 self.instr_accrued_ccy_cur_fx = 1
                 self.instr_pricing_ccy_cur_fx = 1
@@ -3208,8 +3189,8 @@ class EventSchedule(models.Model):
                     break
 
                 if (
-                    self.accrual_calculation_schedule_id is not None
-                    and effective_date >= fdate
+                        self.accrual_calculation_schedule_id is not None
+                        and effective_date >= fdate
                 ):
                     effective_date = fdate - timedelta(days=1)
                     stop = True
@@ -3488,7 +3469,7 @@ class GeneratedEvent(models.Model):
         return f"Event #{self.id}"
 
     def processed(
-        self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
+            self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
     ):
         from poms.transactions.models import TransactionType
 
@@ -3517,8 +3498,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-            self.effective_date == now
-            and notification_class.is_notify_on_effective_date
+                self.effective_date == now
+                and notification_class.is_notify_on_effective_date
         )
 
     def is_notify_on_notification_date(self, now=None):
@@ -3538,8 +3519,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-            self.notification_date == now
-            and notification_class.is_notify_on_notification_date
+                self.notification_date == now
+                and notification_class.is_notify_on_notification_date
         )
 
     def is_notify_on_date(self, now=None):
@@ -3553,8 +3534,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.effective_date == now
-                and notification_class.is_apply_default_on_effective_date
+                    self.effective_date == now
+                    and notification_class.is_apply_default_on_effective_date
             )
 
         return False
@@ -3564,8 +3545,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.notification_date == now
-                and notification_class.is_apply_default_on_notification_date
+                    self.notification_date == now
+                    and notification_class.is_apply_default_on_notification_date
             )
 
         return False
@@ -3581,8 +3562,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.effective_date == now
-                and notification_class.is_need_reaction_on_effective_date
+                    self.effective_date == now
+                    and notification_class.is_need_reaction_on_effective_date
             )
 
         return False
@@ -3592,8 +3573,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.notification_date == now
-                and notification_class.is_need_reaction_on_notification_date
+                    self.notification_date == now
+                    and notification_class.is_need_reaction_on_notification_date
             )
 
         return False
