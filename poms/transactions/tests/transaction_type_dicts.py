@@ -566,3 +566,37 @@ TRANSACTION_TYPE_BOOK_DICT = {
     },
     "book_transaction_layout": {"test": "test"},
 }
+
+TRANSACTION_TYPE_RECALCULATE_DICT = {
+    "id": 6,
+    "user_code": "local.poms.space0xheq:developing",
+    "configuration_code": "local.poms.space0xheq",
+    "name": "Developing",
+    "short_name": "Dev",
+    "public_name": None,
+    "notes": None,
+    "is_deleted": False,
+    "is_enabled": True,
+    "deleted_user_code": None,
+    "meta": {
+        "content_type": "transactions.transactiontypegroup",
+        "app_label": "transactions",
+        "model_name": "transactiontypegroup",
+        "space_code": "space0xheq"
+    }
+}
+
+RECALCULATE_PAYLOAD = {
+    "transaction_type": 34,
+    "recalculate_inputs": [
+        "input_to_recalculate",
+        "input_to_recalculate2"
+    ],
+    "process_mode": "recalculate",
+    "values": {
+        "input1": 5,
+        "input2": 5,
+        "input_to_recalculate": 10,
+        "input_to_recalculate2": 5
+    }
+}
