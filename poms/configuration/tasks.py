@@ -653,6 +653,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         destination_path = os.path.join(
             settings.BASE_DIR, "configurations/" + str(task.id) + "/archive.zip"
         )
+        storage_file_path = None
 
         if response.status_code != 200:
             task.status = CeleryTask.STATUS_ERROR
@@ -669,6 +670,11 @@ def install_configuration_from_marketplace(self, **kwargs):
                     if chunk:
                         f.write(chunk)
 
+            storage_file_path = os.path.join(settings.BASE_DIR,
+                                     'public/import-configurations/%s' % (str(task.id) + 'archive.zip'))
+
+            storage.save(storage_file_path, f)
+
         import_configuration_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
@@ -678,7 +684,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         )
 
         options_object = {
-            "file_path": destination_path,
+            "file_path": storage_file_path,
         }
 
         import_configuration_celery_task.options_object = options_object
