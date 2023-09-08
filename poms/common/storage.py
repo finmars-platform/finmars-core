@@ -433,9 +433,15 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         for file in files:
 
-            path = src + file
+            if src.endswith('/'):
+                path = src + file
+            else:
+                path = src + '/' + file
 
-            local_path = local_destination_path + '/' + path
+            if local_destination_path.endswith('/'):
+                local_path = local_destination_path + path
+            else:
+                local_path = local_destination_path + '/' + path
 
             self.download_file_and_save_locally(path, local_path)
 
@@ -443,9 +449,15 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         for directory in directories:
 
-            path = src + directory
+            if src.endswith('/'):
+                path = src + directory
+            else:
+                path = src + '/' + directory
 
-            local_path = local_destination_path + '/' + path
+            if local_destination_path.endswith('/'):
+                local_path = local_destination_path + path
+            else:
+                local_path = local_destination_path + '/' + path
 
             self.download_directory(path, local_path)
 
