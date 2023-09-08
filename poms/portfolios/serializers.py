@@ -362,16 +362,22 @@ class PortfolioRegisterSerializer(
     ):
         linked_instrument_type = new_linked_instrument["instrument_type"]
         instrument_type = (
-            InstrumentType.objects.get(
+            InstrumentType.objects.filter(
                 master_user=master_user,
                 id=linked_instrument_type,
-            )
+            ).first()
             if isinstance(new_linked_instrument, int)
-            else InstrumentType.objects.get(
+            else InstrumentType.objects.filter(
                 master_user=master_user,
                 user_code=linked_instrument_type,
-            )
+            ).first()
         )
+        if not instrument_type:
+            raise ValidationError(
+                detail=f"InstrumentType {linked_instrument_type} doesn't exist!",
+                code="invalid instrument_type value in new_linked_instrument",
+            )
+
         process = InstrumentTypeProcess(instrument_type=instrument_type)
 
         instrument_object = process.instrument
