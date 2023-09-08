@@ -6,6 +6,7 @@ import django_filters
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q
+from django.http import Http404
 from django.utils.translation import gettext_lazy
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -645,36 +646,45 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
-        methods=["get", "put"],
+        methods=["put"],
         url_path="recalculate",
         serializer_class=TransactionTypeRecalculateSerializer,
         permission_classes=[IsAuthenticated],
     )
     def recalculate(self, request, pk=None):
-        complex_transaction_status = ComplexTransaction.PRODUCTION
+        process_mode = request.data.get("process_mode")
+        if not process_mode:
+            raise ValidationError("mandatory process_mode param is missing!")
 
-        transaction_type = TransactionType.objects.get(pk=pk)
+        recalculate_inputs = request.data.get("recalculate_inputs")
+        if not recalculate_inputs:
+            raise ValidationError("mandatory recalculate_inputs param is missing!")
+
+        transaction_type = TransactionType.objects.filter(pk=pk).first()
+        if not transaction_type:
+            raise Http404(f"TransactionType {pk} doesn't exists")
 
         context_values = self.get_context_for_book(request)
         # But by default Context Variables overwrites default value
         # default_values = self.get_context_for_book(request)
 
-        uniqueness_reaction = request.data.get("uniqueness_reaction", None)
-
         process_st = time.perf_counter()
 
         instance = TransactionTypeProcess(
-            process_mode=request.data["process_mode"],
             transaction_type=transaction_type,
+            process_mode=process_mode,
+            recalculate_inputs=recalculate_inputs,
+            uniqueness_reaction=request.data.get("uniqueness_reaction"),
+            values=request.data.get("values"),
+            #
             context=self.get_serializer_context(),
             context_values=context_values,
-            complex_transaction_status=complex_transaction_status,
-            uniqueness_reaction=uniqueness_reaction,
+            complex_transaction_status=ComplexTransaction.PRODUCTION,
             member=request.user.member,
         )
 
         _l.debug(
-            "rebook TransactionTypeProcess done: %s",
+            "TransactionTypeProcess recalculate mode instance created: %s",
             "{:3.3f}".format(time.perf_counter() - process_st),
         )
 
@@ -1410,8 +1420,6 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def recalculate(self, request, pk=None):
-        st = time.perf_counter()
-
         complex_transaction = self.get_object()
 
         uniqueness_reaction = request.data.get("uniqueness_reaction", None)
