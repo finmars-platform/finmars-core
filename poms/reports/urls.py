@@ -10,6 +10,7 @@ router.register(r'balance-report-sql', reports.BalanceReportViewSet, "BalanceRep
 router.register(r'balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
                 'BalanceReportCustomField')
 
+router.register(r'backend-pl-report', reports.BackendPLReportViewSet, "BackendPLReport")
 router.register(r'pl-report', reports.PLReportViewSet, "PlReport")
 router.register(r'pl-report-sql', reports.PLReportViewSet, "PlReportSyncSql")  # deprecated, delete soon
 router.register(r'pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'PlReportCustomField')
