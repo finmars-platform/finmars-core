@@ -125,8 +125,9 @@ class BackendReportHelperService():
 
             original_item = self.flatten_and_convert_item(item, helper_dicts)
 
-            for custom_field in item['custom_fields']:
-                original_item['custom_fields.' + custom_field['user_code']] = custom_field['value']
+            if 'custom_fields' in item:
+                for custom_field in item['custom_fields']:
+                    original_item['custom_fields.' + custom_field['user_code']] = custom_field['value']
 
             original_items.append(original_item)
 
