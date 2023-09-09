@@ -43,7 +43,7 @@ class BackendReportHelperService():
         return exist
 
 
-    def get_unique_groups(self, items, group_type):
+    def get_unique_groups(self, items, group_type, columns):
         result_groups = []
 
         result_group = None
@@ -80,6 +80,18 @@ class BackendReportHelperService():
 
             if not self.group_already_exist(result_group, result_groups):
                 result_groups.append(result_group)
+
+
+        for result_group in result_groups:
+
+            group_items = []
+
+            for item in items:
+
+                if item[result_group['___group_type_key']] == result_group['___group_identifier']:
+                    group_items.append(item)
+
+            result_group['subtotal'] = BackendReportSubtotalService.calculate(group_items, columns)
 
         return result_groups
 
@@ -178,3 +190,94 @@ class BackendReportHelperService():
             return filtered_items
 
         return items
+
+
+class BackendReportSubtotalService:
+
+    @staticmethod
+    def get_item_value(item, value_property):
+        return item.get(value_property, 0)
+
+    @staticmethod
+    def sum(items, column):
+        result = 0
+        for item in items:
+            item_val = BackendReportSubtotalService.get_item_value(item, column["key"])
+            if not isinstance(item_val, (int, float)):
+                result = "#Error"
+                print(f"{column['key']} with not a number", item, item[column["key"]])
+                break
+            else:
+                result += float(item_val)
+        return result
+
+    @staticmethod
+    def get_weighted_value(items, column_key, weighted_key):
+        result = 0
+        for item in items:
+            value = BackendReportSubtotalService.get_item_value(item, weighted_key)
+            if value:
+                item_val = BackendReportSubtotalService.get_item_value(item, column_key)
+                if item_val:
+                    result += float(item_val) * float(value)
+        return result
+
+    @staticmethod
+    def get_weighted_average_value(items, column_key, weighted_average_key):
+        result = 0
+        total = 0
+        for item in items:
+            value = BackendReportSubtotalService.get_item_value(item, weighted_average_key)
+            if value:
+                total += value
+        if total:
+            for item in items:
+                item_val = BackendReportSubtotalService.get_item_value(item, column_key)
+                if not isinstance(item_val, (int, float)):
+                    result = "#Error"
+                    break
+                else:
+                    value = BackendReportSubtotalService.get_item_value(item, weighted_average_key)
+                    average = float(value) / total
+                    result += float(item_val) * average
+        else:
+            print(f"{weighted_average_key} totals is", total, column_key)
+            result = "#Error"
+        return result
+
+    @staticmethod
+    def resolve_subtotal_function(items, column):
+        if "report_settings" in column and "subtotal_formula_id" in column["report_settings"]:
+            formula_id = column["report_settings"]["subtotal_formula_id"]
+            if formula_id == 1:
+                return BackendReportSubtotalService.sum(items, column)
+            elif formula_id == 2:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value")
+            elif formula_id == 3:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value_percent")
+            elif formula_id == 4:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure")
+            elif formula_id == 5:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure_percent")
+            elif formula_id == 6:
+                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value")
+            elif formula_id == 7:
+                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value_percent")
+            elif formula_id == 8:
+                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "exposure")
+            elif formula_id == 9:
+                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "exposure_percent")
+
+    @staticmethod
+    def calculate(items, columns):
+        result = {}
+        for column in columns:
+            if column["value_type"] == 20:
+                result[column["key"]] = BackendReportSubtotalService.resolve_subtotal_function(items, column)
+        return result
+
+    @staticmethod
+    def calculate_column(items, column):
+        result = {}
+        result[column["key"]] = BackendReportSubtotalService.resolve_subtotal_function(items, column)
+        return result

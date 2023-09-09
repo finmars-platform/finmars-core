@@ -1272,18 +1272,13 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         _l.info('original_items0 %s' % full_items[0])
 
         groups_types = instance.frontend_request_options['groups_types']
+        columns = instance.frontend_request_options['columns']
 
         group_type = groups_types[len(groups_types) - 1]
 
-        unique_groups = helper_service.get_unique_groups(full_items, group_type)
+        unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
 
         _l.info('unique_groups %s' % unique_groups)
-
-        for group in unique_groups:
-            group["subtotal"] = {
-                "market_value": 8012830.788852158,
-                "market_value_percent": 69.1293255611
-            }
 
         groups = unique_groups
 
