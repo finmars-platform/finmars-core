@@ -47,8 +47,6 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
                 "instrument_type": self.random_int(),
             },
         }
-        with contextlib.suppress(Exception):
-            _ = self.client.post(self.url, data=new_pr_data, format="json")
 
-        pr = PortfolioRegister.objects.filter(name="name").first()
-        self.assertIsNone(pr)
+        response = self.client.post(self.url, data=new_pr_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)

@@ -4450,7 +4450,7 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
         return representation
 
 
-# TransactionType processing -------------------------------------------------------------------------------------------
+# TransactionType processing --------------------------------------------------------
 
 
 class TransactionTypeProcessValuesSerializer(serializers.Serializer):
@@ -5191,6 +5191,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
 
         kwargs["context"] = context = kwargs.get("context", {}) or {}
         super().__init__(**kwargs)
+
         context["instance"] = self.instance
 
         self.fields["transaction_type"] = serializers.PrimaryKeyRelatedField(
