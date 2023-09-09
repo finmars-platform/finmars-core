@@ -308,9 +308,34 @@ class BackendReportHelperService():
 
         return items
 
+
+    def filter_by_global_table_search(self, items, options):
+
+        query = options.get('globalTableSearch', '')
+
+        if query:
+
+            pieces = [piece.lower() for piece in query.split()]
+
+            def item_matches(item):
+                for key, value in item.items():
+                    if value is not None:
+                        value_str = str(value).lower()
+                        if any(piece in value_str for piece in pieces):
+                            return True
+                return False
+
+            return list(filter(item_matches, items))
+
+        return items
+
     def filter(self, items, options):
 
         _l.info("Before filter %s" % len(items))
+
+        items = self.filter_by_global_table_search(items, options)
+
+        _l.info("After filter_by_global_table_search %s" % len(items))
 
         items = self.filter_table_rows(items, options)
 
