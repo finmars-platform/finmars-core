@@ -1,4 +1,5 @@
 import logging
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -31,7 +32,6 @@ class BackendReportHelperService():
 
         return result
 
-
     def group_already_exist(self, group, groups):
         exist = False
 
@@ -41,7 +41,6 @@ class BackendReportHelperService():
                 exist = True
 
         return exist
-
 
     def get_unique_groups(self, items, group_type, columns):
         result_groups = []
@@ -56,7 +55,6 @@ class BackendReportHelperService():
                 '___group_identifier': None,
                 '___group_type_key': group_type['key'],
             }
-
 
             item_value = item[group_type['key']]
             identifier_key = self.convert_name_key_to_user_code_key(group_type['key'])
@@ -80,7 +78,6 @@ class BackendReportHelperService():
 
             if not self.group_already_exist(result_group, result_groups):
                 result_groups.append(result_group)
-
 
         for result_group in result_groups:
 
@@ -113,7 +110,7 @@ class BackendReportHelperService():
 
     def convert_report_items_to_full_items(self, data):
 
-        original_items = [] # probably we missing user attributes
+        original_items = []  # probably we missing user attributes
 
         helper_dicts = {
             'pricing_currency': self.convert_helper_dict(data['item_currencies']),
@@ -159,6 +156,126 @@ class BackendReportHelperService():
 
         return key
 
+
+    # Methods for filter_table_rows
+
+    def check_for_empty_regular_filter(self, regular_filter_value, filter_type):
+        # Need null's checks for filters of data type number
+        if filter_type in ['from_to', 'out_of_range']:
+            if (regular_filter_value.get('min_value') is not None) and (regular_filter_value.get('max_value') is not None):
+                return True
+        elif isinstance(regular_filter_value, list):
+            if regular_filter_value[0] is not None:
+                return True
+        return False
+
+
+    def does_string_contains_substrings(self, value_to_filter, filter_by_string):
+        filter_substrings = filter_by_string.split(' ')
+        for substring in filter_substrings:
+            if substring not in value_to_filter:
+                return False
+        return True
+
+
+    def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
+        if operation_type == 'contains':
+            if '"' in filter_by:  # if string inside of double quotes
+                formatted_filter_by = filter_by.strip('"')
+                if formatted_filter_by in value_to_filter:
+                    return True
+            elif self.does_string_contains_substrings(value_to_filter, filter_by):
+                return True
+
+        elif operation_type == 'contains_has_substring':
+            if '"' in filter_by:  # if string inside of double quotes
+                formatted_filter_by = filter_by.strip('"')
+                if formatted_filter_by in value_to_filter:
+                    return True
+            elif filter_by in value_to_filter:
+                return True
+
+        elif operation_type == 'does_not_contains':
+            return filter_by not in value_to_filter
+        elif operation_type == 'equal' or operation_type == 'selector':
+            return value_to_filter == filter_by
+        elif operation_type == 'not_equal':
+            return value_to_filter != filter_by
+        elif operation_type == 'greater':
+            return value_to_filter > filter_by
+        elif operation_type == 'greater_equal':
+            return value_to_filter >= filter_by
+        elif operation_type == 'less':
+            return value_to_filter < filter_by
+        elif operation_type == 'less_equal':
+            return value_to_filter <= filter_by
+        elif operation_type == 'from_to':
+            return filter_by['min_value'] <= value_to_filter <= filter_by['max_value']
+        elif operation_type == 'out_of_range':
+            return value_to_filter <= filter_by['min_value'] or value_to_filter >= filter_by['max_value']
+        elif operation_type == 'multiselector':
+            return value_to_filter in filter_by
+        elif operation_type == 'date_tree':
+            return any(str(value_to_filter.date()) == str(date) for date in filter_by)
+        else:
+            return False
+
+
+    def get_regular_filters(self, options):
+        result = {}
+
+        if 'filter_settings' in options:
+            result = options['filter_settings']
+        else:
+            excluded_keys = ['groups_order', 'groups_types', 'groups_values', 'page', 'page_size']
+            for key, value in options.items():
+                if key not in excluded_keys:
+                    result[key] = value
+
+        return result
+
+
+
+    def filter_table_rows(self, items, options):
+
+        regular_filters = self.get_regular_filters(options)
+
+        def match_item(item):
+            for filter_ in regular_filters:
+                key_property = filter_['key']
+                value_type = filter_['value_type']
+                filter_type = filter_['filter_type']
+                exclude_empty_cells = filter_['exclude_empty_cells']
+                filter_value = filter_['value']
+
+                if key_property != 'ordering':
+                    if key_property in item and item[key_property] is not None:
+                        if self.check_for_empty_regular_filter(filter_value, filter_type):
+                            value_from_table = item[key_property]
+                            filter_argument = filter_value
+
+                            if value_type in [10, 30] and filter_type != 'multiselector':
+                                value_from_table = value_from_table.lower()
+                                filter_argument = filter_argument[0].lower()
+                            elif value_type == 40:
+                                if filter_type in ['equal', 'not_equal']:
+                                    value_from_table = str(value_from_table.date())
+                                    filter_argument = str(filter_argument[0].date())
+                                elif filter_type in ['from_to', 'out_of_range']:
+                                    value_from_table = value_from_table.date()
+                                    filter_argument['min_value'] = filter_argument['min_value'].date()
+                                    filter_argument['max_value'] = filter_argument['max_value'].date()
+
+                            if not self.filter_value_from_table(value_from_table, filter_argument, filter_type):
+                                return False
+                    elif exclude_empty_cells or (key_property in ['name', 'instrument'] and item['item_type'] != 1):
+                        return False
+            return True
+
+        return [item for item in items if match_item(item)]
+
+    # Methods for filter_table_rows
+
     def filter_by_groups_filters(self, items, options):
 
         groups_types = options['groups_types']
@@ -188,6 +305,20 @@ class BackendReportHelperService():
             # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
 
             return filtered_items
+
+        return items
+
+    def filter(self, items, options):
+
+        _l.info("Before filter %s" % len(items))
+
+        items = self.filter_table_rows(items, options)
+
+        _l.info("After filter_table_rows %s" % len(items))
+
+        items = self.filter_by_groups_filters(items, options)
+
+        _l.info("After filter_by_groups_filters %s" % len(items))
 
         return items
 
@@ -262,7 +393,8 @@ class BackendReportSubtotalService:
             elif formula_id == 6:
                 return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value")
             elif formula_id == 7:
-                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value_percent")
+                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"],
+                                                                               "market_value_percent")
             elif formula_id == 8:
                 return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "exposure")
             elif formula_id == 9:
