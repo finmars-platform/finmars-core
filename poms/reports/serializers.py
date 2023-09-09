@@ -1264,12 +1264,15 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
+        # make them flat
         full_items = helper_service.convert_report_items_to_full_items(data)
+        # filter by previous groups
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
         groups = []
 
-        _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
-        _l.info('original_items0 %s' % full_items[0])
+        # _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
+        # _l.info('original_items0 %s' % full_items[0])
 
         groups_types = instance.frontend_request_options['groups_types']
         columns = instance.frontend_request_options['columns']
@@ -1278,7 +1281,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
 
-        _l.info('unique_groups %s' % unique_groups)
+        # _l.info('unique_groups %s' % unique_groups)
 
         groups = unique_groups
 
@@ -1311,7 +1314,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         full_items = helper_service.convert_report_items_to_full_items(data)
 
         _l.info('full_items %s' % full_items[0])
-        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options);
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
         result_items = []
 

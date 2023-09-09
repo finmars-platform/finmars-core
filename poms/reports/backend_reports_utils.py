@@ -48,7 +48,7 @@ class BackendReportHelperService():
 
         result_group = None
 
-        _l.info('get_unique_groups.item[0] %s' % items[0])
+        # _l.info('get_unique_groups.item[0] %s' % items[0])
         for item in items:
 
             result_group = {
@@ -163,8 +163,8 @@ class BackendReportHelperService():
 
         groups_types = options['groups_types']
 
-        _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
-        _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
+        # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
+        # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
 
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
             filtered_items = []
@@ -175,8 +175,8 @@ class BackendReportHelperService():
                     value = options["groups_values"][i]
                     converted_key = self.convert_name_key_to_user_code_key(key)
 
-                    _l.info('filter_by_groups_filters.key %s' % key)
-                    _l.info('filter_by_groups_filters.value %s' % value)
+                    # _l.info('filter_by_groups_filters.key %s' % key)
+                    # _l.info('filter_by_groups_filters.value %s' % value)
 
                     match = self.get_filter_match(item, converted_key, value)
 
@@ -185,7 +185,7 @@ class BackendReportHelperService():
                 if match:
                     filtered_items.append(item)
 
-            _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
+            # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
 
             return filtered_items
 
