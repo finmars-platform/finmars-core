@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.utils import get_closest_bday_of_yesterday
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
-from poms.reports.backend_reports_utils import get_unique_groups
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
     ReportSummary
 from poms.reports.performance_report import PerformanceReportBuilder

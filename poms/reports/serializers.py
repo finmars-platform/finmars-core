@@ -25,7 +25,8 @@ from poms.instruments.models import CostMethod
 from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
-from poms.reports.backend_reports_utils import get_unique_groups, convert_helper_dict, flatten_and_convert_item
+from poms.reports.backend_reports_utils import BackendReportHelperService
+
 from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
     ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
     ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
@@ -1241,56 +1242,50 @@ class PriceHistoryCheckSerializer(ReportSerializer):
 
 class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
-    def get_items(self, obj):
-
-        result = []
-
-        for item in obj.items:
-            result.append(item)
-
-        return result
+    # def get_items(self, obj):
+    #
+    #     result = []
+    #
+    #     for item in obj.items:
+    #         result.append(item)
+    #
+    #     return result
 
     def to_representation(self, instance):
+
+        if not instance.frontend_request_options:
+            raise serializers.ValidationError('frontend_request_options is required')
 
         to_representation_st = time.perf_counter()
 
         data = super(BackendBalanceReportGroupsSerializer, self).to_representation(instance)
 
-        original_items = [] # probably we missing custom columns
+        helper_service = BackendReportHelperService()
 
-        helper_dicts = {
-            'pricing_currency': convert_helper_dict(data['item_currencies']),
-            'portfolio': convert_helper_dict(data['item_portfolios']),
-            'instrument': convert_helper_dict(data['item_instruments']),
-            'account': convert_helper_dict(data['item_accounts']),
-        }
+        _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
-        for item in data['items']:
-            original_item = flatten_and_convert_item(item, helper_dicts)
-            original_items.append(original_item)
+        full_items = helper_service.convert_report_items_to_full_items(data)
 
         groups = []
 
         _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
-        _l.info('original_items0 %s' % original_items[0])
+        _l.info('original_items0 %s' % full_items[0])
 
-        if instance.frontend_request_options:
+        groups_types = instance.frontend_request_options['groups_types']
 
-            groups_types = instance.frontend_request_options['groups_types']
+        group_type = groups_types[len(groups_types) - 1]
 
-            group_type = groups_types[len(groups_types) - 1]
+        unique_groups = helper_service.get_unique_groups(full_items, group_type)
 
-            unique_groups = get_unique_groups(original_items, group_type)
+        _l.info('unique_groups %s' % unique_groups)
 
-            _l.info('unique_groups %s' % unique_groups)
+        for group in unique_groups:
+            group["subtotal"] = {
+                "market_value": 8012830.788852158,
+                "market_value_percent": 69.1293255611
+            }
 
-            for group in unique_groups:
-                group["subtotal"] = {
-                    "market_value": 8012830.788852158,
-                    "market_value_percent": 69.1293255611
-                }
-
-            groups = unique_groups
+        groups = unique_groups
 
         data['items'] = groups
 
@@ -1307,11 +1302,37 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
     def to_representation(self, instance):
 
+        if not instance.frontend_request_options:
+            raise serializers.ValidationError('frontend_request_options is required')
+
         to_representation_st = time.perf_counter()
 
         data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
 
+        helper_service = BackendReportHelperService()
+
         _l.info("BackendBalanceReportItemsSerializer.to_representation")
+
+        full_items = helper_service.convert_report_items_to_full_items(data)
+
+        _l.info('full_items %s' % full_items[0])
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options);
+
+        result_items = []
+
+        # _l.info("full_items items len %s" % len(full_items))
+        # _l.info("original items len %s" % len(data['items']))
+
+        for item in data['items']:
+            for full_item in full_items:
+                if item['id'] == full_item['id']:
+                    result_items.append(item)
+
+        data['items'] = result_items
+
+        # _l.info("after filter items len %s" % len(data['items']))
+
+        # original_items = helper_service.filterByGlobalTableSearch(original_items, globalTableSearch)
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
