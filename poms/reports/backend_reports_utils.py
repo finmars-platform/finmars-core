@@ -16,82 +16,46 @@ class BackendReportHelperService():
         return obj
 
     def convert_name_key_to_user_code_key(self, key):
-        result = key
-
         pieces = key.split('.')
+        # Transform last key to user_code
+        if len(pieces) > 1 and pieces[-1] in ['short_name', 'name', 'public_name']:
+            pieces[-1] = 'user_code'
+        return '.'.join(pieces)
 
-        last_key = None
+    def get_result_group(self, item, group_type):
+        result_group = {
+            '___group_name': None,
+            '___group_identifier': None,
+            '___group_type_key': group_type['key'],
+        }
+        item_value = item.get(group_type['key'])
+        identifier_key = self.convert_name_key_to_user_code_key(group_type['key'])
+        identifier_value = item.get(identifier_key)
 
-        if len(pieces) > 1:
-            last_key = pieces.pop()
+        if identifier_value not in [None, '-']:
+            result_group['___group_identifier'] = str(identifier_value)
+            result_group['___group_name'] = str(item_value)
 
-            if last_key in ['short_name', 'name', 'public_name']:
-                pieces.append('user_code')
+            if group_type['key'] == 'complex_transaction.status':
+                status_map = {1: 'Booked', 2: 'Pending', 3: 'Ignored'}
+                result_group['___group_name'] = status_map.get(item_value, str(item_value))
 
-                result = '.'.join(pieces)
-
-        return result
-
-    def group_already_exist(self, group, groups):
-        exist = False
-
-        for item in groups:
-
-            if item['___group_identifier'] == group['___group_identifier']:
-                exist = True
-
-        return exist
+        return result_group
 
     def get_unique_groups(self, items, group_type, columns):
+        seen_group_identifiers = set()
         result_groups = []
 
-        result_group = None
-
-        # _l.info('get_unique_groups.item[0] %s' % items[0])
         for item in items:
+            result_group = self.get_result_group(item, group_type)
+            identifier = result_group['___group_identifier']
 
-            result_group = {
-                '___group_name': None,
-                '___group_identifier': None,
-                '___group_type_key': group_type['key'],
-            }
-
-            item_value = item.get(group_type['key'], None)
-            identifier_key = self.convert_name_key_to_user_code_key(group_type['key'])
-            identifier_value = item.get(identifier_key, None)
-
-            if identifier_value != None and identifier_value != '-':
-
-                result_group['___group_identifier'] = str(identifier_value)
-                result_group['___group_name'] = str(item_value)
-
-                if group_type['key'] == 'complex_transaction.status':
-
-                    if item_value == 1:
-                        result_group['___group_name'] = 'Booked'
-
-                    if item_value == 2:
-                        result_group['___group_name'] = 'Pending'
-
-                    if item_value == 3:
-                        result_group['___group_name'] = 'Ignored'
-
-            if not self.group_already_exist(result_group, result_groups):
+            if identifier and identifier not in seen_group_identifiers:
+                seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
         for result_group in result_groups:
-
-            _l.info('___group_type_key %s' % result_group['___group_type_key'])
-            _l.info('___group_identifier %s' % result_group['___group_identifier'])
-            _l.info('items %s' % items[0])
-
-            group_items = []
-
-            for item in items:
-
-                if item.get(result_group['___group_type_key'], None) == result_group['___group_identifier']:
-                    group_items.append(item)
-
+            group_items = [item for item in items if item.get(result_group['___group_type_key']) == result_group['___group_identifier']]
             result_group['subtotal'] = BackendReportSubtotalService.calculate(group_items, columns)
 
         return result_groups
@@ -206,18 +170,6 @@ class BackendReportHelperService():
                 return False
 
         return True
-
-    def convert_name_key_to_user_code_key(self, key):
-        pieces = key.split('.')
-
-        if len(pieces) > 1:
-            last_key = pieces[-1]
-            if last_key in ['short_name', 'name', 'public_name']:
-                pieces.pop()
-                pieces.append('user_code')
-                return '.'.join(pieces)
-
-        return key
 
     # Methods for filter_table_rows
 
@@ -367,24 +319,27 @@ class BackendReportHelperService():
         return items
 
     def filter_by_global_table_search(self, items, options):
-
         query = options.get('globalTableSearch', '')
 
-        if query:
+        if not query:
+            return items
 
-            pieces = [piece.lower() for piece in query.split()]
+        pieces = set(piece.lower() for piece in query.split())
 
-            def item_matches(item):
-                for key, value in item.items():
-                    if value is not None:
-                        value_str = str(value).lower()
-                        if any(piece in value_str for piece in pieces):
-                            return True
-                return False
+        def item_matches(item):
+            for value in item.values():
+                if value is not None:
+                    # Let's only convert to str if it's not already a str
+                    value_str = value if isinstance(value, str) else str(value)
+                    value_str = value_str.lower()
 
-            return list(filter(item_matches, items))
+                    # Check if any piece is in value_str
+                    if any(piece in value_str for piece in pieces):
+                        return True
 
-        return items
+            return False
+
+        return list(filter(item_matches, items))
 
     def filter(self, items, options):
 
