@@ -521,7 +521,7 @@ class AbstractModelViewSet(
                 except Exception as e:
                     _l.info(f"e {e}")
 
-        _l.info(f"page {page}")
+        # _l.info(f"page {page}")
 
         if page is not None:
             return self.get_paginated_response(page)

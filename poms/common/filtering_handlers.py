@@ -1070,7 +1070,7 @@ def is_dynamic_attribute_filter(filter_config):
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
-    print('Handle filters %s' % filter_settings)
+    # print('Handle filters %s' % filter_settings)
 
     start_time = time.time()
 
