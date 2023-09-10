@@ -155,6 +155,7 @@ class BackendReportHelperService():
             'portfolio': self.convert_helper_dict(data['item_portfolios']),
             'instrument': self.convert_helper_dict(data['item_instruments']),
             'entry_instrument': self.convert_helper_dict(data['item_instruments']),
+            'allocation': self.convert_helper_dict(data['item_instruments']),
             'allocation_balance': self.convert_helper_dict(data['item_instruments']),
             'allocation_pl': self.convert_helper_dict(data['item_instruments']),
             'account': self.convert_helper_dict(data['item_accounts']),
