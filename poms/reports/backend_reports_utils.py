@@ -114,13 +114,23 @@ class BackendReportHelperService():
 
         helper_dicts = {
             'pricing_currency': self.convert_helper_dict(data['item_currencies']),
+            'settlement_currency': self.convert_helper_dict(data['item_currencies']),
+            'transaction_currency': self.convert_helper_dict(data['item_currencies']),
+            'entry_currency': self.convert_helper_dict(data['item_currencies']),
             'portfolio': self.convert_helper_dict(data['item_portfolios']),
             'instrument': self.convert_helper_dict(data['item_instruments']),
+            'entry_instrument': self.convert_helper_dict(data['item_instruments']),
             'account': self.convert_helper_dict(data['item_accounts']),
+            'account_cash': self.convert_helper_dict(data['item_accounts']),
+            'account_interim': self.convert_helper_dict(data['item_accounts']),
+            'account_position': self.convert_helper_dict(data['item_accounts']),
+            'entry_account': self.convert_helper_dict(data['item_accounts']),
+            'counterparty': self.convert_helper_dict(data['item_counterparties']),
+            'responsible': self.convert_helper_dict(data['item_responsibles'])
         }
 
         # _l.info('data helper_dicts %s' %  helper_dicts)
-        # _l.info('data items %s' %  data['items'][0])
+        _l.info('data items %s' %  data['items'][0])
         for item in data['items']:
 
             original_item = self.flatten_and_convert_item(item, helper_dicts)
