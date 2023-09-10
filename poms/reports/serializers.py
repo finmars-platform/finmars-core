@@ -35,7 +35,7 @@ from poms.reports.common import Report, PerformanceReport, TransactionReport
 from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
     TransactionReportCustomFieldField, ReportCurrencyField, ReportPricingPolicyField
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
-    PLReportInstance, BalanceReportInstance, BalanceReportInstanceItem, PLReportInstanceItem, PerformanceReportInstance, \
+    PLReportInstance, BalanceReportInstance, PerformanceReportInstance, \
     PerformanceReportInstanceItem
 from poms.reports.serializers_helpers import serialize_price_checker_item, serialize_price_checker_item_instrument, \
     serialize_transaction_report_item, serialize_pl_report_item, serialize_report_item_instrument, \
@@ -126,7 +126,8 @@ class ReportSerializerWithLogs(serializers.Serializer):
 
 
 class ReportSerializer(ReportSerializerWithLogs):
-    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False) # something depreacted
+    report_instance_id = serializers.CharField(allow_null=True, allow_blank=True, required=False) # needs for backend reports
     task_status = serializers.ReadOnlyField()
 
     master_user = MasterUserField()
@@ -459,131 +460,11 @@ class BalanceReportSerializer(ReportSerializer):
 
     def to_representation(self, instance):
 
+        # No need for now, but do not delete
+
         to_representation_st = time.perf_counter()
 
         data = super(BalanceReportSerializer, self).to_representation(instance)
-
-        report_uuid = str(uuid.uuid4())
-
-        if instance.save_report:
-
-            report_instance_name = ''
-            if self.instance.report_instance_name:
-                report_instance_name = self.instance.report_instance_name
-            else:
-                report_instance_name = report_uuid
-
-            try:
-
-                report_instance = BalanceReportInstance.objects.get(
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    user_code=report_instance_name,
-                )
-            except Exception as e:
-                report_instance = BalanceReportInstance.objects.create(
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    user_code=report_instance_name,
-                    name=report_instance_name,
-                    short_name=report_instance_name,
-                    report_date=instance.report_date,
-                    report_currency=instance.report_currency,
-                    pricing_policy=instance.pricing_policy,
-                    cost_method=instance.cost_method,
-                )
-
-            report_instance.report_date = instance.report_date
-            report_instance.report_currency = instance.report_currency
-            report_instance.pricing_policy = instance.pricing_policy
-            report_instance.cost_method = instance.cost_method
-
-            report_instance.report_uuid = report_uuid
-            report_instance.save()
-
-            BalanceReportInstanceItem.objects.filter(report_instance=report_instance).delete()
-
-            custom_fields_map = {}
-
-            for custom_field in instance.custom_fields:
-                custom_fields_map[custom_field.id] = custom_field
-
-            for item in data['items']:
-
-                instance_item = BalanceReportInstanceItem(report_instance=report_instance,
-                                                          master_user=instance.master_user,
-                                                          member=instance.member,
-                                                          report_date=instance.report_date,
-                                                          report_currency=instance.report_currency,
-                                                          pricing_policy=instance.pricing_policy,
-                                                          cost_method=instance.cost_method)
-
-                instance_item.item_id = item['id']
-
-                for field in BalanceReportInstanceItem._meta.fields:
-
-                    if field.name not in ['id']:
-
-                        if field.name in item:
-
-                            if isinstance(field, ForeignKey):
-
-                                try:
-                                    setattr(instance_item, field.name + '_id', item[field.name])
-                                except Exception as e:
-                                    print('exception field %s : %s' % (field.name, e))
-                                    setattr(instance_item, field.name, None)
-
-                            else:
-
-                                try:
-                                    setattr(instance_item, field.name, item[field.name])
-                                except Exception as e:
-                                    print('exception field %s : %s' % (field.name, e))
-                                    setattr(instance_item, field.name, None)
-
-                index_text = 1
-                index_number = 1
-                index_date = 1
-
-                if 'custom_fields' in item:
-                    for custom_field_item in item['custom_fields']:
-
-                        cc = custom_fields_map[custom_field_item['custom_field']]
-
-                        try:
-
-                            if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text),
-                                        custom_field_item['value'])
-
-                                index_text = index_text + 1
-
-                            if cc.value_type == 20:
-                                setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                        float(custom_field_item['value']))
-
-                                index_number = index_number + 1
-
-                            if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date),
-                                        custom_field_item['value'])
-
-                                index_date = index_date + 1
-
-                        except Exception as e:
-                            print("Custom field save error %s" % e)
-
-                            if cc.value_type == 10:
-                                index_text = index_text + 1
-                            if cc.value_type == 20:
-                                index_number = index_number + 1
-                            if cc.value_type == 40:
-                                index_date = index_date + 1
-
-                instance_item.save()
-
-        data['report_uuid'] = report_uuid
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
@@ -633,135 +514,6 @@ class PLReportSerializer(ReportSerializer):
         to_representation_st = time.perf_counter()
 
         data = super(PLReportSerializer, self).to_representation(instance)
-
-        report_uuid = str(uuid.uuid4())
-
-        if instance.save_report:
-
-            report_instance_name = ''
-            if self.instance.report_instance_name:
-                report_instance_name = self.instance.report_instance_name
-            else:
-                report_instance_name = report_uuid
-
-            try:
-                report_instance = PLReportInstance.objects.get(
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    name=report_instance_name,
-                )
-
-            except Exception as e:
-
-                report_instance = PLReportInstance.objects.create(
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    user_code=report_instance_name,
-                    name=report_instance_name,
-                    short_name=report_instance_name,
-                    report_date=instance.report_date,
-                    pl_first_date=instance.pl_first_date,
-                    report_currency=instance.report_currency,
-                    pricing_policy=instance.pricing_policy,
-                    cost_method=instance.cost_method,
-                )
-
-            report_instance.report_uuid = report_uuid
-            report_instance.report_date = instance.report_date
-            report_instance.pl_first_date = instance.pl_first_date
-            report_instance.report_currency = instance.report_currency
-            report_instance.pricing_policy = instance.pricing_policy
-            report_instance.cost_method = instance.cost_method
-
-            report_instance.save()
-
-            PLReportInstanceItem.objects.filter(report_instance=report_instance).delete()
-
-            custom_fields_map = {}
-
-            for custom_field in instance.custom_fields:
-                custom_fields_map[custom_field.id] = custom_field
-
-            for item in data['items']:
-
-                instance_item = PLReportInstanceItem(report_instance=report_instance,
-                                                     master_user=instance.master_user,
-                                                     member=instance.member,
-                                                     report_date=instance.report_date,
-                                                     pl_first_date=instance.pl_first_date,
-                                                     report_currency=instance.report_currency,
-                                                     pricing_policy=instance.pricing_policy,
-                                                     cost_method=instance.cost_method)
-
-                instance_item.item_id = item['id']
-
-                for field in PLReportInstanceItem._meta.fields:
-
-                    if field.name not in ['id']:
-
-                        if field.name in item:
-
-                            if isinstance(field, ForeignKey):
-
-                                try:
-                                    setattr(instance_item, field.name + '_id', item[field.name])
-                                except Exception as e:
-                                    print('exception field %s : %s' % (field.name, e))
-                                    setattr(instance_item, field.name, None)
-
-                            else:
-
-                                try:
-                                    setattr(instance_item, field.name, item[field.name])
-                                except Exception as e:
-                                    print('exception field %s : %s' % (field.name, e))
-                                    setattr(instance_item, field.name, None)
-
-                index_text = 1
-                index_number = 1
-                index_date = 1
-
-                if 'custom_fields' in item:
-                    for custom_field_item in item['custom_fields']:
-
-                        cc = custom_fields_map[custom_field_item['custom_field']]
-
-                        try:
-
-                            if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text),
-                                        custom_field_item['value'])
-
-                                index_text = index_text + 1
-
-                            if cc.value_type == 20:
-                                setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                        float(custom_field_item['value']))
-
-                                index_number = index_number + 1
-
-                            if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date),
-                                        custom_field_item['value'])
-
-                                index_date = index_date + 1
-
-                        except Exception as e:
-                            print("Custom field save error %s" % e)
-
-                            if cc.value_type == 10:
-                                index_text = index_text + 1
-                            if cc.value_type == 20:
-                                index_number = index_number + 1
-                            if cc.value_type == 40:
-                                index_date = index_date + 1
-
-                instance_item.save()
-
-            _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
-                time.perf_counter() - to_representation_st))
-
-        data['report_uuid'] = report_uuid
 
         return data
 
@@ -1249,21 +1001,66 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         to_representation_st = time.perf_counter()
 
-        data = super(BackendBalanceReportGroupsSerializer, self).to_representation(instance)
 
         helper_service = BackendReportHelperService()
 
         _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
-        # make them flat
-        full_items = helper_service.convert_report_items_to_full_items(data)
+        if not instance.report_instance_id:
+
+            data = super(BackendBalanceReportGroupsSerializer, self).to_representation(instance)
+
+            report_uuid = str(uuid.uuid4())
+
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
+
+            report_instance = BalanceReportInstance.objects.create(
+                master_user=instance.master_user,
+                member=instance.member,
+                user_code=report_instance_name,
+                name=report_instance_name,
+                short_name=report_instance_name,
+                report_date=instance.report_date,
+                report_currency=instance.report_currency,
+                pricing_policy=instance.pricing_policy,
+                cost_method=instance.cost_method,
+            )
+
+            report_instance.report_date = instance.report_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
+
+            report_instance.report_uuid = report_uuid
+
+            data['report_uuid'] = report_uuid
+
+            full_items = helper_service.convert_report_items_to_full_items(data)
+
+            data['items'] = full_items
+
+            report_instance.data = json.loads(json.dumps(data, default=str)) # TODO consider something more logical, we got here date conversion error
+
+            report_instance.save()
+
+
+
+        else:
+
+            report_instance = BalanceReportInstance.objects.get(id=instance.report_instance_id)
+
+            data = report_instance.data
+
+            full_items = report_instance.data['items']
+
+        data['report_instance_id'] = report_instance.id
+
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
-
-        groups = []
-
-        # _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
-        # _l.info('original_items0 %s' % full_items[0])
 
         groups_types = instance.frontend_request_options['groups_types']
         columns = instance.frontend_request_options['columns']
@@ -1296,13 +1093,69 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         to_representation_st = time.perf_counter()
 
-        data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
-
         helper_service = BackendReportHelperService()
 
         _l.info("BackendBalanceReportItemsSerializer.to_representation")
 
-        full_items = helper_service.convert_report_items_to_full_items(data)
+        # TODO Hard logic requires refactor
+        # Idea is that if user is not passed report_instance_id then we calculated it normal flow
+        # if user passed report_instance_id then we skip:
+        #    - build_report step
+        #    - all to_representation steps
+        # Idea is that we put calculated report and to_representation result to BalanceReportInstance.data
+        # And if user just applies filters or regroups there is no need for calculating whole report again
+
+        if not instance.report_instance_id:
+
+            data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+
+            report_uuid = str(uuid.uuid4())
+
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
+
+            report_instance = BalanceReportInstance.objects.create(
+                master_user=instance.master_user,
+                member=instance.member,
+                user_code=report_instance_name,
+                name=report_instance_name,
+                short_name=report_instance_name,
+                report_date=instance.report_date,
+                report_currency=instance.report_currency,
+                pricing_policy=instance.pricing_policy,
+                cost_method=instance.cost_method,
+            )
+
+            report_instance.report_date = instance.report_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
+
+            report_instance.report_uuid = report_uuid
+
+            data['report_uuid'] = report_uuid
+
+            full_items = helper_service.convert_report_items_to_full_items(data)
+
+            data['items'] = full_items
+
+            report_instance.data = json.loads(json.dumps(data, default=str)) # TODO consider something more logical, we got here date conversion error
+
+            report_instance.save()
+
+        else:
+
+            report_instance = BalanceReportInstance.objects.get(id=instance.report_instance_id)
+
+            data = report_instance.data
+
+            full_items = report_instance.data['items']
+
+
+        data['report_instance_id'] = report_instance.id
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
@@ -1339,14 +1192,65 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         to_representation_st = time.perf_counter()
 
-        data = super(BackendPLReportGroupsSerializer, self).to_representation(instance)
-
         helper_service = BackendReportHelperService()
+
+        if not instance.report_instance_id:
+
+            data = super(BackendPLReportGroupsSerializer, self).to_representation(instance)
+
+            report_uuid = str(uuid.uuid4())
+
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
+
+            report_instance = PLReportInstance.objects.create(
+                master_user=instance.master_user,
+                member=instance.member,
+                user_code=report_instance_name,
+                name=report_instance_name,
+                short_name=report_instance_name,
+                report_date=instance.report_date,
+                pl_first_date=instance.pl_first_date,
+                report_currency=instance.report_currency,
+                pricing_policy=instance.pricing_policy,
+                cost_method=instance.cost_method,
+            )
+
+            report_instance.report_uuid = report_uuid
+            report_instance.report_date = instance.report_date
+            report_instance.pl_first_date = instance.pl_first_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
+
+            report_instance.report_uuid = report_uuid
+
+            data['report_uuid'] = report_uuid
+
+            full_items = helper_service.convert_report_items_to_full_items(data)
+
+            data['items'] = full_items
+
+            report_instance.data = json.loads(json.dumps(data, default=str)) # TODO consider something more logical, we got here date conversion error
+
+            report_instance.save()
+
+        else:
+
+            report_instance = BalanceReportInstance.objects.get(id=instance.report_instance_id)
+
+            data = report_instance.data
+
+            full_items = report_instance.data['items']
+
+        data['report_instance_id'] = report_instance.id
+
 
         _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
-        # make them flat
-        full_items = helper_service.convert_report_items_to_full_items(data)
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
@@ -1386,13 +1290,65 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         to_representation_st = time.perf_counter()
 
-        data = super(BackendPLReportItemsSerializer, self).to_representation(instance)
+
 
         helper_service = BackendReportHelperService()
 
-        _l.info("BackendBalanceReportItemsSerializer.to_representation")
+        if not instance.report_instance_id:
 
-        full_items = helper_service.convert_report_items_to_full_items(data)
+            data = super(BackendPLReportGroupsSerializer, self).to_representation(instance)
+
+            report_uuid = str(uuid.uuid4())
+
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
+
+            report_instance = PLReportInstance.objects.create(
+                master_user=instance.master_user,
+                member=instance.member,
+                user_code=report_instance_name,
+                name=report_instance_name,
+                short_name=report_instance_name,
+                report_date=instance.report_date,
+                pl_first_date=instance.pl_first_date,
+                report_currency=instance.report_currency,
+                pricing_policy=instance.pricing_policy,
+                cost_method=instance.cost_method,
+            )
+
+            report_instance.report_uuid = report_uuid
+            report_instance.report_date = instance.report_date
+            report_instance.pl_first_date = instance.pl_first_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
+
+            report_instance.report_uuid = report_uuid
+
+            data['report_uuid'] = report_uuid
+
+            full_items = helper_service.convert_report_items_to_full_items(data)
+
+            data['items'] = full_items
+
+            report_instance.data = json.loads(json.dumps(data, default=str)) # TODO consider something more logical, we got here date conversion error
+
+            report_instance.save()
+
+        else:
+
+            report_instance = BalanceReportInstance.objects.get(id=instance.report_instance_id)
+
+            data = report_instance.data
+
+            full_items = report_instance.data['items']
+
+        data['report_instance_id'] = report_instance.id
+
+        _l.info("BackendBalanceReportItemsSerializer.to_representation")
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)

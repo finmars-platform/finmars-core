@@ -505,11 +505,12 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        builder = BalanceReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = BalanceReportBuilderSql(instance=instance)
+            instance = builder.build_balance()
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+            instance.task_id = 1 # deprecated, but not to remove
+            instance.task_status = "SUCCESS" # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -526,11 +527,12 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        builder = BalanceReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = BalanceReportBuilderSql(instance=instance)
+            instance = builder.build_balance()
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+            instance.task_id = 1  # deprecated, but not to remove
+            instance.task_status = "SUCCESS"  # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -551,11 +553,12 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        builder = PLReportBuilderSql(instance=instance)
-        instance = builder.build_report()
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = PLReportBuilderSql(instance=instance)
+            instance = builder.build_report()
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+            instance.task_id = 1  # deprecated, but not to remove
+            instance.task_status = "SUCCESS"  # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -572,11 +575,12 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        builder = PLReportBuilderSql(instance=instance)
-        instance = builder.build_report()
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = PLReportBuilderSql(instance=instance)
+            instance = builder.build_report()
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)

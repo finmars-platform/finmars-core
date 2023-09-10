@@ -83,7 +83,8 @@ class Report(BaseReport):
             items=None,
             execution_time=None,
             serialization_time=None,
-            frontend_request_options=None
+            frontend_request_options=None,
+            report_instance_id=None,
     ):
         super(Report, self).__init__(
             id=id,
@@ -162,6 +163,7 @@ class Report(BaseReport):
         self.calculate_pl = calculate_pl
 
         self.frontend_request_options = frontend_request_options  # For Backend Report Calculation
+        self.report_instance_id = report_instance_id  # For Backend Report Calculation
 
     def __str__(self):
         return (
