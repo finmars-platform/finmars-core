@@ -125,12 +125,16 @@ class BackendReportHelperService():
             'account_interim': self.convert_helper_dict(data['item_accounts']),
             'account_position': self.convert_helper_dict(data['item_accounts']),
             'entry_account': self.convert_helper_dict(data['item_accounts']),
-            'counterparty': self.convert_helper_dict(data['item_counterparties']),
-            'responsible': self.convert_helper_dict(data['item_responsibles'])
         }
 
+        if 'item_counterparties' in data:
+            helper_dicts['counterparty'] = self.convert_helper_dict(data['item_counterparties'])
+
+        if 'item_responsibles' in data:
+            helper_dicts['responsible'] = self.convert_helper_dict(data['item_responsibles'])
+
         # _l.info('data helper_dicts %s' %  helper_dicts)
-        _l.info('data items %s' %  data['items'][0])
+        _l.info('data items %s' % data['items'][0])
         for item in data['items']:
 
             original_item = self.flatten_and_convert_item(item, helper_dicts)
@@ -167,19 +171,18 @@ class BackendReportHelperService():
 
         return key
 
-
     # Methods for filter_table_rows
 
     def check_for_empty_regular_filter(self, regular_filter_value, filter_type):
         # Need null's checks for filters of data type number
         if filter_type in ['from_to', 'out_of_range']:
-            if (regular_filter_value.get('min_value') is not None) and (regular_filter_value.get('max_value') is not None):
+            if (regular_filter_value.get('min_value') is not None) and (
+                    regular_filter_value.get('max_value') is not None):
                 return True
         elif isinstance(regular_filter_value, list):
             if regular_filter_value[0] is not None:
                 return True
         return False
-
 
     def does_string_contains_substrings(self, value_to_filter, filter_by_string):
         filter_substrings = filter_by_string.split(' ')
@@ -187,7 +190,6 @@ class BackendReportHelperService():
             if substring not in value_to_filter:
                 return False
         return True
-
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
         if operation_type == 'contains':
@@ -231,7 +233,6 @@ class BackendReportHelperService():
         else:
             return False
 
-
     def get_regular_filters(self, options):
         result = {}
 
@@ -244,8 +245,6 @@ class BackendReportHelperService():
                     result[key] = value
 
         return result
-
-
 
     def filter_table_rows(self, items, options):
 
@@ -318,7 +317,6 @@ class BackendReportHelperService():
             return filtered_items
 
         return items
-
 
     def filter_by_global_table_search(self, items, options):
 
