@@ -785,6 +785,13 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
         help_text="Content of whole report representation",
     )
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if BalanceReportInstance.objects.all().count() > 512:
+            _l.warning(f"BalanceReportInstance amount > 512, delete oldest BalanceReportInstance")
+            BalanceReportInstance.objects.all().order_by("id")[0].delete()
+
 class PLReportInstance(DataTimeStampedModel, NamedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
@@ -814,6 +821,13 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
         verbose_name=gettext_lazy("Data"),
         help_text="Content of whole report representation",
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if PLReportInstance.objects.all().count() > 512:
+            _l.warning(f"PLReportInstance amount > 512, delete oldest PLReportInstance")
+            PLReportInstance.objects.all().order_by("id")[0].delete()
 
 
 class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
