@@ -155,11 +155,19 @@ class BackendReportHelperService():
             'portfolio': self.convert_helper_dict(data['item_portfolios']),
             'instrument': self.convert_helper_dict(data['item_instruments']),
             'entry_instrument': self.convert_helper_dict(data['item_instruments']),
+            'allocation_balance': self.convert_helper_dict(data['item_instruments']),
+            'allocation_pl': self.convert_helper_dict(data['item_instruments']),
             'account': self.convert_helper_dict(data['item_accounts']),
             'account_cash': self.convert_helper_dict(data['item_accounts']),
             'account_interim': self.convert_helper_dict(data['item_accounts']),
             'account_position': self.convert_helper_dict(data['item_accounts']),
             'entry_account': self.convert_helper_dict(data['item_accounts']),
+            'strategy1_position': self.convert_helper_dict(data['item_strategies1']),
+            'strategy1_cash': self.convert_helper_dict(data['item_strategies1']),
+            'strategy2_position': self.convert_helper_dict(data['item_strategies2']),
+            'strategy2_cash': self.convert_helper_dict(data['item_strategies2']),
+            'strategy3_position': self.convert_helper_dict(data['item_strategies3']),
+            'strategy3_cash': self.convert_helper_dict(data['item_strategies3']),
         }
 
         if 'item_counterparties' in data:
@@ -167,6 +175,10 @@ class BackendReportHelperService():
 
         if 'item_responsibles' in data:
             helper_dicts['responsible'] = self.convert_helper_dict(data['item_responsibles'])
+
+        if 'item_transaction_classes' in data:
+            helper_dicts['transaction_class'] = self.convert_helper_dict(data['item_transaction_classes'])
+
 
         # _l.info('data helper_dicts %s' %  helper_dicts)
         _l.info('data items %s' % data['items'][0])
