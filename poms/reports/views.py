@@ -18,7 +18,7 @@ from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLRepor
     TransactionReportCustomFieldSerializer, PerformanceReportSerializer, PriceHistoryCheckSerializer, \
     BalanceReportSerializer, PLReportSerializer, TransactionReportSerializer, SummarySerializer, \
     BackendBalanceReportGroupsSerializer, BackendBalanceReportItemsSerializer, BackendPLReportGroupsSerializer, \
-    BackendPLReportItemsSerializer
+    BackendPLReportItemsSerializer, BackendTransactionReportGroupsSerializer, BackendTransactionReportItemsSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
@@ -578,6 +578,54 @@ class BackendPLReportViewSet(AbstractViewSet):
         if not instance.report_instance_id: # Check to_representation comments to find why is that
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
+
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
+
+        serialize_report_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance, many=False)
+
+        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class BackendTransactionReportViewSet(AbstractViewSet):
+
+    @action(detail=False, methods=['post'], url_path='groups', serializer_class = BackendTransactionReportGroupsSerializer)
+    def groups(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        instance.auth_time = self.auth_time
+
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = TransactionReportBuilderSql(instance=instance)
+            instance = builder.build_transaction()
+
+            instance.task_id = 1  # deprecated, but not to remove
+            instance.task_status = "SUCCESS"  # deprecated, but not to remove
+
+        serialize_report_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance, many=False)
+
+        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='items', serializer_class = BackendTransactionReportItemsSerializer)
+    def items(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        instance.auth_time = self.auth_time
+
+        if not instance.report_instance_id: # Check to_representation comments to find why is that
+            builder = TransactionReportBuilderSql(instance=instance)
+            instance = builder.build_transaction()
 
             instance.task_id = 1
             instance.task_status = "SUCCESS"

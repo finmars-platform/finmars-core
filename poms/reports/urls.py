@@ -15,6 +15,7 @@ router.register(r'pl-report', reports.PLReportViewSet, "PlReport")
 router.register(r'pl-report-sql', reports.PLReportViewSet, "PlReportSyncSql")  # deprecated, delete soon
 router.register(r'pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'PlReportCustomField')
 
+router.register(r'backend-transaction-report', reports.BackendTransactionReportViewSet, "BackendTransactionReport")
 router.register(r'transaction-report', reports.TransactionReportViewSet, "TransactionReport")
 router.register(r'transaction-report-sql', reports.TransactionReportViewSet, "TransactionReportSyncSql")
 

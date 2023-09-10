@@ -830,6 +830,36 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
             PLReportInstance.objects.all().order_by("id")[0].delete()
 
 
+class TransactionReportInstance(DataTimeStampedModel, NamedModel):
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member,
+                               verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
+
+    begin_date = models.DateField(db_index=True, verbose_name=gettext_lazy('begin date'))
+    end_date = models.DateField(db_index=True, verbose_name=gettext_lazy('end date'))
+
+    report_settings_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('report settings data'))
+
+    report_uuid = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('report uuid'))
+
+    data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("Data"),
+        help_text="Content of whole report representation",
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if TransactionReportInstance.objects.all().count() > 512:
+            _l.warning(f"TransactionReportInstance amount > 512, delete oldest PLReportInstance")
+            TransactionReportInstance.objects.all().order_by("id")[0].delete()
+
+
+
 class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)

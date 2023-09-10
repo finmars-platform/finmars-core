@@ -230,6 +230,9 @@ class TransactionReport(BaseReport):
             depth_level=None,
             expression_iterations_count=1,
             filters=None,
+            report_instance_name=None,
+            frontend_request_options=None,
+            report_instance_id=None
     ):
         super().__init__(
             id=id,
@@ -280,6 +283,9 @@ class TransactionReport(BaseReport):
         self.depth_level = depth_level or "base_transaction"
 
         self.expression_iterations_count = expression_iterations_count
+        self.report_instance_name = report_instance_name
+        self.frontend_request_options = frontend_request_options
+        self.report_instance_id = report_instance_id
 
     def __str__(self):
         return f"TransactionReport:{self.id}"
