@@ -56,9 +56,9 @@ class BackendReportHelperService():
                 '___group_type_key': group_type['key'],
             }
 
-            item_value = item[group_type['key']]
+            item_value = item.get(group_type['key'], None)
             identifier_key = self.convert_name_key_to_user_code_key(group_type['key'])
-            identifier_value = item[identifier_key]
+            identifier_value = item.get(identifier_key, None)
 
             if identifier_value != None and identifier_value != '-':
 
@@ -81,11 +81,15 @@ class BackendReportHelperService():
 
         for result_group in result_groups:
 
+            _l.info('___group_type_key %s' % result_group['___group_type_key'])
+            _l.info('___group_identifier %s' % result_group['___group_identifier'])
+            _l.info('items %s' % items[0])
+
             group_items = []
 
             for item in items:
 
-                if item[result_group['___group_type_key']] == result_group['___group_identifier']:
+                if item.get(result_group['___group_type_key'], None) == result_group['___group_identifier']:
                     group_items.append(item)
 
             result_group['subtotal'] = BackendReportSubtotalService.calculate(group_items, columns)
@@ -96,14 +100,45 @@ class BackendReportHelperService():
         helper_dict = {entry['id']: entry for entry in helper_list}
         return helper_dict
 
+    def _get_attribute_value(self, attribute):
+        value_type = attribute.get("attribute_type_object", {}).get("value_type")
+        if value_type == 30:
+
+            if 'classifier_object' in attribute:
+                if attribute['classifier_object']:
+                    return attribute['classifier_object']['name']
+
+        elif value_type == 10:  # example value types for float and string
+            return attribute.get("value_string")
+        elif value_type == 20:  # example value types for float and string
+            return attribute.get("value_float")
+        elif value_type == 40:  # example value types for float and string
+            return attribute.get("value_date")
+
+        return None
+
     def flatten_and_convert_item(self, item, helper_dicts):
         flattened_item = {}
         for key, value in item.items():
             if key in helper_dicts:
                 related_object = helper_dicts[key].get(value, {})
                 for related_key, related_value in related_object.items():
-                    new_key = f"{key}.{related_key}"
-                    flattened_item[new_key] = related_value
+
+                    if related_key == "attributes" and isinstance(related_value, list):
+                        for attribute in related_value:
+
+                            _l.info('attribute %s' % attribute)
+
+                            user_code = attribute.get("attribute_type_object", {}).get("user_code")
+                            if user_code:
+                                attr_value = self._get_attribute_value(attribute)
+                                flattened_item[f"{key}.attributes.{user_code}"] = attr_value
+
+                                # _l.info('flattened_item %s' % flattened_item)
+
+                    else:
+                        new_key = f"{key}.{related_key}"
+                        flattened_item[new_key] = related_value
             else:
                 flattened_item[key] = value
         return flattened_item
