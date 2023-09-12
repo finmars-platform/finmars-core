@@ -1,3 +1,4 @@
+import json
 import time
 
 from django.core.management.base import BaseCommand
@@ -35,7 +36,9 @@ class Command(BaseCommand):
                                                                  memory_limit='1Gi',
                                                                  queue='backend-general-queue,backend-reports-queue,backend-imports-queue,backend-background-queue')
 
-                status_detail = default_worker.get_status()
+                default_worker.get_status()
+
+                status_detail = json.loads(default_worker.status)
 
                 _l.info('deploy_default_worker: status_detail %s' % status_detail)
 

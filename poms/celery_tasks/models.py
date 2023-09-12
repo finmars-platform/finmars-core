@@ -304,11 +304,10 @@ class CeleryWorker(TimeStampedModel):
         help_text="worker or scheduler"
     )
 
-    status = models.CharField(
+    status = models.TextField(
         null=True,
         blank=True,
         default="unknown",
-        max_length=255,
         verbose_name="status",
         help_text="Status of worker container"
     )
