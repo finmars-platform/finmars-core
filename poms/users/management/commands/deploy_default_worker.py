@@ -29,7 +29,7 @@ class Command(BaseCommand):
             try:
 
                 try:
-                    default_worker = CeleryWorker.objects.get(worker_name='default_worker')
+                    default_worker = CeleryWorker.objects.get(worker_name='worker00')
                 except Exception as e:
                     default_worker = CeleryWorker.objects.create(worker_name='worker00',
                                                                  worker_type='worker',
