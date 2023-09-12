@@ -1075,6 +1075,15 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         groups = unique_groups
 
         data['items'] = groups
+        data.pop('item_currencies', [])
+        data.pop('item_portfolios', [])
+        data.pop('item_instruments', [])
+        data.pop('item_instrument_types', [])
+        data.pop('item_accounts', [])
+        data.pop('item_account_types', [])
+        data.pop('item_strategies1', [])
+        data.pop('item_strategies2', [])
+        data.pop('item_strategies3', [])
 
         _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
@@ -1166,12 +1175,23 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         # _l.info("full_items items len %s" % len(full_items))
         # _l.info("original items len %s" % len(data['items']))
 
-        for item in data['items']:
-            for full_item in full_items:
-                if item['id'] == full_item['id']:
-                    result_items.append(item)
+        # for item in data['items']:
+        #     for full_item in full_items:
+        #         if item['id'] == full_item['id']:
+        #             result_items.append(item)
+        #
+        # data['items'] = result_items
 
-        data['items'] = result_items
+        data['items'] = full_items
+        data.pop('item_currencies', [])
+        data.pop('item_portfolios', [])
+        data.pop('item_instruments', [])
+        data.pop('item_instrument_types', [])
+        data.pop('item_accounts', [])
+        data.pop('item_account_types', [])
+        data.pop('item_strategies1', [])
+        data.pop('item_strategies2', [])
+        data.pop('item_strategies3', [])
 
         # _l.info("after filter items len %s" % len(data['items']))
 
@@ -1359,12 +1379,23 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         # _l.info("full_items items len %s" % len(full_items))
         # _l.info("original items len %s" % len(data['items']))
 
-        for item in data['items']:
-            for full_item in full_items:
-                if item['id'] == full_item['id']:
-                    result_items.append(item)
+        # for item in data['items']:
+        #     for full_item in full_items:
+        #         if item['id'] == full_item['id']:
+        #             result_items.append(item)
+        #
+        # data['items'] = result_items
 
-        data['items'] = result_items
+        data['items'] = full_items
+        data.pop('item_currencies', [])
+        data.pop('item_portfolios', [])
+        data.pop('item_instruments', [])
+        data.pop('item_instrument_types', [])
+        data.pop('item_accounts', [])
+        data.pop('item_account_types', [])
+        data.pop('item_strategies1', [])
+        data.pop('item_strategies2', [])
+        data.pop('item_strategies3', [])
 
         # _l.info("after filter items len %s" % len(data['items']))
 
@@ -1460,6 +1491,15 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         groups = unique_groups
 
         data['items'] = groups
+        data.pop('item_currencies', [])
+        data.pop('item_portfolios', [])
+        data.pop('item_instruments', [])
+        data.pop('item_instrument_types', [])
+        data.pop('item_accounts', [])
+        data.pop('item_account_types', [])
+        data.pop('item_strategies1', [])
+        data.pop('item_strategies2', [])
+        data.pop('item_strategies3', [])
 
         _l.info("BackendTransactionReportGroupsSerializer.to_representation")
 
@@ -1541,12 +1581,26 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         # _l.info("full_items items len %s" % len(full_items))
         # _l.info("original items len %s" % len(data['items']))
 
-        for item in data['items']:
-            for full_item in full_items:
-                if item['id'] == full_item['id']:
-                    result_items.append(item)
+        # for item in data['items']:
+        #     for full_item in full_items:
+        #         if item['id'] == full_item['id']:
+        #             result_items.append(item)
 
-        data['items'] = result_items
+        # data['items'] = result_items
+        data['items'] = full_items
+        data.pop('item_currencies', [])
+        data.pop('item_portfolios', [])
+        data.pop('item_instruments', [])
+        data.pop('item_instrument_types', [])
+        data.pop('item_accounts', [])
+        data.pop('item_account_types', [])
+        data.pop('item_strategies1', [])
+        data.pop('item_strategies2', [])
+        data.pop('item_strategies3', [])
+        data.pop('item_counterparties', [])
+        data.pop('item_responsibles', [])
+        data.pop('item_transaction_classes', [])
+        data.pop('item_complex_transactions', [])
 
         # _l.info("after filter items len %s" % len(data['items']))
 
