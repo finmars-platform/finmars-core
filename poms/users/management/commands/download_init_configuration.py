@@ -22,7 +22,7 @@ class Command(BaseCommand):
         # Need to wait to ensure celery workers are available
         i = celery_app.control.inspect()
 
-        max_retries = 100
+        max_retries = 20
         retry_count = 1
 
         while not i.stats() and retry_count < max_retries:
