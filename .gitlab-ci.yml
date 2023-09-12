@@ -49,8 +49,10 @@ Test:
     pull_policy: if-not-present # available: always, if-not-present,
 
   services:
-    - postgres:15
-    - rabbitmq:3.11.3-management
+    - name: postgres:15
+      pull_policy: if-not-present # available: always, if-not-present,
+    - name: rabbitmq:3.11.3-management
+      pull_policy: if-not-present # available: always, if-not-present,
 
   variables:
     DB_HOST: postgres
