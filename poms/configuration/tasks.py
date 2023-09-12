@@ -665,15 +665,18 @@ def install_configuration_from_marketplace(self, **kwargs):
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
 
             # Write the file to the destination path
-            with open(destination_path, "wb+") as f: # need to be readable to encrypt
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+            f = open(destination_path, "wb+")
+
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
 
             storage_file_path = os.path.join(settings.BASE_DIR,
                                      'public/import-configurations/%s' % (str(task.id) + 'archive.zip'))
 
             storage.save(storage_file_path, f)
+
+            f.close()
 
         import_configuration_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
