@@ -291,7 +291,7 @@ class CeleryTaskAttachment(models.Model):
 
 class CeleryWorker(TimeStampedModel):
     worker_name = models.CharField(
-        null=True,
+        unique=True,
         max_length=255,
         verbose_name="worker name",
         help_text="Name that will be used in celery worker command"
