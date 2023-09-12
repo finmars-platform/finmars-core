@@ -1,3 +1,5 @@
+import time
+
 from django.core.management.base import BaseCommand
 
 import logging
@@ -18,6 +20,10 @@ class Command(BaseCommand):
 
         try:
             _l.info("deploy_default_worker processing")
+
+
+            _l.info('Waiting for Rabbitmq...')
+            time.sleep(10)
 
             try:
 
