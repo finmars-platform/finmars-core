@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -9,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
 from django.utils.timezone import now
+from django.core.files.base import ContentFile, File
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -664,19 +666,11 @@ def install_configuration_from_marketplace(self, **kwargs):
         else:
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
 
-            # Write the file to the destination path
-            f = open(destination_path, "wb+")
+            storage_file_path = '/public/import-configurations/%s' % (str(task.id) + '_archive.zip')
 
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
+            byte_stream = io.BytesIO(response.content)
+            storage.save(storage_file_path, File(byte_stream, str(task.id) + '_archive.zip'))
 
-            storage_file_path = os.path.join(settings.BASE_DIR,
-                                     'public/import-configurations/%s' % (str(task.id) + 'archive.zip'))
-
-            storage.save(storage_file_path, f)
-
-            f.close()
 
         import_configuration_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
