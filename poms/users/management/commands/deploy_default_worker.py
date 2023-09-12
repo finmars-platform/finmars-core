@@ -43,10 +43,10 @@ class Command(BaseCommand):
                 _l.info('deploy_default_worker: status_detail %s' % status_detail)
 
                 if status_detail:
-                    if status_detail['status']['deployed']:
+                    if status_detail['status'] == 'deployed':
                         _l.info("deploy_default_worker: Default worker already deployed")
                         return
-                    elif status_detail['status']['not_found']:
+                    elif status_detail['status'] == 'not_found':
                         default_worker.deploy()
                     else:
                         default_worker.start()
