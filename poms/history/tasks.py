@@ -65,8 +65,7 @@ def clear_old_journal_records():
 
     delete_time = now() - timedelta(days=ttl)
     date_from = delete_time.strftime(DATE_FORMAT)
-    date_to = now().strftime(DATE_FORMAT)
-    filename = f"{date_from}__{date_to}"
+    filename = f"removed_journal_records_till_{date_from}"
 
     records_to_delete = HistoricalRecord.objects.filter(created__lt=delete_time)
 
