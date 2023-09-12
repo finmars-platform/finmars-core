@@ -36,6 +36,8 @@ class Command(BaseCommand):
                                                                  memory_limit='1Gi',
                                                                  queue='backend-general-queue,backend-reports-queue,backend-imports-queue,backend-background-queue')
 
+                    default_worker.create_worker()
+
                 default_worker.get_status()
 
                 status_detail = json.loads(default_worker.status)
