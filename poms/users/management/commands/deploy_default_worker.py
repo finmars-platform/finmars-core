@@ -37,17 +37,20 @@ class Command(BaseCommand):
 
                 status_detail = default_worker.get_status()
 
-                if status_detail['status']['deployed']:
-                    _l.info("Default worker already deployed")
-                    return
-                elif status_detail['status']['not_found']:
-                    default_worker.deploy()
-                else:
-                    default_worker.start()
+                _l.info('deploy_default_worker: status_detail %s' % status_detail)
+
+                if status_detail:
+                    if status_detail['status']['deployed']:
+                        _l.info("deploy_default_worker: Default worker already deployed")
+                        return
+                    elif status_detail['status']['not_found']:
+                        default_worker.deploy()
+                    else:
+                        default_worker.start()
 
             except Exception as e:
-                _l.error("Could not deploy worker %s" % e)
+                _l.error("deploy_default_worker: Could not deploy worker %s" % e)
 
 
         except Exception as e:
-            _l.info("deploy_default_worker error %s" % e)
+            _l.info("deploy_default_worker: error %s" % e)
