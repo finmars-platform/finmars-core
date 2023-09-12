@@ -1,18 +1,24 @@
 from logging import getLogger
 
-from celery.result import AsyncResult
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from celery.result import AsyncResult
+
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
+
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
 from .models import CeleryTask, CeleryWorker
-from .serializers import CeleryTaskLightSerializer, CeleryTaskSerializer, CeleryWorkerSerializer
+from .serializers import (
+    CeleryTaskLightSerializer,
+    CeleryTaskSerializer,
+    CeleryWorkerSerializer,
+)
 
 _l = getLogger("poms.celery_tasks")
 
@@ -111,9 +117,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
     def abort_transaction_import(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
-
+        from poms_app import celery_app
         from poms.transactions.models import ComplexTransaction
+
+        task = CeleryTask.objects.get(pk=pk)
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
@@ -139,8 +146,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             verbose_name="Bulk Delete",
             type="bulk_delete",
         )
-
-        from poms_app import celery_app
 
         celery_app.send_task(
             "celery_tasks.bulk_delete",
@@ -189,9 +194,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     queryset = CeleryWorker.objects.all()
     serializer_class = CeleryWorkerSerializer
     filter_class = CeleryWorkerFilterSet
-    filter_backends = [
-
-    ]
+    filter_backends = []
 
     def update(self, request, *args, **kwargs):
         # Workers could not be updated for now,

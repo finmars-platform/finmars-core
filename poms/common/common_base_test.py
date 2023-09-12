@@ -554,7 +554,8 @@ class DbInitializer:
 
         return types
 
-    def get_or_create_classes(self) -> dict:
+    @staticmethod
+    def get_or_create_classes() -> dict:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
@@ -670,5 +671,5 @@ class DbInitializer:
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
         print(
-            f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n"
+            f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
