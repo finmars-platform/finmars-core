@@ -18,10 +18,10 @@ log = "CeleryTask"
 
 class CeleryTask(TimeStampedModel):
     """
-    Maybe should be rename just to Task (like in Workflow)
+    Maybe should be renamed just to Task (like in Workflow)
     Kinda legacy functionality (everything to background processes should
     be moved to Workflow/Olap microservices)
-    But still its in use
+    But still it's in use
     Most important tasks are:
         Transaction Import (transactions itself, sometimes instruments)
         Simple Import (Portfolios, Accounts, Instruments, Prices, FxRates)
@@ -29,11 +29,11 @@ class CeleryTask(TimeStampedModel):
         UI layouts)
         Portfolio Records and Portfolio Prices
 
-    Also we have poms.procedures, and poms.pricing and somehow it different
-    entities but they do the same thing as CeleryTask
+    Also, we have poms.procedures, and poms.pricing and somehow it different
+    entities, but they do the same thing as CeleryTask
     Maybe in future procedures/pricing will be refactored and one day
     they will be just CeleryTask
-    And in far future even that will be moved to Workflow/Olap
+    And in the far future even that will be moved to Workflow/Olap
     """
 
     STATUS_INIT = "I"
