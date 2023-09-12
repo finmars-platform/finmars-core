@@ -6,10 +6,10 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
-from poms.celery_tasks import finmars_task
 from celery.utils.log import get_task_logger
 from poms_app import settings
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -19,7 +19,7 @@ _l = logging.getLogger("poms.celery_tasks")
 
 
 # TODO Refactor to task_id
-@finmars_task(name='celery_tasks.remove_old_tasks', bind=True)
+@finmars_task(name="celery_tasks.remove_old_tasks", bind=True)
 def remove_old_tasks(self, *args, **kwargs):
     try:
         tasks = CeleryTask.objects.filter(created__lte=now() - timedelta(days=30))
@@ -87,8 +87,6 @@ def auto_cancel_task_by_ttl():
 def bulk_delete(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
 
-    _l.info(f"bulk_delete.task_id {task_id}")
-
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -96,15 +94,17 @@ def bulk_delete(self, task_id):
 
     options_object = celery_task.options_object
 
-    _l.info(f"bulk_delete.options_object {options_object}")
+    _l.info(
+        f"bulk_delete: task_id {task_id} content_type {options_object['content_type']}"
+        f" options_object {options_object}"
+    )
 
     content_type_pieces = options_object["content_type"].split(".")
 
     content_type = ContentType.objects.get(
-        app_label=content_type_pieces[0], model=content_type_pieces[1]
+        app_label=content_type_pieces[0],
+        model=content_type_pieces[1],
     )
-
-    queryset = content_type.model_class().objects.all()
 
     _l.info(f'bulk_delete {options_object["ids"]}')
 
@@ -117,24 +117,20 @@ def bulk_delete(self, task_id):
         }
     )
 
+    to_be_deleted_queryset = content_type.model_class().objects.filter(
+        id__in=options_object["ids"]
+    )
+
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
             # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
 
-            queryset = queryset.filter(id__in=options_object["ids"])
-
-            count = 0
-
-            items = list(queryset)
-
-            for instance in items:
+            for count, instance in enumerate(to_be_deleted_queryset, start=1):
                 # try:
                 #     self.check_object_permissions(request, instance)
                 # except PermissionDenied:
                 #     raise
                 instance.fake_delete()
-
-                count = count + 1
 
                 celery_task.update_progress(
                     {
@@ -145,19 +141,31 @@ def bulk_delete(self, task_id):
                     }
                 )
 
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.mark_task_as_finished()
+
     except Exception as e:
-        _l.error(f"bulk_delete exception {repr(e)} {traceback.format_exc()}")
+        err_msg = f"bulk_delete exception {repr(e)} {traceback.format_exc()}"
+        _l.error(err_msg)
 
         if options_object["content_type"] in (
             "instruments.pricehistory",
             "currencies.currencyhistory",
         ):
-            _l.info("Going to permanent delete.")
-            queryset.filter(id__in=options_object["ids"]).delete()
+            _l.info("Going to permanent delete")
 
-    celery_task.status = CeleryTask.STATUS_DONE
-    celery_task.mark_task_as_finished()
-    celery_task.save()
+            to_be_deleted_queryset.delete()
+
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.mark_task_as_finished()
+
+        else:
+            celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.error_message = err_msg
+
+    finally:
+
+        celery_task.save()
 
 
 def import_item(item, context):

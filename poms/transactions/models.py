@@ -2801,10 +2801,10 @@ class ComplexTransaction(DataTimeStampedModel):
         super().save(*args, **kwargs)
 
     def fake_delete(self):
-        if (
-            self.is_deleted
-        ):  # if transaction was already marked as deleted, then do real delete
+        if self.is_deleted:
+            # if the transaction was already marked as deleted, then do real delete
             self.delete()
+
         else:
             self.is_deleted = True
 
