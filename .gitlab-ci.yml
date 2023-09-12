@@ -47,8 +47,8 @@ Test:
   image: python:3.10-bullseye  # adjust the Python version as necessary
 
   services:
-    - postgres:latest
-    - rabbitmq:latest
+    - postgres:15
+    - rabbitmq:3.11.3-management
 
   variables:
     DB_HOST: postgres
