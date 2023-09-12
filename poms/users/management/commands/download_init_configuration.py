@@ -22,9 +22,18 @@ class Command(BaseCommand):
         # Need to wait to ensure celery workers are available
         i = celery_app.control.inspect()
 
-        while not i.stats():
-            _l.info('Waiting for Celery worker(s)...')
+        max_retries = 100
+        retry_count = 1
+
+        while not i.stats() and retry_count < max_retries:
+            _l.info('Waiting for Celery worker(s) try %s/%s...' % (retry_count, max_retries))
             time.sleep(5)
+            retry_count = retry_count + 1
+
+        if retry_count > max_retries:
+            _l.info('Workers are unavailable, skip init install...')
+            return
+
 
         _l.info('Celery worker(s) are now available.')
 

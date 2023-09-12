@@ -104,6 +104,7 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   python manage.py clear_celery
   python manage.py deploy_default_worker
+
   python manage.py download_init_configuration
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")

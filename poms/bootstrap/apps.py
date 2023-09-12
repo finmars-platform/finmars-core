@@ -59,7 +59,7 @@ class BootstrapConfig(AppConfig):
         self.register_at_authorizer_service()
         self.sync_celery_workers()
 
-        # self.create_iam_access_policies_templates()
+        self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
