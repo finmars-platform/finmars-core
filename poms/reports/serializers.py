@@ -1521,13 +1521,11 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
 
         to_representation_st = time.perf_counter()
 
-
-
         helper_service = BackendReportHelperService()
 
         if not instance.report_instance_id:
 
-            data = super(BackendTransactionReportGroupsSerializer, self).to_representation(instance)
+            data = super(BackendTransactionReportItemsSerializer, self).to_representation(instance)
 
             report_uuid = str(uuid.uuid4())
 
