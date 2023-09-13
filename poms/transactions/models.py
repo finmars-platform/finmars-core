@@ -273,7 +273,7 @@ class NotificationClass(AbstractClassModel):
     @property
     def is_apply_default_on_effective_date(self):
         return (
-            self.id in NotificationClass.get_apply_default_on_effective_date_classes()
+                self.id in NotificationClass.get_apply_default_on_effective_date_classes()
         )
 
     @staticmethod
@@ -287,8 +287,8 @@ class NotificationClass(AbstractClassModel):
     @property
     def is_apply_default_on_notification_date(self):
         return (
-            self.id
-            in NotificationClass.get_apply_default_on_notification_date_classes()
+                self.id
+                in NotificationClass.get_apply_default_on_notification_date_classes()
         )
 
     @staticmethod
@@ -301,7 +301,7 @@ class NotificationClass(AbstractClassModel):
     @property
     def is_need_reaction_on_effective_date(self):
         return (
-            self.id in NotificationClass.get_need_reaction_on_effective_date_classes()
+                self.id in NotificationClass.get_need_reaction_on_effective_date_classes()
         )
 
     @staticmethod
@@ -314,8 +314,8 @@ class NotificationClass(AbstractClassModel):
     @property
     def is_need_reaction_on_notification_date(self):
         return (
-            self.id
-            in NotificationClass.get_need_reaction_on_notification_date_classes()
+                self.id
+                in NotificationClass.get_need_reaction_on_notification_date_classes()
         )
 
 
@@ -1173,7 +1173,7 @@ class TransactionTypeInput(models.Model):
             return f"{self.name}: {self.get_value_type_display()}"
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         if not self.verbose_name:
             self.verbose_name = self.name
@@ -3023,6 +3023,7 @@ class Transaction(models.Model):
     transaction_code = models.IntegerField(
         unique=True,
         verbose_name=gettext_lazy("transaction code"),
+        help_text="More Human Readable ID, like Complex Transaction has 100, then Transaction will have 101",
         db_index=True,
     )
     transaction_class = models.ForeignKey(
@@ -3030,11 +3031,13 @@ class Transaction(models.Model):
         on_delete=models.PROTECT,
         db_index=True,
         verbose_name=gettext_lazy("transaction class"),
+        help_text="Important entity, depending on class will be applied different method to calculate report (e.g. Buy, Sell, Transfer)"
     )
     is_canceled = models.BooleanField(
         default=False,
         db_index=True,
         verbose_name=gettext_lazy("is canceled"),
+        help_text="Transaction will be filtered out from report calculation"
     )
     is_deleted = models.BooleanField(
         default=False,
@@ -3053,6 +3056,7 @@ class Transaction(models.Model):
         on_delete=models.PROTECT,
         null=True,
         blank=True,
+        help_text="Link to Instrument, could be null if we describing cash",
         verbose_name=gettext_lazy("instrument"),
     )
     transaction_currency = models.ForeignKey(
@@ -3399,9 +3403,9 @@ class Transaction(models.Model):
 
     def get_instr_ytm_data_d0_v0(self, dt):
         return dt, -(
-            self.trade_price
-            * self.instrument.price_multiplier
-            * self.instrument.get_factor(dt)
+                self.trade_price
+                * self.instrument.price_multiplier
+                * self.instrument.get_factor(dt)
         )
 
     def get_instr_ytm_data(self, dt):
@@ -3414,9 +3418,9 @@ class Transaction(models.Model):
             # _l.debug('get_instr_ytm_data: [], maturity_date rule')
             return []
         if (
-            instr.maturity_price is None
-            or isnan(instr.maturity_price)
-            or isclose(instr.maturity_price, 0.0)
+                instr.maturity_price is None
+                or isnan(instr.maturity_price)
+                or isclose(instr.maturity_price, 0.0)
         ):
             # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
@@ -3429,14 +3433,14 @@ class Transaction(models.Model):
         data = [(d0, v0)]
 
         for cpn_date, cpn_val in instr.get_future_coupons(
-            begin_date=d0, with_maturity=False
+                begin_date=d0, with_maturity=False
         ):
             try:
                 factor = instr.get_factor(cpn_date)
                 k = (
-                    instr.accrued_multiplier
-                    * factor
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                        instr.accrued_multiplier
+                        * factor
+                        * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
                 )
             except ArithmeticError:
                 k = 0
@@ -3445,8 +3449,8 @@ class Transaction(models.Model):
         prev_factor = None
         for factor in instr.factor_schedules.all():
             if (
-                factor.effective_date < d0
-                or factor.effective_date > instr.maturity_date
+                    factor.effective_date < d0
+                    or factor.effective_date > instr.maturity_date
             ):
                 prev_factor = factor
                 continue
@@ -3473,9 +3477,9 @@ class Transaction(models.Model):
         try:
             accrual_size = self.instrument.get_accrual_size(dt)
             return (
-                (accrual_size * self.instrument.accrued_multiplier)
-                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                / (self.trade_price * self.instrument.price_multiplier)
+                    (accrual_size * self.instrument.accrued_multiplier)
+                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                    / (self.trade_price * self.instrument.price_multiplier)
             )
         except ArithmeticError:
             return 0
@@ -3518,15 +3522,15 @@ class Transaction(models.Model):
         dt = self.accounting_date
 
         if (
-            self.instrument.maturity_date is None
-            or self.instrument.maturity_date == date.max
-            or str(self.instrument.maturity_date) == "2999-01-01"
-            or str(self.instrument.maturity_date) == "2099-01-01"
+                self.instrument.maturity_date is None
+                or self.instrument.maturity_date == date.max
+                or str(self.instrument.maturity_date) == "2999-01-01"
+                or str(self.instrument.maturity_date) == "2099-01-01"
         ):
             try:
                 accrual_size = self.instrument.get_accrual_size(dt)
                 ytm = (accrual_size * self.instrument.accrued_multiplier) / (
-                    self.trade_price * self.instrument.price_multiplier
+                        self.trade_price * self.instrument.price_multiplier
                 )
 
             except ArithmeticError:
@@ -3574,7 +3578,7 @@ class Transaction(models.Model):
                 )
             else:
                 self.transaction_code = (
-                    self.complex_transaction.code + self.complex_transaction_order
+                        self.complex_transaction.code + self.complex_transaction_order
                 )
 
         try:
@@ -3593,9 +3597,9 @@ class Transaction(models.Model):
 
     def is_can_calc_cash_by_formulas(self):
         return (
-            self.transaction_class_id in [TransactionClass.BUY, TransactionClass.SELL]
-            and self.instrument.instrument_type.instrument_class_id
-            == InstrumentClass.CONTRACT_FOR_DIFFERENCE
+                self.transaction_class_id in [TransactionClass.BUY, TransactionClass.SELL]
+                and self.instrument.instrument_type.instrument_class_id
+                == InstrumentClass.CONTRACT_FOR_DIFFERENCE
         )
 
     def calc_cash_by_formulas(self, save=True):

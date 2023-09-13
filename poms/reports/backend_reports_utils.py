@@ -1,4 +1,5 @@
 import logging
+from functools import cmp_to_key
 
 _l = logging.getLogger('poms.reports')
 
@@ -386,6 +387,59 @@ class BackendReportHelperService():
             result_items.append(result_item)
 
         return result_items
+
+    def order_sort(self, property, sort_order):
+        def comparator(a, b):
+            if a.get(property) is None:
+                return 1 * sort_order
+            if b.get(property) is None:
+                return -1 * sort_order
+
+            if a[property] < b[property]:
+                return -1 * sort_order
+
+            if a[property] > b[property]:
+                return 1 * sort_order
+
+            return 0
+
+        return comparator
+    def sort_items_by_property(self, items, property):
+        # Determine sort direction
+        if property.startswith('-'):
+            reverse = True
+            property = property[1:]
+        else:
+            reverse = False
+
+        # Use sorted() to sort items
+        return sorted(items, key=lambda x: x.get(property, None), reverse=reverse)
+
+
+
+    def sort_groups(self, items, options):
+
+        if 'groups_order' in options:
+            property = '___group_name' # TODO consider refactor someday
+
+            if options['groups_order'] == 'desc':
+                property = '-' + property
+
+            return self.sort_items_by_property(items, property)
+
+        return items
+
+    def sort_items(self, items, options):
+
+        if 'ordering' in options and 'items_order' in options:
+            property = options['ordering']
+
+            if options['items_order'] == 'desc':
+                property = '-' + property
+
+            return self.sort_items_by_property(items, property)
+
+        return items
 
 
 class BackendReportSubtotalService:

@@ -1062,6 +1062,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
         groups_types = instance.frontend_request_options['groups_types']
         columns = instance.frontend_request_options['columns']
@@ -1069,6 +1070,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         group_type = groups_types[len(groups_types) - 1]
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
+        unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
 
         # _l.info('unique_groups %s' % unique_groups)
 
@@ -1169,6 +1171,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         result_items = []
@@ -1276,6 +1279,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
+
         groups = []
 
         # _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
@@ -1287,6 +1291,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         group_type = groups_types[len(groups_types) - 1]
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
+        unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
 
         # _l.info('unique_groups %s' % unique_groups)
 
@@ -1374,7 +1379,9 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
+
 
         result_items = []
 
@@ -1487,6 +1494,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         group_type = groups_types[len(groups_types) - 1]
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
+        unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
 
         # _l.info('unique_groups %s' % unique_groups)
 
@@ -1576,6 +1584,8 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
+
+        full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
         result_items = []
 
