@@ -521,21 +521,21 @@ def handler_instrument_object(
             ][0]["first_payment_date"]
 
     accrual_map = {
-        "Actual/Actual (ICMA)": AccrualCalculationModel.ACT_ACT,
-        "Actual/Actual (ISDA)": AccrualCalculationModel.ACT_ACT_ISDA,
-        "Actual/360": AccrualCalculationModel.ACT_360,
-        "Actual/364": AccrualCalculationModel.ACT_365,
-        "Actual/365 (Actual/365F)": AccrualCalculationModel.ACT_365,
-        "Actual/366": AccrualCalculationModel.ACT_365_366,
-        "Actual/365L": AccrualCalculationModel.ACT_365_366,
-        "Actual/365A": AccrualCalculationModel.ACT_1_365,
-        "30/360 US": AccrualCalculationModel.C_30_360,
-        "30E+/360": AccrualCalculationModel.C_30E_P_360,
-        "NL/365": AccrualCalculationModel.NL_365,
-        "BD/252": AccrualCalculationModel.BUS_DAYS_252,
-        "30E/360": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 (30/360 ISDA)": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 German": AccrualCalculationModel.GERMAN_30_360_NO_EOM,
+        "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+        "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
+        "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
+        "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
+        "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+        "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
+        "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
+        "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
+        "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
+        "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
+        "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
+        "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+        "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
+        "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+        "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
     }
 
     if "accrual_calculation_schedules" in source_data:
@@ -613,10 +613,10 @@ def handler_instrument_object(
             else:
                 _l.info("Setting up accrual schedules. Creating new")
 
-                accrual = {}
-
-                accrual["accrual_calculation_model"] = AccrualCalculationModel.ACT_365
-                accrual["periodicity"] = Periodicity.ANNUALLY
+                accrual = {
+                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_ACT_364,
+                    "periodicity": Periodicity.ANNUALLY
+                }
 
                 if (
                     "accrual_start_date"
@@ -649,16 +649,16 @@ def handler_instrument_object(
                     if accrual["periodicity_n"] == 1:
                         accrual["periodicity"] = Periodicity.ANNUALLY
 
-                    if accrual["periodicity_n"] == 2:
+                    elif accrual["periodicity_n"] == 2:
                         accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
 
-                    if accrual["periodicity_n"] == 4:
+                    elif accrual["periodicity_n"] == 4:
                         accrual["periodicity"] = Periodicity.QUARTERLY
 
-                    if accrual["periodicity_n"] == 6:
+                    elif accrual["periodicity_n"] == 6:
                         accrual["periodicity"] = Periodicity.BIMONTHLY
 
-                    if accrual["periodicity_n"] == 12:
+                    elif accrual["periodicity_n"] == 12:
                         accrual["periodicity"] = Periodicity.MONTHLY
 
                     _l.info("periodicity %s" % accrual["periodicity"])
@@ -698,7 +698,8 @@ class SimpleImportProcess(object):
             )
 
             _l.info(
-                f"SimpleImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
+                f"SimpleImportProcess.Task {self.task}. init "
+                f"procedure_instance {self.procedure_instance}"
             )
 
         self.member = self.task.member
@@ -820,10 +821,10 @@ class SimpleImportProcess(object):
         result.append(column_row)
 
         for result_item in self.result.items:
-            content = []
-
-            content.append(str(result_item.row_number))
-            content.append(result_item.status)
+            content = [
+                str(result_item.row_number),
+                result_item.status,
+            ]
 
             if result_item.error_message:
                 content.append(result_item.error_message)
@@ -1107,9 +1108,7 @@ class SimpleImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-            names = {}
-
-            names["data"] = self.file_items
+            names = {"data": self.file_items}
 
             try:
                 # _l.info("whole_file_preprocess  names %s" % names)
@@ -1205,7 +1204,7 @@ class SimpleImportProcess(object):
 
                 self.preprocessed_items.append(preprocess_item)
 
-                row_number = row_number + 1
+                row_number += 1
 
         for preprocess_item in self.preprocessed_items:
             # CREATE SCHEME INPUTS
