@@ -82,30 +82,32 @@ class BackendReportHelperService():
         return None
 
     def flatten_and_convert_item(self, item, helper_dicts):
-        flattened_item = {}
-        for key, value in item.items():
-            if key in helper_dicts:
-                related_object = helper_dicts[key].get(value, {})
-                for related_key, related_value in related_object.items():
+        def recursively_flatten(prefix, item):
+            flattened = {}
 
-                    if related_key == "attributes" and isinstance(related_value, list):
-                        for attribute in related_value:
+            for key, value in item.items():
+                current_key = f"{prefix}.{key}" if prefix else key
 
-                            # _l.info('attribute %s' % attribute)
+                if key in helper_dicts:
+                    related_object = helper_dicts[key].get(value, {})
 
-                            user_code = attribute.get("attribute_type_object", {}).get("user_code")
-                            if user_code:
-                                attr_value = self._get_attribute_value(attribute)
-                                flattened_item[f"{key}.attributes.{user_code}"] = attr_value
-
-                                # _l.info('flattened_item %s' % flattened_item)
-
+                    if related_object:
+                        flattened.update(recursively_flatten(current_key, related_object))
                     else:
-                        new_key = f"{key}.{related_key}"
-                        flattened_item[new_key] = related_value
-            else:
-                flattened_item[key] = value
-        return flattened_item
+                        flattened[current_key] = value
+
+                elif key == "attributes" and isinstance(value, list):
+                    for attribute in value:
+                        user_code = attribute.get("attribute_type_object", {}).get("user_code")
+                        if user_code:
+                            attr_value = self._get_attribute_value(attribute)
+                            flattened[f"{current_key}.{user_code}"] = attr_value
+                else:
+                    flattened[current_key] = value
+
+            return flattened
+
+        return recursively_flatten("", item)
 
     def convert_report_items_to_full_items(self, data):
 
@@ -115,14 +117,17 @@ class BackendReportHelperService():
             'pricing_currency': self.convert_helper_dict(data['item_currencies']),
             'settlement_currency': self.convert_helper_dict(data['item_currencies']),
             'transaction_currency': self.convert_helper_dict(data['item_currencies']),
+            'exposure_currency': self.convert_helper_dict(data['item_currencies']),
             'entry_currency': self.convert_helper_dict(data['item_currencies']),
             'portfolio': self.convert_helper_dict(data['item_portfolios']),
             'instrument': self.convert_helper_dict(data['item_instruments']),
+            'instrument_type': self.convert_helper_dict(data['item_instrument_types']),
             'entry_instrument': self.convert_helper_dict(data['item_instruments']),
             'allocation': self.convert_helper_dict(data['item_instruments']),
             'allocation_balance': self.convert_helper_dict(data['item_instruments']),
             'allocation_pl': self.convert_helper_dict(data['item_instruments']),
             'account': self.convert_helper_dict(data['item_accounts']),
+            'type': self.convert_helper_dict(data['item_account_types']),
             'account_cash': self.convert_helper_dict(data['item_accounts']),
             'account_interim': self.convert_helper_dict(data['item_accounts']),
             'account_position': self.convert_helper_dict(data['item_accounts']),
