@@ -698,7 +698,8 @@ class SimpleImportProcess(object):
             )
 
             _l.info(
-                f"SimpleImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
+                f"SimpleImportProcess.Task {self.task}. init "
+                f"procedure_instance {self.procedure_instance}"
             )
 
         self.member = self.task.member
@@ -820,10 +821,10 @@ class SimpleImportProcess(object):
         result.append(column_row)
 
         for result_item in self.result.items:
-            content = []
-
-            content.append(str(result_item.row_number))
-            content.append(result_item.status)
+            content = [
+                str(result_item.row_number),
+                result_item.status,
+            ]
 
             if result_item.error_message:
                 content.append(result_item.error_message)
@@ -1107,9 +1108,7 @@ class SimpleImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-            names = {}
-
-            names["data"] = self.file_items
+            names = {"data": self.file_items}
 
             try:
                 # _l.info("whole_file_preprocess  names %s" % names)
@@ -1205,7 +1204,7 @@ class SimpleImportProcess(object):
 
                 self.preprocessed_items.append(preprocess_item)
 
-                row_number = row_number + 1
+                row_number += 1
 
         for preprocess_item in self.preprocessed_items:
             # CREATE SCHEME INPUTS
