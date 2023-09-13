@@ -359,6 +359,18 @@ class BackendReportHelperService():
 
         return items
 
+    def reduce_columns(self, items, options):
+
+        columns = options['columns']
+
+        user_columns = []
+        for column in columns:
+            user_columns.append(column['key'])
+
+        items = [{key: item[key] for key in user_columns if key in item} for item in items]
+
+        return items
+
 
 class BackendReportSubtotalService:
 

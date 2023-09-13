@@ -1169,6 +1169,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         result_items = []
 
@@ -1373,6 +1374,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         result_items = []
 
@@ -1575,6 +1577,7 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         result_items = []
 
