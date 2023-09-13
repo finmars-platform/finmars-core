@@ -271,7 +271,7 @@ class TransactionReportBuilderSql:
                             transaction_currency_expression = 't.transaction_currency_id IN (%s)' % res
                             # TODO add or for transaction_currency_id
 
-                        _l.info('result %s' % result)
+                        # _l.info('result %s' % result)
 
                         if instrument_expression and (settlement_currency_expression and transaction_currency_expression):
 
@@ -308,7 +308,7 @@ class TransactionReportBuilderSql:
         #
         #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
 
-        _l.info('add_user_filters result %s' % result)
+        # _l.info('add_user_filters result %s' % result)
 
         return result
 

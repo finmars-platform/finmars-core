@@ -91,7 +91,7 @@ class BackendReportHelperService():
                     if related_key == "attributes" and isinstance(related_value, list):
                         for attribute in related_value:
 
-                            _l.info('attribute %s' % attribute)
+                            # _l.info('attribute %s' % attribute)
 
                             user_code = attribute.get("attribute_type_object", {}).get("user_code")
                             if user_code:
@@ -146,7 +146,7 @@ class BackendReportHelperService():
 
 
         # _l.info('data helper_dicts %s' %  helper_dicts)
-        _l.info('data items %s' % data['items'][0])
+        # _l.info('data items %s' % data['items'][0])
         for item in data['items']:
 
             original_item = self.flatten_and_convert_item(item, helper_dicts)

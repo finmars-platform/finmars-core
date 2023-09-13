@@ -1089,7 +1089,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
-        _l.info('data items %s ' % data['items'])
+        # _l.info('data items %s ' % data['items'])
 
         return data
 
@@ -1298,7 +1298,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
-        _l.info('data items %s ' % data['items'])
+        # _l.info('data items %s ' % data['items'])
 
         return data
 
