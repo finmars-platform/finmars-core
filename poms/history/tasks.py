@@ -25,6 +25,8 @@ log = f"history_{Path(__name__).stem}.clear_old_journal_records:"
 _l = logging.getLogger("poms.history")
 
 DATE_FORMAT = "%Y-%m-%d"
+CHUNK_SIZE = 5000
+DAYS_30 = 30
 
 
 def zip_records_to_buffer(filename: str, records: Iterable) -> bytes:
@@ -61,41 +63,63 @@ def clear_old_journal_records():
         _l.error(f"{log} aborted, no master user")
         return
 
-    ttl = MasterUser.JOURNAL_POLICY_DAYS.get(master.journal_storage_policy, 30)
-
+    ttl = MasterUser.JOURNAL_POLICY_DAYS.get(master.journal_storage_policy, DAYS_30)
     delete_time = now() - timedelta(days=ttl)
     date_from = delete_time.strftime(DATE_FORMAT)
-    filename = f"removed_journal_records_till_{date_from}"
 
-    records_to_delete = HistoricalRecord.objects.filter(created__lt=delete_time)
+    old_records = HistoricalRecord.objects.filter(
+        created__lt=delete_time,
+    ).order_by(
+        "created",
+    )
 
-    count = records_to_delete.count()
+    total_count = old_records.count()
 
-    _l.info(f"{log} {count} records to be deleted")
-    if not records_to_delete:
+    _l.info(f"{log} {total_count} records to be deleted")
+    if not old_records:
         _l.info(f"{log} aborted, nothing to delete")
         return
 
-    buffer = zip_records_to_buffer(filename, records_to_delete)
-    _l.info(f"{log} created buffer of {len(buffer)} size")
+    start = 0
+    chunk_no = 1
+    while start < total_count:
+        end = start + CHUNK_SIZE
 
-    try:
-        if storage := get_storage():
-            remote_path = get_storage_path(filename)
-            save_to_remote_storage(storage, remote_path, buffer)
-            _l.info(f"{log} records saved to remote storage {remote_path}")
+        chunk = old_records[start:end]
+
+        filename = f"deleted_records_from_{date_from}_chunk_{chunk_no}"
+
+        buffer = zip_records_to_buffer(filename, chunk)
+        _l.info(f"{log} created buffer of {len(buffer)} size")
+
+        try:
+            storage = get_storage()
+            if storage:
+                remote_path = get_storage_path(filename)
+                save_to_remote_storage(storage, remote_path, buffer)
+                _l.info(f"{log} deleted records saved to remote storage {remote_path}")
+            else:
+                local_path = get_local_path(filename)
+                save_to_local_file(local_path, buffer)
+                _l.info(f"{log} deleted records saved to local file {local_path}")
+
+        except Exception as e:
+            _l.error(
+                f"{log} unable to save deleted records into file {filename} "
+                f"due to error: {repr(e)}"
+            )
+            return
+
+        try:
+            delete_selected_records(old_records)
+            vacuum_table(table=HistoricalRecord)
+
+        except Exception as e:
+            _l.error(f"{log} unable to delete records and vacuum the table: {repr(e)}")
+            return
+
         else:
-            local_path = get_local_path(filename)
-            save_to_local_file(local_path, buffer)
-            _l.info(f"{log} records saved to local file {local_path}")
-    except Exception as e:
-        _l.error(f"{log} unable to save deleted records: {e}")
-        return
+            _l.info(f"{log} {total_count} records successfully deleted from history")
 
-    try:
-        delete_selected_records(records_to_delete)
-        vacuum_table(table=HistoricalRecord)
-    except Exception as e:
-        _l.error(f"{log} unable to delete records and vacuum the table: {e}")
-    else:
-        _l.info(f"{log} {count} deleted from history")
+        chunk_no += 1
+        start = end
