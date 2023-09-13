@@ -614,7 +614,7 @@ def handler_instrument_object(
                 _l.info("Setting up accrual schedules. Creating new")
 
                 accrual = {
-                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_ACT_364,
+                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_SIMPLE,
                     "periodicity": Periodicity.ANNUALLY
                 }
 
