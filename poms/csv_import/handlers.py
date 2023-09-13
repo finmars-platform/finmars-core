@@ -613,10 +613,10 @@ def handler_instrument_object(
             else:
                 _l.info("Setting up accrual schedules. Creating new")
 
-                accrual = {}
-
-                accrual["accrual_calculation_model"] = AccrualCalculationModel.ACT_365
-                accrual["periodicity"] = Periodicity.ANNUALLY
+                accrual = {
+                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_ACT_364,
+                    "periodicity": Periodicity.ANNUALLY
+                }
 
                 if (
                     "accrual_start_date"
@@ -649,16 +649,16 @@ def handler_instrument_object(
                     if accrual["periodicity_n"] == 1:
                         accrual["periodicity"] = Periodicity.ANNUALLY
 
-                    if accrual["periodicity_n"] == 2:
+                    elif accrual["periodicity_n"] == 2:
                         accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
 
-                    if accrual["periodicity_n"] == 4:
+                    elif accrual["periodicity_n"] == 4:
                         accrual["periodicity"] = Periodicity.QUARTERLY
 
-                    if accrual["periodicity_n"] == 6:
+                    elif accrual["periodicity_n"] == 6:
                         accrual["periodicity"] = Periodicity.BIMONTHLY
 
-                    if accrual["periodicity_n"] == 12:
+                    elif accrual["periodicity_n"] == 12:
                         accrual["periodicity"] = Periodicity.MONTHLY
 
                     _l.info("periodicity %s" % accrual["periodicity"])

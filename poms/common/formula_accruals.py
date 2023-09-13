@@ -1,19 +1,23 @@
-from __future__ import unicode_literals, division
-
 import calendar
 import logging
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 
 from dateutil import relativedelta, rrule
 from scipy.optimize import newton
 
-_l = logging.getLogger('poms.common')
+_l = logging.getLogger("poms.common")
 
 
 def coupon_accrual_factor(
-        accrual_calculation_schedule=None,
-        accrual_calculation_model=None, periodicity=None, periodicity_n=None,
-        dt1=None, dt2=None, dt3=None, maturity_date=None):
+    accrual_calculation_schedule=None,
+    accrual_calculation_model=None,
+    periodicity=None,
+    periodicity_n=None,
+    dt1=None,
+    dt2=None,
+    dt3=None,
+    maturity_date=None,
+):
     from poms.instruments.models import AccrualCalculationModel
 
     # day_convention_code - accrual_calculation_model
@@ -24,7 +28,9 @@ def coupon_accrual_factor(
     # maturity_date - instrument.maturity_date
 
     if accrual_calculation_schedule:
-        accrual_calculation_model = accrual_calculation_schedule.accrual_calculation_model
+        accrual_calculation_model = (
+            accrual_calculation_schedule.accrual_calculation_model
+        )
         periodicity = accrual_calculation_schedule.periodicity
         periodicity_n = accrual_calculation_schedule.periodicity_n
         if maturity_date is None:
@@ -36,7 +42,13 @@ def coupon_accrual_factor(
     # if isinstance(periodicity, Periodicity):
     #     periodicity = periodicity.id
 
-    if accrual_calculation_model is None or periodicity is None or dt1 is None or dt2 is None or dt3 is None:
+    if (
+        accrual_calculation_model is None
+        or periodicity is None
+        or dt1 is None
+        or dt2 is None
+        or dt3 is None
+    ):
         return 0
 
     # k = 0
@@ -78,9 +90,8 @@ def coupon_accrual_factor(
         dt3 += periodicity.to_timedelta(i=k)
         if k > 0:
             dt1 = dt3 - periodicity.to_timedelta(i=1)
-        if maturity_date is not None:
-            if dt3 >= maturity_date > dt2:
-                dt3 = maturity_date
+        if maturity_date is not None and dt3 >= maturity_date > dt2:
+            dt3 = maturity_date
 
     elif freq >= 12:
         return 0
@@ -90,17 +101,17 @@ def coupon_accrual_factor(
     else:
         dt3 = maturity_date
 
-    if accrual_calculation_model.id == AccrualCalculationModel.NONE:  # 1
+    if accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_NONE:
         # Case 0  'none
         #     CouponAccrualFactor = 0
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_ACT:  # 2
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA:
         # Case 1  'ACT/ACT
         #     CouponAccrualFactor = (dt2 - dt1) / (dt3 - dt1) / freq
         return (dt2 - dt1).days / (dt3 - dt1).days / freq
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_ACT_ISDA:  # 3
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA:
         # Case 100  'ACT/ACT  - ISDA
         #     Ndays1 = DateSerial(y1, 1, 1) - DateSerial(y1, 12, 31)
         #     Ndays2 = DateSerial(y2, 1, 1) - DateSerial(y2, 12, 31)
@@ -116,26 +127,23 @@ def coupon_accrual_factor(
         is_leap1 = calendar.isleap(dt1.year)
         is_leap2 = calendar.isleap(dt2.year)
         if is_leap1 != is_leap2:
-            return (date(dt2.year, 1, 1) - dt1).days / ndays1 + (dt2 - date(dt2.year, 1, 1)).days / ndays2
+            return (date(dt2.year, 1, 1) - dt1).days / ndays1 + (
+                dt2 - date(dt2.year, 1, 1)
+            ).days / ndays2
         else:
             return (dt2 - dt1).days / 365
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_360:  # 4
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_360:
         # Case 2  'ACT/360
         #     CouponAccrualFactor = (dt2 - dt1) / 360
         return (dt2 - dt1).days / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365:  # 5
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_365:
         # Case 3  'ACT/365
         #     CouponAccrualFactor = (dt2 - dt1) / 365
         return (dt2 - dt1).days / 365
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365_25:  # 6
-        # Case 106  'Act/365.25
-        #     CouponAccrualFactor = (dt2 - dt1) / 365.25
-        return (dt2 - dt1).days / 365.25
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365_366:  # 7
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_366:
         # Case 107  'Act/365(366)
         #     If y1 < y2 Then
         #         If (Month(DateSerial(y1, 2, 29)) = 2 Or Month(DateSerial(y2, 2, 29)) = 2) And _
@@ -149,79 +157,28 @@ def coupon_accrual_factor(
             # TODO: verify
             is_leap1 = calendar.isleap(dt1.year)
             is_leap2 = calendar.isleap(dt2.year)
-            if (is_leap1 or is_leap2) and dt1 <= (date(dt1.year, 2, 28) + timedelta(days=1)) <= dt2:
+            if (is_leap1 or is_leap2) and dt1 <= (
+                date(dt1.year, 2, 28) + timedelta(days=1)
+            ) <= dt2:
                 return ((dt2 - dt1).days + 1) / 366
             else:
                 return ((dt2 - dt1).days + 1) / 365
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_1_365:  # 8
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_365A:
         # Case 104  'Act+1/365
         #     CouponAccrualFactor = (dt2 - dt1 + 1) / 365
         return ((dt2 - dt1).days + 1) / 365
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_1_360:  # 9
-        # CouponAccrualFactor = (dt2 - dt1 + 1) / 360
-        return ((dt2 - dt1).days + 1) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30_360:  # 11
-        # Case 5  '30/360
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_US:
+        return _accrual_factor_30_360(dt1, dt2)
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30_360_NO_EOM:  # 12
-        # Case 14  '30/360 (NO EOM)
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
+    elif (
+        accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_GERMAN
+    ):
+        return _accrual_factor_30_360(dt1, dt2)
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30E_P_360:  # 24
-        # Case 101  '30E+/360
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 Then
-        #     M2 = M2 + 1
-        #     d2 = 1
-        #     End If
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        m1 = dt1.month
-        m2 = dt1.month
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            m2 += 1
-            d2 = 1
-        return ((dt2.year - dt1.year) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30E_P_360_ITL:  # 13
-        # Case 102  '30E+/360.ITL
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1 + 1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1 + 1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.NL_365:  # 14
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_NL_365:  # 14
         # Case 9  'NL/365
         #     Y1_leap = Month(DateSerial(Year(dt1), 2, 29)) = 2
         #     Y2_leap = Month(DateSerial(Year(dt2), 2, 29)) = 2
@@ -238,88 +195,17 @@ def coupon_accrual_factor(
             k = 1
         return ((dt2 - dt1).days - k) / 365
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.NL_365_NO_EOM:  # 15
-        # Case 18  'NL/365 (NO-EOM)
-        #     Y1_leap = Month(DateSerial(Year(dt1), 2, 29)) = 2
-        #     Y2_leap = Month(DateSerial(Year(dt2), 2, 29)) = 2
-        #     k = 0
-        #     If Y1_leap And dt1 < DateSerial(Year(dt1), 2, 29) And dt2 >= DateSerial(Year(dt1), 2, 29) Then k = 1
-        #     If Y2_leap And dt2 >= DateSerial(Year(dt2), 2, 29) And dt1 < DateSerial(Year(dt2), 2, 29) Then k = 1
-        #     CouponAccrualFactor = (dt2 - dt1 - k) / 365
-        is_leap1 = calendar.isleap(dt1.year)
-        is_leap2 = calendar.isleap(dt2.year)
-        k = 0
-        if is_leap1 and dt1 < date(dt1.year, 2, 29) <= dt2:
-            k = 1
-        if is_leap2 and dt2 >= date(dt2.year, 2, 29) > dt1:
-            k = 1
-        return ((dt2 - dt1).days - k) / 365
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ISMA_30_360:  # 16
-        # Case 20  'ISMA-30/360 = 30E/360
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ISMA_30_360_NO_EOM:  # 17
-        # Case 23  'ISMA-30/360 (NO EOM)
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.US_MINI_30_360_EOM:  # 18
-        # Case 29  'US MUNI-30/360 (EOM)
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #     lastDay1 = Month(dt1 + 1) = 3 And Day(dt1 + 1) = 1
-        #     lastDay2 = Month(dt2 + 1) = 3 And Day(dt2 + 1) = 1
-        #     If lastDay1 Then d1 = 30
-        #     If lastDay1 And lastDay2 Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        last_day1 = (dt1 + timedelta(days=1)).month == 3 and (dt1 + timedelta(days=1)).day == 1
-        last_day2 = (dt2 + timedelta(days=1)).month == 3 and (dt2 + timedelta(days=1)).day == 1
-        if last_day1:
-            d1 = 30
-        if last_day1 and last_day2:
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.US_MINI_30_360_NO_EOM:  # 19
-        # Case 32  'US MUNI-30/360 (NO EOM)
-        #     If d1 = 31 Then d1 = 30
-        #     If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        d1 = dt1.day
-        d2 = dt2.day
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.BUS_DAYS_252:  # 20
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_BD_252:
         # Case 33  'BUS DAYS/252
         #     CouponAccrualFactor = (DateDiff("d", dt1, dt2) - DateDiff("ww", dt1, dt2, vbSaturday) - _
         #         DateDiff("ww", dt1, dt2, vbSunday)) / 252
-        return ((dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)) / 252
+        return (
+            (dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)
+        ) / 252
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.GERMAN_30_360_EOM:  # 21
+    elif (
+        accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_ISDA
+    ):  # 21
         # Case 35  'GERMAN-30/360 (EOM)
         #     If IsNull(MaturityDate) Then
         #         CouponAccrualFactor = 0
@@ -338,39 +224,32 @@ def coupon_accrual_factor(
         last_day2 = (dt2 + timedelta(days=1)).month == (dt2.month + 1)
         if last_day1:
             d1 = 30
-        if last_day2 and not ((dt2 == maturity_date) and dt2.month == 2):
+        if last_day2 and (dt2 != maturity_date or dt2.month != 2):
             d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
+        return (
+                (dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)
+        ) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.GERMAN_30_360_NO_EOM:  # 22
-        # Case 38  'GERMAN-30/360 (NO EOM)
-        #     If IsNull(MaturityDate) Then
-        #         CouponAccrualFactor = 0
-        #         Exit Function
-        #     End If
-        #     lastDay1 = Month(dt1 + 1) = (Month(dt1) + 1)
-        #     lastDay2 = Month(dt1 + 1) = (Month(dt1) + 1)
-        #     If lastDay1 Then d1 = 30
-        #     If lastDay2 And Not ((dt2 = MaturityDate) And Month(dt2) = 2) Then d2 = 30
-        #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if maturity_date is None:
-            return 0
-        d1 = dt1.day
-        d2 = dt2.day
-        last_day1 = (dt1 + timedelta(days=1)).month == (dt1.month + 1)
-        last_day2 = (dt2 + timedelta(days=1)).month == (dt2.month + 1)
-        if last_day1:
-            d1 = 30
-        if last_day2 and not ((dt2 == maturity_date) and dt2.month == 2):
-            d2 = 30
-        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.REVERSED_ACT_365:  # 23
-        # Case 1001  'reversed ACT/365
-        #     CouponAccrualFactor = (dt3 - dt2) / 365
-        return (dt3 - dt2).days / 365
+    else:
+        _l.error(f"unknown accrual_calculation_model.id={accrual_calculation_model.id}")
 
     return 0
+
+
+def _accrual_factor_30_360(dt1, dt2):
+    # Case 5  '30/360
+    #     If d1 = 31 Then d1 = 30
+    #     If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
+    #     CouponAccrualFactor = ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
+    d1 = dt1.day
+    d2 = dt2.day
+    if d1 == 31:
+        d1 = 30
+    if d2 == 31 and d1 in (30, 31):
+        d2 = 30
+    return (
+        (dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)
+    ) / 360
 
 
 def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
@@ -492,13 +371,10 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     from poms.instruments.models import AccrualCalculationModel
 
     accrual_calculation_model = accrual.accrual_calculation_model
-    cpn = accrual.accrual_size if not factor else 1.0
-
-    cpn = 0.0
 
     try:
         cpn = float(accrual.accrual_size)
-    except Exception as e:
+    except Exception:
         cpn = 0.0
 
     if factor:
@@ -507,7 +383,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     periodicity = accrual.periodicity
     freq = periodicity.to_freq()
     # dt3 = accrual.first_payment_date
-    dt3 = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
+    # dt3 = datetime.date(datetime.strptime(accrual.first_payment_date, "%Y-%m-%d"))
 
     d1 = dt1.day
     m1 = dt1.month
@@ -517,22 +393,22 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     y2 = dt2.year
 
     # Select Case day_convention_code
-    if accrual_calculation_model.id == AccrualCalculationModel.NONE:
+    if accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_NONE:
         #     Case 0  '
         #         GetCoupon = 0
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_ACT:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA:
         #     Case 1  'ACT/ACT
         #         GetCoupon = CPN / freq
         return cpn / freq
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_360:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_360:
         #     Case 2  'ACT/360
         #         GetCoupon = CPN * (dt2 - dt1) / 360
         return cpn * (dt2 - dt1).days / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_364:
         #     Case 3  'ACT/365
         #         GetCoupon = CPN * (dt2 - dt1) / 365
         return cpn * (dt2 - dt1).days / 365
@@ -542,33 +418,18 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         # #         GetCoupon = Null
         # return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30_360:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_US:
         #     Case 5  '30/360
         #         If d1 = 31 Then d1 = 30
         #         If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
         #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
         if d1 == 31:
             d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
+        if d2 == 31 and d1 in (30, 31):
             d2 = 30
         return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
 
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 6  '30/365
-    # #         GetCoupon = Null
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 7  'NL/ACT
-    # #         GetCoupon = Null
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 8  'NL/360
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.NL_365:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_NL_365:
         #     Case 9  'NL/365
         #         Y1_leap = Month(DateSerial(Year(dt1), 2, 29)) = 2  ‘ check if dt1 lying in leap year
         #         Y2_leap = Month(DateSerial(Year(dt2), 2, 29)) = 2  ‘check if dt2 lying in leap year
@@ -585,150 +446,21 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
             ndays1 = 1
         return cpn * ((dt2 - dt1).days - ndays1) / 365
 
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    #     #     Case 10  'ACT/ACT (NO EOM)
-    #     #         GetCoupon = CPN / freq
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_360:
-        #     Case 11  'ACT/360 (NO EOM)
-        #         GetCoupon = CPN * (dt2 - dt1) / 360
-        return cpn * (dt2 - dt1).days / 360
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    #     #     Case 12  'ACT/365 (NO EOM)
-    #     #         GetCoupon = CPN * (dt2 - dt1) / 365
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 13  '30/ACT (NO EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30_360_NO_EOM:
-        #     Case 14  '30/360 (NO EOM)
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 15  '30/365 (NO-EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 16  'NL/ACT (NO-EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 17  'NL/360 (NO-EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.NL_365_NO_EOM:
-        #     Case 18  'NL/365 (NO-EOM)
-        #         Y1_leap = Month(DateSerial(Year(dt1), 2, 29)) = 2
-        #         Y2_leap = Month(DateSerial(Year(dt2), 2, 29)) = 2
-        #         Ndays1 = 0
-        #         If Y1_leap And dt1 < DateSerial(Year(dt1), 2, 29) And dt2 >= DateSerial(Year(dt1), 2, 29) Then Ndays1 = 1
-        #         If Y2_leap And dt2 >= DateSerial(Year(dt2), 2, 29) And dt1 < DateSerial(Year(dt2), 2, 29) Then Ndays1 = 1
-        #         GetCoupon = CPN * (dt2 - dt1 - Ndays1) / 365
-        is_leap1 = calendar.isleap(dt1.year)
-        is_leap2 = calendar.isleap(dt2.year)
-        ndays1 = 0
-        if is_leap1 and dt1 < date(y1, 2, 29) and dt2 >= date(y1, 2, 29):
-            ndays1 = 1
-        if is_leap2 and dt2 >= date(y2, 2, 29) and dt1 < date(y2, 2, 29):
-            ndays1 = 1
-        return cpn * ((dt2 - dt1).d - ndays1) / 365
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 19  'ISMA-30/ACT
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ISMA_30_360:
-        #     Case 20  'ISMA-30/360 = 30E/360
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 21  'ISMA-30/365
-    # #         GetCoupon = Null
-    #     return 0
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 22  'ISMA-30/ACT (NO EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ISMA_30_360_NO_EOM:
-        #     Case 23  'ISMA-30/360 (NO EOM)
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    # elif accrual_calculation_model.id == AccrualCalculationModel.:
-    # #     Case 24  'ISMA-30/365 (NO EOM)
-    # #         GetCoupon = Null
-    #     return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.US_MINI_30_360_EOM:
-        #     Case 29  'US MUNI-30/360 (EOM)
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #         lastDay1 = Month(dt1 + 1) = 3 And Day(dt1 + 1) = 1
-        #         lastDay2 = Month(dt2 + 1) = 3 And Day(dt2 + 1) = 1
-        #         If lastDay1 Then d1 = 30
-        #         If lastDay1 And lastDay2 Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        lastDay1 = (dt1 + timedelta(days=1)).month == 3 and (dt1 + timedelta(days=1)).day == 1
-        lastDay2 = (dt2 + timedelta(days=1)).month = 3 and (dt2 + timedelta(days=1)).day == 1
-        if lastDay1:
-            d1 = 30
-        if lastDay1 and lastDay2:
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.US_MINI_30_360_NO_EOM:
-        #     Case 32  'US MUNI-30/360 (NO EOM)
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 And (d1 = 30 Or d1 = 31) Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31 and (d1 == 30 or d1 == 31):
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.BUS_DAYS_252:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_BD_252:
         #     Case 33  'BUS DAYS/252
         #         GetCoupon = CPN * (DateDiff("d", dt1, dt2) - DateDiff("ww", dt1, dt2, vbSaturday) - _
         #             DateDiff("d", dt1, dt2, vbSunday)) / 252
-        return cpn * ((dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)) / 252
+        return (
+            cpn
+            * (
+                (dt2 - dt1).days
+                - weekday(dt1, dt2, rrule.SA)
+                - weekday(dt1, dt2, rrule.SU)
+            )
+            / 252
+        )
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.GERMAN_30_360_EOM:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_ISDA:
         #     Case 35  'GERMAN-30/360 (EOM)
         #         If IsNull(MaturityDate) Then
         #             AddCoupon = 0
@@ -745,11 +477,11 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         last_day2 = (dt2 + timedelta(days=1)).month == (dt2.month + 1)
         if last_day1:
             d1 = 30
-        if last_day2 and not ((dt2 == maturity_date) and dt2.month == 2):
+        if last_day2 and (dt2 != maturity_date or dt2.month != 2):
             d2 = 30
         return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.GERMAN_30_360_NO_EOM:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_GERMAN:
         #     Case 38  'GERMAN-30/360 (NO EOM)
         #         If IsNull(MaturityDate) Then
         #             AddCoupon = 0
@@ -762,17 +494,18 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1)) / 360
         if maturity_date is None:
             return 0
+
         d1 = dt1.day
         d2 = dt2.day
         last_day1 = (dt1 + timedelta(days=1)).month == (dt1.month + 1)
         last_day2 = (dt2 + timedelta(days=1)).month == (dt2.month + 1)
         if last_day1:
             d1 = 30
-        if last_day2 and not ((dt2 == maturity_date) and dt2.month == 2):
+        if last_day2 and (dt2 != maturity_date or dt2.month != 2):
             d2 = 30
         return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_ACT_ISDA:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA:
         #     Case 100  'ACT/ACT  - ISDA
         #         Ndays1 = DateSerial(y1, 1, 1) - DateSerial(y1, 12, 31)
         #         Ndays2 = DateSerial(y2, 1, 1) - DateSerial(y2, 12, 31)
@@ -788,11 +521,14 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         is_leap1 = calendar.isleap(dt1.year)
         is_leap2 = calendar.isleap(dt2.year)
         if is_leap1 != is_leap2:
-            return cpn * ((date(dt2.year, 1, 1) - dt1).days / ndays1 + (dt2 - date(dt2.year, 1, 1)).days / ndays2)
+            return cpn * (
+                (date(dt2.year, 1, 1) - dt1).days / ndays1
+                + (dt2 - date(dt2.year, 1, 1)).days / ndays2
+            )
         else:
             return cpn * (dt2 - dt1).days / 365
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30E_P_360:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30E_PLUS_360:
         #     Case 101  '30E+/360
         #         If d1 = 31 Then d1 = 30
         #         If d2 = 31 Then
@@ -807,33 +543,12 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
             d2 = 1
         return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.C_30E_P_360_ITL:
-        #     Case 102  '30E+/360.ITL
-        #         If d1 = 31 Then d1 = 30
-        #         If d2 = 31 Then d2 = 30
-        #         GetCoupon = CPN * ((y2 - y1) * 360 + (M2 - M1) * 30 + (d2 - d1 + 1)) / 360
-        if d1 == 31:
-            d1 = 30
-        if d2 == 31:
-            d2 = 30
-        return cpn * ((y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1 + 1)) / 360
-
-        # elif accrual_calculation_model.id == AccrualCalculationModel.:
-        #     Case 104  'Act+1/365
-        #         GetCoupon = CPN * (dt2 - dt1 + 1) / 365
-        # return 0
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_1_360:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_365A:
         #     Case 105  'Act+1/360
         #         GetCoupon = CPN * (dt2 - dt1 + 1) / 360
         return cpn * ((dt2 - dt1).days + 1) / 360
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365_25:
-        #     Case 106  'Act/365.25
-        #         GetCoupon = CPN * (dt2 - dt1) / 365.25
-        return cpn * (dt2 - dt1).days / 365.25
-
-    elif accrual_calculation_model.id == AccrualCalculationModel.ACT_365_366:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_365L:
         #     Case 107  'Act/365(366)
         #         If y1 < y2 Then
         #             If (Month(DateSerial(y1, 2, 29)) = 2 Or Month(DateSerial(y2, 2, 29)) = 2) And _
@@ -847,16 +562,16 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
             # TODO: verify
             is_leap1 = calendar.isleap(dt1.year)
             is_leap2 = calendar.isleap(dt2.year)
-            if (is_leap1 or is_leap2) and dt1 <= (date(y1, 2, 28) + timedelta(days=1)) <= dt2:
+            if (is_leap1 or is_leap2) and dt1 <= (
+                date(y1, 2, 28) + timedelta(days=1)
+            ) <= dt2:
                 return cpn * ((dt2 - dt1).days + 1) / 366
             else:
                 return cpn * ((dt2 - dt1).days + 1) / 365
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.REVERSED_ACT_365:
-        #     Case 1001 ' reversed ACT/365
-        #         GetCoupon = CPN * (dt3 - dt2) / 365
-        return cpn * (dt3 - dt2).days / 365
+    else:
+        _l.error(f"unknown accrual_calculation_model.id={accrual_calculation_model.id}")
 
     return 0
 
@@ -882,32 +597,31 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
 
 
 def weekday(dt1, dt2, byweekday):
-    # print(-20, dt1, dt1.strftime('%A'), ' - ', dt2, dt2.strftime('%A'), byweekday)
-    count = 0
-    for d in rrule.rrule(rrule.WEEKLY, dtstart=dt1, until=dt2, byweekday=byweekday):
-        # print(-20, d, d.strftime('%A'))
-        count += 1
-    # print(-21, count)
-    return count
+    return sum(
+        1
+        for _ in rrule.rrule(
+            rrule.WEEKLY, dtstart=dt1, until=dt2, byweekday=byweekday
+        )
+    )
 
 
 def f_xnpv(data, rate):
-    '''Equivalent of Excel's XNPV function.
+    """Equivalent of Excel's XNPV function.
     https://support.office.com/en-us/article/XNPV-function-1b42bbf6-370f-4532-a0eb-d67c16b664b7
 
-    >>> from datetime import date
-    >>> dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-    >>> values = [-90, 5, 5, 105, ]
-    >>> data = [(d, v) for d, v in zip(dates, values)]
-    >>> f_xnpv(0.09, data)
+    from datetime import date
+    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17),]
+    values = [-90, 5, 5, 105, ]
+    data = [(d, v) for d, v in zip(dates, values)]
+    f_xnpv(0.09, data)
     16.7366702148651
-    '''
+    """
     # _l.debug('xnpv > rate=%s', rate)
     if not data:
         return 0.0
 
     if rate <= -1.0:
-        return float('inf')
+        return float("inf")
     d0, v0 = data[0]  # or min(dates)
 
     # for di, vi in data:
@@ -919,25 +633,22 @@ def f_xnpv(data, rate):
     #         _l.debug('    res=%s', repr(e))
 
     try:
-        return sum(
-            vi / ((1.0 + rate) ** ((di - d0).days / 365.0))
-            for di, vi in data
-        )
+        return sum(vi / ((1.0 + rate) ** ((di - d0).days / 365.0)) for di, vi in data)
     except (OverflowError, ZeroDivisionError):
         return 0.0
 
 
 def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
-    '''Equivalent of Excel's XIRR function.
+    """Equivalent of Excel's XIRR function.
     https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
 
-    >>> from datetime import date
-    >>> dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-    >>> values = [-90, 5, 5, 105, ]
-    >>> data = [(d, v) for d, v in zip(dates, values)]
-    >>> f_xirr(data)
+    from datetime import date
+    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
+    values = [-90, 5, 5, 105, ]
+    data = [(d, v) for d, v in zip(dates, values)]
+    f_xirr(data)
     0.3291520343150294
-    '''
+    """
     # _l.debug('f_xirr: data=%s', data)
 
     # return newton(lambda r: xnpv(r, values, dates), 0.0), \
@@ -951,9 +662,9 @@ def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
     try:
         kw = {}
         if tol is not None:
-            kw['tol'] = tol
+            kw["tol"] = tol
         if maxiter is not None:
-            kw['maxiter'] = maxiter
+            kw["maxiter"] = maxiter
         return newton(func=lambda r: f_xnpv(data, r), x0=x0, **kw)
     except RuntimeError:  # Failed to converge?
         # _l.debug('newton error', exc_info=True)
@@ -961,16 +672,16 @@ def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
 
 
 def f_duration(data, ytm=None):
-    '''Equivalent of Excel's XIRR function.
+    """Equivalent of Excel's XIRR function.
     https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
 
-    >>> from datetime import date
-    >>> dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-    >>> values = [-90, 5, 5, 105, ]
-    >>> data = [(d, v) for d, v in zip(dates, values)]
-    >>> f_xirr(data)
+    from datetime import date
+    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
+    values = [-90, 5, 5, 105, ]
+    data = [(d, v) for d, v in zip(dates, values)]
+    f_xirr(data)
     0.6438341602180792
-    '''
+    """
     # _l.debug('duration >')
 
     if not data:
@@ -982,25 +693,33 @@ def f_duration(data, ytm=None):
     v0 = -v0
 
     try:
-        return sum(
-            ((di - d0).days / 365.0) * (vi / ((1.0 + ytm) ** ((di - d0).days / 365.0)))
-            for di, vi in data
-        ) / v0 / (1 + ytm)
+        return (
+            sum(
+                ((di - d0).days / 365.0)
+                * (vi / ((1.0 + ytm) ** ((di - d0).days / 365.0)))
+                for di, vi in data
+            )
+            / v0
+            / (1 + ytm)
+        )
     except (OverflowError, ZeroDivisionError):
         return 0.0
 
 
 if __name__ == "__main__":
     # noinspection PyUnresolvedReferences
-    import env_ai
     import django
-
-    django.setup()
-
     from django.db import transaction
-    from poms.instruments.models import AccrualCalculationModel, Instrument, Periodicity, AccrualCalculationSchedule
+
+    from poms.instruments.models import (
+        AccrualCalculationModel,
+        AccrualCalculationSchedule,
+        Instrument,
+        Periodicity,
+    )
     from poms.users.models import MasterUser
 
+    django.setup()
 
     # print('1 -> ', coupon_accrual_factor(
     #     accrual_calculation_model=AccrualCalculationModel.NONE,
@@ -1010,7 +729,6 @@ if __name__ == "__main__":
     #     dt3=date(2016, 2, 1),
     #     maturity_date=date(2016, 12, 31)
     # ))
-
     # d0 = date(2016, 2, 29)
     # d1 = date(2016, 1, 31)
     # d2 = date(2016, 2, 11)
@@ -1080,13 +798,11 @@ if __name__ == "__main__":
     #     dt3=date(2016, 2, 1),
     #     maturity_date=date.max
     # ))
-
     # s = datetime.utcnow()
     # count = 0
     # for d in rrule.rrule(dtstart=date.min, until=date.max, freq=rrule.MONTHLY):
     #     count += 1
     # print(400, date.min, date.max, count, datetime.utcnow() - s)
-
     # s = datetime.utcnow()
     # sd = date.min
     # count = 0
@@ -1099,7 +815,6 @@ if __name__ == "__main__":
     #     if d >= date.max:
     #         break
     # print(401, date.min, date.max, count, datetime.utcnow() - s)
-
     # i = Instrument.objects.get(pk=19)
     # _l.debug('> instr_accrual: instr=%s', i.id)
     # d = date(2016, 4, 7)
@@ -1111,51 +826,79 @@ if __name__ == "__main__":
     #     _l.debug('< instr_accrual_accrued_price: %s', instr_accrual_accrued_price)
 
     def _test_ytm():
-        dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-        values = [-90, 5, 5, 105, ]
+        dates = [
+            date(2016, 2, 16),
+            date(2016, 3, 10),
+            date(2016, 9, 1),
+            date(2017, 1, 17),
+        ]
+        values = [
+            -90,
+            5,
+            5,
+            105,
+        ]
         data = [(d, v) for d, v in zip(dates, values)]
-        _l.debug('data: %s', [(str(d), v) for d, v in data])
-        _l.debug('xirr: %s', f_xirr(data))
+        _l.debug("data: %s", [(str(d), v) for d, v in data])
+        _l.debug("xirr: %s", f_xirr(data))
 
-        _l.debug('https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d')
-        dates = [date(2008, 1, 1), date(2008, 3, 1), date(2008, 10, 30), date(2009, 2, 15), date(2009, 4, 1), ]
-        values = [-10000, 2750, 4250, 3250, 2750, ]
+        _l.debug(
+            "https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d"
+        )
+        dates = [
+            date(2008, 1, 1),
+            date(2008, 3, 1),
+            date(2008, 10, 30),
+            date(2009, 2, 15),
+            date(2009, 4, 1),
+        ]
+        values = [
+            -10000,
+            2750,
+            4250,
+            3250,
+            2750,
+        ]
         data = [(d, v) for d, v in zip(dates, values)]
-        _l.debug('data: %s', [(str(d), v) for d, v in data])
-        _l.debug('xirr: %s', f_xirr(data))
-        _l.debug('xirr: %s <- from MS', 0.373362535)
+        _l.debug("data: %s", [(str(d), v) for d, v in data])
+        _l.debug("xirr: %s", f_xirr(data))
+        _l.debug("xirr: %s <- from MS", 0.373362535)
 
         # trn
         data = [(date(2017, 1, 27), -1.0), (date(2019, 9, 30), 1.0)]
-        _l.debug('data: %s', [(str(d), v) for d, v in data])
-        _l.debug('xirr: %s', f_xirr(data, x0=1.0))
+        _l.debug("data: %s", [(str(d), v) for d, v in data])
+        _l.debug("xirr: %s", f_xirr(data, x0=1.0))
         # item
         data = [(date(2017, 2, 3), -1.00857), (date(2019, 9, 30), 1.0)]
-        _l.debug('data: %s', [(str(d), v) for d, v in data])
-        _l.debug('xirr: %s', f_xirr(data, x0=0.0))
-
+        _l.debug("data: %s", [(str(d), v) for d, v in data])
+        _l.debug("xirr: %s", f_xirr(data, x0=0.0))
 
     _test_ytm()
     pass
-
 
     @transaction.atomic()
     def _test_coupons():
         try:
             master_user = MasterUser.objects.get(pk=1)
-            usd = master_user.currencies.get(user_code='USD')
-            i = Instrument.objects.create(master_user=master_user, instrument_type=master_user.instrument_type,
-                                          name="i1",
-                                          pricing_currency=usd, accrued_currency=usd)
+            usd = master_user.currencies.get(user_code="USD")
+            i = Instrument.objects.create(
+                master_user=master_user,
+                instrument_type=master_user.instrument_type,
+                name="i1",
+                pricing_currency=usd,
+                accrued_currency=usd,
+            )
 
-            _l.debug('-' * 10)
+            _l.debug("-" * 10)
             accruals = [
                 AccrualCalculationSchedule.objects.create(
                     instrument=i,
                     accrual_start_date=date(2001, 1, 1),
                     first_payment_date=date(2001, 7, 1),
                     accrual_size=10,
-                    accrual_calculation_model=AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.ACT_360),
+                    accrual_calculation_model=AccrualCalculationModel.objects.get(
+                        pk=AccrualCalculationModel.DAY_COUNT_ACT_360
+                    ),
                     periodicity=Periodicity.objects.get(pk=Periodicity.SEMI_ANNUALLY),
                 ),
                 AccrualCalculationSchedule.objects.create(
@@ -1163,7 +906,9 @@ if __name__ == "__main__":
                     accrual_start_date=date(2003, 1, 1),
                     first_payment_date=date(2003, 7, 1),
                     accrual_size=20,
-                    accrual_calculation_model=AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.ACT_360),
+                    accrual_calculation_model=AccrualCalculationModel.objects.get(
+                        pk=AccrualCalculationModel.DAY_COUNT_ACT_360
+                    ),
                     periodicity=Periodicity.objects.get(pk=Periodicity.SEMI_ANNUALLY),
                 ),
             ]
@@ -1178,28 +923,44 @@ if __name__ == "__main__":
                 # _l.debug('%s', cpn_date)
                 cpn_val, is_cpn = i.get_coupon(cpn_date=cpn_date)
                 if is_cpn:
-                    _l.debug('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
+                    _l.debug("    %s - %s (is_cpn=%s)", cpn_date, cpn_val, is_cpn)
                 cpn_date += timedelta(days=1)
 
-            _l.debug('get_future_coupons: %s',
-                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
-            _l.debug('get_future_coupons: %s',
-                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))])
+            _l.debug(
+                "get_future_coupons: %s",
+                [
+                    (str(d), v)
+                    for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))
+                ],
+            )
+            _l.debug(
+                "get_future_coupons: %s",
+                [
+                    (str(d), v)
+                    for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))
+                ],
+            )
 
             for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1)):
-                _l.debug('get_coupon: %s - %s', d, i.get_coupon(d))
+                _l.debug("get_coupon: %s - %s", d, i.get_coupon(d))
 
-            i = Instrument.objects.create(master_user=master_user, instrument_type=master_user.instrument_type,
-                                          name="i2",
-                                          pricing_currency=usd, accrued_currency=usd)
-            _l.debug('-' * 10)
+            i = Instrument.objects.create(
+                master_user=master_user,
+                instrument_type=master_user.instrument_type,
+                name="i2",
+                pricing_currency=usd,
+                accrued_currency=usd,
+            )
+            _l.debug("-" * 10)
             accruals = [
                 AccrualCalculationSchedule.objects.create(
                     instrument=i,
                     accrual_start_date=date(2001, 1, 1),
                     first_payment_date=date(2001, 7, 1),
                     accrual_size=10,
-                    accrual_calculation_model=AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.ACT_360),
+                    accrual_calculation_model=AccrualCalculationModel.objects.get(
+                        pk=AccrualCalculationModel.DAY_COUNT_ACT_360
+                    ),
                     periodicity=Periodicity.objects.get(pk=Periodicity.SEMI_ANNUALLY),
                 ),
                 AccrualCalculationSchedule.objects.create(
@@ -1207,7 +968,9 @@ if __name__ == "__main__":
                     accrual_start_date=date(2003, 2, 1),
                     first_payment_date=date(2004, 1, 1),
                     accrual_size=20,
-                    accrual_calculation_model=AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.ACT_360),
+                    accrual_calculation_model=AccrualCalculationModel.objects.get(
+                        pk=AccrualCalculationModel.DAY_COUNT_ACT_360
+                    ),
                     periodicity=Periodicity.objects.get(pk=Periodicity.ANNUALLY),
                 ),
             ]
@@ -1222,14 +985,17 @@ if __name__ == "__main__":
                 # _l.debug('%s', cpn_date)
                 cpn_val, is_cpn = i.get_coupon(cpn_date=cpn_date)
                 if is_cpn:
-                    _l.debug('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
+                    _l.debug("    %s - %s (is_cpn=%s)", cpn_date, cpn_val, is_cpn)
                 cpn_date += timedelta(days=1)
 
-            _l.debug('get_future_coupons: %s',
-                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
+            _l.debug(
+                "get_future_coupons: %s",
+                [
+                    (str(d), v)
+                    for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))
+                ],
+            )
         finally:
             transaction.set_rollback(True)
 
-
     _test_coupons()
-    pass
