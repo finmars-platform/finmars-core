@@ -521,21 +521,21 @@ def handler_instrument_object(
             ][0]["first_payment_date"]
 
     accrual_map = {
-        "Actual/Actual (ICMA)": AccrualCalculationModel.ACT_ACT,
-        "Actual/Actual (ISDA)": AccrualCalculationModel.ACT_ACT_ISDA,
-        "Actual/360": AccrualCalculationModel.ACT_360,
-        "Actual/364": AccrualCalculationModel.ACT_365,
-        "Actual/365 (Actual/365F)": AccrualCalculationModel.ACT_365,
-        "Actual/366": AccrualCalculationModel.ACT_365_366,
-        "Actual/365L": AccrualCalculationModel.ACT_365_366,
-        "Actual/365A": AccrualCalculationModel.ACT_1_365,
-        "30/360 US": AccrualCalculationModel.C_30_360,
-        "30E+/360": AccrualCalculationModel.C_30E_P_360,
-        "NL/365": AccrualCalculationModel.NL_365,
-        "BD/252": AccrualCalculationModel.BUS_DAYS_252,
-        "30E/360": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 (30/360 ISDA)": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 German": AccrualCalculationModel.GERMAN_30_360_NO_EOM,
+        "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+        "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
+        "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
+        "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
+        "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+        "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
+        "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
+        "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
+        "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
+        "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
+        "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
+        "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+        "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
+        "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+        "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
     }
 
     if "accrual_calculation_schedules" in source_data:
