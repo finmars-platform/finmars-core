@@ -367,9 +367,20 @@ class BackendReportHelperService():
         for column in columns:
             user_columns.append(column['key'])
 
-        items = [{key: item[key] for key in user_columns if key in item} for item in items]
+        result_items = []
 
-        return items
+        for item in items:
+
+            result_item = {
+                'id': item['id']
+            }
+            for key in user_columns:
+                if key in item:
+                    result_item[key] = item[key]
+
+            result_items.append(result_item)
+
+        return result_items
 
 
 class BackendReportSubtotalService:
