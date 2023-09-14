@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
@@ -25,15 +26,20 @@ from poms.portfolios.models import (
     PortfolioRegisterRecord,
 )
 from poms.portfolios.serializers import (
+    FirstTransactionDateRequestSerializer,
+    FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
     PortfolioLightSerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
-    FirstTransactionDateRequestSerializer,
-    FirstTransactionDateResponseSerializer,
+    PrCalculatePriceHistoryRequestSerializer,
+    PrCalculateRecordsRequestSerializer,
 )
-from poms.portfolios.tasks import calculate_portfolio_register_price_history
+from poms.portfolios.tasks import (
+    calculate_portfolio_register_price_history,
+    calculate_portfolio_register_record,
+)
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger("poms.portfolios")
@@ -297,26 +303,64 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        # portfolio_ids = request.data["portfolio_ids"]
-        # master_user = request.user.master_user
+        serializer = PrCalculateRecordsRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # Trigger Recalc Properly
-        # calculate_portfolio_register_record.apply_async(
-        #     kwargs={'portfolio_ids': portfolio_ids})
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Register Records",
+            type="calculate_portfolio_register_record",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
 
-        return Response({"status": "ok"})
+        calculate_portfolio_register_record.apply_async(
+            kwargs={"task_id": task.id},
+        )
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=False, methods=["post"], url_path="calculate-price-history")
     def calculate_price_history(self, request):
         _l.info(
             f"{self.__class__.__name__}.calculate_price_history data={request.data}"
         )
+        serializer = PrCalculatePriceHistoryRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # master_user = request.user.master_user
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Register Prices",
+            type="calculate_portfolio_register_price_history",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
 
-        calculate_portfolio_register_price_history.apply_async()
+        calculate_portfolio_register_price_history.apply_async(
+            kwargs={"task_id": task.id},
+        )
 
-        return Response({"status": "ok"})
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         from poms.instruments.models import Instrument
@@ -342,9 +386,6 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             instrument.fake_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# Portfolio Register Record
 
 
 class PortfolioRegisterRecordFilterSet(FilterSet):
@@ -386,10 +427,9 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
     response_serializer_class = FirstTransactionDateResponseSerializer
 
     def list(self, request, *args, **kwargs):
-
         request_serializer = self.serializer_class(
             data=request.query_params,
-            context={"request": request, "member": request.user.member}
+            context={"request": request, "member": request.user.member},
         )
         request_serializer.is_valid(raise_exception=True)
 
@@ -404,7 +444,7 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
                     "first_transaction": {
                         "date_field": date_field,
                         "date": first_date,
-                    }
+                    },
                 }
             )
 

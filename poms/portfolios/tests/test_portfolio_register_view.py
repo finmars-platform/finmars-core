@@ -1,16 +1,30 @@
-import contextlib
-
 from django.conf import settings
 
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.portfolios.models import PortfolioRegister
+
+PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
+
+EXPECTED_RESPONSE_PRICES = {
+    "task_id": 1,
+    "task_status": "P",
+    "task_type": "calculate_portfolio_register_price_history",
+    "task_options": {"date_to": "2023-09-13", "portfolios": ["x1", "y2", "z3"]},
+}
+
+EXPECTED_RESPONSE_RECORD = {
+    "task_id": 2,
+    "task_status": "P",
+    "task_type": "calculate_portfolio_register_record",
+    "task_options": {"portfolios": ["x1", "y2", "z3"]},
+}
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register/"
+        self.url = f"{PORTFOLIO_API}/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
         self.pr_data = None
@@ -50,3 +64,61 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
 
         response = self.client.post(self.url, data=new_pr_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
+
+
+class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.url = f"{PORTFOLIO_API}/calculate-records/"
+
+    def test_check_url(self):
+        response = self.client.post(path=self.url, data={})
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_RECORD))
+        self.assertEqual(
+            response_json["task_type"], EXPECTED_RESPONSE_RECORD["task_type"]
+        )
+
+    def test__validate_portfolios(self):
+        request_data = dict(portfolios=["a1", "b2", "c3"])
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["task_options"], request_data)
+
+
+class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.url = f"{PORTFOLIO_API}/calculate-price-history/"
+
+    def test_check_url(self):
+        response = self.client.post(path=self.url, data={})
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_PRICES))
+        self.assertEqual(
+            response_json["task_type"], EXPECTED_RESPONSE_PRICES["task_type"]
+        )
+
+    def test__validate_portfolios(self):
+        request_data = dict(portfolios=["x1", "y2", "z3"])
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(
+            response_json["task_options"]["portfolios"], request_data["portfolios"]
+        )
