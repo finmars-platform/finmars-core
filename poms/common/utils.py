@@ -547,12 +547,14 @@ def get_serializer(content_type_key):
     from poms.ui.serializers import MobileLayoutSerializer
 
     from poms.integrations.serializers import MappingTableSerializer
+    from poms.currencies.serializers import CurrencySerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
         "instruments.instrument": InstrumentSerializer,
         "instruments.instrumenttype": InstrumentTypeSerializer,
         "instruments.pricingpolicy": PricingPolicySerializer,
+        "currencies.currency": CurrencySerializer,
         "accounts.account": AccountSerializer,
         "accounts.accounttype": AccountTypeSerializer,
         "portfolios.portfolio": PortfolioSerializer,
