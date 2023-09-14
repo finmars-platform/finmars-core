@@ -536,6 +536,7 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TASK_SEND_SENT_EVENT = True
+# CELERY_TASK_REJECT_ON_WORKER_LOST = True # mark task as failed if worker beign killed # Enabling this can cause message loops; make sure you know what you’re doing.
 
 if CELERY_RESULT_BACKEND in {"django-db"}:
     CELERY_RESULT_EXPIRES = 2 * 24 * 60 * 60

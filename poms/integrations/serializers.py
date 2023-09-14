@@ -2332,9 +2332,9 @@ class ComplexTransactionImportSchemeSerializer(
         instance.selector_values.exclude(pk__in=pk_set).delete()
 
     def save_inputs(self, instance, inputs):
-        _l.info("inputs %s" % inputs[0])
-        _l.info("======================")
-        _l.info("inputs %s" % inputs)
+        # _l.info("inputs %s" % inputs[0])
+        # _l.info("======================")
+        # _l.info("inputs %s" % inputs)
 
         pk_set = []
         for input_values in inputs:
