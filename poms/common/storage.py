@@ -200,13 +200,19 @@ class FinmarsStorage(EncryptedStorage):
 
         return local_file_path
 
-    def zip_directory(self, directory_path, zip_file_path):
-        with ZipFile(zip_file_path, 'w', ZIP_DEFLATED) as zip_file:
-            for root, _, files in os.walk(directory_path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    archive_path = os.path.relpath(file_path, directory_path)
-                    zip_file.write(file_path, archive_path)
+    def zip_directory(self, paths, output_zip_path):
+        with ZipFile(output_zip_path, 'w') as zf:
+            for path in paths:
+                # We specify `arcname` to override the name of the file in the zip archive
+                if os.path.isfile(path):
+                    zf.write(path, arcname=os.path.basename(path))
+                elif os.path.isdir(path):
+                    for foldername, subfolders, filenames in os.walk(path):
+                        for filename in filenames:
+                            full_path = os.path.join(foldername, filename)
+                            # Calculate relative path for the current file
+                            relative_path = os.path.relpath(full_path, path)
+                            zf.write(full_path, arcname=relative_path)
 
     def download_paths_as_zip(self, paths):
 
@@ -217,8 +223,17 @@ class FinmarsStorage(EncryptedStorage):
         temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download/%s' % unique_path_prefix)
         os.makedirs(temp_dir_path, exist_ok=True)
 
+
+        _l.info('temp_dir_path %s' % temp_dir_path)
+        _l.info('paths %s' % paths)
+
         for path in paths:
-            local_filename = temp_dir_path + '/' + path
+
+            local_filename = os.path.join(temp_dir_path, os.path.basename(path.rstrip('/')))
+
+            _l.info('path %s' % path)
+            _l.info('local_filename %s' % local_filename)
+
 
             if path.endswith('/'):  # Assuming the path is a directory
 
@@ -233,7 +248,7 @@ class FinmarsStorage(EncryptedStorage):
                 else:
                     self.download_file_and_save_locally(settings.BASE_API_URL + '/' + path, local_filename)
 
-        self.zip_directory(temp_dir_path, zip_filename)
+        self.zip_directory([temp_dir_path], zip_filename)
 
         # shutil.rmtree(temp_dir_path)
 
@@ -422,8 +437,8 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         # # shutil.copytree(src_with_root, local_destination_path, dirs_exist_ok=True)
         # shutil.copytree(src_with_root, local_destination_path)
 
-        _l.info('download_directory. src %s' % src)
-        _l.info('download_directory. local_destination_path %s' % local_destination_path)
+        # _l.info('download_directory. src %s' % src)
+        # _l.info('download_directory. local_destination_path %s' % local_destination_path)
 
         directory_content = self.listdir(src)
         _l.info(directory_content)
@@ -438,12 +453,10 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
             else:
                 path = src + '/' + file
 
-            if local_destination_path.endswith('/'):
-                local_path = local_destination_path + path
-            else:
-                local_path = local_destination_path + '/' + path
+            # _l.info('download_directory file . file %s' % file)
+            # _l.info('download_directory path . path %s' % path)
 
-            self.download_file_and_save_locally(path, local_path)
+            self.download_file_and_save_locally(path, os.path.join(local_destination_path, file))
 
             # _l.info('download_directory.path %s' % path)
 
@@ -454,12 +467,7 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
             else:
                 path = src + '/' + directory
 
-            if local_destination_path.endswith('/'):
-                local_path = local_destination_path + path
-            else:
-                local_path = local_destination_path + '/' + path
-
-            self.download_directory(path, local_path)
+            self.download_directory(path, os.path.join(local_destination_path, directory))
 
     def download_directory_as_zip(self, folder_path):
         path = os.path.join(settings.MEDIA_ROOT, folder_path)
