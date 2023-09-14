@@ -1,5 +1,6 @@
 from logging import getLogger
 from typing import Type
+from datetime import timedelta
 
 from django.db import models, transaction
 from rest_framework import serializers
@@ -9,6 +10,7 @@ from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
+from django.views.generic.dates import timezone_today
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType
 from poms.instruments.serializers import (
@@ -582,3 +584,29 @@ class BasicPortfolioSerializer(serializers.ModelSerializer):
 class FirstTransactionDateResponseSerializer(serializers.Serializer):
     portfolio = BasicPortfolioSerializer()
     first_transaction = FirstTransactionSerializer()
+
+
+class PrCalculateRecordsRequestSerializer(serializers.Serializer):
+    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+
+
+DATE_FORMAT = "%Y-%m-%d"
+
+
+class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        date_to = attrs.pop("date_to", None) or timezone_today() - timedelta(days=1)
+        date_from = attrs.pop("date_from", None)
+
+        if date_from and date_to and (date_from > date_to):
+            raise ValidationError("date_from must be <= date_to")
+
+        attrs["date_to"] = date_to.strftime(DATE_FORMAT)
+        if date_from:
+            attrs["date_from"] = date_from.strftime(DATE_FORMAT)
+
+        return attrs

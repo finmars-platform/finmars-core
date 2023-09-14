@@ -615,7 +615,7 @@ def handler_instrument_object(
 
                 accrual = {
                     "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_SIMPLE,
-                    "periodicity": Periodicity.ANNUALLY
+                    "periodicity": Periodicity.ANNUALLY,
                 }
 
                 if (
@@ -1348,74 +1348,67 @@ class SimpleImportProcess(object):
         return result
 
     def overwrite_item_attributes(self, result_item, item):
-        result = []
-
         for attribute in result_item["attributes"]:
             for entity_field in self.scheme.entity_fields.all():
-                if entity_field.attribute_user_code:
+                if entity_field.attribute_user_code and (
+                    entity_field.attribute_user_code
+                    == attribute["attribute_type_object"]["user_code"]
+                ):
                     if (
-                        entity_field.attribute_user_code
-                        == attribute["attribute_type_object"]["user_code"]
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.STRING
                     ):
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.STRING
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_string"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_string"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.NUMBER
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_float"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.NUMBER
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_float"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.CLASSIFIER
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                try:
-                                    attribute[
-                                        "classifier"
-                                    ] = GenericClassifier.objects.get(
-                                        attribute_type_id=attribute[
-                                            "attribute_type_object"
-                                        ]["id"],
-                                        name=item.final_inputs[
-                                            entity_field.attribute_user_code
-                                        ],
-                                    ).id
-                                except Exception as e:
-                                    _l.error(
-                                        "fill_result_item_with_attributes classifier error - item %s e %s"
-                                        % (item, e)
-                                    )
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.CLASSIFIER
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            try:
+                                attribute["classifier"] = GenericClassifier.objects.get(
+                                    attribute_type_id=attribute[
+                                        "attribute_type_object"
+                                    ]["id"],
+                                    name=item.final_inputs[
+                                        entity_field.attribute_user_code
+                                    ],
+                                ).id
+                            except Exception as e:
+                                _l.error(
+                                    "fill_result_item_with_attributes classifier error - item %s e %s"
+                                    % (item, e)
+                                )
 
-                                    if not item.error_message:
-                                        item.error_message = ""
+                                if not item.error_message:
+                                    item.error_message = ""
 
-                                    item.error_message = (
-                                        item.error_message + "%s: %s, "
-                                    ) % (entity_field.attribute_user_code, str(e))
+                                item.error_message = (
+                                    item.error_message + "%s: %s, "
+                                ) % (entity_field.attribute_user_code, str(e))
 
-                                    attribute["classifier"] = None
+                                attribute["classifier"] = None
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.DATE
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_date"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
-
-        return result
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.DATE
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_date"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
     def convert_relation_to_ids(self, item, result_item):
         relation_fields_map = {
