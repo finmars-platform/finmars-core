@@ -106,7 +106,9 @@ Versioning:
 
         # Construct full version name
         FULL_VERSION_NAME="$CI_COMMIT_REF_NAME-$CI_PIPELINE_ID-$FANCY_NAME"
-      
+
+        echo "FULL_VERSION_NAME is $FULL_VERSION_NAME"
+
         # Export the generated version name for later stages to use
         echo "IMAGE_TAG=$(echo $FULL_VERSION_NAME)" >> build.env
       
