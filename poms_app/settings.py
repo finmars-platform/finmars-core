@@ -3,6 +3,7 @@ Django settings for the main Backend project.
 """
 
 import os
+from datetime import timedelta
 
 from django.utils.translation import gettext_lazy
 
@@ -669,9 +670,19 @@ KEYCLOAK_CLIENT_ID = os.environ.get("KEYCLOAK_CLIENT_ID", "finmars")
 # not required anymore, api works in Bearer-only mod
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get("KEYCLOAK_CLIENT_SECRET_KEY", None)
 
+
 SIMPLE_JWT = {
-    "SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY),
-    "USER_ID_FIELD": "username",
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 REDOC_SETTINGS = {
