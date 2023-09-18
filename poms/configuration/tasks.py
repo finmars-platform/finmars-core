@@ -424,16 +424,16 @@ def push_configuration_to_marketplace(self, task_id):
 
     if configuration.is_from_marketplace:
         path = (
-                settings.BASE_API_URL
-                + "/configurations/"
+                # settings.BASE_API_URL
+                "/configurations/"
                 + configuration.configuration_code
                 + "/"
                 + configuration.version
         )
     else:
         path = (
-                settings.BASE_API_URL
-                + "/configurations/custom/"
+                # settings.BASE_API_URL
+                "/configurations/custom/"
                 + configuration.configuration_code
                 + "/"
                 + configuration.version
