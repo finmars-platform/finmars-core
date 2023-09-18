@@ -1799,7 +1799,7 @@ class SimpleImportProcess(object):
 
             self.task.result_object = self.import_result
 
-            _l.info("self.task.result_object %s" % self.task.result_object)
+            # _l.info("self.task.result_object %s" % self.task.result_object)
 
             self.task.save()
 

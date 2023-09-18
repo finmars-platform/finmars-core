@@ -428,7 +428,7 @@ def push_configuration_to_marketplace(self, task_id):
                 "/configurations/"
                 + configuration.configuration_code
                 + "/"
-                + configuration.version
+                + configuration.version + '/' # slash on end imply its directory
         )
     else:
         path = (
@@ -436,7 +436,7 @@ def push_configuration_to_marketplace(self, task_id):
                 "/configurations/custom/"
                 + configuration.configuration_code
                 + "/"
-                + configuration.version
+                + configuration.version + '/' # slash on end imply its directory
         )
 
     zip_file_path = storage.download_paths_as_zip([path])
