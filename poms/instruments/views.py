@@ -1168,6 +1168,7 @@ class InstrumentForSelectFilterSet(FilterSet):
 
 
 class InstrumentForSelectViewSet(AbstractModelViewSet):
+    http_method_names = ["get"]
     queryset = Instrument.objects.select_related(
         "master_user",
         "instrument_type",
