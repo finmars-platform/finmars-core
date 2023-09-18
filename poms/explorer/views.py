@@ -452,3 +452,27 @@ class DownloadAsZipViewSet(AbstractViewSet):
         response['Content-Disposition'] = f'attachment; filename="archive.zip"'
 
         return response
+
+
+class DownloadViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+        path = request.data.get('path')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not path:
+            raise ValidationError("path is required")
+
+        _l.info('path %s' % path)
+
+        path = settings.BASE_API_URL + '/' + path
+
+        # Serve the zip file as a response
+        # Serve the file as a response
+        with storage.open(path, 'rb') as file:
+            response = FileResponse(file, content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(path)}"'
+
+        return response
