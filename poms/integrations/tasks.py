@@ -2172,6 +2172,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         },
                         uniqueness_reaction=instance.scheme.book_uniqueness_settings,
                         member=instance.member,
+                        linked_import_task=celery_task,
                     )
                     tt_process.process()
 
