@@ -50,13 +50,13 @@ class ExplorerViewSet(AbstractViewSet):
 
         items = storage.listdir(path)
 
+        members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
+
         results = []
 
         for dir in items[0]:
 
             if path == settings.BASE_API_URL + '/':
-
-                members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
 
                 if dir not in members_usernames:
                     results.append({
