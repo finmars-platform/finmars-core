@@ -1513,10 +1513,11 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
 
 class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
-
     instrument_type_object = InstrumentTypeViewSerializer(
-        source="instrument_type", read_only=True
+        source="instrument_type",
+        read_only=True,
     )
+    instrument_type = serializers.CharField(source="instrument_type.user_code")
 
     class Meta:
         model = Instrument
@@ -1535,9 +1536,6 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
             "is_enabled",
             "has_linked_with_portfolio",
         ]
-
-    def to_representation(self, instance):
-        return super().to_representation(instance)
 
 
 class InstrumentViewSerializer(ModelWithUserCodeSerializer):
