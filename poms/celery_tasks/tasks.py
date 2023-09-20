@@ -164,7 +164,6 @@ def bulk_delete(self, task_id):
             celery_task.error_message = err_msg
 
     finally:
-
         celery_task.save()
 
 
@@ -189,16 +188,16 @@ def import_item(item, context):
             if input["value_type"] == 10:
                 values[input["transaction_type_input"]] = input["value_string"]
 
-            if input["value_type"] == 20:
+            elif input["value_type"] == 20:
                 values[input["transaction_type_input"]] = input["value_float"]
 
-            if input["value_type"] == 40:
+            elif input["value_type"] == 40:
                 values[input["transaction_type_input"]] = input["value_date"]
 
-            if input["value_type"] == 110:
+            elif input["value_type"] == 110:
                 values[input["transaction_type_input"]] = input["value_string"]
 
-            if input["value_type"] == 100:
+            elif input["value_type"] == 100:
                 content_type_key = input["content_type"]
 
                 content_type = get_content_type_by_name(content_type_key)
@@ -215,7 +214,7 @@ def import_item(item, context):
             context=context,
             member=context["member"],
             source=item["source"],
-            execution_context="manual",
+            linked_import_task=context.get("task"),
         )
 
         process_instance.process()
@@ -230,6 +229,8 @@ def import_item(item, context):
 
 @finmars_task(name="celery_tasks.universal_input", bind=True)
 def universal_input(self, task_id):
+    from poms.common.models import ProxyUser, ProxyRequest
+
     # is_fake = bool(request.query_params.get('is_fake'))
 
     _l.info(f"universal_input.task_id {task_id}")
@@ -243,10 +244,7 @@ def universal_input(self, task_id):
     try:
         data = celery_task.options_object
 
-        from poms.common.models import ProxyUser
-
         proxy_user = ProxyUser(celery_task.member, celery_task.master_user)
-        from poms.common.models import ProxyRequest
 
         proxy_request = ProxyRequest(proxy_user)
 
@@ -254,6 +252,7 @@ def universal_input(self, task_id):
             "master_user": celery_task.master_user,
             "member": celery_task.member,
             "request": proxy_request,
+            "task": celery_task,
         }
 
         if isinstance(data, dict):
