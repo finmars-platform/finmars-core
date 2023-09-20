@@ -10,11 +10,10 @@ class CeleryTaskAdmin(admin.ModelAdmin):
     master_user_path = "master_user"
     list_display = [
         "id",
-        "master_user",
-        "parent",
-        "celery_task_id",
-        "type",
         "status",
+        "type",
+        "celery_task_id",
+        "parent",
         "created",
         "modified",
     ]

@@ -1,18 +1,18 @@
 import contextlib
 import logging
 import traceback
-from datetime import timedelta
-
-from django.contrib.contenttypes.models import ContentType
-from django.utils.timezone import now
+from datetime import datetime, timedelta, timezone
 
 from celery.utils.log import get_task_logger
-from poms_app import settings
+from django.contrib.contenttypes.models import ContentType
+from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
+from poms_app import settings
+from poms_app.celery import app
 
 celery_logger = get_task_logger(__name__)
 _l = logging.getLogger("poms.celery_tasks")
@@ -83,6 +83,49 @@ def auto_cancel_task_by_ttl():
         )
 
 
+@finmars_task(name="celery_tasks.check_for_died_workers")
+def check_for_died_workers():
+    # Create an inspect instance
+    inspect_instance = app.control.inspect()
+
+    tasks = CeleryTask.objects.filter(
+        status=CeleryTask.STATUS_PENDING
+    )
+
+    _l.info('check_for_died_workers.pending_tasks %s' % len(tasks))
+
+    # Get the active workers
+    active_workers = inspect_instance.active()
+    if not active_workers:
+
+        _l.info('check_for_died_workers.no_active_workers')
+
+        for task in tasks:
+            task.status = CeleryTask.STATUS_CANCELED
+            task.error_message = 'No active workers'
+            task.save()
+
+    for task in tasks:
+        worker_name = task.worker_name
+
+        # Get stats of the worker processing this task
+        worker_stats = inspect_instance.stats().get(worker_name, {})
+        uptime = worker_stats.get('uptime')  # This is in seconds
+
+        if not uptime:
+            continue
+
+        worker_start_time = datetime.now(timezone.utc) - timedelta(seconds=uptime)
+
+        # Compare worker start time with task's created time
+        if task.modified > worker_start_time:
+            # The task was created before the worker started (worker restarted after picking the task)
+            task.error_message = 'Worker probably died after picking the task'
+            task.status = CeleryTask.STATUS_CANCELED
+            task.save()
+            _l.info('check_for_died_workers. Task %s canceled due worker died' % task.id)
+
+
 @finmars_task(name="celery_tasks.bulk_delete", bind=True)
 def bulk_delete(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
@@ -149,8 +192,8 @@ def bulk_delete(self, task_id):
         _l.error(err_msg)
 
         if options_object["content_type"] in (
-            "instruments.pricehistory",
-            "currencies.currencyhistory",
+                "instruments.pricehistory",
+                "currencies.currencyhistory",
         ):
             _l.info("Going to permanent delete")
 
