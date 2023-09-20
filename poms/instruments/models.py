@@ -1820,11 +1820,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         first_accrual.accrual_calculation_model
                     )
 
-                    interest = ql.FixedRateLeg(
-                        schedule, day_count, [face_value], [float_accrual_size]
-                    )
+                    coupons = [float_accrual_size]
 
-                    bond = ql.Bond(settlementDays, calendar, start, interest)
+                    face_value = 100 # probably self.default_price
+
+                    bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
 
                 else:
                     bond = ql.ZeroCouponBond(
