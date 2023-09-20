@@ -116,9 +116,9 @@ class TransactionTypeProcess:
         linked_import_task=None,
     ):
         _l.info(
-            f"TransactionTypeProcess transaction_type {transaction_type} "
-            f"process_mode {process_mode} context_values {context_values}"
-            f"linked_import_task {linked_import_task}"
+            f"TransactionTypeProcess transaction_type={transaction_type} "
+            f"process_mode={process_mode} context_values={context_values} "
+            f"linked_import_task={linked_import_task}"
         )
 
         master_user = transaction_type.master_user
@@ -174,6 +174,11 @@ class TransactionTypeProcess:
         if complex_transaction and not complex_transaction_status:
             self.complex_transaction_status = complex_transaction.status_id
 
+        self._context = context
+        self._context["transaction_type"] = self.transaction_type
+        self._id_seq = 0
+        self._transaction_order_seq = 0
+
         self.inputs = list(self.transaction_type.inputs.all())
         if values is None:
             # needs self.inputs to be defined, also checks complex_transaction inputs
@@ -187,11 +192,6 @@ class TransactionTypeProcess:
             self.complex_transaction.execution_log = ""
 
         self.complex_transaction.save()
-
-        self._context = context
-        self._context["transaction_type"] = self.transaction_type
-        self._id_seq = 0
-        self._transaction_order_seq = 0
 
         self.record_execution_progress("Booking Complex Transaction")
         self.record_execution_progress(f"Start {date_now()} ")
