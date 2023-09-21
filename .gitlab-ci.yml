@@ -134,17 +134,27 @@ Push Version:
       JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\" }"
 
       # Pass the payload to curl
-      response=$(curl --request POST https://license.finmars.com/api/v1/version/ \
-      --header "Content-Type: application/json" \
-      --data "$JSON_PAYLOAD")
-      
+#      response=$(curl --request POST https://license.finmars.com/api/v1/version/ \
+#      --header "Content-Type: application/json" \
+#      --data "$JSON_PAYLOAD")
+#
+#      if [[ "$response" -ne 200 ]]; then
+#        echo "Error detected. Failing the build."
+#        exit 1
+#      else
+#        echo "Build succeeded."
+#      fi
+      response=$(curl --write-out "%{http_code}" --request POST https://license.finmars.com/api/v1/version/ \
+      --header "Content-Type: application/json" --data "$JSON_PAYLOAD")
+
       if [[ "$response" -ne 200 ]]; then
-        echo "Error detected. Failing the build."
+        echo "Error detected. Failing the build. HTTP Status Code: $response"
         exit 1
       else
         echo "Build succeeded."
       fi
-      
+
+
 
   only:
     - /^.*-rc$/
