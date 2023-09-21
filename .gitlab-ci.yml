@@ -148,7 +148,7 @@ Push Version:
       status_code=$(curl -o /dev/null -s -w "%{http_code}" --request POST https://license.finmars.com/api/v1/version/ --header "Content-Type: application/json" --data "$JSON_PAYLOAD")
       
       if [[ "$status_code" -ne "201" ]]; then
-        echo "Error detected. Failing the build. HTTP Status Code: $response"
+        echo "Error detected. Failing the build. HTTP Status Code: $status_code"
         exit 1
       else
         echo "Build succeeded."
