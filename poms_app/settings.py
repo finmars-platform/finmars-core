@@ -260,7 +260,16 @@ USE_ETAGS = True
 # TODO Refactor csrf protection later
 
 ENV_CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
-ENV_CSRF_TRUSTED_ORIGINS = os.environ.get("ENV_CSRF_TRUSTED_ORIGINS", None)
+
+ENV_CSRF_TRUSTED_ORIGINS = [
+    'capacitor://localhost',
+    'http://localhost',
+    'http://0.0.0.0',
+    'http://' + DOMAIN_NAME,
+    'https://' + DOMAIN_NAME
+] + os.environ.get("ENV_CSRF_TRUSTED_ORIGINS", "").split(",")
+
+
 
 if SERVER_TYPE == "production":
     CORS_URLS_REGEX = r"^/api/.*$"
