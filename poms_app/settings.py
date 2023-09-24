@@ -259,16 +259,22 @@ USE_ETAGS = True
 
 # TODO Refactor csrf protection later
 
-ENV_CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
+CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
 
-ENV_CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = [
     'capacitor://localhost',
     'http://localhost',
     'http://0.0.0.0',
+    'http://0.0.0.0:8080',
     'http://' + DOMAIN_NAME,
     'https://' + DOMAIN_NAME
-] + os.environ.get("ENV_CSRF_TRUSTED_ORIGINS", "").split(",")
+]
 
+if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
+    CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS + os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
+
+
+# print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
 
 
 if SERVER_TYPE == "production":
@@ -294,7 +300,6 @@ if SERVER_TYPE == "development":
     CORS_ALLOW_CREDENTIALS = True
     CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = "Strict"
-    CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
     CORS_ALLOW_ALL_ORIGINS = True
 
 if SERVER_TYPE == "local":
