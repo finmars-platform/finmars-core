@@ -191,16 +191,23 @@ class SummaryViewSet(AbstractViewSet):
 
         calculate_new = validated_data["calculate_new"]
 
-        summary_record_count = ReportSummaryInstance.objects.filter(member=request.user.member).count()
+        date_from = validated_data["date_from"]
+        date_to = validated_data["date_to"]
+        portfolios = validated_data["portfolios"]
+        currency = validated_data["currency"]
+
+        summary_record_count = ReportSummaryInstance.objects.filter(member=request.user.member,
+                                                                    date_from=date_from,
+                                                                    date_to=date_to,
+                                                                    portfolios=portfolios,
+                                                                    currency=currency
+                                                                    ).count()
 
         _l.info('summary_record_count %s' % summary_record_count)
 
         if calculate_new or summary_record_count == 0:
 
-            date_from = validated_data["date_from"]
-            date_to = validated_data["date_to"]
-            portfolios = validated_data["portfolios"]
-            currency = validated_data["currency"]
+
 
             bundles = []
 
@@ -240,17 +247,27 @@ class SummaryViewSet(AbstractViewSet):
             report_summary_record = ReportSummaryInstance.objects.create(
                 master_user=request.user.master_user,
                 member=request.user.member,
+                date_from=date_from,
+                date_to=date_to,
+                portfolios=portfolios,
+                currency=currency,
                 data=result
             )
 
+            result['report_summary_id'] = report_summary_record.id
             result['created'] = report_summary_record.created
 
         else:
 
-            report_summary_record = ReportSummaryInstance.objects.filter(member=request.user.member).last()
+            report_summary_record = ReportSummaryInstance.objects.filter(member=request.user.member,
+                                                                         date_from=date_from,
+                                                                         date_to=date_to,
+                                                                         portfolios=portfolios,
+                                                                         currency=currency).last()
 
             result = report_summary_record.data
 
+            result['report_summary_id'] = report_summary_record.id
             result['created'] = report_summary_record.created
 
 

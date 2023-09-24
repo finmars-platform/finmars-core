@@ -1360,6 +1360,29 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
     )
+    date_from = models.DateField(
+        null=True,
+        db_index=True, verbose_name=gettext_lazy("date from")
+    )
+    date_to = models.DateField(
+        null=True,
+        db_index=True,
+        verbose_name=gettext_lazy("date to"),
+    )
+
+    portfolios = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("portfolios user_codes"),
+    )
+
+    currency = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("currency user_code"),
+    )
+
     data = models.JSONField(
         null=True,
         blank=True,
