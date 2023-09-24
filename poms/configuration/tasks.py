@@ -439,6 +439,8 @@ def push_configuration_to_marketplace(self, task_id):
                 + configuration.version + '/' # slash on end imply its directory
         )
 
+    _l.info('path %s' % path)
+
     zip_file_path = storage.download_paths_as_zip([path])
 
     data = {

@@ -14,7 +14,7 @@ from poms.reports.models import (
     BalanceReportCustomField,
     PLReportCustomField,
     ReportSummary,
-    TransactionReportCustomField,
+    TransactionReportCustomField, ReportSummaryInstance,
 )
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import (
@@ -189,45 +189,70 @@ class SummaryViewSet(AbstractViewSet):
 
         _l.info(f"Validated_data {validated_data} ")
 
-        date_from = validated_data["date_from"]
-        date_to = validated_data["date_to"]
-        portfolios = validated_data["portfolios"]
-        currency = validated_data["currency"]
+        calculate_new = validated_data["calculate_new"]
 
-        bundles = []
+        summary_record_count = ReportSummaryInstance.objects.filter(member=request.user.member).count()
 
-        if not date_to:
-            date_to = get_closest_bday_of_yesterday()
+        _l.info('summary_record_count %s' % summary_record_count)
 
-        context = self.get_serializer_context()
+        if calculate_new or summary_record_count == 0:
 
-        report_summary = ReportSummary(
-            date_from,
-            date_to,
-            portfolios,
-            bundles,
-            currency,
-            request.user.master_user,
-            request.user.member,
-            context,
-        )
+            date_from = validated_data["date_from"]
+            date_to = validated_data["date_to"]
+            portfolios = validated_data["portfolios"]
+            currency = validated_data["currency"]
 
-        report_summary.build_balance()
-        report_summary.build_pl_daily()
-        report_summary.build_pl_mtd()
-        report_summary.build_pl_ytd()
+            bundles = []
 
-        result = {
-            "total": {
-                "nav": report_summary.get_nav(),
-                "pl_daily": report_summary.get_total_pl_daily(),
-                "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
-                "pl_mtd": report_summary.get_total_pl_mtd(),
-                "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(),
-                "pl_ytd": report_summary.get_total_pl_ytd(),
-                "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(),
+            if not date_to:
+                date_to = get_closest_bday_of_yesterday()
+
+            context = self.get_serializer_context()
+
+            report_summary = ReportSummary(
+                date_from,
+                date_to,
+                portfolios,
+                bundles,
+                currency,
+                request.user.master_user,
+                request.user.member,
+                context,
+            )
+
+            report_summary.build_balance()
+            report_summary.build_pl_daily()
+            report_summary.build_pl_mtd()
+            report_summary.build_pl_ytd()
+
+            result = {
+                "total": {
+                    "nav": report_summary.get_nav(),
+                    "pl_daily": report_summary.get_total_pl_daily(),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
+                    "pl_mtd": report_summary.get_total_pl_mtd(),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(),
+                    "pl_ytd": report_summary.get_total_pl_ytd(),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(),
+                }
             }
-        }
+
+            report_summary_record = ReportSummaryInstance.objects.create(
+                master_user=request.user.master_user,
+                member=request.user.member,
+                data=result
+            )
+
+            result['created'] = report_summary_record.created
+
+        else:
+
+            report_summary_record = ReportSummaryInstance.objects.filter(member=request.user.member).last()
+
+            result = report_summary_record.data
+
+            result['created'] = report_summary_record.created
+
 
         return Response(result)
 

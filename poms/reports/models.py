@@ -1347,3 +1347,32 @@ class ReportInstanceModel:
         self.allocation_mode = kwargs["allocation_mode"]
 
         self.master_user = kwargs["master_user"]
+
+
+class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
+    master_user = models.ForeignKey(
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    member = models.ForeignKey(
+        Member,
+        verbose_name=gettext_lazy("member"),
+        on_delete=models.CASCADE,
+    )
+    data = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("Data"),
+        help_text="Content of whole report representation",
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if ReportSummaryInstance.objects.all().count() > 512:
+            _l.warning(
+                "BalanceReportInstance amount > 512, "
+                "delete oldest BalanceReportInstance"
+            )
+            ReportSummaryInstance.objects.all().order_by("id")[0].delete()
