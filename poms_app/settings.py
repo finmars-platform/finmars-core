@@ -137,8 +137,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-    "corsheaders.middleware.CorsMiddleware",
-    "corsheaders.middleware.CorsPostCsrfMiddleware",
+
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -159,6 +158,9 @@ MIDDLEWARE = [
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
+
+    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsPostCsrfMiddleware",
 
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
@@ -275,6 +277,8 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 
 
 # print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
+
+CORS_ORIGIN_WHITELIST = CSRF_TRUSTED_ORIGINS
 
 
 if SERVER_TYPE == "production":
