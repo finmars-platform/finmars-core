@@ -445,8 +445,6 @@ def push_configuration_to_marketplace(self, task_id):
 
     zip_file_path = storage.download_paths_as_zip([path])
 
-
-
     data = {
         "configuration_code": configuration.configuration_code,
         "name": configuration.name,
