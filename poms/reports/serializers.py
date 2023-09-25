@@ -49,6 +49,16 @@ from poms_app import settings
 
 _l = logging.getLogger('poms.reports')
 
+_cf_list = [
+    'id',
+    'master_user',
+    'name',
+    'user_code',
+    'expr',
+    'value_type',
+    'notes',
+    'configuration_code',
+]
 
 class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
@@ -56,9 +66,7 @@ class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BalanceReportCustomField
-        fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
-        ]
+        fields = _cf_list
 
 
 class PLReportCustomFieldSerializer(serializers.ModelSerializer):
@@ -67,9 +75,7 @@ class PLReportCustomFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PLReportCustomField
-        fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
-        ]
+        fields = _cf_list
 
 
 class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
@@ -78,9 +84,7 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionReportCustomField
-        fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
-        ]
+        fields = _cf_list
 
 
 class ReportSerializerWithLogs(serializers.Serializer):

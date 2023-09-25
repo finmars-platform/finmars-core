@@ -4,6 +4,7 @@ import traceback
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, \
+    save_serialized_custom_fields, \
     save_serialized_entity_layout, \
     save_serialized_layout
 from poms_app import settings
@@ -214,6 +215,21 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                        'counterparties.responsible',
                                        source_directory + '/attribute-types/responsible',
                                        context)
+
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.balancereport',
+                                      source_directory + '/custom-columns/balance-report',
+                                      context)
+
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.plreport',
+                                      source_directory + '/custom-columns/pl-report',
+                                      context)
+
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.transactionreport',
+                                      source_directory + '/custom-columns/transaction-report',
+                                      context)
 
         # save_serialized_entity('ui.dashboardlayout',
         #                        configuration.configuration_code,
