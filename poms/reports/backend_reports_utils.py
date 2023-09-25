@@ -426,6 +426,7 @@ class BackendReportHelperService:
 
         return result_items
 
+    # Probably Deprecated
     def order_sort(self, property, sort_order):
         def comparator(a, b):
             if a.get(property) is None:
@@ -451,8 +452,11 @@ class BackendReportHelperService:
         else:
             reverse = False
 
+        # Adjusted sort key to handle None values
+        sort_key = lambda x: (x.get(property) is None, x.get(property))
+
         # Use sorted() to sort items
-        return sorted(items, key=lambda x: x.get(property, None), reverse=reverse)
+        return sorted(items, key=sort_key, reverse=reverse)
 
     def sort_groups(self, items, options):
         if "groups_order" in options:
