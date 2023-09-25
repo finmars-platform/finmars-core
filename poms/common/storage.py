@@ -220,7 +220,7 @@ class FinmarsStorage(EncryptedStorage):
 
         unique_path_prefix = os.urandom(32).hex()
 
-        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download/%s' % unique_path_prefix)
+        temp_dir_path = os.path.join('/tmp/temp_download/%s' % unique_path_prefix)
         os.makedirs(temp_dir_path, exist_ok=True)
 
 
@@ -248,11 +248,13 @@ class FinmarsStorage(EncryptedStorage):
                 else:
                     self.download_file_and_save_locally(settings.BASE_API_URL + '/' + path, local_filename)
 
-        self.zip_directory([temp_dir_path], zip_filename)
 
+        output_zip_filename = os.path.join('/tmp/temp_download/%s/%s' % (unique_path_prefix, zip_filename))
+
+        self.zip_directory([temp_dir_path], output_zip_filename)
         # shutil.rmtree(temp_dir_path)
 
-        return zip_filename
+        return output_zip_filename
 
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
