@@ -548,6 +548,9 @@ def get_serializer(content_type_key):
 
     from poms.integrations.serializers import MappingTableSerializer
     from poms.currencies.serializers import CurrencySerializer
+
+    from poms.configuration.serializers import NewMemberSetupConfigurationSerializer
+
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -591,6 +594,7 @@ def get_serializer(content_type_key):
         "iam.role": RoleSerializer,
         "iam.accesspolicy": AccessPolicySerializer,
         "reference_tables.referencetable": ReferenceTableSerializer,
+        "configuration.newmembersetupconfiguration": NewMemberSetupConfigurationSerializer,
     }
 
     return serializer_map[content_type_key]
