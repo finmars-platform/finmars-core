@@ -7,13 +7,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.configuration.models import ConfigurationModel
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 _l = logging.getLogger("poms.reports")
 
 
-class BalanceReportCustomField(models.Model):
+class BalanceReportCustomField(ConfigurationModel):
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -33,10 +34,6 @@ class BalanceReportCustomField(models.Model):
     name = models.CharField(
         max_length=255,
         verbose_name=gettext_lazy("name"),
-    )
-    user_code = models.CharField(
-        max_length=255,
-        verbose_name=gettext_lazy("user code"),
     )
     expr = models.CharField(
         max_length=EXPRESSION_FIELD_LENGTH,
@@ -62,7 +59,7 @@ class BalanceReportCustomField(models.Model):
         return self.name
 
 
-class PLReportCustomField(models.Model):
+class PLReportCustomField(ConfigurationModel):
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -111,7 +108,7 @@ class PLReportCustomField(models.Model):
         return self.name
 
 
-class TransactionReportCustomField(models.Model):
+class TransactionReportCustomField(ConfigurationModel):
     STRING = 10
     NUMBER = 20
     DATE = 40

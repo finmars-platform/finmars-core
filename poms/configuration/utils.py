@@ -184,6 +184,62 @@ def save_serialized_attribute_type(
         save_json_to_file(path, serialized_data)
 
 
+def save_serialized_custom_fields(configuration_code, report_content_type, source_directory, context):
+    '''
+
+    :param configuration_code:
+    :param report_content_type: Allowed values: 'reports.balancereport', 'reports.plreport', 'reports.transactionreport'
+    :type report_content_type: str
+    :param source_directory:
+    :param context:
+    :return:
+    '''
+    from poms.reports.models import (
+        BalanceReportCustomField,
+        PLReportCustomField,
+        TransactionReportCustomField,
+    )
+    from poms.reports.serializers import (
+        BalanceReportCustomFieldSerializer,
+        PLReportCustomFieldSerializer,
+        TransactionReportCustomFieldSerializer,
+    )
+
+    custom_fields_map = {
+        "reports.balancereport": [
+            BalanceReportCustomField,
+            BalanceReportCustomFieldSerializer
+        ],
+        "reports.plreport": [
+            PLReportCustomField,
+            PLReportCustomFieldSerializer,
+        ],
+        "reports.transactionreport": [
+            TransactionReportCustomField,
+            TransactionReportCustomFieldSerializer,
+        ],
+    }
+
+    if report_content_type not in custom_fields_map:
+        raise RuntimeError(
+            f"Could not find report with content type: {report_content_type}"
+        )
+
+    model = custom_fields_map[report_content_type][0]
+    SerializerClass = custom_fields_map[report_content_type][1]
+
+    filtered_objects = model.objects.filter(
+        configuration_code=configuration_code, master_user=context["master_user"]
+    )
+
+    for item in filtered_objects:
+        serializer = SerializerClass(item, context=context)
+        serialized_data = remove_id_key_recursively(serializer.data)
+
+        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
+
+        save_json_to_file(path, serialized_data)
+
 def save_serialized_layout(content_type, configuration_code, source_directory, context):
     try:
         model = apps.get_model(content_type)
