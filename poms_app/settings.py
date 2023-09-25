@@ -134,6 +134,7 @@ if USE_DEBUGGER:
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
@@ -159,8 +160,8 @@ MIDDLEWARE = [
 
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
 
-    "corsheaders.middleware.CorsMiddleware",
-    "corsheaders.middleware.CorsPostCsrfMiddleware",
+
+    # "corsheaders.middleware.CorsPostCsrfMiddleware",
 
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
@@ -261,7 +262,7 @@ USE_ETAGS = True
 
 # TODO Refactor csrf protection later
 
-CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
+CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 
 CSRF_TRUSTED_ORIGINS = [
     'capacitor://localhost',
