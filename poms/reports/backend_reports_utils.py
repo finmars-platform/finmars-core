@@ -22,6 +22,7 @@ class BackendReportHelperService:
         return ".".join(pieces)
 
     def get_result_group(self, item, group_type):
+
         result_group = {
             "___group_name": None,
             "___group_identifier": None,
@@ -40,6 +41,9 @@ class BackendReportHelperService:
                 result_group["___group_name"] = status_map.get(
                     item_value, str(item_value)
                 )
+        elif identifier_value is None:  # Specifically handle None values
+            result_group["___group_identifier"] = None
+            result_group["___group_name"] = "Other"
 
         return result_group
 
@@ -51,7 +55,7 @@ class BackendReportHelperService:
             result_group = self.get_result_group(item, group_type)
             identifier = result_group["___group_identifier"]
 
-            if identifier and identifier not in seen_group_identifiers:
+            if identifier not in seen_group_identifiers:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
@@ -422,6 +426,7 @@ class BackendReportHelperService:
 
         return result_items
 
+    # Probably Deprecated
     def order_sort(self, property, sort_order):
         def comparator(a, b):
             if a.get(property) is None:
@@ -447,8 +452,11 @@ class BackendReportHelperService:
         else:
             reverse = False
 
+        # Adjusted sort key to handle None values
+        sort_key = lambda x: (x.get(property) is None, x.get(property))
+
         # Use sorted() to sort items
-        return sorted(items, key=lambda x: x.get(property, None), reverse=reverse)
+        return sorted(items, key=sort_key, reverse=reverse)
 
     def sort_groups(self, items, options):
         if "groups_order" in options:

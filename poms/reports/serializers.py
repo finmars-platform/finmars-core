@@ -485,6 +485,7 @@ class SummarySerializer(serializers.Serializer):
 
     currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
+    calculate_new = serializers.BooleanField(default=False, initial=False)
 
 class PLReportSerializer(ReportSerializer):
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)

@@ -171,6 +171,11 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Exported: schedules.schedule")
 
+        save_serialized_entity('configuration.newmembersetupconfiguration',
+                               configuration.configuration_code,
+                               source_directory + '/new-user-setups',
+                               context)
+
         _l.info("Going to export: obj_attrs.genericattributetype")
 
         save_serialized_attribute_type('obj_attrs.genericattributetype',

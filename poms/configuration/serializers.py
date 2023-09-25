@@ -3,6 +3,7 @@ import shutil
 
 from rest_framework import serializers
 
+from poms.common.serializers import ModelMetaSerializer
 from poms.common.storage import get_storage
 from poms.configuration.models import Configuration, NewMemberSetupConfiguration
 from poms_app import settings
@@ -56,7 +57,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
         return ConfigurationImport(file_path=file_path, file_name=file_name)
 
 
-class NewMemberSetupConfigurationSerializer(serializers.ModelSerializer):
+class NewMemberSetupConfigurationSerializer(ModelMetaSerializer):
     file = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
