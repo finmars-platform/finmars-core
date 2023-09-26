@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZipFile
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.core.files.base import ContentFile, File
@@ -104,7 +104,6 @@ class EncryptedStorage(object):
 
         return decrypted_file_instance
 
-
     def open_skip_decrypt(self, name, mode='rb'):
         file = super()._open(name, mode)
 
@@ -202,8 +201,8 @@ class FinmarsStorage(EncryptedStorage):
 
     def zip_directory(self, paths, output_zip_path):
 
-        _l.info('zip_directory.paths %s' % paths)
-        _l.info('zip_directory.output_zip_path %s' % output_zip_path)
+        # _l.info('zip_directory.paths %s' % paths)
+        # _l.info('zip_directory.output_zip_path %s' % output_zip_path)
 
         with ZipFile(output_zip_path, 'w') as zf:
             for path in paths:
@@ -222,19 +221,34 @@ class FinmarsStorage(EncryptedStorage):
                             base_dir = os.path.basename(path)
                             relative_path = os.path.relpath(full_path, os.path.dirname(path))
                             if relative_path.startswith(base_dir):
-                                relative_path = relative_path[len(base_dir)+1:]
+                                relative_path = relative_path[len(base_dir) + 1:]
 
                             zf.write(full_path, arcname=relative_path)
 
-    def download_paths_as_zip(self, paths):
-
-        zip_filename = 'archive.zip'
+    def download_directory_content_as_zip(self, path_to_directory):
 
         unique_path_prefix = os.urandom(32).hex()
 
-        temp_dir_path = os.path.join('/tmp/temp_download/%s' % unique_path_prefix)
+        temp_dir_path = os.path.join(settings.BASE_DIR + '/tmp/temp_download/%s' % unique_path_prefix)
         os.makedirs(temp_dir_path, exist_ok=True)
 
+        local_filename = temp_dir_path
+
+        self.download_directory(settings.BASE_API_URL + path_to_directory, local_filename)
+
+        output_zip_filename = os.path.join(settings.BASE_DIR + '/tmp/temp_download/%s' % (unique_path_prefix + '_archive.zip'))
+
+        self.zip_directory([temp_dir_path], output_zip_filename)
+        # shutil.rmtree(temp_dir_path)
+
+        return output_zip_filename
+
+    def download_paths_as_zip(self, paths):
+
+        unique_path_prefix = os.urandom(32).hex()
+
+        temp_dir_path = os.path.join(settings.BASE_DIR + '/tmp/temp_download/%s' % unique_path_prefix)
+        os.makedirs(temp_dir_path, exist_ok=True)
 
         _l.info('temp_dir_path %s' % temp_dir_path)
         _l.info('paths %s' % paths)
@@ -243,11 +257,13 @@ class FinmarsStorage(EncryptedStorage):
 
             local_filename = temp_dir_path
 
+
             _l.info('path %s' % path)
             _l.info('local_filename %s' % local_filename)
 
-
             if path.endswith('/'):  # Assuming the path is a directory
+
+                local_filename = local_filename  + '/' + path.split('/')[-2]
 
                 if path[0] == '/':
                     self.download_directory(settings.BASE_API_URL + path, local_filename)
@@ -255,13 +271,19 @@ class FinmarsStorage(EncryptedStorage):
                     self.download_directory(settings.BASE_API_URL + '/' + path, local_filename)
 
             else:
+
+                local_filename = local_filename  + '/' + path.split('/')[-1]
+
+                # local_filename = local_filename  + '/' + path.split('/')[-1]
+
+                _l.info('local_filename %s ' %  local_filename)
+
                 if path[0] == '/':
                     self.download_file_and_save_locally(settings.BASE_API_URL + path, local_filename)
                 else:
                     self.download_file_and_save_locally(settings.BASE_API_URL + '/' + path, local_filename)
 
-
-        output_zip_filename = os.path.join('/tmp/temp_download/%s/%s' % (unique_path_prefix, zip_filename))
+        output_zip_filename = os.path.join(settings.BASE_DIR + '/tmp/temp_download/%s' % (unique_path_prefix + '_archive.zip'))
 
         self.zip_directory([temp_dir_path], output_zip_filename)
         # shutil.rmtree(temp_dir_path)
@@ -378,7 +400,6 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
         _l.info('directory_path %s' % directory_path)
         _l.info('local_destination_path %s' % local_destination_path)
 
-
         folder = os.path.dirname(local_destination_path)
         if folder:
             os.makedirs(folder, exist_ok=True)
@@ -429,7 +450,6 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
             return settings.MEDIA_ROOT + name
 
         return settings.MEDIA_ROOT + '/' + name
-
 
     def listdir(self, path):
         path = self.path(path)
@@ -491,7 +511,6 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         zip_file_path = download_local_folder_as_zip(path)
         return zip_file_path
-
 
 
 def get_storage():
