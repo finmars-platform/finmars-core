@@ -13,7 +13,7 @@ from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
 
-INSTANCE_TYPE = ENV_STR('INSTANCE_TYPE', 'backend') # backend, worker, scheduler,
+INSTANCE_TYPE = ENV_STR('INSTANCE_TYPE', 'backend')  # backend, worker, scheduler,
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,8 +53,7 @@ ALLOWED_HOSTS = ["*"]
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
-XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
-
+XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
 
 # Application definition
 
@@ -138,8 +137,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-
-
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -160,7 +157,6 @@ MIDDLEWARE = [
 
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
 
-
     # "corsheaders.middleware.CorsPostCsrfMiddleware",
 
     # 'poms.common.middleware.LogRequestsMiddleware',
@@ -170,7 +166,6 @@ MIDDLEWARE = [
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
     # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
-
 
 PROFILER = ENV_BOOL("PROFILER", False)
 
@@ -276,11 +271,19 @@ CSRF_TRUSTED_ORIGINS = [
 if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
     CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS + os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
 
-
 # print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
 
-CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+CORS_ALLOWED_ORIGINS = [
+    'capacitor://localhost',
+    'http://localhost',
+    'http://0.0.0.0',
+    'http://0.0.0.0:8080',
+    'http://' + DOMAIN_NAME,
+    'https://' + DOMAIN_NAME
+]
 
+if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
+    CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
 
 if SERVER_TYPE == "production":
     CORS_URLS_REGEX = r"^/api/.*$"
@@ -295,10 +298,7 @@ if SERVER_TYPE == "production":
     CSRF_COOKIE_SECURE = True
     # CSRF_COOKIE_SAMESITE = 'Strict'
 
-
-
 CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
-
 
 if SERVER_TYPE == "development":
     CORS_ORIGIN_ALLOW_ALL = True
@@ -565,14 +565,16 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
-CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024) # Maximum amount of resident memory, in KiB
-CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1) # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
+CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD",
+                                      512 * 1024)  # Maximum amount of resident memory, in KiB
+CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD",
+                                     1)  # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
 
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 
-CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2) # Number of child processes processing the queue. The default is the number of CPUs available on your system.
-
+CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY",
+                                    2)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
@@ -688,7 +690,6 @@ KEYCLOAK_CLIENT_ID = os.environ.get("KEYCLOAK_CLIENT_ID", "finmars")
 
 # not required anymore, api works in Bearer-only mod
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get("KEYCLOAK_CLIENT_SECRET_KEY", None)
-
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
