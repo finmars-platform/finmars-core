@@ -273,46 +273,50 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 
 # print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
 
-CORS_ALLOWED_ORIGINS = [
-    'capacitor://localhost',
-    'http://localhost',
-    'http://0.0.0.0',
-    'http://0.0.0.0:8080',
-    'http://' + DOMAIN_NAME,
-    'https://' + DOMAIN_NAME
-]
+# CORS_ALLOWED_ORIGINS = [
+#     'capacitor://localhost',
+#     'http://localhost',
+#     'http://0.0.0.0',
+#     'http://0.0.0.0:8080',
+#     'http://' + DOMAIN_NAME,
+#     'https://' + DOMAIN_NAME
+# ]
 
-if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
-    CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = True
 
-if SERVER_TYPE == "production":
-    CORS_URLS_REGEX = r"^/api/.*$"
-    # CORS_REPLACE_HTTPS_REFERER = True
-    CORS_ALLOW_CREDENTIALS = True
-    CORS_PREFLIGHT_MAX_AGE = 300
-    USE_X_FORWARDED_HOST = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_REDIRECT_EXEMPT = ['healthcheck']
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    # CSRF_COOKIE_SAMESITE = 'Strict'
-
-CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
-CORS_ORIGIN_ALLOW_ALL = ENV_BOOL('CORS_ORIGIN_ALLOW_ALL', False)
-
-if SERVER_TYPE == "development":
-    CORS_ORIGIN_ALLOW_ALL = True
-    CORS_ALLOW_CREDENTIALS = True
-    CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = "Strict"
-    CORS_ALLOW_ALL_ORIGINS = True
-
-if SERVER_TYPE == "local":
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ORIGIN_ALLOW_ALL = True
-    CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOW_ALL_ORIGINS = True
+# TODO warning about security in future
+# if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
+#     CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
+#
+# if SERVER_TYPE == "production":
+#     CORS_URLS_REGEX = r"^/api/.*$"
+#     # CORS_REPLACE_HTTPS_REFERER = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CORS_PREFLIGHT_MAX_AGE = 300
+#     USE_X_FORWARDED_HOST = True
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     SECURE_REDIRECT_EXEMPT = ['healthcheck']
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+#     # CSRF_COOKIE_SAMESITE = 'Strict'
+#
+# CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
+# CORS_ORIGIN_ALLOW_ALL = ENV_BOOL('CORS_ORIGIN_ALLOW_ALL', False)
+#
+# if SERVER_TYPE == "development":
+#     CORS_ORIGIN_ALLOW_ALL = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CSRF_COOKIE_SECURE = True
+#     CSRF_COOKIE_SAMESITE = "Strict"
+#     CORS_ALLOW_ALL_ORIGINS = True
+#
+# if SERVER_TYPE == "local":
+#     CORS_ALLOW_ALL_ORIGINS = True
+#     CORS_ORIGIN_ALLOW_ALL = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_METHODS = [
     "DELETE",
