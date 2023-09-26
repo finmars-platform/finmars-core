@@ -284,6 +284,7 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 # TODO warning about security in future
 # if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
