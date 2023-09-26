@@ -69,10 +69,19 @@ class KeycloakAuthentication(TokenAuthentication):
     def authenticate(self, request):
 
         # print('KeycloakAuthentication.authenticate')
+        # print('KeycloakAuthentication.request.method %s' % request.method)
+
+        user_model = get_user_model()
+
+        if request.method == 'OPTIONS':
+
+            finmars_bot = User.objects.get(username='finmars_bot')
+
+            return finmars_bot, None
 
         token = self.get_auth_token_from_request(request)
 
-        return self.authenticate_credentials(token)
+        return self.authenticate_credentials(token, request)
 
     def authenticate_credentials(self, key, request=None):
         '''
@@ -82,6 +91,8 @@ class KeycloakAuthentication(TokenAuthentication):
         :param request:
         :return:
         '''
+
+
 
         self.keycloak = KeycloakConnect(server_url=settings.KEYCLOAK_SERVER_URL,
                                         realm_name=settings.KEYCLOAK_REALM,
