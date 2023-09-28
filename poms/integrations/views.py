@@ -100,7 +100,8 @@ from poms.integrations.models import (
     Strategy1Mapping,
     Strategy2Mapping,
     Strategy3Mapping,
-    TransactionFileResult, MappingTable,
+    TransactionFileResult,
+    MappingTable,
 )
 from poms.integrations.serializers import (
     AccountClassifierMappingSerializer,
@@ -146,7 +147,8 @@ from poms.integrations.serializers import (
     Strategy2MappingSerializer,
     Strategy3MappingSerializer,
     TestCertificateSerializer,
-    TransactionFileResultSerializer, MappingTableSerializer,
+    TransactionFileResultSerializer,
+    MappingTableSerializer,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -262,9 +264,7 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
 
 # DEPRECATED
@@ -321,18 +321,16 @@ class MappingTableFilterSet(FilterSet):
     class Meta:
         fields = []
 
+
 class MappingTableViewSet(AbstractModelViewSet):
-    queryset = MappingTable.objects.prefetch_related('items')
+    queryset = MappingTable.objects.prefetch_related("items")
     serializer_class = MappingTableSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [SuperUserOrReadOnly]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = MappingTableFilterSet
-    ordering_fields = [
-        "name",
-        "user_code"
-    ]
+    ordering_fields = ["name", "user_code"]
 
 
 class AbstractMappingFilterSet(FilterSet):
@@ -856,7 +854,7 @@ class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
 
         task = validated_data["task"]
         data = validated_data["data"]
-        if not ("instruments" in data and "currencies" in data):
+        if "instruments" not in data or "currencies" not in data:
             err_msg = "no 'instruments' or 'currencies' in request.data"
             raise ValidationError(err_msg)
 
@@ -986,9 +984,7 @@ class ComplexTransactionImportSchemeViewSet(
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
 
 class TransactionImportViewSet(AbstractAsyncViewSet):
@@ -1114,7 +1110,9 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, instance.scheme.name),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
+        transaction_import.apply_async(
+            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+        )
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
@@ -1164,7 +1162,9 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, options_object["scheme_user_code"]),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
+        transaction_import.apply_async(
+            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+        )
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
@@ -1207,7 +1207,9 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         _l.info("celery_task %s created " % celery_task.pk)
 
-        task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
+        task_result = transaction_import.apply(
+            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+        )
 
         result = []
         error_message = None
@@ -1279,13 +1281,12 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
                 }
             )
 
-        options_object = {}
-        options_object["file_name"] = instance.file_name
-        options_object["file_path"] = instance.file_path
-        options_object["scheme_id"] = instance.scheme.id
-        # options_object['preprocess_file'] = True
-        options_object["execution_context"] = None
-
+        options_object = {
+            "file_name": instance.file_name,
+            "file_path": instance.file_path,
+            "scheme_id": instance.scheme.id,
+            "execution_context": None,
+        }
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
@@ -1304,9 +1305,9 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         response = HttpResponse(
             new_raw_items, content_type="application/force-download"
         )
-        response["Content-Disposition"] = (
-            "attachment; filename=%s" % "preprocessed_" + filename_without_ext + ".json"
-        )
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename=preprocessed_{filename_without_ext}.json"
 
         return response
 
@@ -1434,7 +1435,9 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, instance.scheme.name),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
+        transaction_import.apply_async(
+            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+        )
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
@@ -1554,12 +1557,12 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
         # REFACTOR THIS
 
-        options_object = {}
-        options_object["file_name"] = instance.file_name
-        options_object["file_path"] = instance.file_path
-        options_object["scheme_id"] = instance.scheme.id
-        options_object["execution_context"] = None
-
+        options_object = {
+            "file_name": instance.file_name,
+            "file_path": instance.file_path,
+            "scheme_id": instance.scheme.id,
+            "execution_context": None,
+        }
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
@@ -1568,21 +1571,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             type="validate_transaction_import",
         )
 
-        # celery_task.save()
-
         complex_transaction_csv_file_import_validate_parallel(task_id=celery_task.pk)
-
-        # def oncommit():
-        #
-        #     res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
-        #
-        #     _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel %' % res.id)
-        #
-        #     celery_task.celery_task_id = res.id
-        #
-        #     celery_task.save()
-        #
-        # transaction.on_commit(oncommit)
 
         _l.info(
             "ComplexTransactionCsvFileImportValidateViewSet done: %s",
@@ -1646,95 +1635,6 @@ class TransactionImportJson(APIView):
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 
-# Deprecated
-# class TransactionFileResultUploadHandler(APIView):
-#     permission_classes = []
-#
-#     def get(self, request):
-#
-#         return Response({'status': 'ok'})
-#
-#     def post(self, request):
-#
-#         # _l.debug('request.data %s' % request.data)
-#
-#         _l.debug('request.data %s' % request.data)
-#
-#         procedure_id = request.data['id']
-#
-#         master_user = MasterUser.objects.get(token=request.data['user']['token'])
-#
-#         _l.debug('master_user %s' % master_user)
-#
-#         try:
-#
-#             procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
-#
-#             try:
-#
-#                 item = TransactionFileResult.objects.get(master_user=master_user,
-#                                                          provider__user_code=request.data['provider'],
-#                                                          procedure_instance=procedure_instance)
-#
-#                 if (request.data['files'] and len(request.data['files'])):
-#
-#                     with transaction.atomic():
-#
-#                         procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
-#                         procedure_instance.save()
-#
-#                         item.file_path = request.data['files'][0]["path"]
-#
-#                         item.save()
-#
-#                         _l.debug("Transaction File saved successfuly")
-#
-#                         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-#                         procedure_instance.save()
-#
-#                     if procedure_instance.schedule_instance:
-#                         procedure_instance.schedule_instance.run_next_procedure()
-#
-#                     if procedure_instance.procedure.scheme_type == 'transaction_import':
-#                         complex_transaction_csv_file_import_by_procedure.apply_async(
-#                             kwargs={'procedure_instance_id': procedure_instance.id,
-#                                     'transaction_file_result_id': item.id,
-#                                     })
-#
-#                     if procedure_instance.procedure.scheme_type == 'simple_import':
-#                         data_csv_file_import_by_procedure.apply_async(
-#                             kwargs={'procedure_instance_id': procedure_instance.id,
-#                                     'transaction_file_result_id': item.id,
-#                                     })
-#
-#                 else:
-#                     _l.debug("No files found")
-#
-#                     text = "Data File Procedure %s. Files not found" % (
-#                         procedure_instance.procedure.user_code)
-#
-#                     send_system_message(master_user=procedure_instance.master_user,
-#                                         performed_by='System',
-#                                         description=text)
-#
-#                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-#                     procedure_instance.save()
-#
-#                 return Response({'status': 'ok'})
-#
-#             except Exception as e:
-#
-#                 _l.debug("Transaction File error happened %s " % e)
-#
-#                 return Response({'status': 'error'})
-#
-#         except RequestDataFileProcedureInstance.DoesNotExist:
-#
-#             _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
-#
-#             return Response({'status': '404'})  # TODO handle 404 properly
-
-
 class DataProviderViewSet(AbstractReadOnlyModelViewSet):
     ordering_fields = ["name"]
     filter_fields = ["user_code", "name"]
@@ -1759,15 +1659,13 @@ class SupersetGetSecurityToken(APIView):
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
 
-        response_json = response.json()
-
-        return response_json
+        return response.json()
 
     def get_csrf_token(self, tokens):
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": "Bearer %s" % tokens["access_token"],
+            "Authorization": f'Bearer {tokens["access_token"]}',
         }
 
         url = settings.SUPERSET_URL + "api/v1/security/csrf_token/"
@@ -1800,7 +1698,7 @@ class SupersetGetSecurityToken(APIView):
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": "Bearer %s" % tokens["access_token"],
+            "Authorization": f'Bearer {tokens["access_token"]}',
             "X-CSRFToken": csrf_token,
         }
 
