@@ -1171,7 +1171,7 @@ class PricingConditionMapping(AbstractMapping):
         ]
 
     def __str__(self):
-        return "%s / %s -> %s" % (self.provider, self.value, self.content_object)
+        return f"{self.provider} / {self.value} -> {self.content_object}"
 
 
 # ----------------------------------------

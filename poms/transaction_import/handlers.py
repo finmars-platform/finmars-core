@@ -1429,8 +1429,8 @@ class TransactionImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error("Could not execute preoprocess expression. Error %s" % e)
+                _l.error(f"Could not execute preoprocess expression. Error {repr(e)}")
 
-        _l.info("whole_file_preprocess.file_items %s" % len(self.file_items))
+        _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
         return self.file_items
