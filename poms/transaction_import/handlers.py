@@ -878,7 +878,7 @@ class TransactionImportProcess(object):
                     _l.error(
                         f"TransactionImportProcess.Task {self.task}. "
                         f"fill_with_raw_items {self.process_type} Exception "
-                        f"{repr(e)} trace {traceback.format_exc()}"
+                        f"{repr(e)}"
                     )
                     continue
 

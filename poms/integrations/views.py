@@ -1298,6 +1298,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         transaction_import_process = TransactionImportProcess(task_id=celery_task.id)
 
         transaction_import_process.fill_with_raw_items()
+
         new_raw_items = transaction_import_process.whole_file_preprocess()
 
         filename_without_ext = instance.file_name.split(".")[0]
