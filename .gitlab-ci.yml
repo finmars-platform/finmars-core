@@ -130,7 +130,7 @@ Push Version:
   script:
     - |
       # Create the JSON payload
-      NOTES=$(git log -1 --pretty=%B)
+      NOTES=$(git log -1 --pretty=%b)
       JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\" }"
 
       # Pass the payload to curl
