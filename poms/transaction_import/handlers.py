@@ -872,9 +872,6 @@ class TransactionImportProcess(object):
 
                 item = {}
                 for scheme_input in self.scheme.inputs.all():
-                    if scheme_input.book_uniqueness_settings == ComplexTransactionImportScheme.SKIP:
-                        continue
-
                     try:
                         item[scheme_input.name] = file_item[scheme_input.column_name]
                     except Exception:
