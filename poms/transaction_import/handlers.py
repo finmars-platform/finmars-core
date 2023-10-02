@@ -862,41 +862,36 @@ class TransactionImportProcess(object):
 
     def fill_with_raw_items(self):
         _l.info(
-            "TransactionImportProcess.Task %s. fill_with_raw_items INIT %s"
-            % (self.task, self.process_type)
+            f"TransactionImportProcess.Task {self.task}. "
+            f"fill_with_raw_items INIT {self.process_type}"
         )
         st = time.perf_counter()
 
-        try:
-            for file_item in self.file_items:
+        for file_item in self.file_items:
 
-                item = {}
-                for scheme_input in self.scheme.inputs.all():
-                    try:
-                        item[scheme_input.name] = file_item[scheme_input.column_name]
-                    except Exception:
-                        item[scheme_input.name] = None
+            item = {}
+            for scheme_input in self.scheme.inputs.all():
+                try:
+                    item[scheme_input.name] = file_item[scheme_input.column_name]
 
-                self.raw_items.append(item)
+                except Exception as e:
+                    _l.error(
+                        f"TransactionImportProcess.Task {self.task}. "
+                        f"fill_with_raw_items {self.process_type} Exception "
+                        f"{repr(e)}"
+                    )
+                    continue
 
-            _l.info(
-                "TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s"
-                % (self.task, self.process_type, len(self.raw_items))
-            )
-            _l.info(
-                "TransactionImportProcess: fill_with_raw_items done: %s",
-                "{:3.3f}".format(time.perf_counter() - st),
-            )
+            self.raw_items.append(item)
 
-        except Exception as e:
-            _l.error(
-                "TransactionImportProcess.Task %s. fill_with_raw_items %s Exception %s"
-                % (self.task, self.process_type, e)
-            )
-            _l.error(
-                "TransactionImportProcess.Task %s. fill_with_raw_items %s Traceback %s"
-                % (self.task, self.process_type, traceback.format_exc())
-            )
+        _l.info(
+            f"TransactionImportProcess.Task {self.task}. fill_with_raw_items "
+            f"{self.process_type} DONE items {len(self.raw_items)}"
+        )
+        _l.info(
+            "TransactionImportProcess: fill_with_raw_items done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
     def apply_conversion_to_raw_items(self):
         # EXECUTE CONVERSIONS ON SCHEME INPUTS
@@ -1418,9 +1413,8 @@ class TransactionImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-            names = {}
 
-            names["data"] = self.file_items
+            names = {"data": self.file_items}
 
             try:
                 # _l.info("whole_file_preprocess  names %s" % names)
@@ -1434,8 +1428,8 @@ class TransactionImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error("Could not execute preoprocess expression. Error %s" % e)
+                _l.error(f"Could not execute preoprocess expression. Error {repr(e)}")
 
-        _l.info("whole_file_preprocess.file_items %s" % len(self.file_items))
+        _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
         return self.file_items

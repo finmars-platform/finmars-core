@@ -504,8 +504,7 @@ class SimpleEval2(object):
         raise _Return(val)
 
     def _on_ast_Name(self, node):
-        ret = self._find_name(node.id)
-        return ret
+        return self._find_name(node.id)
 
     def _on_ast_Subscript(self, node):
         val = self._eval(node.value)
@@ -890,10 +889,10 @@ def get_model_data_ext(instance, context=None, hide_fields=None):
         many = True
         model = instance.model
         instance = instance.all()
-    else:
-        if not instance:
-            return None
+    elif instance:
         model = instance.__class__
+    else:
+        return None
     object_class = str(model.__name__)
 
     try:
