@@ -556,6 +556,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                               ('entry', gettext_lazy('Entry')),
                                           ))
     expression_iterations_count = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
+    count = serializers.IntegerField(default=0, initial=0, min_value=0, read_only=True)
 
     begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
                                        default=date_now() - timedelta(days=365))
@@ -1328,7 +1329,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         if not instance.report_instance_id:
 
-            data = super(BackendPLReportGroupsSerializer, self).to_representation(instance)
+            data = super(BackendPLReportItemsSerializer, self).to_representation(instance)
 
             report_uuid = str(uuid.uuid4())
 
@@ -1591,6 +1592,8 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+        data['count'] = len(full_items)
+        # full_items = helper_service.paginate_items(full_items, instance.frontend_request_options)
 
         result_items = []
 
