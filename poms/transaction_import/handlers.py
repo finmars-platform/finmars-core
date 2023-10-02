@@ -1413,16 +1413,15 @@ class TransactionImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-            # names = {}
-            #
-            # names["data"] = self.file_items
+
+            names = {"data": self.file_items}
 
             try:
                 # _l.info("whole_file_preprocess  names %s" % names)
 
                 self.file_items = formula.safe_eval(
                     self.scheme.data_preprocess_expression,
-                    names=self.file_items,
+                    names=names,
                     context=self.context,
                 )
 
