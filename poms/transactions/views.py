@@ -1214,6 +1214,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         "date",
         "code",
         "is_deleted",
+        "transactions__accounting_date"
     ]
 
     def create(self, request, *args, **kwargs):
