@@ -1193,6 +1193,8 @@ class ComplexTransactionFilterSet(FilterSet):
     date = django_filters.DateFromToRangeFilter()
     is_deleted = django_filters.BooleanFilter()
 
+    transactions__accounting_date = django_filters.DateFromToRangeFilter()
+
     class Meta:
         model = ComplexTransaction
         fields = []
@@ -1207,10 +1209,12 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
+    filter_class = ComplexTransactionFilterSet
     ordering_fields = [
         "date",
         "code",
         "is_deleted",
+        "transactions__accounting_date"
     ]
 
     def create(self, request, *args, **kwargs):

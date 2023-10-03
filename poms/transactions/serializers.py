@@ -3562,7 +3562,11 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
         representation = super().to_representation(instance)
 
         try:
-            instance = TransactionTypeGroup.objects.get(id=representation["group"])
+
+            if isinstance(representation["group"], int):
+                instance = TransactionTypeGroup.objects.get(id=representation["group"])
+            else:
+                instance = TransactionTypeGroup.objects.get(user_code=representation["group"])
 
             s = TransactionTypeGroupViewSerializer(
                 instance=instance, read_only=True, context=self.context
@@ -4263,6 +4267,7 @@ class ComplexTransactionViewSerializer(
 class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    first_transaction_accounting_date = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -4276,6 +4281,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         fields = [
             "id",
             "date",
+            "first_transaction_accounting_date",
             "status",
             "code",
             "text",
@@ -4342,6 +4348,13 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             "user_date_4",
             "user_date_5",
         ]
+
+    def get_first_transaction_accounting_date(self, instance):
+
+        if instance.transactions.count():
+            return instance.transactions.first().accounting_date
+
+        return None
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

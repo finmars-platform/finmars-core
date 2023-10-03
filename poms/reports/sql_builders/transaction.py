@@ -145,6 +145,8 @@ class TransactionReportBuilderSql:
                                 if value == portfolio[field_key]:
                                     portfolio_ids.append(str(portfolio['id']))
 
+                        _l.info('portfolio_ids %s' % portfolio_ids)
+
                         if portfolio_ids:
                             res = "'" + "\',\'".join(portfolio_ids)
                             res = res + "'"
