@@ -131,9 +131,16 @@ if USE_DEBUGGER:
     INSTALLED_APPS.append("debug_toolbar")
     INSTALLED_APPS.append("pympler")
 
+# CRAZY, this settings MUST be before MIDDLEWARE prop
+CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
+CORS_ORIGIN_ALLOW_ALL = ENV_BOOL("CORS_ORIGIN_ALLOW_ALL", True)
+CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
+
+# print('CORS_ALLOW_CREDENTIALS %s' % CORS_ALLOW_CREDENTIALS)
+
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
@@ -161,6 +168,7 @@ MIDDLEWARE = [
 
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 if USE_DEBUGGER:
@@ -282,9 +290,7 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 #     'https://' + DOMAIN_NAME
 # ]
 
-CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", False)
-CORS_ORIGIN_ALLOW_ALL = ENV_BOOL("CORS_ORIGIN_ALLOW_ALL", True)
-CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
+
 
 # TODO warning about security in future
 # if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
