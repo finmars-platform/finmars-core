@@ -17,7 +17,7 @@ router.register(
     basename="mapping-table",
 )
 router.register(
-    "provide",
+    "provider",
     integrations.ProviderClassViewSet,
     basename="provider_class",
 )
