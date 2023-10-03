@@ -180,7 +180,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         #             raise
         #         self.perform_destroy(instance)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"task_id": celery_task.id})
 
 
 class BulkCreateModelMixin(CreateModelMixin):
