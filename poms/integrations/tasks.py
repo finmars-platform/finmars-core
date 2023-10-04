@@ -254,6 +254,9 @@ def download_instrument_async(self, task_id=None):
         task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
+
+            _l.info('download_instrument_async.result %s' % result )
+
             task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
@@ -1113,7 +1116,7 @@ def download_instrument_pricing_async(self, task_id):
 @finmars_task(name="integrations.test_certificate_async", bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
-    _l.debug(
+    _l.info(
         "handle_test_certificate_async: master_user_id=%s, task=%s",
         task.master_user_id,
         task,
@@ -1126,19 +1129,19 @@ def test_certificate_async(self, task_id):
 
         provider = get_provider(task.master_user, provider_id)
     except Exception:
-        _l.debug("provider load error", exc_info=True)
+        _l.error("provider load error", exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
-        _l.debug("provider not found")
+        _l.error("provider not found")
         task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
-        _l.warning("invalid task status")
+        _l.error("invalid task status")
         return
 
     options = task.options_object
@@ -1146,13 +1149,13 @@ def test_certificate_async(self, task_id):
     try:
         result = provider.test_certificate(options)
     except Exception:
-        _l.warning("provider processing error", exc_info=True)
+        _l.error("provider processing error", exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
     else:
-        _l.debug(f"handle_test_certificate_async task: result {result}")
-        _l.debug(
+        _l.info(f"handle_test_certificate_async task: result {result}")
+        _l.info(
             f"handle_test_certificate_async task: result is authorized "
             f'{result["is_authorized"]}'
         )

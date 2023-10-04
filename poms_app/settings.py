@@ -640,7 +640,14 @@ BLOOMBERG_MAX_RETRIES = 60
 BLOOMBERG_DATE_INPUT_FORMAT = "%m/%d/%Y"
 BLOOMBERG_EMPTY_VALUE = [None, "", "N.S."]
 
-BLOOMBERG_SANDBOX = os.environ.get("POMS_BLOOMBERG_SANDBOX") != "False"
+BLOOMBERG_SANDBOX = ENV_BOOL("BLOOMBERG_SANDBOX", True)
+
+if BLOOMBERG_SANDBOX:
+    print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
+else:
+    print("Bloomberg Data License Module activated 🟢")
+
+
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
