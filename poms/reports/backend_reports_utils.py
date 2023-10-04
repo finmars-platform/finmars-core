@@ -32,6 +32,8 @@ class BackendReportHelperService:
         identifier_key = self.convert_name_key_to_user_code_key(group_type["key"])
         identifier_value = item.get(identifier_key)
 
+        # _l.info('get_result_group.identifier_value %s' % identifier_value)
+
         if identifier_value not in [None, "-"]:
             result_group["___group_identifier"] = str(identifier_value)
             result_group["___group_name"] = str(item_value)
@@ -41,9 +43,16 @@ class BackendReportHelperService:
                 result_group["___group_name"] = status_map.get(
                     item_value, str(item_value)
                 )
+        elif identifier_value is '-':
+
+            result_group["___group_identifier"] = '-'
+            result_group["___group_name"] = "-"
+
         elif identifier_value is None:  # Specifically handle None values
+
             result_group["___group_identifier"] = None
-            result_group["___group_name"] = "Other"
+            result_group["___group_name"] = "No Data"
+
 
         return result_group
 
@@ -59,14 +68,18 @@ class BackendReportHelperService:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
+        # _l.info('items %s' % items)
+
         for result_group in result_groups:
-            # TODO refactor this garbage
-            group_items = [
-                item
-                for item in items
-                if item.get(result_group["___group_type_key"])
-                   == result_group["___group_identifier"]
-            ]
+            # TODO CONSIDER SOMETHING WITH -
+            group_items = []
+
+            for item in items:
+                if item.get(result_group["___group_type_key"]) == result_group["___group_identifier"]:
+                    group_items.append(item)
+
+            # _l.info('group_items %s' % group_items)
+
             result_group["subtotal"] = BackendReportSubtotalService.calculate(
                 group_items, columns
             )
