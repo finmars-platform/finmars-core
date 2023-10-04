@@ -24,7 +24,7 @@ from poms.common.filters import (
     CharFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter,
+    NoOpFilter, ModelExtUserCodeMultipleChoiceFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import (
@@ -1194,6 +1194,7 @@ class ComplexTransactionFilterSet(FilterSet):
     is_deleted = django_filters.BooleanFilter()
 
     transactions__accounting_date = django_filters.DateFromToRangeFilter()
+    transactions__portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
 
     class Meta:
         model = ComplexTransaction
