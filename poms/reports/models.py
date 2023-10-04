@@ -1031,6 +1031,35 @@ class ReportSummary:
             % "{:3.3f}".format(time.perf_counter() - st)
         )
 
+    def build_pl_range(self):
+        st = time.perf_counter()
+
+        from poms.reports.serializers import PLReportSerializer
+
+        serializer = PLReportSerializer(
+            data={
+                "pl_first_date": self.date_from,
+                "report_date": self.date_to,
+                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "report_currency": self.currency.id,
+                "portfolios": self.portfolio_ids,
+                "cost_method": CostMethod.AVCO,
+            },
+            context=self.context,
+        )
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+
+        self.pl_report_range = PLReportBuilderSql(instance=instance).build_report()
+
+        _l.info(
+            "ReportSummary.build_pl_daily done: %s"
+            % "{:3.3f}".format(time.perf_counter() - st)
+        )
+
     def build_pl_daily(self):
         st = time.perf_counter()
 
@@ -1168,6 +1197,43 @@ class ReportSummary:
                 nav = nav + item["market_value"]
 
         return nav
+
+    def get_total_pl_range(self, portfolio_id=None):
+        total = 0
+
+        for item in self.pl_report_range.items:
+            if (
+                    portfolio_id
+                    and item["portfolio_id"] == portfolio_id
+                    and item["total"]
+                    or not portfolio_id
+                    and item["total"]
+            ):
+                total = total + item["total"]
+
+        return total
+
+    def get_total_position_return_pl_range(self, portfolio_id=None):
+        total = 0
+        market_value = 0
+
+        for item in self.pl_report_range.items:
+            if portfolio_id:
+                if item["portfolio_id"] == portfolio_id:
+                    if item["total"]:
+                        total = total + item["total"]
+
+                    if item["market_value"]:
+                        total = market_value + item["market_value"]
+
+            else:
+                if item["total"]:
+                    total = total + item["total"]
+
+                if item["market_value"]:
+                    market_value = market_value + item["market_value"]
+
+        return math.floor(total / market_value * 10000) / 100 if market_value else 0
 
     def get_total_pl_daily(self, portfolio_id=None):
         total = 0

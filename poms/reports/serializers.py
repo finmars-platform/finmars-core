@@ -17,7 +17,7 @@ from poms.accounts.serializers import AccountViewSerializer
 from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.utils import date_now
+from poms.common.utils import date_now, date_yesterday
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.fields import RegisterField, BundleField
@@ -477,7 +477,7 @@ class BalanceReportSerializer(ReportSerializer):
 
 class SummarySerializer(serializers.Serializer):
 
-    date_from = serializers.DateField(required=False, allow_null=True, default=date_now,
+    date_from = serializers.DateField(required=False, allow_null=True, default=date_yesterday,
                                         help_text=gettext_lazy('Date from'))
 
     date_to = serializers.DateField(required=False, allow_null=True, default=date_now,

@@ -1,5 +1,6 @@
 import logging
 import time
+from datetime import timedelta
 
 from django.core.cache import cache
 from django_filters.rest_framework import FilterSet
@@ -441,6 +442,12 @@ class SummaryViewSet(AbstractViewSet):
         portfolios = validated_data["portfolios"]
         currency = validated_data["currency"]
 
+        if date_from > date_to:
+            date_from = date_to - timedelta(days=1)
+
+        _l.info('SummaryViewSet.list.date_from %s' % date_from)
+        _l.info('SummaryViewSet.list.date_to %s' % date_to)
+
         summary_record_count = ReportSummaryInstance.objects.filter(member=request.user.member,
                                                                     date_from=date_from,
                                                                     date_to=date_to,
@@ -471,6 +478,7 @@ class SummaryViewSet(AbstractViewSet):
             )
 
             report_summary.build_balance()
+            report_summary.build_pl_range()
             report_summary.build_pl_daily()
             report_summary.build_pl_mtd()
             report_summary.build_pl_ytd()
@@ -478,6 +486,8 @@ class SummaryViewSet(AbstractViewSet):
             result = {
                 "total": {
                     "nav": report_summary.get_nav(),
+                    "pl_range": report_summary.get_total_pl_range(),
+                    "pl_range_percent": report_summary.get_total_position_return_pl_range(),
                     "pl_daily": report_summary.get_total_pl_daily(),
                     "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
                     "pl_mtd": report_summary.get_total_pl_mtd(),
