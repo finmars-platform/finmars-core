@@ -194,7 +194,11 @@ class CeleryTask(TimeStampedModel):
             self.options = None
         else:
             self.options = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     @property
@@ -207,7 +211,11 @@ class CeleryTask(TimeStampedModel):
             self.result = None
         else:
             self.result = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     @property
@@ -220,7 +228,11 @@ class CeleryTask(TimeStampedModel):
             self.progress = None
         else:
             self.progress = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     def add_attachment(self, file_report_id):
@@ -251,9 +263,16 @@ class CeleryTask(TimeStampedModel):
         if self.ttl and not self.expiry_at:
             self.expiry_at = self.created + timedelta(seconds=self.ttl)
 
-        if CeleryTask.objects.exclude(type__in=['calculate_balance_report', 'calculate_pl_report']).count() > 3000:
+        if (
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).count()
+            > 3000
+        ):
             _l.warning(f"{log} tasks amount > 1000, delete oldest task")
-            CeleryTask.objects.exclude(type__in=['calculate_balance_report', 'calculate_pl_report']).order_by("id")[0].delete()
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).order_by("id")[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):
@@ -294,71 +313,61 @@ class CeleryWorker(TimeStampedModel):
         unique=True,
         max_length=255,
         verbose_name="worker name",
-        help_text="Name that will be used in celery worker command"
+        help_text="Name that will be used in celery worker command",
     )
-
     worker_type = models.CharField(
         default="worker",
         max_length=255,
         verbose_name="worker type",
-        help_text="worker or scheduler"
+        help_text="worker or scheduler",
     )
-
     status = models.TextField(
         null=True,
         blank=True,
         default="unknown",
         verbose_name="status",
-        help_text="Status of worker container"
+        help_text="Status of worker container",
     )
-
     notes = models.TextField(
         null=True,
         blank=True,
         verbose_name=gettext_lazy("notes"),
     )
-
     memory_limit = models.CharField(
         null=True,
         max_length=255,
         verbose_name="Memory Limit",
-        help_text="Memory limit for celery worker e.g. 2Gi"
+        help_text="Memory limit for celery worker e.g. 2Gi",
     )
-
     queue = models.TextField(
         null=True,
         blank=True,
         default="backend-general-queue,backend-background-queue",
         verbose_name=gettext_lazy("Queue"),
-        help_text="Comma separated list of queues that worker will listen to"
+        help_text="Comma separated list of queues that worker will listen to",
     )
 
     def create_worker(self):
-
         authorizer_service = AuthorizerService()
 
         authorizer_service.create_worker(self)
 
     def start(self):
-
         authorizer_service = AuthorizerService()
 
         authorizer_service.start_worker(self)
 
     def stop(self):
-
         authorizer_service = AuthorizerService()
 
         authorizer_service.stop_worker(self)
 
     def restart(self):
-
         authorizer_service = AuthorizerService()
 
         authorizer_service.restart_worker(self)
 
     def get_status(self):
-
         authorizer_service = AuthorizerService()
 
         status = authorizer_service.get_worker_status(self)
@@ -366,15 +375,11 @@ class CeleryWorker(TimeStampedModel):
         try:
             self.status = json.dumps(status)
         except Exception as e:
-            self.status = json.dumps({
-                "status": "unknown",
-                "error_message": str(e)
-            })
+            self.status = json.dumps({"status": "unknown", "error_message": str(e)})
 
         self.save()
 
     def delete_worker(self):
-
         authorizer_service = AuthorizerService()
 
         authorizer_service.delete_worker(self)
