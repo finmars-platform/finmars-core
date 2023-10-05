@@ -1069,6 +1069,13 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+
+        total_market_value = 0
+        for item in full_items:
+            total_market_value = total_market_value + item["market_value"]
+
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
+
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
         groups_types = instance.frontend_request_options['groups_types']
@@ -1076,7 +1083,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         group_type = groups_types[len(groups_types) - 1]
 
-        unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
+        unique_groups = helper_service.get_unique_groups(full_items, group_type, columns, total_market_value)
         unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
 
         # _l.info('unique_groups %s' % unique_groups)
@@ -1178,7 +1185,15 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+
+        total_market_value = 0
+        for item in full_items:
+            total_market_value = total_market_value + item["market_value"]
+
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
+
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+        full_items = helper_service.calculate_market_value_percent(full_items, total_market_value)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
         result_items = []
@@ -1285,6 +1300,11 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        total_market_value = 0
+        for item in full_items:
+            total_market_value = total_market_value + item["market_value"]
+
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
 
         groups = []
@@ -1297,7 +1317,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         group_type = groups_types[len(groups_types) - 1]
 
-        unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
+        unique_groups = helper_service.get_unique_groups(full_items, group_type, columns, total_market_value)
         unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
 
         # _l.info('unique_groups %s' % unique_groups)
@@ -1386,7 +1406,13 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        total_market_value = 0
+        for item in full_items:
+            total_market_value = total_market_value + item["market_value"]
+
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+        full_items = helper_service.calculate_market_value_percent(full_items, total_market_value)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
 
