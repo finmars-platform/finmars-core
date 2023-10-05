@@ -20,7 +20,7 @@ from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.utils import date_now, date_yesterday
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
-from poms.instruments.fields import RegisterField, BundleField
+from poms.instruments.fields import RegisterField, BundleField, PricingPolicyField, SystemPricingPolicyDefault
 from poms.instruments.models import CostMethod
 from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
 from poms.portfolios.fields import PortfolioField
@@ -484,6 +484,7 @@ class SummarySerializer(serializers.Serializer):
                                       help_text=gettext_lazy('Date from'))
 
     currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    pricing_policy = PricingPolicyField(required=False, allow_null=True, default=SystemPricingPolicyDefault())
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     calculate_new = serializers.BooleanField(default=False, initial=False)
 

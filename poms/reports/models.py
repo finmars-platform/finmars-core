@@ -981,6 +981,7 @@ class ReportSummary:
         portfolios,
         bundles,
         currency,
+        pricing_policy,
         master_user,
         member,
         context,
@@ -995,6 +996,7 @@ class ReportSummary:
         self.date_to = date_to
 
         self.currency = currency
+        self.pricing_policy = pricing_policy
         self.portfolios = portfolios
         self.bundles = bundles
 
@@ -1010,7 +1012,7 @@ class ReportSummary:
         serializer = BalanceReportSerializer(
             data={
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1040,7 +1042,7 @@ class ReportSummary:
             data={
                 "pl_first_date": self.date_from,
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1069,7 +1071,7 @@ class ReportSummary:
             data={
                 "pl_first_date": self.date_to - timedelta(days=1),
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1098,7 +1100,7 @@ class ReportSummary:
             data={
                 "pl_first_date": self.date_to - timedelta(days=30),
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1132,7 +1134,7 @@ class ReportSummary:
             data={
                 "pl_first_date": self.date_to - timedelta(days=365),
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1163,7 +1165,7 @@ class ReportSummary:
             data={
                 "pl_first_date": self.date_to - timedelta(days=365000),
                 "report_date": self.date_to,
-                "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+                "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
@@ -1444,6 +1446,13 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("currency user_code"),
+    )
+
+    pricing_policy = models.CharField(
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("pricing policy user_code"),
     )
 
     data = models.JSONField(

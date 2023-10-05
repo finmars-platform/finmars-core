@@ -441,6 +441,7 @@ class SummaryViewSet(AbstractViewSet):
         date_to = validated_data["date_to"]
         portfolios = validated_data["portfolios"]
         currency = validated_data["currency"]
+        pricing_policy = validated_data["pricing_policy"]
 
         if date_from > date_to:
             date_from = date_to - timedelta(days=1)
@@ -452,6 +453,7 @@ class SummaryViewSet(AbstractViewSet):
                                                                     date_from=date_from,
                                                                     date_to=date_to,
                                                                     portfolios=portfolios,
+                                                                    pricing_policy=pricing_policy,
                                                                     currency=currency
                                                                     ).count()
 
@@ -472,6 +474,7 @@ class SummaryViewSet(AbstractViewSet):
                 portfolios,
                 bundles,
                 currency,
+                pricing_policy,
                 request.user.master_user,
                 request.user.member,
                 context,
