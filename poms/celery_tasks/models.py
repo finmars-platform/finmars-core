@@ -251,9 +251,9 @@ class CeleryTask(TimeStampedModel):
         if self.ttl and not self.expiry_at:
             self.expiry_at = self.created + timedelta(seconds=self.ttl)
 
-        if CeleryTask.objects.all().count() > 1000:
+        if CeleryTask.objects.exclude(type__in=['calculate_balance_report', 'calculate_pl_report']).count() > 3000:
             _l.warning(f"{log} tasks amount > 1000, delete oldest task")
-            CeleryTask.objects.all().order_by("id")[0].delete()
+            CeleryTask.objects.exclude(type__in=['calculate_balance_report', 'calculate_pl_report']).order_by("id")[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):
