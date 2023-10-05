@@ -102,36 +102,6 @@ class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         super(ModelExtMultipleChoiceFilter, self).__init__(*args, **kwargs)
 
 
-
-
-
-def _model_choices(model, field_name, master_user_path):
-    master_user = get_request().user.master_user
-
-    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
-
-    for t in qs:
-        yield t.user_code, getattr(t, field_name)
-
-
-class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
-    model = None
-    field_name = 'user_code'
-    master_user_path = 'master_user'
-
-    def __init__(self, *args, **kwargs):
-        kwargs['lookup_expr'] = 'exact'
-        self.model = kwargs.pop('model', self.model)
-        self.field_name = kwargs.pop('field_name', self.field_name)
-        self.master_user_path = kwargs.pop('master_user_path', self.master_user_path)
-        kwargs['choices'] = partial(_model_choices, model=self.model, field_name=self.field_name,
-                                    master_user_path=self.master_user_path)
-        super(ModelExtUserCodeMultipleChoiceFilter, self).__init__(*args, **kwargs)
-
-
-
-
-
 class AbstractRelatedFilterBackend(BaseFilterBackend):
     source = None
     query_key = None
@@ -157,6 +127,30 @@ class ByIsDeletedFilterBackend(BaseFilterBackend):
                     is_deleted = value in (True, 'True', 'true', '1')
                     queryset = queryset.filter(is_deleted=is_deleted)
         return queryset
+
+
+def _user_code_model_choices(model, field_name, master_user_path):
+    master_user = get_request().user.master_user
+
+    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
+
+    for t in qs:
+        yield t.user_code, getattr(t, field_name)
+
+
+class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
+    model = None
+    field_name = 'user_code'
+    master_user_path = 'master_user'
+
+    def __init__(self, *args, **kwargs):
+        kwargs['lookup_expr'] = 'exact'
+        self.model = kwargs.pop('model', self.model)
+        self.field_name = kwargs.pop('field_name', self.field_name)
+        self.master_user_path = kwargs.pop('master_user_path', self.master_user_path)
+        kwargs['choices'] = partial(_user_code_model_choices, model=self.model, field_name=self.field_name,
+                                    master_user_path=self.master_user_path)
+        super(ModelExtUserCodeMultipleChoiceFilter, self).__init__(*args, **kwargs)
 
 
 class ByIsEnabledFilterBackend(BaseFilterBackend):
