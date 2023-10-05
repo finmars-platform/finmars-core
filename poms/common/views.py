@@ -638,6 +638,41 @@ class AbstractSyncViewSet(AbstractViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def _get_values_for_select(model, value_type, key, filter_kw):
+    '''
+    :param model:
+    :param value_type: Allowed values: 10, 20, 30, 40, 'field'
+    :param key:
+    :param filter_kw: Keyword arguments for method .filter()
+    :type filter_kw: dict
+    '''
+    filter_kw[key + "__isnull"] = False
+
+    if value_type not in [10, 20, 40, 'field']:
+        return Response(
+            {
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": "Invalid value_type for content_type.",
+                "results": [],
+            }
+        )
+
+    if value_type in [10, 20, 40]:
+        return (
+            model.objects.filter(**filter_kw)
+            .order_by(key)
+            .values_list(key, flat=True)
+            .distinct(key)
+        )
+
+    elif value_type == "field":
+        return (
+            model.objects.filter(**filter_kw)
+            .order_by(key + "__user_code")
+            .values_list(key + "__user_code", flat=True)
+            .distinct(key + "__user_code")
+        )
+
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
         results = []
@@ -648,6 +683,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         master_user = request.user.master_user
 
+        # region Exceptions
         if not content_type_name:
             return Response(
                 {
@@ -686,6 +722,8 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                         "results": [],
                     }
                 )
+
+        # endregion Exceptions
 
         content_type_pieces = content_type_name.split(".")
 
@@ -761,94 +799,44 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         else:
             if content_type_name == "instruments.pricehistory":
-                if value_type == 10:
-                    results = (
-                        model.objects.filter(instrument__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 20:
-                    results = (
-                        model.objects.filter(instrument__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 40:
-                    results = (
-                        model.objects.filter(instrument__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == "field":
-                    results = (
-                        model.objects.filter(instrument__master_user=master_user)
-                        .order_by(key + "__user_code")
-                        .values_list(key + "__user_code", flat=True)
-                        .distinct(key + "__user_code")
-                    )
+                results = _get_values_for_select(
+                    model,
+                    value_type,
+                    key,
+                    {"instrument__master_user": master_user}
+                )
 
             elif content_type_name == "currencies.currencyhistory":
-                if value_type == 10:
-                    results = (
-                        model.objects.filter(currency__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 20:
-                    results = (
-                        model.objects.filter(currency__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 40:
-                    results = (
-                        model.objects.filter(currency__master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == "field":
-                    results = (
-                        model.objects.filter(currency__master_user=master_user)
-                        .order_by(key + "__user_code")
-                        .values_list(key + "__user_code", flat=True)
-                        .distinct(key + "__user_code")
-                    )
+                results = _get_values_for_select(
+                    model,
+                    value_type,
+                    key,
+                    {"currency__master_user": master_user}
+                )
+
+            elif content_type_name == "transactions.transactionclass":
+                results = (
+                    model.objects.all()
+                    .order_by(key)
+                    .values_list(key, flat=True)
+                    .distinct(key)
+                )
+
+            elif content_type_name == "instruments.country":
+                results = (
+                    model.objects.all()
+                    .order_by(key)
+                    .values_list(key, flat=True)
+                    .distinct(key)
+                )
 
             else:
-                if value_type == 10:
-                    results = (
-                        model.objects.filter(master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 20:
-                    results = (
-                        model.objects.filter(master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == 40:
-                    results = (
-                        model.objects.filter(master_user=master_user)
-                        .order_by(key)
-                        .values_list(key, flat=True)
-                        .distinct(key)
-                    )
-                if value_type == "field":
-                    results = (
-                        model.objects.filter(master_user=master_user)
-                        .order_by(key + "__user_code")
-                        .values_list(key + "__user_code", flat=True)
-                        .distinct(key + "__user_code")
-                    )
+                results = _get_values_for_select(
+                    model,
+                    value_type,
+                    key,
+                    {"master_user": master_user}
+                )
 
         _l.debug(f"model {model}")
 

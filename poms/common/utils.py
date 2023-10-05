@@ -61,6 +61,9 @@ def date_now():
     return timezone_today()
 
 
+def date_yesterday():
+    return timezone_today() - timedelta(days=1)
+
 def datetime_now():
     return now()
 

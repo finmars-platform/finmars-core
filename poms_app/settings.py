@@ -131,9 +131,16 @@ if USE_DEBUGGER:
     INSTALLED_APPS.append("debug_toolbar")
     INSTALLED_APPS.append("pympler")
 
+# CRAZY, this settings MUST be before MIDDLEWARE prop
+CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
+CORS_ORIGIN_ALLOW_ALL = ENV_BOOL("CORS_ORIGIN_ALLOW_ALL", True)
+CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
+
+# print('CORS_ALLOW_CREDENTIALS %s' % CORS_ALLOW_CREDENTIALS)
+
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
@@ -161,6 +168,7 @@ MIDDLEWARE = [
 
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 if USE_DEBUGGER:
@@ -282,9 +290,7 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 #     'https://' + DOMAIN_NAME
 # ]
 
-# CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_ALL_ORIGINS = True
+
 
 # TODO warning about security in future
 # if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
@@ -634,7 +640,14 @@ BLOOMBERG_MAX_RETRIES = 60
 BLOOMBERG_DATE_INPUT_FORMAT = "%m/%d/%Y"
 BLOOMBERG_EMPTY_VALUE = [None, "", "N.S."]
 
-BLOOMBERG_SANDBOX = os.environ.get("POMS_BLOOMBERG_SANDBOX") != "False"
+BLOOMBERG_SANDBOX = ENV_BOOL("BLOOMBERG_SANDBOX", True)
+
+if BLOOMBERG_SANDBOX:
+    print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
+else:
+    print("Bloomberg Data License Module activated 🟢")
+
+
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
@@ -698,18 +711,48 @@ KEYCLOAK_CLIENT_ID = os.environ.get("KEYCLOAK_CLIENT_ID", "finmars")
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get("KEYCLOAK_CLIENT_SECRET_KEY", None)
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': True,
+
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer'),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# OLD ONE
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
+#     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': False,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,
+#     'VERIFYING_KEY': None,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+#     'USER_ID_FIELD': 'id',
+#     'USER_ID_CLAIM': 'user_id',
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+#     'TOKEN_TYPE_CLAIM': 'token_type',
+# }
 
 REDOC_SETTINGS = {
     "LAZY_RENDERING": True,
