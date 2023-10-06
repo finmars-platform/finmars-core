@@ -1071,8 +1071,14 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1187,8 +1193,13 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1226,8 +1237,6 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
-
-
 
 
 class BackendPLReportGroupsSerializer(PLReportSerializer):
@@ -1301,8 +1310,13 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1407,8 +1421,13 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
@@ -1556,6 +1575,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
 
     def to_representation(self, instance):
+        _l.info("BackendTransactionReportItemsSerializer.to_representation")
 
         if not instance.frontend_request_options:
             raise serializers.ValidationError('frontend_request_options is required')
@@ -1565,12 +1585,9 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         helper_service = BackendReportHelperService()
 
         if not instance.report_instance_id:
-
-            data = super(BackendTransactionReportItemsSerializer, self).to_representation(instance)
-
+            data = super().to_representation(instance)
             report_uuid = str(uuid.uuid4())
 
-            report_instance_name = ''
             if self.instance.report_instance_name:
                 report_instance_name = self.instance.report_instance_name
             else:
@@ -1584,55 +1601,30 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
                 short_name=report_instance_name,
                 begin_date=instance.begin_date,
                 end_date=instance.end_date,
+                report_uuid=report_uuid,
             )
 
-            report_instance.report_uuid = report_uuid
-            report_instance.begin_date = instance.begin_date
-            report_instance.end_date = instance.end_date
-
-            report_instance.report_uuid = report_uuid
-
             data['report_uuid'] = report_uuid
-
             full_items = helper_service.convert_report_items_to_full_items(data)
-
             data['items'] = full_items
 
-            report_instance.data = json.loads(json.dumps(data, default=str)) # TODO consider something more logical, we got here date conversion error
+            # TODO consider something more logical, we got here date conversion error
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
         else:
-
             report_instance = TransactionReportInstance.objects.get(id=instance.report_instance_id)
-
             data = report_instance.data
-
             full_items = report_instance.data['items']
 
         data['report_instance_id'] = report_instance.id
 
-        _l.info("BackendTransactionReportItemsSerializer.to_representation")
-
-        # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
-
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+
         data['count'] = len(full_items)
-        # full_items = helper_service.paginate_items(full_items, instance.frontend_request_options)
-
-        result_items = []
-
-        # _l.info("full_items items len %s" % len(full_items))
-        # _l.info("original items len %s" % len(data['items']))
-
-        # for item in data['items']:
-        #     for full_item in full_items:
-        #         if item['id'] == full_item['id']:
-        #             result_items.append(item)
-
-        # data['items'] = result_items
         data['items'] = full_items
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
@@ -1647,10 +1639,6 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         data.pop('item_responsibles', [])
         data.pop('item_transaction_classes', [])
         data.pop('item_complex_transactions', [])
-
-        # _l.info("after filter items len %s" % len(data['items']))
-
-        # original_items = helper_service.filterByGlobalTableSearch(original_items, globalTableSearch)
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 

@@ -1145,9 +1145,8 @@ class BackendTransactionReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-                not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = TransactionReportBuilderSql(instance=instance)
             instance = builder.build_transaction()
 
@@ -1177,9 +1176,8 @@ class BackendTransactionReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-                not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = TransactionReportBuilderSql(instance=instance)
             instance = builder.build_transaction()
 

@@ -1,5 +1,6 @@
 import random
 import string
+import dateutil.utils
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
@@ -204,7 +205,11 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     @classmethod
     def today(cls) -> date:
-        return date.today()
+        return dateutil.utils.today().date()
+
+    @classmethod
+    def yesterday(cls) -> date:
+        return cls.today() - timedelta(days=1)
 
     @classmethod
     def random_future_date(cls, interval=365) -> date:
