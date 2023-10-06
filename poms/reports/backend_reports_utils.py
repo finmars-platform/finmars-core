@@ -56,7 +56,7 @@ class BackendReportHelperService:
 
         return result_group
 
-    def get_unique_groups(self, items, group_type, columns, total_value):
+    def get_unique_groups(self, items, group_type, columns, total_value=None):
         seen_group_identifiers = set()
         result_groups = []
 
