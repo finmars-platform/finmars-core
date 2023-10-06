@@ -56,7 +56,7 @@ class BackendReportHelperService:
 
         return result_group
 
-    def get_unique_groups(self, items, group_type, columns, total_value):
+    def get_unique_groups(self, items, group_type, columns, total_value=None):
         seen_group_identifiers = set()
         result_groups = []
 
@@ -90,10 +90,13 @@ class BackendReportHelperService:
 
             if 'market_value' in result_group["subtotal"]:
 
-                if not isinstance(total_value, (int, float)):
-                    result_group["subtotal"]["market_value_percent"] = '#Error'
-                else:
+                if total_value:
+
                     result_group["subtotal"]["market_value_percent"] = round((result_group["subtotal"]["market_value"] / total_value) * 100, 2)
+
+                else:
+
+                    result_group["subtotal"]["market_value_percent"] = "No Data"
 
         return result_groups
 
@@ -506,19 +509,19 @@ class BackendReportHelperService:
 
     def calculate_market_value_percent(self, items, total_market_value):
 
-        for item in items:
-            item["market_value_percent"] = round((item["market_value"] / total_market_value) * 100, 2)
+        if total_market_value:
+            for item in items:
+                item["market_value_percent"] = round((item["market_value"] / total_market_value) * 100, 2)
+        else:
+            for item in items:
+                item["market_value_percent"] = "No Data"
 
         return items
 
     def calculate_total_percent(self, items, total_total_value):
 
         for item in items:
-
-            if not isinstance(total_total_value, (int, float)):
-                item["total_percent"] = '#Error'
-            else:
-                item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
+            item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
 
         return items
 
@@ -576,7 +579,7 @@ class BackendReportSubtotalService:
             for item in items:
                 item_val = BackendReportSubtotalService.get_item_value(item, column_key)
                 if not isinstance(item_val, (int, float)):
-                    result = "#Error"
+                    result = "No Data"
                     break
                 else:
                     value = BackendReportSubtotalService.get_item_value(
@@ -586,7 +589,7 @@ class BackendReportSubtotalService:
                     result += float(item_val) * average
         else:
             print(f"{weighted_average_key} totals is", total, column_key)
-            result = "#Error"
+            result = "No Data"
         return result
 
     @staticmethod
