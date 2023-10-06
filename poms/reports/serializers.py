@@ -1071,8 +1071,14 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1187,8 +1193,13 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
 
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1301,8 +1312,13 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
@@ -1407,8 +1423,13 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         # _l.info('full_items %s' % full_items[0])
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         total_market_value = 0
-        for item in full_items:
-            total_market_value = total_market_value + item["market_value"]
+        try:
+            for item in full_items:
+                total_market_value = total_market_value + item["market_value"]
+
+        except Exception as e:
+            _l.error("Could not calculate market_value, some prices/fxrates are missing")
+            total_market_value = None
 
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
