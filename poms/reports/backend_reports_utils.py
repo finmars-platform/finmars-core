@@ -90,7 +90,10 @@ class BackendReportHelperService:
 
             if 'market_value' in result_group["subtotal"]:
 
-                result_group["subtotal"]["market_value_percent"] = round((result_group["subtotal"]["market_value"] / total_value) * 100, 2)
+                if not isinstance(total_value, (int, float)):
+                    result_group["subtotal"]["market_value_percent"] = '#Error'
+                else:
+                    result_group["subtotal"]["market_value_percent"] = round((result_group["subtotal"]["market_value"] / total_value) * 100, 2)
 
         return result_groups
 
@@ -511,7 +514,11 @@ class BackendReportHelperService:
     def calculate_total_percent(self, items, total_total_value):
 
         for item in items:
-            item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
+
+            if not isinstance(total_total_value, (int, float)):
+                item["total_percent"] = '#Error'
+            else:
+                item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
 
         return items
 
