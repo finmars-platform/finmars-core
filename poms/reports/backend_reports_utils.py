@@ -333,7 +333,7 @@ class BackendReportHelperService:
                                 filter_argument = filter_value
 
                                 if (
-                                        value_type in [10, 30]
+                                        value_type in (10, 30)
                                         and filter_type != "multiselector"
                                 ):
                                     value_from_table = value_from_table.lower()
