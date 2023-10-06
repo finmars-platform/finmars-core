@@ -27,7 +27,6 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.url = f"{PORTFOLIO_API}/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
-        self.pr_data = None
         self.pr_data = {
             "portfolio": self.portfolio.id,
             "linked_instrument": self.instrument.id,
@@ -122,3 +121,37 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
         self.assertEqual(
             response_json["task_options"]["portfolios"], request_data["portfolios"]
         )
+
+    @BaseTestCase.cases(
+        ("1", "2023-08-01", "2023-09-06"),
+        ("2", "2020-01-27", "2023-10-13"),
+        ("3", "2022-11-14", "2025-03-30"),
+        ("4", "2022-12-31", None),
+        ("5", "2022-11-14", "2022-11-14"),
+    )
+    def test__validate_dates(self, date_from, date_to):
+        request_data = (
+            dict(date_from=date_from, date_to=date_to)
+            if date_to
+            else dict(date_from=date_from)
+        )
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["task_options"]["date_from"], date_from)
+        self.assertEqual(
+            response_json["task_options"]["date_to"],
+            date_to or self.yesterday().strftime(settings.API_DATE_FORMAT),
+        )
+
+    @BaseTestCase.cases(
+        ("invalid_date", "2023-09-01", "2023-07-01"),
+    )
+    def test__validate_invalid_dates(self, date_from, date_to):
+        request_data = dict(date_from=date_from, date_to=date_to)
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 400, response.content)

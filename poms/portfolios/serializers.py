@@ -93,13 +93,11 @@ class PortfolioSerializer(
     ModelWithTimeStampSerializer,
 ):
     master_user = MasterUserField()
-    # accounts = AccountField(many=True, allow_null=True, required=False)
-    # responsibles = ResponsibleField(many=True, allow_null=True, required=False)
-    # counterparties = CounterpartyField(many=True, allow_null=True, required=False)
-    # transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
-
     registers = PortfolioPortfolioRegisterSerializer(
-        many=True, allow_null=True, required=False, read_only=True
+        many=True,
+        allow_null=True,
+        required=False,
+        read_only=True,
     )
 
     class Meta:
@@ -590,23 +588,17 @@ class PrCalculateRecordsRequestSerializer(serializers.Serializer):
     portfolios = serializers.ListField(child=serializers.CharField(), required=False)
 
 
-DATE_FORMAT = "%Y-%m-%d"
-
-
 class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
     date_from = serializers.DateField(required=False)
     date_to = serializers.DateField(required=False)
     portfolios = serializers.ListField(child=serializers.CharField(), required=False)
 
     def validate(self, attrs: dict) -> dict:
-        date_to = attrs.pop("date_to", None) or timezone_today() - timedelta(days=1)
-        date_from = attrs.pop("date_from", None)
+        date_to = attrs.get("date_to") or timezone_today() - timedelta(days=1)
+        attrs["date_to"] = date_to
 
+        date_from = attrs.get("date_from")
         if date_from and date_to and (date_from > date_to):
             raise ValidationError("date_from must be <= date_to")
-
-        attrs["date_to"] = date_to.strftime(DATE_FORMAT)
-        if date_from:
-            attrs["date_from"] = date_from.strftime(DATE_FORMAT)
 
         return attrs

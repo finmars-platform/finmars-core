@@ -6,14 +6,13 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
 import pandas as pd
-
-
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -21,8 +20,6 @@ _l = logging.getLogger("poms.common")
 
 def force_qs_evaluation(qs):
     list(qs)
-
-    pass
 
 
 def db_class_check_data(model, verbosity, using):
@@ -33,7 +30,7 @@ def db_class_check_data(model, verbosity, using):
     except ProgrammingError:
         return
     if verbosity >= 2:
-        print("existed transaction classes -> %s" % exists)
+        print(f"existed transaction classes -> {exists}")
     for id, code, name in model.CLASSES:
         if id not in exists:
             if verbosity >= 2:
@@ -116,17 +113,17 @@ class sfloat(float):
         except (ZeroDivisionError, OverflowError):
             return 0.0
 
-    def __pow__(self, power):
+    def __pow__(self, power, **kwargs):
         # print('__pow__: self=%s, other=%s' % (self, other))
         try:
-            return super(sfloat, self).__pow__(power)
+            return super().__pow__(power, **kwargs)
         except (ZeroDivisionError, OverflowError):
             return 0.0
 
-    def __rpow__(self, power):
+    def __rpow__(self, power, **kwargs):
         # print('__rpow__: self=%s, other=%s' % (self, other))
         try:
-            return super(sfloat, self).__rpow__(power)
+            return super().__rpow__(power, **kwargs)
         except (ZeroDivisionError, OverflowError):
             return 0.0
 
@@ -137,20 +134,20 @@ def add_view_and_manage_permissions():
 
     existed = {(p.content_type_id, p.codename) for p in Permission.objects.all()}
     for content_type in ContentType.objects.all():
-        codename = "view_%s" % content_type.model
+        codename = f"view_{content_type.model}"
         if (content_type.id, codename) not in existed:
             Permission.objects.update_or_create(
                 content_type=content_type,
                 codename=codename,
-                defaults={"name": "Can view %s" % content_type.name},
+                defaults={"name": f"Can view {content_type.name}"},
             )
 
-        codename = "manage_%s" % content_type.model
+        codename = f"manage_{content_type.model}"
         if (content_type.id, codename) not in existed:
             Permission.objects.update_or_create(
                 content_type=content_type,
                 codename=codename,
-                defaults={"name": "Can manage %s" % content_type.name},
+                defaults={"name": f"Can manage {content_type.name}"},
             )
 
 
@@ -189,15 +186,14 @@ class MemorySavingQuerysetIterator(object):
 
     def _setup(self):
         for i in range(0, self._base_queryset.count(), self.max_obj_num):
-            # By making a copy of of the queryset and using that to actually access
-            # the objects we ensure that there are only `max_obj_num` objects in
+            # By making a copy of the queryset and using that to actually access
+            # the object, we ensure that there are only `max_obj_num` objects in
             # memory at any given time
             smaller_queryset = copy.deepcopy(self._base_queryset)[
                 i : i + self.max_obj_num
             ]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
-            for obj in smaller_queryset.iterator():
-                yield obj
+            yield from smaller_queryset.iterator()
 
     def __iter__(self):
         return self
@@ -238,9 +234,7 @@ def get_content_type_by_name(name):
     app_label_title = pieces[0]
     model_title = pieces[1]
 
-    content_type = ContentType.objects.get(app_label=app_label_title, model=model_title)
-
-    return content_type
+    return ContentType.objects.get(app_label=app_label_title, model=model_title)
 
 
 def is_business_day(date):
@@ -255,40 +249,35 @@ def get_last_business_day(date, to_string=False):
     :return:
     """
 
-    format = "%Y-%m-%d"
-
     if not isinstance(date, datetime.date):
-        date = datetime.datetime.strptime(date, format).date()
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
 
     weekday = datetime.date.weekday(date)
     if weekday > 4:  # if it's Saturday or Sunday
         date = date - datetime.timedelta(days=weekday - 4)
 
-    if to_string:
-        return date.strftime("%Y-%m-%d")
-
-    return date
+    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
 
 
 def last_day_of_month(any_day):
-    # The day 28 exists in every month. 4 days later, it's always next month
+    # Day 28 exists in every month. 4 days later, it's always next month
     next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
     # subtracting the number of the current day brings us back one month
     return next_month - datetime.timedelta(days=next_month.day)
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
-    result = []
-    format = "%Y-%m-%d"
-
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(date_from, format).date()
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
 
     if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, format).date()
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
 
     diff = date_to - date_from
 
+    result = []
     for i in range(diff.days + 1):
         day = date_from + timedelta(days=i)
         if to_string:
@@ -300,17 +289,17 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
-    result = []
-    format = "%Y-%m-%d"
-
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(date_from, format).date()
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
 
     if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, format).date()
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
 
     diff = date_to - date_from
 
+    result = []
     for i in range(diff.days + 1):
         day = date_from + timedelta(days=i)
 
@@ -324,17 +313,17 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
-    result = []
-    format = "%Y-%m-%d"
-
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(date_from, format).date()
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
 
     if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, format).date()
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
 
     diff = date_to - date_from
 
+    result = []
     if date_from.day != 1:
         if to_string:
             result.append(str(date_from))
@@ -353,24 +342,22 @@ def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
     return result
 
 
-def convert_name_to_key(name):
+def convert_name_to_key(name: str) -> str:
     return name.strip().lower().replace(" ", "_")
 
 
-def check_if_last_day_of_month(to_date):
+def check_if_last_day_of_month(to_date: datetime.date) -> bool:
     """
-    Check if date is last day of month
+    Checks if date is the last day of month
     :param to_date:
     :return: bool
     """
     delta = datetime.timedelta(days=1)
     next_day = to_date + delta
-    if to_date.month != next_day.month:
-        return True
-    return False
+    return to_date.month != next_day.month
 
 
-def get_first_transaction(portfolio_instance):
+def get_first_transaction(portfolio_instance) -> object:
     """
     Get first transaction of portfolio
     :param portfolio_instance:
@@ -378,10 +365,9 @@ def get_first_transaction(portfolio_instance):
     """
     from poms.transactions.models import Transaction
 
-    transaction = Transaction.objects.filter(portfolio=portfolio_instance).order_by(
+    return Transaction.objects.filter(portfolio=portfolio_instance).order_by(
         "accounting_date"
     )[0]
-    return transaction
 
 
 def last_business_day_in_month(year: int, month: int, to_string=False):
@@ -396,10 +382,7 @@ def last_business_day_in_month(year: int, month: int, to_string=False):
 
     d = datetime.datetime(year, month, day).date()
 
-    if to_string:
-        return d.strftime("%Y-%m-%d")
-
-    return d
+    return d.strftime(settings.API_DATE_FORMAT) if to_string else d
 
 
 def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
@@ -414,7 +397,7 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
     end_of_months = []
 
     if not isinstance(date_to, datetime.date):
-        d_date_to = datetime.datetime.strptime(date_to, "%Y-%m-%d").date()
+        d_date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
     else:
         d_date_to = date_to
 
@@ -424,7 +407,7 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
         if last_business_day_in_month(month.year, month.month) > d_date_to:
             if to_string:
-                end_of_months.append(d_date_to.strftime("%Y-%m-%d"))
+                end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
             else:
                 end_of_months.append(d_date_to)
         else:
@@ -442,7 +425,7 @@ def str_to_date(d):
     :return:
     """
     if not isinstance(d, datetime.date):
-        d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
+        d = datetime.datetime.strptime(d, settings.API_DATE_FORMAT).date()
 
     return d
 
@@ -474,7 +457,10 @@ def finmars_exception_handler(exc, context):
                 "status_code": 0,
                 "message": "",
                 "details": [],
-                "datetime": str(datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S")),
+                "datetime": datetime.datetime.strftime(
+                    now(),
+                    f"{settings.API_DATE_FORMAT} %H:%M:%S",
+                ),
                 "workspace_id": settings.BASE_API_URL,
             }
         }
@@ -485,6 +471,7 @@ def finmars_exception_handler(exc, context):
         error["message"] = http_code_to_message[status_code]
         error["details"] = response.data
         response.data = error_payload
+
     return response
 
 
@@ -496,12 +483,16 @@ def get_serializer(content_type_key):
     """
 
     from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
+    from poms.configuration.serializers import NewMemberSetupConfigurationSerializer
     from poms.counterparties.serializers import (
         CounterpartySerializer,
         ResponsibleSerializer,
     )
     from poms.csv_import.serializers import CsvImportSchemeSerializer
-    from poms.currencies.serializers import CurrencyHistorySerializer
+    from poms.currencies.serializers import (
+        CurrencyHistorySerializer,
+        CurrencySerializer,
+    )
     from poms.iam.serializers import (
         AccessPolicySerializer,
         GroupSerializer,
@@ -516,9 +507,14 @@ def get_serializer(content_type_key):
     from poms.integrations.serializers import (
         ComplexTransactionImportSchemeSerializer,
         InstrumentDownloadSchemeSerializer,
+        MappingTableSerializer,
     )
     from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
-    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.portfolios.serializers import (
+        PortfolioRegisterRecordSerializer,
+        PortfolioRegisterSerializer,
+        PortfolioSerializer,
+    )
     from poms.pricing.serializers import (
         CurrencyPricingSchemeSerializer,
         InstrumentPricingSchemeSerializer,
@@ -543,16 +539,9 @@ def get_serializer(content_type_key):
         InstrumentUserFieldSerializer,
         ListLayoutSerializer,
         MemberLayoutSerializer,
+        MobileLayoutSerializer,
         TransactionUserFieldSerializer,
     )
-
-    from poms.portfolios.serializers import PortfolioRegisterSerializer, PortfolioRegisterRecordSerializer
-    from poms.ui.serializers import MobileLayoutSerializer
-
-    from poms.integrations.serializers import MappingTableSerializer
-    from poms.currencies.serializers import CurrencySerializer
-
-    from poms.configuration.serializers import NewMemberSetupConfigurationSerializer
 
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
@@ -612,22 +601,18 @@ def get_list_of_entity_attributes(content_type_key):
     from poms.obj_attrs.models import GenericAttributeType
 
     content_type = get_content_type_by_name(content_type_key)
-    result = []
-
     attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
 
-    for attribute_type in attribute_types:
-        result.append(
-            {
-                "name": attribute_type.name,
-                "key": "attributes." + attribute_type.user_code,
-                "value_type": attribute_type.value_type,
-                "tooltip": attribute_type.tooltip,
-                "can_recalculate": attribute_type.can_recalculate,
-            }
-        )
-
-    return result
+    return [
+        {
+            "name": attribute_type.name,
+            "key": "attributes." + attribute_type.user_code,
+            "value_type": attribute_type.value_type,
+            "tooltip": attribute_type.tooltip,
+            "can_recalculate": attribute_type.can_recalculate,
+        }
+        for attribute_type in attribute_types
+    ]
 
 
 def compare_versions(version1, version2):

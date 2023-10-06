@@ -2,11 +2,12 @@ import json
 import logging
 from datetime import timedelta
 
-from celery.result import AsyncResult
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+
+from celery.result import AsyncResult
 
 from poms.common.finmars_authorizer import AuthorizerService
 from poms.common.models import TimeStampedModel
@@ -244,17 +245,7 @@ class CeleryTask(TimeStampedModel):
         self.finished_at = now()
 
     def update_progress(self, progress):
-        # {
-        #   current: 20,
-        #   total: 100,
-        #   percent: 20
-        #   description
-        # }
-
-        # _l.debug(f"{log} update_progress {progress}")
-
         self.progress_object = progress
-
         self.save()
 
     def save(self, *args, **kwargs):
