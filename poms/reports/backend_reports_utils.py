@@ -336,6 +336,7 @@ class BackendReportHelperService:
                                 ):
                                     value_from_table = value_from_table.lower()
                                     filter_argument = filter_argument[0].lower()
+
                                 elif value_type == 40:
                                     if filter_type in ["equal", "not_equal"]:
                                         value_from_table = str(value_from_table.date())
