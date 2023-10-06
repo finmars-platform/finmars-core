@@ -333,6 +333,7 @@ class TransactionReportBuilderSql:
                       (null) as transaction_item_short_name,
                       (null) as transaction_item_user_code,
                       
+                      tc.id as complex_transaction_id,
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,
@@ -444,7 +445,8 @@ class TransactionReportBuilderSql:
             result = dictfetchall(cursor)
 
             for result_item in result:
-                result_item['id'] = result_item['complex_transaction_code']
+                result_item['id'] = result_item['complex_transaction_id']
+                result_item['code'] = result_item['complex_transaction_code']
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
                 result_item['entry_item_name'] = None  # Should be filled later
@@ -494,6 +496,7 @@ class TransactionReportBuilderSql:
                       end as transaction_item_short_name,
                       -- complex transaction fields
                       tc.status_id as complex_transaction_status,
+                      tc.id as complex_transaction_id,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,
                       tc.date as complex_transaction_date,
@@ -656,6 +659,7 @@ class TransactionReportBuilderSql:
                       end as transaction_item_short_name,
                       
                       -- complex transaction fields
+                      tc.id as complex_transaction_id,
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,

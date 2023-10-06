@@ -190,6 +190,7 @@ def serialize_transaction_report_item(item):
     # Complex Transaction Fields
 
     # result['complex_transaction.status'] = item['complex_transaction_status']
+    result['complex_transaction.id'] = item['complex_transaction_id']
     result['complex_transaction.code'] = item['complex_transaction_code']
     result['complex_transaction.text'] = item['complex_transaction_text']
     result['complex_transaction.date'] = item['complex_transaction_date']

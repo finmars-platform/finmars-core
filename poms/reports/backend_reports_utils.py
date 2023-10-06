@@ -161,6 +161,7 @@ class BackendReportHelperService:
             "transaction_currency": self.convert_helper_dict(data["item_currencies"]),
             "exposure_currency": self.convert_helper_dict(data["item_currencies"]),
             "entry_currency": self.convert_helper_dict(data["item_currencies"]),
+            "currency": self.convert_helper_dict(data["item_currencies"]),
             "portfolio": self.convert_helper_dict(data["item_portfolios"]),
             "instrument": self.convert_helper_dict(data["item_instruments"]),
             "instrument_type": self.convert_helper_dict(data["item_instrument_types"]),
@@ -445,8 +446,14 @@ class BackendReportHelperService:
 
         for item in items:
             result_item = {"id": item["id"]}
+
             for key in user_columns:
                 if key in item:
+                    result_item[key] = item[key]
+
+            for key in item.keys():
+
+                if '.id' in key:
                     result_item[key] = item[key]
 
             result_items.append(result_item)
