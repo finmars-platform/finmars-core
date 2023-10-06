@@ -7,13 +7,17 @@ from datetime import timedelta
 
 from django.utils.translation import gettext_lazy
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
-from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
+from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
+
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
 
-INSTANCE_TYPE = ENV_STR('INSTANCE_TYPE', 'backend')  # backend, worker, scheduler,
+INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, scheduler,
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,17 +26,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = ENV_BOOL("DEBUG", True)
 
 SECRET_KEY = ENV_STR("SECRET_KEY", "django_secret_key")
-ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)  # Need to encrypt everything related to storage
+
+# Need to encrypt everything related to storage
+ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)
+
+# azure, aws, or custom, only log purpose
+HOST_LOCATION = ENV_STR("HOST_LOCATION", "AWS")
+
+# looks like HOST_URL, maybe refactor required
+HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")
+
+DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_STR("USE_DEBUGGER", False)
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
-HOST_LOCATION = ENV_STR(
-    "HOST_LOCATION", "AWS"
-)  # azure, aws, or custom, only log purpose
-DOMAIN_NAME = ENV_STR(
-    "DOMAIN_NAME", "finmars.com"
-)  # looks like HOST_URL, maybe refactor required
-HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")  #
+
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
 VERIFY_SSL = ENV_BOOL("VERIFY_SSL", True)
 ENABLE_DEV_DOCUMENTATION = ENV_BOOL("ENABLE_DEV_DOCUMENTATION", False)
@@ -46,14 +54,17 @@ SUPERSET_URL = os.environ.get("SUPERSET_URL", None)
 UNIFIED_DATA_PROVIDER_URL = os.environ.get("UNIFIED_DATA_PROVIDER_URL", None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 ROUND_NDIGITS = ENV_INT("ROUND_NDIGITS", 6)
-FILE_UPLOAD_MAX_MEMORY_SIZE = (
-    0  # Important, that all files write to temporary file no matter size
-)
+
+API_DATE_FORMAT = "%Y-%m-%d"
+
+# Important that all files write to temporary file no matter size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0
+
 ALLOWED_HOSTS = ["*"]
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
-XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
+XS_SHARING_ALLOWED_METHODS = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
 
 # Application definition
 
@@ -140,10 +151,8 @@ CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
-
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -161,11 +170,8 @@ MIDDLEWARE = [
     # 'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
-
     # "corsheaders.middleware.CorsPostCsrfMiddleware",
-
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -268,16 +274,16 @@ USE_ETAGS = True
 CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 
 CSRF_TRUSTED_ORIGINS = [
-    'capacitor://localhost',
-    'http://localhost',
-    'http://0.0.0.0',
-    'http://0.0.0.0:8080',
-    'http://' + DOMAIN_NAME,
-    'https://' + DOMAIN_NAME
+    "capacitor://localhost",
+    "http://localhost",
+    "http://0.0.0.0",
+    "http://0.0.0.0:8080",
+    f"http://{DOMAIN_NAME}",
+    f"https://{DOMAIN_NAME}",
 ]
 
 if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
-    CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS + os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
+    CSRF_TRUSTED_ORIGINS += os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
 
 # print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
 
@@ -289,7 +295,6 @@ if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
 #     'http://' + DOMAIN_NAME,
 #     'https://' + DOMAIN_NAME
 # ]
-
 
 
 # TODO warning about security in future
@@ -568,7 +573,8 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TASK_SEND_SENT_EVENT = True
-# CELERY_TASK_REJECT_ON_WORKER_LOST = True # mark task as failed if worker beign killed # Enabling this can cause message loops; make sure you know what you’re doing.
+# CELERY_TASK_REJECT_ON_WORKER_LOST = True # mark task as failed if worker beign killed
+# Enabling this can cause message loops; make sure you know what you’re doing.
 
 if CELERY_RESULT_BACKEND in {"django-db"}:
     CELERY_RESULT_EXPIRES = 2 * 24 * 60 * 60
@@ -577,16 +583,19 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
-CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD",
-                                      512 * 1024)  # Maximum amount of resident memory, in KiB
-CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD",
-                                     1)  # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
+# Maximum amount of resident memory, in KiB
+CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024)
+
+# Maximum number of tasks a pool worker can execute before
+# it’s terminated and replaced by a new worker.
+CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1)
 
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 
-CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY",
-                                    2)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
+CELERY_WORKER_CONCURRENCY = ENV_INT(
+    "CELERY_WORKER_CONCURRENCY", 2
+)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
@@ -711,32 +720,28 @@ KEYCLOAK_CLIENT_ID = os.environ.get("KEYCLOAK_CLIENT_ID", "finmars")
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get("KEYCLOAK_CLIENT_SECRET_KEY", None)
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': True,
-
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
-
-    'AUTH_HEADER_TYPES': ('Bearer'),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-
-    'JTI_CLAIM': 'jti',
-
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer"),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # OLD ONE
@@ -761,21 +766,17 @@ REDOC_SETTINGS = {
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
-# SENTRY
 
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+# SENTRY
 
 sentry_sdk.init(
     dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
     integrations=[DjangoIntegration()],
-
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
     traces_sample_rate=1.0,
-
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True
+    send_default_pii=True,
 )
