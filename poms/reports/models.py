@@ -1091,6 +1091,19 @@ class ReportSummary:
             % "{:3.3f}".format(time.perf_counter() - st)
         )
 
+    def pl_first_date_for_mtd(self):
+        # If self.date_to is the first day of the month
+        if self.date_to.day == 1:
+            # Subtract one day to get the last day of the previous month
+            last_day_of_prev_month = self.date_to - timedelta(days=1)
+            # Check if it's a weekend
+            while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+                last_day_of_prev_month -= timedelta(days=1)
+            return last_day_of_prev_month
+        else:
+            # Return the first day of the current month
+            return self.date_to.replace(day=1)
+
     def build_pl_mtd(self):
         st = time.perf_counter()
 
@@ -1098,7 +1111,7 @@ class ReportSummary:
 
         serializer = PLReportSerializer(
             data={
-                "pl_first_date": self.date_to - timedelta(days=30),
+                "pl_first_date": self.pl_first_date_for_mtd,
                 "report_date": self.date_to,
                 "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
@@ -1125,6 +1138,20 @@ class ReportSummary:
             % "{:3.3f}".format(time.perf_counter() - st)
         )
 
+    @property
+    def pl_first_date_for_ytd(self):
+        # If self.date_to is January 1st
+        if self.date_to.month == 1 and self.date_to.day == 1:
+            # Subtract one day to get the last day of the previous year
+            last_day_of_prev_year = self.date_to - timedelta(days=1)
+            # Check if it's a weekend
+            while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+                last_day_of_prev_year -= timedelta(days=1)
+            return last_day_of_prev_year
+        else:
+            # Return the first day of the current year
+            return self.date_to.replace(month=1, day=1)
+
     def build_pl_ytd(self):
         st = time.perf_counter()
 
@@ -1132,7 +1159,7 @@ class ReportSummary:
 
         serializer = PLReportSerializer(
             data={
-                "pl_first_date": self.date_to - timedelta(days=365),
+                "pl_first_date": self.pl_first_date_for_ytd,
                 "report_date": self.date_to,
                 "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,

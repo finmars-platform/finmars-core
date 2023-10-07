@@ -24,7 +24,7 @@ DEBUG = ENV_BOOL("DEBUG", True)
 SECRET_KEY = ENV_STR("SECRET_KEY", "django_secret_key")
 ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)  # Need to encrypt everything related to storage
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
-USE_DEBUGGER = ENV_STR("USE_DEBUGGER", False)
+USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
 HOST_LOCATION = ENV_STR(
     "HOST_LOCATION", "AWS"
@@ -178,6 +178,7 @@ if USE_DEBUGGER:
 PROFILER = ENV_BOOL("PROFILER", False)
 
 if PROFILER:
+    print("Warning, PROFILER is enabled, could lead to slow performance")
     MIDDLEWARE.append("django_cprofile_middleware.middleware.ProfilerMiddleware")
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
@@ -676,6 +677,7 @@ INTERNAL_IPS = [
 ]
 
 if USE_DEBUGGER:
+    print("Warning. Debugger is activated, could lead to low performance")
     DEBUG_TOOLBAR_PANELS = [
         "debug_toolbar.panels.versions.VersionsPanel",
         "debug_toolbar.panels.timer.TimerPanel",
