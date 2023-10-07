@@ -1,6 +1,7 @@
 from logging import getLogger
 
 import django_filters
+from django.conf import settings
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -345,7 +346,17 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             type="calculate_portfolio_register_price_history",
             status=CeleryTask.STATUS_PENDING,
         )
-        task.options_object = serializer.validated_data
+        task.options_object = {
+            "portfolios": serializer.validated_data.get("portfolios"),
+            "date_to": serializer.validated_data["date_to"].strftime(
+                settings.API_DATE_FORMAT
+            ),
+            "date_from": serializer.validated_data["date_from"].strftime(
+                settings.API_DATE_FORMAT
+            )
+            if serializer.validated_data.get("date_from")
+            else None,
+        }
         task.save()
 
         calculate_portfolio_register_price_history.apply_async(

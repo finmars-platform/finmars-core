@@ -287,7 +287,9 @@ class BackendReportHelperService:
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
         elif operation_type == "date_tree":
-            return any(str(value_to_filter.date()) == str(date) for date in filter_by)
+            # possible type error if value_to_filter is str !!!
+            return any(value_to_filter == str(date) for date in filter_by)
+
         else:
             return False
 
@@ -331,23 +333,29 @@ class BackendReportHelperService:
                                 filter_argument = filter_value
 
                                 if (
-                                        value_type in [10, 30]
+                                        value_type in (10, 30)
                                         and filter_type != "multiselector"
                                 ):
                                     value_from_table = value_from_table.lower()
                                     filter_argument = filter_argument[0].lower()
+
                                 elif value_type == 40:
+                                    _l.info(
+                                        "BackendReportHelperService.filter_table_rows"
+                                        f".match_item value_type=40 "
+                                        f"value_from_table={value_from_table} "
+                                        f"filter_argument={filter_argument}"
+                                    )
                                     if filter_type in ["equal", "not_equal"]:
-                                        value_from_table = str(value_from_table.date())
-                                        filter_argument = str(filter_argument[0].date())
+                                        filter_argument = filter_argument[0]
+
                                     elif filter_type in ["from_to", "out_of_range"]:
-                                        value_from_table = value_from_table.date()
                                         filter_argument["min_value"] = filter_argument[
                                             "min_value"
-                                        ].date()
+                                        ]
                                         filter_argument["max_value"] = filter_argument[
                                             "max_value"
-                                        ].date()
+                                        ]
 
                                 if not self.filter_value_from_table(
                                         value_from_table, filter_argument, filter_type
