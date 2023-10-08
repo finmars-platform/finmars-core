@@ -1090,8 +1090,9 @@ class ReportSummary:
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
-
+    @property
     def pl_first_date_for_mtd(self):
+
         # If self.date_to is the first day of the month
         if self.date_to.day == 1:
             # Subtract one day to get the last day of the previous month
@@ -1099,15 +1100,18 @@ class ReportSummary:
             # Check if it's a weekend
             while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
                 last_day_of_prev_month -= timedelta(days=1)
-            return last_day_of_prev_month
+            return last_day_of_prev_month.strftime('%Y-%m-%d')
         else:
             # Return the first day of the current month
-            return self.date_to.replace(day=1)
+            return self.date_to.replace(day=1).strftime('%Y-%m-%d')
 
     def build_pl_mtd(self):
         st = time.perf_counter()
 
         from poms.reports.serializers import PLReportSerializer
+
+        _l.info('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+
 
         serializer = PLReportSerializer(
             data={
@@ -1140,6 +1144,7 @@ class ReportSummary:
 
     @property
     def pl_first_date_for_ytd(self):
+
         # If self.date_to is January 1st
         if self.date_to.month == 1 and self.date_to.day == 1:
             # Subtract one day to get the last day of the previous year
@@ -1147,15 +1152,17 @@ class ReportSummary:
             # Check if it's a weekend
             while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
                 last_day_of_prev_year -= timedelta(days=1)
-            return last_day_of_prev_year
+            return last_day_of_prev_year.strftime('%Y-%m-%d')
         else:
             # Return the first day of the current year
-            return self.date_to.replace(month=1, day=1)
+            return self.date_to.replace(month=1, day=1).strftime('%Y-%m-%d')
 
     def build_pl_ytd(self):
         st = time.perf_counter()
 
         from poms.reports.serializers import PLReportSerializer
+
+        _l.info('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
 
         serializer = PLReportSerializer(
             data={
