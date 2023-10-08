@@ -100,6 +100,8 @@ class PortfolioSerializer(
         read_only=True,
     )
 
+    first_transaction = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -114,7 +116,18 @@ class PortfolioSerializer(
             "is_deleted",
             "is_enabled",
             "registers",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
 
     def __init__(self, *args, **kwargs):
         from poms.accounts.serializers import AccountViewSerializer
@@ -230,6 +243,8 @@ class PortfolioSerializer(
 class PortfolioLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    first_transaction = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -242,7 +257,19 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
             "is_default",
             "is_deleted",
             "is_enabled",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
+
 
 
 class PortfolioViewSerializer(ModelWithUserCodeSerializer):
