@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
-from poms.common.mixins import DestroySystemicModelMixin
+from poms.common.mixins import DestroyModelMixinExt
 from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
 from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.currencies.models import Currency
@@ -334,7 +334,7 @@ class ListLayoutFilterSet(FilterSet):
         fields = ['content_type', 'name']
 
 
-class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
+class ListLayoutViewSet(AbstractModelViewSet, DestroyModelMixinExt):
     queryset = ListLayout.objects.select_related(
         'member',
         'content_type'
