@@ -1439,11 +1439,14 @@ class ReportSummary:
     def get_mtd_performance(self):
 
         from poms.reports.serializers import PerformanceReportSerializer
+
+        _l.info('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+
         serializer = PerformanceReportSerializer(data={
             "begin_date": self.pl_first_date_for_mtd,
             "end_date": self.date_to,
             "calculation_type": "time_weighted",
-            "segmentation_type": "days",
+            "segmentation_type": "months",
             "registers": self.portfolio_user_codes,
             "report_currency": self.currency.user_code,
         }, context=self.context)
@@ -1464,7 +1467,7 @@ class ReportSummary:
             "begin_date": self.pl_first_date_for_ytd,
             "end_date": self.date_to,
             "calculation_type": "time_weighted",
-            "segmentation_type": "days",
+            "segmentation_type": "months",
             "registers": self.portfolio_user_codes,
             "report_currency": self.currency.user_code,
         }, context=self.context)
