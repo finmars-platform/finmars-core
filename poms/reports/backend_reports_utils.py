@@ -68,6 +68,8 @@ class BackendReportHelperService:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
+
+        # _l.info('result_groups %s' % result_groups)
         # _l.info('items %s' % items)
 
 
@@ -216,11 +218,19 @@ class BackendReportHelperService:
     def get_filter_match(self, item, key, value):
         item_value = item.get(key)
 
+        result_value = value
+
+        if isinstance(result_value, str):
+            result_value = result_value.lower()
+
+        # _l.info('get_filter_match.item_value %s' % item_value)
+
+        # Refactor someday this shitty logic
         if item_value is None:
-            if value != "-":
+            if result_value != "-" and result_value != None: # TODO this one is important, we need to split - and None in future
                 return False
         else:
-            if str(item_value).lower() != value.lower():
+            if str(item_value).lower() != result_value:
                 return False
 
         return True
@@ -378,6 +388,8 @@ class BackendReportHelperService:
         # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
         # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
 
+        _l.info('filter_by_groups_filters before len %s' % len(items))
+
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
             filtered_items = []
             for item in items:
@@ -400,6 +412,8 @@ class BackendReportHelperService:
             # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
 
             return filtered_items
+
+        _l.info('filter_by_groups_filters after len %s' % len(items))
 
         return items
 
