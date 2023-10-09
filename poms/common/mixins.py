@@ -90,7 +90,7 @@ class UpdateModelMixinExt(UpdateModelMixin):
             return Response(serializer.data)
         return response
 
-
+# TODO: may be delete later
 class DestroySystemicModelMixin(DestroyModelMixinExt):
     def perform_destroy(self, instance):
         if hasattr(instance, "is_systemic") and instance.is_systemic:

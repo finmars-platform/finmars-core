@@ -443,7 +443,10 @@ class SummaryViewSet(AbstractViewSet):
         currency = validated_data["currency"]
         pricing_policy = validated_data["pricing_policy"]
 
-        if date_from > date_to:
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
+        if date_from >= date_to:
             date_from = date_to - timedelta(days=1)
 
         _l.info('SummaryViewSet.list.date_from %s' % date_from)
@@ -462,9 +465,6 @@ class SummaryViewSet(AbstractViewSet):
         if calculate_new or summary_record_count == 0:
 
             bundles = []
-
-            if not date_to:
-                date_to = get_closest_bday_of_yesterday()
 
             context = self.get_serializer_context()
 

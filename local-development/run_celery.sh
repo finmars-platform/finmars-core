@@ -9,7 +9,7 @@ DB_PORT=5434 \
 LOCAL=True \
 DEBUG=False \
 BLOOMBERG_SANDBOX=False \
-PROFILER=True \
+PROFILER=False \
 ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
 AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \
@@ -23,5 +23,4 @@ SECRET_KEY=mv83o5mq \
 FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
-CELERY_WORKER_CONCURRENCY=8 \
-celery --app=poms_app worker  -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend
+celery --app=poms_app worker --concurrency=10 -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend

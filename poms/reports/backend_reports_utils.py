@@ -287,8 +287,8 @@ class BackendReportHelperService:
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
         elif operation_type == "date_tree":
-            # FIXME possible type error if value_to_filter is str !!!
-            return any(str(value_to_filter.date()) == str(date) for date in filter_by)
+            # possible type error if value_to_filter is str !!!
+            return any(value_to_filter == str(date) for date in filter_by)
 
         else:
             return False

@@ -1,23 +1,37 @@
 import logging
 import traceback
 
-# from poms.common.websockets import send_websocket_message
-from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
+from poms.system_messages.models import (
+    SystemMessage,
+    SystemMessageAttachment,
+    SystemMessageMember,
+)
 from poms.users.models import Member
 
-_l = logging.getLogger('poms.system_messages')
+_l = logging.getLogger("poms.system_messages")
 
 
-def send_system_message(master_user, title=None, description=None, attachments=[], section='other', type='info',
-                        action_status='not_required',
-                        performed_by=None, target=None, linked_event=None):
+def send_system_message(
+    master_user,
+    title=None,
+    description=None,
+    attachments=None,
+    section="other",
+    type="info",
+    action_status="not_required",
+    performed_by=None,
+    target=None,
+    linked_event=None,
+):
+    if attachments is None:
+        attachments = []
+
     try:
-
         type_mapping = {
-            'info': SystemMessage.TYPE_INFORMATION,
-            'warning': SystemMessage.TYPE_WARNING,
-            'error': SystemMessage.TYPE_ERROR,
-            'success': SystemMessage.TYPE_SUCCESS
+            "info": SystemMessage.TYPE_INFORMATION,
+            "warning": SystemMessage.TYPE_WARNING,
+            "error": SystemMessage.TYPE_ERROR,
+            "success": SystemMessage.TYPE_SUCCESS,
         }
 
         # SECTION_GENERAL = 0
@@ -32,74 +46,62 @@ def send_system_message(master_user, title=None, description=None, attachments=[
         # SECTION_SCHEDULES = 9
 
         section_mapping = {
-            'general': SystemMessage.SECTION_GENERAL,
-            'events': SystemMessage.SECTION_EVENTS,
-            'transactions': SystemMessage.SECTION_TRANSACTIONS,
-            'instruments': SystemMessage.SECTION_INSTRUMENTS,
-            'data': SystemMessage.SECTION_DATA,
-            'prices': SystemMessage.SECTION_PRICES,
-            'report': SystemMessage.SECTION_REPORT,
-            'import': SystemMessage.SECTION_IMPORT,
-            'activity_log': SystemMessage.SECTION_ACTIVITY_LOG,
-            'schedules': SystemMessage.SECTION_SCHEDULES,
-            'other': SystemMessage.SECTION_OTHER,
+            "general": SystemMessage.SECTION_GENERAL,
+            "events": SystemMessage.SECTION_EVENTS,
+            "transactions": SystemMessage.SECTION_TRANSACTIONS,
+            "instruments": SystemMessage.SECTION_INSTRUMENTS,
+            "data": SystemMessage.SECTION_DATA,
+            "prices": SystemMessage.SECTION_PRICES,
+            "report": SystemMessage.SECTION_REPORT,
+            "import": SystemMessage.SECTION_IMPORT,
+            "activity_log": SystemMessage.SECTION_ACTIVITY_LOG,
+            "schedules": SystemMessage.SECTION_SCHEDULES,
+            "other": SystemMessage.SECTION_OTHER,
         }
 
         action_status_mapping = {
-            'not_required': SystemMessage.ACTION_STATUS_NOT_REQUIRED,
-            'required': SystemMessage.ACTION_STATUS_REQUIRED,
-            'solved': SystemMessage.ACTION_STATUS_SOLVED
+            "not_required": SystemMessage.ACTION_STATUS_NOT_REQUIRED,
+            "required": SystemMessage.ACTION_STATUS_REQUIRED,
+            "solved": SystemMessage.ACTION_STATUS_SOLVED,
         }
 
-        system_message = SystemMessage.objects.create(master_user=master_user,
-                                                      performed_by=performed_by,
-                                                      target=target,
-                                                      title=title,
-                                                      description=description,
-                                                      section=section_mapping[section],
-                                                      action_status=action_status_mapping[action_status],
-                                                      type=type_mapping[type],
-                                                      linked_event=linked_event
-                                                      )
+        system_message = SystemMessage.objects.create(
+            master_user=master_user,
+            performed_by=performed_by,
+            target=target,
+            title=title,
+            description=description,
+            section=section_mapping[section],
+            action_status=action_status_mapping[action_status],
+            type=type_mapping[type],
+            linked_event=linked_event,
+        )
 
-        _l.info('system_message %s' % system_message)
+        _l.info(f"system_message {system_message}")
 
-        system_message_attachments = []
-
-        for file_report_id in attachments:
-            system_message_attachments.append(SystemMessageAttachment(system_message=system_message,
-                                                                      file_report_id=file_report_id))
+        system_message_attachments = [
+            SystemMessageAttachment(
+                system_message=system_message, file_report_id=file_report_id
+            )
+            for file_report_id in attachments
+        ]
         if len(system_message_attachments):
             SystemMessageAttachment.objects.bulk_create(system_message_attachments)
-            _l.info("Saved %s attachments " % len(system_message_attachments))
+            _l.info(f"Saved {len(system_message_attachments)} attachments ")
 
         members = Member.objects.all()
 
-        system_message_members = []
-
-        for member in members:
-            system_message_members.append(SystemMessageMember(member=member, system_message=system_message))
-
+        system_message_members = [
+            SystemMessageMember(member=member, system_message=system_message)
+            for member in members
+        ]
         if len(system_message_members):
             SystemMessageMember.objects.bulk_create(system_message_members)
 
-            _l.debug("Send message to %s members " % len(system_message_members))
-
-            # DEPRECATED
-            # for member in members:
-            #     send_websocket_message(data={
-            #         'type': 'new_system_message',
-            #         'payload': {
-            #             'id': system_message.id,
-            #             'type': system_message.type,
-            #             'section': system_message.section,
-            #             'title': system_message.title,
-            #             'description': system_message.description,
-            #             'created': str(system_message.created)
-            #         }
-            #     }, level="member",
-            #         context={"master_user": master_user, "member": member})
+            _l.debug(f"Send message to {len(system_message_members)} members ")
 
     except Exception as e:
-        _l.info("Error send system message: exception %s" % e)
-        _l.info("Error send system message: trace %s" % traceback.format_exc())
+        _l.info(
+            f"Error send system message: exception {repr(e)} "
+            f"trace {traceback.format_exc()}"
+        )
