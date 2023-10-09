@@ -442,6 +442,7 @@ class SummaryViewSet(AbstractViewSet):
         portfolios = validated_data["portfolios"]
         currency = validated_data["currency"]
         pricing_policy = validated_data["pricing_policy"]
+        allocation_mode = validated_data["allocation_mode"]
 
         if not date_to:
             date_to = get_closest_bday_of_yesterday()
@@ -457,7 +458,8 @@ class SummaryViewSet(AbstractViewSet):
                                                                     date_to=date_to,
                                                                     portfolios=portfolios,
                                                                     pricing_policy=pricing_policy,
-                                                                    currency=currency
+                                                                    currency=currency,
+                                                                    allocation_mode=allocation_mode
                                                                     ).count()
 
         _l.info('summary_record_count %s' % summary_record_count)
@@ -475,6 +477,7 @@ class SummaryViewSet(AbstractViewSet):
                 bundles,
                 currency,
                 pricing_policy,
+                allocation_mode,
                 request.user.master_user,
                 request.user.member,
                 context,
@@ -519,6 +522,7 @@ class SummaryViewSet(AbstractViewSet):
                 date_to=date_to,
                 portfolios=portfolios,
                 currency=currency,
+                allocation_mode=allocation_mode,
                 data=result
             )
 
@@ -531,6 +535,7 @@ class SummaryViewSet(AbstractViewSet):
                                                                          date_from=date_from,
                                                                          date_to=date_to,
                                                                          portfolios=portfolios,
+                                                                         allocation_mode=allocation_mode,
                                                                          currency=currency).last()
 
             result = report_summary_record.data

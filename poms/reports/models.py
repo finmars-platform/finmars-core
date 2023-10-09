@@ -983,6 +983,7 @@ class ReportSummary:
         bundles,
         currency,
         pricing_policy,
+            allocation_mode,
         master_user,
         member,
         context,
@@ -998,6 +999,7 @@ class ReportSummary:
 
         self.currency = currency
         self.pricing_policy = pricing_policy
+        self.allocation_mode = allocation_mode
         self.portfolios = portfolios
         self.bundles = bundles
 
@@ -1049,6 +1051,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1082,6 +1085,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1130,6 +1134,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1182,6 +1187,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1564,6 +1570,10 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("pricing policy user_code"),
+    )
+    allocation_mode = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("allocation_mode"),
     )
 
     data = models.JSONField(
