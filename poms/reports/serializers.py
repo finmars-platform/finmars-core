@@ -1621,6 +1621,7 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         data['report_instance_id'] = report_instance.id
 
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
