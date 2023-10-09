@@ -490,14 +490,26 @@ class SummaryViewSet(AbstractViewSet):
                 "total": {
                     "nav": report_summary.get_nav(),
                     "pl_range": report_summary.get_total_pl_range(),
-                    "pl_range_percent": report_summary.get_total_position_return_pl_range(),
+                    "pl_range_percent": report_summary.get_total_position_return_pl_range(), # deprecated, wrong figures
                     "pl_daily": report_summary.get_total_pl_daily(),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(), # deprecated, wrong figures
                     "pl_mtd": report_summary.get_total_pl_mtd(),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(), # deprecated, wrong figures
                     "pl_ytd": report_summary.get_total_pl_ytd(),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(), # deprecated, wrong figures
+                },
+                "performance": {
+                    "daily": {
+                        "grand_return": report_summary.get_daily_performance(),
+                    },
+                    "mtd": {
+                        "grand_return":  report_summary.get_mtd_performance(),
+                    },
+                    "ytd": {
+                        "grand_return": report_summary.get_ytd_performance(),
+                    }
                 }
+
             }
 
             report_summary_record = ReportSummaryInstance.objects.create(

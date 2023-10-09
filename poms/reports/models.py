@@ -1002,8 +1002,10 @@ class ReportSummary:
         self.bundles = bundles
 
         self.portfolio_ids = []
+        self.portfolio_user_codes = []
 
         self.portfolio_ids.extend(portfolio.id for portfolio in self.portfolios)
+        self.portfolio_user_codes.extend(portfolio.user_code for portfolio in self.portfolios)
 
     def build_balance(self):
         st = time.perf_counter()
@@ -1068,9 +1070,13 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
+        pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
+
+        _l.info('build_pl_daily %s' % pl_first_date)
+
         serializer = PLReportSerializer(
             data={
-                "pl_first_date": get_last_business_day(self.date_to),
+                "pl_first_date": pl_first_date,
                 "report_date": self.date_to,
                 "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
@@ -1407,6 +1413,70 @@ class ReportSummary:
                 position_return = position_return + item["position_return"]
 
         return position_return
+
+
+    def get_daily_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "days",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
+
+    def get_mtd_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": self.pl_first_date_for_mtd,
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "days",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
+
+    def get_ytd_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": self.pl_first_date_for_ytd,
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "days",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
 
 
 class ReportInstanceModel:
