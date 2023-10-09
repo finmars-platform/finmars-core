@@ -512,18 +512,22 @@ class DbInitializer:
         accounts = {}
         for name in PORTFOLIOS:
             account = Account.objects.filter(
-                name=name
+                name=name,
+                user_code=name,
             ).first() or Account.objects.create(
                 master_user=self.master_user,
                 name=name,
+                user_code=name,
             )
             accounts[name] = account
 
             portfolio = Portfolio.objects.filter(
-                name=name
+                name=name,
+                user_code=name,
             ).first() or Portfolio.objects.create(
                 master_user=self.master_user,
                 name=name,
+                user_code=name,
             )
             portfolio.accounts.clear()
             portfolio.accounts.add(account)

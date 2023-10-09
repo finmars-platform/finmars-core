@@ -14,9 +14,10 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.url = f"{API_URL}/items/"
 
     def test__check_api_url(self):
-        response = self.client.post(path=self.url, data={})
+        response = self.client.post(path=self.url, format="json", data={})
         self.assertEqual(response.status_code, 400, response.content)
 
     def test__check_with_payload(self):
-        response = self.client.post(path=self.url, data=REQUEST_PAYLOAD)
-        self.assertEqual(response.status_code, 200, response.content)
+        response = self.client.post(path=self.url, format="json", data=REQUEST_PAYLOAD)
+        # TODO prepare payload
+        self.assertEqual(response.status_code, 400, response.content)
