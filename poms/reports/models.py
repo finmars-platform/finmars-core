@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.utils import get_last_business_day
 from poms.configuration.models import ConfigurationModel
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.users.models import EcosystemDefault, MasterUser, Member
@@ -1069,7 +1070,7 @@ class ReportSummary:
 
         serializer = PLReportSerializer(
             data={
-                "pl_first_date": self.date_to - timedelta(days=1),
+                "pl_first_date": get_last_business_day(self.date_to),
                 "report_date": self.date_to,
                 "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
@@ -1093,17 +1094,19 @@ class ReportSummary:
     @property
     def pl_first_date_for_mtd(self):
 
-        # If self.date_to is the first day of the month
+        # If self.date_to is the first day of the month, we subtract one day to get the last day of the previous month.
+        # Otherwise, we set the date to the last day of the previous month.
         if self.date_to.day == 1:
-            # Subtract one day to get the last day of the previous month
             last_day_of_prev_month = self.date_to - timedelta(days=1)
-            # Check if it's a weekend
-            while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-                last_day_of_prev_month -= timedelta(days=1)
-            return last_day_of_prev_month.strftime('%Y-%m-%d')
         else:
-            # Return the first day of the current month
-            return self.date_to.replace(day=1).strftime('%Y-%m-%d')
+            # Subtract enough days to get to the first day of the current month and then subtract one more day
+            last_day_of_prev_month = self.date_to - timedelta(days=self.date_to.day-1) - timedelta(days=1)
+
+        # Check if it's a weekend and adjust accordingly
+        while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+            last_day_of_prev_month -= timedelta(days=1)
+
+        return last_day_of_prev_month.strftime('%Y-%m-%d')
 
     def build_pl_mtd(self):
         st = time.perf_counter()
@@ -1145,17 +1148,18 @@ class ReportSummary:
     @property
     def pl_first_date_for_ytd(self):
 
-        # If self.date_to is January 1st
+        # If self.date_to is January 1st, we subtract one day to get the last day of the previous year.
+        # Otherwise, we set the date to December 31st of the previous year.
         if self.date_to.month == 1 and self.date_to.day == 1:
-            # Subtract one day to get the last day of the previous year
             last_day_of_prev_year = self.date_to - timedelta(days=1)
-            # Check if it's a weekend
-            while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-                last_day_of_prev_year -= timedelta(days=1)
-            return last_day_of_prev_year.strftime('%Y-%m-%d')
         else:
-            # Return the first day of the current year
-            return self.date_to.replace(month=1, day=1).strftime('%Y-%m-%d')
+            last_day_of_prev_year = self.date_to.replace(year=self.date_to.year-1, month=12, day=31)
+
+        # Check if it's a weekend or holiday and adjust accordingly
+        while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+            last_day_of_prev_year -= timedelta(days=1)
+
+        return last_day_of_prev_year.strftime('%Y-%m-%d')
 
     def build_pl_ytd(self):
         st = time.perf_counter()
