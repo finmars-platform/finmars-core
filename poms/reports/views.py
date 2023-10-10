@@ -442,6 +442,7 @@ class SummaryViewSet(AbstractViewSet):
         portfolios = validated_data["portfolios"]
         currency = validated_data["currency"]
         pricing_policy = validated_data["pricing_policy"]
+        allocation_mode = validated_data["allocation_mode"]
 
         if not date_to:
             date_to = get_closest_bday_of_yesterday()
@@ -457,7 +458,8 @@ class SummaryViewSet(AbstractViewSet):
                                                                     date_to=date_to,
                                                                     portfolios=portfolios,
                                                                     pricing_policy=pricing_policy,
-                                                                    currency=currency
+                                                                    currency=currency,
+                                                                    allocation_mode=allocation_mode
                                                                     ).count()
 
         _l.info('summary_record_count %s' % summary_record_count)
@@ -475,6 +477,7 @@ class SummaryViewSet(AbstractViewSet):
                 bundles,
                 currency,
                 pricing_policy,
+                allocation_mode,
                 request.user.master_user,
                 request.user.member,
                 context,
@@ -490,14 +493,26 @@ class SummaryViewSet(AbstractViewSet):
                 "total": {
                     "nav": report_summary.get_nav(),
                     "pl_range": report_summary.get_total_pl_range(),
-                    "pl_range_percent": report_summary.get_total_position_return_pl_range(),
+                    "pl_range_percent": report_summary.get_total_position_return_pl_range(), # deprecated, wrong figures
                     "pl_daily": report_summary.get_total_pl_daily(),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(), # deprecated, wrong figures
                     "pl_mtd": report_summary.get_total_pl_mtd(),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(), # deprecated, wrong figures
                     "pl_ytd": report_summary.get_total_pl_ytd(),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(), # deprecated, wrong figures
+                },
+                "performance": {
+                    "daily": {
+                        "grand_return": report_summary.get_daily_performance(),
+                    },
+                    "mtd": {
+                        "grand_return":  report_summary.get_mtd_performance(),
+                    },
+                    "ytd": {
+                        "grand_return": report_summary.get_ytd_performance(),
+                    }
                 }
+
             }
 
             report_summary_record = ReportSummaryInstance.objects.create(
@@ -507,6 +522,7 @@ class SummaryViewSet(AbstractViewSet):
                 date_to=date_to,
                 portfolios=portfolios,
                 currency=currency,
+                allocation_mode=allocation_mode,
                 data=result
             )
 
@@ -519,6 +535,7 @@ class SummaryViewSet(AbstractViewSet):
                                                                          date_from=date_from,
                                                                          date_to=date_to,
                                                                          portfolios=portfolios,
+                                                                         allocation_mode=allocation_mode,
                                                                          currency=currency).last()
 
             result = report_summary_record.data

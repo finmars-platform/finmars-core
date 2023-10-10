@@ -3471,6 +3471,14 @@ class PLReportBuilderSql:
                 ITEM_TYPE_TRANSACTION_PL = 5
                 ITEM_TYPE_MISMATCH = 6
 
+
+                ITEM_GROUP_OPENED = 10
+                ITEM_GROUP_FX_VARIATIONS = 11
+                ITEM_GROUP_FX_TRADES = 12
+                ITEM_GROUP_OTHER = 13
+                ITEM_GROUP_MISMATCH = 14
+                ITEM_GROUP_CLOSED = 15
+
                 for item in result_tmp_raw:
 
                     item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
@@ -3483,8 +3491,15 @@ class PLReportBuilderSql:
                     else:
                         result_tmp.append(item)
 
+                _l.info("WTF??")
+
+                # index = 0
+
                 for item in result_tmp:
 
+                    # if 'Pfizer' in item['user_code']:
+                    #     _l.info("WTF??? item %s ______  %s" %  (index, item))
+                    #     index = index + 1
                     # result_item_opened = item.copy()
                     result_item_opened = {}
 
@@ -3568,42 +3583,58 @@ class PLReportBuilderSql:
                         result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
                     if 'allocation_pl_id' in item:
-                        if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or \
-                                item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
 
-                            if item['instrument_id'] != None and item['instrument_id'] != -1:
-                                result_item_opened['allocation_pl_id'] = item['instrument_id']
-                            else:
-                                # convert None to '-'
+                        if item['allocation_pl_id'] == ecosystem_defaults.instrument_id:
+                            result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                        elif item['allocation_pl_id'] == None:
+
+                            if item['instrument_id'] == None:
                                 result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                            else:
+                                result_item_opened['allocation_pl_id'] = item['instrument_id']
                         else:
-                            # TODO do not remove that, its really important
                             result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
+
+                        # Before 2023-10-10
+                        # if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or \
+                        #         item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+                        #
+                        #     if item['instrument_id'] != None and item['instrument_id'] != -1:
+                        #         pass
+                        #         # TODO ASK Oleg if its right?
+                        #         # result_item_opened['allocation_pl_id'] = item['instrument_id']
+                        #         result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
+                        #     else:
+                        #         # convert None to '-'
+                        #         result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                        # else:
+                        #     # TODO do not remove that, its really important
+                        #     result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
                     else:
                         result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
-                        result_item_opened["item_group"] = 10
+                        result_item_opened["item_group"] = ITEM_GROUP_OPENED
                         result_item_opened["item_group_code"] = "OPENED"
                         result_item_opened["item_group_name"] = "Opened"
 
                     if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS:
-                        result_item_opened["item_group"] = 11
+                        result_item_opened["item_group"] = ITEM_GROUP_FX_VARIATIONS
                         result_item_opened["item_group_code"] = "FX_VARIATIONS"
                         result_item_opened["item_group_name"] = "FX Variations"
 
                     if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES:
-                        result_item_opened["item_group"] = 12
+                        result_item_opened["item_group"] = ITEM_GROUP_FX_TRADES
                         result_item_opened["item_group_code"] = "FX_TRADES"
                         result_item_opened["item_group_name"] = "FX Trades"
 
                     if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL:
-                        result_item_opened["item_group"] = 13
+                        result_item_opened["item_group"] = ITEM_GROUP_OTHER
                         result_item_opened["item_group_code"] = "OTHER"
                         result_item_opened["item_group_name"] = "Other"
 
                     if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
-                        result_item_opened["item_group"] = 14
+                        result_item_opened["item_group"] = ITEM_GROUP_MISMATCH
                         result_item_opened["item_group_code"] = "MISMATCH"
                         result_item_opened["item_group_name"] = "Mismatch"
 
@@ -3691,6 +3722,8 @@ class PLReportBuilderSql:
                         result.append(result_item_opened)
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
+
+                        _l.info("PL opened position has closed value")
 
                         # result_item_closed = item.copy()
                         # result_item_closed = copy.deepcopy(item)
@@ -3804,27 +3837,58 @@ class PLReportBuilderSql:
                         # else:
                         #     result_item_closed['allocation_pl_id'] = item['instrument_id']
 
+                        # if 'allocation_pl_id' in item:
+                        #
+                        #     if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+                        #
+                        #         if item['instrument_id'] != None and item['instrument_id'] != -1:
+                        #
+                        #             result_item_closed['allocation_pl_id'] = item['instrument_id']
+                        #
+                        #         else:
+                        #
+                        #             # convert None to '-'
+                        #             result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                        #
+                        #     else:
+                        #         # TODO do not remove that, its really important
+                        #         result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
+                        # else:
+                        #     result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
+
                         if 'allocation_pl_id' in item:
 
-                            if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+                            if item['allocation_pl_id'] == ecosystem_defaults.instrument_id:
+                                result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                            elif item['allocation_pl_id'] == None:
 
-                                if item['instrument_id'] != None and item['instrument_id'] != -1:
-
-                                    result_item_closed['allocation_pl_id'] = item['instrument_id']
-
-                                else:
-
-                                    # convert None to '-'
+                                if item['instrument_id'] == None:
                                     result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
-
+                                else:
+                                    result_item_closed['allocation_pl_id'] = item['instrument_id']
                             else:
-                                # TODO do not remove that, its really important
                                 result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
+
+                            # Before 2023-10-10
+                            # if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or \
+                            #         item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+                            #
+                            #     if item['instrument_id'] != None and item['instrument_id'] != -1:
+                            #         pass
+                            #         # TODO ASK Oleg if its right?
+                            #         # result_item_opened['allocation_pl_id'] = item['instrument_id']
+                            #         result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
+                            #     else:
+                            #         # convert None to '-'
+                            #         result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
+                            # else:
+                            #     # TODO do not remove that, its really important
+                            #     result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
                         else:
                             result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
 
 
-                        result_item_closed["item_group"] = 11
+                        result_item_closed["item_group"] = ITEM_GROUP_CLOSED
                         result_item_closed["item_group_code"] = "CLOSED"
                         result_item_closed["item_group_name"] = "Closed"
 

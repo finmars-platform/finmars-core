@@ -487,6 +487,7 @@ class SummarySerializer(serializers.Serializer):
     pricing_policy = PricingPolicyField(required=False, allow_null=True, default=SystemPricingPolicyDefault())
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     calculate_new = serializers.BooleanField(default=False, initial=False)
+    allocation_mode = serializers.IntegerField(default=0, initial=0)
 
 class PLReportSerializer(ReportSerializer):
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
@@ -1418,7 +1419,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         _l.info("BackendBalanceReportItemsSerializer.to_representation")
 
-        # _l.info('full_items %s' % full_items[0])
+        _l.info('PL BEFORE ALL FILTERS full_items len %s' % len(full_items))
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
         total_market_value = 0
         try:
@@ -1429,10 +1430,12 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
             _l.error("Could not calculate market_value, some prices/fxrates are missing")
             total_market_value = None
 
+        _l.info('PL BEFORE ALL GLOBAL FILTER full_items len %s' % len(full_items))
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
         full_items = helper_service.calculate_market_value_percent(full_items, total_market_value)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
+        _l.info('PL BEFORE AFTER ALL FILTERS full_items len %s' % len(full_items))
 
 
         result_items = []
@@ -1446,6 +1449,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         #             result_items.append(item)
         #
         # data['items'] = result_items
+
+        # _l.info('full_items %s' % full_items)
 
         data['items'] = full_items
         data.pop('item_currencies', [])
@@ -1621,6 +1626,7 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         data['report_instance_id'] = report_instance.id
 
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
