@@ -63,17 +63,6 @@ class SchemeViewSet(AbstractModelViewSet):
         return result
 
 
-# DEPRECATED
-class SchemeLightViewSet(AbstractModelViewSet):
-    queryset = CsvImportScheme.objects
-    serializer_class = CsvImportSchemeLightSerializer
-    filter_class = SchemeFilterSet
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    permission_classes = AbstractModelViewSet.permission_classes + []
-
-
 class CsvDataImportViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = simple_import
@@ -83,7 +72,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
     ]
 
     def get_serializer_context(self):
-        context = super(AbstractAsyncViewSet, self).get_serializer_context()
+        context = super().get_serializer_context()
         context["show_object_permissions"] = False
         return context
 
@@ -93,8 +82,6 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        # REFACTOR THIS
 
         options_object = {
             "file_path": instance.file_path,
@@ -140,10 +127,11 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         st = time.perf_counter()
 
         _l.info("SimpleImportViewSet.execute")
-        options_object = {}
 
-        options_object["items"] = request.data.get("items", None)
-        options_object["file_path"] = request.data.get("file_path", None)
+        options_object = {
+            "items": request.data.get("items", None),
+            "file_path": request.data.get("file_path", None),
+        }
 
         if options_object["file_path"]:
             # TODO refactor to file_name

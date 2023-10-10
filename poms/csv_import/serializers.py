@@ -538,35 +538,43 @@ class CsvImportSchemeLightSerializer(ModelWithUserCodeSerializer):
 
 
 class CsvDataImportSerializer(serializers.Serializer):
-    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_id = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+    )
     task_status = serializers.ReadOnlyField()
-
-    file = serializers.FileField(required=False, allow_null=True)
-
+    file = serializers.FileField(
+        required=False,
+        allow_null=True,
+    )
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     scheme = CsvImportSchemeField(required=False)
-
     delimiter = serializers.CharField(
-        max_length=3, required=False, initial=",", default=","
+        max_length=3,
+        required=False,
+        initial=",",
+        default=",",
     )
-
     quotechar = serializers.CharField(
-        max_length=1, required=False, initial='"', default='"'
+        max_length=1,
+        required=False,
+        initial='"',
+        default='"',
     )
-    # encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
     encoding = serializers.CharField(
-        max_length=20, required=False, initial="utf-8-sig", default="utf-8-sig"
+        max_length=20,
+        required=False,
+        initial="utf-8-sig",
+        default="utf-8-sig",
     )
-
     error_handler = serializers.ChoiceField(
         choices=[("break", "Break on first error"), ("continue", "Try continue")],
         required=False,
         initial="continue",
         default="continue",
     )
-
     missing_data_handler = serializers.ChoiceField(
         choices=[
             ("throw_error", "Treat as Error"),
@@ -576,7 +584,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         initial="throw_error",
         default="throw_error",
     )
-
     classifier_handler = serializers.ChoiceField(
         choices=[
             ("skip", "Skip (assign Null)"),
@@ -586,7 +593,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         initial="skip",
         default="skip",
     )
-
     mode = serializers.ChoiceField(
         choices=[("skip", "Skip if exists"), ("overwrite", "Overwrite")],
         required=False,
@@ -597,7 +603,6 @@ class CsvDataImportSerializer(serializers.Serializer):
     stats = serializers.ReadOnlyField()
     stats_file_report = serializers.ReadOnlyField()
     imported = serializers.ReadOnlyField()
-
     processed_rows = serializers.ReadOnlyField()
     total_rows = serializers.ReadOnlyField()
 
