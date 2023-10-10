@@ -492,8 +492,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
             "instrument_reference_column", scheme.instrument_reference_column
         )
 
-        # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
-
         scheme.mode = validated_data.get("mode", scheme.mode)
         scheme.delimiter = validated_data.get("delimiter", scheme.delimiter)
         scheme.column_matcher = validated_data.get(
@@ -570,7 +568,10 @@ class CsvDataImportSerializer(serializers.Serializer):
         default="utf-8-sig",
     )
     error_handler = serializers.ChoiceField(
-        choices=[("break", "Break on first error"), ("continue", "Try continue")],
+        choices=[
+            ("break", "Break on first error"),
+            ("continue", "Try continue"),
+        ],
         required=False,
         initial="continue",
         default="continue",
@@ -594,7 +595,10 @@ class CsvDataImportSerializer(serializers.Serializer):
         default="skip",
     )
     mode = serializers.ChoiceField(
-        choices=[("skip", "Skip if exists"), ("overwrite", "Overwrite")],
+        choices=[
+            ("skip", "Skip if exists"),
+            ("overwrite", "Overwrite"),
+        ],
         required=False,
         initial="skip",
         default="skip",
@@ -609,7 +613,7 @@ class CsvDataImportSerializer(serializers.Serializer):
     scheme_object = CsvImportSchemeSerializer(source="scheme", read_only=True)
 
     def create(self, validated_data):
-        filetmp = file = validated_data.get("file", None)
+        filetmp = validated_data.get("file", None)
 
         if "scheme" in validated_data:
             validated_data["delimiter"] = validated_data["scheme"].delimiter
