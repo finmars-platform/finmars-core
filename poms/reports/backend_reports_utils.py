@@ -253,6 +253,12 @@ class BackendReportHelperService:
         return True
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
+
+        _l.info(
+            f"filter_table_rows.filter_value_from_table value_to_filter="
+            f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
+        )
+
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
                 formatted_filter_by = filter_by.strip('"')
