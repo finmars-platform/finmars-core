@@ -7,7 +7,6 @@ import traceback
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
-
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
@@ -57,6 +56,24 @@ from poms.users.models import EcosystemDefault
 storage = get_storage()
 
 _l = getLogger("poms.csv_import")
+
+ACCRUAL_MAP = {
+    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+    "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
+    "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
+    "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
+    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
+    "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
+    "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
+    "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
+    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
+    "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
+    "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+    "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
+    "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+    "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+}
 
 
 ## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
@@ -520,24 +537,6 @@ def handler_instrument_object(
                 "accrual_calculation_schedules"
             ][0]["first_payment_date"]
 
-    accrual_map = {
-        "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
-        "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
-        "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
-        "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
-        "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
-        "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
-        "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
-        "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
-        "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
-        "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
-        "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
-        "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
-        "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
-        "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
-        "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
-    }
-
     if "accrual_calculation_schedules" in source_data:
         if source_data["accrual_calculation_schedules"] and len(
             source_data["accrual_calculation_schedules"]
@@ -550,8 +549,8 @@ def handler_instrument_object(
                 accrual = object_data["accrual_calculation_schedules"][0]
 
                 if "day_count_convention" in source_data:
-                    if source_data["day_count_convention"] in accrual_map:
-                        accrual["accrual_calculation_model"] = accrual_map[
+                    if source_data["day_count_convention"] in ACCRUAL_MAP:
+                        accrual["accrual_calculation_model"] = ACCRUAL_MAP[
                             source_data["day_count_convention"]
                         ]
 
@@ -796,13 +795,13 @@ class SimpleImportProcess(object):
 
         for result_item in self.result.items:
             if result_item.status == "error":
-                error_rows_count = error_rows_count + 1
+                error_rows_count += 1
 
             if result_item.status == "success":
-                success_rows_count = success_rows_count + 1
+                success_rows_count += 1
 
             if "skip" in result_item.status:
-                skip_rows_count = skip_rows_count + 1
+                skip_rows_count += 1
 
         result.append("Rows total, %s" % self.result.total_rows)
         result.append("Rows success import, %s" % success_rows_count)
@@ -946,9 +945,9 @@ class SimpleImportProcess(object):
 
         for item in self.result.items:
             if item.status == "error":
-                error_count = error_count + 1
+                error_count += 1
             else:
-                imported_count = imported_count + 1
+                imported_count += 1
 
         result = (
             "Processed %s rows and successfully imported %s items. Error rows %s"
@@ -1681,11 +1680,12 @@ class SimpleImportProcess(object):
                     item.error_message = (
                         item.error_message + "==== Overwrite Exception " + str(e)
                     )
-
-                    _l.error("import_item.overwrite  e %s" % e)
                     _l.error(
-                        "import_item.overwrite  traceback %s" % traceback.format_exc()
+                        f"import_item.overwrite model={self.scheme.content_type.model}"
+                        f" final_inputs={item.final_inputs} error {e} traceback "
+                        f"{traceback.format_exc()}"
                     )
+
 
             else:
                 item.status = "error"
