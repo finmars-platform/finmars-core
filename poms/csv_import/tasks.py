@@ -45,7 +45,9 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
             if instance.scheme.data_preprocess_expression:
                 try:
-                    _l.info(f"Going to execute {instance.scheme.data_preprocess_expression}")
+                    _l.info(
+                        f"Going to execute {instance.scheme.data_preprocess_expression}"
+                    )
 
                     new_file_items = instance.whole_file_preprocess()
                     instance.file_items = new_file_items
