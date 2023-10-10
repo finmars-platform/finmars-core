@@ -329,6 +329,10 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
+                _l.info(
+                    f"filter_table_rows.match_item item={item} filter_={filter_}"
+                )
+
                 if len(filter_value):
                     if key_property != "ordering":
                         if key_property in item and item[key_property] is not None:
