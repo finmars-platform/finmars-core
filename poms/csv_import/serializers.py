@@ -57,11 +57,7 @@ class CsvDataFileImport:
     ):
         self.task_id = task_id
         self.task_status = task_status
-
-        # self.file = file
-
         self.filename = filename
-
         self.file_path = file_path
         self.master_user = master_user
         self.member = member
@@ -87,7 +83,10 @@ class CsvDataFileImport:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return f'{getattr(self.master_user, "name", None)}:{getattr(self.scheme, "user_code", None)}'
+        return (
+            f'{getattr(self.master_user, "name", None)}:'
+            f'{getattr(self.scheme, "user_code", None)}'
+        )
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
@@ -95,7 +94,12 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CsvField
-        fields = ("column", "name", "name_expr", "column_name")
+        fields = (
+            "column",
+            "name",
+            "name_expr",
+            "column_name",
+        )
 
 
 class EntityFieldSerializer(serializers.ModelSerializer):
@@ -143,14 +147,18 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
     calculated_inputs = CsvImportSchemeCalculatedInputSerializer(
         many=True, read_only=False, required=False
     )
-
     delimiter = serializers.CharField(
-        max_length=3, required=False, initial=",", default=","
+        max_length=3,
+        required=False,
+        initial=",",
+        default=",",
     )
     column_matcher = serializers.CharField(
-        max_length=255, required=False, initial="index", default="index"
+        max_length=255,
+        required=False,
+        initial="index",
+        default="index",
     )
-
     item_post_process_script = ExpressionField(
         max_length=EXPRESSION_FIELD_LENGTH,
         required=False,
