@@ -1680,11 +1680,12 @@ class SimpleImportProcess(object):
                     item.error_message = (
                         item.error_message + "==== Overwrite Exception " + str(e)
                     )
-
-                    _l.error("import_item.overwrite  e %s" % e)
                     _l.error(
-                        "import_item.overwrite  traceback %s" % traceback.format_exc()
+                        f"import_item.overwrite model={self.scheme.content_type.model}"
+                        f" final_inputs={item.final_inputs} error {e} traceback "
+                        f"{traceback.format_exc()}"
                     )
+
 
             else:
                 item.status = "error"
