@@ -22,7 +22,6 @@ class BackendReportHelperService:
         return ".".join(pieces)
 
     def get_result_group(self, item, group_type):
-
         result_group = {
             "___group_name": None,
             "___group_identifier": None,
@@ -43,16 +42,13 @@ class BackendReportHelperService:
                 result_group["___group_name"] = status_map.get(
                     item_value, str(item_value)
                 )
-        elif identifier_value is '-':
-
-            result_group["___group_identifier"] = '-'
+        elif identifier_value is "-":
+            result_group["___group_identifier"] = "-"
             result_group["___group_name"] = "-"
 
-        elif identifier_value is None:  # Specifically handle None values
-
+        elif identifier_value is None:  # Specifically, handle None values
             result_group["___group_identifier"] = None
             result_group["___group_name"] = "No Data"
-
 
         return result_group
 
@@ -72,14 +68,15 @@ class BackendReportHelperService:
         # _l.info('result_groups %s' % result_groups)
         # _l.info('items %s' % items)
 
-
-
         for result_group in result_groups:
             # TODO CONSIDER SOMETHING WITH -
             group_items = []
 
             for item in items:
-                if item.get(result_group["___group_type_key"]) == result_group["___group_identifier"]:
+                if (
+                    item.get(result_group["___group_type_key"])
+                    == result_group["___group_identifier"]
+                ):
                     group_items.append(item)
 
             # _l.info('group_items %s' % group_items)
@@ -89,15 +86,14 @@ class BackendReportHelperService:
             )
 
         for result_group in result_groups:
-
-            if 'market_value' in result_group["subtotal"]:
-
+            if "market_value" in result_group["subtotal"]:
                 if total_value:
-
-                    result_group["subtotal"]["market_value_percent"] = round((result_group["subtotal"]["market_value"] / total_value) * 100, 2)
+                    result_group["subtotal"]["market_value_percent"] = round(
+                        (result_group["subtotal"]["market_value"] / total_value) * 100,
+                        2,
+                    )
 
                 else:
-
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
         return result_groups
@@ -209,7 +205,7 @@ class BackendReportHelperService:
                 for custom_field in item["custom_fields"]:
                     original_item[
                         "custom_fields." + custom_field["user_code"]
-                        ] = custom_field["value"]
+                    ] = custom_field["value"]
 
             original_items.append(original_item)
 
@@ -241,7 +237,7 @@ class BackendReportHelperService:
         # Need null's checks for filters of data type number
         if filter_type in ["from_to", "out_of_range"]:
             if (regular_filter_value.get("min_value") is not None) and (
-                    regular_filter_value.get("max_value") is not None
+                regular_filter_value.get("max_value") is not None
             ):
                 return True
         elif isinstance(regular_filter_value, list):
@@ -257,6 +253,12 @@ class BackendReportHelperService:
         return True
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
+
+        _l.info(
+            f"filter_table_rows.filter_value_from_table value_to_filter="
+            f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
+        )
+
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
                 formatted_filter_by = filter_by.strip('"')
@@ -291,13 +293,13 @@ class BackendReportHelperService:
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
         elif operation_type == "out_of_range":
             return (
-                    value_to_filter <= filter_by["min_value"]
-                    or value_to_filter >= filter_by["max_value"]
+                value_to_filter <= filter_by["min_value"]
+                or value_to_filter >= filter_by["max_value"]
             )
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
+
         elif operation_type == "date_tree":
-            # possible type error if value_to_filter is str !!!
             return any(value_to_filter == str(date) for date in filter_by)
 
         else:
@@ -333,18 +335,22 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
+                _l.info(
+                    f"filter_table_rows.match_item item={item} filter_={filter_}"
+                )
+
                 if len(filter_value):
                     if key_property != "ordering":
                         if key_property in item and item[key_property] is not None:
                             if self.check_for_empty_regular_filter(
-                                    filter_value, filter_type
+                                filter_value, filter_type
                             ):
                                 value_from_table = item[key_property]
                                 filter_argument = filter_value
 
                                 if (
-                                        value_type in (10, 30)
-                                        and filter_type != "multiselector"
+                                    value_type in (10, 30)
+                                    and filter_type != "multiselector"
                                 ):
                                     value_from_table = value_from_table.lower()
                                     filter_argument = filter_argument[0].lower()
@@ -368,12 +374,12 @@ class BackendReportHelperService:
                                         ]
 
                                 if not self.filter_value_from_table(
-                                        value_from_table, filter_argument, filter_type
+                                    value_from_table, filter_argument, filter_type
                                 ):
                                     return False
                         elif exclude_empty_cells or (
-                                key_property in ["name", "instrument"]
-                                and item["item_type"] != 1
+                            key_property in ["name", "instrument"]
+                            and item["item_type"] != 1
                         ):
                             return False
             return True
@@ -474,8 +480,7 @@ class BackendReportHelperService:
                     result_item[key] = item[key]
 
             for key in item.keys():
-
-                if '.id' in key:
+                if ".id" in key:
                     result_item[key] = item[key]
 
             result_items.append(result_item)
@@ -537,10 +542,11 @@ class BackendReportHelperService:
         return items
 
     def calculate_market_value_percent(self, items, total_market_value):
-
         if total_market_value:
             for item in items:
-                item["market_value_percent"] = round((item["market_value"] / total_market_value) * 100, 2)
+                item["market_value_percent"] = round(
+                    (item["market_value"] / total_market_value) * 100, 2
+                )
         else:
             for item in items:
                 item["market_value_percent"] = "No Data"
@@ -548,17 +554,15 @@ class BackendReportHelperService:
         return items
 
     def calculate_total_percent(self, items, total_total_value):
-
         for item in items:
             item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
 
         return items
 
     def paginate_items(self, items, options):
+        page_size = options.get("page_size", 40)
 
-        page_size = options.get('page_size', 40)
-
-        page = options.get('page', 1)
+        page = options.get("page", 1)
 
         start_index = (page - 1) * page_size
         end_index = start_index + page_size
@@ -624,8 +628,8 @@ class BackendReportSubtotalService:
     @staticmethod
     def resolve_subtotal_function(items, column):
         if (
-                "report_settings" in column
-                and "subtotal_formula_id" in column["report_settings"]
+            "report_settings" in column
+            and "subtotal_formula_id" in column["report_settings"]
         ):
             formula_id = column["report_settings"]["subtotal_formula_id"]
             if formula_id == 1:

@@ -19,7 +19,7 @@ from poms.transactions.tests.transaction_type_dicts import (
     TRANSACTION_TYPE_BOOK_DICT,
 )
 
-DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT = settings.API_DATE_FORMAT
 
 
 class TransactionTypeViewSetTest(BaseTestCase):
