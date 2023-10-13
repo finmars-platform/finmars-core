@@ -5,14 +5,12 @@ Django settings for the main Backend project.
 import os
 from datetime import timedelta
 
-from django.utils.translation import gettext_lazy
-
 import sentry_sdk
+from django.utils.translation import gettext_lazy
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
-
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
@@ -162,6 +160,8 @@ MIDDLEWARE = [
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.cache.UpdateCacheMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 if USE_DEBUGGER:
@@ -633,7 +633,6 @@ if BLOOMBERG_SANDBOX:
 else:
     print("Bloomberg Data License Module activated 🟢")
 
-
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
@@ -743,7 +742,6 @@ REDOC_SETTINGS = {
 }
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
-
 
 # SENTRY
 
