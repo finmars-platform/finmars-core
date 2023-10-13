@@ -5,14 +5,12 @@ Django settings for the main Backend project.
 import os
 from datetime import timedelta
 
-from django.utils.translation import gettext_lazy
-
 import sentry_sdk
+from django.utils.translation import gettext_lazy
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
-
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
@@ -159,22 +157,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
-    # Possibly Deprecated
-    # 'django.middleware.gzip.GZipMiddleware',
-    # 'django.middleware.http.ConditionalGetMiddleware',
-    # 'django.middleware.security.SecurityMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.locale.LocaleMiddleware',
-    # 'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
-    # "corsheaders.middleware.CorsPostCsrfMiddleware",
-    # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.cache.UpdateCacheMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 if USE_DEBUGGER:
@@ -399,14 +386,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "()": "colorlog.ColoredFormatter",
-            "format": "%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
-            "log_colors": {
-                "DEBUG": "cyan",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
+            "format": "[%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
         },
         "provision-verbose": {
             "()": GunicornWorkerIDLogFormatter,
@@ -414,72 +394,68 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
         "provision-console": {
             "level": DJANGO_LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        "file": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.FileHandler",  # TODO refactor to more sophisticated handler
-            # 'class': 'logging.handlers.TimedRotatingFileHandler',
-            # 'interval': 1,
-            # 'when': 'D',
-            "filename": "/var/log/finmars/backend/django.log",
-            "formatter": "verbose",
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
+        # "file": {
+        #     "level": DJANGO_LOG_LEVEL,
+        #     "class": "logging.FileHandler",
+        #     "filename": "/var/log/finmars/backend/django.log",
+        #     "formatter": "verbose",
+        # },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["file"]},
+        "django.request": {"level": "ERROR", "handlers": ["console"]},
         "provision": {
-            "handlers": ["provision-console", "file"],
+            "handlers": ["provision-console"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["file"],
+            "handlers": ["console"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
+            "handlers": ["console"],
             "propagate": True,
-        },
-        "finmars": {
-            "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
-            "propagate": True,
-        },
+        }
     },
 }
 
-if SEND_LOGS_TO_FINMARS:
-    LOGGING["handlers"]["logstash"] = {
-        "level": DJANGO_LOG_LEVEL,
-        "class": "logstash.TCPLogstashHandler",
-        "host": FINMARS_LOGSTASH_HOST,
-        "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
-        "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
-        "fqdn": False,  # Fully qualified domain name. Default value: false.
-        "ssl_verify": False,  # Fully qualified domain name. Default value: false.
-        # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
-    }
+# if SEND_LOGS_TO_FINMARS:
+#     LOGGING["handlers"]["logstash"] = {
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logstash.TCPLogstashHandler",
+#         "host": FINMARS_LOGSTASH_HOST,
+#         "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
+#         "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
+#         "fqdn": False,  # Fully qualified domain name. Default value: false.
+#         "ssl_verify": False,  # Fully qualified domain name. Default value: false.
+#         # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
+#     }
+#
+#     LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["django"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["poms"]["handlers"].append("logstash")
 
-    LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
-    LOGGING["loggers"]["django"]["handlers"].append("logstash")
-    LOGGING["loggers"]["poms"]["handlers"].append("logstash")
-
-if SERVER_TYPE == "local":
-    LOGGING["loggers"]["django.request"]["handlers"].append("console")
-    LOGGING["loggers"]["django"]["handlers"].append("console")
-    LOGGING["loggers"]["poms"]["handlers"].append("console")
-    LOGGING["loggers"]["finmars"]["handlers"].append("console")
+# if SERVER_TYPE == "local":
+#     LOGGING["loggers"]["django.request"]["handlers"].append("console")
+#     LOGGING["loggers"]["django"]["handlers"].append("console")
+#     LOGGING["loggers"]["poms"]["handlers"].append("console")
+#
+#     LOGGING["handlers"]["console"] ={
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logging.StreamHandler",
+#         "formatter": "verbose",
+#     }
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
@@ -657,7 +633,6 @@ if BLOOMBERG_SANDBOX:
 else:
     print("Bloomberg Data License Module activated 🟢")
 
-
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
@@ -767,7 +742,6 @@ REDOC_SETTINGS = {
 }
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
-
 
 # SENTRY
 
