@@ -21,9 +21,8 @@ storage = get_storage()
 def simple_import(self, task_id, procedure_instance_id=None):
     try:
         celery_task = CeleryTask.objects.get(pk=task_id)
-        celery_task.celery_task_id = (
-            self.request.id
-        )  # Important (record history rely on that)
+        # Important (record history rely on that)
+        celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
 
@@ -45,7 +44,9 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
             if instance.scheme.data_preprocess_expression:
                 try:
-                    _l.info(f"Going to execute {instance.scheme.data_preprocess_expression}")
+                    _l.info(
+                        f"Going to execute {instance.scheme.data_preprocess_expression}"
+                    )
 
                     new_file_items = instance.whole_file_preprocess()
                     instance.file_items = new_file_items

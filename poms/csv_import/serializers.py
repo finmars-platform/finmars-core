@@ -57,11 +57,7 @@ class CsvDataFileImport:
     ):
         self.task_id = task_id
         self.task_status = task_status
-
-        # self.file = file
-
         self.filename = filename
-
         self.file_path = file_path
         self.master_user = master_user
         self.member = member
@@ -87,7 +83,10 @@ class CsvDataFileImport:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return f'{getattr(self.master_user, "name", None)}:{getattr(self.scheme, "user_code", None)}'
+        return (
+            f'{getattr(self.master_user, "name", None)}:'
+            f'{getattr(self.scheme, "user_code", None)}'
+        )
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
@@ -95,7 +94,12 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CsvField
-        fields = ("column", "name", "name_expr", "column_name")
+        fields = (
+            "column",
+            "name",
+            "name_expr",
+            "column_name",
+        )
 
 
 class EntityFieldSerializer(serializers.ModelSerializer):
@@ -143,14 +147,18 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
     calculated_inputs = CsvImportSchemeCalculatedInputSerializer(
         many=True, read_only=False, required=False
     )
-
     delimiter = serializers.CharField(
-        max_length=3, required=False, initial=",", default=","
+        max_length=3,
+        required=False,
+        initial=",",
+        default=",",
     )
     column_matcher = serializers.CharField(
-        max_length=255, required=False, initial="index", default="index"
+        max_length=255,
+        required=False,
+        initial="index",
+        default="index",
     )
-
     item_post_process_script = ExpressionField(
         max_length=EXPRESSION_FIELD_LENGTH,
         required=False,
@@ -492,8 +500,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
             "instrument_reference_column", scheme.instrument_reference_column
         )
 
-        # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
-
         scheme.mode = validated_data.get("mode", scheme.mode)
         scheme.delimiter = validated_data.get("delimiter", scheme.delimiter)
         scheme.column_matcher = validated_data.get(
@@ -538,35 +544,46 @@ class CsvImportSchemeLightSerializer(ModelWithUserCodeSerializer):
 
 
 class CsvDataImportSerializer(serializers.Serializer):
-    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_id = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+        required=False,
+    )
     task_status = serializers.ReadOnlyField()
-
-    file = serializers.FileField(required=False, allow_null=True)
-
+    file = serializers.FileField(
+        required=False,
+        allow_null=True,
+    )
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     scheme = CsvImportSchemeField(required=False)
-
     delimiter = serializers.CharField(
-        max_length=3, required=False, initial=",", default=","
+        max_length=3,
+        required=False,
+        initial=",",
+        default=",",
     )
-
     quotechar = serializers.CharField(
-        max_length=1, required=False, initial='"', default='"'
+        max_length=1,
+        required=False,
+        initial='"',
+        default='"',
     )
-    # encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
     encoding = serializers.CharField(
-        max_length=20, required=False, initial="utf-8-sig", default="utf-8-sig"
+        max_length=20,
+        required=False,
+        initial="utf-8-sig",
+        default="utf-8-sig",
     )
-
     error_handler = serializers.ChoiceField(
-        choices=[("break", "Break on first error"), ("continue", "Try continue")],
+        choices=[
+            ("break", "Break on first error"),
+            ("continue", "Try continue"),
+        ],
         required=False,
         initial="continue",
         default="continue",
     )
-
     missing_data_handler = serializers.ChoiceField(
         choices=[
             ("throw_error", "Treat as Error"),
@@ -576,7 +593,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         initial="throw_error",
         default="throw_error",
     )
-
     classifier_handler = serializers.ChoiceField(
         choices=[
             ("skip", "Skip (assign Null)"),
@@ -586,9 +602,11 @@ class CsvDataImportSerializer(serializers.Serializer):
         initial="skip",
         default="skip",
     )
-
     mode = serializers.ChoiceField(
-        choices=[("skip", "Skip if exists"), ("overwrite", "Overwrite")],
+        choices=[
+            ("skip", "Skip if exists"),
+            ("overwrite", "Overwrite"),
+        ],
         required=False,
         initial="skip",
         default="skip",
@@ -597,14 +615,13 @@ class CsvDataImportSerializer(serializers.Serializer):
     stats = serializers.ReadOnlyField()
     stats_file_report = serializers.ReadOnlyField()
     imported = serializers.ReadOnlyField()
-
     processed_rows = serializers.ReadOnlyField()
     total_rows = serializers.ReadOnlyField()
 
     scheme_object = CsvImportSchemeSerializer(source="scheme", read_only=True)
 
     def create(self, validated_data):
-        filetmp = file = validated_data.get("file", None)
+        filetmp = validated_data.get("file", None)
 
         if "scheme" in validated_data:
             validated_data["delimiter"] = validated_data["scheme"].delimiter
