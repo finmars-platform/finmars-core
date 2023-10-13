@@ -399,14 +399,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "()": "colorlog.ColoredFormatter",
-            "format": "%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
-            "log_colors": {
-                "DEBUG": "cyan",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
+            "format": "[%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
         },
         "provision-verbose": {
             "()": GunicornWorkerIDLogFormatter,
@@ -414,72 +407,70 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
         "provision-console": {
             "level": DJANGO_LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        "file": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.FileHandler",  # TODO refactor to more sophisticated handler
-            # 'class': 'logging.handlers.TimedRotatingFileHandler',
-            # 'interval': 1,
-            # 'when': 'D',
-            "filename": "/var/log/finmars/backend/django.log",
-            "formatter": "verbose",
+        'syslog': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.SysLogHandler',
+            'address': '/dev/log',  # This points to the syslog socket
+            'formatter': 'verbose',
         },
+        # "file": {
+        #     "level": DJANGO_LOG_LEVEL,
+        #     "class": "logging.FileHandler",
+        #     "filename": "/var/log/finmars/backend/django.log",
+        #     "formatter": "verbose",
+        # },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["file"]},
+        "django.request": {"level": "ERROR", "handlers": ["syslog"]},
         "provision": {
-            "handlers": ["provision-console", "file"],
+            "handlers": ["provision-console"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["file"],
+            "handlers": ["syslog"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
+            "handlers": ["syslog"],
             "propagate": True,
-        },
-        "finmars": {
-            "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
-            "propagate": True,
-        },
+        }
     },
 }
 
-if SEND_LOGS_TO_FINMARS:
-    LOGGING["handlers"]["logstash"] = {
-        "level": DJANGO_LOG_LEVEL,
-        "class": "logstash.TCPLogstashHandler",
-        "host": FINMARS_LOGSTASH_HOST,
-        "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
-        "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
-        "fqdn": False,  # Fully qualified domain name. Default value: false.
-        "ssl_verify": False,  # Fully qualified domain name. Default value: false.
-        # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
-    }
-
-    LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
-    LOGGING["loggers"]["django"]["handlers"].append("logstash")
-    LOGGING["loggers"]["poms"]["handlers"].append("logstash")
+# if SEND_LOGS_TO_FINMARS:
+#     LOGGING["handlers"]["logstash"] = {
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logstash.TCPLogstashHandler",
+#         "host": FINMARS_LOGSTASH_HOST,
+#         "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
+#         "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
+#         "fqdn": False,  # Fully qualified domain name. Default value: false.
+#         "ssl_verify": False,  # Fully qualified domain name. Default value: false.
+#         # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
+#     }
+#
+#     LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["django"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["poms"]["handlers"].append("logstash")
 
 if SERVER_TYPE == "local":
     LOGGING["loggers"]["django.request"]["handlers"].append("console")
     LOGGING["loggers"]["django"]["handlers"].append("console")
     LOGGING["loggers"]["poms"]["handlers"].append("console")
-    LOGGING["loggers"]["finmars"]["handlers"].append("console")
+
+    LOGGING["handlers"]["console"] ={
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.StreamHandler",
+        "formatter": "verbose",
+    }
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
