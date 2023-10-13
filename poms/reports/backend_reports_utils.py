@@ -42,7 +42,7 @@ class BackendReportHelperService:
                 result_group["___group_name"] = status_map.get(
                     item_value, str(item_value)
                 )
-        elif identifier_value is "-":
+        elif identifier_value == "-":
             result_group["___group_identifier"] = "-"
             result_group["___group_name"] = "-"
 
@@ -69,16 +69,14 @@ class BackendReportHelperService:
         # _l.info('items %s' % items)
 
         for result_group in result_groups:
-            # TODO CONSIDER SOMETHING WITH -
-            group_items = []
-
-            for item in items:
+            group_items = [
+                item
+                for item in items
                 if (
                     item.get(result_group["___group_type_key"])
                     == result_group["___group_identifier"]
-                ):
-                    group_items.append(item)
-
+                )
+            ]
             # _l.info('group_items %s' % group_items)
 
             result_group["subtotal"] = BackendReportSubtotalService.calculate(
@@ -99,15 +97,13 @@ class BackendReportHelperService:
         return result_groups
 
     def convert_helper_dict(self, helper_list):
-        helper_dict = {entry["id"]: entry for entry in helper_list}
-        return helper_dict
+        return {entry["id"]: entry for entry in helper_list}
 
     def _get_attribute_value(self, attribute):
         value_type = attribute.get("attribute_type_object", {}).get("value_type")
         if value_type == 30:
-            if "classifier_object" in attribute:
-                if attribute["classifier_object"]:
-                    return attribute["classifier_object"]["name"]
+            if "classifier_object" in attribute and attribute["classifier_object"]:
+                return attribute["classifier_object"]["name"]
 
         elif value_type == 10:  # example value types for float and string
             return attribute.get("value_string")
@@ -223,11 +219,11 @@ class BackendReportHelperService:
 
         # Refactor someday this shitty logic
         if item_value is None:
-            if result_value != "-" and result_value != None: # TODO this one is important, we need to split - and None in future
+            if result_value not in ("-", None): 
+                # TODO this one is important, we need to split - and None in future
                 return False
-        else:
-            if str(item_value).lower() != result_value:
-                return False
+        elif str(item_value).lower() != result_value:
+            return False
 
         return True
 
@@ -247,10 +243,7 @@ class BackendReportHelperService:
 
     def does_string_contains_substrings(self, value_to_filter, filter_by_string):
         filter_substrings = filter_by_string.split(" ")
-        for substring in filter_substrings:
-            if substring not in value_to_filter:
-                return False
-        return True
+        return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
 
