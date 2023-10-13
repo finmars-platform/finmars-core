@@ -159,20 +159,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
-    # Possibly Deprecated
-    # 'django.middleware.gzip.GZipMiddleware',
-    # 'django.middleware.http.ConditionalGetMiddleware',
-    # 'django.middleware.security.SecurityMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.locale.LocaleMiddleware',
-    # 'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
-    # "corsheaders.middleware.CorsPostCsrfMiddleware",
-    # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
 ]
@@ -412,10 +399,8 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        'syslog': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.SysLogHandler',
-            'address': '/dev/log',  # This points to the syslog socket
+        'console': {
+            'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
         # "file": {
@@ -426,20 +411,20 @@ LOGGING = {
         # },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["syslog"]},
+        "django.request": {"level": "ERROR", "handlers": ["console"]},
         "provision": {
             "handlers": ["provision-console"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["syslog"],
+            "handlers": ["console"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["syslog"],
+            "handlers": ["console"],
             "propagate": True,
         }
     },
@@ -461,16 +446,16 @@ LOGGING = {
 #     LOGGING["loggers"]["django"]["handlers"].append("logstash")
 #     LOGGING["loggers"]["poms"]["handlers"].append("logstash")
 
-if SERVER_TYPE == "local":
-    LOGGING["loggers"]["django.request"]["handlers"].append("console")
-    LOGGING["loggers"]["django"]["handlers"].append("console")
-    LOGGING["loggers"]["poms"]["handlers"].append("console")
-
-    LOGGING["handlers"]["console"] ={
-        "level": DJANGO_LOG_LEVEL,
-        "class": "logging.StreamHandler",
-        "formatter": "verbose",
-    }
+# if SERVER_TYPE == "local":
+#     LOGGING["loggers"]["django.request"]["handlers"].append("console")
+#     LOGGING["loggers"]["django"]["handlers"].append("console")
+#     LOGGING["loggers"]["poms"]["handlers"].append("console")
+#
+#     LOGGING["handlers"]["console"] ={
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logging.StreamHandler",
+#         "formatter": "verbose",
+#     }
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
