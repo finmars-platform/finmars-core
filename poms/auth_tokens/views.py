@@ -18,6 +18,7 @@ from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSeria
     AcceptInviteSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.common.models import ProxyRequest, ProxyUser
+from poms.configuration.utils import get_default_configuration_code
 from poms.users.models import MasterUser, Member, UserProfile
 from poms_app import settings
 
@@ -239,6 +240,18 @@ class CreateUser(APIView):
             from poms.iam.models import Role, Group
             roles_instances = Role.objects.filter(user_code__in=roles)
             groups_instances = Group.objects.filter(user_code__in=groups)
+
+            if not len(roles_instances):
+                try:
+
+                    configuration_code = get_default_configuration_code()
+
+                    viewer_only_role = Role.objects.get(user_code=configuration_code + ':viewer')
+
+                    roles_instances = [viewer_only_role]
+
+                except Exception as e:
+                    _l.error("Roles are not set, even default view only is not available")
 
             member.iam_roles.set(roles_instances)
             member.iam_groups.set(groups_instances)

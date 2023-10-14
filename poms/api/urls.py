@@ -425,7 +425,7 @@ urlpatterns = [
 
     re_path(
         r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"
-    ),  # TODO deprecated delete soon
+    ),
     re_path(
         r"^authorizer/create-master-user/",
         CreateMasterUser.as_view(),
