@@ -92,7 +92,8 @@ class TransactionImportProcess(object):
             )
 
             _l.info(
-                f"TransactionImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
+                f"TransactionImportProcess.Task {self.task}. "
+                f"init procedure_instance {self.procedure_instance}"
             )
 
         self.member = self.task.member
@@ -110,7 +111,7 @@ class TransactionImportProcess(object):
                 user_code=self.task.options_object["scheme_user_code"]
             )
         else:
-            raise Exception("Import Scheme not found")
+            raise RuntimeError("Import Scheme not found")
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
@@ -458,9 +459,7 @@ class TransactionImportProcess(object):
                 try:
                     # optimized way of getting from prefetched dictionary
 
-                    content_type_key = (
-                        i.content_type.app_label + "." + i.content_type.model
-                    )
+                    content_type_key = f"{i.content_type.app_label}.{i.content_type.model}"
 
                     v = self.prefetched_relations[content_type_key][value]
 

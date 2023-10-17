@@ -12,7 +12,8 @@ _l = logging.getLogger("poms.transaction_import")
 def transaction_import(self, task_id, procedure_instance_id=None):
     try:
         instance = TransactionImportProcess(
-            task_id=task_id, procedure_instance_id=procedure_instance_id
+            task_id=task_id,
+            procedure_instance_id=procedure_instance_id,
         )
 
         self.finmars_task.update_progress(
