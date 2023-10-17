@@ -270,7 +270,7 @@ class BackendReportHelperService:
 
         elif operation_type == "does_not_contains":
             return filter_by not in value_to_filter
-        elif operation_type == "equal" or operation_type == "selector":
+        elif operation_type in ("equal", "selector"):
             return value_to_filter == filter_by
         elif operation_type == "not_equal":
             return value_to_filter != filter_by
@@ -387,7 +387,7 @@ class BackendReportHelperService:
         # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
         # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
 
-        _l.info('filter_by_groups_filters before len %s' % len(items))
+        _l.info(f'filter_by_groups_filters before len {len(items)}')
 
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
             filtered_items = []
@@ -412,7 +412,7 @@ class BackendReportHelperService:
 
             return filtered_items
 
-        _l.info('filter_by_groups_filters after len %s' % len(items))
+        _l.info(f'filter_by_groups_filters after len {len(items)}')
 
         return items
 
@@ -422,7 +422,7 @@ class BackendReportHelperService:
         if not query:
             return items
 
-        pieces = set(piece.lower() for piece in query.split())
+        pieces = {piece.lower() for piece in query.split()}
 
         def item_matches(item):
             for value in item.values():
@@ -440,31 +440,28 @@ class BackendReportHelperService:
         return list(filter(item_matches, items))
 
     def filter(self, items, options):
-        _l.info("Before filter %s" % len(items))
+        _l.info(f"Before filter {len(items)}")
 
         items = self.filter_by_global_table_search(items, options)
 
-        _l.info("After filter_by_global_table_search %s" % len(items))
+        _l.info(f"After filter_by_global_table_search {len(items)}")
 
         items = self.filter_table_rows(items, options)
 
-        _l.info("After filter_table_rows %s" % len(items))
+        _l.info(f"After filter_table_rows {len(items)}")
 
         # items = self.filter_by_groups_filters(items, options)
 
-        _l.info("After filter_by_groups_filters %s" % len(items))
+        _l.info(f"After filter_by_groups_filters {len(items)}")
 
         return items
 
     def reduce_columns(self, items, options):
         columns = options["columns"]
 
-        user_columns = []
-        for column in columns:
-            user_columns.append(column["key"])
-
+        user_columns = [column["key"] for column in columns]
+        
         result_items = []
-
         for item in items:
             result_item = {"id": item["id"]}
 
