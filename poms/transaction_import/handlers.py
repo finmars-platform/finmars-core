@@ -591,7 +591,6 @@ class TransactionImportProcess(object):
 
             if transaction_type_process_instance.has_errors:
                 if transaction_type_process_instance.uniqueness_status == "skip":
-                    item.status = "skip"
 
                     errors = []
 
@@ -600,11 +599,17 @@ class TransactionImportProcess(object):
                             errors + transaction_type_process_instance.general_errors
                         )
 
-                    item.error_message = (
-                        item.error_message
-                        + "Book Skip: "
-                        + json.dumps(errors, default=str)
+                    item.status = "skip"
+                    item.message = (
+                            "Transaction Skipped %s"
+                            % json.dumps(errors, default=str)
                     )
+
+                    # item.error_message = (
+                    #     item.error_message
+                    #     + "Book Skip: "
+                    #     + json.dumps(errors, default=str)
+                    # )
 
                     self.task.update_progress(
                         {
@@ -618,7 +623,7 @@ class TransactionImportProcess(object):
                         }
                     )
 
-                    raise BookSkipException(code=409, error_message=item.error_message)
+                    # raise BookSkipException(code=409, error_message=item.error_message)
 
                 else:
                     item.status = "error"
