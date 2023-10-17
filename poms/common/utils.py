@@ -543,6 +543,10 @@ def get_serializer(content_type_key):
         TransactionUserFieldSerializer,
     )
 
+    from poms.reports.serializers import BalanceReportCustomFieldSerializer
+    from poms.reports.serializers import PLReportCustomFieldSerializer
+    from poms.reports.serializers import TransactionReportCustomFieldSerializer
+
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -587,6 +591,9 @@ def get_serializer(content_type_key):
         "iam.accesspolicy": AccessPolicySerializer,
         "reference_tables.referencetable": ReferenceTableSerializer,
         "configuration.newmembersetupconfiguration": NewMemberSetupConfigurationSerializer,
+        "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,
+        "reports.plreportcustomfield": PLReportCustomFieldSerializer,
+        "reports.transactionreportcustomfield": TransactionReportCustomFieldSerializer,
     }
 
     return serializer_map[content_type_key]

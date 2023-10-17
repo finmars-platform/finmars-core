@@ -2745,6 +2745,8 @@ class TransactionTypeProcess:
             )
             self.complex_transaction.transaction_unique_code = None
 
+        _l.info('self.complex_transaction.transaction_unique_code %s' % self.complex_transaction.transaction_unique_code)
+
         if self.is_rebook:
             try:
                 exist = ComplexTransaction.objects.exclude(
@@ -2800,18 +2802,18 @@ class TransactionTypeProcess:
                     )
 
         else:
-            try:
-                exist = ComplexTransaction.objects.filter(
-                    master_user=self.transaction_type.master_user,
-                    transaction_unique_code=self.complex_transaction.transaction_unique_code,
-                )[0]
-            except Exception as e:
-                exist = None
-                _l.error(f"execute_uniqueness_expression.exist {repr(e)}")
+            # exist = ComplexTransaction.objects.filter(
+            #     master_user=self.transaction_type.master_user,
+            #     transaction_unique_code=self.complex_transaction.transaction_unique_code,
+            # ).first()
+            exist = ComplexTransaction.objects.filter(
+                transaction_unique_code=self.complex_transaction.transaction_unique_code,
+            ).first()
 
-            _l.debug(
+            _l.info(
                 f"execute_uniqueness_expression.uniqueness_reaction "
                 f"{self.uniqueness_reaction}"
+                f"{exist}"
             )
 
             if (

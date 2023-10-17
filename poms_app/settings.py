@@ -160,8 +160,8 @@ MIDDLEWARE = [
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.cache.UpdateCacheMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
+    # "django.middleware.cache.UpdateCacheMiddleware",
+    # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 if USE_DEBUGGER:
