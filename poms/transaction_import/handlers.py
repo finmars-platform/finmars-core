@@ -164,6 +164,8 @@ class TransactionImportProcess(object):
             description=f"{self.member.username} started import with scheme {self.scheme.name}",
         )
 
+        _l.info('self.scheme.book_uniqueness_settings %s' % self.scheme.book_uniqueness_settings)
+
     def prefetch_relations(self):
         st = time.perf_counter()
 
@@ -223,6 +225,7 @@ class TransactionImportProcess(object):
         result.append("Type, Transaction Import")
         result.append("Scheme, " + self.scheme.user_code)
         result.append("Error handle, " + self.scheme.error_handler)
+        result.append("Uniqueness settings, " + str(self.scheme.book_uniqueness_settings))
 
         if self.result.file_name:
             result.append("Filename, " + self.result.file_name)
