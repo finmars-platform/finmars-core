@@ -93,13 +93,7 @@ from poms.integrations.models import (
     TransactionFileResult, MappingTable, MappingTableKeyValue,
 )
 from poms.integrations.providers.base import ProviderException, get_provider
-# from poms.integrations.tasks import (
-#     # download_unified_data,
-#     # import_instrument_finmars_database,
-#     # import_currency_finmars_database,
-#     # import_company_finmars_database,
-#     test_certificate,
-# )
+
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import (
     GenericAttributeTypeSerializer,
