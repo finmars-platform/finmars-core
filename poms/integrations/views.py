@@ -1317,7 +1317,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
-        context = super(AbstractAsyncViewSet, self).get_serializer_context()
+        context = super().get_serializer_context()
         context["show_object_permissions"] = False
         return context
 
