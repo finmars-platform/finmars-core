@@ -31,7 +31,7 @@ class CsvDataImportViewSetTest(BaseTestCase):
             user_code=self.random_string(length=5),
         )
 
-    def test__get_405l(self):
+    def test__get_405(self):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 405, response.content)
 

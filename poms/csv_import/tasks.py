@@ -24,81 +24,87 @@ def simple_import(self, task_id, procedure_instance_id=None):
         celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
+    except Exception as e:
+        _l.error(
+            f"simple_import celery_task {task_id} error {repr(e)} "
+            f"traceback {traceback.format_exc()}"
+        )
+        raise e
 
-        try:
-            instance = SimpleImportProcess(
-                task_id=task_id,
-                procedure_instance_id=procedure_instance_id,
-            )
+    try:
+        instance = SimpleImportProcess(
+            task_id=task_id,
+            procedure_instance_id=procedure_instance_id,
+        )
 
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Going to parse raw items",
-                }
-            )
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Going to parse raw items",
+            }
+        )
 
-            instance.fill_with_file_items()
+        instance.fill_with_file_items()
 
-            if instance.scheme.data_preprocess_expression:
-                try:
-                    _l.info(
-                        f"Going to execute {instance.scheme.data_preprocess_expression}"
-                    )
+        if instance.scheme.data_preprocess_expression:
+            try:
+                _l.info(
+                    f"Going to execute {instance.scheme.data_preprocess_expression}"
+                )
 
-                    new_file_items = instance.whole_file_preprocess()
-                    instance.file_items = new_file_items
+                new_file_items = instance.whole_file_preprocess()
+                instance.file_items = new_file_items
 
-                except Exception as e:
-                    err_msg = f"transaction_import.preprocess errors {repr(e)}"
-                    _l.error(err_msg)
-                    raise RuntimeError(err_msg) from e
+            except Exception as e:
+                err_msg = f"transaction_import.preprocess errors {repr(e)}"
+                _l.error(err_msg)
+                raise RuntimeError(err_msg) from e
 
-            instance.fill_with_raw_items()
+        instance.fill_with_raw_items()
 
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Parse raw items",
-                }
-            )
-            instance.apply_conversion_to_raw_items()
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Apply Conversion",
-                }
-            )
-            instance.preprocess()
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Preprocess items",
-                }
-            )
-            instance.process()
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Parse raw items",
+            }
+        )
 
-            return json.dumps(instance.import_result, default=str)
+        instance.apply_conversion_to_raw_items()
 
-        except Exception as e:
-            _l.error(f"simple_import error {repr(e)} trace {traceback.format_exc()}")
-            raise e
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Apply Conversion",
+            }
+        )
 
-            # celery_task.error_message = str(e)
-            # celery_task.status = CeleryTask.STATUS_ERROR
-            # celery_task.save()
+        instance.preprocess()
+
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Preprocess items",
+            }
+        )
+        instance.process()
+
+        return json.dumps(instance.import_result, default=str)
 
     except Exception as e:
-        _l.error(f"simple_import general error {e} traceback {traceback.format_exc()}")
+        _l.error(f"simple_import error {repr(e)} trace {traceback.format_exc()}")
         raise e
+
+        # celery_task.error_message = str(e)
+        # celery_task.status = CeleryTask.STATUS_ERROR
+        # celery_task.save()
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
