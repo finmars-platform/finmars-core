@@ -1,6 +1,3 @@
-
-
-
 class BookUnhandledException(Exception):
     code: int
     error_message: str

@@ -534,8 +534,6 @@ class TransactionImportProcess(object):
             if error:
                 fields["error_message"] = str(error)
 
-            uniqueness_reaction = None
-
             if (
                 self.scheme.book_uniqueness_settings
                 == ComplexTransactionImportScheme.USE_TRANSACTION_TYPE_SETTING
@@ -571,14 +569,6 @@ class TransactionImportProcess(object):
             item.transaction_inputs[rule_scenario.transaction_type] = fields_dict
 
             transaction_type_process_instance.process()
-
-            # if transaction_type_process_instance.uniqueness_status == 'skip':
-            #     item.status = 'skip'
-            #     item.error_message = item.error_message + 'Unique code already exist. Skip'
-            #
-            # if transaction_type_process_instance.uniqueness_status == 'error':
-            #     item.status = 'error'
-            #     item.error_message = item.error_message + 'Unique code already exist. Error'
 
             item.processed_rule_scenarios.append(rule_scenario)
 
@@ -660,7 +650,7 @@ class TransactionImportProcess(object):
 
                     item.error_message = (
                         item.error_message
-                        + "Book Exception: "
+                        + " Book Exception: "
                         + json.dumps(errors, default=str)
                     )
 
@@ -694,9 +684,9 @@ class TransactionImportProcess(object):
             )
 
             if e.__class__.__name__ == "BookException":
-                raise BookException(code=400, error_message=str(e))
+                raise BookException(code=400, error_message=str(e)) from e
             elif e.__class__.__name__ == "BookSkipException":
-                raise BookSkipException(code=400, error_message=str(e))
+                raise BookSkipException(code=400, error_message=str(e)) from e
 
             else:
                 item.status = "error"
@@ -709,7 +699,7 @@ class TransactionImportProcess(object):
                     % (self.task, traceback.format_exc())
                 )
 
-                raise BookUnhandledException(code=500, error_message=str(e))
+                raise BookUnhandledException(code=500, error_message=str(e)) from e
 
     def fill_with_file_items(self):
         _l.info(
@@ -1128,8 +1118,8 @@ class TransactionImportProcess(object):
                                         # transaction.savepoint_rollback(sid)
 
                                         _l.error(
-                                            "Catch BookUnhandledException trying to book error_rule_scenario %s"
-                                            % e
+                                            f"Catch BookUnhandledException trying "
+                                            f"to book error_rule_scenario {e}"
                                         )
 
                                         try:
@@ -1139,12 +1129,8 @@ class TransactionImportProcess(object):
                                             # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
-                                        except (
-                                            Exception
-                                        ) as e:  # any exception will work on error scenario
-                                            _l.error(
-                                                "Could not book error scenario %s" % e
-                                            )
+                                        except Exception as e:  # any exception will work on error scenario
+                                            _l.error(f"Could not book error scenario {e}")
                                             # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
@@ -1191,20 +1177,6 @@ class TransactionImportProcess(object):
                         # transaction.savepoint_rollback(sid)
 
                 self.result.processed_rows = self.result.processed_rows + 1
-
-                # DEPRECATED
-                # send_websocket_message(data={
-                #     'type': 'transaction_import_status',
-                #     'payload': {
-                #         'parent_task_id': self.task.parent_id,
-                #         'task_id': self.task.id,
-                #         'state': CeleryTask.STATUS_PENDING,
-                #         'processed_rows': self.result.processed_rows,
-                #         'total_rows': self.result.total_rows,
-                #         'scheme_name': self.scheme.user_code,
-                #         'file_name': self.result.file_name}
-                # }, level="member",
-                #     context=self.context)
 
                 self.task.update_progress(
                     {
