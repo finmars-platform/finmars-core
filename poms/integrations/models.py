@@ -12,7 +12,7 @@ from poms.common.models import (
     AbstractClassModel,
     DataTimeStampedModel,
     NamedModel,
-    TimeStampedModel,
+    TimeStampedModel, FakeDeletableModel,
 )
 from poms.common.storage import get_storage
 from poms.configuration.models import ConfigurationModel
@@ -1197,7 +1197,7 @@ COLUMN_MATCHER_CHOICES = [["index", "Index"], ["name", "Name"]]
 
 
 class ComplexTransactionImportScheme(
-    NamedModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, DataTimeStampedModel, ConfigurationModel, FakeDeletableModel
 ):
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
