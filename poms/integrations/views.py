@@ -27,7 +27,7 @@ from poms.common.filters import (
     ByIdFilterBackend,
     CharFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter,
+    NoOpFilter, GroupsAttributeFilter, AttributeFilter,
 )
 from poms.common.mixins import (
     BulkModelMixin,
@@ -955,14 +955,13 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 
 class ComplexTransactionImportSchemeViewSet(
-    AbstractApiView, UpdateModelMixinExt, ModelViewSet
+    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
 ):
     permission_classes = [IsAuthenticated]
     filter_backends = [
-        ByIdFilterBackend,
-        DjangoFilterBackend,
-        OrderingFilter,
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+        AttributeFilter,
     ]
     queryset = ComplexTransactionImportScheme.objects
 
