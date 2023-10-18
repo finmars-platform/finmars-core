@@ -27,7 +27,8 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
         try:
             instance = SimpleImportProcess(
-                task_id=task_id, procedure_instance_id=procedure_instance_id
+                task_id=task_id,
+                procedure_instance_id=procedure_instance_id,
             )
 
             celery_task.update_progress(
@@ -161,22 +162,20 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         )
 
     except Exception as e:
-        _l.info(f"data_csv_file_import_by_procedure_json error {repr(e)}")
+        _l.info(
+            f"data_csv_file_import_by_procedure_json "
+            f"scheme {procedure_instance.procedure.scheme_name} not found "
+            f"error {repr(e)}"
+        )
 
         text = (
             f"Data File Procedure {procedure_instance.procedure.user_code}. "
             f"Can't import json, Error {repr(e)}"
         )
-
         send_system_message(
             master_user=procedure_instance.master_user,
             performed_by="System",
             description=text,
-        )
-
-        _l.debug(
-            f"data_csv_file_import_by_procedure_json "
-            f"scheme {procedure_instance.procedure.scheme_name} not found"
         )
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
