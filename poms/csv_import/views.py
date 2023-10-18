@@ -58,18 +58,14 @@ class SchemeViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
 
 class CsvDataImportViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = simple_import
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # PomsFunctionPermission
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -98,15 +94,12 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             type="simple_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
-
-        # celery_task.save()
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Simple Import (scheme %s)"
-            % (request.user.member.username, instance.scheme.name),
+            description=f"Member {request.user.member.username} started Simple Import (scheme {instance.scheme.name})",
         )
 
         simple_import.apply_async(
@@ -152,13 +145,15 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             type="simple_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Simple Import (scheme %s)"
-            % (request.user.member.username, options_object["scheme_user_code"]),
+            description=(
+                f'Member {request.user.member.username} started Simple Import '
+                f'(scheme {options_object["scheme_user_code"]})'
+            ),
         )
 
         simple_import.apply_async(
