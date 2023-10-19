@@ -702,7 +702,6 @@ class SimpleImportProcess(object):
             )
 
         self.member = self.task.member
-
         self.master_user = self.task.master_user
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
@@ -716,7 +715,10 @@ class SimpleImportProcess(object):
                 user_code=self.task.options_object["scheme_user_code"]
             )
         else:
-            raise Exception("Import Scheme not found")
+            raise RuntimeError(
+                f"Import Scheme {self.task.options_object['scheme_user_code']} "
+                f"not found"
+            )
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
@@ -740,6 +742,7 @@ class SimpleImportProcess(object):
         self.conversion_items = []  # items with applied converions
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
+        self.attribute_types = []
 
         self.context = {
             "master_user": self.master_user,
@@ -763,30 +766,33 @@ class SimpleImportProcess(object):
             section="import",
             type="success",
             title=import_system_message_title,
-            description=f"{self.member.username} started import with scheme {self.scheme.name}",
+            description=(
+                f"{self.member.username} started import "
+                f"with scheme {self.scheme.name}"
+            ),
         )
 
     def generate_file_report(self):
         _l.info(
-            "SimpleImportProcess.generate_file_report error_handler %s"
-            % self.scheme.error_handler
+            f"SimpleImportProcess.generate_file_report "
+            f"error_handler {self.scheme.error_handler}"
         )
         _l.info(
-            "SimpleImportProcess.generate_file_report missing_data_handler %s"
-            % self.scheme.missing_data_handler
+            f"SimpleImportProcess.generate_file_report missing_data_handler "
+            f"{self.scheme.missing_data_handler}"
         )
 
         result = [
             "Type, Simple Import",
-            "Scheme, " + self.scheme.user_code,
-            "Error handle, " + self.scheme.error_handler,
+            f"Scheme, {self.scheme.user_code}",
+            f"Error handle, {self.scheme.error_handler}",
         ]
 
         if self.result.file_name:
-            result.append("Filename, " + self.result.file_name)
+            result.append(f"Filename, {self.result.file_name}")
 
         result.append(
-            "Import Rules - if object is not found, " + self.scheme.missing_data_handler
+            f"Import Rules - if object is not found {self.scheme.missing_data_handler}"
         )
 
         success_rows_count = 0
@@ -797,24 +803,23 @@ class SimpleImportProcess(object):
             if result_item.status == "error":
                 error_rows_count += 1
 
-            if result_item.status == "success":
+            elif result_item.status == "success":
                 success_rows_count += 1
 
             if "skip" in result_item.status:
                 skip_rows_count += 1
 
-        result.append("Rows total, %s" % self.result.total_rows)
-        result.append("Rows success import, %s" % success_rows_count)
-        result.append("Rows fail import, %s" % error_rows_count)
-        result.append("Rows skipped import, %s" % skip_rows_count)
-
+        result.extend(
+            (
+                f"Rows total, {self.result.total_rows}",
+                f"Rows success import, {success_rows_count}",
+                f"Rows fail import, {error_rows_count}",
+                f"Rows skipped import, {skip_rows_count}",
+            )
+        )
         columns = ["Row Number", "Status", "Message"]
 
-        column_row_list = []
-
-        for item in columns:
-            column_row_list.append('"' + str(item) + '"')
-
+        column_row_list = [f'"{str(item)}"' for item in columns]
         column_row = ",".join(column_row_list)
 
         result.append(column_row)
@@ -832,11 +837,7 @@ class SimpleImportProcess(object):
             else:
                 content.append("")
 
-            content_row_list = []
-
-            for item in content:
-                content_row_list.append('"' + str(item) + '"')
-
+            content_row_list = [f'"{str(item)}"' for item in content]
             content_row = ",".join(content_row_list)
 
             result.append(content_row)
@@ -845,7 +846,7 @@ class SimpleImportProcess(object):
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-        file_name = "file_report_%s_task_%s.csv" % (current_date_time, self.task.id)
+        file_name = f"file_report_{current_date_time}_task_{self.task.id}.csv"
 
         file_report = FileReport()
 
@@ -855,9 +856,8 @@ class SimpleImportProcess(object):
             file_name=file_name, text=result, master_user=self.master_user
         )
         file_report.master_user = self.master_user
-        file_report.name = "Simple Import %s (Task %s).csv" % (
-            current_date_time,
-            self.task.id,
+        file_report.name = (
+            f"Simple Import {current_date_time} (Task {self.task.id}).csv"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
@@ -866,8 +866,8 @@ class SimpleImportProcess(object):
 
         file_report.save()
 
-        _l.info("SimpleImportProcess.file_report %s" % file_report)
-        _l.info("SimpleImportProcess.file_report %s" % file_report.file_url)
+        _l.info(f"SimpleImportProcess.file_report {file_report}")
+        _l.info(f"SimpleImportProcess.file_report {file_report.file_url}")
 
         return file_report
 
@@ -883,7 +883,7 @@ class SimpleImportProcess(object):
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = "file_report_%s_task_%s.json" % (current_date_time, self.task.id)
+        file_name = f"file_report_{current_date_time}_task_{self.task.id}.json"
 
         file_report = FileReport()
 
@@ -895,9 +895,8 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
-        file_report.name = "Simple Import %s (Task %s).json" % (
-            current_date_time,
-            self.task.id,
+        file_report.name = (
+            f"Simple Import {current_date_time} (Task {self.task.id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
@@ -906,8 +905,7 @@ class SimpleImportProcess(object):
 
         file_report.save()
 
-        _l.info("SimpleImportProcess.json_report %s" % file_report)
-        _l.info("SimpleImportProcess.json_report %s" % file_report.file_url)
+        _l.info(f"SimpleImportProcess.json_report {file_report} {file_report.file_url}")
 
         return file_report
 
@@ -920,7 +918,7 @@ class SimpleImportProcess(object):
             )
 
         except Exception as e:
-            _l.error("Get attribute types excpetion %s" % e)
+            _l.error(f"Get attribute types excpetion {repr(e)}")
 
         self.attribute_types = attribute_types
 
@@ -935,8 +933,7 @@ class SimpleImportProcess(object):
             self.process_type = ProcessType.CSV
 
         _l.info(
-            "SimpleImportProcess.Task %s. process_type %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. process_type {self.process_type}"
         )
 
     def get_verbose_result(self):
@@ -950,16 +947,16 @@ class SimpleImportProcess(object):
                 imported_count += 1
 
         result = (
-            "Processed %s rows and successfully imported %s items. Error rows %s"
-            % (len(self.items), imported_count, error_count)
+            f"Processed {len(self.items)} rows and successfully imported "
+            f"{imported_count} items. Error rows {error_count}"
         )
 
         return result
 
     def fill_with_file_items(self):
         _l.info(
-            "SimpleImportProcess.Task %s. fill_with_raw_items INIT %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+            f"INIT {self.process_type}"
         )
 
         try:
@@ -972,14 +969,14 @@ class SimpleImportProcess(object):
 
                     self.file_items = items
 
-                except Exception as e:
+                except Exception:
                     _l.info("Trying to get json items from file")
 
                     with storage.open(self.file_path, "rb") as f:
                         self.file_items = json.loads(f.read())
 
             if self.process_type == ProcessType.CSV:
-                _l.info("ProcessType.CSV self.file_path %s" % self.file_path)
+                _l.info(f"ProcessType.CSV self.file_path {self.file_path}")
 
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
@@ -1000,110 +997,92 @@ class SimpleImportProcess(object):
                                 skipinitialspace=True,
                             )
 
-                            column_row = None
-
-                            for row_index, row in enumerate(reader):
-                                if row_index == 0:
-                                    column_row = row
-
-                                else:
-                                    file_item = {}
-
-                                    for column_index, value in enumerate(row):
-                                        key = column_row[column_index]
-                                        file_item[key] = value
-
-                                    self.file_items.append(file_item)
-
-                            self.result.total_rows = len(self.file_items)
-
+                            self._extracted_from_fill_with_file_items_45(reader)
             if self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
-                        for chunk in f.chunks():
-                            tmpf.write(chunk)
-                        tmpf.flush()
-
-                        os.link(tmpf.name, tmpf.name + ".xlsx")
-
-                        _l.info("self.file_path %s" % self.file_path)
-                        _l.info("tmpf.name %s" % tmpf.name)
-
-                        wb = load_workbook(filename=tmpf.name + ".xlsx")
-
-                        if (
-                            self.scheme.spreadsheet_active_tab_name
-                            and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
-                        ):
-                            ws = wb[self.scheme.spreadsheet_active_tab_name]
-                        else:
-                            ws = wb.active
-
-                        reader = []
-
-                        if self.scheme.spreadsheet_start_cell == "A1":
-                            for r in ws.rows:
-                                reader.append([cell.value for cell in r])
-
-                        else:
-                            start_cell_row_number = int(
-                                re.search(r"\d+", self.scheme.spreadsheet_start_cell)[0]
-                            )
-                            start_cell_letter = (
-                                self.scheme.spreadsheet_start_cell.split(
-                                    str(start_cell_row_number)
-                                )[0]
-                            )
-
-                            start_cell_column_number = column_index_from_string(
-                                start_cell_letter
-                            )
-
-                            row_number = 1
-
-                            for r in ws.rows:
-                                row_values = []
-
-                                if row_number >= start_cell_row_number:
-                                    for cell in r:
-                                        if cell.column >= start_cell_column_number:
-                                            row_values.append(cell.value)
-
-                                    reader.append(row_values)
-
-                                row_number = row_number + 1
-
-                        column_row = None
-
-                        for row_index, row in enumerate(reader):
-                            if row_index == 0:
-                                column_row = row
-
-                            else:
-                                file_item = {}
-
-                                for column_index, value in enumerate(row):
-                                    key = column_row[column_index]
-                                    file_item[key] = value
-
-                                self.file_items.append(file_item)
-
-                        self.result.total_rows = len(self.file_items)
-
+                        self._extracted_from_fill_with_file_items_65(f, tmpf)
             _l.info(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s DONE items %s"
-                % (self.task, self.process_type, len(self.raw_items))
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} DONE items {len(self.raw_items)}"
             )
 
         except Exception as e:
             _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Exception %s"
-                % (self.task, self.process_type, e)
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} Exception {e}"
             )
             _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Traceback %s"
-                % (self.task, self.process_type, traceback.format_exc())
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} Traceback {traceback.format_exc()}"
             )
+
+    # TODO Rename this here and in `fill_with_file_items`
+    def _extracted_from_fill_with_file_items_65(self, f, tmpf):
+        for chunk in f.chunks():
+            tmpf.write(chunk)
+        tmpf.flush()
+
+        os.link(tmpf.name, f"{tmpf.name}.xlsx")
+
+        _l.info(f"self.file_path {self.file_path}")
+        _l.info(f"tmpf.name {tmpf.name}")
+
+        wb = load_workbook(filename=f"{tmpf.name}.xlsx")
+
+        ws = (
+            wb[self.scheme.spreadsheet_active_tab_name]
+            if (
+                self.scheme.spreadsheet_active_tab_name
+                and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
+            )
+            else wb.active
+        )
+        reader = []
+
+        if self.scheme.spreadsheet_start_cell == "A1":
+            reader.extend([cell.value for cell in r] for r in ws.rows)
+        else:
+            start_cell_row_number = int(
+                re.search(r"\d+", self.scheme.spreadsheet_start_cell)[0]
+            )
+            start_cell_letter = self.scheme.spreadsheet_start_cell.split(
+                str(start_cell_row_number)
+            )[0]
+
+            start_cell_column_number = column_index_from_string(start_cell_letter)
+
+            row_number = 1
+
+            for r in ws.rows:
+                if row_number >= start_cell_row_number:
+                    row_values = [
+                        cell.value
+                        for cell in r
+                        if cell.column >= start_cell_column_number
+                    ]
+                    reader.append(row_values)
+
+                row_number = row_number + 1
+
+        self._extracted_from_fill_with_file_items_45(reader)
+
+    # TODO Rename this here and in `fill_with_file_items`
+    def _extracted_from_fill_with_file_items_45(self, reader):
+        column_row = None
+
+        for row_index, row in enumerate(reader):
+            if row_index == 0:
+                column_row = row
+
+            else:
+                file_item = {
+                    column_row[column_index]: value
+                    for column_index, value in enumerate(row)
+                }
+                self.file_items.append(file_item)
+
+        self.result.total_rows = len(self.file_items)
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
@@ -1121,16 +1100,16 @@ class SimpleImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error("Could not execute preoprocess expression. Error %s" % e)
+                _l.error(f"Could not execute preoprocess expression. Error {e}")
 
-        _l.info("whole_file_preprocess.file_items %s" % len(self.file_items))
+        _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
         return self.file_items
 
     def fill_with_raw_items(self):
         _l.info(
-            "SimpleImportProcess.Task %s. fill_with_raw_items INIT %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+            f"INIT {self.process_type}"
         )
 
         try:
@@ -1140,23 +1119,19 @@ class SimpleImportProcess(object):
                 for scheme_input in self.scheme.csv_fields.all():
                     try:
                         item[scheme_input.name] = file_item[scheme_input.column_name]
-                    except Exception as e:
+                    except Exception:
                         item[scheme_input.name] = None
 
                 self.raw_items.append(item)
             _l.info(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s DONE items %s"
-                % (self.task, self.process_type, len(self.raw_items))
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} DONE items {len(self.raw_items)}"
             )
 
         except Exception as e:
             _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Exception %s"
-                % (self.task, self.process_type, e)
-            )
-            _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Traceback %s"
-                % (self.task, self.process_type, traceback.format_exc())
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type}  error {e} trace {traceback.format_exc()}"
             )
 
     def apply_conversion_to_raw_items(self):
@@ -1191,9 +1166,9 @@ class SimpleImportProcess(object):
     # so it means, in first iterations we will got errors in that inputs
     def recursive_preprocess(self, deep=1, current_level=0):
         if len(self.preprocessed_items) == 0:
-            row_number = 1
-
-            for conversion_item in self.conversion_items:
+            for row_number, conversion_item in enumerate(
+                self.conversion_items, start=1
+            ):
                 preprocess_item = SimpleImportProcessPreprocessItem()
                 preprocess_item.file_inputs = conversion_item.file_inputs
                 preprocess_item.raw_inputs = conversion_item.raw_inputs
@@ -1202,8 +1177,6 @@ class SimpleImportProcess(object):
                 preprocess_item.inputs = {}
 
                 self.preprocessed_items.append(preprocess_item)
-
-                row_number += 1
 
         for preprocess_item in self.preprocessed_items:
             # CREATE SCHEME INPUTS
@@ -1685,7 +1658,6 @@ class SimpleImportProcess(object):
                         f" final_inputs={item.final_inputs} error {e} traceback "
                         f"{traceback.format_exc()}"
                     )
-
 
             else:
                 item.status = "error"
