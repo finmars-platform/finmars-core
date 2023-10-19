@@ -327,7 +327,6 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "index_linked_bonds",
             "short_term_notes",
         } and len(instrument_object["event_schedules"]):
-
             # FIXME coupon_event is not used !
             # coupon_event = instrument_object["event_schedules"][0]
             #
@@ -1503,7 +1502,9 @@ class SimpleImportProcess(object):
                     if not item.error_message:
                         item.error_message = ""
 
-                    item.error_message = f"{item.error_message}Post script error: {repr(e)}, "
+                    item.error_message = (
+                        f"{item.error_message}Post script error: {repr(e)}, "
+                    )
 
             self.handle_successful_item_import(item, serializer)
         except Exception as e:
@@ -1675,7 +1676,7 @@ class SimpleImportProcess(object):
                 f"Exception {e} Traceback {traceback.format_exc()}"
             )
 
-            self.result.error_message = f"General Import Error. Exception {e}"
+            self.result.error_message = f"General Import Error. Exception {repr(e)}"
 
             if (
                 self.execution_context
@@ -1699,15 +1700,12 @@ class SimpleImportProcess(object):
             self.task.save()
 
             self.result.reports = []
-
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
-            error_rows_count = 0
-            for result_item in self.result.items:
-                if result_item.status == "error":
-                    error_rows_count = error_rows_count + 1
-
+            error_rows_count = sum(
+                result_item.status == "error" for result_item in self.result.items
+            )
             if error_rows_count != 0:
                 send_system_message(
                     master_user=self.master_user,
@@ -1733,7 +1731,6 @@ class SimpleImportProcess(object):
             ):
                 system_message_title = "New itmes (import from broker)"
                 system_message_performed_by = "System"
-
                 import_system_message_title = "Simple import from broker (finished)"
 
             send_system_message(
@@ -1771,9 +1768,8 @@ class SimpleImportProcess(object):
 
         self.task.add_attachment(self.result.reports[0].id)
         self.task.add_attachment(self.result.reports[1].id)
-
         self.task.verbose_result = self.get_verbose_result()
-
         self.task.status = CeleryTask.STATUS_DONE
         self.task.mark_task_as_finished()
+
         self.task.save()
