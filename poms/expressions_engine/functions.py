@@ -2720,13 +2720,12 @@ _set_instrument_user_attribute.evaluator = True
 
 
 def _get_instrument_user_attribute(evaluator, instrument, user_code):
+    from poms.obj_attrs.models import GenericClassifier
+
     try:
         instrument = _safe_get_instrument(evaluator, instrument)
 
-        context = evaluator.context
-
         result = None
-
         for attribute in instrument.attributes.all():
 
             if attribute.attribute_type.user_code == user_code:
@@ -2734,22 +2733,21 @@ def _get_instrument_user_attribute(evaluator, instrument, user_code):
                 if attribute.attribute_type.value_type == 10:
                     result = attribute.value_string
 
-                if attribute.attribute_type.value_type == 20:
+                elif attribute.attribute_type.value_type == 20:
                     result = attribute.value_float
 
-                if attribute.attribute_type.value_type == 30:
+                elif attribute.attribute_type.value_type == 30:
                     try:
-                        from poms.obj_attrs.models import GenericClassifier
                         classifier = GenericClassifier.objects.get(
-                            attribute_type=attribute.attribute_type, name=value
+                            attribute_type=attribute.attribute_type,
+                            # name=value,  # FIXME undefined value!
                         )
-
                         result = classifier.name
 
                     except Exception:
                         result = None
 
-                if attribute.attribute_type.value_type == 40:
+                elif attribute.attribute_type.value_type == 40:
                     result = attribute.value_date
 
         return result

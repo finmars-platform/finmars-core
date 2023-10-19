@@ -1069,8 +1069,8 @@ class SimpleImportProcess(object):
 
         try:
             for file_item in self.file_items:
-                item = {}
 
+                item = {}
                 for scheme_input in self.scheme.csv_fields.all():
                     try:
                         item[scheme_input.name] = file_item[scheme_input.column_name]
@@ -1078,6 +1078,7 @@ class SimpleImportProcess(object):
                         item[scheme_input.name] = None
 
                 self.raw_items.append(item)
+
             _l.info(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type} DONE items {len(self.raw_items)}"
@@ -1103,18 +1104,17 @@ class SimpleImportProcess(object):
             for scheme_input in self.scheme.csv_fields.all():
                 try:
                     names = raw_item
-
                     conversion_item.conversion_inputs[
                         scheme_input.name
                     ] = formula.safe_eval(
                         scheme_input.name_expr, names=names, context=self.context
                     )
-                except Exception as e:
+                except Exception:
                     conversion_item.conversion_inputs[scheme_input.name] = None
 
             self.conversion_items.append(conversion_item)
 
-            row_number = row_number + 1
+            row_number += 1
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
@@ -1134,8 +1134,8 @@ class SimpleImportProcess(object):
                 self.preprocessed_items.append(preprocess_item)
 
         for preprocess_item in self.preprocessed_items:
-            # CREATE SCHEME INPUTS
 
+            # CREATE SCHEME INPUTS
             for scheme_input in self.scheme.csv_fields.all():
                 key_column_name = scheme_input.column_name
 
@@ -1156,7 +1156,6 @@ class SimpleImportProcess(object):
                         )
 
             # CREATE CALCULATED INPUTS
-
             for scheme_calculated_input in self.scheme.calculated_inputs.all():
                 try:
                     names = preprocess_item.inputs
