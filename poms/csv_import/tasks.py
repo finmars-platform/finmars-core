@@ -13,7 +13,6 @@ from poms.system_messages.handlers import send_system_message
 
 _l = getLogger("poms.csv_import")
 
-
 storage = get_storage()
 
 
@@ -25,93 +24,97 @@ def simple_import(self, task_id, procedure_instance_id=None):
         celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
+    except Exception as e:
+        _l.error(
+            f"simple_import celery_task {task_id} error {repr(e)} "
+            f"traceback {traceback.format_exc()}"
+        )
+        raise e
 
-        try:
-            instance = SimpleImportProcess(
-                task_id=task_id, procedure_instance_id=procedure_instance_id
-            )
+    try:
+        instance = SimpleImportProcess(
+            task_id=task_id,
+            procedure_instance_id=procedure_instance_id,
+        )
 
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Going to parse raw items",
-                }
-            )
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Going to parse raw items",
+            }
+        )
 
-            instance.fill_with_file_items()
+        instance.fill_with_file_items()
 
-            if instance.scheme.data_preprocess_expression:
-                try:
-                    _l.info(
-                        f"Going to execute {instance.scheme.data_preprocess_expression}"
-                    )
+        if instance.scheme.data_preprocess_expression:
+            try:
+                _l.info(
+                    f"Going to execute {instance.scheme.data_preprocess_expression}"
+                )
 
-                    new_file_items = instance.whole_file_preprocess()
-                    instance.file_items = new_file_items
+                new_file_items = instance.whole_file_preprocess()
+                instance.file_items = new_file_items
 
-                except Exception as e:
-                    _l.error("transaction_import.preprocess errors %s" % e)
-                    raise Exception("Could not preprocess raw items %s" % e) from e
+            except Exception as e:
+                err_msg = f"transaction_import.preprocess errors {repr(e)}"
+                _l.error(err_msg)
+                raise RuntimeError(err_msg) from e
 
-            instance.fill_with_raw_items()
+        instance.fill_with_raw_items()
 
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Parse raw items",
-                }
-            )
-            instance.apply_conversion_to_raw_items()
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Apply Conversion",
-                }
-            )
-            instance.preprocess()
-            celery_task.update_progress(
-                {
-                    "current": 0,
-                    "total": len(instance.raw_items),
-                    "percent": 0,
-                    "description": "Preprocess items",
-                }
-            )
-            instance.process()
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Parse raw items",
+            }
+        )
 
-            return json.dumps(instance.import_result, default=str)
+        instance.apply_conversion_to_raw_items()
 
-        except Exception as e:
-            _l.error("simple_import error %s" % e)
-            _l.error("simple_import traceback %s" % traceback.format_exc())
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Apply Conversion",
+            }
+        )
 
-            raise Exception(e)
+        instance.preprocess()
 
-            # celery_task.error_message = str(e)
-            # celery_task.status = CeleryTask.STATUS_ERROR
-            # celery_task.save()
-            #
+        celery_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Preprocess items",
+            }
+        )
+        instance.process()
+
+        return json.dumps(instance.import_result, default=str)
 
     except Exception as e:
-        _l.error("simple_import general error %s" % e)
-        _l.error("simple_import general traceback %s" % traceback.format_exc())
+        _l.error(f"simple_import error {repr(e)} trace {traceback.format_exc()}")
         raise e
+
+        # celery_task.error_message = str(e)
+        # celery_task.status = CeleryTask.STATUS_ERROR
+        # celery_task.save()
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
 def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-    _l.info(
-        "data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s"
-        % (procedure_instance_id, celery_task_id)
-    )
-
     from poms.procedures.models import RequestDataFileProcedureInstance
+
+    _l.info(
+        f"data_csv_file_import_by_procedure_json  procedure_instance_id "
+        f"{procedure_instance_id} celery_task_id {celery_task_id}"
+    )
 
     procedure_instance = RequestDataFileProcedureInstance.objects.get(
         id=procedure_instance_id
@@ -121,12 +124,12 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
     celery_task.celery_task_id = self.request.id
     celery_task.save()
 
-    try:
-        _l.info(
-            "data_csv_file_import_by_procedure_json looking for scheme %s "
-            % procedure_instance.procedure.scheme_user_code
-        )
+    _l.info(
+        f"data_csv_file_import_by_procedure_json looking for "
+        f"scheme {procedure_instance.procedure.scheme_user_code} "
+    )
 
+    try:
         scheme = CsvImportScheme.objects.get(
             master_user=procedure_instance.master_user,
             user_code=procedure_instance.procedure.scheme_user_code,
@@ -143,8 +146,9 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         celery_task.save()
 
         text = (
-            "Data File Procedure %s. Procedure Instance %s. File is received. Importing JSON"
-            % (procedure_instance.id, procedure_instance.procedure.user_code)
+            f"Data File Procedure {procedure_instance.id}. "
+            f"Procedure Instance {procedure_instance.procedure.user_code}. "
+            f"File is received. Importing JSON"
         )
 
         send_system_message(
@@ -164,22 +168,20 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         )
 
     except Exception as e:
-        _l.info("data_csv_file_import_by_procedure_json e %s" % e)
+        _l.info(
+            f"data_csv_file_import_by_procedure_json "
+            f"scheme {procedure_instance.procedure.scheme_name} not found "
+            f"error {repr(e)}"
+        )
 
         text = (
             f"Data File Procedure {procedure_instance.procedure.user_code}. "
-            f"Can't import json, Error {e}"
+            f"Can't import json, Error {repr(e)}"
         )
-
         send_system_message(
             master_user=procedure_instance.master_user,
             performed_by="System",
             description=text,
-        )
-
-        _l.debug(
-            "data_csv_file_import_by_procedure_json scheme %s not found"
-            % procedure_instance.procedure.scheme_name
         )
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
