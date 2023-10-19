@@ -327,12 +327,14 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "index_linked_bonds",
             "short_term_notes",
         } and len(instrument_object["event_schedules"]):
-            coupon_event = instrument_object["event_schedules"][0]
 
-            if "first_coupon_date" in data_object:
-                coupon_event["effective_date"] = data_object["first_coupon_date"]
-
-            coupon_event["final_date"] = maturity
+            # FIXME coupon_event is not used !
+            # coupon_event = instrument_object["event_schedules"][0]
+            #
+            # if "first_coupon_date" in data_object:
+            #     coupon_event["effective_date"] = data_object["first_coupon_date"]
+            #
+            # coupon_event["final_date"] = maturity
 
             if len(instrument_object["event_schedules"]) == 2:
                 undate_events_for_instrument(instrument_object, 1, maturity)
@@ -425,10 +427,7 @@ def handler_instrument_object(
         object_data["maturity_date"] = source_data["maturity"]
 
     elif "maturity_date" in source_data and source_data["maturity_date"] != "":
-        if (
-            source_data["maturity_date"] == "null"
-            or source_data["maturity_date"] == "9999-00-00"
-        ):
+        if source_data["maturity_date"] in ("null", "9999-00-00"):
             object_data["maturity_date"] = None
         else:
             object_data["maturity_date"] = source_data["maturity_date"]
@@ -468,11 +467,9 @@ def handler_instrument_object(
     except Exception as e:
         _l.error(f"{func} Could not set sector {repr(e)}")
 
-    _tmp_attributes_dict = {}
-
-    for item in object_data["attributes"]:
-        _tmp_attributes_dict[item["attribute_type"]] = item
-
+    _tmp_attributes_dict = {
+        item["attribute_type"]: item for item in object_data["attributes"]
+    }
     try:
         if "attributes" in source_data and isinstance(source_data["attributes"], dict):
             for attribute_type in attribute_types:
@@ -515,7 +512,7 @@ def handler_instrument_object(
 
     object_data["attributes"] = []
 
-    for key, value in _tmp_attributes_dict.items():
+    for value in _tmp_attributes_dict.values():
         object_data["attributes"].append(value)
 
     object_data["master_user"] = master_user.id
@@ -523,19 +520,23 @@ def handler_instrument_object(
 
     set_events_for_instrument(object_data, source_data, instrument_type)
 
-    if (
-        "accrual_calculation_schedules" in source_data
-        and source_data["accrual_calculation_schedules"]
-    ) and (
-        len(source_data["accrual_calculation_schedules"])
-        and len(object_data["event_schedules"])
-    ):
-        coupon_event = object_data["event_schedules"][0]
-
-        if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-            coupon_event["effective_date"] = source_data[
-                "accrual_calculation_schedules"
-            ][0]["first_payment_date"]
+    # FIXME coupon_event is not used !
+    # if (
+    #     (
+    #         "accrual_calculation_schedules" in source_data
+    #         and source_data["accrual_calculation_schedules"]
+    #     )
+    #     and (
+    #         len(source_data["accrual_calculation_schedules"])
+    #         and len(object_data["event_schedules"])
+    #     )
+    #     and "first_payment_date" in source_data["accrual_calculation_schedules"][0]
+    # ):
+    #     coupon_event = object_data["event_schedules"][0]
+    #
+    #     coupon_event["effective_date"] = source_data["accrual_calculation_schedules"][
+    #         0
+    #     ]["first_payment_date"]
 
     if "accrual_calculation_schedules" in source_data:
         if source_data["accrual_calculation_schedules"] and len(
@@ -559,54 +560,10 @@ def handler_instrument_object(
                             "accrual_calculation_model"
                         ] = AccrualCalculationModel.DAY_COUNT_NONE
 
-                if (
-                    "accrual_start_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["accrual_start_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["accrual_start_date"]
-
-                if (
-                    "first_payment_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["first_payment_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["first_payment_date"]
-
+                set_accrual_dates_and_size(source_data, accrual)
                 try:
-                    accrual["accrual_size"] = float(
-                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
-                    )
+                    set_periodicity_period(source_data, accrual)
                 except Exception:
-                    accrual["accrual_size"] = 0
-
-                try:
-                    accrual["periodicity_n"] = int(
-                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
-                    )
-
-                    if accrual["periodicity_n"] == 1:
-                        accrual["periodicity"] = Periodicity.ANNUALLY
-
-                    if accrual["periodicity_n"] == 2:
-                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
-
-                    if accrual["periodicity_n"] == 4:
-                        accrual["periodicity"] = Periodicity.QUARTERLY
-
-                    if accrual["periodicity_n"] == 6:
-                        accrual["periodicity"] = Periodicity.BIMONTHLY
-
-                    if accrual["periodicity_n"] == 12:
-                        accrual["periodicity"] = Periodicity.MONTHLY
-
-                    _l.info("periodicity %s" % accrual["periodicity"])
-
-                    accrual["periodicity_n"] = 0
-
-                except Exception as e:
                     accrual["periodicity_n"] = 0
 
             else:
@@ -617,51 +574,9 @@ def handler_instrument_object(
                     "periodicity": Periodicity.ANNUALLY,
                 }
 
-                if (
-                    "accrual_start_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["accrual_start_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["accrual_start_date"]
-
-                if (
-                    "first_payment_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["first_payment_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["first_payment_date"]
-
+                set_accrual_dates_and_size(source_data, accrual)
                 try:
-                    accrual["accrual_size"] = float(
-                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
-                    )
-                except Exception:
-                    accrual["accrual_size"] = 0
-
-                try:
-                    accrual["periodicity_n"] = int(
-                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
-                    )
-
-                    if accrual["periodicity_n"] == 1:
-                        accrual["periodicity"] = Periodicity.ANNUALLY
-
-                    elif accrual["periodicity_n"] == 2:
-                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
-
-                    elif accrual["periodicity_n"] == 4:
-                        accrual["periodicity"] = Periodicity.QUARTERLY
-
-                    elif accrual["periodicity_n"] == 6:
-                        accrual["periodicity"] = Periodicity.BIMONTHLY
-
-                    elif accrual["periodicity_n"] == 12:
-                        accrual["periodicity"] = Periodicity.MONTHLY
-
-                    _l.info("periodicity %s" % accrual["periodicity"])
-
+                    set_periodicity_period(source_data, accrual)
                 except Exception:
                     accrual["periodicity_n"] = 0
 
@@ -678,6 +593,52 @@ def handler_instrument_object(
     _l.info(f"{func} instrument={source_data['user_code']} object_data={object_data}")
 
     return object_data
+
+
+def set_periodicity_period(source_data, accrual):
+    accrual["periodicity_n"] = int(
+        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
+    )
+
+    if accrual["periodicity_n"] == 1:
+        accrual["periodicity"] = Periodicity.ANNUALLY
+
+    elif accrual["periodicity_n"] == 2:
+        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
+
+    elif accrual["periodicity_n"] == 4:
+        accrual["periodicity"] = Periodicity.QUARTERLY
+
+    elif accrual["periodicity_n"] == 6:
+        accrual["periodicity"] = Periodicity.BIMONTHLY
+
+    elif accrual["periodicity_n"] == 12:
+        accrual["periodicity"] = Periodicity.MONTHLY
+
+    else:
+        _l.error(f'invalid/unknown periodicity_n={accrual["periodicity_n"]}')
+        accrual["periodicity"] = 0
+
+    _l.info(f'periodicity {accrual["periodicity"]}')
+
+
+def set_accrual_dates_and_size(source_data, accrual):
+    if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
+        accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
+            "accrual_start_date"
+        ]
+
+    if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
+        accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
+            "first_payment_date"
+        ]
+
+    try:
+        accrual["accrual_size"] = float(
+            source_data["accrual_calculation_schedules"][0]["accrual_size"]
+        )
+    except Exception:
+        accrual["accrual_size"] = 0
 
 
 class SimpleImportProcess(object):
@@ -743,6 +704,7 @@ class SimpleImportProcess(object):
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
         self.attribute_types = []
+        self.import_result = None
 
         self.context = {
             "master_user": self.master_user,
@@ -1349,16 +1311,17 @@ class SimpleImportProcess(object):
                                 ).id
                             except Exception as e:
                                 _l.error(
-                                    "fill_result_item_with_attributes classifier error - item %s e %s"
-                                    % (item, e)
+                                    f"fill_result_item_with_attributes classifier error"
+                                    f" - item {item} e {e}"
                                 )
 
                                 if not item.error_message:
                                     item.error_message = ""
 
-                                item.error_message = (
-                                    item.error_message + "%s: %s, "
-                                ) % (entity_field.attribute_user_code, str(e))
+                                item.error_message = f"{item.error_message}%s: %s, " % (
+                                    entity_field.attribute_user_code,
+                                    str(e),
+                                )
 
                                 attribute["classifier"] = None
 
@@ -1406,24 +1369,23 @@ class SimpleImportProcess(object):
         for entity_field in self.scheme.entity_fields.all():
             key = entity_field.system_property_key
 
-            if key in relation_fields_map:
-                if isinstance(result_item[key], str):
-                    try:
-                        result_item[key] = (
-                            relation_fields_map[key]
-                            .objects.get(user_code=result_item[key])
-                            .id
-                        )
-                    except Exception as e:
-                        result_item[key] = None
+            if key in relation_fields_map and isinstance(result_item[key], str):
+                try:
+                    result_item[key] = (
+                        relation_fields_map[key]
+                        .objects.get(user_code=result_item[key])
+                        .id
+                    )
+                except Exception as e:
+                    result_item[key] = None
 
-                        if not item.error_message:
-                            item.error_message = ""
+                    if not item.error_message:
+                        item.error_message = ""
 
-                        item.error_message = (item.error_message + "%s: %s, ") % (
-                            key,
-                            str(e),
-                        )
+                    item.error_message = (item.error_message + " %s: %s, ") % (
+                        key,
+                        str(e),
+                    )
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1431,7 +1393,7 @@ class SimpleImportProcess(object):
 
     def remove_nullable_attributes(self, result_item):
         for key, value in list(result_item.items()):
-            if value == None:
+            if value is None:
                 result_item.pop(key)
 
         return result_item
@@ -1453,13 +1415,13 @@ class SimpleImportProcess(object):
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error("get_final_inputs.e %s" % e)
+                    _l.error(f"get_final_inputs.e {e}")
 
                     if not item.error_message:
                         item.error_message = ""
 
                     if entity_field.system_property_key:
-                        item.error_message = (item.error_message + "%s: %s, ") % (
+                        item.error_message = f"{item.error_message}%s: %s, " % (
                             entity_field.system_property_key,
                             str(e),
                         )
@@ -1467,25 +1429,24 @@ class SimpleImportProcess(object):
                         result[entity_field.system_property_key] = None
 
                     elif entity_field.attribute_user_code:
-                        item.error_message = (item.error_message + "%s: %s, ") % (
+                        item.error_message = f"{item.error_message}%s: %s, " % (
                             entity_field.attribute_user_code,
                             str(e),
                         )
 
                         result[entity_field.attribute_user_code] = None
 
-            else:
-                if entity_field.system_property_key:
-                    result[entity_field.system_property_key] = None
+            elif entity_field.system_property_key:
+                result[entity_field.system_property_key] = None
 
-                elif entity_field.attribute_user_code:
-                    result[entity_field.attribute_user_code] = None
+            elif entity_field.attribute_user_code:
+                result[entity_field.attribute_user_code] = None
 
         return result
 
     def import_item(self, item):
         content_type_key = (
-            self.scheme.content_type.app_label + "." + self.scheme.content_type.model
+            f"{self.scheme.content_type.app_label}.{self.scheme.content_type.model}"
         )
 
         serializer_class = get_serializer(content_type_key)
@@ -1542,19 +1503,9 @@ class SimpleImportProcess(object):
                     if not item.error_message:
                         item.error_message = ""
 
-                    item.error_message = (
-                        item.error_message + "Post script error: %s, "
-                    ) % str(e)
+                    item.error_message = f"{item.error_message}Post script error: {repr(e)}, "
 
-            item.status = "success"
-            item.message = "Item Imported %s" % serializer.instance
-
-            trn = SimpleImportImportedItem(
-                id=serializer.instance.id, user_code=str(serializer.instance)
-            )
-
-            item.imported_items.append(trn)
-
+            self.handle_successful_item_import(item, serializer)
         except Exception as e:
             # _l.error('import_item e %s' % e)
             # _l.error('import_item traceback %s' % traceback.format_exc())
@@ -1628,19 +1579,11 @@ class SimpleImportProcess(object):
                                 item.error_message + "Post script error: %s, "
                             ) % str(e)
 
-                    item.status = "success"
-                    item.message = "Item Imported %s" % serializer.instance
-
-                    trn = SimpleImportImportedItem(
-                        id=serializer.instance.id, user_code=str(serializer.instance)
-                    )
-
-                    item.imported_items.append(trn)
-
+                    self.handle_successful_item_import(item, serializer)
                 except Exception as e:
                     item.status = "error"
                     item.error_message = (
-                        item.error_message + "==== Overwrite Exception " + str(e)
+                        f"{item.error_message}==== Overwrite Exception {e}"
                     )
                     _l.error(
                         f"import_item.overwrite model={self.scheme.content_type.model}"
@@ -1650,27 +1593,33 @@ class SimpleImportProcess(object):
 
             else:
                 item.status = "error"
-                item.error_message = (
-                    item.error_message + "====  Create Exception " + str(e)
-                )
+                item.error_message = f"{item.error_message}====  Create Exception {e}"
+
+    def handle_successful_item_import(self, item, serializer):
+        item.status = "success"
+        item.message = f"Item Imported {serializer.instance}"
+
+        trn = SimpleImportImportedItem(
+            id=serializer.instance.id, user_code=str(serializer.instance)
+        )
+
+        item.imported_items.append(trn)
 
     def process_items(self):
-        _l.info("SimpleImportProcess.Task %s. process_items INIT" % self.task)
-
-        index = 0
+        _l.info(f"SimpleImportProcess.Task {self.task}. process_items INIT")
 
         for item in self.items:
             try:
                 _l.info(
-                    "SimpleImportProcess.Task %s. ========= process row %s/%s ========"
-                    % (self.task, str(item.row_number), str(self.result.total_rows))
+                    f"SimpleImportProcess.Task {self.task}. ========= process row "
+                    f"{item.row_number}/{self.result.total_rows} ========"
                 )
 
                 if self.scheme.filter_expr:
                     # expr = Expression.parseString("a == 1 and b == 2")
                     # expr = Expression.parseString(self.scheme.filter_expr)
 
-                    result = bool(
+                    success = bool(
                         formula.safe_eval(
                             self.scheme.filter_expr,
                             names=item.inputs,
@@ -1678,22 +1627,18 @@ class SimpleImportProcess(object):
                         )
                     )
 
-                    if result:
-                        # filter passed
-                        pass
-                    else:
+                    if not success:
                         item.status = "skip"
                         item.message = "Skipped due filter"
-
                         _l.info(
-                            "SimpleImportProcess.Task %s. Row skipped due filter %s"
-                            % (self.task, str(item.row_number))
+                            f"SimpleImportProcess.Task {self.task}. Row skipped "
+                            f"due filter {item.row_number}"
                         )
                         continue
 
                 self.import_item(item)
 
-                self.result.processed_rows = self.result.processed_rows + 1
+                self.result.processed_rows += 1
 
                 self.task.update_progress(
                     {
@@ -1702,26 +1647,23 @@ class SimpleImportProcess(object):
                         "percent": round(
                             self.result.processed_rows / (len(self.items) / 100)
                         ),
-                        "description": "Row %s processed" % self.result.processed_rows,
+                        "description": f"Row {self.result.processed_rows} processed",
                     }
                 )
 
             except Exception as e:
                 item.status = "error"
-                item.message = "Error %s" % e
+                item.message = f"Error {repr(e)}"
 
                 _l.error(
-                    "SimpleImportProcess.Task %s.  ========= process row %s ======== Exception %s"
-                    % (self.task, str(item.row_number), e)
-                )
-                _l.error(
-                    "SimpleImportProcess.Task %s.  ========= process row %s ======== Traceback %s"
-                    % (self.task, str(item.row_number), traceback.format_exc())
+                    f"SimpleImportProcess.Task {self.task}.  ========= process row "
+                    f"{str(item.row_number)} ======== Exception {e} ====== "
+                    f"Traceback {traceback.format_exc()}"
                 )
 
         self.result.items = self.items
 
-        _l.info("SimpleImportProcess.Task %s. process_items DONE" % self.task)
+        _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
     def process(self):
         try:
@@ -1729,14 +1671,11 @@ class SimpleImportProcess(object):
 
         except Exception as e:
             _l.error(
-                "SimpleImportProcess.Task %s. process Exception %s" % (self.task, e)
-            )
-            _l.error(
-                "SimpleImportProcess.Task %s. process Traceback %s"
-                % (self.task, traceback.format_exc())
+                f"SimpleImportProcess.Task {self.task}.process "
+                f"Exception {e} Traceback {traceback.format_exc()}"
             )
 
-            self.result.error_message = "General Import Error. Exception %s" % e
+            self.result.error_message = f"General Import Error. Exception {e}"
 
             if (
                 self.execution_context
@@ -1745,15 +1684,10 @@ class SimpleImportProcess(object):
                 send_system_message(
                     master_user=self.master_user,
                     performed_by="System",
-                    description="Can't process file. Exception %s" % e,
+                    description=f"Can't process file. Exception {e}",
                 )
 
         finally:
-            if self.task.options_object and "items" in self.task.options_object:
-                pass
-            else:
-                pass
-
             self.import_result = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
@@ -1779,32 +1713,28 @@ class SimpleImportProcess(object):
                     master_user=self.master_user,
                     action_status="required",
                     type="warning",
-                    title="Simple Import Partially Failed. Task id: %s" % self.task.id,
-                    description="Error rows %s/%s"
-                    % (error_rows_count, len(self.result.items)),
+                    title=f"Simple Import Partially Failed. Task id: {self.task.id}",
+                    description=f"Error rows {error_rows_count}/{len(self.result.items)}",
                 )
 
-            system_message_title = "New Items (import from file)"
             system_message_description = (
-                "New items created (Import scheme - "
-                + str(self.scheme.name)
-                + ") - "
-                + str(len(self.items))
+                f"New items created (Import scheme - {str(self.scheme.name)}) -"
+                f" {len(self.items)}"
             )
 
             import_system_message_title = "Simple import (finished)"
 
             system_message_performed_by = self.member.username
 
-            if self.process_type == ProcessType.JSON:
-                if (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
-                ):
-                    system_message_title = "New itmes (import from broker)"
-                    system_message_performed_by = "System"
+            system_message_title = "New Items (import from file)"
+            if self.process_type == ProcessType.JSON and (
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
+            ):
+                system_message_title = "New itmes (import from broker)"
+                system_message_performed_by = "System"
 
-                    import_system_message_title = "Simple import from broker (finished)"
+                import_system_message_title = "Simple import from broker (finished)"
 
             send_system_message(
                 master_user=self.master_user,
@@ -1812,7 +1742,10 @@ class SimpleImportProcess(object):
                 section="import",
                 type="success",
                 title="Import Finished. Prices Recalculation Required",
-                description="Please, run schedule or execute procedures to calculate portfolio prices and nav history",
+                description=(
+                    "Please, run schedule or execute procedures to calculate portfolio "
+                    "prices and nav history"
+                ),
             )
 
         send_system_message(
