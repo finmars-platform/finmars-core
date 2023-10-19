@@ -11,6 +11,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
+
 from poms_app import settings
 
 _l = logging.getLogger('provision')
@@ -56,8 +57,9 @@ class BootstrapConfig(AppConfig):
         self.create_member_layouts()
         self.create_base_folders()
         self.register_at_authorizer_service()
+        self.sync_celery_workers()
 
-        # self.create_iam_access_policies_templates()
+        self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
@@ -272,6 +274,33 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.info("register_at_authorizer_service error %s" % e)
+
+    # Creating worker in case if deployment is missing (e.g. from backup?)
+    def sync_celery_workers(self):
+
+        if not settings.AUTHORIZER_URL:
+            return
+
+        try:
+            _l.info("sync_celery_workers processing")
+
+            from poms.common.finmars_authorizer import AuthorizerService
+            authorizer_service = AuthorizerService()
+            from poms.celery_tasks.models import CeleryWorker
+
+            workers = CeleryWorker.objects.all()
+
+            for worker in workers:
+                try:
+                    worker_status = authorizer_service.get_worker_status(worker)
+
+                    if worker_status['status'] == 'not_found':
+                        authorizer_service.create_worker(worker)
+                except Exception as e:
+                    _l.error("sync_celery_workers: worker %s error %s" % (worker, e))
+
+        except Exception as e:
+            _l.info("sync_celery_workers error %s" % e)
 
     def create_member_layouts(self):
 

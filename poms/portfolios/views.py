@@ -1,11 +1,14 @@
 from logging import getLogger
 
 import django_filters
+from django.conf import settings
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
@@ -24,13 +27,20 @@ from poms.portfolios.models import (
     PortfolioRegisterRecord,
 )
 from poms.portfolios.serializers import (
+    FirstTransactionDateRequestSerializer,
+    FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
     PortfolioLightSerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
+    PrCalculatePriceHistoryRequestSerializer,
+    PrCalculateRecordsRequestSerializer,
 )
-from poms.portfolios.tasks import calculate_portfolio_register_price_history
+from poms.portfolios.tasks import (
+    calculate_portfolio_register_price_history,
+    calculate_portfolio_register_record,
+)
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger("poms.portfolios")
@@ -207,17 +217,18 @@ class PortfolioViewSet(AbstractModelViewSet):
         url_path="get-inception-date",
     )
     def get_inception_date(self, request, *args, **kwargs):
-
-        result = {
-            "date": None
-        }
+        result = {"date": None}
 
         portfolio = self.get_object()
 
-        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+        first_record = (
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
+        )
 
         if first_record:
-            result['date'] = first_record.transaction_date
+            result["date"] = first_record.transaction_date
 
         return Response(result)
 
@@ -227,22 +238,23 @@ class PortfolioViewSet(AbstractModelViewSet):
         url_path="get-inception-date",
     )
     def get_inception_date(self, request, *args, **kwargs):
-
-        user_code = request.query_params.get('user_code', None)
+        user_code = request.query_params.get("user_code", None)
 
         if not user_code:
-            raise Exception('user_code is required')
+            raise Exception("user_code is required")
 
-        result = {
-            "date": None
-        }
+        result = {"date": None}
 
         portfolio = Portfolio.objects.get(user_code=user_code)
 
-        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+        first_record = (
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
+        )
 
         if first_record:
-            result['date'] = first_record.transaction_date
+            result["date"] = first_record.transaction_date
 
         return Response(result)
 
@@ -292,26 +304,74 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        # portfolio_ids = request.data["portfolio_ids"]
-        # master_user = request.user.master_user
+        serializer = PrCalculateRecordsRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # Trigger Recalc Properly
-        # calculate_portfolio_register_record.apply_async(
-        #     kwargs={'portfolio_ids': portfolio_ids})
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Register Records",
+            type="calculate_portfolio_register_record",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
 
-        return Response({"status": "ok"})
+        calculate_portfolio_register_record.apply_async(
+            kwargs={"task_id": task.id},
+        )
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=False, methods=["post"], url_path="calculate-price-history")
     def calculate_price_history(self, request):
         _l.info(
             f"{self.__class__.__name__}.calculate_price_history data={request.data}"
         )
+        serializer = PrCalculatePriceHistoryRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # master_user = request.user.master_user
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Register Prices",
+            type="calculate_portfolio_register_price_history",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = {
+            "portfolios": serializer.validated_data.get("portfolios"),
+            "date_to": serializer.validated_data["date_to"].strftime(
+                settings.API_DATE_FORMAT
+            ),
+            "date_from": serializer.validated_data["date_from"].strftime(
+                settings.API_DATE_FORMAT
+            )
+            if serializer.validated_data.get("date_from")
+            else None,
+        }
+        task.save()
 
-        calculate_portfolio_register_price_history.apply_async()
+        calculate_portfolio_register_price_history.apply_async(
+            kwargs={"task_id": task.id},
+        )
 
-        return Response({"status": "ok"})
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         from poms.instruments.models import Instrument
@@ -339,9 +399,6 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# Portfolio Register Record
-
-
 class PortfolioRegisterRecordFilterSet(FilterSet):
     id = NoOpFilter()
 
@@ -351,9 +408,7 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related(
-        "master_user",
-    )
+    queryset = PortfolioRegisterRecord.objects.select_related("master_user")
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioRegisterRecordFilterSet
@@ -369,10 +424,43 @@ class PortfolioBundleFilterSet(FilterSet):
 
 
 class PortfolioBundleViewSet(AbstractModelViewSet):
-    queryset = PortfolioBundle.objects.select_related(
-        "master_user",
-    )
+    queryset = PortfolioBundle.objects.select_related("master_user")
     serializer_class = PortfolioBundleSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioBundleFilterSet
     ordering_fields = []
+
+
+class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
+    queryset = Portfolio.objects
+    serializer_class = FirstTransactionDateRequestSerializer
+    http_method_names = ["get"]
+    response_serializer_class = FirstTransactionDateResponseSerializer
+
+    def list(self, request, *args, **kwargs):
+        request_serializer = self.serializer_class(
+            data=request.query_params,
+            context={"request": request, "member": request.user.member},
+        )
+        request_serializer.is_valid(raise_exception=True)
+
+        portfolios: list = request_serializer.validated_data["portfolio"]
+        date_field: str = request_serializer.validated_data["date_field"]
+        response_data = []
+        for portfolio in portfolios:
+            first_date = portfolio.first_transaction_date(date_field)
+            response_data.append(
+                {
+                    "portfolio": portfolio,
+                    "first_transaction": {
+                        "date_field": date_field,
+                        "date": first_date,
+                    },
+                }
+            )
+
+        response_serializer = self.response_serializer_class(response_data, many=True)
+        return Response(response_serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed("retrieve", "not allowed", "405")

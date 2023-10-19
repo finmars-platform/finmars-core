@@ -3562,7 +3562,11 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
         representation = super().to_representation(instance)
 
         try:
-            instance = TransactionTypeGroup.objects.get(id=representation["group"])
+
+            if isinstance(representation["group"], int):
+                instance = TransactionTypeGroup.objects.get(id=representation["group"])
+            else:
+                instance = TransactionTypeGroup.objects.get(user_code=representation["group"])
 
             s = TransactionTypeGroupViewSerializer(
                 instance=instance, read_only=True, context=self.context
@@ -4263,6 +4267,7 @@ class ComplexTransactionViewSerializer(
 class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    first_transaction_accounting_date = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -4276,6 +4281,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         fields = [
             "id",
             "date",
+            "first_transaction_accounting_date",
             "status",
             "code",
             "text",
@@ -4342,6 +4348,13 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             "user_date_4",
             "user_date_5",
         ]
+
+    def get_first_transaction_accounting_date(self, instance):
+
+        if instance.transactions.count():
+            return instance.transactions.first().accounting_date
+
+        return None
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -4450,7 +4463,7 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
         return representation
 
 
-# TransactionType processing -------------------------------------------------------------------------------------------
+# TransactionType processing --------------------------------------------------------
 
 
 class TransactionTypeProcessValuesSerializer(serializers.Serializer):
@@ -4730,12 +4743,12 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
 
 
 class PhantomInstrumentField(InstrumentField):
-    def to_internal_value(self, data):
-        pk = data
+    def to_internal_value(self, value):
+        pk = value
         if self.pk_field is not None:
-            pk = self.pk_field.to_internal_value(data)
+            pk = self.pk_field.to_internal_value(value)
 
-        return Instrument(id=pk) if pk and pk < 0 else super().to_internal_value(data)
+        return Instrument(id=pk) if pk and pk < 0 else super().to_internal_value(value)
 
 
 class PhantomTransactionSerializer(TransactionSerializer):
@@ -5191,6 +5204,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
 
         kwargs["context"] = context = kwargs.get("context", {}) or {}
         super().__init__(**kwargs)
+
         context["instance"] = self.instance
 
         self.fields["transaction_type"] = serializers.PrimaryKeyRelatedField(

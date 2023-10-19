@@ -1,12 +1,16 @@
 from logging import getLogger
+from typing import Type
+from datetime import timedelta
 
-from django.db import transaction
+from django.db import models, transaction
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
+from django.views.generic.dates import timezone_today
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType
 from poms.instruments.serializers import (
@@ -15,6 +19,7 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.portfolios.fields import PortfolioField
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -88,14 +93,14 @@ class PortfolioSerializer(
     ModelWithTimeStampSerializer,
 ):
     master_user = MasterUserField()
-    # accounts = AccountField(many=True, allow_null=True, required=False)
-    # responsibles = ResponsibleField(many=True, allow_null=True, required=False)
-    # counterparties = CounterpartyField(many=True, allow_null=True, required=False)
-    # transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
-
     registers = PortfolioPortfolioRegisterSerializer(
-        many=True, allow_null=True, required=False, read_only=True
+        many=True,
+        allow_null=True,
+        required=False,
+        read_only=True,
     )
+
+    first_transaction = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Portfolio
@@ -111,7 +116,18 @@ class PortfolioSerializer(
             "is_deleted",
             "is_enabled",
             "registers",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
 
     def __init__(self, *args, **kwargs):
         from poms.accounts.serializers import AccountViewSerializer
@@ -227,6 +243,8 @@ class PortfolioSerializer(
 class PortfolioLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    first_transaction = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -239,7 +257,19 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
             "is_default",
             "is_deleted",
             "is_enabled",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
+
 
 
 class PortfolioViewSerializer(ModelWithUserCodeSerializer):
@@ -359,16 +389,22 @@ class PortfolioRegisterSerializer(
     ):
         linked_instrument_type = new_linked_instrument["instrument_type"]
         instrument_type = (
-            InstrumentType.objects.get(
+            InstrumentType.objects.filter(
                 master_user=master_user,
                 id=linked_instrument_type,
-            )
+            ).first()
             if isinstance(new_linked_instrument, int)
-            else InstrumentType.objects.get(
+            else InstrumentType.objects.filter(
                 master_user=master_user,
                 user_code=linked_instrument_type,
-            )
+            ).first()
         )
+        if not instrument_type:
+            raise ValidationError(
+                detail=f"InstrumentType {linked_instrument_type} doesn't exist!",
+                code="invalid instrument_type value in new_linked_instrument",
+            )
+
         process = InstrumentTypeProcess(instrument_type=instrument_type)
 
         instrument_object = process.instrument
@@ -508,3 +544,88 @@ class PortfolioEvalSerializer(
         ]
 
         read_only_fields = fields
+
+
+def belongs_to_model(field: str, model: Type[models.Model]) -> bool:
+    model_fields = model._meta.get_fields()
+    field_names = [  # Exclude relation fields
+        field.name for field in model_fields if field.is_relation is False
+    ]
+    return field in field_names
+
+
+class FirstTransactionDateRequestSerializer(serializers.Serializer):
+    portfolio = PortfolioField(required=False)
+    date_field = serializers.CharField(default="transaction_date")
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Portfolio
+        fields = [
+            "portfolio",
+            "date_field",
+            "master_user",
+        ]
+        read_only_fields = fields
+
+    def validate(self, attrs: dict) -> dict:
+        from poms.transactions.models import Transaction
+
+        if "portfolio" in attrs:
+            attrs["portfolio"] = [
+                attrs["portfolio"],
+            ]
+        else:
+            attrs["portfolio"] = list(Portfolio.objects.all())
+
+        date_field = attrs["date_field"]
+        if not belongs_to_model(date_field, Transaction) or "date" not in date_field:
+            raise ValidationError(f"Transaction has no such date field {date_field}!")
+
+        return attrs
+
+
+class FirstTransactionSerializer(serializers.Serializer):
+    date_field = serializers.CharField()
+    date = serializers.DateField()
+
+
+class BasicPortfolioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portfolio
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_default",
+            "is_deleted",
+            "is_enabled",
+        ]
+
+
+class FirstTransactionDateResponseSerializer(serializers.Serializer):
+    portfolio = BasicPortfolioSerializer()
+    first_transaction = FirstTransactionSerializer()
+
+
+class PrCalculateRecordsRequestSerializer(serializers.Serializer):
+    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+
+
+class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        date_to = attrs.get("date_to") or timezone_today() - timedelta(days=1)
+        attrs["date_to"] = date_to
+
+        date_from = attrs.get("date_from")
+        if date_from and date_to and (date_from > date_to):
+            raise ValidationError("date_from must be <= date_to")
+
+        return attrs

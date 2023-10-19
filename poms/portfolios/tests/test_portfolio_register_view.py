@@ -1,19 +1,32 @@
-import contextlib
-
 from django.conf import settings
 
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.portfolios.models import PortfolioRegister
+
+PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
+
+EXPECTED_RESPONSE_PRICES = {
+    "task_id": 1,
+    "task_status": "P",
+    "task_type": "calculate_portfolio_register_price_history",
+    "task_options": {"date_to": "2023-09-13", "portfolios": ["x1", "y2", "z3"]},
+}
+
+EXPECTED_RESPONSE_RECORD = {
+    "task_id": 2,
+    "task_status": "P",
+    "task_type": "calculate_portfolio_register_record",
+    "task_options": {"portfolios": ["x1", "y2", "z3"]},
+}
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register/"
+        self.url = f"{PORTFOLIO_API}/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
-        self.pr_data = None
         self.pr_data = {
             "portfolio": self.portfolio.id,
             "linked_instrument": self.instrument.id,
@@ -47,8 +60,98 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
                 "instrument_type": self.random_int(),
             },
         }
-        with contextlib.suppress(Exception):
-            _ = self.client.post(self.url, data=new_pr_data, format="json")
 
-        pr = PortfolioRegister.objects.filter(name="name").first()
-        self.assertIsNone(pr)
+        response = self.client.post(self.url, data=new_pr_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+
+class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.url = f"{PORTFOLIO_API}/calculate-records/"
+
+    def test_check_url(self):
+        response = self.client.post(path=self.url, data={})
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_RECORD))
+        self.assertEqual(
+            response_json["task_type"], EXPECTED_RESPONSE_RECORD["task_type"]
+        )
+
+    def test__validate_portfolios(self):
+        request_data = dict(portfolios=["a1", "b2", "c3"])
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["task_options"], request_data)
+
+
+class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.url = f"{PORTFOLIO_API}/calculate-price-history/"
+
+    def test_check_url(self):
+        response = self.client.post(path=self.url, data={})
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_PRICES))
+        self.assertEqual(
+            response_json["task_type"], EXPECTED_RESPONSE_PRICES["task_type"]
+        )
+
+    def test__validate_portfolios(self):
+        request_data = dict(portfolios=["x1", "y2", "z3"])
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(
+            response_json["task_options"]["portfolios"], request_data["portfolios"]
+        )
+
+    @BaseTestCase.cases(
+        ("1", "2023-08-01", "2023-09-06"),
+        ("2", "2020-01-27", "2023-10-13"),
+        ("3", "2022-11-14", "2025-03-30"),
+        ("4", "2022-12-31", None),
+        ("5", "2022-11-14", "2022-11-14"),
+    )
+    def test__validate_dates(self, date_from, date_to):
+        request_data = (
+            dict(date_from=date_from, date_to=date_to)
+            if date_to
+            else dict(date_from=date_from)
+        )
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["task_options"]["date_from"], date_from)
+        self.assertEqual(
+            response_json["task_options"]["date_to"],
+            date_to or self.yesterday().strftime(settings.API_DATE_FORMAT),
+        )
+
+    @BaseTestCase.cases(
+        ("invalid_date", "2023-09-01", "2023-07-01"),
+    )
+    def test__validate_invalid_dates(self, date_from, date_to):
+        request_data = dict(date_from=date_from, date_to=date_to)
+
+        response = self.client.post(path=self.url, data=request_data)
+        self.assertEqual(response.status_code, 400, response.content)

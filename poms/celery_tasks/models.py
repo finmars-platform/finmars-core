@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy
 
 from celery.result import AsyncResult
 
+from poms.common.finmars_authorizer import AuthorizerService
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 
@@ -18,10 +19,10 @@ log = "CeleryTask"
 
 class CeleryTask(TimeStampedModel):
     """
-    Maybe should be rename just to Task (like in Workflow)
+    Maybe should be renamed just to Task (like in Workflow)
     Kinda legacy functionality (everything to background processes should
     be moved to Workflow/Olap microservices)
-    But still its in use
+    But still it's in use
     Most important tasks are:
         Transaction Import (transactions itself, sometimes instruments)
         Simple Import (Portfolios, Accounts, Instruments, Prices, FxRates)
@@ -29,11 +30,11 @@ class CeleryTask(TimeStampedModel):
         UI layouts)
         Portfolio Records and Portfolio Prices
 
-    Also we have poms.procedures, and poms.pricing and somehow it different
-    entities but they do the same thing as CeleryTask
+    Also, we have poms.procedures, and poms.pricing and somehow it different
+    entities, but they do the same thing as CeleryTask
     Maybe in future procedures/pricing will be refactored and one day
     they will be just CeleryTask
-    And in far future even that will be moved to Workflow/Olap
+    And in the far future even that will be moved to Workflow/Olap
     """
 
     STATUS_INIT = "I"
@@ -194,7 +195,11 @@ class CeleryTask(TimeStampedModel):
             self.options = None
         else:
             self.options = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     @property
@@ -207,7 +212,11 @@ class CeleryTask(TimeStampedModel):
             self.result = None
         else:
             self.result = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     @property
@@ -220,7 +229,11 @@ class CeleryTask(TimeStampedModel):
             self.progress = None
         else:
             self.progress = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+                value,
+                cls=DjangoJSONEncoder,
+                sort_keys=True,
+                indent=1,
+                default=str,
             )
 
     def add_attachment(self, file_report_id):
@@ -232,17 +245,7 @@ class CeleryTask(TimeStampedModel):
         self.finished_at = now()
 
     def update_progress(self, progress):
-        # {
-        #   current: 20,
-        #   total: 100,
-        #   percent: 20
-        #   description
-        # }
-
-        # _l.debug(f"{log} update_progress {progress}")
-
         self.progress_object = progress
-
         self.save()
 
     def save(self, *args, **kwargs):
@@ -251,9 +254,16 @@ class CeleryTask(TimeStampedModel):
         if self.ttl and not self.expiry_at:
             self.expiry_at = self.created + timedelta(seconds=self.ttl)
 
-        if CeleryTask.objects.all().count() > 1000:
+        if (
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).count()
+            > 3000
+        ):
             _l.warning(f"{log} tasks amount > 1000, delete oldest task")
-            CeleryTask.objects.all().order_by("id")[0].delete()
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).order_by("id")[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):
@@ -287,3 +297,80 @@ class CeleryTaskAttachment(models.Model):
         verbose_name=gettext_lazy("file report"),
         on_delete=models.SET_NULL,
     )
+
+
+class CeleryWorker(TimeStampedModel):
+    worker_name = models.CharField(
+        unique=True,
+        max_length=255,
+        verbose_name="worker name",
+        help_text="Name that will be used in celery worker command",
+    )
+    worker_type = models.CharField(
+        default="worker",
+        max_length=255,
+        verbose_name="worker type",
+        help_text="worker or scheduler",
+    )
+    status = models.TextField(
+        null=True,
+        blank=True,
+        default="unknown",
+        verbose_name="status",
+        help_text="Status of worker container",
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("notes"),
+    )
+    memory_limit = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name="Memory Limit",
+        help_text="Memory limit for celery worker e.g. 2Gi",
+    )
+    queue = models.TextField(
+        null=True,
+        blank=True,
+        default="backend-general-queue,backend-background-queue",
+        verbose_name=gettext_lazy("Queue"),
+        help_text="Comma separated list of queues that worker will listen to",
+    )
+
+    def create_worker(self):
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.create_worker(self)
+
+    def start(self):
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.start_worker(self)
+
+    def stop(self):
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.stop_worker(self)
+
+    def restart(self):
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.restart_worker(self)
+
+    def get_status(self):
+        authorizer_service = AuthorizerService()
+
+        status = authorizer_service.get_worker_status(self)
+
+        try:
+            self.status = json.dumps(status)
+        except Exception as e:
+            self.status = json.dumps({"status": "unknown", "error_message": str(e)})
+
+        self.save()
+
+    def delete_worker(self):
+        authorizer_service = AuthorizerService()
+
+        authorizer_service.delete_worker(self)

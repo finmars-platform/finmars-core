@@ -55,7 +55,8 @@ class UniqueCodeError(ValidationError):
 
 
 class TransactionTypeProcess:
-    # if store is false then operations must be rollback outside, for example in view...
+    # if store is false, then operations must be rollback outside,
+    # for example, in view...
     MODE_BOOK = "book"
     MODE_REBOOK = "rebook"
     MODE_RECALCULATE = "recalculate"
@@ -70,73 +71,127 @@ class TransactionTypeProcess:
             _time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             self.complex_transaction.execution_log = (
-                    self.complex_transaction.execution_log
-                    + "["
-                    + str(_time)
-                    + "] "
-                    + message
-                    + "\n"
+                self.complex_transaction.execution_log
+                + "["
+                + str(_time)
+                + "] "
+                + message
+                + "\n"
             )
 
             if obj:
                 self.complex_transaction.execution_log = (
-                        self.complex_transaction.execution_log
-                        + json.dumps(obj, indent=4, default=str)
-                        + "\n"
+                    self.complex_transaction.execution_log
+                    + json.dumps(obj, indent=4, default=str)
+                    + "\n"
                 )
 
     def __init__(
-            self,
-            process_mode=None,
-            transaction_type=None,
-            default_values=None,
-            values=None,
-            recalculate_inputs=None,
-            has_errors=False,
-            value_errors=None,
-            general_errors=None,
-            instruments=None,
-            instruments_errors=None,
-            complex_transaction=None,
-            complex_transaction_status=None,
-            complex_transaction_errors=None,
-            transactions=None,
-            transactions_errors=None,
-            fake_id_gen=None,
-            transaction_order_gen=None,
-            now=None,
-            context=None,  # for formula engine
-            context_values=None,  # context_values = CONTEXT VARIABLES
-            uniqueness_reaction=None,
-            execution_context="manual",
-            member=None,
-            source=None,
-            clear_execution_log=True,
-            record_execution_log=True,
-            linked_import_task=None,
-    ):  # if book from import
-        _l.debug("==== TransactionTypeProcess INIT ====")
+        self,
+        process_mode=None,
+        transaction_type=None,
+        default_values=None,
+        values=None,
+        recalculate_inputs=None,
+        value_errors=None,
+        general_errors=None,
+        instruments=None,
+        instruments_errors=None,
+        complex_transaction=None,
+        complex_transaction_status=None,
+        complex_transaction_errors=None,
+        transactions=None,
+        transactions_errors=None,
+        fake_id_gen=None,
+        transaction_order_gen=None,
+        now=None,
+        context=None,  # for formula engine
+        context_values=None,  # context_values = CONTEXT VARIABLES
+        uniqueness_reaction=None,
+        execution_context="manual",
+        member=None,
+        source=None,
+        clear_execution_log=True,
+        record_execution_log=True,
+        linked_import_task=None,
+    ):
+        _l.info(
+            f"TransactionTypeProcess transaction_type={transaction_type} "
+            f"process_mode={process_mode} context_values={context_values} "
+            f"linked_import_task={linked_import_task}"
+        )
 
-        self.transaction_type = transaction_type
-
-        master_user = self.transaction_type.master_user
-        self.member = member
-
+        master_user = transaction_type.master_user
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
-        self.complex_transaction = complex_transaction
+        self.member = member
+        self.transaction_type = transaction_type
+        self.process_mode = process_mode or TransactionTypeProcess.MODE_BOOK
+        self.execution_context = execution_context
+        self.linked_import_task = linked_import_task
+        self.clear_execution_log = clear_execution_log
+        self.record_execution_log = record_execution_log
+        self.default_values = default_values or {}
+        self.context_values = context_values or {}
+        self.value_errors = value_errors or []
+        self.general_errors = general_errors or []
+        self.transactions = transactions or []
+        self.instruments = instruments or []
+        self.instruments_errors = instruments_errors or []
+        self.complex_transaction_errors = complex_transaction_errors or []
+        self.complex_transaction_status = complex_transaction_status
+        self.transactions_errors = transactions_errors or []
+        self.recalculate_inputs = recalculate_inputs or []
+        self.source = source  # JSON object that contains source dictionary from broker
+        self.uniqueness_reaction = uniqueness_reaction or (
+            self.transaction_type.transaction_unique_code_options
+        )
+        self._now = now or date_now()
+        self.next_transaction_order = (
+            transaction_order_gen or self._next_transaction_order_default
+        )
+        self.next_fake_id = fake_id_gen or self._next_fake_id_default
+        self.uniqueness_status = None
+
+        # set complex-transaction params
+        self.complex_transaction: ComplexTransaction = complex_transaction
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(
                 transaction_type=self.transaction_type,
-                date=None,
+                date=self._now,
                 master_user=master_user,
             )
+        self.complex_transaction.visibility_status = (
+            self.transaction_type.visibility_status
+        )
+        self.complex_transaction.linked_import_task = self.linked_import_task
 
-        self.clear_execution_log = clear_execution_log
-        self.record_execution_log = record_execution_log
+        self.complex_transaction_status = complex_transaction_status
+
+        if complex_transaction_status:
+            self.complex_transaction.status_id = complex_transaction_status
+
+        if complex_transaction and not complex_transaction_status:
+            self.complex_transaction_status = complex_transaction.status_id
+
+        self._context = context
+        self._context["transaction_type"] = self.transaction_type
+        self._id_seq = 0
+        self._transaction_order_seq = 0
+
+        self.inputs = list(self.transaction_type.inputs.all())
+        if values is None:
+            # needs self.inputs to be defined, also checks complex_transaction inputs
+            self._set_values()
+        else:
+            self.values = values
+            for i in range(10):
+                self.values[f"phantom_instrument_{i}"] = None
 
         if self.clear_execution_log:
             self.complex_transaction.execution_log = ""
+
+        self.complex_transaction.save()
 
         self.record_execution_progress("Booking Complex Transaction")
         self.record_execution_progress(f"Start {date_now()} ")
@@ -145,77 +200,9 @@ class TransactionTypeProcess:
         )
         self.record_execution_progress(f"Member: {self.member}")
         self.record_execution_progress(f"Execution_context: {execution_context}")
+        self.record_execution_progress(f"Linked Import Task: {linked_import_task}")
         # self.record_execution_progress('==== INPUT CONTEXT VALUES ====', context_values)
         # self.record_execution_progress('==== INPUT VALUES ====', values)
-
-        self.process_mode = process_mode
-        self.execution_context = execution_context
-        self.linked_import_task = linked_import_task
-
-        if self.process_mode is None:
-            self.process_mode = TransactionTypeProcess.MODE_BOOK
-
-        _l.debug(
-            f"TransactionTypeProcess.transaction_type {self.transaction_type} "
-            f"process_mode {self.process_mode}"
-        )
-
-        self.default_values = default_values or {}
-        self.context_values = context_values or {}
-
-        _l.debug(f"TransactionTypeProcess.context_values {context_values}")
-
-        self.inputs = list(self.transaction_type.inputs.all())
-
-        self.complex_transaction.visibility_status = (
-            self.transaction_type.visibility_status
-        )
-
-        self.complex_transaction_status = complex_transaction_status
-
-        if complex_transaction_status is not None:
-            self.complex_transaction.status_id = complex_transaction_status
-
-        if complex_transaction and not complex_transaction_status:
-            self.complex_transaction_status = complex_transaction.status_id
-
-        self._now = now or date_now()
-        self._context = context
-        self._context["transaction_type"] = self.transaction_type
-
-        self.recalculate_inputs = recalculate_inputs or []
-
-        self.value_errors = value_errors or []
-        self.general_errors = general_errors or []
-        self.transactions = transactions or []
-        self.instruments = instruments or []
-        self.instruments_errors = instruments_errors or []
-        self.complex_transaction_errors = complex_transaction_errors or []
-        self.transactions_errors = transactions_errors or []
-
-        self._id_seq = 0
-        self._transaction_order_seq = 0
-
-        self.next_fake_id = fake_id_gen or self._next_fake_id_default
-        self.next_transaction_order = (
-                transaction_order_gen or self._next_transaction_order_default
-        )
-
-        self.uniqueness_reaction = uniqueness_reaction or (
-            self.transaction_type.transaction_unique_code_options
-        )
-
-        self.source = source  # JSON object that contains source dictionary from broker
-
-        self.uniqueness_status = None
-
-        if values is None:
-            self._set_values()
-        else:
-            self.values = values
-
-            for i in range(10):
-                self.values[f"phantom_instrument_{i}"] = None
 
     @property
     def is_book(self):
@@ -260,7 +247,7 @@ class TransactionTypeProcess:
         self.record_execution_progress("==== SETTINGS VALUES ====")
 
         def _get_val_by_model_cls_for_transaction_type_input(
-                master_user, value, model_class
+            master_user, value, model_class
         ):
             try:
                 if issubclass(model_class, Account):
@@ -316,11 +303,11 @@ class TransactionTypeProcess:
                 elif issubclass(model_class, NotificationClass):
                     return NotificationClass.objects.get(user_code=value)
             except Exception:
-                _l.debug(f"Could not find default value relation {value} ")
+                _l.debug(f"Could not find default value relation {value}")
                 return None
 
         def _get_val_by_model_cls_for_complex_transaction_input(
-                master_user, obj, model_class
+            master_user, obj, model_class
         ):
             try:
                 if issubclass(model_class, Account):
@@ -400,11 +387,11 @@ class TransactionTypeProcess:
 
         _l.debug(f"Transaction type values {self.values}")
 
-        # if complex transaction already exists
+        # if a complex transaction already exists
         if (
-                self.complex_transaction
-                and self.complex_transaction.id is not None
-                and self.complex_transaction.id > 0
+            self.complex_transaction
+            and self.complex_transaction.id is not None
+            and self.complex_transaction.id > 0
         ):
             # load previous values if need
             ci_qs = self.complex_transaction.inputs.all().select_related(
@@ -414,8 +401,8 @@ class TransactionTypeProcess:
                 i = ci.transaction_type_input
                 value = None
                 if i.value_type in (
-                        TransactionTypeInput.STRING,
-                        TransactionTypeInput.SELECTOR,
+                    TransactionTypeInput.STRING,
+                    TransactionTypeInput.SELECTOR,
                 ):
                     value = ci.value_string
                 elif i.value_type == TransactionTypeInput.NUMBER:
@@ -438,85 +425,83 @@ class TransactionTypeProcess:
         )
 
         for i in self.inputs:
-            if i.name not in self.values:
-                if "context_" not in i.name:  # input could not be context
-                    value = None
+            # input could not be context
+            if (i.name not in self.values) and ("context_" not in i.name):
+                value = None
 
-                    if i.is_fill_from_context:
-                        try:
-                            value = self.context_values[i.context_property]
+                if i.is_fill_from_context:
+                    try:
+                        value = self.context_values[i.context_property]
 
-                            _l.debug(f"Set from context. input {i.name} value {value}")
+                        _l.debug(f"Set from context. input {i.name} value {value}")
 
-                        except KeyError:
-                            _l.debug(
-                                f"Can't find context variable {i.context_property}"
-                            )
+                    except KeyError:
+                        _l.debug(f"Can't find context variable {i.context_property}")
 
-                    if value is None:
-                        if i.value_type == TransactionTypeInput.RELATION:
-                            model_class = i.content_type.model_class()
+                if value is None:
+                    if i.value_type == TransactionTypeInput.RELATION:
+                        model_class = i.content_type.model_class()
 
-                            if i.value:
-                                errors = {}
-                                try:
-                                    value = formula.safe_eval(
-                                        i.value,
-                                        names=self.values,
-                                        now=self._now,
-                                        context=self._context,
-                                    )
+                        if i.value:
+                            errors = {}
+                            try:
+                                value = formula.safe_eval(
+                                    i.value,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
+                                )
 
-                                    _l.debug(
-                                        f"Set from default. input {i.name} "
-                                        f"value {i.value}"
-                                    )
+                                _l.debug(
+                                    f"Set from default. input {i.name} "
+                                    f"value {i.value}"
+                                )
 
-                                except formula.InvalidExpression as e:
-                                    self._set_eval_error(errors, i.name, i.value, e)
-                                    self.value_errors.append(errors)
-                                    _l.debug(
-                                        f"ERROR Set from default. input {i.name} error {e}"
-                                    )
-                                    value = None
+                            except formula.InvalidExpression as e:
+                                self._set_eval_error(errors, i.name, i.value, e)
+                                self.value_errors.append(errors)
+                                _l.debug(
+                                    f"ERROR Set from default. input {i.name} error {e}"
+                                )
+                                value = None
 
-                            value = _get_val_by_model_cls_for_transaction_type_input(
-                                self.complex_transaction.master_user, value, model_class
-                            )
-
-                            _l.debug(
-                                f"Set from default. Relation input {i.name} "
-                                f"value {value}"
-                            )
-
-                        else:
-                            if i.value:
-                                errors = {}
-                                try:
-                                    value = formula.safe_eval(
-                                        i.value,
-                                        names=self.values,
-                                        now=self._now,
-                                        context=self._context,
-                                    )
-
-                                    _l.debug(
-                                        f"Set from default. input {i.name} value {i.value}"
-                                    )
-
-                                except formula.InvalidExpression as e:
-                                    self._set_eval_error(errors, i.name, i.value, e)
-                                    self.value_errors.append(errors)
-                                    _l.debug(f"ERROR Set from default. input {i.name}")
-                                    _l.debug(f"ERROR Set from default. error {e}")
-                                    value = None
-
-                    if value or value == 0:
-                        self.values[i.name] = value
-                    else:
-                        _l.debug(
-                            f"Value is not set. No Context. No Default. input {i.name} "
+                        value = _get_val_by_model_cls_for_transaction_type_input(
+                            self.complex_transaction.master_user, value, model_class
                         )
+
+                        _l.debug(
+                            f"Set from default. Relation input {i.name} "
+                            f"value {value}"
+                        )
+
+                    else:
+                        if i.value:
+                            errors = {}
+                            try:
+                                value = formula.safe_eval(
+                                    i.value,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
+                                )
+
+                                _l.debug(
+                                    f"Set from default. input {i.name} value {i.value}"
+                                )
+
+                            except formula.InvalidExpression as e:
+                                self._set_eval_error(errors, i.name, i.value, e)
+                                self.value_errors.append(errors)
+                                _l.debug(f"ERROR Set from default. input {i.name}")
+                                _l.debug(f"ERROR Set from default. error {e}")
+                                value = None
+
+                if value or value == 0:
+                    self.values[i.name] = value
+                else:
+                    _l.debug(
+                        f"Value is not set. No Context. No Default. input {i.name} "
+                    )
 
         self.record_execution_progress("==== CALCULATED INPUTS ====")
 
@@ -526,7 +511,7 @@ class TransactionTypeProcess:
             )
 
     def book_create_instruments(
-            self, actions, master_user, instrument_map, pass_download=False
+        self, actions, master_user, instrument_map, pass_download=False
     ):
         # object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
@@ -573,11 +558,11 @@ class TransactionTypeProcess:
                 )
 
                 if (
-                        not exist
-                        and isinstance(user_code, str)
-                        and action_instrument.rebook_reaction
-                        == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT
-                        and pass_download == False
+                    not exist
+                    and isinstance(user_code, str)
+                    and action_instrument.rebook_reaction
+                    == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT
+                    and pass_download == False
                 ):
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
@@ -649,9 +634,9 @@ class TransactionTypeProcess:
                             )
 
                             if (
-                                    action_instrument.rebook_reaction
-                                    == RebookReactionChoice.FIND_OR_CREATE
-                                    and self.process_mode == self.MODE_REBOOK
+                                action_instrument.rebook_reaction
+                                == RebookReactionChoice.FIND_OR_CREATE
+                                and self.process_mode == self.MODE_REBOOK
                             ):
                                 instrument = ecosystem_default.instrument
                                 instrument_exists = True
@@ -935,17 +920,17 @@ class TransactionTypeProcess:
                                     instrument = serializer.save()
 
                                 if (
-                                        rebook_reaction == RebookReactionChoice.CREATE
-                                        and not instrument_exists
+                                    rebook_reaction == RebookReactionChoice.CREATE
+                                    and not instrument_exists
                                 ):
                                     _l.debug("Rebook CREATE")
 
                                     instrument = serializer.save()
 
                                 if (
-                                        rebook_reaction
-                                        == RebookReactionChoice.FIND_OR_CREATE
-                                        and not instrument_exists
+                                    rebook_reaction
+                                    == RebookReactionChoice.FIND_OR_CREATE
+                                    and not instrument_exists
                                 ):
                                     _l.debug("Rebook FIND_OR_CREATE")
 
@@ -958,26 +943,26 @@ class TransactionTypeProcess:
                                     instrument = serializer.save()
 
                                 if (
-                                        rebook_reaction == RebookReactionChoice.CREATE
-                                        and not instrument_exists
+                                    rebook_reaction == RebookReactionChoice.CREATE
+                                    and not instrument_exists
                                 ):
                                     _l.debug("Book  CREATE")
 
                                     instrument = serializer.save()
 
                                 if (
-                                        rebook_reaction
-                                        == RebookReactionChoice.FIND_OR_CREATE
-                                        and not instrument_exists
+                                    rebook_reaction
+                                    == RebookReactionChoice.FIND_OR_CREATE
+                                    and not instrument_exists
                                 ):
                                     _l.debug("Book  FIND_OR_CREATE")
 
                                     instrument = serializer.save()
 
                             if (
-                                    rebook_reaction
-                                    == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT
-                                    and not instrument_exists
+                                rebook_reaction
+                                == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT
+                                and not instrument_exists
                             ):
                                 _l.debug("Book  TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT")
 
@@ -1025,7 +1010,7 @@ class TransactionTypeProcess:
                 action_instrument_factor_schedule = None
 
             if action_instrument_factor_schedule and self.execute_action_condition(
-                    action_instrument_factor_schedule
+                action_instrument_factor_schedule
             ):
                 _l.debug(
                     "process factor schedule: %s", action_instrument_factor_schedule
@@ -1089,8 +1074,8 @@ class TransactionTypeProcess:
                             factor.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             _l.debug("Skip")
 
@@ -1111,8 +1096,8 @@ class TransactionTypeProcess:
                             factor.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             InstrumentFactorSchedule.objects.filter(
                                 instrument=factor.instrument
@@ -1155,10 +1140,10 @@ class TransactionTypeProcess:
                 action_instrument_manual_pricing_formula = None
 
             if (
-                    action_instrument_manual_pricing_formula
-                    and self.execute_action_condition(
                 action_instrument_manual_pricing_formula
-            )
+                and self.execute_action_condition(
+                    action_instrument_manual_pricing_formula
+                )
             ):
                 _l.debug(
                     "process manual pricing formula: %s",
@@ -1180,8 +1165,8 @@ class TransactionTypeProcess:
                     source_attr_name="instrument",
                 )
                 if (
-                        action_instrument_manual_pricing_formula.instrument_phantom
-                        is not None
+                    action_instrument_manual_pricing_formula.instrument_phantom
+                    is not None
                 ):
                     manual_pricing_formula.instrument = instrument_map[
                         action_instrument_manual_pricing_formula.instrument_phantom_id
@@ -1239,8 +1224,8 @@ class TransactionTypeProcess:
                             manual_pricing_formula.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             _l.debug("Skip")
 
@@ -1256,8 +1241,8 @@ class TransactionTypeProcess:
                             manual_pricing_formula.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             ManualPricingFormula.objects.filter(
                                 instrument=manual_pricing_formula.instrument
@@ -1299,10 +1284,10 @@ class TransactionTypeProcess:
                 action_instrument_accrual_calculation_schedule = None
 
             if (
-                    action_instrument_accrual_calculation_schedule
-                    and self.execute_action_condition(
                 action_instrument_accrual_calculation_schedule
-            )
+                and self.execute_action_condition(
+                    action_instrument_accrual_calculation_schedule
+                )
             ):
                 _l.debug(
                     "process accrual calculation schedule: %s",
@@ -1324,8 +1309,8 @@ class TransactionTypeProcess:
                     source_attr_name="instrument",
                 )
                 if (
-                        action_instrument_accrual_calculation_schedule.instrument_phantom
-                        is not None
+                    action_instrument_accrual_calculation_schedule.instrument_phantom
+                    is not None
                 ):
                     accrual_calculation_schedule.instrument = instrument_map[
                         action_instrument_accrual_calculation_schedule.instrument_phantom_id
@@ -1426,8 +1411,8 @@ class TransactionTypeProcess:
                             accrual_calculation_schedule.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             _l.debug("Skip")
 
@@ -1448,8 +1433,8 @@ class TransactionTypeProcess:
                             accrual_calculation_schedule.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument
@@ -1491,7 +1476,7 @@ class TransactionTypeProcess:
                 action_instrument_event_schedule = None
 
             if action_instrument_event_schedule and self.execute_action_condition(
-                    action_instrument_event_schedule
+                action_instrument_event_schedule
             ):
                 _l.debug("process event schedule: %s", action_instrument_event_schedule)
                 _l.debug("instrument_map: %s", instrument_map)
@@ -1640,8 +1625,8 @@ class TransactionTypeProcess:
                             event_schedule.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             _l.debug("Skip")
 
@@ -1662,8 +1647,8 @@ class TransactionTypeProcess:
                             event_schedule.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             EventSchedule.objects.filter(
                                 instrument=event_schedule.instrument
@@ -1710,10 +1695,10 @@ class TransactionTypeProcess:
                 action_instrument_event_schedule_action = None
 
             if (
-                    action_instrument_event_schedule_action
-                    and self.execute_action_condition(
                 action_instrument_event_schedule_action
-            )
+                and self.execute_action_condition(
+                    action_instrument_event_schedule_action
+                )
             ):
                 errors = {}
 
@@ -1731,8 +1716,8 @@ class TransactionTypeProcess:
                 )
 
                 if (
-                        action_instrument_event_schedule_action.event_schedule_phantom
-                        is not None
+                    action_instrument_event_schedule_action.event_schedule_phantom
+                    is not None
                 ):
                     event_schedule = event_schedules_map[
                         action_instrument_event_schedule_action.event_schedule_phantom_id
@@ -1817,8 +1802,8 @@ class TransactionTypeProcess:
                             event_schedule_action.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             _l.debug("Skip")
 
@@ -1839,8 +1824,8 @@ class TransactionTypeProcess:
                             event_schedule_action.save()
 
                         if (
-                                rebook_reaction
-                                == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
+                            rebook_reaction
+                            == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP
                         ):
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule
@@ -1896,10 +1881,10 @@ class TransactionTypeProcess:
                     # _l.debug('result %s', result)
 
                 except (
-                        ValueError,
-                        TypeError,
-                        IntegrityError,
-                        formula.InvalidExpression,
+                    ValueError,
+                    TypeError,
+                    IntegrityError,
+                    formula.InvalidExpression,
                 ) as e:
                     # _l.debug("Execute command execute_command.expr %s " % execute_command.expr)
                     # _l.debug("Execute command execute_command.names %s " % names)
@@ -1920,19 +1905,19 @@ class TransactionTypeProcess:
                         # self.instruments_errors.append(errors)
 
     def transaction_access_check(
-            self, transaction, group, account_permissions, portfolio_permissions
+        self, transaction, group, account_permissions, portfolio_permissions
     ):
         account_result = any(
             perm.group.id == group.id
             and (
-                    (
-                            transaction.account_position
-                            and transaction.account_position.id == perm.object_id
-                    )
-                    and (
-                            transaction.account_cash
-                            and transaction.account_cash.id == perm.object_id
-                    )
+                (
+                    transaction.account_position
+                    and transaction.account_position.id == perm.object_id
+                )
+                and (
+                    transaction.account_cash
+                    and transaction.account_cash.id == perm.object_id
+                )
             )
             for perm in account_permissions
         )
@@ -1950,550 +1935,545 @@ class TransactionTypeProcess:
             except ObjectDoesNotExist:
                 action_transaction = None
 
-            if action_transaction:
-                if self.execute_action_condition(action_transaction):
-                    if action_transaction.instrument_phantom is not None:
-                        _l.debug(
-                            "process transaction instrument_phantom.order: %s",
-                            action_transaction.instrument_phantom.order,
-                        )
-                    errors = {}
-                    transaction = Transaction(master_user=master_user)
-                    transaction.complex_transaction = self.complex_transaction
-                    transaction.complex_transaction_order = (
-                        self.next_transaction_order()
+            if action_transaction and self.execute_action_condition(action_transaction):
+                if action_transaction.instrument_phantom is not None:
+                    _l.debug(
+                        "process transaction instrument_phantom.order: %s",
+                        action_transaction.instrument_phantom.order,
                     )
-                    transaction.transaction_class = action_transaction.transaction_class
+                errors = {}
+                transaction = Transaction(master_user=master_user)
+                transaction.complex_transaction = self.complex_transaction
+                transaction.complex_transaction_order = self.next_transaction_order()
+                transaction.transaction_class = action_transaction.transaction_class
 
-                    self._set_rel(
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=None,
+                    target=transaction,
+                    target_attr_name="instrument",
+                    model=Instrument,
+                    source=action_transaction,
+                    source_attr_name="instrument",
+                )
+
+                if action_transaction.instrument_phantom is not None:
+                    transaction.instrument = instrument_map[
+                        action_transaction.instrument_phantom.order
+                    ]
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.currency,
+                    model=Currency,
+                    target=transaction,
+                    target_attr_name="transaction_currency",
+                    source=action_transaction,
+                    source_attr_name="transaction_currency",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="position_size_with_sign",
+                    source=action_transaction,
+                    source_attr_name="position_size_with_sign",
+                )
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.currency,
+                    model=Currency,
+                    target=transaction,
+                    target_attr_name="settlement_currency",
+                    source=action_transaction,
+                    source_attr_name="settlement_currency",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="cash_consideration",
+                    source=action_transaction,
+                    source_attr_name="cash_consideration",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="principal_with_sign",
+                    source=action_transaction,
+                    source_attr_name="principal_with_sign",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="carry_with_sign",
+                    source=action_transaction,
+                    source_attr_name="carry_with_sign",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="overheads_with_sign",
+                    source=action_transaction,
+                    source_attr_name="overheads_with_sign",
+                )
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.portfolio,
+                    model=Portfolio,
+                    target=transaction,
+                    target_attr_name="portfolio",
+                    source=action_transaction,
+                    source_attr_name="portfolio",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.account,
+                    model=Account,
+                    target=transaction,
+                    target_attr_name="account_position",
+                    source=action_transaction,
+                    source_attr_name="account_position",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.account,
+                    model=Account,
+                    target=transaction,
+                    target_attr_name="account_cash",
+                    source=action_transaction,
+                    source_attr_name="account_cash",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.account,
+                    model=Account,
+                    target=transaction,
+                    target_attr_name="account_interim",
+                    source=action_transaction,
+                    source_attr_name="account_interim",
+                )
+
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self._now,
+                    target=transaction,
+                    target_attr_name="accounting_date",
+                    source=action_transaction,
+                    source_attr_name="accounting_date",
+                    validator=formula.validate_date,
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self._now,
+                    target=transaction,
+                    target_attr_name="cash_date",
+                    source=action_transaction,
+                    source_attr_name="cash_date",
+                    validator=formula.validate_date,
+                )
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy1,
+                    model=Strategy1,
+                    target=transaction,
+                    target_attr_name="strategy1_position",
+                    source=action_transaction,
+                    source_attr_name="strategy1_position",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy1,
+                    model=Strategy1,
+                    target=transaction,
+                    target_attr_name="strategy1_cash",
+                    source=action_transaction,
+                    source_attr_name="strategy1_cash",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy2,
+                    model=Strategy2,
+                    target=transaction,
+                    target_attr_name="strategy2_position",
+                    source=action_transaction,
+                    source_attr_name="strategy2_position",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy2,
+                    model=Strategy2,
+                    target=transaction,
+                    target_attr_name="strategy2_cash",
+                    source=action_transaction,
+                    source_attr_name="strategy2_cash",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy3,
+                    model=Strategy3,
+                    target=transaction,
+                    target_attr_name="strategy3_position",
+                    source=action_transaction,
+                    source_attr_name="strategy3_position",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.strategy3,
+                    model=Strategy3,
+                    target=transaction,
+                    target_attr_name="strategy3_cash",
+                    source=action_transaction,
+                    source_attr_name="strategy3_cash",
+                )
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.responsible,
+                    model=Responsible,
+                    target=transaction,
+                    target_attr_name="responsible",
+                    source=action_transaction,
+                    source_attr_name="responsible",
+                )
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=self.ecosystem_default.counterparty,
+                    model=Counterparty,
+                    target=transaction,
+                    target_attr_name="counterparty",
+                    source=action_transaction,
+                    source_attr_name="counterparty",
+                )
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=None,
+                    model=Instrument,
+                    target=transaction,
+                    target_attr_name="linked_instrument",
+                    source=action_transaction,
+                    source_attr_name="linked_instrument",
+                )
+
+                if action_transaction.linked_instrument_phantom is not None:
+                    # transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
+                    transaction.linked_instrument = instrument_map[
+                        action_transaction.linked_instrument_phantom.order
+                    ]
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=None,
+                    model=Instrument,
+                    target=transaction,
+                    target_attr_name="allocation_balance",
+                    source=action_transaction,
+                    source_attr_name="allocation_balance",
+                )
+                if action_transaction.allocation_balance_phantom is not None:
+                    # transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
+                    transaction.allocation_balance = instrument_map[
+                        action_transaction.allocation_balance_phantom.order
+                    ]
+
+                self._set_rel(
+                    errors=errors,
+                    values=self.values,
+                    default_value=None,
+                    model=Instrument,
+                    target=transaction,
+                    target_attr_name="allocation_pl",
+                    source=action_transaction,
+                    source_attr_name="allocation_pl",
+                )
+                if action_transaction.allocation_pl_phantom is not None:
+                    # transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
+                    transaction.allocation_pl = instrument_map[
+                        action_transaction.allocation_pl_phantom.order
+                    ]
+
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="reference_fx_rate",
+                    source=action_transaction,
+                    source_attr_name="reference_fx_rate",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="factor",
+                    source=action_transaction,
+                    source_attr_name="factor",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="trade_price",
+                    source=action_transaction,
+                    source_attr_name="trade_price",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="position_amount",
+                    source=action_transaction,
+                    source_attr_name="position_amount",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="principal_amount",
+                    source=action_transaction,
+                    source_attr_name="principal_amount",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="carry_amount",
+                    source=action_transaction,
+                    source_attr_name="carry_amount",
+                )
+                self._set_val(
+                    errors=errors,
+                    values=self.values,
+                    default_value=0.0,
+                    target=transaction,
+                    target_attr_name="overheads",
+                    source=action_transaction,
+                    source_attr_name="overheads",
+                )
+
+                transaction.carry_with_sign = format_float_to_2(
+                    transaction.carry_with_sign
+                )
+                transaction.principal_with_sign = format_float_to_2(
+                    transaction.principal_with_sign
+                )
+                transaction.overheads_with_sign = format_float_to_2(
+                    transaction.overheads_with_sign
+                )
+
+                transaction.cash_consideration = format_float_to_2(
+                    transaction.cash_consideration
+                )
+
+                # _l.debug('action_transaction.notes')
+                # _l.debug(action_transaction.notes)
+                # _l.debug(self.values)
+
+                if action_transaction.notes is not None:
+                    self._set_val(
+                        errors=errors,
+                        values=self.values,
+                        default_value="",
+                        target=transaction,
+                        target_attr_name="notes",
+                        source=action_transaction,
+                        source_attr_name="notes",
+                    )
+
+                if action_transaction.user_text_1 is not None:
+                    self._set_val(
+                        errors=errors,
+                        values=self.values,
+                        default_value="",
+                        target=transaction,
+                        target_attr_name="user_text_1",
+                        source=action_transaction,
+                        source_attr_name="user_text_1",
+                    )
+
+                if action_transaction.user_text_2 is not None:
+                    self._set_val(
+                        errors=errors,
+                        values=self.values,
+                        default_value="",
+                        target=transaction,
+                        target_attr_name="user_text_2",
+                        source=action_transaction,
+                        source_attr_name="user_text_2",
+                    )
+
+                if action_transaction.user_text_3 is not None:
+                    self._set_val(
+                        errors=errors,
+                        values=self.values,
+                        default_value="",
+                        target=transaction,
+                        target_attr_name="user_text_3",
+                        source=action_transaction,
+                        source_attr_name="user_text_3",
+                    )
+
+                if action_transaction.user_number_1 is not None:
+                    self._set_val(
                         errors=errors,
                         values=self.values,
                         default_value=None,
                         target=transaction,
-                        target_attr_name="instrument",
-                        model=Instrument,
+                        target_attr_name="user_number_1",
                         source=action_transaction,
-                        source_attr_name="instrument",
+                        source_attr_name="user_number_1",
                     )
 
-                    if action_transaction.instrument_phantom is not None:
-                        transaction.instrument = instrument_map[
-                            action_transaction.instrument_phantom.order
-                        ]
-
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.currency,
-                        model=Currency,
-                        target=transaction,
-                        target_attr_name="transaction_currency",
-                        source=action_transaction,
-                        source_attr_name="transaction_currency",
-                    )
+                if action_transaction.user_number_2 is not None:
                     self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="position_size_with_sign",
-                        source=action_transaction,
-                        source_attr_name="position_size_with_sign",
-                    )
-
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.currency,
-                        model=Currency,
-                        target=transaction,
-                        target_attr_name="settlement_currency",
-                        source=action_transaction,
-                        source_attr_name="settlement_currency",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="cash_consideration",
-                        source=action_transaction,
-                        source_attr_name="cash_consideration",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="principal_with_sign",
-                        source=action_transaction,
-                        source_attr_name="principal_with_sign",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="carry_with_sign",
-                        source=action_transaction,
-                        source_attr_name="carry_with_sign",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="overheads_with_sign",
-                        source=action_transaction,
-                        source_attr_name="overheads_with_sign",
-                    )
-
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.portfolio,
-                        model=Portfolio,
-                        target=transaction,
-                        target_attr_name="portfolio",
-                        source=action_transaction,
-                        source_attr_name="portfolio",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.account,
-                        model=Account,
-                        target=transaction,
-                        target_attr_name="account_position",
-                        source=action_transaction,
-                        source_attr_name="account_position",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.account,
-                        model=Account,
-                        target=transaction,
-                        target_attr_name="account_cash",
-                        source=action_transaction,
-                        source_attr_name="account_cash",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.account,
-                        model=Account,
-                        target=transaction,
-                        target_attr_name="account_interim",
-                        source=action_transaction,
-                        source_attr_name="account_interim",
-                    )
-
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self._now,
-                        target=transaction,
-                        target_attr_name="accounting_date",
-                        source=action_transaction,
-                        source_attr_name="accounting_date",
-                        validator=formula.validate_date,
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self._now,
-                        target=transaction,
-                        target_attr_name="cash_date",
-                        source=action_transaction,
-                        source_attr_name="cash_date",
-                        validator=formula.validate_date,
-                    )
-
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy1,
-                        model=Strategy1,
-                        target=transaction,
-                        target_attr_name="strategy1_position",
-                        source=action_transaction,
-                        source_attr_name="strategy1_position",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy1,
-                        model=Strategy1,
-                        target=transaction,
-                        target_attr_name="strategy1_cash",
-                        source=action_transaction,
-                        source_attr_name="strategy1_cash",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy2,
-                        model=Strategy2,
-                        target=transaction,
-                        target_attr_name="strategy2_position",
-                        source=action_transaction,
-                        source_attr_name="strategy2_position",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy2,
-                        model=Strategy2,
-                        target=transaction,
-                        target_attr_name="strategy2_cash",
-                        source=action_transaction,
-                        source_attr_name="strategy2_cash",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy3,
-                        model=Strategy3,
-                        target=transaction,
-                        target_attr_name="strategy3_position",
-                        source=action_transaction,
-                        source_attr_name="strategy3_position",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.strategy3,
-                        model=Strategy3,
-                        target=transaction,
-                        target_attr_name="strategy3_cash",
-                        source=action_transaction,
-                        source_attr_name="strategy3_cash",
-                    )
-
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.responsible,
-                        model=Responsible,
-                        target=transaction,
-                        target_attr_name="responsible",
-                        source=action_transaction,
-                        source_attr_name="responsible",
-                    )
-                    self._set_rel(
-                        errors=errors,
-                        values=self.values,
-                        default_value=self.ecosystem_default.counterparty,
-                        model=Counterparty,
-                        target=transaction,
-                        target_attr_name="counterparty",
-                        source=action_transaction,
-                        source_attr_name="counterparty",
-                    )
-
-                    self._set_rel(
                         errors=errors,
                         values=self.values,
                         default_value=None,
-                        model=Instrument,
                         target=transaction,
-                        target_attr_name="linked_instrument",
+                        target_attr_name="user_number_2",
                         source=action_transaction,
-                        source_attr_name="linked_instrument",
+                        source_attr_name="user_number_2",
                     )
 
-                    if action_transaction.linked_instrument_phantom is not None:
-                        # transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
-                        transaction.linked_instrument = instrument_map[
-                            action_transaction.linked_instrument_phantom.order
-                        ]
-
-                    self._set_rel(
+                if action_transaction.user_number_3 is not None:
+                    self._set_val(
                         errors=errors,
                         values=self.values,
                         default_value=None,
-                        model=Instrument,
                         target=transaction,
-                        target_attr_name="allocation_balance",
+                        target_attr_name="user_number_3",
                         source=action_transaction,
-                        source_attr_name="allocation_balance",
+                        source_attr_name="user_number_3",
                     )
-                    if action_transaction.allocation_balance_phantom is not None:
-                        # transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
-                        transaction.allocation_balance = instrument_map[
-                            action_transaction.allocation_balance_phantom.order
-                        ]
 
-                    self._set_rel(
+                if action_transaction.user_date_1 is not None:
+                    self._set_val(
                         errors=errors,
                         values=self.values,
                         default_value=None,
-                        model=Instrument,
                         target=transaction,
-                        target_attr_name="allocation_pl",
+                        target_attr_name="user_date_1",
                         source=action_transaction,
-                        source_attr_name="allocation_pl",
+                        source_attr_name="user_date_1",
                     )
-                    if action_transaction.allocation_pl_phantom is not None:
-                        # transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
-                        transaction.allocation_pl = instrument_map[
-                            action_transaction.allocation_pl_phantom.order
-                        ]
 
+                if action_transaction.user_date_2 is not None:
                     self._set_val(
                         errors=errors,
                         values=self.values,
-                        default_value=0.0,
+                        default_value=None,
                         target=transaction,
-                        target_attr_name="reference_fx_rate",
+                        target_attr_name="user_date_2",
                         source=action_transaction,
-                        source_attr_name="reference_fx_rate",
+                        source_attr_name="user_date_2",
                     )
+
+                if action_transaction.user_date_3 is not None:
                     self._set_val(
                         errors=errors,
                         values=self.values,
-                        default_value=0.0,
+                        default_value=None,
                         target=transaction,
-                        target_attr_name="factor",
+                        target_attr_name="user_date_3",
                         source=action_transaction,
-                        source_attr_name="factor",
+                        source_attr_name="user_date_3",
                     )
+
+                if action_transaction.is_canceled is not None:
                     self._set_val(
                         errors=errors,
                         values=self.values,
-                        default_value=0.0,
+                        default_value=False,
                         target=transaction,
-                        target_attr_name="trade_price",
+                        target_attr_name="is_canceled",
                         source=action_transaction,
-                        source_attr_name="trade_price",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="position_amount",
-                        source=action_transaction,
-                        source_attr_name="position_amount",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="principal_amount",
-                        source=action_transaction,
-                        source_attr_name="principal_amount",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="carry_amount",
-                        source=action_transaction,
-                        source_attr_name="carry_amount",
-                    )
-                    self._set_val(
-                        errors=errors,
-                        values=self.values,
-                        default_value=0.0,
-                        target=transaction,
-                        target_attr_name="overheads",
-                        source=action_transaction,
-                        source_attr_name="overheads",
+                        source_attr_name="is_canceled",
                     )
 
-                    transaction.carry_with_sign = format_float_to_2(
-                        transaction.carry_with_sign
+                transaction_date_source = "null"
+
+                if transaction.accounting_date is None:
+                    transaction.accounting_date = self._now
+                else:
+                    transaction_date_source = "accounting_date"
+
+                if transaction.cash_date is None:
+                    transaction.cash_date = self._now
+                else:
+                    transaction_date_source = "cash_date"
+
+                # Set transaction date below
+
+                if transaction_date_source == "accounting_date":
+                    transaction.transaction_date = transaction.accounting_date
+                elif transaction_date_source == "cash_date":
+                    transaction.transaction_date = transaction.cash_date
+                elif transaction_date_source == "null":
+                    transaction.transaction_date = min(
+                        transaction.accounting_date, transaction.cash_date
                     )
-                    transaction.principal_with_sign = format_float_to_2(
-                        transaction.principal_with_sign
+
+                try:
+                    # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
+                    transaction.save()
+
+                    self.record_execution_progress(f"Create Transaction {transaction}")
+
+                    # self.assign_permissions_to_transaction(transaction)
+
+                except (ValueError, TypeError, IntegrityError) as error:
+                    _l.debug(error)
+
+                    self._add_err_msg(errors, "non_field_errors", str(error))
+                except DatabaseError:
+                    self._add_err_msg(
+                        errors,
+                        "non_field_errors",
+                        gettext_lazy("General DB error."),
                     )
-                    transaction.overheads_with_sign = format_float_to_2(
-                        transaction.overheads_with_sign
-                    )
+                else:
+                    self.transactions.append(transaction)
+                finally:
+                    # _l.debug("Transaction action errors %s " % errors)
 
-                    transaction.cash_consideration = format_float_to_2(
-                        transaction.cash_consideration
-                    )
-
-                    # _l.debug('action_transaction.notes')
-                    # _l.debug(action_transaction.notes)
-                    # _l.debug(self.values)
-
-                    if action_transaction.notes is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value="",
-                            target=transaction,
-                            target_attr_name="notes",
-                            source=action_transaction,
-                            source_attr_name="notes",
-                        )
-
-                    if action_transaction.user_text_1 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value="",
-                            target=transaction,
-                            target_attr_name="user_text_1",
-                            source=action_transaction,
-                            source_attr_name="user_text_1",
-                        )
-
-                    if action_transaction.user_text_2 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value="",
-                            target=transaction,
-                            target_attr_name="user_text_2",
-                            source=action_transaction,
-                            source_attr_name="user_text_2",
-                        )
-
-                    if action_transaction.user_text_3 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value="",
-                            target=transaction,
-                            target_attr_name="user_text_3",
-                            source=action_transaction,
-                            source_attr_name="user_text_3",
-                        )
-
-                    if action_transaction.user_number_1 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_number_1",
-                            source=action_transaction,
-                            source_attr_name="user_number_1",
-                        )
-
-                    if action_transaction.user_number_2 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_number_2",
-                            source=action_transaction,
-                            source_attr_name="user_number_2",
-                        )
-
-                    if action_transaction.user_number_3 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_number_3",
-                            source=action_transaction,
-                            source_attr_name="user_number_3",
-                        )
-
-                    if action_transaction.user_date_1 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_date_1",
-                            source=action_transaction,
-                            source_attr_name="user_date_1",
-                        )
-
-                    if action_transaction.user_date_2 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_date_2",
-                            source=action_transaction,
-                            source_attr_name="user_date_2",
-                        )
-
-                    if action_transaction.user_date_3 is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=None,
-                            target=transaction,
-                            target_attr_name="user_date_3",
-                            source=action_transaction,
-                            source_attr_name="user_date_3",
-                        )
-
-                    if action_transaction.is_canceled is not None:
-                        self._set_val(
-                            errors=errors,
-                            values=self.values,
-                            default_value=False,
-                            target=transaction,
-                            target_attr_name="is_canceled",
-                            source=action_transaction,
-                            source_attr_name="is_canceled",
-                        )
-
-                    transaction_date_source = "null"
-
-                    if transaction.accounting_date is None:
-                        transaction.accounting_date = self._now
-                    else:
-                        transaction_date_source = "accounting_date"
-
-                    if transaction.cash_date is None:
-                        transaction.cash_date = self._now
-                    else:
-                        transaction_date_source = "cash_date"
-
-                    # Set transaction date below
-
-                    if transaction_date_source == "accounting_date":
-                        transaction.transaction_date = transaction.accounting_date
-                    elif transaction_date_source == "cash_date":
-                        transaction.transaction_date = transaction.cash_date
-                    elif transaction_date_source == "null":
-                        transaction.transaction_date = min(
-                            transaction.accounting_date, transaction.cash_date
-                        )
-
-                    try:
-                        # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
-                        transaction.save()
-
-                        self.record_execution_progress(
-                            f"Create Transaction {transaction}"
-                        )
-
-                        # self.assign_permissions_to_transaction(transaction)
-
-                    except (ValueError, TypeError, IntegrityError) as error:
-                        _l.debug(error)
-
-                        self._add_err_msg(errors, "non_field_errors", str(error))
-                    except DatabaseError:
-                        self._add_err_msg(
-                            errors,
-                            "non_field_errors",
-                            gettext_lazy("General DB error."),
-                        )
-                    else:
-                        self.transactions.append(transaction)
-                    finally:
-                        # _l.debug("Transaction action errors %s " % errors)
-
-                        if bool(errors):
-                            self.transactions_errors.append(errors)
+                    if bool(errors):
+                        self.transactions_errors.append(errors)
 
     def _save_inputs(self):
         self.complex_transaction.inputs.all().delete()
@@ -2508,8 +2488,8 @@ class TransactionTypeProcess:
             ci.transaction_type_input = ti
 
             if ti.value_type in (
-                    TransactionTypeInput.STRING,
-                    TransactionTypeInput.SELECTOR,
+                TransactionTypeInput.STRING,
+                TransactionTypeInput.SELECTOR,
             ):
                 if val is None:
                     val = ""
@@ -2746,21 +2726,12 @@ class TransactionTypeProcess:
         return names
 
     def execute_uniqueness_expression(self):
-        # uniqueness below
-        # 1 (SKIP, gettext_lazy('Skip')),
-        # 2 (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
-        # 3 (OVERWRITE, gettext_lazy('Overwrite')),
-        # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
-
         # _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
 
         self.record_execution_progress("Calculating Unique Code")
 
         names = dict(self.values.items())
         try:
-            # _l.debug('names %s' % names)
-            # _l.debug('self._context %s' % self._context)
-
             self.complex_transaction.transaction_unique_code = formula.safe_eval(
                 self.complex_transaction.transaction_type.transaction_unique_code_expr,
                 names=names,
@@ -2768,13 +2739,13 @@ class TransactionTypeProcess:
             )
 
         except Exception as e:
-            # _l.error('execute_uniqueness_expression.e %s ' % e)
-            # _l.debug('execute_uniqueness_expression.names %s' % names)
-            # _l.debug('execute_uniqueness_expression.names %s' % traceback.format_exc())
-
+            _l.error(
+                f"execute_uniqueness_expression.e {e} names {names} "
+                f"trace {traceback.format_exc()}"
+            )
             self.complex_transaction.transaction_unique_code = None
 
-        exist = None
+        _l.info('self.complex_transaction.transaction_unique_code %s' % self.complex_transaction.transaction_unique_code)
 
         if self.is_rebook:
             try:
@@ -2783,42 +2754,38 @@ class TransactionTypeProcess:
                 ).filter(
                     master_user=self.transaction_type.master_user,
                     transaction_unique_code=self.complex_transaction.transaction_unique_code,
-                )[0]
+                )[
+                    0
+                ]
             except Exception as e:
                 exist = None
-                _l.error('execute_uniqueness_expression.is_rebook exist e %s ' % e)
+                _l.error(f"execute_uniqueness_expression.is_rebook exist {repr(e)} ")
 
             if (
-                    self.uniqueness_reaction == TransactionType.SKIP
-                    and exist
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.SKIP
+                and exist
+                and self.complex_transaction.transaction_unique_code
             ):
-                self.uniqueness_status = "skip"
-
-                self.general_errors.append(
-                    {
-                        "reason": 409,
-                        "message": "Skipped book. Transaction Unique code error",
-                    }
-                )
+                self.skipped_book_unique_code_error()
 
             elif (
-                    self.uniqueness_reaction == TransactionType.SKIP
-                    and not exist
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.SKIP
+                and not exist
+                and self.complex_transaction.transaction_unique_code
             ):
                 # Just create complex transaction
                 self.uniqueness_status = "update"
 
                 self.record_execution_progress(
-                    "Unique code is owned by its transaction, can update transaction. (TransactionType.SKIP)"
+                    "Unique code is owned by its transaction, can update transaction. "
+                    "(TransactionType.SKIP)"
                 )
 
             elif self.uniqueness_reaction == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
-                self._extracted_from_execute_uniqueness_expression_70()
+                self.book_without_unique_code()
             elif (
-                    self.uniqueness_reaction == TransactionType.OVERWRITE
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.OVERWRITE
+                and self.complex_transaction.transaction_unique_code
             ):
                 self.uniqueness_status = "overwrite"
 
@@ -2826,7 +2793,8 @@ class TransactionTypeProcess:
                     exist.fake_delete()
 
                     self.record_execution_progress(
-                        f"Unique Code is occupied, delete transaction {exist.code} (OVERWRITE)"
+                        f"Unique Code is occupied, delete transaction {exist.code}"
+                        f" (OVERWRITE)"
                     )
                 else:
                     self.record_execution_progress(
@@ -2834,41 +2802,31 @@ class TransactionTypeProcess:
                     )
 
         else:
-            try:
-                exist = ComplexTransaction.objects.filter(
-                    master_user=self.transaction_type.master_user,
-                    transaction_unique_code=self.complex_transaction.transaction_unique_code,
-                )[0]
-            except Exception as e:
-                exist = None
-                _l.error('execute_uniqueness_expression.exist e %s ' % e)
+            # exist = ComplexTransaction.objects.filter(
+            #     master_user=self.transaction_type.master_user,
+            #     transaction_unique_code=self.complex_transaction.transaction_unique_code,
+            # ).first()
+            exist = ComplexTransaction.objects.filter(
+                transaction_unique_code=self.complex_transaction.transaction_unique_code,
+            ).first()
 
-            _l.debug(
-                f"execute_uniqueness_expression.uniqueness_reaction {self.uniqueness_reaction}"
+            _l.info(
+                f"execute_uniqueness_expression.uniqueness_reaction "
+                f"{self.uniqueness_reaction}"
+                f"{exist}"
             )
 
             if (
-                    self.uniqueness_reaction == 1
-                    and exist
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.SKIP
+                and exist
+                and self.complex_transaction.transaction_unique_code
             ):
-                # self.complex_transaction.delete()
-
-                # Do not create new transaction if transcation with that code already exists
-
-                self.uniqueness_status = "skip"
-
-                self.general_errors.append(
-                    {
-                        "reason": 409,
-                        "message": "Skipped book. Transaction Unique code error",
-                    }
-                )
+                self.skipped_book_unique_code_error()
 
             elif (
-                    self.uniqueness_reaction == 1
-                    and not exist
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.SKIP
+                and not exist
+                and self.complex_transaction.transaction_unique_code
             ):
                 # Just create complex transaction
                 self.uniqueness_status = "create"
@@ -2877,15 +2835,16 @@ class TransactionTypeProcess:
                     "Unique code is free, can create transaction. (SKIP)"
                 )
 
-            elif self.uniqueness_reaction == 2:
-                self._extracted_from_execute_uniqueness_expression_70()
+            elif self.uniqueness_reaction == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
+                self.book_without_unique_code()
             elif (
-                    self.uniqueness_reaction == 3
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.OVERWRITE
+                and self.complex_transaction.transaction_unique_code
             ):
                 if exist:
                     self.record_execution_progress(
-                        "Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)"
+                        "Unique Code is already in use, can create transaction. "
+                        "Previous Transaction is deleted (OVERWRITE)"
                     )
                     exist.fake_delete()
 
@@ -2901,15 +2860,13 @@ class TransactionTypeProcess:
                     )
 
             elif (
-                    self.uniqueness_reaction == 4
-                    and exist
-                    and self.complex_transaction.transaction_unique_code
+                self.uniqueness_reaction == TransactionType.TREAT_AS_ERROR
+                and exist
+                and self.complex_transaction.transaction_unique_code
             ):
                 # TODO ask if behavior same as skip
                 self.uniqueness_status = "error"
-
                 self.complex_transaction.fake_delete()
-
                 self.general_errors.append(
                     {
                         "reason": 410,
@@ -2921,12 +2878,19 @@ class TransactionTypeProcess:
             f"Unique Code: {self.complex_transaction.transaction_unique_code} "
         )
 
-    # TODO Rename this here and in `execute_uniqueness_expression`
-    def _extracted_from_execute_uniqueness_expression_70(self):
+    def skipped_book_unique_code_error(self):
+        # Do not create a new transaction if transaction with that code already exists
+        self.uniqueness_status = "skip"
+        self.general_errors.append(
+            {
+                "reason": 409,
+                "message": "Skipped book. Transaction Unique Code error",
+            }
+        )
+
+    def book_without_unique_code(self):
         self.uniqueness_status = "booked_without_unique_code"
-
         self.record_execution_progress("Book without Unique Code")
-
         self.complex_transaction.transaction_unique_code = None
 
     def run_procedures_after_book(self):
@@ -3005,7 +2969,7 @@ class TransactionTypeProcess:
 
         self._save_inputs()
 
-        self.assign_permissions_to_pending_complex_transaction()
+        # self.assign_permissions_to_pending_complex_transaction() FIXME no such !
 
         self.run_procedures_after_book()
 
@@ -3058,7 +3022,7 @@ class TransactionTypeProcess:
         )
 
         """
-        Creating instruments factor schedules
+        Creating instrument's factor schedules
         """
         create_factor_st = time.perf_counter()
         self.book_create_factor_schedules(actions, instrument_map)
@@ -3151,15 +3115,15 @@ class TransactionTypeProcess:
             self.complex_transaction.source = self.source
 
         if self.complex_transaction.transaction_unique_code:
-
             count = (
                 ComplexTransaction.objects.filter(
                     transaction_unique_code=self.complex_transaction.transaction_unique_code
-                ).exclude(code=self.complex_transaction.code).count()
+                )
+                .exclude(code=self.complex_transaction.code)
+                .count()
             )
 
             if self.uniqueness_status == "overwrite":
-
                 # TODO this is weird logic, but ok for now
 
                 items = ComplexTransaction.objects.filter(
@@ -3169,15 +3133,15 @@ class TransactionTypeProcess:
                 for item in items:
                     item.fake_delete()
 
-            else:
-                if count > 0:
-                    raise RuntimeError("Transaction Unique Code must be unique")
+            elif count > 0:
+                raise RuntimeError("Transaction Unique Code must be unique")
 
         _l.debug(
-            f"self.complex_transaction.transaction_unique_code {self.complex_transaction.transaction_unique_code}"
+            f"self.complex_transaction.transaction_unique_code"
+            f" {self.complex_transaction.transaction_unique_code} "
+            f"id {self.complex_transaction.id} "
+            f"code {self.complex_transaction.code}"
         )
-        _l.debug(f"self.complex_transaction.id {self.complex_transaction.id}")
-        _l.debug(f"self.complex_transaction.code {self.complex_transaction.code}")
 
         self.complex_transaction.save()  # save executed text and date expression
         self._context["complex_transaction"] = self.complex_transaction
@@ -3264,8 +3228,8 @@ class TransactionTypeProcess:
             self.complex_transaction.transactions.all().delete()
 
         if (
-                self.complex_transaction.transaction_type.type
-                == TransactionType.TYPE_PROCEDURE
+            self.complex_transaction.transaction_type.type
+            == TransactionType.TYPE_PROCEDURE
         ):
             self.complex_transaction.fake_delete()
             self.complex_transaction = None
@@ -3401,24 +3365,24 @@ class TransactionTypeProcess:
     @property
     def has_errors(self):
         return (
-                bool(self.instruments_errors)
-                or any(bool(e) for e in self.general_errors)
-                or any(bool(e) for e in self.value_errors)
-                or any(bool(e) for e in self.complex_transaction_errors)
-                or any(bool(e) for e in self.transactions_errors)
+            bool(self.instruments_errors)
+            or any(bool(e) for e in self.general_errors)
+            or any(bool(e) for e in self.value_errors)
+            or any(bool(e) for e in self.complex_transaction_errors)
+            or any(bool(e) for e in self.transactions_errors)
         )
 
     def _set_val(
-            self,
-            errors,
-            values,
-            default_value,
-            target,
-            target_attr_name,
-            source,
-            source_attr_name,
-            validator=None,
-            object_data=None,
+        self,
+        errors,
+        values,
+        default_value,
+        target,
+        target_attr_name,
+        source,
+        source_attr_name,
+        validator=None,
+        object_data=None,
     ):
         value = getattr(source, source_attr_name)
         if value:
@@ -3440,16 +3404,16 @@ class TransactionTypeProcess:
         setattr(target, target_attr_name, value)  # set computed value
 
     def _set_rel(
-            self,
-            errors,
-            values,
-            default_value,
-            target,
-            target_attr_name,
-            source,
-            source_attr_name,
-            model,
-            object_data=None,
+        self,
+        errors,
+        values,
+        default_value,
+        target,
+        target_attr_name,
+        source,
+        source_attr_name,
+        model,
+        object_data=None,
     ):
         user_code = getattr(source, source_attr_name, None)  # got user_code
         value = None

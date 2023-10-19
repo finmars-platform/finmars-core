@@ -50,13 +50,13 @@ class ExplorerViewSet(AbstractViewSet):
 
         items = storage.listdir(path)
 
+        members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
+
         results = []
 
         for dir in items[0]:
 
             if path == settings.BASE_API_URL + '/':
-
-                members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
 
                 if dir not in members_usernames:
                     results.append({
@@ -450,5 +450,29 @@ class DownloadAsZipViewSet(AbstractViewSet):
         # Serve the zip file as a response
         response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="archive.zip"'
+
+        return response
+
+
+class DownloadViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+        path = request.data.get('path')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not path:
+            raise ValidationError("path is required")
+
+        _l.info('path %s' % path)
+
+        path = settings.BASE_API_URL + '/' + path
+
+        # Serve the zip file as a response
+        # Serve the file as a response
+        with storage.open(path, 'rb') as file:
+            response = FileResponse(file, content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(path)}"'
 
         return response

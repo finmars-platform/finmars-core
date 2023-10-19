@@ -264,7 +264,7 @@ class BloombergDataProvider(AbstractProvider):
 
     def test_certificate(self, options):
 
-        _l.debug('download_currency_pricing: %s', options)
+        _l.info('test_certificate: %s', options)
 
         return self._invoke_sync(name='test_certificate',
                                  request_func=self.get_test_certificate_send_request,
@@ -273,7 +273,7 @@ class BloombergDataProvider(AbstractProvider):
                                  response_func=self.get_test_certificate_get_response)
 
     def download_instrument(self, options):
-        _l.debug('download_instrument: %s', options)
+        _l.info('download_instrument: %s', options)
 
         response_id = options.get('response_id', None)
         if response_id is None:
@@ -483,7 +483,7 @@ class BloombergDataProvider(AbstractProvider):
         @return: response_id: used to get data in get_pricing_latest_get_response
         @rtype: str
         """
-        _l.debug('> get_test_certificate_send_request:')
+        _l.info('> get_test_certificate_send_request:')
 
         # fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN', 'SECURITY_TYP']
         fields = []
@@ -497,23 +497,26 @@ class BloombergDataProvider(AbstractProvider):
             "historical": True,
         }
 
-        _l.debug('request: fields=%s, headers=%s', fields, headers)
+        _l.info('get_test_certificate_send_request.request: fields=%s, headers=%s', fields, headers)
         response = self.soap_client.service.submitGetDataRequest(
             headers=headers,
             fields=fields_data
         )
-        _l.debug('response=%s', response)
+        _l.info('get_test_certificate_send_request.response=%s', response)
 
         is_authorized = False
 
         if response.statusCode.code == 200:
             is_authorized = True
 
-        _l.debug('< is_authorized=%s', is_authorized)
+        _l.info('<get_test_certificate_send_request. is_authorized=%s', is_authorized)
 
-        return is_authorized
+        return {
+            "is_authorized": is_authorized,
+            "response_text": str(response)
+        }
 
-    def get_test_certificate_get_response(self, is_authorized):
+    def get_test_certificate_get_response(self, data):
         """
         Retrieval of status of test certificate request. Return True/False as status value
         @param is_authorized: authorization status
@@ -522,11 +525,9 @@ class BloombergDataProvider(AbstractProvider):
         @rtype: dict
         """
 
-        _l.debug('get_test_certificate_get_response is_authorized %s' % is_authorized)
+        # _l.debug('get_test_certificate_get_response data %s' % data)
 
-        return {
-            "is_authorized": is_authorized
-        }
+        return data
 
     def get_pricing_latest_send_request(self, instruments, fields):
         """
@@ -1296,7 +1297,7 @@ class FakeBloombergDataProvider(BloombergDataProvider):
         return result
 
     def get_test_certificate_send_request(self):
-        _l.debug('> get_test_certificate_send_request:')
+        _l.info('> get_test_certificate_send_request:')
 
         if settings.BLOOMBERG_SANDBOX_SEND_EMPTY:
             _l.debug('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')

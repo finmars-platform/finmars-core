@@ -190,6 +190,7 @@ def serialize_transaction_report_item(item):
     # Complex Transaction Fields
 
     # result['complex_transaction.status'] = item['complex_transaction_status']
+    result['complex_transaction.id'] = item['complex_transaction_id']
     result['complex_transaction.code'] = item['complex_transaction_code']
     result['complex_transaction.text'] = item['complex_transaction_text']
     result['complex_transaction.date'] = item['complex_transaction_date']
@@ -441,6 +442,8 @@ def serialize_balance_report_item(item):
 
 
 def serialize_pl_report_item(item):
+
+
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
         "id": '-',
@@ -487,8 +490,10 @@ def serialize_pl_report_item(item):
     # result["currency"] = None
 
     ids = []
-    ids.append(str(result["item_type"]))
-    ids.append(str(result["item_group"]))
+
+
+    ids.append(str(item["item_type"]))
+    ids.append(str(item["item_group"]))
 
     if item['item_type'] == 1:  # instrument
         ids.append(str(result["instrument"]))

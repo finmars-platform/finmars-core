@@ -21,7 +21,6 @@ import poms.explorer.urls as explorer_router
 import poms.file_reports.views as file_reports
 import poms.history.views as history
 import poms.iam.urls as iam_router
-import poms.iam.views as iam
 import poms.instruments.urls as instrument_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
@@ -77,6 +76,13 @@ router.register(
     celery_tasks.CeleryTaskViewSet,
     "CeleryTask",
 )
+
+router.register(
+    r"tasks/worker",
+    celery_tasks.CeleryWorkerViewSet,
+    "CeleryWorker",
+)
+
 router.register(
     r"tasks/stats",
     celery_tasks.CeleryStatsViewSet,
@@ -360,8 +366,6 @@ urlpatterns = [
         r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
     ),
 
-
-
     # external callbacks
     re_path(
         r"internal/brokers/bloomberg/callback",
@@ -418,7 +422,7 @@ urlpatterns = [
 
     re_path(
         r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"
-    ),  # TODO deprecated delete soon
+    ),
     re_path(
         r"^authorizer/create-master-user/",
         CreateMasterUser.as_view(),

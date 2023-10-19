@@ -1,3 +1,5 @@
+from datetime import date
+
 from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -138,6 +140,15 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         return (
             self.master_user.portfolio_id == self.id if self.master_user_id else False
         )
+
+    def first_transaction_date(self, date_field: str) -> date:
+        """
+        Try to return the 1st transaction date for the portfolio
+        """
+        param = f"transaction__{date_field}"
+        return self.portfolioregisterrecord_set.aggregate(models.Min(param))[
+            f"{param}__min"
+        ]
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
@@ -371,7 +382,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         )
 
 
-class PortfolioBundle(NamedModel,  DataTimeStampedModel):
+class PortfolioBundle(NamedModel, DataTimeStampedModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_bundles",

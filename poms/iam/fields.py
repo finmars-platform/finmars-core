@@ -1,15 +1,14 @@
-from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField, RelatedField
+import logging
 
-from poms.iam.filters import ObjectPermissionBackend
+from rest_framework.relations import RelatedField
+
 from poms.iam.utils import get_allowed_queryset
 from poms.users.utils import get_member_from_context
 
-import logging
+_l = logging.getLogger("poms.iam")
 
-_l = logging.getLogger('poms.iam')
 
 class IamProtectedRelatedField(RelatedField):
-
     def get_queryset(self):
         queryset = super().get_queryset()
 
@@ -18,7 +17,7 @@ class IamProtectedRelatedField(RelatedField):
         if member.is_admin:
             return queryset
 
-        _l.debug('IamProtectedRelatedField %s' % member)
+        _l.debug(f"IamProtectedRelatedField {member}")
 
         queryset = get_allowed_queryset(member, queryset)
 

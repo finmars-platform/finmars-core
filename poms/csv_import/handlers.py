@@ -7,7 +7,6 @@ import traceback
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
-
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
@@ -57,6 +56,24 @@ from poms.users.models import EcosystemDefault
 storage = get_storage()
 
 _l = getLogger("poms.csv_import")
+
+ACCRUAL_MAP = {
+    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+    "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
+    "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
+    "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
+    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
+    "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
+    "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
+    "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
+    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
+    "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
+    "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+    "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
+    "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+    "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+}
 
 
 ## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
@@ -520,24 +537,6 @@ def handler_instrument_object(
                 "accrual_calculation_schedules"
             ][0]["first_payment_date"]
 
-    accrual_map = {
-        "Actual/Actual (ICMA)": AccrualCalculationModel.ACT_ACT,
-        "Actual/Actual (ISDA)": AccrualCalculationModel.ACT_ACT_ISDA,
-        "Actual/360": AccrualCalculationModel.ACT_360,
-        "Actual/364": AccrualCalculationModel.ACT_365,
-        "Actual/365 (Actual/365F)": AccrualCalculationModel.ACT_365,
-        "Actual/366": AccrualCalculationModel.ACT_365_366,
-        "Actual/365L": AccrualCalculationModel.ACT_365_366,
-        "Actual/365A": AccrualCalculationModel.ACT_1_365,
-        "30/360 US": AccrualCalculationModel.C_30_360,
-        "30E+/360": AccrualCalculationModel.C_30E_P_360,
-        "NL/365": AccrualCalculationModel.NL_365,
-        "BD/252": AccrualCalculationModel.BUS_DAYS_252,
-        "30E/360": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 (30/360 ISDA)": AccrualCalculationModel.GERMAN_30_360_EOM,
-        "30/360 German": AccrualCalculationModel.GERMAN_30_360_NO_EOM,
-    }
-
     if "accrual_calculation_schedules" in source_data:
         if source_data["accrual_calculation_schedules"] and len(
             source_data["accrual_calculation_schedules"]
@@ -550,15 +549,15 @@ def handler_instrument_object(
                 accrual = object_data["accrual_calculation_schedules"][0]
 
                 if "day_count_convention" in source_data:
-                    if source_data["day_count_convention"] in accrual_map:
-                        accrual["accrual_calculation_model"] = accrual_map[
+                    if source_data["day_count_convention"] in ACCRUAL_MAP:
+                        accrual["accrual_calculation_model"] = ACCRUAL_MAP[
                             source_data["day_count_convention"]
                         ]
 
                     else:
                         accrual[
                             "accrual_calculation_model"
-                        ] = AccrualCalculationModel.DEFAULT
+                        ] = AccrualCalculationModel.DAY_COUNT_NONE
 
                 if (
                     "accrual_start_date"
@@ -613,10 +612,10 @@ def handler_instrument_object(
             else:
                 _l.info("Setting up accrual schedules. Creating new")
 
-                accrual = {}
-
-                accrual["accrual_calculation_model"] = AccrualCalculationModel.ACT_365
-                accrual["periodicity"] = Periodicity.ANNUALLY
+                accrual = {
+                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_SIMPLE,
+                    "periodicity": Periodicity.ANNUALLY,
+                }
 
                 if (
                     "accrual_start_date"
@@ -649,16 +648,16 @@ def handler_instrument_object(
                     if accrual["periodicity_n"] == 1:
                         accrual["periodicity"] = Periodicity.ANNUALLY
 
-                    if accrual["periodicity_n"] == 2:
+                    elif accrual["periodicity_n"] == 2:
                         accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
 
-                    if accrual["periodicity_n"] == 4:
+                    elif accrual["periodicity_n"] == 4:
                         accrual["periodicity"] = Periodicity.QUARTERLY
 
-                    if accrual["periodicity_n"] == 6:
+                    elif accrual["periodicity_n"] == 6:
                         accrual["periodicity"] = Periodicity.BIMONTHLY
 
-                    if accrual["periodicity_n"] == 12:
+                    elif accrual["periodicity_n"] == 12:
                         accrual["periodicity"] = Periodicity.MONTHLY
 
                     _l.info("periodicity %s" % accrual["periodicity"])
@@ -698,7 +697,8 @@ class SimpleImportProcess(object):
             )
 
             _l.info(
-                f"SimpleImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
+                f"SimpleImportProcess.Task {self.task}. init "
+                f"procedure_instance {self.procedure_instance}"
             )
 
         self.member = self.task.member
@@ -795,13 +795,13 @@ class SimpleImportProcess(object):
 
         for result_item in self.result.items:
             if result_item.status == "error":
-                error_rows_count = error_rows_count + 1
+                error_rows_count += 1
 
             if result_item.status == "success":
-                success_rows_count = success_rows_count + 1
+                success_rows_count += 1
 
             if "skip" in result_item.status:
-                skip_rows_count = skip_rows_count + 1
+                skip_rows_count += 1
 
         result.append("Rows total, %s" % self.result.total_rows)
         result.append("Rows success import, %s" % success_rows_count)
@@ -820,10 +820,10 @@ class SimpleImportProcess(object):
         result.append(column_row)
 
         for result_item in self.result.items:
-            content = []
-
-            content.append(str(result_item.row_number))
-            content.append(result_item.status)
+            content = [
+                str(result_item.row_number),
+                result_item.status,
+            ]
 
             if result_item.error_message:
                 content.append(result_item.error_message)
@@ -945,9 +945,9 @@ class SimpleImportProcess(object):
 
         for item in self.result.items:
             if item.status == "error":
-                error_count = error_count + 1
+                error_count += 1
             else:
-                imported_count = imported_count + 1
+                imported_count += 1
 
         result = (
             "Processed %s rows and successfully imported %s items. Error rows %s"
@@ -1107,9 +1107,7 @@ class SimpleImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-            names = {}
-
-            names["data"] = self.file_items
+            names = {"data": self.file_items}
 
             try:
                 # _l.info("whole_file_preprocess  names %s" % names)
@@ -1205,7 +1203,7 @@ class SimpleImportProcess(object):
 
                 self.preprocessed_items.append(preprocess_item)
 
-                row_number = row_number + 1
+                row_number += 1
 
         for preprocess_item in self.preprocessed_items:
             # CREATE SCHEME INPUTS
@@ -1349,74 +1347,67 @@ class SimpleImportProcess(object):
         return result
 
     def overwrite_item_attributes(self, result_item, item):
-        result = []
-
         for attribute in result_item["attributes"]:
             for entity_field in self.scheme.entity_fields.all():
-                if entity_field.attribute_user_code:
+                if entity_field.attribute_user_code and (
+                    entity_field.attribute_user_code
+                    == attribute["attribute_type_object"]["user_code"]
+                ):
                     if (
-                        entity_field.attribute_user_code
-                        == attribute["attribute_type_object"]["user_code"]
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.STRING
                     ):
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.STRING
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_string"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_string"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.NUMBER
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_float"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.NUMBER
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_float"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.CLASSIFIER
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                try:
-                                    attribute[
-                                        "classifier"
-                                    ] = GenericClassifier.objects.get(
-                                        attribute_type_id=attribute[
-                                            "attribute_type_object"
-                                        ]["id"],
-                                        name=item.final_inputs[
-                                            entity_field.attribute_user_code
-                                        ],
-                                    ).id
-                                except Exception as e:
-                                    _l.error(
-                                        "fill_result_item_with_attributes classifier error - item %s e %s"
-                                        % (item, e)
-                                    )
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.CLASSIFIER
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            try:
+                                attribute["classifier"] = GenericClassifier.objects.get(
+                                    attribute_type_id=attribute[
+                                        "attribute_type_object"
+                                    ]["id"],
+                                    name=item.final_inputs[
+                                        entity_field.attribute_user_code
+                                    ],
+                                ).id
+                            except Exception as e:
+                                _l.error(
+                                    "fill_result_item_with_attributes classifier error - item %s e %s"
+                                    % (item, e)
+                                )
 
-                                    if not item.error_message:
-                                        item.error_message = ""
+                                if not item.error_message:
+                                    item.error_message = ""
 
-                                    item.error_message = (
-                                        item.error_message + "%s: %s, "
-                                    ) % (entity_field.attribute_user_code, str(e))
+                                item.error_message = (
+                                    item.error_message + "%s: %s, "
+                                ) % (entity_field.attribute_user_code, str(e))
 
-                                    attribute["classifier"] = None
+                                attribute["classifier"] = None
 
-                        if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.DATE
-                        ):
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_date"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
-
-        return result
+                    elif (
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.DATE
+                    ):
+                        if item.final_inputs[entity_field.attribute_user_code]:
+                            attribute["value_date"] = item.final_inputs[
+                                entity_field.attribute_user_code
+                            ]
 
     def convert_relation_to_ids(self, item, result_item):
         relation_fields_map = {
@@ -1689,11 +1680,12 @@ class SimpleImportProcess(object):
                     item.error_message = (
                         item.error_message + "==== Overwrite Exception " + str(e)
                     )
-
-                    _l.error("import_item.overwrite  e %s" % e)
                     _l.error(
-                        "import_item.overwrite  traceback %s" % traceback.format_exc()
+                        f"import_item.overwrite model={self.scheme.content_type.model}"
+                        f" final_inputs={item.final_inputs} error {e} traceback "
+                        f"{traceback.format_exc()}"
                     )
+
 
             else:
                 item.status = "error"
@@ -1807,7 +1799,7 @@ class SimpleImportProcess(object):
 
             self.task.result_object = self.import_result
 
-            _l.info("self.task.result_object %s" % self.task.result_object)
+            # _l.info("self.task.result_object %s" % self.task.result_object)
 
             self.task.save()
 

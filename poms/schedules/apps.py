@@ -12,7 +12,7 @@ class SchedulesConfig(AppConfig):
 
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(
-        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+            self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
@@ -82,6 +82,12 @@ class SchedulesConfig(AppConfig):
                 "task": "history_tasks.clear_old_journal_records",
                 "crontab": crontabs["daily_morning"],
             },
+            {
+                "id": 7,
+                "name": "SYSTEM: Check for Died Workers",
+                "task": "celery_tasks.check_for_died_workers",
+                "crontab": crontabs["every_5_min"],
+            },
         ]
 
         periodic_tasks_exists = PeriodicTask.objects.values_list("pk", flat=True)
@@ -98,7 +104,7 @@ class SchedulesConfig(AppConfig):
                 PeriodicTask.objects.create(**task)
 
     def sync_user_schedules_with_celery_beat(
-        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+            self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from poms.schedules.utils import sync_schedules
 

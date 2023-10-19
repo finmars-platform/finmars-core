@@ -3,14 +3,19 @@ Django settings for the main Backend project.
 """
 
 import os
+from datetime import timedelta
 
+import sentry_sdk
 from django.utils.translation import gettext_lazy
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
-from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
+from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
+
+INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, scheduler,
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,17 +24,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = ENV_BOOL("DEBUG", True)
 
 SECRET_KEY = ENV_STR("SECRET_KEY", "django_secret_key")
-ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)  # Need to encrypt everything related to storage
+
+# Need to encrypt everything related to storage
+ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)
+
+# azure, aws, or custom, only log purpose
+HOST_LOCATION = ENV_STR("HOST_LOCATION", "AWS")
+
+# looks like HOST_URL, maybe refactor required
+HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")
+
+DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
-USE_DEBUGGER = ENV_STR("USE_DEBUGGER", False)
+USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
-HOST_LOCATION = ENV_STR(
-    "HOST_LOCATION", "AWS"
-)  # azure, aws, or custom, only log purpose
-DOMAIN_NAME = ENV_STR(
-    "DOMAIN_NAME", "finmars.com"
-)  # looks like HOST_URL, maybe refactor required
-HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")  #
+
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
 VERIFY_SSL = ENV_BOOL("VERIFY_SSL", True)
 ENABLE_DEV_DOCUMENTATION = ENV_BOOL("ENABLE_DEV_DOCUMENTATION", False)
@@ -43,15 +52,17 @@ SUPERSET_URL = os.environ.get("SUPERSET_URL", None)
 UNIFIED_DATA_PROVIDER_URL = os.environ.get("UNIFIED_DATA_PROVIDER_URL", None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 ROUND_NDIGITS = ENV_INT("ROUND_NDIGITS", 6)
-FILE_UPLOAD_MAX_MEMORY_SIZE = (
-    0  # Important, that all files write to temporary file no matter size
-)
+
+API_DATE_FORMAT = "%Y-%m-%d"
+
+# Important that all files write to temporary file no matter size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0
+
 ALLOWED_HOSTS = ["*"]
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
-XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
-
+XS_SHARING_ALLOWED_METHODS = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
 
 # Application definition
 
@@ -129,46 +140,38 @@ if USE_DEBUGGER:
     INSTALLED_APPS.append("debug_toolbar")
     INSTALLED_APPS.append("pympler")
 
+# CRAZY, this settings MUST be before MIDDLEWARE prop
+CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
+CORS_ORIGIN_ALLOW_ALL = ENV_BOOL("CORS_ORIGIN_ALLOW_ALL", True)
+CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
+
+# print('CORS_ALLOW_CREDENTIALS %s' % CORS_ALLOW_CREDENTIALS)
+
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-
-    "corsheaders.middleware.CorsMiddleware",
-    "corsheaders.middleware.CorsPostCsrfMiddleware",
-
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
-    # Possibly Deprecated
-    # 'django.middleware.gzip.GZipMiddleware',
-    # 'django.middleware.http.ConditionalGetMiddleware',
-    # 'django.middleware.security.SecurityMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.locale.LocaleMiddleware',
-    # 'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
-
-    # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    # "django.middleware.cache.UpdateCacheMiddleware",
+    # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
     # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
 
-
 PROFILER = ENV_BOOL("PROFILER", False)
 
 if PROFILER:
+    print("Warning, PROFILER is enabled, could lead to slow performance")
     MIDDLEWARE.append("django_cprofile_middleware.middleware.ProfilerMiddleware")
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
@@ -256,40 +259,64 @@ USE_ETAGS = True
 
 # TODO Refactor csrf protection later
 
-ENV_CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
-ENV_CSRF_TRUSTED_ORIGINS = os.environ.get("ENV_CSRF_TRUSTED_ORIGINS", None)
+CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 
-if SERVER_TYPE == "production":
-    CORS_URLS_REGEX = r"^/api/.*$"
-    # CORS_REPLACE_HTTPS_REFERER = True
-    CORS_ALLOW_CREDENTIALS = True
-    CORS_PREFLIGHT_MAX_AGE = 300
-    USE_X_FORWARDED_HOST = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_REDIRECT_EXEMPT = ['healthcheck']
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_TRUSTED_ORIGINS = [
+    "capacitor://localhost",
+    "http://localhost",
+    "http://0.0.0.0",
+    "http://0.0.0.0:8080",
+    f"http://{DOMAIN_NAME}",
+    f"https://{DOMAIN_NAME}",
+]
+
+if os.environ.get("CSRF_TRUSTED_ORIGINS", ""):
+    CSRF_TRUSTED_ORIGINS += os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
+
+# print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
+
+# CORS_ALLOWED_ORIGINS = [
+#     'capacitor://localhost',
+#     'http://localhost',
+#     'http://0.0.0.0',
+#     'http://0.0.0.0:8080',
+#     'http://' + DOMAIN_NAME,
+#     'https://' + DOMAIN_NAME
+# ]
 
 
-
-CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
-
-
-if SERVER_TYPE == "development":
-    CORS_ORIGIN_ALLOW_ALL = True
-    CORS_ALLOW_CREDENTIALS = True
-    CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = "Strict"
-    CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
-    CORS_ALLOW_ALL_ORIGINS = True
-
-if SERVER_TYPE == "local":
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ORIGIN_ALLOW_ALL = True
-    CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOW_ALL_ORIGINS = True
+# TODO warning about security in future
+# if os.environ.get("CORS_ALLOWED_ORIGINS", ""):
+#     CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
+#
+# if SERVER_TYPE == "production":
+#     CORS_URLS_REGEX = r"^/api/.*$"
+#     # CORS_REPLACE_HTTPS_REFERER = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CORS_PREFLIGHT_MAX_AGE = 300
+#     USE_X_FORWARDED_HOST = True
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     SECURE_REDIRECT_EXEMPT = ['healthcheck']
+#     SECURE_SSL_REDIRECT = True
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+#     # CSRF_COOKIE_SAMESITE = 'Strict'
+#
+# CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
+# CORS_ORIGIN_ALLOW_ALL = ENV_BOOL('CORS_ORIGIN_ALLOW_ALL', False)
+#
+# if SERVER_TYPE == "development":
+#     CORS_ORIGIN_ALLOW_ALL = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CSRF_COOKIE_SECURE = True
+#     CSRF_COOKIE_SAMESITE = "Strict"
+#     CORS_ALLOW_ALL_ORIGINS = True
+#
+# if SERVER_TYPE == "local":
+#     CORS_ALLOW_ALL_ORIGINS = True
+#     CORS_ORIGIN_ALLOW_ALL = True
+#     CORS_ALLOW_CREDENTIALS = True
+#     CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -359,14 +386,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "()": "colorlog.ColoredFormatter",
-            "format": "%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
-            "log_colors": {
-                "DEBUG": "cyan",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
+            "format": "[%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s",
         },
         "provision-verbose": {
             "()": GunicornWorkerIDLogFormatter,
@@ -374,72 +394,68 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
         "provision-console": {
             "level": DJANGO_LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        "file": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.FileHandler",  # TODO refactor to more sophisticated handler
-            # 'class': 'logging.handlers.TimedRotatingFileHandler',
-            # 'interval': 1,
-            # 'when': 'D',
-            "filename": "/var/log/finmars/backend/django.log",
-            "formatter": "verbose",
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
+        # "file": {
+        #     "level": DJANGO_LOG_LEVEL,
+        #     "class": "logging.FileHandler",
+        #     "filename": "/var/log/finmars/backend/django.log",
+        #     "formatter": "verbose",
+        # },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["file"]},
+        "django.request": {"level": "ERROR", "handlers": ["console"]},
         "provision": {
-            "handlers": ["provision-console", "file"],
+            "handlers": ["provision-console"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["file"],
+            "handlers": ["console"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
+            "handlers": ["console"],
             "propagate": True,
-        },
-        "finmars": {
-            "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
-            "propagate": True,
-        },
+        }
     },
 }
 
-if SEND_LOGS_TO_FINMARS:
-    LOGGING["handlers"]["logstash"] = {
-        "level": DJANGO_LOG_LEVEL,
-        "class": "logstash.TCPLogstashHandler",
-        "host": FINMARS_LOGSTASH_HOST,
-        "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
-        "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
-        "fqdn": False,  # Fully qualified domain name. Default value: false.
-        "ssl_verify": False,  # Fully qualified domain name. Default value: false.
-        # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
-    }
+# if SEND_LOGS_TO_FINMARS:
+#     LOGGING["handlers"]["logstash"] = {
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logstash.TCPLogstashHandler",
+#         "host": FINMARS_LOGSTASH_HOST,
+#         "port": FINMARS_LOGSTASH_PORT,  # Default value: 5959
+#         "message_type": "finmars-backend",  # 'type' field in logstash message. Default value: 'logstash'.
+#         "fqdn": False,  # Fully qualified domain name. Default value: false.
+#         "ssl_verify": False,  # Fully qualified domain name. Default value: false.
+#         # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
+#     }
+#
+#     LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["django"]["handlers"].append("logstash")
+#     LOGGING["loggers"]["poms"]["handlers"].append("logstash")
 
-    LOGGING["loggers"]["django.request"]["handlers"].append("logstash")
-    LOGGING["loggers"]["django"]["handlers"].append("logstash")
-    LOGGING["loggers"]["poms"]["handlers"].append("logstash")
-
-if SERVER_TYPE == "local":
-    LOGGING["loggers"]["django.request"]["handlers"].append("console")
-    LOGGING["loggers"]["django"]["handlers"].append("console")
-    LOGGING["loggers"]["poms"]["handlers"].append("console")
-    LOGGING["loggers"]["finmars"]["handlers"].append("console")
+# if SERVER_TYPE == "local":
+#     LOGGING["loggers"]["django.request"]["handlers"].append("console")
+#     LOGGING["loggers"]["django"]["handlers"].append("console")
+#     LOGGING["loggers"]["poms"]["handlers"].append("console")
+#
+#     LOGGING["handlers"]["console"] ={
+#         "level": DJANGO_LOG_LEVEL,
+#         "class": "logging.StreamHandler",
+#         "formatter": "verbose",
+#     }
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
@@ -534,6 +550,8 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TASK_SEND_SENT_EVENT = True
+# CELERY_TASK_REJECT_ON_WORKER_LOST = True # mark task as failed if worker beign killed
+# Enabling this can cause message loops; make sure you know what you’re doing.
 
 if CELERY_RESULT_BACKEND in {"django-db"}:
     CELERY_RESULT_EXPIRES = 2 * 24 * 60 * 60
@@ -542,14 +560,19 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
-CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024) # Maximum amount of resident memory, in KiB
-CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1) # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
+# Maximum amount of resident memory, in KiB
+CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024)
+
+# Maximum number of tasks a pool worker can execute before
+# it’s terminated and replaced by a new worker.
+CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1)
 
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 
-CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2) # Number of child processes processing the queue. The default is the number of CPUs available on your system.
-
+CELERY_WORKER_CONCURRENCY = ENV_INT(
+    "CELERY_WORKER_CONCURRENCY", 2
+)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
@@ -603,7 +626,13 @@ BLOOMBERG_MAX_RETRIES = 60
 BLOOMBERG_DATE_INPUT_FORMAT = "%m/%d/%Y"
 BLOOMBERG_EMPTY_VALUE = [None, "", "N.S."]
 
-BLOOMBERG_SANDBOX = os.environ.get("POMS_BLOOMBERG_SANDBOX") != "False"
+BLOOMBERG_SANDBOX = ENV_BOOL("BLOOMBERG_SANDBOX", True)
+
+if BLOOMBERG_SANDBOX:
+    print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
+else:
+    print("Bloomberg Data License Module activated 🟢")
+
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
@@ -632,6 +661,7 @@ INTERNAL_IPS = [
 ]
 
 if USE_DEBUGGER:
+    print("Warning. Debugger is activated, could lead to low performance")
     DEBUG_TOOLBAR_PANELS = [
         "debug_toolbar.panels.versions.VersionsPanel",
         "debug_toolbar.panels.timer.TimerPanel",
@@ -667,9 +697,44 @@ KEYCLOAK_CLIENT_ID = os.environ.get("KEYCLOAK_CLIENT_ID", "finmars")
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get("KEYCLOAK_CLIENT_SECRET_KEY", None)
 
 SIMPLE_JWT = {
-    "SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY),
-    "USER_ID_FIELD": "username",
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer"),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
+# OLD ONE
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
+#     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': False,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,
+#     'VERIFYING_KEY': None,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+#     'USER_ID_FIELD': 'id',
+#     'USER_ID_CLAIM': 'user_id',
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+#     'TOKEN_TYPE_CLAIM': 'token_type',
+# }
 
 REDOC_SETTINGS = {
     "LAZY_RENDERING": True,
@@ -680,19 +745,14 @@ VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
 # SENTRY
 
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-
 sentry_sdk.init(
     dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
     integrations=[DjangoIntegration()],
-
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
     traces_sample_rate=1.0,
-
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True
+    send_default_pii=True,
 )

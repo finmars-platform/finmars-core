@@ -228,17 +228,15 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
                 type="install_initial_configuration"
             )
 
-            output_directory = os.path.join(settings.BASE_DIR,
-                                            'tmp/task_' + str(celery_task.id) + '/')
+            # true_storage_path = new_member_setup_configuration.file_url
 
-            if not os.path.exists(output_directory):
-                os.makedirs(output_directory, exist_ok=True)
+            # if settings.BASE_API_URL in true_storage_path:
+            #     true_storage_path = true_storage_path.replace(settings.BASE_API_URL, '')
 
-            local_file_path = storage.download_file_and_save_locally(new_member_setup_configuration.file_url,
-                                                                     output_directory + 'file.zip')
+            # _l.info('true_storage_path %s' % true_storage_path)
 
             options_object = {
-                'file_path': local_file_path,
+                'file_path': new_member_setup_configuration.file_url,
             }
 
             celery_task.options_object = options_object

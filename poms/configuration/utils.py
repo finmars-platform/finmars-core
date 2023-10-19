@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import os
@@ -5,36 +6,36 @@ import re
 import time
 import zipfile
 
-import requests
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.http import FileResponse
 
-from poms.common.storage import get_storage
-from poms.common.utils import get_serializer, get_content_type_by_name
+import requests
 from poms_app import settings
 
-_l = logging.getLogger('poms.configuration')
+from poms.common.storage import get_storage
+from poms.common.utils import get_content_type_by_name, get_serializer
+
+_l = logging.getLogger("poms.configuration")
+
 storage = get_storage()
 
 
 class DeleteFileAfterResponse(FileResponse):
     def __init__(self, *args, **kwargs):
-        self.path_to_delete = kwargs.pop('path_to_delete', None)
+        self.path_to_delete = kwargs.pop("path_to_delete", None)
         super().__init__(*args, **kwargs)
 
     def close(self):
         super().close()
         if self.path_to_delete:
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 os.remove(self.path_to_delete)
-            except FileNotFoundError:
-                pass
 
 
-def replace_special_chars_and_spaces(s):
-    return re.sub(r'[^A-Za-z0-9]+', '_', s)
+def replace_special_chars_and_spaces(code: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", code)
 
 
 def remove_id_key_recursively(data):
@@ -42,7 +43,7 @@ def remove_id_key_recursively(data):
         return data
 
     # Remove 'id' key if present
-    data.pop('id', None)
+    data.pop("id", None)
 
     # Recursively process nested dictionaries
     for key, value in data.items():
@@ -57,11 +58,11 @@ def remove_id_key_recursively(data):
 
 def user_code_to_file_name(configuration_code, user_code):
     try:
-        code = user_code.split(configuration_code + ':')[1]
+        code = user_code.split(f"{configuration_code}:")[1]
 
         return replace_special_chars_and_spaces(code).lower()
 
-    except Exception as e:
+    except Exception:
         return replace_special_chars_and_spaces(user_code).lower()
 
 
@@ -72,22 +73,22 @@ def save_json_to_file(file_path, json_data):
         if folder:
             os.makedirs(folder, exist_ok=True)
 
-        with open(file_path, 'w', encoding='utf-8') as file:
+        with open(file_path, "w", encoding="utf-8") as file:
             json.dump(json_data, file, ensure_ascii=False, indent=4)
     except Exception as e:
-        _l.error('save_json_to_file %s: %s' % (file_path, e))
+        _l.error(f"save_json_to_file {file_path}: {e}")
 
-        raise Exception(e)
+        raise e
 
 
 def read_json_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return data
 
 
 def zip_directory(source_dir, output_zipfile):
-    with zipfile.ZipFile(output_zipfile, 'w', zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(output_zipfile, "w", zipfile.ZIP_DEFLATED) as archive:
         for root, _, files in os.walk(source_dir):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -96,11 +97,7 @@ def zip_directory(source_dir, output_zipfile):
 
 
 def remove_object_keys(d: dict) -> dict:
-    filtered_dict = {}
-    for key, value in d.items():
-        if '_object' not in key:
-            filtered_dict[key] = value
-    return filtered_dict
+    return {key: value for key, value in d.items() if "_object" not in key}
 
 
 def model_has_field(model, field_name):
@@ -115,15 +112,20 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
     try:
         model = apps.get_model(content_type)
     except Exception as e:
-        raise Exception("Could not find model for content type: %s" % content_type)
+        raise RuntimeError(
+            f"Could not find model for content type: {content_type}"
+        ) from e
 
-    dash = configuration_code + ':' + '-'
+    dash = f"{configuration_code}:-"
 
-    if model_has_field(model, 'is_deleted'):
-        filtered_objects = model.objects.filter(configuration_code=configuration_code, is_deleted=False).exclude(
-            user_code=dash)
+    if model_has_field(model, "is_deleted"):
+        filtered_objects = model.objects.filter(
+            configuration_code=configuration_code, is_deleted=False
+        ).exclude(user_code=dash)
     else:
-        filtered_objects = model.objects.filter(configuration_code=configuration_code).exclude(user_code=dash)
+        filtered_objects = model.objects.filter(
+            configuration_code=configuration_code
+        ).exclude(user_code=dash)
 
     SerializerClass = get_serializer(content_type)
 
@@ -131,34 +133,40 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
         serializer = SerializerClass(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
 
-        if 'is_deleted' in serialized_data:
-            serialized_data.pop('is_deleted')
+        if "is_deleted" in serialized_data:
+            serialized_data.pop("is_deleted")
 
-        if 'is_enabled' in serialized_data:
-            serialized_data.pop('is_enabled')
+        if "is_enabled" in serialized_data:
+            serialized_data.pop("is_enabled")
 
-        if 'deleted_user_code' in serialized_data:
-            serialized_data.pop('deleted_user_code')
+        if "deleted_user_code" in serialized_data:
+            serialized_data.pop("deleted_user_code")
 
-        if 'members' in serialized_data:
-            serialized_data.pop('members')
+        if "members" in serialized_data:
+            serialized_data.pop("members")
 
         serialized_data = remove_object_keys(serialized_data)
 
-        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
 
         save_json_to_file(path, serialized_data)
 
 
-def save_serialized_attribute_type(content_type, configuration_code, content_type_key, source_directory, context):
+def save_serialized_attribute_type(
+    content_type, configuration_code, content_type_key, source_directory, context
+):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
-        raise Exception("Could not find model for content type: %s" % content_type)
+        raise RuntimeError(
+            f"Could not find model for content type: {content_type}"
+        ) from e
 
     entity_content_type = get_content_type_by_name(content_type_key)
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code, content_type=entity_content_type)
+    filtered_objects = model.objects.filter(
+        configuration_code=configuration_code, content_type=entity_content_type
+    )
 
     SerializerClass = get_serializer(content_type)
 
@@ -168,24 +176,83 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
 
         # TODO convert content_type_id to content_type_key
 
-        if 'deleted_user_code' in serialized_data:
-            serialized_data.pop('deleted_user_code')
+        if "deleted_user_code" in serialized_data:
+            serialized_data.pop("deleted_user_code")
 
-        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
 
         save_json_to_file(path, serialized_data)
 
+
+def save_serialized_custom_fields(configuration_code, report_content_type, source_directory, context):
+    '''
+
+    :param configuration_code:
+    :param report_content_type: Allowed values: 'reports.balancereport', 'reports.plreport', 'reports.transactionreport'
+    :type report_content_type: str
+    :param source_directory:
+    :param context:
+    :return:
+    '''
+    from poms.reports.models import (
+        BalanceReportCustomField,
+        PLReportCustomField,
+        TransactionReportCustomField,
+    )
+    from poms.reports.serializers import (
+        BalanceReportCustomFieldSerializer,
+        PLReportCustomFieldSerializer,
+        TransactionReportCustomFieldSerializer,
+    )
+
+    custom_fields_map = {
+        "reports.balancereport": [
+            BalanceReportCustomField,
+            BalanceReportCustomFieldSerializer
+        ],
+        "reports.plreport": [
+            PLReportCustomField,
+            PLReportCustomFieldSerializer,
+        ],
+        "reports.transactionreport": [
+            TransactionReportCustomField,
+            TransactionReportCustomFieldSerializer,
+        ],
+    }
+
+    if report_content_type not in custom_fields_map:
+        raise RuntimeError(
+            f"Could not find report with content type: {report_content_type}"
+        )
+
+    model = custom_fields_map[report_content_type][0]
+    SerializerClass = custom_fields_map[report_content_type][1]
+
+    filtered_objects = model.objects.filter(
+        configuration_code=configuration_code, master_user=context["master_user"]
+    )
+
+    for item in filtered_objects:
+        serializer = SerializerClass(item, context=context)
+        serialized_data = remove_id_key_recursively(serializer.data)
+
+        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
+
+        save_json_to_file(path, serialized_data)
 
 def save_serialized_layout(content_type, configuration_code, source_directory, context):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
-        raise Exception("Could not find model for content type: %s" % content_type)
+        raise RuntimeError(
+            f"Could not find model for content type: {content_type}"
+        ) from e
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code,
-                                            member=context['member'])
+    filtered_objects = model.objects.filter(
+        configuration_code=configuration_code, member=context["member"]
+    )
 
-    _l.info('filtered_objects %s' % filtered_objects)
+    _l.info(f"filtered_objects {filtered_objects}")
 
     SerializerClass = get_serializer(content_type)
 
@@ -194,28 +261,39 @@ def save_serialized_layout(content_type, configuration_code, source_directory, c
         # serialized_data = remove_id_key_recursively(serializer.data)
         serialized_data = serializer.data
 
-        serialized_data.pop('id')
+        serialized_data.pop("id")
 
-        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+        path = (
+            source_directory
+            + "/"
+            + user_code_to_file_name(configuration_code, item.user_code)
+            + ".json"
+        )
 
         save_json_to_file(path, serialized_data)
 
 
-def save_serialized_entity_layout(content_type, configuration_code, content_type_key, source_directory, context):
+def save_serialized_entity_layout(
+    content_type, configuration_code, content_type_key, source_directory, context
+):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
-        raise Exception("Could not find model for content type: %s" % content_type)
+        raise RuntimeError(
+            f"Could not find model for content type: {content_type}"
+        ) from e
 
     entity_content_type = get_content_type_by_name(content_type_key)
 
-    _l.info('save_serialized_entity_layout.entity_content_type %s' % entity_content_type)
+    _l.info(f"save_serialized_entity_layout.entity_content_type {entity_content_type}")
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code,
-                                            content_type=entity_content_type,
-                                            member=context['member'])
+    filtered_objects = model.objects.filter(
+        configuration_code=configuration_code,
+        content_type=entity_content_type,
+        member=context["member"],
+    )
 
-    _l.info('filtered_objects %s' % filtered_objects)
+    _l.info(f"filtered_objects {filtered_objects}")
 
     SerializerClass = get_serializer(content_type)
 
@@ -224,15 +302,20 @@ def save_serialized_entity_layout(content_type, configuration_code, content_type
         # serialized_data = remove_id_key_recursively(serializer.data)
         serialized_data = serializer.data
 
-        serialized_data.pop('id')
+        serialized_data.pop("id")
 
-        if 'reportOptions' in serialized_data['data']:
-            serialized_data['data']['reportOptions']['accounts'] = []
-            serialized_data['data']['reportOptions']['accounts_object'] = []
-            serialized_data['data']['reportOptions']['portfolios'] = []
-            serialized_data['data']['reportOptions']['portfolios_object'] = []
+        if "reportOptions" in serialized_data["data"]:
+            serialized_data["data"]["reportOptions"]["accounts"] = []
+            serialized_data["data"]["reportOptions"]["accounts_object"] = []
+            serialized_data["data"]["reportOptions"]["portfolios"] = []
+            serialized_data["data"]["reportOptions"]["portfolios_object"] = []
 
-        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+        path = (
+            source_directory
+            + "/"
+            + user_code_to_file_name(configuration_code, item.user_code)
+            + ".json"
+        )
 
         save_json_to_file(path, serialized_data)
 
@@ -246,10 +329,9 @@ def list_json_files(directory):
     json_files = []
 
     for root, _, files in os.walk(directory):
-        for file in files:
-            if file.endswith(".json"):
-                json_files.append(os.path.join(root, file))
-
+        json_files.extend(
+            os.path.join(root, file) for file in files if file.endswith(".json")
+        )
     return json_files
 
 
@@ -263,12 +345,12 @@ def save_directory_to_storage(local_directory, storage_directory):
             s3_path = os.path.join(storage_directory, relative_path)
 
             # Save the file to S3
-            with open(local_path, 'rb') as file_obj:
+            with open(local_path, "rb") as file_obj:
                 storage.save(s3_path, file_obj)
 
 
 def save_file_to_storage(file_path, storage_path):
-    with open(file_path, 'rb') as file_obj:
+    with open(file_path, "rb") as file_obj:
         storage.save(storage_path, file_obj)
 
 
@@ -280,9 +362,9 @@ def copy_directory(src_dir, dst_dir):
         src_file_path = os.path.join(src_dir, file_name)
         dst_file_path = os.path.join(dst_dir, file_name)
 
-        with storage.open(src_file_path, 'rb') as src_file:
+        with storage.open(src_file_path, "rb") as src_file:
             content = src_file.read()
-            with storage.open(dst_file_path, 'wb') as dst_file:
+            with storage.open(dst_file_path, "wb") as dst_file:
                 dst_file.write(content)
 
     # Recursively copy subdirectories
@@ -300,17 +382,21 @@ def upload_directory_to_storage(local_directory, storage_directory):
     for root, dirs, files in os.walk(local_directory):
         for file in files:
             local_file_path = os.path.join(root, file)
-            storage_file_path = os.path.join(storage_directory, os.path.relpath(local_file_path, local_directory))
+            storage_file_path = os.path.join(
+                storage_directory, os.path.relpath(local_file_path, local_directory)
+            )
 
-            with open(local_file_path, 'rb') as local_file:
+            with open(local_file_path, "rb") as local_file:
                 content = local_file.read()
                 storage.save(storage_file_path, ContentFile(content))
 
 
 def run_workflow(user_code, payload=None):
-    from rest_framework_simplejwt.tokens import RefreshToken
     from django.contrib.auth import get_user_model
+
     from poms_app import settings
+    from rest_framework_simplejwt.tokens import RefreshToken
+
     User = get_user_model()
 
     bot = User.objects.get(username="finmars_bot")
@@ -319,27 +405,27 @@ def run_workflow(user_code, payload=None):
 
     # _l.info('refresh %s' % refresh.access_token)
 
-    headers = {'Content-type': 'application/json', 'Accept': 'application/json',
-               'Authorization': 'Bearer %s' % refresh.access_token}
-
-    url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/run-workflow/'
-
-    data = {
-        'user_code': user_code,
-        'payload': payload
+    headers = {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {refresh.access_token}",
     }
+
+    url = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}/workflow/api/workflow/run-workflow/"
+
+    data = {"user_code": user_code, "payload": payload}
 
     response = requests.post(url, headers=headers, json=data)
 
-    response_data = response.json()
-
-    return response_data
+    return response.json()
 
 
-def get_workflow(id):
-    from rest_framework_simplejwt.tokens import RefreshToken
+def get_workflow(workflow_id: int):
     from django.contrib.auth import get_user_model
+
     from poms_app import settings
+    from rest_framework_simplejwt.tokens import RefreshToken
+
     User = get_user_model()
 
     bot = User.objects.get(username="finmars_bot")
@@ -348,27 +434,28 @@ def get_workflow(id):
 
     # _l.info('refresh %s' % refresh.access_token)
 
-    headers = {'Content-type': 'application/json', 'Accept': 'application/json',
-               'Authorization': 'Bearer %s' % refresh.access_token}
+    headers = {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {refresh.access_token}",
+    }
 
-    url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' + str(id) + '/'
+    url = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}/workflow/api/workflow/{workflow_id}/"
 
     response = requests.get(url, headers=headers)
 
-    response_data = response.json()
-
-    return response_data
+    return response.json()
 
 
-def wait_workflow_until_end(id):
+def wait_workflow_until_end(workflow_id: int):
     while True:
-        workflow = get_workflow(id)
+        workflow = get_workflow(workflow_id)
 
-        if workflow['status'] != 'init' and workflow['status'] != 'progress':
+        if workflow["status"] not in ("init", "progress"):
             return workflow
 
         time.sleep(10)
 
 
 def get_default_configuration_code():
-    return 'local.poms.' + settings.BASE_API_URL
+    return f"local.poms.{settings.BASE_API_URL}"

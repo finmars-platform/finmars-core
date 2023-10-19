@@ -1070,7 +1070,7 @@ def is_dynamic_attribute_filter(filter_config):
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
-    print('Handle filters %s' % filter_settings)
+    # print('Handle filters %s' % filter_settings)
 
     start_time = time.time()
 
@@ -1154,6 +1154,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     if content_type.model not in ['currencyhistory', 'pricehistory', 'transaction', 'currencyhistoryerror',
+                                  'complextransactionimportscheme',
                                   'pricehistoryerror', 'generatedevent', 'portfolioregisterrecord', 'complextransaction']:
         string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
         date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})

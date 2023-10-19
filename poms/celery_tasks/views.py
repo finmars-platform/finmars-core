@@ -2,6 +2,7 @@ from logging import getLogger
 
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -12,8 +13,12 @@ from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
-from .models import CeleryTask
-from .serializers import CeleryTaskLightSerializer, CeleryTaskSerializer
+from .models import CeleryTask, CeleryWorker
+from .serializers import (
+    CeleryTaskLightSerializer,
+    CeleryTaskSerializer,
+    CeleryWorkerSerializer,
+)
 
 _l = getLogger("poms.celery_tasks")
 
@@ -104,7 +109,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None):
-
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
@@ -113,9 +117,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
     def abort_transaction_import(self, request, pk=None):
-        task = CeleryTask.objects.get(pk=pk)
-
+        from poms_app import celery_app
         from poms.transactions.models import ComplexTransaction
+
+        task = CeleryTask.objects.get(pk=pk)
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
@@ -141,8 +146,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             verbose_name="Bulk Delete",
             type="bulk_delete",
         )
-
-        from poms_app import celery_app
 
         celery_app.send_task(
             "celery_tasks.bulk_delete",
@@ -173,3 +176,71 @@ class CeleryStatsViewSet(AbstractViewSet):
         stats = i.stats()
 
         return Response(stats)
+
+
+class CeleryWorkerFilterSet(FilterSet):
+    id = CharFilter()
+    worker_name = CharFilter()
+    queue = CharFilter()
+    worker_type = CharFilter()
+    notes = CharFilter()
+
+    class Meta:
+        model = CeleryWorker
+        fields = []
+
+
+class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
+    queryset = CeleryWorker.objects.all()
+    serializer_class = CeleryWorkerSerializer
+    filter_class = CeleryWorkerFilterSet
+    filter_backends = []
+
+    def update(self, request, *args, **kwargs):
+        # Workers could not be updated for now,
+        # Consider delete and creating new
+        raise PermissionDenied()
+
+    @action(detail=True, methods=["PUT"], url_path="create-worker")
+    def create_worker(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.create_worker()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="start")
+    def start(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.start()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="stop")
+    def stop(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.stop()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["PUT"], url_path="restart")
+    def restart(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.restart()
+
+        return Response({"status": "ok"})
+
+    @action(detail=True, methods=["GET"], url_path="status")
+    def status(self, request, pk=None):
+        worker = self.get_object()
+
+        worker.get_status()
+
+        return Response({"status": "ok"})
+
+    def perform_destroy(self, instance):
+        instance.delete_worker()
+        return super(CeleryWorkerViewSet, self).perform_destroy(instance)

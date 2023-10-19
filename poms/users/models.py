@@ -657,11 +657,11 @@ class MasterUser(models.Model):
         pricing_policy = PricingPolicy.objects.create(
             master_user=self, name="-", expr="(ask+bid)/2"
         )
-        pricing_policy_dft = PricingPolicy.objects.create(
-            master_user=self,
-            name="DFT",
-            expr="(ask+bid)/2",
-        )
+        # pricing_policy_dft = PricingPolicy.objects.create(
+        #     master_user=self,
+        #     name="DFT",
+        #     expr="(ask+bid)/2",
+        # )
         instrument_pricing_scheme = InstrumentPricingScheme.objects.create(
             master_user=self,
             name="-",
@@ -739,7 +739,7 @@ class MasterUser(models.Model):
             pk=InstrumentClass.DEFAULT
         )
         ecosystem_defaults.accrual_calculation_model = (
-            AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DEFAULT)
+            AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DAY_COUNT_SIMPLE)
         )
         ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(
             pk=PaymentSizeDetail.DEFAULT

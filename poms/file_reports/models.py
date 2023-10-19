@@ -71,14 +71,14 @@ class FileReport(models.Model):
 
         self.file_url = file_url
 
-        _l.info(f"FileReport.upload_file.file_url {file_url}")
+        # _l.info(f"FileReport.upload_file.file_url {file_url}")
 
         return file_url
 
     def get_file(self):
         result = None
 
-        print(f"get_file self.file_url {self.file_url}")
+        # print(f"get_file self.file_url {self.file_url}")
 
         path = self.file_url
 

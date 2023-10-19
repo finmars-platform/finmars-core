@@ -1,5 +1,6 @@
 import random
 import string
+import dateutil.utils
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
@@ -204,7 +205,11 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     @classmethod
     def today(cls) -> date:
-        return date.today()
+        return dateutil.utils.today().date()
+
+    @classmethod
+    def yesterday(cls) -> date:
+        return cls.today() - timedelta(days=1)
 
     @classmethod
     def random_future_date(cls, interval=365) -> date:
@@ -300,7 +305,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return Country.objects.get(name=name)
 
     @staticmethod
-    def get_accrual_calculation_model(model_id=AccrualCalculationModel.ACT_ACT):
+    def get_accrual_calculation_model(model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA):
         return AccrualCalculationModel.objects.get(id=model_id)
 
     @staticmethod
@@ -507,18 +512,22 @@ class DbInitializer:
         accounts = {}
         for name in PORTFOLIOS:
             account = Account.objects.filter(
-                name=name
+                name=name,
+                user_code=name,
             ).first() or Account.objects.create(
                 master_user=self.master_user,
                 name=name,
+                user_code=name,
             )
             accounts[name] = account
 
             portfolio = Portfolio.objects.filter(
-                name=name
+                name=name,
+                user_code=name,
             ).first() or Portfolio.objects.create(
                 master_user=self.master_user,
                 name=name,
+                user_code=name,
             )
             portfolio.accounts.clear()
             portfolio.accounts.add(account)
@@ -554,7 +563,8 @@ class DbInitializer:
 
         return types
 
-    def get_or_create_classes(self) -> dict:
+    @staticmethod
+    def get_or_create_classes() -> dict:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
@@ -598,9 +608,11 @@ class DbInitializer:
             short_name=name,
         )
 
-    def cash_in_transaction(self, portfolio: Portfolio, amount: int = 1000) -> tuple:
+    def cash_in_transaction(
+        self, portfolio: Portfolio, amount: int = 1000, day=None
+    ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
-        op_date = date.today()
+        op_date = day or date.today()
         complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
             date=op_date,
@@ -668,5 +680,5 @@ class DbInitializer:
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
         print(
-            f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n"
+            f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )

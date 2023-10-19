@@ -85,17 +85,19 @@ class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
         "invalid": _("Invalid value."),
     }
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, value):
         queryset = self.get_queryset()
         try:
-            if isinstance(data, str):
-                return queryset.get(user_code=data)
+            if isinstance(value, int) or value.isdigit():
+                return queryset.get(pk=int(value))
             else:
-                return queryset.get(pk=data)
+                return queryset.get(user_code=value)
+
         except ObjectDoesNotExist:
-            self.fail("does_not_exist", value=str(data))
+            self.fail("does_not_exist", value=str(value))
+
         except (TypeError, ValueError):
-            self.fail("invalid")
+            self.fail("invalid", value=str(value))
 
     def to_representation(self, obj):
         return getattr(obj, "id")
@@ -113,7 +115,6 @@ class UserCodeField(CharField):
 
 class DateTimeTzAwareField(DateTimeField):
     format = "%Y-%m-%dT%H:%M:%S%z"
-    # format = None
     input_formats = [
         "%Y-%m-%dT%H:%M:%S%z",
         ISO_8601,

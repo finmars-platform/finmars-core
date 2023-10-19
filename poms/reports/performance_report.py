@@ -59,7 +59,7 @@ class PerformanceReportBuilder:
                 portfolios.append(portfolio_register.portfolio_id)
                 portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-            _l.info('get_first_transaction.portfolios %s ' % portfolios)
+            # _l.info('get_first_transaction.portfolios %s ' % portfolios)
 
             transaction = Transaction.objects.filter(portfolio__in=portfolios,
                                                      transaction_class__in=[TransactionClass.CASH_INFLOW,
@@ -109,8 +109,8 @@ class PerformanceReportBuilder:
         # if begin_date < first_transaction_date:
         #     begin_date = first_transaction_date
 
-        _l.info('build_report.begin_date %s' % begin_date)
-        _l.info('build_report.end_date %s' % self.end_date)
+        # _l.info('build_report.begin_date %s' % begin_date)
+        # _l.info('build_report.end_date %s' % self.end_date)
 
         if self.end_date < begin_date:
             self.end_date = begin_date
@@ -181,7 +181,7 @@ class PerformanceReportBuilder:
 
             self.instance.items.append(item)
 
-        _l.info('items total %s' % len(self.instance.items))
+        # _l.info('items total %s' % len(self.instance.items))
 
         _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -339,7 +339,7 @@ class PerformanceReportBuilder:
 
     def get_periods(self, date_from, date_to, segmentation_type):
 
-        _l.info("Getting periods %s from %s to %s" % (self.instance.segmentation_type, date_from, date_to))
+        # _l.info("Getting periods %s from %s to %s" % (self.instance.segmentation_type, date_from, date_to))
 
         result = []
 
@@ -424,7 +424,7 @@ class PerformanceReportBuilder:
         for key, value in result_obj.items():
             result.append(result_obj[key])
 
-        _l.info("result %s" % result)
+        # _l.info("result %s" % result)
 
         return result
 
@@ -453,7 +453,7 @@ class PerformanceReportBuilder:
 
     def build_time_weighted(self, date_from, date_to):
 
-        _l.info("build portfolio records")
+        # _l.info("build portfolio records")
 
         date_from_str = str(date_from)
         date_to_str = str(date_to)
@@ -479,7 +479,7 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-        _l.info('build_time_weighted.result portfolios %s ' % portfolios)
+        # _l.info('build_time_weighted.result portfolios %s ' % portfolios)
 
         # transactions = Transaction.objects.filter(portfolio__in=portfolios,
         #                                           transaction_date__gte=date_from,
@@ -765,7 +765,7 @@ class PerformanceReportBuilder:
 
     def build_money_weighted(self, date_from, date_to):
 
-        _l.info("build portfolio records")
+        # _l.info("build portfolio records")
 
         date_from_str = str(date_from)
         date_to_str = str(date_to)
@@ -793,7 +793,7 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-        _l.info('build_time_weighted.result portfolios %s ' % portfolios)
+        # _l.info('build_time_weighted.result portfolios %s ' % portfolios)
 
         # transactions = Transaction.objects.filter(portfolio__in=portfolios,
         #                                           transaction_date__gte=date_from,
@@ -870,7 +870,7 @@ class PerformanceReportBuilder:
 
                 nav = price_history.nav * fx_rate
             except Exception as e:
-                _l.info("Money weighted date_from nav error %s" % e)
+                # _l.info("Money weighted date_from nav error %s" % e)
                 nav = 0
 
             table[date_from_str]['portfolios'][portfolio_id] = {
@@ -939,7 +939,7 @@ class PerformanceReportBuilder:
                                                          pricing_policy=portfolio_registers_map[
                                                              portfolio_id].valuation_pricing_policy)
 
-                _l.info('price_history.nav %s' % price_history.nav)
+                # _l.info('price_history.nav %s' % price_history.nav)
 
                 fx_rate = 1
 

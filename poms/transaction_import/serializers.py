@@ -64,7 +64,7 @@ class TransactionImportCeleryTaskSerializer(serializers.ModelSerializer):
 class TransactionImportSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'name', 'user_code', 'delimiter', 'error_handler', 'missing_data_handler']
+        fields = ['id', 'name', 'user_code', 'delimiter', 'error_handler', 'missing_data_handler', 'book_uniqueness_settings']
 
 
 class TransactionImportResultSerializer(serializers.Serializer):

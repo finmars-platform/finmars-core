@@ -4,6 +4,7 @@ import traceback
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, \
+    save_serialized_custom_fields, \
     save_serialized_entity_layout, \
     save_serialized_layout
 from poms_app import settings
@@ -170,6 +171,11 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Exported: schedules.schedule")
 
+        save_serialized_entity('configuration.newmembersetupconfiguration',
+                               configuration.configuration_code,
+                               source_directory + '/new-user-setups',
+                               context)
+
         _l.info("Going to export: obj_attrs.genericattributetype")
 
         save_serialized_attribute_type('obj_attrs.genericattributetype',
@@ -210,6 +216,21 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                        source_directory + '/attribute-types/responsible',
                                        context)
 
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.balancereport',
+                                      source_directory + '/custom-columns/balance-report',
+                                      context)
+
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.plreport',
+                                      source_directory + '/custom-columns/pl-report',
+                                      context)
+
+        save_serialized_custom_fields(configuration.configuration_code,
+                                      'reports.transactionreport',
+                                      source_directory + '/custom-columns/transaction-report',
+                                      context)
+
         # save_serialized_entity('ui.dashboardlayout',
         #                        configuration.configuration_code,
         #                        source_directory + '/ui/layouts/dashboard',
@@ -226,6 +247,11 @@ def export_configuration_to_directory(source_directory, configuration, master_us
         save_serialized_layout('ui.contextmenulayout',
                                configuration.configuration_code,
                                source_directory + '/ui/layouts/context-menu',
+                               context)
+
+        save_serialized_layout('ui.mobilelayout',
+                               configuration.configuration_code,
+                               source_directory + '/ui/layouts/mobile-layout',
                                context)
 
         # TODO Need to add user_code
@@ -248,6 +274,18 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                       configuration.configuration_code,
                                       'portfolios.portfolio',
                                       source_directory + '/ui/layouts/portfolio',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolioregister',
+                                      source_directory + '/ui/layouts/portfolio-register',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolioregisterrecord',
+                                      source_directory + '/ui/layouts/portfolio-register-record',
                                       context)
 
         save_serialized_entity_layout('ui.listlayout',

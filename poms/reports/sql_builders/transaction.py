@@ -42,7 +42,8 @@ class TransactionReportBuilderSql:
         if not self.instance.end_date:
             self.instance.end_date = timezone_today()
 
-        '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
+        # TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object
+        #  he has no access to we should throw error'''
 
         if self.instance.bundle and self.instance.portfolios:
             raise Exception("Both portfolios and bundle provided. Only one of them should be provided.")
@@ -96,22 +97,6 @@ class TransactionReportBuilderSql:
 
         result = ''
 
-        # [{
-        #     "content_type": "transactions.transactiontype",
-        #     "key": "complex_transaction.transaction_type.name",
-        #     "name": "Complex Transaction. Transaction Type. Name",
-        #     "options": {
-        #         "enabled": true,
-        #         "exclude_empty_cells": false,
-        #         "filter_type": "selector",
-        #         "filter_values": [
-        #             "Buy/Sell"
-        #         ],
-        #         "use_from_above": {}
-        #     },
-        #     "value_type": 10
-        # }]
-
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
@@ -119,8 +104,6 @@ class TransactionReportBuilderSql:
         _l.info("add_user_filters.instruments %s" % len(instruments))
 
         try:
-
-            item_type_filter = None  # TODO shitcode here
 
             for filter in self.instance.filters:
 
@@ -144,6 +127,8 @@ class TransactionReportBuilderSql:
 
                                 if value == portfolio[field_key]:
                                     portfolio_ids.append(str(portfolio['id']))
+
+                        _l.info('portfolio_ids %s' % portfolio_ids)
 
                         if portfolio_ids:
                             res = "'" + "\',\'".join(portfolio_ids)
@@ -172,56 +157,6 @@ class TransactionReportBuilderSql:
                             result = result + 'and t.instrument_id IN (%s)' % res
 
                     if filter['key'] in ['entry_item_user_code']:
-
-                        # field_key = filter['key'].split('.')[1]
-                        # '''Its needed because sometimes we have instruments with user code USD (its equals user_code of currency
-                        #     and because of that it breaks all logic) so in case if front send another filter object with item type
-                        #     we use it to do more detailed filtering
-                        #  '''
-                        # if item_type_filter:
-                        #
-                        #     item_type = item_type_filter['options']['filter_values'][0]
-                        #
-                        #     if int(item_type) == 1:
-                        #
-                        #         instrument_ids = []
-                        #
-                        #         for instrument in instruments:
-                        #
-                        #             for value in filter['options']['filter_values']:
-                        #
-                        #                 if value == instrument['user_code']:
-                        #                     instrument_ids.append(str(instrument['id']))
-                        #
-                        #         _l.info('instrument_ids %s' % instrument_ids)
-                        #
-                        #         if instrument_ids:
-                        #             res = "'" + "\',\'".join(instrument_ids)
-                        #             res = res + "'"
-                        #
-                        #             result = result + 'and t.instrument_id IN (%s)' % res
-                        #
-                        #     if int(item_type) == 2:
-                        #         currencies_ids = []
-                        #
-                        #         for currency in currencies:
-                        #
-                        #             for value in filter['options']['filter_values']:
-                        #
-                        #                 if value == currency['user_code']:
-                        #                     currencies_ids.append(str(currency['id']))
-                        #
-                        #         _l.info('currencies_ids %s' % currencies_ids)
-                        #
-                        #         if currencies_ids:
-                        #             res = "'" + "\',\'".join(currencies_ids)
-                        #             res = res + "'"
-                        #
-                        #             result = result + 'and t.settlement_currency_id IN (%s)' % res
-                        #
-                        #         _l.info('result %s' % result)
-                        #
-                        # else:
 
                         instrument_ids = []
 
@@ -271,7 +206,7 @@ class TransactionReportBuilderSql:
                             transaction_currency_expression = 't.transaction_currency_id IN (%s)' % res
                             # TODO add or for transaction_currency_id
 
-                        _l.info('result %s' % result)
+                        # _l.info('result %s' % result)
 
                         if instrument_expression and (settlement_currency_expression and transaction_currency_expression):
 
@@ -308,7 +243,7 @@ class TransactionReportBuilderSql:
         #
         #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
 
-        _l.info('add_user_filters result %s' % result)
+        # _l.info('add_user_filters result %s' % result)
 
         return result
 
@@ -331,6 +266,7 @@ class TransactionReportBuilderSql:
                       (null) as transaction_item_short_name,
                       (null) as transaction_item_user_code,
                       
+                      tc.id as complex_transaction_id,
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,
@@ -442,7 +378,8 @@ class TransactionReportBuilderSql:
             result = dictfetchall(cursor)
 
             for result_item in result:
-                result_item['id'] = result_item['complex_transaction_code']
+                result_item['id'] = result_item['complex_transaction_id']
+                result_item['code'] = result_item['complex_transaction_code']
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
                 result_item['entry_item_name'] = None  # Should be filled later
@@ -492,6 +429,7 @@ class TransactionReportBuilderSql:
                       end as transaction_item_short_name,
                       -- complex transaction fields
                       tc.status_id as complex_transaction_status,
+                      tc.id as complex_transaction_id,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,
                       tc.date as complex_transaction_date,
@@ -654,6 +592,7 @@ class TransactionReportBuilderSql:
                       end as transaction_item_short_name,
                       
                       -- complex transaction fields
+                      tc.id as complex_transaction_id,
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,

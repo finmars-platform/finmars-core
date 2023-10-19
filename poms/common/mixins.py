@@ -90,7 +90,7 @@ class UpdateModelMixinExt(UpdateModelMixin):
             return Response(serializer.data)
         return response
 
-
+# TODO: may be delete later
 class DestroySystemicModelMixin(DestroyModelMixinExt):
     def perform_destroy(self, instance):
         if hasattr(instance, "is_systemic") and instance.is_systemic:
@@ -180,7 +180,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         #             raise
         #         self.perform_destroy(instance)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"task_id": celery_task.id})
 
 
 class BulkCreateModelMixin(CreateModelMixin):
