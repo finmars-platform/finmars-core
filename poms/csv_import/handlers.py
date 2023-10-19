@@ -1091,10 +1091,8 @@ class SimpleImportProcess(object):
             )
 
     def apply_conversion_to_raw_items(self):
-        # EXECUTE CONVERSIONS ON SCHEME INPUTS
 
-        row_number = 1
-        for raw_item in self.raw_items:
+        for row_number, raw_item in enumerate(self.raw_items, start=1):
             conversion_item = SimpleImportConversionItem()
             conversion_item.file_inputs = self.file_items[row_number - 1]
             conversion_item.raw_inputs = raw_item
@@ -1113,8 +1111,6 @@ class SimpleImportProcess(object):
                     conversion_item.conversion_inputs[scheme_input.name] = None
 
             self.conversion_items.append(conversion_item)
-
-            row_number += 1
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
@@ -1206,8 +1202,8 @@ class SimpleImportProcess(object):
         )
 
     def fill_result_item_with_attributes(self, item):
-        result = []
 
+        result = []
         for attribute_type in self.attribute_types:
             for entity_field in self.scheme.entity_fields.all():
                 if (
@@ -1446,6 +1442,8 @@ class SimpleImportProcess(object):
         return result
 
     def import_item(self, item):
+        from poms.instruments.handlers import InstrumentTypeProcess
+
         content_type_key = (
             f"{self.scheme.content_type.app_label}.{self.scheme.content_type.model}"
         )
@@ -1459,9 +1457,7 @@ class SimpleImportProcess(object):
             item.final_inputs = self.get_final_inputs(item)
 
             result_item = {}
-
             if self.scheme.content_type.model == "instrument":
-                from poms.instruments.handlers import InstrumentTypeProcess
 
                 instrument_type = InstrumentType.objects.get(
                     user_code=item.final_inputs["instrument_type"]

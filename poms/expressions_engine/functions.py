@@ -4232,10 +4232,10 @@ class SimpleEval2Def(object):
         self.func = func
 
     def __str__(self):
-        return "<def %s>" % self.name
+        return f"<def {self.name}>"
 
     def __repr__(self):
-        return "<def %s>" % self.name
+        return f"<def {self.name}>"
 
     def __call__(self, evaluator, *args, **kwargs):
         if getattr(self.func, "evaluator", False):

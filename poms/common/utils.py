@@ -542,7 +542,6 @@ def get_serializer(content_type_key):
         MobileLayoutSerializer,
         TransactionUserFieldSerializer,
     )
-
     from poms.reports.serializers import BalanceReportCustomFieldSerializer
     from poms.reports.serializers import PLReportCustomFieldSerializer
     from poms.reports.serializers import TransactionReportCustomFieldSerializer
