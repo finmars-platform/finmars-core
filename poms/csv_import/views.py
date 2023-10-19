@@ -58,18 +58,14 @@ class SchemeViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
 
 class CsvDataImportViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = simple_import
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # PomsFunctionPermission
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -98,19 +94,20 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             type="simple_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
-
-        # celery_task.save()
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Simple Import (scheme %s)"
-            % (request.user.member.username, instance.scheme.name),
+            description=(
+                f"Member {request.user.member.username} started Simple Import "
+                f"(scheme {instance.scheme.name})"
+            ),
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.pk},
+            queue="backend-background-queue",
         )
 
         _l.info(
@@ -118,7 +115,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         )
 
         return Response(
-            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            {
+                "task_id": celery_task.pk,
+                "task_status": celery_task.status,
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -126,23 +126,16 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
     def execute(self, request, *args, **kwargs):
         st = time.perf_counter()
 
-        _l.info("SimpleImportViewSet.execute")
+        _l.info("SimpleImportViewSet.execute started")
 
+        file_path = request.data.get("file_path")
         options_object = {
-            "items": request.data.get("items", None),
-            "file_path": request.data.get("file_path", None),
+            "items": request.data.get("items"),
+            "file_path": file_path,
+            "filename": file_path.split("/")[-1] if file_path else None,
+            "scheme_user_code": request.data["scheme_user_code"],
+            "execution_context": None,
         }
-
-        if options_object["file_path"]:
-            # TODO refactor to file_name
-            options_object["filename"] = request.data["file_path"].split("/")[-1]
-        else:
-            options_object["filename"] = None
-
-        options_object["scheme_user_code"] = request.data["scheme_user_code"]
-        options_object["execution_context"] = None
-
-        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
@@ -152,17 +145,22 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             type="simple_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(
+            f"celery_task {celery_task.pk} created, options_object={options_object}"
+        )
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Simple Import (scheme %s)"
-            % (request.user.member.username, options_object["scheme_user_code"]),
+            description=(
+                f"Member {request.user.member.username} started Simple Import "
+                f'(scheme {options_object["scheme_user_code"]})'
+            ),
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.pk},
+            queue="backend-background-queue",
         )
 
         _l.info(
@@ -170,6 +168,9 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         )
 
         return Response(
-            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            {
+                "task_id": celery_task.pk,
+                "task_status": celery_task.status,
+            },
             status=status.HTTP_200_OK,
         )

@@ -13,7 +13,7 @@ class CsvImportContentTypeField(SlugRelatedFilteredField):
 
     def __init__(self, **kwargs):
         kwargs["slug_field"] = "model"
-        super(CsvImportContentTypeField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def to_internal_value(self, data):
         try:
@@ -27,7 +27,7 @@ class CsvImportContentTypeField(SlugRelatedFilteredField):
             self.fail("invalid")
 
     def to_representation(self, obj):
-        return "%s.%s" % (obj.app_label, obj.model)
+        return f"{obj.app_label}.{obj.model}"
 
 
 class CsvImportSchemeField(PrimaryKeyRelatedFilteredField):

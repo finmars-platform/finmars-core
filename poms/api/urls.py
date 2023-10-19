@@ -21,7 +21,6 @@ import poms.explorer.urls as explorer_router
 import poms.file_reports.views as file_reports
 import poms.history.views as history
 import poms.iam.urls as iam_router
-import poms.iam.views as iam
 import poms.instruments.urls as instrument_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
@@ -366,8 +365,6 @@ urlpatterns = [
     re_path(
         r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
     ),
-
-
 
     # external callbacks
     re_path(
