@@ -775,11 +775,8 @@ class SimpleImportProcess(object):
     def generate_file_report(self):
         _l.info(
             f"SimpleImportProcess.generate_file_report "
-            f"error_handler {self.scheme.error_handler}"
-        )
-        _l.info(
-            f"SimpleImportProcess.generate_file_report missing_data_handler "
-            f"{self.scheme.missing_data_handler}"
+            f"error_handler {self.scheme.error_handler} "
+            f"missing_data_handler {self.scheme.missing_data_handler}"
         )
 
         result = [
@@ -866,8 +863,7 @@ class SimpleImportProcess(object):
 
         file_report.save()
 
-        _l.info(f"SimpleImportProcess.file_report {file_report}")
-        _l.info(f"SimpleImportProcess.file_report {file_report.file_url}")
+        _l.info(f"SimpleImportProcess.file_report {file_report} {file_report.file_url}")
 
         return file_report
 
@@ -918,7 +914,7 @@ class SimpleImportProcess(object):
             )
 
         except Exception as e:
-            _l.error(f"Get attribute types excpetion {repr(e)}")
+            _l.error(f"Get attribute types exception {repr(e)}")
 
         self.attribute_types = attribute_types
 
@@ -997,7 +993,7 @@ class SimpleImportProcess(object):
                                 skipinitialspace=True,
                             )
 
-                            self._extracted_from_fill_with_file_items_45(reader)
+                            self.append_and_count_file_items(reader)
             if self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
@@ -1052,9 +1048,7 @@ class SimpleImportProcess(object):
 
             start_cell_column_number = column_index_from_string(start_cell_letter)
 
-            row_number = 1
-
-            for r in ws.rows:
+            for row_number, r in enumerate(ws.rows, start=1):
                 if row_number >= start_cell_row_number:
                     row_values = [
                         cell.value
@@ -1063,12 +1057,9 @@ class SimpleImportProcess(object):
                     ]
                     reader.append(row_values)
 
-                row_number = row_number + 1
+        self.append_and_count_file_items(reader)
 
-        self._extracted_from_fill_with_file_items_45(reader)
-
-    # TODO Rename this here and in `fill_with_file_items`
-    def _extracted_from_fill_with_file_items_45(self, reader):
+    def append_and_count_file_items(self, reader):
         column_row = None
 
         for row_index, row in enumerate(reader):
@@ -1193,15 +1184,11 @@ class SimpleImportProcess(object):
                     preprocess_item.inputs[scheme_input.name] = None
 
                     if current_level == deep:
-                        _l.error("key_column_name %s" % key_column_name)
-                        _l.error("scheme_input.name %s" % scheme_input.name)
                         _l.error(
-                            "preprocess_item.raw_inputs %s"
-                            % preprocess_item.conversion_inputs
-                        )
-                        _l.error(
-                            "SimpleImportProcess.Task %s. recursive_preprocess init input %s Exception %s"
-                            % (self.task, scheme_input, e)
+                            f"key_column_name {key_column_name} scheme_input.name "
+                            f"{scheme_input.name} preprocess_item.raw_inputs "
+                            f"{preprocess_item.conversion_inputs} Task {self.task}. "
+                            f"recursive_preprocess init input {scheme_input} err {e}"
                         )
 
             # CREATE CALCULATED INPUTS
@@ -1228,18 +1215,15 @@ class SimpleImportProcess(object):
 
                     if current_level == deep:
                         _l.error(
-                            "SimpleImportProcess.Task %s. recursive_preprocess calculated_input %s Exception %s"
-                            % (self.task, scheme_calculated_input, e)
+                            f"SimpleImportProcess.Task {self.task} recursive_preprocess"
+                            f" calculated_input {scheme_calculated_input} err {e}"
                         )
-                        # _l.error(
-                        #     'TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Traceback %s' % (
-                        #         self.task, scheme_calculated_input, traceback.format_exc()))
 
         if current_level < deep:
             self.recursive_preprocess(deep, current_level + 1)
 
     def preprocess(self):
-        _l.info("SimpleImportProcess.Task %s. preprocess INIT" % self.task)
+        _l.info(f"SimpleImportProcess.Task {self.task}. preprocess INIT")
 
         self.recursive_preprocess(deep=2)
 
@@ -1254,8 +1238,8 @@ class SimpleImportProcess(object):
             self.items.append(item)
 
         _l.info(
-            "SimpleImportProcess.Task %s. preprocess DONE items %s"
-            % (self.task, len(self.preprocessed_items))
+            f"SimpleImportProcess.Task {self.task}. preprocess "
+            f"DONE items {len(self.preprocessed_items)}"
         )
 
     def fill_result_item_with_attributes(self, item):
@@ -1263,59 +1247,64 @@ class SimpleImportProcess(object):
 
         for attribute_type in self.attribute_types:
             for entity_field in self.scheme.entity_fields.all():
-                if entity_field.attribute_user_code:
-                    if entity_field.attribute_user_code == attribute_type.user_code:
-                        attribute = {"attribute_type": attribute_type.id}
+                if (
+                    entity_field.attribute_user_code
+                    and entity_field.attribute_user_code == attribute_type.user_code
+                ):
+                    attribute = {"attribute_type": attribute_type.id}
 
-                        if attribute_type.value_type == GenericAttributeType.STRING:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_string"] = item.final_inputs[
+                    if (
+                        attribute_type.value_type == GenericAttributeType.STRING
+                        and item.final_inputs[entity_field.attribute_user_code]
+                    ):
+                        attribute["value_string"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
+
+                    if attribute_type.value_type == GenericAttributeType.NUMBER and (
+                        item.final_inputs[entity_field.attribute_user_code]
+                        or item.final_inputs[entity_field.attribute_user_code] == 0
+                    ):
+                        attribute["value_float"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
+
+                    if (
+                        attribute_type.value_type == GenericAttributeType.CLASSIFIER
+                        and item.final_inputs[entity_field.attribute_user_code]
+                    ):
+                        try:
+                            attribute["classifier"] = GenericClassifier.objects.get(
+                                attribute_type=attribute_type,
+                                name=item.final_inputs[
                                     entity_field.attribute_user_code
-                                ]
+                                ],
+                            ).id
+                        except Exception as e:
+                            _l.error(
+                                f"fill_result_item_with_attributes classifier error - "
+                                f"item {item} e {e}"
+                            )
 
-                        if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            if (
-                                item.final_inputs[entity_field.attribute_user_code]
-                                or item.final_inputs[entity_field.attribute_user_code]
-                                == 0
-                            ):
-                                attribute["value_float"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                            if not item.error_message:
+                                item.error_message = ""
 
-                        if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                try:
-                                    attribute[
-                                        "classifier"
-                                    ] = GenericClassifier.objects.get(
-                                        attribute_type=attribute_type,
-                                        name=item.final_inputs[
-                                            entity_field.attribute_user_code
-                                        ],
-                                    ).id
-                                except Exception as e:
-                                    _l.error(
-                                        "fill_result_item_with_attributes classifier error - item %s e %s"
-                                        % (item, e)
-                                    )
+                            item.error_message = f"{item.error_message}%s: %s, " % (
+                                entity_field.attribute_user_code,
+                                str(e),
+                            )
 
-                                    if not item.error_message:
-                                        item.error_message = ""
+                            attribute["classifier"] = None
 
-                                    item.error_message = (
-                                        item.error_message + "%s: %s, "
-                                    ) % (entity_field.attribute_user_code, str(e))
+                    if (
+                        item.final_inputs[entity_field.attribute_user_code]
+                        and attribute_type.value_type == GenericAttributeType.DATE
+                    ):
+                        attribute["value_date"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
 
-                                    attribute["classifier"] = None
-
-                        if attribute_type.value_type == GenericAttributeType.DATE:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_date"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
-
-                        result.append(attribute)
+                    result.append(attribute)
 
         return result
 
