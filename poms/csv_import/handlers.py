@@ -943,7 +943,10 @@ class SimpleImportProcess(object):
 
                         # TODO check encoding (maybe should be taken from scheme)
                         with open(
-                            tmpf.name, mode="rt", encoding="utf_8_sig", errors="ignore"
+                            tmpf.name,
+                            mode="rt",
+                            encoding="utf_8_sig",
+                            errors="ignore",
                         ) as cf:
                             # TODO check quotechar (maybe should be taken from scheme)
                             reader = csv.reader(
@@ -958,7 +961,7 @@ class SimpleImportProcess(object):
             if self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
-                        self._extracted_from_fill_with_file_items_65(f, tmpf)
+                        self.read_from_excel_file(f, tmpf)
             _l.info(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type} DONE items {len(self.raw_items)}"
@@ -967,17 +970,17 @@ class SimpleImportProcess(object):
         except Exception as e:
             _l.error(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
-                f"{self.process_type} Exception {e}"
+                f"{self.process_type} Exception {repr(e)}"
             )
             _l.error(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type} Traceback {traceback.format_exc()}"
             )
 
-    # TODO Rename this here and in `fill_with_file_items`
-    def _extracted_from_fill_with_file_items_65(self, f, tmpf):
+    def read_from_excel_file(self, f, tmpf):
         for chunk in f.chunks():
             tmpf.write(chunk)
+
         tmpf.flush()
 
         os.link(tmpf.name, f"{tmpf.name}.xlsx")
