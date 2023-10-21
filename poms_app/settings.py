@@ -210,7 +210,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "postgres"),
+        "NAME": ENV_STR("DB_NAME", "backend_db"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
