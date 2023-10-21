@@ -7,10 +7,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import CharFilter
+from poms.common.filters import CharFilter, GroupsAttributeFilter, AttributeFilter
 from poms.common.views import AbstractAsyncViewSet, AbstractModelViewSet
 from poms.csv_import.tasks import simple_import
 from poms.users.filters import OwnerByMasterUserFilter
+from rest_framework.viewsets import ModelViewSet, ViewSet
+from ..common.mixins import UpdateModelMixinExt
 
 from ..system_messages.handlers import send_system_message
 from .filters import SchemeContentTypeFilter
@@ -20,6 +22,8 @@ from .serializers import (
     CsvImportSchemeLightSerializer,
     CsvImportSchemeSerializer,
 )
+
+from rest_framework.permissions import IsAuthenticated
 
 _l = getLogger("poms.csv_import")
 
@@ -38,14 +42,23 @@ def utf_8_encoder(unicode_csv_data):
         yield line.encode("utf-8")
 
 
-class SchemeViewSet(AbstractModelViewSet):
-    queryset = CsvImportScheme.objects
-    serializer_class = CsvImportSchemeSerializer
-    filter_class = SchemeFilterSet
-    filter_backends = AbstractModelViewSet.filter_backends + [
+class SchemeViewSet(
+    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
+):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+        AttributeFilter,
     ]
-    permission_classes = AbstractModelViewSet.permission_classes + []
+    queryset = CsvImportScheme.objects
+
+    serializer_class = CsvImportSchemeSerializer
+
+    filter_class = SchemeFilterSet
+    ordering_fields = [
+        "scheme_name",
+    ]
 
     @action(
         detail=False,
