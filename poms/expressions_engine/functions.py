@@ -1485,6 +1485,19 @@ def _add_price_history(
     is_temporary_price=False,
     overwrite=True,
 ):
+    """
+    Adds a price history entry for an instrument.
+
+    Args:
+    - evaluator: The evaluator object.
+    - date: The date of the price history entry.
+    - instrument: The instrument object.
+    - pricing_policy: The pricing policy object.
+    - principal_price: The principal price (default: 0).
+    - accrued_price: The accrued price (default: 0).
+    - is_temporary_price: Indicates if the price is temporary (default: False).
+    - overwrite: Indicates if existing price history should be overwritten (default: True).
+    """
     from poms.instruments.models import PriceHistory
     # from poms.users.utils import get_master_user_from_context
 
@@ -1498,6 +1511,9 @@ def _add_price_history(
     date = _parse_date(date)
     instrument = _safe_get_instrument(evaluator, instrument)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+    if accrued_price is None:
+        # https://finmars2018.atlassian.net/browse/FN-2233
+        accrued_price = instrument.get_accrued_price(date)
 
     try:
         result = PriceHistory.objects.get(
@@ -4108,7 +4124,7 @@ def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         begin = float("-inf") if begin is None else float(begin)
         end = float("inf") if end is None else float(end)
-        
+
         if begin < val <= end:
             return text
 
@@ -4144,9 +4160,9 @@ def _date_group(evaluator, val, ranges, default=None):
         evaluator.check_time()
 
         begin = _parse_date(begin) if begin else datetime.date(1900, 1, 1)
-        
+
         end = _parse_date(end) if end else datetime.date(2100, 12, 31)
-        
+
         if begin <= val <= end:
             if step:
                 if not isinstance(

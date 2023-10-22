@@ -1055,7 +1055,7 @@ class SimpleImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error(f"Could not execute preoprocess expression. Error {e}")
+                _l.error(f"Could not execute preprocess expression. Error {e}")
 
         _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
