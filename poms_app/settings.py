@@ -264,8 +264,8 @@ CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 CSRF_TRUSTED_ORIGINS = [
     "capacitor://localhost",
     "http://localhost",
+    "http://127.0.0.1",
     "http://0.0.0.0",
-    "http://0.0.0.0:8080",
     f"http://{DOMAIN_NAME}",
     f"https://{DOMAIN_NAME}",
 ]

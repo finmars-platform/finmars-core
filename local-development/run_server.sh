@@ -37,6 +37,7 @@ ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
 AUTHORIZER_URL=http://127.0.0.1:8083/authorizer \
 BACKEND_ROLES="ALL" \
+CSRF_COOKIE_DOMAIN=0.0.0.0 \
 python manage.py runserver
 
 #gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi
