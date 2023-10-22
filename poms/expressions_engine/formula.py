@@ -832,6 +832,8 @@ def _get_supported_models_serializer_class():
     from poms.currencies.models import CurrencyHistory
     from poms.instruments.serializers import PriceHistorySerializer
     from poms.currencies.serializers import CurrencyHistorySerializer
+    from poms.instruments.models import AccrualCalculationSchedule
+    from poms.instruments.serializers import AccrualCalculationScheduleSerializer
     return {
         Account: AccountEvalSerializer,
         AccountType: AccountTypeEvalSerializer,
@@ -857,6 +859,7 @@ def _get_supported_models_serializer_class():
         Member: MemberSerializer,
         Country: CountrySerializer,
         InstrumentPricingPolicy: InstrumentPricingPolicySerializer,
+        AccrualCalculationSchedule: AccrualCalculationScheduleSerializer
     }
 
 
