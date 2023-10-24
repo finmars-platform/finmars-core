@@ -76,7 +76,7 @@ class FileReport(models.Model):
 
         return file_url
 
-    def upload_json_by_fp(self, file_name, dict_to_json, master_user):
+    def upload_json_as_local_file(self, file_name, dict_to_json, master_user):
         file_url = self._get_path(master_user, file_name)
 
         try:

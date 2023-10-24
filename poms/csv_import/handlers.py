@@ -840,7 +840,7 @@ class SimpleImportProcess(object):
 
         _l.info("SimplemportProcess.generate_json_report uploading file")
 
-        file_report.upload_json_by_fp(
+        file_report.upload_json_as_local_file(
             file_name=file_name,
             dict_to_json=self.task.result_object,
             master_user=self.master_user,
