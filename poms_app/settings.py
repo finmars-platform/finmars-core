@@ -264,8 +264,8 @@ CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 CSRF_TRUSTED_ORIGINS = [
     "capacitor://localhost",
     "http://localhost",
+    "http://127.0.0.1",
     "http://0.0.0.0",
-    "http://0.0.0.0:8080",
     f"http://{DOMAIN_NAME}",
     f"https://{DOMAIN_NAME}",
 ]
@@ -403,28 +403,28 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        # "file": {
-        #     "level": DJANGO_LOG_LEVEL,
-        #     "class": "logging.FileHandler",
-        #     "filename": "/var/log/finmars/backend/django.log",
-        #     "formatter": "verbose",
-        # },
+        "file": {
+            "level": DJANGO_LOG_LEVEL,
+            "class": "logging.FileHandler",
+            "filename": "/var/log/finmars/backend/django.log",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["console"]},
+        "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
         "provision": {
-            "handlers": ["provision-console"],
+            "handlers": ["provision-console", "file"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         }
     },

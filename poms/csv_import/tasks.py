@@ -25,11 +25,12 @@ def simple_import(self, task_id, procedure_instance_id=None):
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
     except Exception as e:
-        _l.error(
+        err_msg = (
             f"simple_import celery_task {task_id} error {repr(e)} "
             f"traceback {traceback.format_exc()}"
         )
-        raise e
+        _l.error(err_msg)
+        raise RuntimeError(err_msg) from e
 
     try:
         instance = SimpleImportProcess(
@@ -49,17 +50,17 @@ def simple_import(self, task_id, procedure_instance_id=None):
         instance.fill_with_file_items()
 
         if instance.scheme.data_preprocess_expression:
+            _l.info(f"Going to execute {instance.scheme.data_preprocess_expression}")
             try:
-                _l.info(
-                    f"Going to execute {instance.scheme.data_preprocess_expression}"
-                )
-
                 new_file_items = instance.whole_file_preprocess()
                 instance.file_items = new_file_items
 
             except Exception as e:
                 err_msg = f"transaction_import.preprocess errors {repr(e)}"
                 _l.error(err_msg)
+                celery_task.error_message = err_msg
+                celery_task.status = CeleryTask.STATUS_ERROR
+                celery_task.save()
                 raise RuntimeError(err_msg) from e
 
         instance.fill_with_raw_items()
@@ -99,12 +100,12 @@ def simple_import(self, task_id, procedure_instance_id=None):
         return json.dumps(instance.import_result, default=str)
 
     except Exception as e:
-        _l.error(f"simple_import error {repr(e)} trace {traceback.format_exc()}")
-        raise e
+        err_msg = f"simple_import error {repr(e)} trace {traceback.format_exc()}"
+        _l.error(err_msg)
 
-        # celery_task.error_message = str(e)
-        # celery_task.status = CeleryTask.STATUS_ERROR
-        # celery_task.save()
+        celery_task.error_message = err_msg
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.save()
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)

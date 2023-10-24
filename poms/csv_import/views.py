@@ -46,7 +46,7 @@ class SchemeViewSet(
     AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
 ):
     permission_classes = [IsAuthenticated]
-    filter_backends = [
+    filter_backends = AbstractModelViewSet.filter_backends +  [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter,
