@@ -291,7 +291,7 @@ class BackendReportHelperService:
             return value_to_filter in filter_by
 
         elif operation_type == "date_tree":
-            return any(str(value_to_filter) == str(date) for date in filter_by)
+            return any(str(value_to_filter) == str(value) for value in filter_by)
 
         else:
             return False
