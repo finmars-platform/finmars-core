@@ -968,14 +968,13 @@ class SimpleImportProcess(object):
             )
 
         except Exception as e:
-            _l.error(
+            err_msg = (
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
-                f"{self.process_type} Exception {repr(e)}"
+                f"{self.process_type} Exception {repr(e)} "
+                f"Traceback {traceback.format_exc()}"
             )
-            _l.error(
-                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
-                f"{self.process_type} Traceback {traceback.format_exc()}"
-            )
+            _l.error(err_msg)
+            raise e
 
     def read_from_excel_file(self, f, tmpf):
         for chunk in f.chunks():
@@ -1056,6 +1055,7 @@ class SimpleImportProcess(object):
 
             except Exception as e:
                 _l.error(f"Could not execute preprocess expression. Error {e}")
+                raise e
 
         _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
@@ -1069,7 +1069,6 @@ class SimpleImportProcess(object):
 
         try:
             for file_item in self.file_items:
-
                 item = {}
                 for scheme_input in self.scheme.csv_fields.all():
                     try:
@@ -1089,9 +1088,9 @@ class SimpleImportProcess(object):
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type}  error {e} trace {traceback.format_exc()}"
             )
+            raise e
 
     def apply_conversion_to_raw_items(self):
-
         for row_number, raw_item in enumerate(self.raw_items, start=1):
             conversion_item = SimpleImportConversionItem()
             conversion_item.file_inputs = self.file_items[row_number - 1]
@@ -1130,7 +1129,6 @@ class SimpleImportProcess(object):
                 self.preprocessed_items.append(preprocess_item)
 
         for preprocess_item in self.preprocessed_items:
-
             # CREATE SCHEME INPUTS
             for scheme_input in self.scheme.csv_fields.all():
                 key_column_name = scheme_input.column_name
@@ -1202,7 +1200,6 @@ class SimpleImportProcess(object):
         )
 
     def fill_result_item_with_attributes(self, item):
-
         result = []
         for attribute_type in self.attribute_types:
             for entity_field in self.scheme.entity_fields.all():
@@ -1379,10 +1376,7 @@ class SimpleImportProcess(object):
                     if not item.error_message:
                         item.error_message = ""
 
-                    item.error_message = (item.error_message + " %s: %s, ") % (
-                        key,
-                        str(e),
-                    )
+                    item.error_message = f"{item.error_message} {key}: {e}, "
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1458,7 +1452,6 @@ class SimpleImportProcess(object):
 
             result_item = {}
             if self.scheme.content_type.model == "instrument":
-
                 instrument_type = InstrumentType.objects.get(
                     user_code=item.final_inputs["instrument_type"]
                 )
@@ -1574,9 +1567,7 @@ class SimpleImportProcess(object):
                             if not item.error_message:
                                 item.error_message = ""
 
-                            item.error_message = (
-                                item.error_message + "Post script error: %s, "
-                            ) % str(e)
+                            item.error_message = f"{item.error_message} Post script error: {repr(e)}, "
 
                     self.handle_successful_item_import(item, serializer)
                 except Exception as e:
@@ -1652,7 +1643,7 @@ class SimpleImportProcess(object):
 
             except Exception as e:
                 item.status = "error"
-                item.message = f"Error {repr(e)}"
+                item.message = f"item.row_number {item.row_number} error {repr(e)}"
 
                 _l.error(
                     f"SimpleImportProcess.Task {self.task}.  ========= process row "
@@ -1665,6 +1656,7 @@ class SimpleImportProcess(object):
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
     def process(self):
+        error_flag = False
         try:
             self.process_items()
 
@@ -1673,6 +1665,8 @@ class SimpleImportProcess(object):
                 f"SimpleImportProcess.Task {self.task}.process "
                 f"Exception {e} Traceback {traceback.format_exc()}"
             )
+
+            error_flag = True
 
             self.result.error_message = f"General Import Error. Exception {repr(e)}"
 
@@ -1691,20 +1685,19 @@ class SimpleImportProcess(object):
                 instance=self.result, context=self.context
             ).data
 
+            _l.info(f"self.import_result {self.import_result}")
+
             self.task.result_object = self.import_result
-
-            # _l.info("self.task.result_object %s" % self.task.result_object)
-
-            self.task.save()
-
             self.result.reports = []
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
+            self.task.save()
 
             error_rows_count = sum(
                 result_item.status == "error" for result_item in self.result.items
             )
-            if error_rows_count != 0:
+            if error_rows_count:
+                error_flag = True
                 send_system_message(
                     master_user=self.master_user,
                     action_status="required",
@@ -1735,7 +1728,7 @@ class SimpleImportProcess(object):
                 master_user=self.master_user,
                 performed_by=system_message_performed_by,
                 section="import",
-                type="success",
+                type="error" if error_flag else "success",
                 title="Import Finished. Prices Recalculation Required",
                 description=(
                     "Please, run schedule or execute procedures to calculate portfolio "
@@ -1747,7 +1740,7 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=import_system_message_title,
             attachments=[self.result.reports[0].id, self.result.reports[1].id],
         )
@@ -1756,7 +1749,7 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=system_message_title,
             description=system_message_description,
         )
@@ -1767,7 +1760,8 @@ class SimpleImportProcess(object):
         self.task.add_attachment(self.result.reports[0].id)
         self.task.add_attachment(self.result.reports[1].id)
         self.task.verbose_result = self.get_verbose_result()
-        self.task.status = CeleryTask.STATUS_DONE
+        self.task.status = (
+            CeleryTask.STATUS_ERROR if error_flag else CeleryTask.STATUS_DONE
+        )
         self.task.mark_task_as_finished()
-
         self.task.save()
