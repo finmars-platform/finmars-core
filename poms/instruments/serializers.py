@@ -1612,10 +1612,53 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class AccrualCalculationScheduleStandaloneSerializer(serializers.ModelSerializer):
+
+    instrument = InstrumentField()
+
+    accrual_calculation_model = AccrualCalculationModelField()
+    accrual_calculation_model_object = AccrualCalculationModelSerializer(
+        source="accrual_calculation_model", read_only=True
+    )
+    periodicity = PeriodicityField(allow_null=False)
+    periodicity_object = PeriodicitySerializer(source="periodicity", read_only=True)
+
+    class Meta:
+        model = AccrualCalculationSchedule
+        fields = [
+            "id",
+            "instrument",
+            "accrual_start_date",
+            "accrual_start_date_value_type",
+            "first_payment_date",
+            "first_payment_date_value_type",
+            "accrual_size",
+            "accrual_size_value_type",
+            "periodicity_n",
+            "periodicity_n_value_type",
+            "accrual_calculation_model",
+            "accrual_calculation_model_object",
+            "periodicity",
+            "periodicity_object",
+            "notes",
+        ]
+
+    def validate(self, attrs):
+        return attrs
+
+
 class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentFactorSchedule
-        fields = ["effective_date", "factor_value"]
+        fields = ["id", "effective_date", "factor_value"]
+
+
+class InstrumentFactorScheduleStandaloneSerializer(serializers.ModelSerializer):
+
+    instrument = InstrumentField()
+    class Meta:
+        model = InstrumentFactorSchedule
+        fields = ["id", "instrument", "effective_date", "factor_value"]
 
 
 class EventScheduleActionSerializer(serializers.ModelSerializer):

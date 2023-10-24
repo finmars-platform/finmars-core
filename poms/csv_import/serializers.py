@@ -277,6 +277,22 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
                 "user_text_2",
                 "user_text_3",
             ],
+            "instruments.instrumentfactorschedule": [
+                "instrument",
+                "effective_date",
+                "factor_value"
+            ],
+            "instruments.accrualcalculationschedule": [
+                "instrument",
+                "accrual_start_date",
+                "first_payment_date",
+                "accrual_size",
+                "accrual_calculation_model",
+                "periodicity",
+                "periodicity_n",
+                "notes",
+                "eom"
+            ],
             "instruments.pricehistory": [
                 "instrument",
                 "pricing_policy",
