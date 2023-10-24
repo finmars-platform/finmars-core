@@ -1,4 +1,5 @@
 import traceback
+import json
 from logging import getLogger
 
 from django.core.files.base import ContentFile
@@ -74,6 +75,23 @@ class FileReport(models.Model):
         # _l.info(f"FileReport.upload_file.file_url {file_url}")
 
         return file_url
+
+    def upload_json_by_fp(self, file_name, dict_to_json, master_user):
+        file_url = self._get_path(master_user, file_name)
+
+        try:
+            with storage.open(f"/{settings.BASE_API_URL}{file_url}", 'w') as fp:
+                json.dump(dict_to_json, fp, indent=4, default=str)
+
+        except Exception as e:
+            _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
+
+        self.file_url = file_url
+
+        # _l.info(f"FileReport.upload_file.file_url {file_url}")
+
+        return file_url
+    
 
     def get_file(self):
         result = None
