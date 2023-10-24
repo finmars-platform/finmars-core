@@ -64,7 +64,6 @@ class BackendReportHelperService:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
-
         # _l.info('result_groups %s' % result_groups)
         # _l.info('items %s' % items)
 
@@ -219,7 +218,7 @@ class BackendReportHelperService:
 
         # Refactor someday this shitty logic
         if item_value is None:
-            if result_value not in ("-", None): 
+            if result_value not in ("-", None):
                 # TODO this one is important, we need to split - and None in future
                 return False
         elif str(item_value).lower() != result_value:
@@ -246,7 +245,6 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-
         _l.info(
             f"filter_table_rows.filter_value_from_table value_to_filter="
             f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
@@ -293,7 +291,7 @@ class BackendReportHelperService:
             return value_to_filter in filter_by
 
         elif operation_type == "date_tree":
-            return any(value_to_filter == str(date) for date in filter_by)
+            return any(str(value_to_filter) == str(date) for date in filter_by)
 
         else:
             return False
@@ -328,53 +326,50 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
-                _l.info(
-                    f"filter_table_rows.match_item item={item} filter_={filter_}"
-                )
+                _l.info(f"filter_table_rows.match_item item={item} filter_={filter_}")
 
-                if len(filter_value):
-                    if key_property != "ordering":
-                        if key_property in item and item[key_property] is not None:
-                            if self.check_for_empty_regular_filter(
-                                filter_value, filter_type
-                            ):
-                                value_from_table = item[key_property]
-                                filter_argument = filter_value
-
-                                if (
-                                    value_type in (10, 30)
-                                    and filter_type != "multiselector"
-                                ):
-                                    value_from_table = value_from_table.lower()
-                                    filter_argument = filter_argument[0].lower()
-
-                                elif value_type == 40:
-                                    _l.info(
-                                        "BackendReportHelperService.filter_table_rows"
-                                        f".match_item value_type=40 "
-                                        f"value_from_table={value_from_table} "
-                                        f"filter_argument={filter_argument}"
-                                    )
-                                    if filter_type in ["equal", "not_equal"]:
-                                        filter_argument = filter_argument[0]
-
-                                    elif filter_type in ["from_to", "out_of_range"]:
-                                        filter_argument["min_value"] = filter_argument[
-                                            "min_value"
-                                        ]
-                                        filter_argument["max_value"] = filter_argument[
-                                            "max_value"
-                                        ]
-
-                                if not self.filter_value_from_table(
-                                    value_from_table, filter_argument, filter_type
-                                ):
-                                    return False
-                        elif exclude_empty_cells or (
-                            key_property in ["name", "instrument"]
-                            and item["item_type"] != 1
+                if len(filter_value) and key_property != "ordering":
+                    if key_property in item and item[key_property] is not None:
+                        if self.check_for_empty_regular_filter(
+                            filter_value, filter_type
                         ):
-                            return False
+                            value_from_table = item[key_property]
+                            filter_argument = filter_value
+
+                            if (
+                                value_type in (10, 30)
+                                and filter_type != "multiselector"
+                            ):
+                                value_from_table = value_from_table.lower()
+                                filter_argument = filter_argument[0].lower()
+
+                            elif value_type == 40:
+                                _l.info(
+                                    "BackendReportHelperService.filter_table_rows"
+                                    f".match_item value_type=40 "
+                                    f"value_from_table={value_from_table} "
+                                    f"filter_argument={filter_argument}"
+                                )
+                                if filter_type in ["equal", "not_equal"]:
+                                    filter_argument = filter_argument[0]
+
+                                elif filter_type in ["from_to", "out_of_range"]:
+                                    filter_argument["min_value"] = filter_argument[
+                                        "min_value"
+                                    ]
+                                    filter_argument["max_value"] = filter_argument[
+                                        "max_value"
+                                    ]
+
+                            if not self.filter_value_from_table(
+                                value_from_table, filter_argument, filter_type
+                            ):
+                                return False
+                    elif exclude_empty_cells or (
+                        key_property in ["name", "instrument"]
+                        and item["item_type"] != 1
+                    ):
+                        return False
             return True
 
         return [item for item in items if match_item(item)]
@@ -387,7 +382,7 @@ class BackendReportHelperService:
         # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
         # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
 
-        _l.info(f'filter_by_groups_filters before len {len(items)}')
+        _l.info(f"filter_by_groups_filters before len {len(items)}")
 
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
             filtered_items = []
@@ -412,7 +407,7 @@ class BackendReportHelperService:
 
             return filtered_items
 
-        _l.info(f'filter_by_groups_filters after len {len(items)}')
+        _l.info(f"filter_by_groups_filters after len {len(items)}")
 
         return items
 
@@ -460,7 +455,7 @@ class BackendReportHelperService:
         columns = options["columns"]
 
         user_columns = [column["key"] for column in columns]
-        
+
         result_items = []
         for item in items:
             result_item = {"id": item["id"]}
@@ -478,67 +473,63 @@ class BackendReportHelperService:
         return result_items
 
     # Probably Deprecated
-    def order_sort(self, property, sort_order):
+    def order_sort(self, property_, sort_order):
         def comparator(a, b):
-            if a.get(property) is None:
+            if a.get(property_) is None:
                 return 1 * sort_order
-            if b.get(property) is None:
+            if b.get(property_) is None:
                 return -1 * sort_order
 
-            if a[property] < b[property]:
+            if a[property_] < b[property_]:
                 return -1 * sort_order
 
-            if a[property] > b[property]:
-                return 1 * sort_order
-
-            return 0
+            return 1 * sort_order if a[property_] > b[property_] else 0
 
         return comparator
 
-    def sort_items_by_property(self, items, property):
+    def sort_items_by_property(self, items, property_):
         # Determine sort direction
-        if property.startswith("-"):
+        if property_.startswith("-"):
             reverse = True
-            property = property[1:]
+            property_ = property_[1:]
         else:
             reverse = False
 
         # Adjusted sort key to handle None values
-        sort_key = lambda x: (x.get(property) is None, x.get(property))
+        sort_key = lambda x: (x.get(property_) is None, x.get(property_))
 
         # Use sorted() to sort items
         return sorted(items, key=sort_key, reverse=reverse)
 
     def sort_groups(self, items, options):
         if "groups_order" in options:
-            property = "___group_name"  # TODO consider refactor someday
+            property_ = "___group_name"  # TODO consider refactor someday
 
             if options["groups_order"] == "desc":
-                property = "-" + property
+                property_ = f"-{property_}"
 
-            return self.sort_items_by_property(items, property)
+            return self.sort_items_by_property(items, property_)
 
         return items
 
     def sort_items(self, items, options):
         if "ordering" in options and "items_order" in options:
-            property = options["ordering"]
+            property_ = options["ordering"]
 
             if options["items_order"] == "desc":
-                property = "-" + property
+                property_ = f"-{property_}"
 
-            return self.sort_items_by_property(items, property)
+            return self.sort_items_by_property(items, property_)
 
         return items
 
     def calculate_market_value_percent(self, items, total_market_value):
-        if total_market_value:
-            for item in items:
+        for item in items:
+            if total_market_value:
                 item["market_value_percent"] = round(
                     (item["market_value"] / total_market_value) * 100, 2
                 )
-        else:
-            for item in items:
+            else:
                 item["market_value_percent"] = "No Data"
 
         return items
@@ -659,21 +650,18 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def calculate(items, columns):
-        result = {}
-        for column in columns:
-            if column["value_type"] == 20:
-                result[
-                    column["key"]
-                ] = BackendReportSubtotalService.resolve_subtotal_function(
-                    items, column
-                )
-        return result
+        return {
+            column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
+                items, column
+            )
+            for column in columns
+            if column["value_type"] == 20
+        }
 
     @staticmethod
     def calculate_column(items, column):
-        result = {
+        return {
             column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
                 items, column
             )
         }
-        return result
