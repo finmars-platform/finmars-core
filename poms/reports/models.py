@@ -983,7 +983,7 @@ class ReportSummary:
         bundles,
         currency,
         pricing_policy,
-            allocation_mode,
+        allocation_mode,
         master_user,
         member,
         context,
