@@ -125,7 +125,7 @@ elif [ "$INSTANCE_TYPE" = "worker" ]; then
   : "${WORKER_NAME:=worker1}"
   : "${QUEUES:=backend-general-queue,backend-background-queue}"
 
-  cd /var/app && celery --app poms_app worker  --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES"
+  cd /var/app && celery --app poms_app worker --concurrency=1 --loglevel=INFO --soft-time-limit=3000 -n "$WORKER_NAME" -Q "$QUEUES" --max-tasks-per-child=1
 
 elif [ "$INSTANCE_TYPE" = "scheduler" ]; then
 

@@ -9,7 +9,8 @@ from poms.counterparties.models import (
     ResponsibleGroup,
 )
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.models import Instrument, InstrumentType, PriceHistory
+from poms.instruments.models import Instrument, InstrumentType, PriceHistory, InstrumentFactorSchedule, \
+    AccrualCalculationSchedule
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import (
     Strategy1,
@@ -32,6 +33,8 @@ def get_scheme_content_types():
         Currency,
         InstrumentType,
         Instrument,
+        InstrumentFactorSchedule,
+        AccrualCalculationSchedule,
         Portfolio,
         CounterpartyGroup,
         Counterparty,

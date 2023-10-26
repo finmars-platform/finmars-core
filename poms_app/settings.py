@@ -615,6 +615,8 @@ AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
 
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
 AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", None)

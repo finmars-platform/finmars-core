@@ -97,7 +97,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
         )
         instance.process()
 
-        return json.dumps(instance.import_result, default=str)
+        return json.dumps(instance.task.result_object, default=str)
 
     except Exception as e:
         err_msg = f"simple_import error {repr(e)} trace {traceback.format_exc()}"

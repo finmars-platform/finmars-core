@@ -703,7 +703,6 @@ class SimpleImportProcess(object):
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
         self.attribute_types = []
-        self.import_result = None
 
         self.context = {
             "master_user": self.master_user,
@@ -829,11 +828,6 @@ class SimpleImportProcess(object):
         return file_report
 
     def generate_json_report(self):
-        serializer = SimpleImportResultSerializer(
-            instance=self.result, context=self.context
-        )
-
-        result = serializer.data
 
         # _l.debug('self.result %s' % self.result.__dict__)
 
@@ -846,9 +840,9 @@ class SimpleImportProcess(object):
 
         _l.info("SimplemportProcess.generate_json_report uploading file")
 
-        file_report.upload_file(
+        file_report.upload_json_as_local_file(
             file_name=file_name,
-            text=json.dumps(result, indent=4, default=str),
+            dict_to_json=self.task.result_object,
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
@@ -1681,13 +1675,12 @@ class SimpleImportProcess(object):
                 )
 
         finally:
-            self.import_result = SimpleImportResultSerializer(
+            self.task.result_object = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
 
-            _l.info(f"self.import_result {self.import_result}")
+            #_l.info(f"self.task.result_object {self.task.result_object}")
 
-            self.task.result_object = self.import_result
             self.result.reports = []
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())

@@ -545,10 +545,14 @@ def get_serializer(content_type_key):
     from poms.reports.serializers import PLReportCustomFieldSerializer
     from poms.reports.serializers import TransactionReportCustomFieldSerializer
 
+    from poms.instruments.serializers import InstrumentFactorScheduleStandaloneSerializer
+    from poms.instruments.serializers import AccrualCalculationScheduleStandaloneSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
         "instruments.instrument": InstrumentSerializer,
+        "instruments.instrumentfactorschedule": InstrumentFactorScheduleStandaloneSerializer,
+        "instruments.accrualcalculationschedule": AccrualCalculationScheduleStandaloneSerializer,
         "instruments.instrumenttype": InstrumentTypeSerializer,
         "instruments.pricingpolicy": PricingPolicySerializer,
         "currencies.currency": CurrencySerializer,
