@@ -1473,7 +1473,7 @@ class SimpleImportProcess(object):
                         item.error_message = ""
 
                     item.error_message = (
-                        f"{item.error_message}Post script error: {repr(e)}, "
+                        f"{item.error_message} Post script error: {repr(e)}, "
                     )
 
             self.handle_successful_item_import(item, serializer)

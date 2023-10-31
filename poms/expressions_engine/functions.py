@@ -1513,7 +1513,15 @@ def _add_price_history(
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
     if accrued_price is None:
         # https://finmars2018.atlassian.net/browse/FN-2233
-        accrued_price = instrument.get_accrued_price(date)
+        try:
+            accrued_price = instrument.get_accrued_price(date)
+        except Exception as e:
+            _l.error(
+                f"functions._add_price_history get_accrued_price  date={date} "
+                f"instrument={instrument.user_code}, "
+                f"error={repr(e)} traceback={traceback.format_exc()}"
+            )
+            accrued_price = 0
 
     try:
         result = PriceHistory.objects.get(
