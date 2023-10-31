@@ -531,10 +531,10 @@ def handler_instrument_object(
                         if attribute_type.value_type == 10:
                             attribute["value_string"] = value
 
-                        if attribute_type.value_type == 20:
+                        elif attribute_type.value_type == 20:
                             attribute["value_float"] = value
 
-                        if attribute_type.value_type == 30:
+                        elif attribute_type.value_type == 30:
                             try:
                                 classifier = GenericClassifier.objects.get(
                                     attribute_type=attribute_type, name=value
@@ -545,7 +545,7 @@ def handler_instrument_object(
                             except Exception:
                                 attribute["classifier"] = None
 
-                        if attribute_type.value_type == 40:
+                        elif attribute_type.value_type == 40:
                             attribute["value_date"] = value
 
                         _tmp_attributes_dict[attribute["attribute_type"]] = attribute
