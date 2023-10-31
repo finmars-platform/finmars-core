@@ -1554,7 +1554,7 @@ class SimpleImportProcess(object):
                 except Exception as e:
                     item.status = "error"
                     item.error_message = (
-                        f"{item.error_message}==== Overwrite Exception {e}"
+                        f"{item.error_message} ==== Overwrite Exception {e}"
                     )
                     _l.error(
                         f"import_item.overwrite model={self.scheme.content_type.model}"
