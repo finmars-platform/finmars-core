@@ -1485,7 +1485,7 @@ class SimpleImportProcess(object):
                 try:
                     model = self.scheme.content_type.model_class()
 
-                    if self.scheme.content_type.model in ["pricehistory"]:
+                    if self.scheme.content_type.model == "pricehistory":
                         instance = model.objects.get(
                             instrument__user_code=item.final_inputs["instrument"],
                             pricing_policy__user_code=item.final_inputs[
@@ -1493,7 +1493,7 @@ class SimpleImportProcess(object):
                             ],
                             date=item.final_inputs["date"],
                         )
-                    elif self.scheme.content_type.model in ["currencyhistory"]:
+                    elif self.scheme.content_type.model == "currencyhistory":
                         instance = model.objects.get(
                             currency__user_code=item.final_inputs["currency"],
                             pricing_policy__user_code=item.final_inputs[
