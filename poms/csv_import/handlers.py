@@ -891,18 +891,16 @@ class SimpleImportProcess(object):
         imported_count = 0
         error_count = 0
 
-        for item in self.result.items:
+        for item in self.items:
             if item.status == "error":
                 error_count += 1
             else:
                 imported_count += 1
 
-        result = (
-            f"Processed {len(self.items)} rows and successfully imported "
-            f"{imported_count} items. Error rows {error_count}"
+        return (
+            f"Processed {len(self.items)} rows and successfully "
+            f"imported {imported_count} items. Error rows {error_count}"
         )
-
-        return result
 
     def fill_with_file_items(self):
         _l.info(
@@ -1645,12 +1643,11 @@ class SimpleImportProcess(object):
                     f"Traceback {traceback.format_exc()}"
                 )
 
-        self.result.items = self.items
-
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
     def process(self):
         error_flag = False
+
         try:
             self.process_items()
 
@@ -1675,39 +1672,35 @@ class SimpleImportProcess(object):
                 )
 
         finally:
-            self.task.result_object = SimpleImportResultSerializer(
-                instance=self.result, context=self.context
-            ).data
-
-            #_l.info(f"self.task.result_object {self.task.result_object}")
-
-            self.result.reports = []
-            self.result.reports.append(self.generate_file_report())
-            self.result.reports.append(self.generate_json_report())
-            self.task.save()
-
-            error_rows_count = sum(
-                result_item.status == "error" for result_item in self.result.items
+            self.task.verbose_result = self.get_verbose_result()
+            total_items = len(self.items)
+            errors_count = sum(item.status == "error" for item in self.items)
+            verbose_result = (
+                f"Processed {total_items} rows, successfully imported "
+                f"{total_items - errors_count} and failed {errors_count} items"
             )
-            if error_rows_count:
+            if errors_count:
                 error_flag = True
                 send_system_message(
                     master_user=self.master_user,
                     action_status="required",
                     type="warning",
                     title=f"Simple Import Partially Failed. Task id: {self.task.id}",
-                    description=f"Error rows {error_rows_count}/{len(self.result.items)}",
+                    description=verbose_result,
                 )
 
-            system_message_description = (
-                f"New items created (Import scheme - {str(self.scheme.name)}) -"
-                f" {len(self.items)}"
-            )
+            self.result.reports = []
+            self.result.items = self.items
+            self.result.reports.append(self.generate_file_report())
+            self.result.reports.append(self.generate_json_report())
+
+            self.task.result_object = SimpleImportResultSerializer(
+                instance=self.result, context=self.context
+            ).data
+            self.task.save()
 
             import_system_message_title = "Simple import (finished)"
-
             system_message_performed_by = self.member.username
-
             system_message_title = "New Items (import from file)"
             if self.process_type == ProcessType.JSON and (
                 self.execution_context
@@ -1738,6 +1731,10 @@ class SimpleImportProcess(object):
             attachments=[self.result.reports[0].id, self.result.reports[1].id],
         )
 
+        system_message_description = (
+            f"New items created (Import scheme - {str(self.scheme.name)}) -"
+            f" {len(self.items)}"
+        )
         send_system_message(
             master_user=self.master_user,
             performed_by=system_message_performed_by,
@@ -1752,7 +1749,7 @@ class SimpleImportProcess(object):
 
         self.task.add_attachment(self.result.reports[0].id)
         self.task.add_attachment(self.result.reports[1].id)
-        self.task.verbose_result = self.get_verbose_result()
+        self.task.verbose_result = verbose_result
         self.task.status = (
             CeleryTask.STATUS_ERROR if error_flag else CeleryTask.STATUS_DONE
         )
