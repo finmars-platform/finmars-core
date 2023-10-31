@@ -18,6 +18,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 import requests
@@ -46,7 +47,8 @@ from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentSelectSpecialQueryFilter,
     ListDatesFilter,
-    PriceHistoryObjectPermissionFilter, InstrumentsUserCodeFilter,
+    PriceHistoryObjectPermissionFilter,
+    InstrumentsUserCodeFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -546,9 +548,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                     _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
 
             except InstrumentPricingPolicy.DoesNotExist:
-                _l.error(
-                    f"Policy was not found for instrument.id={instrument.id}"
-                )
+                _l.error(f"Policy was not found for instrument.id={instrument.id}")
 
         return Response(
             {
@@ -556,6 +556,52 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 "data": {"instruments_affected": len(instruments)},
             }
         )
+
+    @action(detail=False, methods=["patch"], url_path="bulk-update")
+    def bulk_update(self, request):
+        request_data = request.data
+        if not isinstance(request_data, list):
+            raise ValidationError("Required list of data")
+
+        queryset = self.get_queryset()
+
+        instance_serializers = []
+        for instance_data in request_data:
+            pk = instance_data.get("id")
+            try:
+                instance = queryset.get(pk=pk)
+
+            except ObjectDoesNotExist:
+                err_msg = {
+                    api_settings.NON_FIELD_ERRORS_KEY: f"object with id={pk} not found"
+                }
+                raise ValidationError(err_msg)
+
+            try:
+                self.check_object_permissions(request, instance)
+            except PermissionDenied:
+                raise
+
+            serializer = self.get_serializer(
+                instance=instance,
+                data=instance_data,
+                partial=True,  # cause only patch method is used
+            )
+            if not serializer.is_valid(raise_exception=False):
+                raise ValidationError(serializer.errors)
+
+            instance_serializers.append(serializer)
+
+        instances = []
+        for serializer in instance_serializers:
+            self.perform_update(serializer)
+            instances.append(serializer.instance)
+
+        ret_serializer = self.get_serializer(
+            instance=queryset.filter(pk__in=(i.id for i in instances)),
+            many=True,
+        )
+        return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -882,8 +928,8 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events(self, request):
-
         from poms.celery_tasks.models import CeleryTask
+
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
@@ -1076,7 +1122,9 @@ class InstrumentExternalAPIViewSet(APIView):
             )
 
         except InstrumentType.DoesNotExist as e:
-            err_msg = f"Unknown InstrumentType.user_code={instrument_data['instrument_type']}"
+            err_msg = (
+                f"Unknown InstrumentType.user_code={instrument_data['instrument_type']}"
+            )
             _l.error(err_msg)
             raise ValidationError(err_msg) from e
 
@@ -1095,7 +1143,9 @@ class InstrumentExternalAPIViewSet(APIView):
         if is_valid:
             serializer.save()
         else:
-            err_msg = f"InstrumentExternalAPIViewSet serializer.errors={serializer.errors}"
+            err_msg = (
+                f"InstrumentExternalAPIViewSet serializer.errors={serializer.errors}"
+            )
             _l.error(err_msg)
             raise ValidationError(err_msg)
 
@@ -1506,7 +1556,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
     )
     serializer_class = GeneratedEventSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-
         GeneratedEventPermissionFilter,
     ]
     filter_class = GeneratedEventFilterSet
