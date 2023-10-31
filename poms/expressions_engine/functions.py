@@ -2606,6 +2606,53 @@ def _safe_get_instrument(evaluator, instrument):
     return instrument
 
 
+def _safe_get_account(evaluator, account):
+    from poms.accounts.models import Account
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+
+    if isinstance(account, Account):
+        return account
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression("Context must be specified")
+
+    pk = None
+    user_code = None
+
+    if isinstance(account, dict):
+        pk = int(account["id"])
+
+    elif isinstance(account, (int, float)):
+        pk = int(account)
+
+    elif isinstance(account, str):
+        user_code = account
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError("Invalid account")
+
+    if account is None:
+        master_user = get_master_user_from_context(context)
+        if master_user is None:
+            raise ExpressionEvalError("master user in context does not find")
+
+        account_qs = Account.objects.filter(master_user=master_user)
+
+        try:
+            if pk is not None:
+                account = account_qs.get(pk=pk)
+
+            elif user_code is not None:
+                account = account_qs.get(user_code=user_code)
+
+        except Account.DoesNotExist as e:
+            raise ExpressionEvalError() from e
+
+    return account
+
+
 def _get_currency(evaluator, currency):
     try:
         currency = _safe_get_currency(evaluator, currency)
@@ -2636,6 +2683,88 @@ def _get_account_type(evaluator, account_type):
 
 
 _get_account_type.evaluator = True
+
+def _set_account_user_attribute(evaluator, account, user_code, value):
+    context = evaluator.context
+
+    account = _safe_get_account(evaluator, account)
+
+    try:
+
+        for attribute in account.attributes.all():
+
+            if attribute.attribute_type.user_code == user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    attribute.value_string = value
+
+                if attribute.attribute_type.value_type == 20:
+                    attribute.value_float = value
+
+                if attribute.attribute_type.value_type == 30:
+                    try:
+                        from poms.obj_attrs.models import GenericClassifier
+                        classifier = GenericClassifier.objects.get(
+                            attribute_type=attribute.attribute_type, name=value
+                        )
+
+                        attribute.classifier = classifier
+
+                    except Exception as e:
+                        _l.error("Error setting classifier: %s" % e)
+                        attribute.classifier = None
+
+                if attribute.attribute_type.value_type == 40:
+                    attribute.value_date = value
+
+                attribute.save()
+
+        account.save()
+    except AttributeError:
+        raise InvalidExpression("Invalid Property")
+
+
+_set_account_user_attribute.evaluator = True
+
+
+def _get_account_user_attribute(evaluator, account, user_code):
+    from poms.obj_attrs.models import GenericClassifier
+
+    try:
+        account = _safe_get_account(evaluator, account)
+
+        result = None
+        for attribute in account.attributes.all():
+
+            if attribute.attribute_type.user_code == user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    result = attribute.value_string
+
+                elif attribute.attribute_type.value_type == 20:
+                    result = attribute.value_float
+
+                elif attribute.attribute_type.value_type == 30:
+                    try:
+                        classifier = GenericClassifier.objects.get(
+                            attribute_type=attribute.attribute_type,
+                            # name=value,  # FIXME undefined value!
+                        )
+                        result = classifier.name
+
+                    except Exception:
+                        result = None
+
+                elif attribute.attribute_type.value_type == 40:
+                    result = attribute.value_date
+
+        return result
+
+    except Exception as e:
+        return None
+
+
+_get_account_user_attribute.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
@@ -2754,7 +2883,7 @@ def _get_instrument_user_attribute(evaluator, instrument, user_code):
         return None
 
 
-_get_instrument.evaluator = True
+_get_instrument_user_attribute.evaluator = True
 
 
 def _set_currency_field(evaluator, currency, parameter_name, parameter_value):
@@ -4328,6 +4457,8 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_instrument", _get_instrument),
     SimpleEval2Def("get_currency", _get_currency),
     SimpleEval2Def("get_account_type", _get_account_type),
+    SimpleEval2Def("set_account_user_attribute", _set_account_user_attribute),
+    SimpleEval2Def("get_account_user_attribute", _get_account_user_attribute),
     SimpleEval2Def("get_currency_field", _get_currency_field),
     SimpleEval2Def("set_currency_field", _set_currency_field),
     SimpleEval2Def("get_instrument_field", _get_instrument_field),

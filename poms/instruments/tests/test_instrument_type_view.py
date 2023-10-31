@@ -204,4 +204,27 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(response_json["status"], "ok")
-        self.assertEqual(response_json["data"], {'instruments_affected': 0})
+        self.assertEqual(response_json["data"], {"instruments_affected": 0})
+
+    def test__patch_bulk_update(self):
+        create_data = self.prepare_data_for_create()
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+
+        instrument_type_id = response_json["id"]
+        new_name = self.random_string()
+        update_data = [{"id": instrument_type_id, "short_name": new_name}]
+        response = self.client.patch(
+            path=f"{self.url}bulk-update/",
+            format="json",
+            data=update_data,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(len(response_json), 1)
+        instrument_type_data = response_json[0]
+        self.assertEqual(instrument_type_data["id"], instrument_type_id)
+        self.assertEqual(instrument_type_data["short_name"], new_name)

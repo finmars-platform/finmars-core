@@ -58,21 +58,34 @@ storage = get_storage()
 _l = getLogger("poms.csv_import")
 
 ACCRUAL_MAP = {
+    "Actual/Actual (AFB)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB,
     "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
     "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
     "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
-    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
     "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
     "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
     "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
     "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
-    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
     "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
     "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
     "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
     "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+    "30/360 (30/360 ISMA)": AccrualCalculationModel.DAY_COUNT_30_360_ISMA,
     "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+    "30/365": AccrualCalculationModel.DAY_COUNT_30_365,
+    "Simple": AccrualCalculationModel.DAY_COUNT_SIMPLE,
+    "none": AccrualCalculationModel.DAY_COUNT_NONE,
+}
+PERIODICITY_MAP = {
+    1: Periodicity.ANNUALLY,
+    2: Periodicity.SEMI_ANNUALLY,
+    4: Periodicity.QUARTERLY,
+    6: Periodicity.BIMONTHLY,
+    12: Periodicity.MONTHLY,
 }
 
 
@@ -356,16 +369,49 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             undate_events_for_instrument(instrument_object, 0, maturity)
 
 
-def set_accruals_for_instrument(instrument_object, data_object, instrument_type_obj):
+def set_default_accrual(instrument_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
+    if "bond" not in instrument_type:
+        # if not bond, no accruals
+        return
 
-    # FIXME INVALID LOGIC
-    if instrument_type == "bonds" and len(
-        instrument_object["accrual_calculation_schedules"]
-    ):
-        accrual = instrument_object["accrual_calculation_schedules"][0]
-        accrual["effective_date"] = data_object["first_coupon_date"]
-        accrual["accrual_end_date"] = data_object["maturity"]
+    if instrument_object["accrual_calculation_schedules"]:
+        # instrument already has accruals
+        return
+
+    instrument_object["accrual_calculation_schedules"] = [
+        {
+            "accrual_start_date": None,
+            "first_payment_date": None,
+            "accrual_size": None,
+            "accrual_calculation_model": 1,
+            "accrual_calculation_model_object": {
+                "id": 1,
+                "name": "none",
+                "short_name": "none",
+                "user_code": "none",
+                "public_name": "none",
+                "notes": None,
+            },
+            "periodicity": 0,
+            "periodicity_object": {},
+            "periodicity_n": 0,
+            "notes": "default none settings",
+        }
+    ]
+
+
+def set_periodicity_period(source_data, accrual):
+    p = int(source_data["accrual_calculation_schedules"][0]["periodicity_n"])
+
+    accrual["periodicity_n"] = p
+    try:
+        accrual["periodicity"] = PERIODICITY_MAP[p]
+    except KeyError:
+        _l.error(f'invalid/unknown periodicity_n={p}')
+        accrual["periodicity"] = 0
+
+    _l.info(f'periodicity {accrual["periodicity"]}')
 
 
 # Global method for create instrument object from Instrument Type Defaults
@@ -537,51 +583,18 @@ def handler_instrument_object(
     #         0
     #     ]["first_payment_date"]
 
-    if "accrual_calculation_schedules" in source_data:
-        if source_data["accrual_calculation_schedules"] and len(
-            source_data["accrual_calculation_schedules"]
-        ):
-            _l.info("Setting up accrual schedules. Init")
+    if (
+        "accrual_calculation_schedules" in source_data
+        and source_data["accrual_calculation_schedules"]
+    ):
+        _l.info("Setting up accrual schedules. Overwrite Existing")
+        accrual = source_data["accrual_calculation_schedules"][0]
+        accrual.pop("id")  # remove id of finmars_database accrual object
+        set_periodicity_period(source_data, accrual)
+        object_data["accrual_calculation_schedules"] = [accrual]
 
-            if len(object_data["accrual_calculation_schedules"]):
-                _l.info("Setting up accrual schedules. Overwrite Existing")
-
-                accrual = object_data["accrual_calculation_schedules"][0]
-
-                if "day_count_convention" in source_data:
-                    if source_data["day_count_convention"] in ACCRUAL_MAP:
-                        accrual["accrual_calculation_model"] = ACCRUAL_MAP[
-                            source_data["day_count_convention"]
-                        ]
-
-                    else:
-                        accrual[
-                            "accrual_calculation_model"
-                        ] = AccrualCalculationModel.DAY_COUNT_NONE
-
-                set_accrual_dates_and_size(source_data, accrual)
-                try:
-                    set_periodicity_period(source_data, accrual)
-                except Exception:
-                    accrual["periodicity_n"] = 0
-
-            else:
-                _l.info("Setting up accrual schedules. Creating new")
-
-                accrual = {
-                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_SIMPLE,
-                    "periodicity": Periodicity.ANNUALLY,
-                }
-
-                set_accrual_dates_and_size(source_data, accrual)
-                try:
-                    set_periodicity_period(source_data, accrual)
-                except Exception:
-                    accrual["periodicity_n"] = 0
-
-                object_data["accrual_calculation_schedules"].append(accrual)
     else:
-        set_accruals_for_instrument(object_data, source_data, instrument_type)
+        set_default_accrual(object_data, instrument_type)
 
     if "name" not in object_data and "user_code" in object_data:
         object_data["name"] = object_data["user_code"]
@@ -592,33 +605,6 @@ def handler_instrument_object(
     _l.info(f"{func} instrument={source_data['user_code']} object_data={object_data}")
 
     return object_data
-
-
-def set_periodicity_period(source_data, accrual):
-    accrual["periodicity_n"] = int(
-        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
-    )
-
-    if accrual["periodicity_n"] == 1:
-        accrual["periodicity"] = Periodicity.ANNUALLY
-
-    elif accrual["periodicity_n"] == 2:
-        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
-
-    elif accrual["periodicity_n"] == 4:
-        accrual["periodicity"] = Periodicity.QUARTERLY
-
-    elif accrual["periodicity_n"] == 6:
-        accrual["periodicity"] = Periodicity.BIMONTHLY
-
-    elif accrual["periodicity_n"] == 12:
-        accrual["periodicity"] = Periodicity.MONTHLY
-
-    else:
-        _l.error(f'invalid/unknown periodicity_n={accrual["periodicity_n"]}')
-        accrual["periodicity"] = 0
-
-    _l.info(f'periodicity {accrual["periodicity"]}')
 
 
 def set_accrual_dates_and_size(source_data, accrual):
@@ -703,7 +689,6 @@ class SimpleImportProcess(object):
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
         self.attribute_types = []
-        self.import_result = None
 
         self.context = {
             "master_user": self.master_user,
@@ -829,12 +814,6 @@ class SimpleImportProcess(object):
         return file_report
 
     def generate_json_report(self):
-        serializer = SimpleImportResultSerializer(
-            instance=self.result, context=self.context
-        )
-
-        result = serializer.data
-
         # _l.debug('self.result %s' % self.result.__dict__)
 
         # _l.debug('generate_json_report.result %s' % result)
@@ -846,9 +825,9 @@ class SimpleImportProcess(object):
 
         _l.info("SimplemportProcess.generate_json_report uploading file")
 
-        file_report.upload_file(
+        file_report.upload_json_as_local_file(
             file_name=file_name,
-            text=json.dumps(result, indent=4, default=str),
+            dict_to_json=self.task.result_object,
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
@@ -968,14 +947,13 @@ class SimpleImportProcess(object):
             )
 
         except Exception as e:
-            _l.error(
+            err_msg = (
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
-                f"{self.process_type} Exception {repr(e)}"
+                f"{self.process_type} Exception {repr(e)} "
+                f"Traceback {traceback.format_exc()}"
             )
-            _l.error(
-                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
-                f"{self.process_type} Traceback {traceback.format_exc()}"
-            )
+            _l.error(err_msg)
+            raise e
 
     def read_from_excel_file(self, f, tmpf):
         for chunk in f.chunks():
@@ -1056,6 +1034,7 @@ class SimpleImportProcess(object):
 
             except Exception as e:
                 _l.error(f"Could not execute preprocess expression. Error {e}")
+                raise e
 
         _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
@@ -1069,7 +1048,6 @@ class SimpleImportProcess(object):
 
         try:
             for file_item in self.file_items:
-
                 item = {}
                 for scheme_input in self.scheme.csv_fields.all():
                     try:
@@ -1089,9 +1067,9 @@ class SimpleImportProcess(object):
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type}  error {e} trace {traceback.format_exc()}"
             )
+            raise e
 
     def apply_conversion_to_raw_items(self):
-
         for row_number, raw_item in enumerate(self.raw_items, start=1):
             conversion_item = SimpleImportConversionItem()
             conversion_item.file_inputs = self.file_items[row_number - 1]
@@ -1130,7 +1108,6 @@ class SimpleImportProcess(object):
                 self.preprocessed_items.append(preprocess_item)
 
         for preprocess_item in self.preprocessed_items:
-
             # CREATE SCHEME INPUTS
             for scheme_input in self.scheme.csv_fields.all():
                 key_column_name = scheme_input.column_name
@@ -1202,7 +1179,6 @@ class SimpleImportProcess(object):
         )
 
     def fill_result_item_with_attributes(self, item):
-
         result = []
         for attribute_type in self.attribute_types:
             for entity_field in self.scheme.entity_fields.all():
@@ -1379,10 +1355,7 @@ class SimpleImportProcess(object):
                     if not item.error_message:
                         item.error_message = ""
 
-                    item.error_message = (item.error_message + " %s: %s, ") % (
-                        key,
-                        str(e),
-                    )
+                    item.error_message = f"{item.error_message} {key}: {e}, "
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1458,7 +1431,6 @@ class SimpleImportProcess(object):
 
             result_item = {}
             if self.scheme.content_type.model == "instrument":
-
                 instrument_type = InstrumentType.objects.get(
                     user_code=item.final_inputs["instrument_type"]
                 )
@@ -1575,8 +1547,8 @@ class SimpleImportProcess(object):
                                 item.error_message = ""
 
                             item.error_message = (
-                                item.error_message + "Post script error: %s, "
-                            ) % str(e)
+                                f"{item.error_message} Post script error: {repr(e)}, "
+                            )
 
                     self.handle_successful_item_import(item, serializer)
                 except Exception as e:
@@ -1652,7 +1624,7 @@ class SimpleImportProcess(object):
 
             except Exception as e:
                 item.status = "error"
-                item.message = f"Error {repr(e)}"
+                item.message = f"item.row_number {item.row_number} error {repr(e)}"
 
                 _l.error(
                     f"SimpleImportProcess.Task {self.task}.  ========= process row "
@@ -1665,6 +1637,7 @@ class SimpleImportProcess(object):
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
     def process(self):
+        error_flag = False
         try:
             self.process_items()
 
@@ -1673,6 +1646,8 @@ class SimpleImportProcess(object):
                 f"SimpleImportProcess.Task {self.task}.process "
                 f"Exception {e} Traceback {traceback.format_exc()}"
             )
+
+            error_flag = True
 
             self.result.error_message = f"General Import Error. Exception {repr(e)}"
 
@@ -1687,24 +1662,22 @@ class SimpleImportProcess(object):
                 )
 
         finally:
-            self.import_result = SimpleImportResultSerializer(
+            self.task.result_object = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
 
-            self.task.result_object = self.import_result
-
-            # _l.info("self.task.result_object %s" % self.task.result_object)
-
-            self.task.save()
+            # _l.info(f"self.task.result_object {self.task.result_object}")
 
             self.result.reports = []
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
+            self.task.save()
 
             error_rows_count = sum(
                 result_item.status == "error" for result_item in self.result.items
             )
-            if error_rows_count != 0:
+            if error_rows_count:
+                error_flag = True
                 send_system_message(
                     master_user=self.master_user,
                     action_status="required",
@@ -1735,7 +1708,7 @@ class SimpleImportProcess(object):
                 master_user=self.master_user,
                 performed_by=system_message_performed_by,
                 section="import",
-                type="success",
+                type="error" if error_flag else "success",
                 title="Import Finished. Prices Recalculation Required",
                 description=(
                     "Please, run schedule or execute procedures to calculate portfolio "
@@ -1747,7 +1720,7 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=import_system_message_title,
             attachments=[self.result.reports[0].id, self.result.reports[1].id],
         )
@@ -1756,7 +1729,7 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=system_message_title,
             description=system_message_description,
         )
@@ -1767,7 +1740,8 @@ class SimpleImportProcess(object):
         self.task.add_attachment(self.result.reports[0].id)
         self.task.add_attachment(self.result.reports[1].id)
         self.task.verbose_result = self.get_verbose_result()
-        self.task.status = CeleryTask.STATUS_DONE
+        self.task.status = (
+            CeleryTask.STATUS_ERROR if error_flag else CeleryTask.STATUS_DONE
+        )
         self.task.mark_task_as_finished()
-
         self.task.save()

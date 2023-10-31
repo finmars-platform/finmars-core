@@ -210,7 +210,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "backend_db"),
+        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
@@ -264,8 +264,8 @@ CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 CSRF_TRUSTED_ORIGINS = [
     "capacitor://localhost",
     "http://localhost",
+    "http://127.0.0.1",
     "http://0.0.0.0",
-    "http://0.0.0.0:8080",
     f"http://{DOMAIN_NAME}",
     f"https://{DOMAIN_NAME}",
 ]
@@ -403,28 +403,28 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        # "file": {
-        #     "level": DJANGO_LOG_LEVEL,
-        #     "class": "logging.FileHandler",
-        #     "filename": "/var/log/finmars/backend/django.log",
-        #     "formatter": "verbose",
-        # },
+        "file": {
+            "level": DJANGO_LOG_LEVEL,
+            "class": "logging.FileHandler",
+            "filename": "/var/log/finmars/backend/django.log",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["console"]},
+        "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
         "provision": {
-            "handlers": ["provision-console"],
+            "handlers": ["provision-console", "file"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         }
     },
@@ -614,6 +614,8 @@ AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
 AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
+
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
