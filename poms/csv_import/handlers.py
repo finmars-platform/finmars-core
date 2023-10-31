@@ -408,7 +408,7 @@ def set_periodicity_period(source_data, accrual):
     try:
         accrual["periodicity"] = PERIODICITY_MAP[p]
     except KeyError:
-        _l.error(f'invalid/unknown periodicity_n={p}')
+        _l.error(f"invalid/unknown periodicity_n={p}")
         accrual["periodicity"] = 0
 
     _l.info(f'periodicity {accrual["periodicity"]}')
@@ -1385,7 +1385,7 @@ class SimpleImportProcess(object):
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error(f"get_final_inputs.e {e}")
+                    _l.error(f"get_final_inputs.error {e}")
 
                     if not item.error_message:
                         item.error_message = ""
