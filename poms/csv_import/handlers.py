@@ -1477,6 +1477,7 @@ class SimpleImportProcess(object):
                     )
 
             self.handle_successful_item_import(item, serializer)
+
         except Exception as e:
             # _l.error('import_item e %s' % e)
             # _l.error('import_item traceback %s' % traceback.format_exc())
@@ -1551,6 +1552,7 @@ class SimpleImportProcess(object):
                             )
 
                     self.handle_successful_item_import(item, serializer)
+
                 except Exception as e:
                     item.status = "error"
                     item.error_message = (
@@ -1564,7 +1566,7 @@ class SimpleImportProcess(object):
 
             else:
                 item.status = "error"
-                item.error_message = f"{item.error_message}====  Create Exception {e}"
+                item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
     def handle_successful_item_import(self, item, serializer):
         item.status = "success"
