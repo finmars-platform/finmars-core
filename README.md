@@ -45,15 +45,15 @@ pip install -U pip uwsgi`
 
 * Run Migrations
 
-`./local-develoment/run_migrate.sh`
+`./local-development/run_migrate.sh`
 
 * Start Celery Server
 
-`./local-develoment/run_celery.sh`
+`./local-development/run_celery.sh`
 
 * Start Django Server
 
-`./local-develoment/run_server.sh`
+`./local-development/run_server.sh`
 
 Success!
 
@@ -74,7 +74,7 @@ How to run django app
 
 4) Execute following script to runserver
 
-   `./local-develoment/run_server.sh`
+   `./local-development/run_server.sh`
    
 Profile uWSGI server 
 1) Activate venv  
