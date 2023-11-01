@@ -523,6 +523,7 @@ class SummaryViewSet(AbstractViewSet):
                 portfolios=portfolios,
                 currency=currency,
                 allocation_mode=allocation_mode,
+                pricing_policy=pricing_policy,
                 data=result
             )
 
