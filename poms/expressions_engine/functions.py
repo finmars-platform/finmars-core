@@ -2633,22 +2633,21 @@ def _safe_get_account(evaluator, account):
     if id is None and user_code is None:
         raise ExpressionEvalError("Invalid account")
 
-    if account is None:
-        master_user = get_master_user_from_context(context)
-        if master_user is None:
-            raise ExpressionEvalError("master user in context does not find")
+    master_user = get_master_user_from_context(context)
+    if master_user is None:
+        raise ExpressionEvalError("master user in context does not find")
 
-        account_qs = Account.objects.filter(master_user=master_user)
+    account_qs = Account.objects.filter(master_user=master_user)
 
-        try:
-            if pk is not None:
-                account = account_qs.get(pk=pk)
+    try:
+        if pk is not None:
+            account = account_qs.get(pk=pk)
 
-            elif user_code is not None:
-                account = account_qs.get(user_code=user_code)
+        elif user_code is not None:
+            account = account_qs.get(user_code=user_code)
 
-        except Account.DoesNotExist as e:
-            raise ExpressionEvalError() from e
+    except Account.DoesNotExist as e:
+        raise ExpressionEvalError() from e
 
     return account
 
@@ -2720,7 +2719,9 @@ def _set_account_user_attribute(evaluator, account, user_code, value):
                 attribute.save()
 
         account.save()
-    except AttributeError:
+    except Exception as e:
+        _l.info("_set_account_user_attribute.e", e)
+        _l.info("_set_account_user_attribute.traceback", traceback.print_exc())
         raise InvalidExpression("Invalid Property")
 
 
@@ -2746,11 +2747,7 @@ def _get_account_user_attribute(evaluator, account, user_code):
 
                 elif attribute.attribute_type.value_type == 30:
                     try:
-                        classifier = GenericClassifier.objects.get(
-                            attribute_type=attribute.attribute_type,
-                            # name=value,  # FIXME undefined value!
-                        )
-                        result = classifier.name
+                        result = attribute.classifier.name
 
                     except Exception:
                         result = None
@@ -2761,6 +2758,7 @@ def _get_account_user_attribute(evaluator, account, user_code):
         return result
 
     except Exception as e:
+        _l.error('e %s' % e)
         return None
 
 
