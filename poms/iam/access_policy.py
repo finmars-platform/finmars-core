@@ -64,6 +64,7 @@ class AccessPolicy(permissions.BasePermission):
     id_prefix = "id:"
 
     def has_permission(self, request, view) -> bool:
+
         if request.user.is_superuser:
             return True
 
@@ -139,6 +140,7 @@ class AccessPolicy(permissions.BasePermission):
     def _evaluate_statements(
         self, statements: List[Union[dict, Statement]], request, view, action: str
     ) -> bool:
+
         statements = self._normalize_statements(statements)
 
         matched = self._get_statements_matching_principal(request, statements)

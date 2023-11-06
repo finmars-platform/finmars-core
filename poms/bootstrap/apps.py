@@ -24,8 +24,6 @@ class BootstrapConfig(AppConfig):
     def ready(self):
         _l.info("Bootstrapping Finmars Application")
 
-        _l.info(f'BLOOMBERG_SANDBOX {settings.BLOOMBERG_SANDBOX} ')
-
         if settings.PROFILER:
             _l.info("Profiler enabled")
 

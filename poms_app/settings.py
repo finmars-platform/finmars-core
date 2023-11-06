@@ -630,10 +630,10 @@ BLOOMBERG_EMPTY_VALUE = [None, "", "N.S."]
 
 BLOOMBERG_SANDBOX = ENV_BOOL("BLOOMBERG_SANDBOX", True)
 
-if BLOOMBERG_SANDBOX:
-    print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
-else:
-    print("Bloomberg Data License Module activated 🟢")
+# if BLOOMBERG_SANDBOX:
+#     print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
+# else:
+#     print("Bloomberg Data License Module activated 🟢")
 
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False

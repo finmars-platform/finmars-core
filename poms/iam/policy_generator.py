@@ -354,6 +354,41 @@ def generate_transaction_rebook_access_policy():
     return access_policy
 
 
+def generate_init_configuration_install_access_policy():
+
+    service_name = settings.SERVICE_NAME
+
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-newmembersetupconfiguration-install'
+
+    name = 'NewMemberSetupConfiguration Install'
+
+    try:
+        access_policy = AccessPolicy.objects.get(user_code=user_code)
+    except Exception as e:
+        access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    configuration_code=configuration_code)
+
+    access_policy.name = name
+    access_policy_json = {
+        "Version": "2023-01-01",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "finmars:NewMemberSetupConfiguration:install",
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    access_policy.policy = access_policy_json
+    access_policy.save()
+
+    return access_policy
+
 
 def generate_speicifc_policies_for_viewsets():
 
@@ -363,6 +398,7 @@ def generate_speicifc_policies_for_viewsets():
     generate_transaction_view_access_policy()
     generate_transaction_book_access_policy()
     generate_transaction_rebook_access_policy()
+    generate_init_configuration_install_access_policy()
 
 
 def generate_viewer_role(readonly_access_policies):
@@ -386,6 +422,10 @@ def generate_viewer_role(readonly_access_policies):
         configuration_code + ':finmars-editlayout-full',
         configuration_code + ':finmars-dashboardlayout-full',
         configuration_code + ':finmars-contextmenulayout-full',
+
+        # For Init Configuration of any member
+
+        configuration_code + ':finmars-newmembersetupconfiguration-install'
 
     ]
 
