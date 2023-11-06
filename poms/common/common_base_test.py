@@ -223,6 +223,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_attribute_type(self) -> GenericAttributeType:
         self.attribute_type = GenericAttributeType.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             content_type=ContentType.objects.first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
@@ -249,6 +250,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_account_type(self) -> AccountType:
         self.account_type = AccountType.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(),
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
@@ -260,6 +262,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_account(self) -> Account:
         self.account = Account.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             type=self.create_account_type(),
             user_code=self.random_string(),
             short_name=self.random_string(3),
@@ -342,6 +345,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.instrument = Instrument.objects.create(
             # mandatory fields
             master_user=self.master_user,
+            owner=self.finmars_bot,
             instrument_type=self.get_instrument_type(instrument_type),
             pricing_currency=currency,
             accrued_currency=currency,
@@ -373,6 +377,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.client = APIClient()
         self.db_data = DbInitializer()
         self.master_user = self.db_data.master_user
+        self.finmars_bot = self.db_data.finmars_bot
         self.user, _ = User.objects.get_or_create(username="view_tester")
         self.user.master_user = self.master_user
         self.user.save()
@@ -425,6 +430,7 @@ USD = "USD"
 
 
 class DbInitializer:
+
     @staticmethod
     def get_or_create_master_user() -> MasterUser:
         master_user = MasterUser.objects.filter(
@@ -444,6 +450,7 @@ class DbInitializer:
             short_name=UNIFIED,
         ).first() or TransactionTypeGroup.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             name=UNIFIED,
             user_code=UNIFIED,
             short_name=UNIFIED,
@@ -454,6 +461,7 @@ class DbInitializer:
             user_code="-",
         ).first() or Instrument.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             name="-",
             user_code="-",
             short_name="-",
@@ -468,6 +476,7 @@ class DbInitializer:
         return [
             InstrumentType.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 instrument_class_id=InstrumentClass.GENERAL,
                 name=type_,
                 user_code=type_,
@@ -484,6 +493,7 @@ class DbInitializer:
                 name=type_,
             ).first() or InstrumentType.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 instrument_class_id=class_id,
                 name=type_,
                 user_code=type_,
@@ -494,6 +504,7 @@ class DbInitializer:
                 name=name,
             ).first() or Instrument.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 instrument_type=instrument_type,
                 name=name,
                 accrued_currency=self.usd,
@@ -516,6 +527,7 @@ class DbInitializer:
                 user_code=name,
             ).first() or Account.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 name=name,
                 user_code=name,
             )
@@ -526,6 +538,7 @@ class DbInitializer:
                 user_code=name,
             ).first() or Portfolio.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 name=name,
                 user_code=name,
             )
@@ -542,6 +555,7 @@ class DbInitializer:
             user_code=USD,
         ).first() or Currency.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=USD,
             name=USD,
             default_fx_rate=1,
@@ -554,6 +568,7 @@ class DbInitializer:
                 user_code=name,
             ).first() or TransactionType.objects.create(
                 master_user=self.master_user,
+                owner=self.finmars_bot,
                 name=name,
                 user_code=name,
                 short_name=name,
@@ -585,6 +600,7 @@ class DbInitializer:
             if not (strategy := model.objects.first()):
                 strategy = model.objects.create(
                     master_user=self.master_user,
+                    owner=self.finmars_bot,
                     name=f"strategy_{i+1}",
                 )
             strategies[i + 1] = strategy
@@ -594,6 +610,7 @@ class DbInitializer:
         name = "test_counter_party"
         return Counterparty.objects.first() or Counterparty.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             name=name,
             user_code=name,
             short_name=name,
@@ -603,6 +620,7 @@ class DbInitializer:
         name = "test_responsible"
         return Responsible.objects.first() or Responsible.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             name=name,
             user_code=name,
             short_name=name,
@@ -661,6 +679,7 @@ class DbInitializer:
             linked_instrument=instrument,
         ).first() or PortfolioRegister.objects.create(
             master_user=self.master_user or MasterUser.objects.first(),
+            owner=self.finmars_bot,
             portfolio=portfolio,
             linked_instrument=instrument,
             valuation_currency=self.usd,
@@ -668,6 +687,7 @@ class DbInitializer:
 
     def __init__(self):
         self.master_user = self.get_or_create_master_user()
+        self.finmars_bot = Member.objects.get(username="finmars_bot")
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
         self.strategies = self.get_or_create_strategies()

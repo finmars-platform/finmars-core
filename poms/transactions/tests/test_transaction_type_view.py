@@ -36,6 +36,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         transaction_type_group = self.get_transaction_type_group()
         self.transaction_type = TransactionType.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             configuration_code=self.random_string(),
             user_code=self.random_string(7),
             name=self.random_string(),

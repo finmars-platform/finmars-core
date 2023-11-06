@@ -89,7 +89,7 @@ class BootstrapConfig(AppConfig):
                 _l.info("finmars_bot created")
 
             except Exception as e:
-                _l.error("Warning. Could not creat finmars_bot")
+                _l.error("Warning. Could not create finmars_bot %s" % e)
 
     def create_iam_access_policies_templates(self):
 

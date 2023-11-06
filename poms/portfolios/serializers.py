@@ -214,6 +214,7 @@ class PortfolioSerializer(
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
+                owner=instance.owner,
                 valuation_pricing_policy=ecosystem_default.pricing_policy,
                 valuation_currency=ecosystem_default.currency,
                 portfolio=instance,

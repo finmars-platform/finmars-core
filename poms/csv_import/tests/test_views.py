@@ -28,6 +28,7 @@ class CsvDataImportViewSetTest(BaseTestCase):
         self.scheme = CsvImportScheme.objects.create(
             content_type=ContentType.objects.first(),
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(length=5),
         )
 

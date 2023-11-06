@@ -222,6 +222,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         except PortfolioBundle.DoesNotExist:
             bundle = PortfolioBundle.objects.create(
                 master_user=self.master_user,
+                owner=self.owner,
                 user_code=self.user_code,
             )
             bundle.registers.set([self])

@@ -30,6 +30,8 @@ TIMEZONE_MAX_LENGTH = 20
 TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
 
+import logging
+_l = logging.getLogger('poms.users')
 
 class ResetPasswordToken(models.Model):
     class Meta:
@@ -208,11 +210,14 @@ class MasterUser(models.Model):
     def create_user_fields(self):
         from poms.ui.models import InstrumentUserField, ComplexTransactionUserField
 
+        finmars_bot = Member.objects.get(username="finmars_bot")
+
         for i in range(20):
             num = str(i + 1)
             key = f"user_text_{num}"
             ComplexTransactionUserField.objects.create(
                 master_user=self,
+                owner=finmars_bot,
                 key=key,
                 name=f"User Text {num}",
                 user_code=key,
@@ -223,6 +228,7 @@ class MasterUser(models.Model):
             key = f"user_number_{num}"
             ComplexTransactionUserField.objects.create(
                 master_user=self,
+                owner=finmars_bot,
                 key=key,
                 name=f"User Number {num}",
                 user_code=key,
@@ -233,6 +239,7 @@ class MasterUser(models.Model):
             key = f"user_date_{num}"
             ComplexTransactionUserField.objects.create(
                 master_user=self,
+                owner=finmars_bot,
                 key=key,
                 name=f"User Date {num}",
                 user_code=key,
@@ -243,6 +250,7 @@ class MasterUser(models.Model):
             key = f"user_text_{num}"
             InstrumentUserField.objects.create(
                 master_user=self,
+                owner=finmars_bot,
                 key=key,
                 name=f"User Text {num}",
                 user_code=key,
@@ -444,6 +452,8 @@ class MasterUser(models.Model):
     def create_color_palettes(self):
         from poms.ui.models import ColorPalette, ColorPaletteColor
 
+        finmars_bot = Member.objects.get(username="finmars_bot")
+
         default_color_map = {
             0: "#000000",
             1: "#0080FF",
@@ -468,12 +478,14 @@ class MasterUser(models.Model):
             try:
                 palette = ColorPalette.objects.get(
                     master_user=self,
+                    owner=finmars_bot,
                     user_code=user_code,
                 )
 
             except ColorPalette.DoesNotExist:
                 palette = ColorPalette.objects.create(
                     master_user=self,
+                    owner=finmars_bot,
                     user_code=user_code,
                 )
 
@@ -500,7 +512,6 @@ class MasterUser(models.Model):
 
                     color.name = f"Color {str(x + 1)}"
                     color.save()
-
     def create_defaults(self, user=None):
         from poms.accounts.models import Account, AccountType
         from poms.counterparties.models import (
@@ -539,8 +550,26 @@ class MasterUser(models.Model):
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
 
+        try:
+            finmars_bot = Member.objects.get(username="finmars_bot")
+        except Exception as e:
+            # Its needed for tests context
+
+            from django.contrib.auth.models import User
+
+            try:
+
+                user = User.objects.get(username='finmars_bot')
+
+            except Exception as e:
+
+                user = User.objects.create(username='finmars_bot')
+
+            finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self,
+                                           is_admin=True)
+
         ccys = {}
-        ccy = Currency.objects.create(master_user=self, name="-", user_code="-")
+        ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
         ccy_usd = None
         dc_reference_for_pricing = ""
 
@@ -554,6 +583,7 @@ class MasterUser(models.Model):
                         user_code=dc_user_code,
                         short_name=dc_user_code,
                         name=dc_name,
+                        owner=finmars_bot,
                         reference_for_pricing=dc_reference_for_pricing,
                     )
                     ccy_usd = c
@@ -563,33 +593,39 @@ class MasterUser(models.Model):
                         user_code=dc_user_code,
                         short_name=dc_user_code,
                         name=dc_name,
+                        owner=finmars_bot,
                         reference_for_pricing=dc_reference_for_pricing,
                     )
                 ccys[c.user_code] = c
 
-        account_type = AccountType.objects.create(master_user=self, name="-")
-        account = Account.objects.create(master_user=self, type=account_type, name="-")
+        account_type = AccountType.objects.create(master_user=self, name="-", owner=finmars_bot)
+        account = Account.objects.create(master_user=self, type=account_type, name="-", owner=finmars_bot)
 
         counterparty_group = CounterpartyGroup.objects.create(
-            master_user=self, name="-"
+            master_user=self, name="-",
+            owner=finmars_bot,
         )
         counterparty = Counterparty.objects.create(
             master_user=self,
             group=counterparty_group,
             name="-",
+            owner=finmars_bot,
         )
         responsible_group = ResponsibleGroup.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         responsible = Responsible.objects.create(
             master_user=self,
             group=responsible_group,
             name="-",
+            owner=finmars_bot,
         )
         portfolio = Portfolio.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         instrument_general_class = InstrumentClass.objects.get(
             pk=InstrumentClass.GENERAL
@@ -598,6 +634,7 @@ class MasterUser(models.Model):
             master_user=self,
             instrument_class=instrument_general_class,
             name="-",
+            owner=finmars_bot,
         )
         instrument = Instrument.objects.create(
             master_user=self,
@@ -605,57 +642,70 @@ class MasterUser(models.Model):
             pricing_currency=ccy,
             accrued_currency=ccy,
             name="-",
+            owner=finmars_bot,
         )
         strategy1_group = Strategy1Group.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         strategy1_subgroup = Strategy1Subgroup.objects.create(
             master_user=self,
             group=strategy1_group,
             name="-",
+            owner=finmars_bot,
         )
         strategy1 = Strategy1.objects.create(
             master_user=self,
             subgroup=strategy1_subgroup,
             name="-",
+            owner=finmars_bot,
         )
         strategy2_group = Strategy2Group.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         strategy2_subgroup = Strategy2Subgroup.objects.create(
-            master_user=self, group=strategy2_group, name="-"
+            master_user=self, group=strategy2_group, name="-",
+            owner=finmars_bot,
         )
         strategy2 = Strategy2.objects.create(
             master_user=self,
             subgroup=strategy2_subgroup,
             name="-",
+            owner=finmars_bot,
         )
         strategy3_group = Strategy3Group.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         strategy3_subgroup = Strategy3Subgroup.objects.create(
             master_user=self,
             group=strategy3_group,
             name="-",
+            owner=finmars_bot,
         )
         strategy3 = Strategy3.objects.create(
             master_user=self,
             subgroup=strategy3_subgroup,
             name="-",
+            owner=finmars_bot,
         )
         transaction_type = TransactionType.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         transaction_type_group = TransactionTypeGroup.objects.create(
             master_user=self,
             name="-",
+            owner=finmars_bot,
         )
         pricing_policy = PricingPolicy.objects.create(
-            master_user=self, name="-", expr="(ask+bid)/2"
+            master_user=self, name="-", expr="(ask+bid)/2",
+            owner=finmars_bot,
         )
         # pricing_policy_dft = PricingPolicy.objects.create(
         #     master_user=self,
@@ -667,12 +717,14 @@ class MasterUser(models.Model):
             name="-",
             user_code="",
             type_id=1,
+            owner=finmars_bot,
         )
         currency_pricing_scheme = CurrencyPricingScheme.objects.create(
             master_user=self,
             name="-",
             user_code="",
             type_id=1,
+            owner=finmars_bot,
         )
 
         # bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
@@ -1206,12 +1258,14 @@ class Member(FakeDeletableModel):
         try:
             layout = MemberLayout.objects.get(
                 member_id=self.id,
+                owner_id=self.id,
                 configuration_code=configuration_code,
                 user_code=f"{configuration_code}:default_member_layout",
             )
         except Exception as e:
             layout = MemberLayout.objects.create(
                 member_id=self.id,
+                owner_id=self.id,
                 is_default=True,
                 configuration_code=configuration_code,
                 name="default",

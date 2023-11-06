@@ -2412,12 +2412,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_scheme = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_scheme,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_scheme = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_scheme,
@@ -2429,12 +2431,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_parameter = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_parameter,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_parameter = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_parameter,
@@ -2446,12 +2450,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_notes = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_notes,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_notes = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_notes,
@@ -2472,8 +2478,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_scheme,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_scheme,
-                    configuration_code=configuration_code,
                 )
 
             if ipp.pricing_scheme:
@@ -2495,8 +2499,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_parameter,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_parameter,
-                    configuration_code=configuration_code,
                 )
 
             if ipp.attribute_key:
@@ -2505,6 +2507,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         code = ipp.attribute_key.split("attributes.")[1]
                         type = GenericAttributeType.objects.get(
                             master_user=self.master_user,
+                            owner=self.owner,
                             content_type=content_type,
                             user_code=code,
                         )
@@ -2553,8 +2556,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_notes,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_notes,
-                    configuration_code=configuration_code,
                 )
 
             attr_notes.value_string = ipp.notes or ""
