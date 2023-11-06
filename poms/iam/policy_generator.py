@@ -380,6 +380,13 @@ def generate_viewer_role(readonly_access_policies):
         configuration_code + ':finmars-balancereport',
         configuration_code + ':finmars-plreport',
         configuration_code + ':finmars-transactionreport',
+
+        # UI project has only member related rules, so no worry to gave full access to it
+        configuration_code + ':finmars-listlayout-full',
+        configuration_code + ':finmars-editlayout-full',
+        configuration_code + ':finmars-dashboardlayout-full',
+        configuration_code + ':finmars-contextmenulayout-full',
+
     ]
 
     extra_policies = list(AccessPolicy.objects.all().filter(user_code__in=extra_policies_user_codes))

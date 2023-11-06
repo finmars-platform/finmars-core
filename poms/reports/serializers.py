@@ -890,6 +890,7 @@ class PerformanceReportSerializer(serializers.Serializer):
                 report_instance = PerformanceReportInstance.objects.get(
                     master_user=instance.master_user,
                     member=instance.member,
+                    owner=instance.member,
                     user_code=report_instance_name,
                 )
 
@@ -898,6 +899,7 @@ class PerformanceReportSerializer(serializers.Serializer):
                 report_instance = PerformanceReportInstance.objects.create(
                     master_user=instance.master_user,
                     member=instance.member,
+                    owner=instance.member,
                     user_code=report_instance_name,
                     name=report_instance_name,
                     short_name=report_instance_name,
@@ -936,6 +938,7 @@ class PerformanceReportSerializer(serializers.Serializer):
                 instance_item = PerformanceReportInstanceItem(report_instance=report_instance,
                                                               master_user=instance.master_user,
                                                               member=instance.member,
+                                                              owner=instance.member,
                                                               begin_date=instance.begin_date,
                                                               end_date=instance.end_date,
                                                               calculation_type=instance.calculation_type,
@@ -1030,6 +1033,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             report_instance = BalanceReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,
@@ -1153,6 +1157,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             report_instance = BalanceReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,
@@ -1266,6 +1271,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
             report_instance = PLReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,
@@ -1378,6 +1384,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
             report_instance = PLReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,
@@ -1501,6 +1508,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
             report_instance = TransactionReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,
@@ -1601,6 +1609,7 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
             report_instance = TransactionReportInstance.objects.create(
                 master_user=instance.master_user,
                 member=instance.member,
+                owner=instance.member,
                 user_code=report_instance_name,
                 name=report_instance_name,
                 short_name=report_instance_name,

@@ -80,6 +80,29 @@ class AccessPolicy(permissions.BasePermission):
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
         return allowed
 
+
+    def has_object_permission(self, request, view, obj):
+
+        if request.user.is_superuser:
+            return True
+
+        if request.user.member and request.user.member.is_admin:
+            return True
+
+        # Check if the user is the owner
+        if obj.owner == request.user.member:
+            return True
+
+        action = self._get_invoked_action(view)
+        statements = self.get_policy_statements(request, view)
+
+        if len(statements) == 0:
+            return False
+
+        allowed = self._evaluate_statements(statements, request, view, action)
+        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
+        return allowed
+
     def get_policy_statements(self, request, view) -> List[Union[dict, Statement]]:
         return self.statements
 
