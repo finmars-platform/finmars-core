@@ -237,6 +237,9 @@ class PerformanceReportBuilder:
         begin_nav = 0
         end_nav = 0
 
+        # TODO for grand return we need to calculate separate perfomance ignoring months period
+        # e.g. instead of 30days windows, we need full amount of days, e.g. 10 years = 3650 days
+        # e.g. date_from = inception, date_to = date_to
         for period in self.instance.periods:
             grand_return = grand_return * (period['total_return'] + 1)
             grand_cash_flow = grand_cash_flow + period['total_cash_flow']
@@ -557,7 +560,8 @@ class PerformanceReportBuilder:
                     'records': []
                 }
 
-            table[transaction_date_str]['portfolios'][record.portfolio_id]['records'].append(record)
+            if transaction_date_str != date_from_str: # Always empty records for date_from
+                table[transaction_date_str]['portfolios'][record.portfolio_id]['records'].append(record)
 
         if date_to_str not in table:
             table[date_to_str] = {}
@@ -593,6 +597,9 @@ class PerformanceReportBuilder:
         for key, value in table.items():
 
             item_date = table[key]
+
+            _l.info('performance.table.key %s' % key)
+            _l.info('performance.table.previous_date %s' % previous_date)
 
             for _key, _value in item_date['portfolios'].items():
 
@@ -708,6 +715,7 @@ class PerformanceReportBuilder:
                 else:
                     if nav:
                         instrument_return = (nav - cash_flow) / nav
+                        # instrument_return = (nav - cash_flow) / cash_flow # 2023-11-08, performance fix
                     else:
                         instrument_return = 0
 
@@ -732,7 +740,13 @@ class PerformanceReportBuilder:
 
                 item['instrument_return'] = instrument_return
 
-            previous_date = item_date
+                if previous_date:
+                    item['previous_date'] = json.loads(json.dumps(previous_date, default=str))
+                else:
+                    item['previous_date'] = None
+
+                previous_date = item_date
+
 
         # Calculate nav
 
@@ -757,7 +771,7 @@ class PerformanceReportBuilder:
                     item_date['subtotal_return'] = item_date['subtotal_return'] + (
                             item['instrument_return'] * item['previous_nav'] / previous_date['subtotal_nav'])
 
-            previous_date = item_date
+                previous_date = item_date
 
         # print('table %s' % table)
 

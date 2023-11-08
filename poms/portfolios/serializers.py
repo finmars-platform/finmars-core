@@ -450,6 +450,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "fx_rate",
             "cash_amount_valuation_currency",
             "valuation_currency",
+            "nav_valuation_currency",
             "nav_previous_day_valuation_currency",
             "n_shares_previous_day",
             "n_shares_added",

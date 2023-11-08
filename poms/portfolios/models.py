@@ -307,6 +307,10 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("valuation currency"),
     )
+    nav_valuation_currency = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav valuation currency"),
+    )
     nav_previous_day_valuation_currency = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("nav previous day valuation currency"),
