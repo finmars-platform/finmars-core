@@ -5,6 +5,7 @@ import shutil
 import tempfile
 from io import BytesIO
 from zipfile import ZipFile
+from botocore.exceptions import ClientError
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.core.files.base import ContentFile, File
@@ -397,22 +398,47 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
     def download_directory(self, directory_path, local_destination_path):
 
-        _l.info('directory_path %s' % directory_path)
-        _l.info('local_destination_path %s' % local_destination_path)
+        # _l.info('directory_path %s' % directory_path)
+        # _l.info('local_destination_path %s' % local_destination_path)
+        #
+        # folder = os.path.dirname(local_destination_path)
+        # if folder:
+        #     os.makedirs(folder, exist_ok=True)
+        #
+        # for obj in self.bucket.objects.filter(Prefix=directory_path):
+        #     local_path = os.path.join(local_destination_path, os.path.relpath(obj.key, directory_path))
+        #     _l.info('local_path %s' % local_path)
+        #     os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        #     self.bucket.download_file(obj.key, local_path)
+        #
+        #     # Download the blob to the local file
+        #     with open(local_path, "wb") as local_file, self.open(obj.key) as download_stream:
+        #         local_file.write(download_stream.read())
 
-        folder = os.path.dirname(local_destination_path)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
+        _l.info('directory_path %s', directory_path)
+        _l.info('local_destination_path %s', local_destination_path)
 
+        # Ensure the local directory exists
+        os.makedirs(local_destination_path, exist_ok=True)
+
+        # Iterate over all objects with the specified prefix
         for obj in self.bucket.objects.filter(Prefix=directory_path):
-            local_path = os.path.join(local_destination_path, os.path.relpath(obj.key, directory_path))
-            _l.info('local_path %s' % local_path)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            self.bucket.download_file(obj.key, local_path)
+            # Construct the local file path
+            local_file_path = os.path.join(local_destination_path, os.path.relpath(obj.key, directory_path))
+            _l.info('local_file_path %s', local_file_path)
 
-            # Download the blob to the local file
-            with open(local_path, "wb") as local_file, self.open(obj.key) as download_stream:
-                local_file.write(download_stream.read())
+            # Ensure the local directory for the file exists
+            os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+
+            # Download the file
+            try:
+                self.bucket.download_file(obj.key, local_file_path)
+            except ClientError as e:
+                _l.error('Failed to download %s to %s: %s', obj.key, local_file_path, e)
+                continue  # Skip this file and continue with the next one
+
+            # If additional processing on the file is needed, it can be done here
+            # ...
 
     def download_directory_as_zip(self, directory_path):
 
