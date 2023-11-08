@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
-from poms.common.serializers import ModelWithTimeStampSerializer, ModelMetaSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelMetaSerializer, ModelWithUserCodeSerializer
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
@@ -147,7 +147,7 @@ class TemplateLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'type', 'name', 'user_code', 'is_default', 'data']
 
 
-class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -159,7 +159,7 @@ class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSeriali
                   'sourced_from_global_layout']
 
 
-class ListLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class ListLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)
@@ -203,7 +203,7 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
         #     return res
 
 
-class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
+class ListLayoutLightSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
 
@@ -214,7 +214,7 @@ class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
                   'origin_for_global_layout', 'sourced_from_global_layout']
 
 
-class DashboardLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class DashboardLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -226,7 +226,7 @@ class DashboardLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
                   'sourced_from_global_layout']
 
 
-class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
+class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
 
     class Meta:
@@ -237,7 +237,7 @@ class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
                   'sourced_from_global_layout']
 
 
-class MemberLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class MemberLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -249,7 +249,7 @@ class MemberLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
                   'sourced_from_global_layout']
 
 
-class MobileLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class MobileLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -269,7 +269,7 @@ class ConfigurationExportLayoutSerializer(ModelWithTimeStampSerializer):
         fields = ['id', 'member', 'name', 'is_default', 'data']
 
 
-class EditLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class EditLayoutSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)
