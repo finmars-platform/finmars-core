@@ -156,6 +156,7 @@ class TestMetaClass(type):
 class BaseTestCase(TestCase, metaclass=TestMetaClass):
     client: APIClient = None
     patchers: list = []
+    common_username = "test_bot"
 
     @classmethod
     def cases(cls, *cases):
@@ -378,7 +379,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.db_data = DbInitializer()
         self.master_user = self.db_data.master_user
         self.finmars_bot = self.db_data.finmars_bot
-        self.user, _ = User.objects.get_or_create(username="view_tester")
+        self.user, _ = User.objects.get_or_create(username=self.common_username)
         self.user.master_user = self.master_user
         self.user.save()
         self.member = Member.objects.create(
