@@ -475,7 +475,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
         if "calculated_inputs" in validated_data:
             calculated_inputs = validated_data.pop("calculated_inputs")
 
-        scheme = CsvImportScheme.objects.create(**validated_data)
+        # scheme = CsvImportScheme.objects.create(**validated_data)
+        scheme = super(CsvImportSchemeSerializer, self).create(validated_data)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)

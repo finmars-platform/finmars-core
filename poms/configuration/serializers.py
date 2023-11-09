@@ -87,7 +87,7 @@ class NewMemberSetupConfigurationSerializer(ModelWithUserCodeSerializer, ModelMe
             validated_data['file_url'] = file_path
             validated_data['file_name'] = file.name
 
-        return NewMemberSetupConfiguration.objects.create(**validated_data)
+        return super(NewMemberSetupConfigurationSerializer, self).create(validated_data)
 
     def update(self, instance, validated_data):
 
