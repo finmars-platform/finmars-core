@@ -99,7 +99,7 @@ Versioning:
     - pip install haikunator
   script:
     - |
-      if [[ $CI_COMMIT_REF_NAME == *"-rc" ]]; then
+      if [[ $CI_COMMIT_REF_NAME == *"-rc" || $CI_COMMIT_REF_NAME == *"-stable" ]]; then
       
         # Fancy Name Generation using Haikunator
         FANCY_NAME=$(python -c 'from haikunator import Haikunator; print(Haikunator().haikunate(token_length=0))')
@@ -117,7 +117,7 @@ Versioning:
     reports:
       dotenv: build.env
   only:
-    - /^.*-rc$/
+    - /^.*-(rc|stable)$/
 
 
 Push Version:
