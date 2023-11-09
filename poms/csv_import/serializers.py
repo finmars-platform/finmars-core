@@ -139,7 +139,7 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "column", "name_expr"]
 
 
-class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
