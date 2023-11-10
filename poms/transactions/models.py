@@ -2374,6 +2374,11 @@ class ComplexTransaction(DataTimeStampedModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
+    owner = models.ForeignKey(
+        "users.Member",
+        verbose_name=gettext_lazy("owner"),
+        on_delete=models.CASCADE,
+    )
     transaction_type = models.ForeignKey(
         TransactionType,
         on_delete=models.PROTECT,
@@ -3008,6 +3013,11 @@ class Transaction(models.Model):
         MasterUser,
         related_name="transactions",
         verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    owner = models.ForeignKey(
+        "users.Member",
+        verbose_name=gettext_lazy("owner"),
         on_delete=models.CASCADE,
     )
     complex_transaction = models.ForeignKey(

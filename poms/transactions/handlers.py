@@ -651,6 +651,7 @@ class TransactionTypeProcess:
                             master_user=master_user,
                             user_code=user_code,
                             name=user_code,
+                            owner=self.member,
                             instrument_type=ecosystem_default.instrument_type,
                             accrued_currency=ecosystem_default.currency,
                             pricing_currency=ecosystem_default.currency,
@@ -2450,6 +2451,8 @@ class TransactionTypeProcess:
                     )
 
                 try:
+
+                    transaction.owner = self.member
                     # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                     transaction.save()
 
@@ -2965,6 +2968,7 @@ class TransactionTypeProcess:
         if self.linked_import_task:
             self.complex_transaction.linked_import_task = self.linked_import_task
 
+        self.complex_transaction.owner = self.member
         self.complex_transaction.save()
 
         self._save_inputs()
@@ -3143,6 +3147,7 @@ class TransactionTypeProcess:
             f"code {self.complex_transaction.code}"
         )
 
+        self.complex_transaction.owner = self.member
         self.complex_transaction.save()  # save executed text and date expression
         self._context["complex_transaction"] = self.complex_transaction
 
@@ -3239,6 +3244,7 @@ class TransactionTypeProcess:
         )
 
         if self.complex_transaction and not self.has_errors:
+            self.complex_transaction.owner = self.member
             self.complex_transaction.save()  # save executed text and date expression
 
         _l.debug(
