@@ -3491,7 +3491,7 @@ class PLReportBuilderSql:
                     else:
                         result_tmp.append(item)
 
-                _l.info("WTF??")
+                # _l.info("WTF??")
 
                 # index = 0
 

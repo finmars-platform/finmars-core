@@ -33,6 +33,8 @@ class BootstrapConfig(AppConfig):
         if settings.SEND_LOGS_TO_FINMARS:
             _l.info("Logs will be sending to Finmars")
 
+        _l.info("space_code: %s" % settings.BASE_API_URL )
+
         post_migrate.connect(self.bootstrap, sender=self)
         _l.info("Finmars Application is running 💚")
 

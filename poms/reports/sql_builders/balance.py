@@ -2176,6 +2176,7 @@ class BalanceReportBuilderSql:
 
         # Retrieve results
         all_dicts = []
+        # TODO probably we can do some optimization here
         for result in group_result.results:
             # Each result is an AsyncResult instance.
             # You can get the result of the task with its .result property.
@@ -2186,8 +2187,7 @@ class BalanceReportBuilderSql:
             # refresh the task instance to get the latest status from the database
             task.refresh_from_db()
 
-            if task.status != CeleryTask.STATUS_ERROR:
-                task.delete()
+            task.delete()
 
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
