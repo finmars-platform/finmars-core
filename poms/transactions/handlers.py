@@ -191,6 +191,7 @@ class TransactionTypeProcess:
         if self.clear_execution_log:
             self.complex_transaction.execution_log = ""
 
+        self.complex_transaction.owner = self.member
         self.complex_transaction.save()
 
         self.record_execution_progress("Booking Complex Transaction")
