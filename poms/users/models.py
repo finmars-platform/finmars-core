@@ -1258,8 +1258,6 @@ class Member(FakeDeletableModel):
         try:
             layout = MemberLayout.objects.get(
                 member_id=self.id,
-                owner_id=self.id,
-                configuration_code=configuration_code,
                 user_code=f"{configuration_code}:default_member_layout",
             )
         except Exception as e:

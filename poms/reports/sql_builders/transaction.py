@@ -101,7 +101,7 @@ class TransactionReportBuilderSql:
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
-        _l.info("add_user_filters.instruments %s" % len(instruments))
+        _l.info("add_user_filters.instruments count %s" % len(instruments))
 
         try:
 
@@ -713,6 +713,8 @@ class TransactionReportBuilderSql:
             ITEM_TYPE_TRANSACTION_PL = 5
             ITEM_TYPE_MISMATCH = 6
             ITEM_TYPE_EXPOSURE_COPY = 7
+
+            _l.info('transaction_report.raw_results.count %s' % len(raw_results))
 
             for raw_item in raw_results:
 

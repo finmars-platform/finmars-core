@@ -4,6 +4,8 @@ from poms.common.utils import date_now
 from poms.instruments.models import CostMethod
 from poms.users.models import EcosystemDefault
 
+import logging
+_l = logging.getLogger('poms.reports')
 
 class BaseReport:
     # CONSOLIDATION = 1
@@ -277,8 +279,8 @@ class TransactionReport(BaseReport):
 
         self.date_field = date_field or "date"
 
-        print(f"====depth_level {depth_level}")
-        print(f"====filters {filters}")
+        _l.info(f"====depth_level {depth_level}")
+        _l.info(f"====filters {filters}")
 
         self.depth_level = depth_level or "base_transaction"
 
