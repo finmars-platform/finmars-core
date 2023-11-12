@@ -634,6 +634,7 @@ class DbInitializer:
         op_date = day or date.today()
         complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             date=op_date,
             transaction_type=self.transaction_types[DEPOSIT],
             text=notes,
@@ -642,6 +643,7 @@ class DbInitializer:
         account = portfolio.accounts.first()
         transaction = Transaction.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             account_position=account,
             account_cash=account,
             account_interim=account,
