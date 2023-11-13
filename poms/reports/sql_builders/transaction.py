@@ -10,7 +10,7 @@ from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
-from poms.instruments.models import Instrument, InstrumentType
+from poms.instruments.models import Instrument, InstrumentType, Country
 from poms.portfolios.models import Portfolio
 from poms.reports.models import TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall, \
@@ -198,7 +198,6 @@ class TransactionReportBuilderSql:
                             settlement_currency_expression = 't.settlement_currency_id IN (%s)' % res
                             # TODO add or for transaction_currency_id
 
-
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
@@ -208,15 +207,20 @@ class TransactionReportBuilderSql:
 
                         # _l.info('result %s' % result)
 
-                        if instrument_expression and (settlement_currency_expression and transaction_currency_expression):
+                        if instrument_expression and (
+                                settlement_currency_expression and transaction_currency_expression):
 
-                            result = result + 'and (%s or %s or %s)' % (instrument_expression, settlement_currency_expression, transaction_currency_expression)
+                            result = result + 'and (%s or %s or %s)' % (
+                            instrument_expression, settlement_currency_expression, transaction_currency_expression)
 
-                        elif instrument_expression and not (settlement_currency_expression and transaction_currency_expression):
+                        elif instrument_expression and not (
+                                settlement_currency_expression and transaction_currency_expression):
                             result = result + 'and %s' % instrument_expression
 
-                        elif not instrument_expression and (settlement_currency_expression and transaction_currency_expression):
-                            result = result + 'and (%s or %s)' % (settlement_currency_expression, transaction_currency_expression)
+                        elif not instrument_expression and (
+                                settlement_currency_expression and transaction_currency_expression):
+                            result = result + 'and (%s or %s)' % (
+                            settlement_currency_expression, transaction_currency_expression)
 
         except Exception as e:
 
@@ -1227,6 +1231,17 @@ class TransactionReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_countries(self, instruments):
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.country_id)
+
+        self.instance.item_countries = (
+            Country.objects
+            .filter(id__in=ids)
+        )
+
     def add_data_items_account_types(self, accounts):
 
         ids = []
@@ -1406,6 +1421,7 @@ class TransactionReportBuilderSql:
         self.instance.item_account_types = []
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_countries(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
         if self.instance.depth_level == 'entry':
