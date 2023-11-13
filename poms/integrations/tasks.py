@@ -363,7 +363,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
     }
     short_type = instrument_data["instrument_type"]["user_code"]
     try:
-        # remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
                 "default_exchange" in instrument_data
