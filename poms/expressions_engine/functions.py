@@ -2773,7 +2773,7 @@ def _get_instrument(evaluator, instrument):
 
         from poms.instruments.serializers import InstrumentSerializer
 
-        return InstrumentSerializer(instance=instrument, context=context).data
+        return instrument
 
     except Exception as e:
         return None
