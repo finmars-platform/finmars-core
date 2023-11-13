@@ -30,7 +30,7 @@ from poms.reports.backend_reports_utils import BackendReportHelperService
 from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
     ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
     ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
-    ReportCounterpartySerializer, ReportComplexTransactionSerializer
+    ReportCounterpartySerializer, ReportComplexTransactionSerializer, ReportCountrySerializer
 from poms.reports.common import Report, PerformanceReport, TransactionReport
 from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
     TransactionReportCustomFieldField, ReportCurrencyField, ReportPricingPolicyField
@@ -243,6 +243,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
     item_instrument_types = ReportInstrumentTypeSerializer(many=True, read_only=True)
+    item_countries = ReportCountrySerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)
@@ -601,6 +602,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
     item_instrument_types = ReportInstrumentTypeSerializer(many=True, read_only=True)
+    item_countries = ReportCountrySerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)

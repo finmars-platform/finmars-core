@@ -19,7 +19,7 @@ from poms.instruments.models import (
     Instrument,
     InstrumentType,
     LongUnderlyingExposure,
-    ShortUnderlyingExposure,
+    ShortUnderlyingExposure, Country,
 )
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
@@ -2266,6 +2266,17 @@ class BalanceReportBuilderSql:
             .filter(id__in=ids)
         )
 
+    def add_data_items_countries(self, instruments):
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.country_id)
+
+        self.instance.item_countries = (
+            Country.objects
+            .filter(id__in=ids)
+        )
+
     def add_data_items_portfolios(self, ids):
         self.instance.item_portfolios = (
             Portfolio.objects.prefetch_related("attributes")
@@ -2429,6 +2440,7 @@ class BalanceReportBuilderSql:
         _l.info("add_data_items_strategies1 %s " % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_countries(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(

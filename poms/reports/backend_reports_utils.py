@@ -159,6 +159,7 @@ class BackendReportHelperService:
             "portfolio": self.convert_helper_dict(data["item_portfolios"]),
             "instrument": self.convert_helper_dict(data["item_instruments"]),
             "instrument_type": self.convert_helper_dict(data["item_instrument_types"]),
+            "country": self.convert_helper_dict(data["item_countries"]),
             "entry_instrument": self.convert_helper_dict(data["item_instruments"]),
             "allocation": self.convert_helper_dict(data["item_instruments"]),
             "allocation_balance": self.convert_helper_dict(data["item_instruments"]),

@@ -3,10 +3,7 @@ import os
 import time
 from datetime import date, timedelta
 
-
-from celery import shared_task, group
-from django.conf import settings
-
+from celery import group
 from django.conf import settings
 from django.db import connection
 
@@ -16,7 +13,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
-from poms.instruments.models import Instrument, CostMethod, InstrumentType
+from poms.instruments.models import Instrument, CostMethod, InstrumentType, Country
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
 from poms.reports.models import PLReportCustomField, ReportInstanceModel
@@ -110,6 +107,7 @@ class PLReportBuilderSql:
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
         return self.instance
+
     @staticmethod
     def get_final_consolidation_columns(instance):
 
@@ -141,6 +139,7 @@ class PLReportBuilderSql:
             resultString = ", ".join(result) + ', '
 
         return resultString
+
     @staticmethod
     def get_final_consolidation_where_filters_columns(instance):
 
@@ -3190,6 +3189,7 @@ class PLReportBuilderSql:
             """
 
         return query
+
     @staticmethod
     def get_query_for_first_date(instance):
 
@@ -3443,8 +3443,10 @@ class PLReportBuilderSql:
 
                 query = query.format(query_first_date=query_1,
                                      query_report_date=query_2,
-                                     final_consolidation_columns=PLReportBuilderSql.get_final_consolidation_columns(instance),
-                                     final_consolidation_where_filters=PLReportBuilderSql.get_final_consolidation_where_filters_columns(instance)
+                                     final_consolidation_columns=PLReportBuilderSql.get_final_consolidation_columns(
+                                         instance),
+                                     final_consolidation_where_filters=PLReportBuilderSql.get_final_consolidation_where_filters_columns(
+                                         instance)
                                      )
 
                 if settings.SERVER_TYPE == 'local':
@@ -3470,7 +3472,6 @@ class PLReportBuilderSql:
                 ITEM_TYPE_FX_TRADES = 4
                 ITEM_TYPE_TRANSACTION_PL = 5
                 ITEM_TYPE_MISMATCH = 6
-
 
                 ITEM_GROUP_OPENED = 10
                 ITEM_GROUP_FX_VARIATIONS = 11
@@ -3640,8 +3641,10 @@ class PLReportBuilderSql:
 
                     result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                     result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                    result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                    result_item_opened["instrument_pricing_currency_fx_rate"] = item[
+                        "instrument_pricing_currency_fx_rate"]
+                    result_item_opened["instrument_accrued_currency_fx_rate"] = item[
+                        "instrument_accrued_currency_fx_rate"]
                     result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
                     result_item_opened["instrument_factor"] = item["instrument_factor"]
@@ -3887,7 +3890,6 @@ class PLReportBuilderSql:
                         else:
                             result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
 
-
                         result_item_closed["item_group"] = ITEM_GROUP_CLOSED
                         result_item_closed["item_group_code"] = "CLOSED"
                         result_item_closed["item_group_name"] = "Closed"
@@ -4024,7 +4026,6 @@ class PLReportBuilderSql:
 
             tasks.append(task)
 
-
         _l.info("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
@@ -4111,6 +4112,17 @@ class PLReportBuilderSql:
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
+
+    def add_data_items_countries(self, instruments):
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.country_id)
+
+        self.instance.item_countries = (
+            Country.objects
+            .filter(id__in=ids)
+        )
 
     def add_data_items_portfolios(self, ids):
 
@@ -4249,6 +4261,7 @@ class PLReportBuilderSql:
         self.add_data_items_strategies3(strategies3_ids)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_countries(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = PLReportCustomField.objects.filter(master_user=self.instance.master_user)
