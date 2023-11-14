@@ -1,11 +1,12 @@
+import logging
 from datetime import date, timedelta
 
 from poms.common.utils import date_now
 from poms.instruments.models import CostMethod
 from poms.users.models import EcosystemDefault
 
-import logging
 _l = logging.getLogger('poms.reports')
+
 
 class BaseReport:
     # CONSOLIDATION = 1
@@ -302,10 +303,10 @@ class PerformanceReport(BaseReport):
     report_date = date.min  # VirtualTransaction
 
     CALCULATION_TYPE_TIME_WEIGHTED = "time_weighted"
-    CALCULATION_TYPE_MONEY_WEIGHTED = "money_weighted"
+    CALCULATION_TYPE_MODIFIED_DIETZ = "modified_dietz"
     CALCULATION_TYPE_CHOICES = (
         (CALCULATION_TYPE_TIME_WEIGHTED, "Time Weighted"),
-        (CALCULATION_TYPE_MONEY_WEIGHTED, "Money Weighted"),
+        (CALCULATION_TYPE_MODIFIED_DIETZ, "Modified Dietz"),
     )
 
     SEGMENTATION_TYPE_DAYS = "days"

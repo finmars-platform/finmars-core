@@ -843,9 +843,11 @@ class PerformanceReportSerializer(serializers.Serializer):
 
     items = PerformanceReportItemSerializer(many=True, read_only=True)
     raw_items = serializers.JSONField(allow_null=True, required=False, read_only=True)
+    execution_log = serializers.JSONField(allow_null=True, required=False, read_only=True)
     begin_nav = serializers.ReadOnlyField()
     end_nav = serializers.ReadOnlyField()
     grand_return = serializers.ReadOnlyField()
+    grand_cash_flow_weighted = serializers.ReadOnlyField()
     grand_cash_flow = serializers.ReadOnlyField()
     grand_cash_inflow = serializers.ReadOnlyField()
     grand_cash_outflow = serializers.ReadOnlyField()
