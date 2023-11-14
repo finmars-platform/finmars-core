@@ -200,7 +200,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "accrual_start_date": "2017-02-08",
                                 "first_payment_date": "2017-02-08",
                                 "accrual_size": 0.0875,
-                                "periodicity_n": 0,
+                                "periodicity_n": 0,  # should be set as ANNUALLY
                                 "accrual_calculation_model": 21,
                                 "accrual_calculation_model_object": {
                                     "id": 21,
@@ -210,7 +210,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                     "public_name": None,
                                     "notes": None,
                                 },
-                                "periodicity": None,
+                                "periodicity": None,  # should be set as ANNUALLY
                                 "periodicity_object": {},
                                 "notes": "",
                             },
@@ -243,4 +243,4 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             accrual.accrual_calculation_model.user_code,
             "DAY_COUNT_30_360_GERMAN",  # code 21
         )
-        self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[2])
+        self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[1])
