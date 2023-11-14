@@ -997,8 +997,13 @@ class PerformanceReportBuilder:
                     "grand_cash_flow_weighted": grand_cash_flow_weighted
                 })
 
-        grand_return = (end_nav - begin_nav - grand_cash_flow) / (
-                begin_nav + grand_cash_flow_weighted)
+        try:
+            grand_return = (end_nav - begin_nav - grand_cash_flow) / (
+                    begin_nav + grand_cash_flow_weighted)
+        except Exception as e:
+            _l.error("Could not calculate modified dietz return error %s" % e)
+            _l.error("Could not calculate modified dietz return traceback %s" % traceback.format_exc())
+            grand_return = 0
 
         self.instance.grand_return = grand_return
         self.instance.grand_cash_flow = grand_cash_flow
