@@ -760,7 +760,9 @@ class MasterUser(models.Model):
         ecosystem_defaults = EcosystemDefault()
 
         ecosystem_defaults.master_user = self
-        ecosystem_defaults.currency = ccy
+        # ecosystem_defaults.currency = ccy
+        # Should be  usd by default 2023-11-14 szhitenev
+        ecosystem_defaults.currency = ccy_usd
         ecosystem_defaults.account_type = account_type
         ecosystem_defaults.account = account
         ecosystem_defaults.counterparty_group = counterparty_group

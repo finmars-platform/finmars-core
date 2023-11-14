@@ -3,18 +3,21 @@ import json
 import logging
 import time
 import traceback
-from datetime import timedelta,date
+from datetime import timedelta, date
 
 from django.forms import model_to_dict
-from django.views.generic.dates import timezone_today
 
 from poms.accounts.models import Account, AccountType
+from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
     last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
+from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
+from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField
+from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import Transaction, TransactionClass
 from poms.users.models import EcosystemDefault
@@ -35,6 +38,15 @@ class PerformanceReportBuilder:
         _l.info('self.instance master_user %s' % self.instance.master_user)
         _l.info('self.instance begin_date %s' % self.instance.begin_date)
         _l.info('self.instance end_date %s' % self.instance.end_date)
+
+        proxy_user = ProxyUser(self.instance.member, self.instance.master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        self.context = {
+            "request": proxy_request,
+            "master_user": self.instance.master_user,
+            "member": self.instance.member,
+        }
 
     def get_first_transaction(self):
 
@@ -118,9 +130,11 @@ class PerformanceReportBuilder:
         self.instance.periods = self.get_periods(begin_date, self.end_date, self.instance.segmentation_type)
 
         cumulative_return = 0
-        for period in self.instance.periods:
 
-            if self.instance.calculation_type == 'time_weighted':
+        if self.instance.calculation_type == 'time_weighted':
+
+            for period in self.instance.periods:
+
                 table = self.build_time_weighted(period['date_from'], period['date_to'])
 
                 for key, value in table.items():
@@ -128,58 +142,50 @@ class PerformanceReportBuilder:
 
                 period = self.calculate_time_weighted_total_values(period)
 
-            if self.instance.calculation_type == 'money_weighted':
-                table = self.build_money_weighted(period['date_from'], period['date_to'])
+                period["cumulative_return"] = (cumulative_return + 1) * (period['total_return'] + 1) - 1
 
-                for key, value in table.items():
-                    period['items'].append(table[key])
+                cumulative_return = period["cumulative_return"]
 
-                period = self.calculate_money_weighted_total_values(period)
-
-            period["cumulative_return"] = (cumulative_return + 1) * (period['total_return'] + 1) - 1
-
-            cumulative_return = period["cumulative_return"]
-
-        if self.instance.calculation_type == 'time_weighted':
             self.calculate_time_weighted_grand_total_values()
 
-        if self.instance.calculation_type == 'money_weighted':
-            self.calculate_money_weighted_grand_total_values()
+            for period in self.instance.periods:
+                for item in period['items']:
 
-        for period in self.instance.periods:
-            for item in period['items']:
+                    for key, value in item['portfolios'].items():
 
-                for key, value in item['portfolios'].items():
+                        result_dicts = []
 
-                    result_dicts = []
+                        for record in item['portfolios'][key]['records']:
+                            record_json = model_to_dict(record)
+                            result_dicts.append(record_json)
 
-                    for record in item['portfolios'][key]['records']:
-                        record_json = model_to_dict(record)
-                        result_dicts.append(record_json)
+                        item['portfolios'][key]['records'] = result_dicts
 
-                    item['portfolios'][key]['records'] = result_dicts
+            self.instance.items = []
+            self.instance.raw_items = json.loads(
+                json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
 
-        self.instance.items = []
-        self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
+            for period in self.instance.periods:
+                item = {}
 
-        for period in self.instance.periods:
-            item = {}
+                item['date_from'] = period['date_from']
+                item['date_to'] = period['date_to']
 
-            item['date_from'] = period['date_from']
-            item['date_to'] = period['date_to']
+                item['begin_nav'] = period['begin_nav']
+                item['end_nav'] = period['end_nav']
 
-            item['begin_nav'] = period['begin_nav']
-            item['end_nav'] = period['end_nav']
+                item['cash_flow'] = period['total_cash_flow']
+                item['cash_inflow'] = period['total_cash_inflow']
+                item['cash_outflow'] = period['total_cash_outflow']
+                item['nav'] = period['total_nav']
+                item['instrument_return'] = period['total_return']
+                if 'cumulative_return' in period:
+                    item['cumulative_return'] = period['cumulative_return']
 
-            item['cash_flow'] = period['total_cash_flow']
-            item['cash_inflow'] = period['total_cash_inflow']
-            item['cash_outflow'] = period['total_cash_outflow']
-            item['nav'] = period['total_nav']
-            item['instrument_return'] = period['total_return']
-            if 'cumulative_return' in period:
-                item['cumulative_return'] = period['cumulative_return']
+                self.instance.items.append(item)
 
-            self.instance.items.append(item)
+        if self.instance.calculation_type == 'modified_dietz':
+            self.build_modified_dietz(begin_date, self.end_date)
 
         # _l.info('items total %s' % len(self.instance.items))
 
@@ -189,7 +195,7 @@ class PerformanceReportBuilder:
 
         relation_prefetch_st = time.perf_counter()
 
-        self.add_data_items()
+        # self.add_data_items()
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
@@ -226,7 +232,7 @@ class PerformanceReportBuilder:
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
 
-    def calculate_money_weighted_grand_total_values(self):
+    def calculate_modified_dietz_grand_total_values(self):
 
         grand_return = 1
 
@@ -289,7 +295,7 @@ class PerformanceReportBuilder:
 
         return period
 
-    def calculate_money_weighted_total_values(self, period):
+    def calculate_modified_dietz_total_values(self, period):
 
         total_nav = 0
         total_cash_flow = 0
@@ -560,7 +566,7 @@ class PerformanceReportBuilder:
                     'records': []
                 }
 
-            if transaction_date_str != date_from_str: # Always empty records for date_from
+            if transaction_date_str != date_from_str:  # Always empty records for date_from
                 table[transaction_date_str]['portfolios'][record.portfolio_id]['records'].append(record)
 
         if date_to_str not in table:
@@ -665,7 +671,6 @@ class PerformanceReportBuilder:
 
                 for record in item['records']:
 
-
                     fx_rate = 1
 
                     try:
@@ -747,7 +752,6 @@ class PerformanceReportBuilder:
 
                 previous_date = item_date
 
-
         # Calculate nav
 
         previous_date = None
@@ -777,16 +781,7 @@ class PerformanceReportBuilder:
 
         return table
 
-    def build_money_weighted(self, date_from, date_to):
-
-        # _l.info("build portfolio records")
-
-        date_from_str = str(date_from)
-        date_to_str = str(date_to)
-
-        result = []
-
-        dates_map = self.get_dict_of_dates_between_two_dates_with_order(date_from, date_to)
+    def get_portfolio_registers(self):
 
         if self.instance.bundle:
             self.instance.bunch_portfolios = []
@@ -807,55 +802,29 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-        # _l.info('build_time_weighted.result portfolios %s ' % portfolios)
+        return portfolio_registers
 
-        # transactions = Transaction.objects.filter(portfolio__in=portfolios,
-        #                                           transaction_date__gte=date_from,
-        #                                           transaction_date__lte=date_to,
-        #                                           transaction_class__in=[TransactionClass.CASH_INFLOW,
-        #                                                                  TransactionClass.CASH_OUTFLOW,
-        #                                                                  TransactionClass.INJECTION,
-        #                                                                  TransactionClass.DISTRIBUTION]).order_by(
-        #     'transaction_date')
+    def get_portfolios(self, portfolio_registers):
 
-        records = PortfolioRegisterRecord.objects.filter(portfolio_register__in=portfolio_registers,
-                                                         transaction_date__gte=date_from,
-                                                         transaction_date__lte=date_to,
-                                                         transaction_class__in=[TransactionClass.CASH_INFLOW,
-                                                                                TransactionClass.CASH_OUTFLOW,
-                                                                                TransactionClass.INJECTION,
-                                                                                TransactionClass.DISTRIBUTION]).order_by(
-            'transaction_date')
+        portfolios = []
 
-        # create empty structure start
+        for portfolio_register in portfolio_registers:
+            portfolios.append(portfolio_register.portfolio)
 
-        table = {}
+        return portfolios
 
-        # FILL START DATE START
-        table[date_from_str] = {}
-        table[date_from_str]['date'] = date_from_str
-        table[date_from_str]['portfolios'] = {}
-        table[date_from_str]['subtotal_cash_flow'] = 0
-        table[date_from_str]['subtotal_cash_inflow'] = 0
-        table[date_from_str]['subtotal_cash_outflow'] = 0
-        table[date_from_str]['subtotal_cash_flow_weighted'] = 0
-        table[date_from_str]['subtotal_nav'] = 0
+    def get_modified_dietz_nav_for_record(self, register_record):
 
-        for portfolio_id in portfolios:
+        try:
+            price_history = PriceHistory.objects.get(date=register_record.transaction_date,
+                                                     instrument=register_record.portfolio_register.linked_instrument,
+                                                     pricing_policy=register_record.portfolio_register.valuation_pricing_policy)
 
-            nav = 0
+            fx_rate = 1
 
             try:
-                price_history = PriceHistory.objects.get(date=date_from,
-                                                         instrument=portfolio_registers_map[
-                                                             portfolio_id].linked_instrument,
-                                                         pricing_policy=portfolio_registers_map[
-                                                             portfolio_id].valuation_pricing_policy)
 
-                fx_rate = 1
-
-                if self.instance.report_currency.id == portfolio_registers_map[
-                    portfolio_id].linked_instrument.pricing_currency.id:
+                if self.instance.report_currency.id == register_record.portfolio_register.linked_instrument.pricing_currency.id:
                     fx_rate = 1
                 else:
                     report_currency_fx_rate = None
@@ -864,486 +833,352 @@ class PerformanceReportBuilder:
                     if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
                         report_currency_fx_rate = 1
                     else:
-                        report_currency_fx_rate = CurrencyHistory.objects.get(date=date_from,
+                        report_currency_fx_rate = CurrencyHistory.objects.get(date=register_record,
                                                                               currency=self.instance.report_currency,
-                                                                              pricing_policy=portfolio_registers_map[
-                                                                                  portfolio_id].valuation_pricing_policy).fx_rate
-                    if portfolio_registers_map[
-                        portfolio_id].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
+                                                                              pricing_policy=register_record.portfolio_register.valuation_pricing_policy).fx_rate
+
+                    if register_record.portfolio_register.linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
                         instrument_pricing_currency_fx_rate = 1
                     else:
-                        instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(date=date_from,
-                                                                                          currency=
-                                                                                          portfolio_registers_map[
-                                                                                              portfolio_id].linked_instrument.pricing_currency,
-                                                                                          pricing_policy=
-                                                                                          portfolio_registers_map[
-                                                                                              portfolio_id].valuation_pricing_policy).fx_rate
+                        instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(
+                            date=register_record.transaction_date,
+                            currency=register_record.portfolio_register.linked_instrument.pricing_currency,
+                            pricing_policy=register_record.portfolio_register.valuation_pricing_policy).fx_rate
 
                     fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
-                nav = price_history.nav * fx_rate
             except Exception as e:
-                # _l.info("Money weighted date_from nav error %s" % e)
-                nav = 0
-
-            table[date_from_str]['portfolios'][portfolio_id] = {
-                'portfolio_register': portfolio_registers_map[portfolio_id],
-                'portfolio_id': portfolio_id,
-                'transaction_date_str': date_from_str,
-                'transaction_date': date_from,
-                'cash_flow': 0,
-                'cash_inflow': 0,
-                'cash_outflow': 0,
-                'cash_flow_weighted': nav * 1,
-                'nav': nav,
-                'records': []
-            }
-
-        # FILL START DATE END
-
-        for record in records:
-
-            transaction_date_str = str(record.transaction_date)
-
-            if transaction_date_str not in table:
-                table[transaction_date_str] = {}
-                table[transaction_date_str]['date'] = transaction_date_str
-                table[transaction_date_str]['portfolios'] = {}
-                table[transaction_date_str]['subtotal_cash_flow'] = 0
-                table[transaction_date_str]['subtotal_cash_inflow'] = 0
-                table[transaction_date_str]['subtotal_cash_outflow'] = 0
-                table[transaction_date_str]['subtotal_cash_flow_weighted'] = 0
-                table[transaction_date_str]['subtotal_nav'] = 0
-
-            if record.portfolio_id not in table[transaction_date_str]['portfolios']:
-                table[transaction_date_str]['portfolios'][record.portfolio_id] = {
-                    'portfolio_register': portfolio_registers_map[record.portfolio_id],
-                    'portfolio_id': record.portfolio_id,
-                    'transaction_date_str': transaction_date_str,
-                    'transaction_date': record.transaction_date,
-                    'cash_flow': 0,
-                    'cash_inflow': 0,
-                    'cash_outflow': 0,
-                    'nav': 0,
-                    'records': []
-                }
-
-            table[transaction_date_str]['portfolios'][record.portfolio_id]['records'].append(record)
-
-        # FILL END DATE START
-
-        table[date_to_str] = {}
-        table[date_to_str]['date'] = date_to_str
-        table[date_to_str]['portfolios'] = {}
-        table[date_to_str]['subtotal_cash_flow'] = 0
-        table[date_to_str]['subtotal_cash_inflow'] = 0
-        table[date_to_str]['subtotal_cash_outflow'] = 0
-        table[date_to_str]['subtotal_cash_flow_weighted'] = 0
-        table[date_to_str]['subtotal_nav'] = 0
-
-        for portfolio_id in portfolios:
-
-            nav = 0
-
-            try:
-                price_history = PriceHistory.objects.get(date=date_to,
-                                                         instrument=portfolio_registers_map[
-                                                             portfolio_id].linked_instrument,
-                                                         pricing_policy=portfolio_registers_map[
-                                                             portfolio_id].valuation_pricing_policy)
-
-                # _l.info('price_history.nav %s' % price_history.nav)
-
+                _l.error('fx_rate e %s' % e)
                 fx_rate = 1
 
-                if self.instance.report_currency.id == portfolio_registers_map[
-                    portfolio_id].linked_instrument.pricing_currency.id:
-                    fx_rate = 1
-                else:
-                    report_currency_fx_rate = None
-                    instrument_pricing_currency_fx_rate = None
+            nav = price_history.nav * fx_rate
 
-                    if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                        report_currency_fx_rate = 1
+        except Exception as e:
+            nav = 0
 
-                    else:
+        return nav
 
-                        report_currency_fx_rate = CurrencyHistory.objects.get(date=date_to,
-                                                                              pricing_policy=portfolio_registers_map[
-                                                                                  portfolio_id].valuation_pricing_policy,
-                                                                              currency=self.instance.report_currency).fx_rate
+    def get_nav_by_date(self, portfolios, date, pricing_policy):
 
-                    if portfolio_registers_map[
-                        portfolio_id].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
-                        instrument_pricing_currency_fx_rate = 1
+        total_nav = 0
 
-                    else:
-                        instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(date=date_to,
-                                                                                          pricing_policy=
-                                                                                          portfolio_registers_map[
-                                                                                              portfolio_id].valuation_pricing_policy,
-                                                                                          currency=
-                                                                                          portfolio_registers_map[
-                                                                                              portfolio_id].linked_instrument.pricing_currency).fx_rate
+        balance_report = Report(master_user=self.instance.master_user)
+        balance_report.master_user = self.instance.master_user
+        balance_report.member = self.instance.member
+        balance_report.report_date = date
+        balance_report.pricing_policy = pricing_policy
+        balance_report.portfolios = portfolios
+        balance_report.report_currency = self.instance.report_currency
 
-                    fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
+        builder = BalanceReportBuilderSql(instance=balance_report)
+        balance_report = builder.build_balance_sync()
 
-                nav = price_history.nav * fx_rate
+        nav = 0
 
-            except Exception as e:
-                _l.error("end date nav e %s" % e)
-                nav = 0
+        _l.info(f'get_nav_by_date.balance_report. date: {date}, len:{len(balance_report.items)}')
 
-            table[date_to_str]['portfolios'][portfolio_id] = {
-                'portfolio_register': portfolio_registers_map[portfolio_id],
-                'portfolio_id': portfolio_id,
-                'transaction_date_str': date_to_str,
-                'transaction_date': date_to,
-                'cash_flow': 0,
-                'cash_inflow': 0,
-                'cash_outflow': 0,
-                'cash_flow_weighted': 0,
-                'previous_nav': 0,
-                'nav': nav,
-                'records': []
-            }
+        for it in balance_report.items:
+            if it["market_value"]:
+                nav = nav + it["market_value"]
 
-        # FILL END DATE END
+        return nav
 
-        # print('table %s '  % table)
+    def get_record_fx_rate(self, record):
 
-        # create empty structure end
+        fx_rate = 1
 
-        # Fill with Data
+        try:
 
-        for key, value in table.items():
-
-            item_date = table[key]
-
-            if key != date_to_str and key != date_from_str:
-
-                for _key, _value in item_date['portfolios'].items():
-
-                    item = item_date['portfolios'][_key]
-
-                    nav = 0
-
-                    try:
-                        price_history = PriceHistory.objects.get(date=item['transaction_date'],
-                                                                 instrument=item[
-                                                                     'portfolio_register'].linked_instrument,
-                                                                 pricing_policy=item[
-                                                                     'portfolio_register'].valuation_pricing_policy)
-
-                        fx_rate = 1
-
-                        try:
-
-                            if self.instance.report_currency.id == item[
-                                'portfolio_register'].linked_instrument.pricing_currency.id:
-                                fx_rate = 1
-                            else:
-                                report_currency_fx_rate = None
-                                instrument_pricing_currency_fx_rate = None
-
-                                if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                                    report_currency_fx_rate = 1
-                                else:
-                                    report_currency_fx_rate = CurrencyHistory.objects.get(date=item['transaction_date'],
-                                                                                          currency=self.instance.report_currency,
-                                                                                          pricing_policy=item[
-                                                                                              'portfolio_register'].valuation_pricing_policy).fx_rate
-
-                                if item[
-                                    'portfolio_register'].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
-                                    instrument_pricing_currency_fx_rate = 1
-                                else:
-                                    instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(
-                                        date=item['transaction_date'],
-                                        currency=item[
-                                            'portfolio_register'].linked_instrument.pricing_currency,
-                                        pricing_policy=item[
-                                            'portfolio_register'].valuation_pricing_policy).fx_rate
-
-                                fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
-
-                        except Exception as e:
-                            _l.error('fx_rate e %s' % e)
-                            fx_rate = 1
-
-
-                        nav = price_history.nav * fx_rate
-                    except Exception as e:
-                        nav = 0
-
-                    cash_flow = 0
-                    cash_inflow = 0
-                    cash_outflow = 0
-
-                    for record in item['records']:
-
-                        fx_rate = 1
-
-                        try:
-
-                            if self.instance.report_currency.id == record.valuation_currency.id:
-                                fx_rate = 1
-                            else:
-                                report_currency_fx_rate = None
-                                record_valuation_currency_fx_rate = None
-
-                                if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                                    report_currency_fx_rate = 1
-                                else:
-                                    report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
-                                                                                          pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                                                                          currency=self.instance.report_currency).fx_rate
-
-                                if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
-                                    record_valuation_currency_fx_rate = 1
-                                else:
-                                    record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
-                                        pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                        date=record.transaction_date, currency=record.valuation_currency).fx_rate
-
-                                fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
-
-                        except Exception as e:
-                            _l.error('fx_rate e %s' % e)
-                            fx_rate = 1 # TODO check if this is correct
-
-                        cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
-
-                        if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
-                            cash_inflow = cash_inflow + record.cash_amount_valuation_currency * fx_rate
-
-                        if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW,
-                                                           TransactionClass.DISTRIBUTION]:
-                            cash_outflow = cash_outflow + record.cash_amount_valuation_currency * fx_rate
-
-                    date_n = dates_map[item['transaction_date_str']]
-                    date_to_n = dates_map[str(date_to)]
-                    date_from_n = dates_map[str(date_from)]
-
-                    # 2022-03-31
-                    # 2022-04-01
-
-                    # date_n = 2022-04-01
-                    # date_to_n = 2022-04-29
-                    # date_from_n = 2022-03-31
-
-                    #   (30 - 2) / (30 - 1) = 28 / 29 = 0
-                    time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
-
-                    if item['transaction_date_str'] == date_from_str:
-                        item['cash_flow'] = 0
-                    else:
-                        item['cash_flow'] = cash_flow
-
-                    if item['transaction_date_str'] == date_from_str:
-                        item['cash_inflow'] = 0
-                    else:
-                        item['cash_inflow'] = cash_inflow
-
-                    if item['transaction_date_str'] == date_from_str:
-                        item['cash_outflow'] = 0
-                    else:
-                        item['cash_outflow'] = cash_outflow
-
-                    item['cash_flow_weighted'] = cash_flow * time_weight
-                    item['nav'] = nav
-
+            if self.instance.report_currency.id == record.valuation_currency.id:
+                fx_rate = 1
             else:
-                print("Skip %s " % key)
+                report_currency_fx_rate = None
+                record_valuation_currency_fx_rate = None
 
-        #  Calculate subtotals
+                if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
+                    report_currency_fx_rate = 1
+                else:
+                    report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
+                                                                          pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                                                                          currency=self.instance.report_currency).fx_rate
 
-        for key, value in table.items():
+                if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
+                    record_valuation_currency_fx_rate = 1
+                else:
+                    record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
+                        pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                        date=record.transaction_date, currency=record.valuation_currency).fx_rate
 
-            item_date = table[key]
+                fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
 
-            for _key, _value in item_date['portfolios'].items():
-                item = item_date['portfolios'][_key]
+        except Exception as e:
+            _l.error('fx_rate e %s' % e)
+            fx_rate = 1  # TODO check if this is correct
 
-                item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
+        return fx_rate
 
-                item_date['subtotal_cash_flow'] = item_date['subtotal_cash_flow'] + item['cash_flow']
-                item_date['subtotal_cash_inflow'] = item_date['subtotal_cash_inflow'] + item['cash_inflow']
-                item_date['subtotal_cash_outflow'] = item_date['subtotal_cash_outflow'] + item['cash_outflow']
+    def build_modified_dietz(self, date_from, date_to):
 
-                item_date['subtotal_cash_flow_weighted'] = item_date['subtotal_cash_flow_weighted'] + item[
-                    'cash_flow_weighted']
+        portfolio_registers = self.get_portfolio_registers()
+        portfolios = self.get_portfolios(portfolio_registers)
 
-        return table
+        dates_map = self.get_dict_of_dates_between_two_dates_with_order(date_from, date_to)
 
-    def add_data_items_instruments(self, ids):
+        grand_return = 0
 
-        self.instance.item_instruments = Instrument.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
-            .filter(id__in=ids)
+        # TODO may cause errors if portfolios has different pricing policies
+        # Consider to discuss with ogreshnev what to do
+        # 2023-11-14 szhitenev
+        pricing_policy = portfolio_registers[0].valuation_pricing_policy
 
-    def add_data_items_instrument_types(self, instruments):
+        begin_nav = self.get_nav_by_date(portfolios, date_from, pricing_policy)
+        end_nav = self.get_nav_by_date(portfolios, date_to, pricing_policy)
 
-        ids = []
+        self.instance.execution_log = {
+            "items": []
+        }
 
-        for instrument in instruments:
-            ids.append(instrument.instrument_type_id)
+        grand_cash_flow = 0
+        grand_cash_inflow = 0
+        grand_cash_outflow = 0
+        grand_cash_flow_weighted = 0
 
-        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
-            .filter(id__in=ids)
+        for portfolio in portfolios:
 
-    def add_data_items_portfolios(self, ids):
+            portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                       transaction_date__gte=date_from,
+                                                                       transaction_date__lte=date_to,
+                                                                       transaction_class__in=[
+                                                                           TransactionClass.CASH_INFLOW,
+                                                                           TransactionClass.CASH_OUTFLOW,
+                                                                           TransactionClass.INJECTION,
+                                                                           TransactionClass.DISTRIBUTION]).order_by(
+                'transaction_date')
 
-        self.instance.item_portfolios = Portfolio.objects.prefetch_related(
-            'attributes'
-        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
-            .filter(master_user=self.instance.master_user) \
-            .filter(
-            id__in=ids)
+            for record in portfolio_records:
+                date_n = dates_map[str(record.transaction_date)]
+                date_to_n = dates_map[str(date_to)]
+                date_from_n = dates_map[str(date_from)]
 
-    def add_data_items_accounts(self, ids):
+                # 2022-03-31
+                # 2022-04-01
 
-        self.instance.item_accounts = Account.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+                # date_n = 2022-04-01
+                # date_to_n = 2022-04-29
+                # date_from_n = 2022-03-31
 
-    def add_data_items_account_types(self, accounts):
+                #   (30 - 2) / (30 - 1) = 28 / 29 = 0
+                time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
-        ids = []
+                fx_rate = self.get_record_fx_rate(record)
 
-        for account in accounts:
-            ids.append(account.type_id)
+                record_cash_flow = record.cash_amount_valuation_currency * fx_rate
 
-        self.instance.item_account_types = AccountType.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
-            .filter(id__in=ids)
+                if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
+                    grand_cash_inflow = grand_cash_inflow + record_cash_flow
 
-    def add_data_items_currencies(self, ids):
+                if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW, TransactionClass.DISTRIBUTION]:
+                    grand_cash_outflow = grand_cash_outflow + record_cash_flow
 
-        self.instance.item_currencies = Currency.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+                grand_cash_flow = grand_cash_flow + record_cash_flow
+                grand_cash_flow_weighted = grand_cash_flow_weighted + (record_cash_flow * time_weight)
 
-    def add_data_items_strategies1(self, ids):
-        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+                self.instance.execution_log['items'].append({
+                    "record": PortfolioRegisterRecordSerializer(record, context=self.context).data,
+                    "date_n": date_n,
+                    "date_from_n": date_from_n,
+                    "date_to_n": date_to_n,
+                    "time_weight": time_weight,
+                    "fx_rate": fx_rate,
+                    "record_cash_flow": record_cash_flow,
+                    "grand_cash_inflow": grand_cash_inflow,
+                    "grand_cash_outflow": grand_cash_outflow,
+                    "grand_cash_flow": grand_cash_flow,
+                    "grand_cash_flow_weighted": grand_cash_flow_weighted
+                })
 
-    def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        grand_return = (end_nav - begin_nav - grand_cash_flow) / (
+                begin_nav + grand_cash_flow_weighted)
 
-    def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.grand_return = grand_return
+        self.instance.grand_cash_flow = grand_cash_flow
+        self.instance.grand_cash_flow_weighted = grand_cash_flow_weighted
+        self.instance.grand_cash_inflow = grand_cash_inflow
+        self.instance.grand_cash_outflow = grand_cash_outflow
+        self.instance.grand_nav = end_nav
+        self.instance.begin_nav = begin_nav
+        self.instance.end_nav = end_nav
 
-    def add_data_items(self):
 
-        instance_relations_st = time.perf_counter()
+def add_data_items_instruments(self, ids):
+    self.instance.item_instruments = Instrument.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user) \
+        .filter(id__in=ids)
 
-        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
-                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
 
-        permissions_st = time.perf_counter()
+def add_data_items_instrument_types(self, instruments):
+    ids = []
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s',
-                 "{:3.3f}".format(time.perf_counter() - permissions_st))
+    for instrument in instruments:
+        ids.append(instrument.instrument_type_id)
 
-        item_relations_st = time.perf_counter()
+    self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user) \
+        .filter(id__in=ids)
 
-        instrument_ids = []
-        portfolio_ids = []
-        account_ids = []
-        currencies_ids = []
-        strategies1_ids = []
-        strategies2_ids = []
-        strategies3_ids = []
 
-        for item in self.instance.items:
+def add_data_items_portfolios(self, ids):
+    self.instance.item_portfolios = Portfolio.objects.prefetch_related(
+        'attributes'
+    ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        .filter(master_user=self.instance.master_user) \
+        .filter(
+        id__in=ids)
 
-            if 'portfolio_id' in item and item['portfolio_id'] != '-':
-                portfolio_ids.append(item['portfolio_id'])
 
-            if 'instrument_id' in item:
-                instrument_ids.append(item['instrument_id'])
+def add_data_items_accounts(self, ids):
+    self.instance.item_accounts = Account.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-            if 'account_position_id' in item and item['account_position_id'] != '-':
-                account_ids.append(item['account_position_id'])
-            if 'account_cash_id' in item and item['account_cash_id'] != '-':
-                account_ids.append(item['account_cash_id'])
 
-            if 'currency_id' in item:
-                currencies_ids.append(item['currency_id'])
-            if 'pricing_currency_id' in item:
-                currencies_ids.append(item['pricing_currency_id'])
-            if 'exposure_currency_id' in item:
-                currencies_ids.append(item['exposure_currency_id'])
+def add_data_items_account_types(self, accounts):
+    ids = []
 
-            if 'strategy1_position_id' in item:
-                strategies1_ids.append(item['strategy1_position_id'])
+    for account in accounts:
+        ids.append(account.type_id)
 
-            if 'strategy2_position_id' in item:
-                strategies2_ids.append(item['strategy2_position_id'])
+    self.instance.item_account_types = AccountType.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user) \
+        .filter(id__in=ids)
 
-            if 'strategy3_position_id' in item:
-                strategies3_ids.append(item['strategy3_position_id'])
 
-            if 'strategy1_cash_id' in item:
-                strategies1_ids.append(item['strategy1_cash_id'])
+def add_data_items_currencies(self, ids):
+    self.instance.item_currencies = Currency.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-            if 'strategy2_cash_id' in item:
-                strategies2_ids.append(item['strategy2_cash_id'])
 
-            if 'strategy3_cash_id' in item:
-                strategies3_ids.append(item['strategy3_cash_id'])
+def add_data_items_strategies1(self, ids):
+    self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-        instrument_ids = list(set(instrument_ids))
-        portfolio_ids = list(set(portfolio_ids))
-        account_ids = list(set(account_ids))
-        currencies_ids = list(set(currencies_ids))
-        strategies1_ids = list(set(strategies1_ids))
-        strategies2_ids = list(set(strategies2_ids))
-        strategies3_ids = list(set(strategies3_ids))
 
-        self.add_data_items_instruments(instrument_ids)
-        self.add_data_items_portfolios(portfolio_ids)
-        self.add_data_items_accounts(account_ids)
-        self.add_data_items_currencies(currencies_ids)
-        self.add_data_items_strategies1(strategies1_ids)
-        self.add_data_items_strategies2(strategies2_ids)
-        self.add_data_items_strategies3(strategies3_ids)
+def add_data_items_strategies2(self, ids):
+    self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-        # _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
 
-        self.add_data_items_instrument_types(self.instance.item_instruments)
-        self.add_data_items_account_types(self.instance.item_accounts)
+def add_data_items_strategies3(self, ids):
+    self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
+        'attributes',
+        'attributes__attribute_type',
+        'attributes__classifier',
+    ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-        self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.info('_refresh_with_perms_optimized item relations done: %s',
-                "{:3.3f}".format(time.perf_counter() - item_relations_st))
+def add_data_items(self):
+    instance_relations_st = time.perf_counter()
 
-        # _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+    _l.debug('_refresh_with_perms_optimized instance relations done: %s',
+             "{:3.3f}".format(time.perf_counter() - instance_relations_st))
+
+    permissions_st = time.perf_counter()
+
+    _l.debug('_refresh_with_perms_optimized permissions done: %s',
+             "{:3.3f}".format(time.perf_counter() - permissions_st))
+
+    item_relations_st = time.perf_counter()
+
+    instrument_ids = []
+    portfolio_ids = []
+    account_ids = []
+    currencies_ids = []
+    strategies1_ids = []
+    strategies2_ids = []
+    strategies3_ids = []
+
+    for item in self.instance.items:
+
+        if 'portfolio_id' in item and item['portfolio_id'] != '-':
+            portfolio_ids.append(item['portfolio_id'])
+
+        if 'instrument_id' in item:
+            instrument_ids.append(item['instrument_id'])
+
+        if 'account_position_id' in item and item['account_position_id'] != '-':
+            account_ids.append(item['account_position_id'])
+        if 'account_cash_id' in item and item['account_cash_id'] != '-':
+            account_ids.append(item['account_cash_id'])
+
+        if 'currency_id' in item:
+            currencies_ids.append(item['currency_id'])
+        if 'pricing_currency_id' in item:
+            currencies_ids.append(item['pricing_currency_id'])
+        if 'exposure_currency_id' in item:
+            currencies_ids.append(item['exposure_currency_id'])
+
+        if 'strategy1_position_id' in item:
+            strategies1_ids.append(item['strategy1_position_id'])
+
+        if 'strategy2_position_id' in item:
+            strategies2_ids.append(item['strategy2_position_id'])
+
+        if 'strategy3_position_id' in item:
+            strategies3_ids.append(item['strategy3_position_id'])
+
+        if 'strategy1_cash_id' in item:
+            strategies1_ids.append(item['strategy1_cash_id'])
+
+        if 'strategy2_cash_id' in item:
+            strategies2_ids.append(item['strategy2_cash_id'])
+
+        if 'strategy3_cash_id' in item:
+            strategies3_ids.append(item['strategy3_cash_id'])
+
+    instrument_ids = list(set(instrument_ids))
+    portfolio_ids = list(set(portfolio_ids))
+    account_ids = list(set(account_ids))
+    currencies_ids = list(set(currencies_ids))
+    strategies1_ids = list(set(strategies1_ids))
+    strategies2_ids = list(set(strategies2_ids))
+    strategies3_ids = list(set(strategies3_ids))
+
+    self.add_data_items_instruments(instrument_ids)
+    self.add_data_items_portfolios(portfolio_ids)
+    self.add_data_items_accounts(account_ids)
+    self.add_data_items_currencies(currencies_ids)
+    self.add_data_items_strategies1(strategies1_ids)
+    self.add_data_items_strategies2(strategies2_ids)
+    self.add_data_items_strategies3(strategies3_ids)
+
+    # _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+
+    self.add_data_items_instrument_types(self.instance.item_instruments)
+    self.add_data_items_account_types(self.instance.item_accounts)
+
+    self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
+
+    _l.info('_refresh_with_perms_optimized item relations done: %s',
+            "{:3.3f}".format(time.perf_counter() - item_relations_st))
+
+    # _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
