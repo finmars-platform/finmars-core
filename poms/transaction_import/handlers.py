@@ -448,7 +448,9 @@ class TransactionImportProcess(object):
                 try:
                     # optimized way of getting from prefetched dictionary
 
-                    content_type_key = f"{i.content_type.app_label}.{i.content_type.model}"
+                    content_type_key = (
+                        f"{i.content_type.app_label}.{i.content_type.model}"
+                    )
 
                     v = self.prefetched_relations[content_type_key][value]
 
@@ -572,7 +574,6 @@ class TransactionImportProcess(object):
 
             if transaction_type_process_instance.has_errors:
                 if transaction_type_process_instance.uniqueness_status == "skip":
-
                     errors = []
 
                     if transaction_type_process_instance.general_errors:
@@ -581,16 +582,9 @@ class TransactionImportProcess(object):
                         )
 
                     item.status = "skip"
-                    item.message = (
-                            "Transaction Skipped %s"
-                            % json.dumps(errors, default=str)
+                    item.message = "Transaction Skipped %s" % json.dumps(
+                        errors, default=str
                     )
-
-                    # item.error_message = (
-                    #     item.error_message
-                    #     + "Book Skip: "
-                    #     + json.dumps(errors, default=str)
-                    # )
 
                     self.task.update_progress(
                         {
@@ -854,7 +848,6 @@ class TransactionImportProcess(object):
         st = time.perf_counter()
 
         for file_item in self.file_items:
-
             item = {}
             for scheme_input in self.scheme.inputs.all():
                 try:
@@ -1225,15 +1218,11 @@ class TransactionImportProcess(object):
 
         except Exception as e:
             _l.error(
-                "TransactionImportProcess.Task %s. process Exception %s"
-                % (self.task, e)
-            )
-            _l.error(
-                "TransactionImportProcess.Task %s. process Traceback %s"
-                % (self.task, traceback.format_exc())
+                f"TransactionImportProcess.Task {self.task}. process Exception {e} "
+                f"Traceback {traceback.format_exc()}"
             )
 
-            self.result.error_message = "General Import Error. Exception %s" % e
+            self.result.error_message = f"General Import Error. Exception {e}"
 
             if (
                 self.execution_context
@@ -1242,37 +1231,10 @@ class TransactionImportProcess(object):
                 send_system_message(
                     master_user=self.master_user,
                     performed_by="System",
-                    description="Can't process file. Exception %s" % e,
+                    description=f"Can't process file. Exception {e}",
                 )
 
         finally:
-            if self.task.options_object and "items" in self.task.options_object:
-                pass
-            else:
-                pass
-                # storage.delete(self.file_path)
-
-            # DEPRECATED
-            # send_websocket_message(data={
-            #     'type': 'transaction_import_status',
-            #     'payload': {
-            #         'parent_task_id': self.task.parent_id,
-            #         'task_id': self.task.id,
-            #         'state': CeleryTask.STATUS_DONE,
-            #         'processed_rows': self.result.processed_rows,
-            #         'total_rows': self.result.total_rows,
-            #         'file_name': self.result.file_name,
-            #         'scheme': self.scheme.id,
-            #         'scheme_object': {
-            #             'id': self.scheme.id,
-            #             'scheme_name': self.scheme.user_code,
-            #             'delimiter': self.scheme.delimiter,
-            #             'error_handler': self.scheme.error_handler,
-            #             'missing_data_handler': self.scheme.missing_data_handler
-            #         }}
-            # }, level="member",
-            #     context=self.context)
-
             self.import_result = TransactionImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
@@ -1281,7 +1243,6 @@ class TransactionImportProcess(object):
 
             self.result.reports = []
 
-            # if self.items_has_error():
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
@@ -1296,46 +1257,30 @@ class TransactionImportProcess(object):
                         master_user=self.master_user,
                         action_status="required",
                         type="warning",
-                        title="Transaction Import Partially Failed. Task id: %s"
-                        % self.task.id,
-                        description="Error rows %s/%s"
-                        % (error_rows_count, len(self.result.items)),
+                        title=f"Transaction Import Partially Failed. Task id: {self.task.id}",
+                        description=f"Error rows {error_rows_count}/{len(self.result.items)}",
                     )
 
-            system_message_title = "New transactions (import from file)"
             system_message_description = (
-                "New transactions created (Import scheme - "
-                + str(self.scheme.name)
-                + ") - "
-                + str(len(self.items))
+                f"New transactions created (Import scheme - {str(self.scheme.name)}) "
+                f"- {len(self.items)}"
             )
 
             import_system_message_title = "Transaction import (finished)"
 
             system_message_performed_by = self.member.username
 
-            if self.process_type == ProcessType.JSON:
-                if (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
-                ):
-                    system_message_title = "New transactions (import from broker)"
-                    system_message_performed_by = "System"
+            system_message_title = "New transactions (import from file)"
+            if self.process_type == ProcessType.JSON and (
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
+            ):
+                system_message_title = "New transactions (import from broker)"
+                system_message_performed_by = "System"
 
-                    import_system_message_title = (
-                        "Transaction import from broker (finished)"
-                    )
-
-                    # if self.execution_context['date_from']:
-
-                    # TODO too long, need refactor
-                    # from poms.portfolios.tasks import calculate_portfolio_register_record, \
-                    #     calculate_portfolio_register_price_history
-                    #
-                    # calculate_portfolio_register_record.apply_async(link=[
-                    #     calculate_portfolio_register_price_history.s(
-                    #         date_from=str(self.execution_context['date_from']))
-                    # ])
+                import_system_message_title = (
+                    "Transaction import from broker (finished)"
+                )
 
             send_system_message(
                 master_user=self.master_user,
@@ -1343,7 +1288,10 @@ class TransactionImportProcess(object):
                 section="import",
                 type="success",
                 title="Import Finished. Prices Recalculation Required",
-                description="Please, run schedule or execute procedures to calculate portfolio prices and nav history",
+                description=(
+                    "Please, run schedule or execute procedures to calculate portfolio "
+                    "prices and nav history"
+                ),
             )
 
         attachments = []
@@ -1381,7 +1329,6 @@ class TransactionImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-
             names = {"data": self.file_items}
 
             try:
@@ -1396,7 +1343,7 @@ class TransactionImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error(f"Could not execute preoprocess expression. Error {repr(e)}")
+                _l.error(f"Could not execute preprocess expression. Error {repr(e)}")
 
         _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
