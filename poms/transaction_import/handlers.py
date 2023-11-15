@@ -97,7 +97,6 @@ class TransactionImportProcess(object):
             )
 
         self.member = self.task.member
-
         self.master_user = self.task.master_user
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
@@ -115,7 +114,6 @@ class TransactionImportProcess(object):
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
-        # self.preprocess_file = self.task.options_object['preprocess_file']
 
         self.ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.master_user
@@ -154,6 +152,7 @@ class TransactionImportProcess(object):
             import_system_message_performed_by = "System"
             import_system_message_title = "Transaction import from broker (start)"
 
+        self.prefetched_relations = {}
         self.prefetch_relations()
 
         send_system_message(
@@ -166,32 +165,30 @@ class TransactionImportProcess(object):
         )
 
         _l.info(
-            f'self.scheme.book_uniqueness_settings {self.scheme.book_uniqueness_settings}'
+            f"self.scheme.book_uniqueness_settings {self.scheme.book_uniqueness_settings}"
         )
 
     def prefetch_relations(self):
+        def as_dict(items):
+            result_dict = {}
+            for item in items:
+                result_dict[item.user_code] = item
+            return result_dict
+
         st = time.perf_counter()
 
-        result = {}
-
-        def as_dict(items):
-            result = {}
-
-            for item in items:
-                result[item.user_code] = item
-
-            return result
-
-        result["accounts.account"] = as_dict(Account.objects.all())
-        result["portfolios.portfolio"] = as_dict(Portfolio.objects.all())
-        result["currencies.currency"] = as_dict(Currency.objects.all())
-        result["instruments.instrument"] = as_dict(Instrument.objects.all())
-        result["strategies.strategy1"] = as_dict(Strategy1.objects.all())
-        result["strategies.strategy2"] = as_dict(Strategy2.objects.all())
-        result["strategies.strategy3"] = as_dict(Strategy3.objects.all())
-        result["counterparties.counterparty"] = as_dict(Counterparty.objects.all())
-        result["counterparties.responsible"] = as_dict(Responsible.objects.all())
-        result["instruments.instrumenttype"] = as_dict(InstrumentType.objects.all())
+        result = {
+            "accounts.account": as_dict(Account.objects.all()),
+            "portfolios.portfolio": as_dict(Portfolio.objects.all()),
+            "currencies.currency": as_dict(Currency.objects.all()),
+            "instruments.instrument": as_dict(Instrument.objects.all()),
+            "strategies.strategy1": as_dict(Strategy1.objects.all()),
+            "strategies.strategy2": as_dict(Strategy2.objects.all()),
+            "strategies.strategy3": as_dict(Strategy3.objects.all()),
+            "counterparties.counterparty": as_dict(Counterparty.objects.all()),
+            "counterparties.responsible": as_dict(Responsible.objects.all()),
+            "instruments.instrumenttype": as_dict(InstrumentType.objects.all()),
+        }
 
         self.prefetched_relations = result
 
@@ -213,12 +210,12 @@ class TransactionImportProcess(object):
             % self.scheme.missing_data_handler
         )
 
-        result = []
-
-        result.append("Type, Transaction Import")
-        result.append("Scheme, " + self.scheme.user_code)
-        result.append("Error handle, " + self.scheme.error_handler)
-        result.append("Uniqueness settings, " + str(self.scheme.book_uniqueness_settings))
+        result = [
+            "Type, Transaction Import",
+            "Scheme, " + self.scheme.user_code,
+            "Error handle, " + self.scheme.error_handler,
+            "Uniqueness settings, " + str(self.scheme.book_uniqueness_settings),
+        ]
 
         if self.result.file_name:
             result.append("Filename, " + self.result.file_name)
