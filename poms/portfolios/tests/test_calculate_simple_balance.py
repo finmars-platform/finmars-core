@@ -16,6 +16,7 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
         self.instrument = self.db_data.instruments["Apple"]
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
             default_instrument_pricing_scheme=None,
@@ -25,6 +26,7 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
     def test__report_portfolio_register_with_instrument(self):
         pr_data = {
             "master_user": self.master_user,
+            "owner": self.finmars_bot,
             "portfolio": self.portfolio,
             "linked_instrument": self.instrument,
             "valuation_pricing_policy": self.pricing_policy,
@@ -43,6 +45,7 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
     def test__report_portfolio_register_no_instrument(self):
         pr_data = {
             "master_user": self.master_user,
+            "owner": self.finmars_bot,
             "portfolio": self.portfolio,
             "linked_instrument": None,
             "valuation_pricing_policy": self.pricing_policy,

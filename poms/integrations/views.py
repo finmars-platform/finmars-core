@@ -27,7 +27,7 @@ from poms.common.filters import (
     ByIdFilterBackend,
     CharFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter,
+    NoOpFilter, GroupsAttributeFilter, AttributeFilter,
 )
 from poms.common.mixins import (
     BulkModelMixin,
@@ -955,14 +955,13 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 
 class ComplexTransactionImportSchemeViewSet(
-    AbstractApiView, UpdateModelMixinExt, ModelViewSet
+    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
 ):
     permission_classes = [IsAuthenticated]
     filter_backends = [
-        ByIdFilterBackend,
-        DjangoFilterBackend,
-        OrderingFilter,
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+        AttributeFilter,
     ]
     queryset = ComplexTransactionImportScheme.objects
 
@@ -1005,16 +1004,15 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         task_id = instance.task_id
 
         if task_id:
-            # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(
-                    master_user=request.user.master_user, celery_task_id=task_id
+                    master_user=request.user.master_user,
+                    celery_task_id=task_id,
                 )
-            except CeleryTask.DoesNotExist:
-                celery_task = None
-                raise PermissionDenied()
+            except CeleryTask.DoesNotExist as e:
+                raise PermissionDenied from e
 
             st = time.perf_counter()
 
@@ -1084,13 +1082,12 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         # REFACTOR THIS
 
-        options_object = {}
-        options_object["file_name"] = instance.file_name  # posiblly optional
-        options_object["file_path"] = instance.file_path
-        # options_object['preprocess_file'] = instance.preprocess_file
-        options_object["scheme_id"] = instance.scheme.id
-        options_object["execution_context"] = None
-
+        options_object = {
+            "file_name": instance.file_name,
+            "file_path": instance.file_path,
+            "scheme_id": instance.scheme.id,
+            "execution_context": None,
+        }
         # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(
@@ -1101,13 +1098,15 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             type="transaction_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Transaction Import (scheme %s)"
-            % (request.user.member.username, instance.scheme.name),
+            description=(
+                f"Member {request.user.member.username} started Transaction Import "
+                f"(scheme {instance.scheme.name})"
+            ),
         )
 
         transaction_import.apply_async(
@@ -1129,15 +1128,14 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         st = time.perf_counter()
 
         _l.info("TransactionImportViewSet.execute")
-        options_object = {}
-        # options_object['file_name'] = request.data['file_name']
-        options_object["items"] = request.data.get("items", None)
-        options_object["file_path"] = request.data.get("file_path", None)
+        options_object = {
+            "items": request.data.get("items", None),
+            "file_path": request.data.get("file_path", None),
+        }
 
         if options_object["file_path"]:
-            options_object["filename"] = request.data["file_path"].split("/")[
-                -1
-            ]  # TODO refactor to file_name
+            # TODO refactor to file_name
+            options_object["filename"] = request.data["file_path"].split("/")[-1]
         else:
             options_object["filename"] = None
         options_object["scheme_user_code"] = request.data["scheme_user_code"]
@@ -1153,13 +1151,15 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             type="transaction_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Transaction Import (scheme %s)"
-            % (request.user.member.username, options_object["scheme_user_code"]),
+            description=(
+                f"Member {request.user.member.username} started Transaction Import "
+                f'(scheme {options_object["scheme_user_code"]})'
+            ),
         )
 
         transaction_import.apply_async(
@@ -1178,6 +1178,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
     @action(detail=False, methods=["post"], url_path="dry-run")
     def dry_run(self, request, *args, **kwargs):
+        from poms.transactions.models import ComplexTransaction
+
         _l.info("TransactionImportViewSet Dry Run")
 
         st = time.perf_counter()
@@ -1188,14 +1190,14 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         # REFACTOR THIS
 
-        options_object = {}
-        options_object["file_name"] = instance.file_name  # posiblly optional
-        options_object["file_path"] = instance.file_path
-        # options_object['preprocess_file'] = instance.preprocess_file
-        options_object["scheme_id"] = instance.scheme.id
-        options_object["execution_context"] = None
+        options_object = {
+            "file_name": instance.file_name,
+            "file_path": instance.file_path,
+            "scheme_id": instance.scheme.id,
+            "execution_context": None,
+        }
 
-        _l.info("options_object %s" % options_object)
+        _l.info(f"options_object {options_object}")
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
@@ -1205,10 +1207,11 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             type="transaction_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(f"celery_task {celery_task.pk} created ")
 
-        task_result = transaction_import.apply(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+        transaction_import.apply(
+            kwargs={"task_id": celery_task.pk},
+            queue="backend-background-queue",
         )
 
         result = []
@@ -1226,11 +1229,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             "{:3.3f}".format(time.perf_counter() - st),
         )
 
-        from poms.transactions.models import ComplexTransaction
-
-        complex_transactions = ComplexTransaction.objects.filter(
-            linked_import_task=celery_task.pk
-        ).delete()
+        ComplexTransaction.objects.filter(linked_import_task=celery_task.pk).delete()
 
         storage.delete(instance.file_path)
 
@@ -1315,11 +1314,10 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
 
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
-        context = super(AbstractAsyncViewSet, self).get_serializer_context()
+        context = super().get_serializer_context()
         context["show_object_permissions"] = False
         return context
 
@@ -1331,16 +1329,15 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         task_id = instance.task_id
 
         if task_id:
-            # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(
-                    master_user=request.user.master_user, celery_task_id=task_id
+                    master_user=request.user.master_user,
+                    celery_task_id=task_id,
                 )
-            except CeleryTask.DoesNotExist:
-                celery_task = None
-                raise PermissionDenied()
+            except CeleryTask.DoesNotExist as e:
+                raise PermissionDenied(f"invalid task permission {task_id}") from e
 
             st = time.perf_counter()
 
@@ -1407,17 +1404,14 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+        options_object = {
+            "file_name": instance.file_name,
+            "file_path": instance.file_path,
+            "scheme_id": instance.scheme.id,
+            "execution_context": None,
+        }
 
-        # REFACTOR THIS
-
-        options_object = {}
-        options_object["file_name"] = instance.file_name
-        options_object["file_path"] = instance.file_path
-        # options_object['preprocess_file'] = instance.preprocess_file
-        options_object["scheme_id"] = instance.scheme.id
-        options_object["execution_context"] = None
-
-        # _l.info('options_object %s' % options_object)
+        _l.info(f'options_object {options_object}')
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
@@ -1427,17 +1421,20 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             type="transaction_import",
         )
 
-        _l.info("celery_task %s created " % celery_task.pk)
+        _l.info(f"celery_task {celery_task.pk} created ")
 
         send_system_message(
             master_user=request.user.master_user,
             performed_by="System",
-            description="Member %s started Transaction Import (scheme %s)"
-            % (request.user.member.username, instance.scheme.name),
+            description=(
+                f"Member {request.user.member.username} started Transaction Import "
+                f"(scheme {instance.scheme.name})"
+            ),
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.pk},
+            queue="backend-background-queue",
         )
 
         _l.info(

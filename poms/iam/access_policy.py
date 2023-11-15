@@ -64,10 +64,34 @@ class AccessPolicy(permissions.BasePermission):
     id_prefix = "id:"
 
     def has_permission(self, request, view) -> bool:
+
         if request.user.is_superuser:
             return True
 
         if request.user.member and request.user.member.is_admin:
+            return True
+
+        action = self._get_invoked_action(view)
+        statements = self.get_policy_statements(request, view)
+
+        if len(statements) == 0:
+            return False
+
+        allowed = self._evaluate_statements(statements, request, view, action)
+        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
+        return allowed
+
+
+    def has_object_permission(self, request, view, obj):
+
+        if request.user.is_superuser:
+            return True
+
+        if request.user.member and request.user.member.is_admin:
+            return True
+
+        # Check if the user is the owner
+        if obj.owner == request.user.member:
             return True
 
         action = self._get_invoked_action(view)
@@ -116,6 +140,7 @@ class AccessPolicy(permissions.BasePermission):
     def _evaluate_statements(
         self, statements: List[Union[dict, Statement]], request, view, action: str
     ) -> bool:
+
         statements = self._normalize_statements(statements)
 
         matched = self._get_statements_matching_principal(request, statements)

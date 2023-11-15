@@ -92,7 +92,8 @@ class TransactionImportProcess(object):
             )
 
             _l.info(
-                f"TransactionImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
+                f"TransactionImportProcess.Task {self.task}. "
+                f"init procedure_instance {self.procedure_instance}"
             )
 
         self.member = self.task.member
@@ -110,7 +111,7 @@ class TransactionImportProcess(object):
                 user_code=self.task.options_object["scheme_user_code"]
             )
         else:
-            raise Exception("Import Scheme not found")
+            raise RuntimeError("Import Scheme not found")
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
@@ -163,6 +164,8 @@ class TransactionImportProcess(object):
             title=import_system_message_title,
             description=f"{self.member.username} started import with scheme {self.scheme.name}",
         )
+
+        _l.info('self.scheme.book_uniqueness_settings %s' % self.scheme.book_uniqueness_settings)
 
     def prefetch_relations(self):
         st = time.perf_counter()
@@ -223,6 +226,7 @@ class TransactionImportProcess(object):
         result.append("Type, Transaction Import")
         result.append("Scheme, " + self.scheme.user_code)
         result.append("Error handle, " + self.scheme.error_handler)
+        result.append("Uniqueness settings, " + str(self.scheme.book_uniqueness_settings))
 
         if self.result.file_name:
             result.append("Filename, " + self.result.file_name)
@@ -455,9 +459,7 @@ class TransactionImportProcess(object):
                 try:
                     # optimized way of getting from prefetched dictionary
 
-                    content_type_key = (
-                        i.content_type.app_label + "." + i.content_type.model
-                    )
+                    content_type_key = f"{i.content_type.app_label}.{i.content_type.model}"
 
                     v = self.prefetched_relations[content_type_key][value]
 
@@ -532,8 +534,6 @@ class TransactionImportProcess(object):
             if error:
                 fields["error_message"] = str(error)
 
-            uniqueness_reaction = None
-
             if (
                 self.scheme.book_uniqueness_settings
                 == ComplexTransactionImportScheme.USE_TRANSACTION_TYPE_SETTING
@@ -570,14 +570,6 @@ class TransactionImportProcess(object):
 
             transaction_type_process_instance.process()
 
-            # if transaction_type_process_instance.uniqueness_status == 'skip':
-            #     item.status = 'skip'
-            #     item.error_message = item.error_message + 'Unique code already exist. Skip'
-            #
-            # if transaction_type_process_instance.uniqueness_status == 'error':
-            #     item.status = 'error'
-            #     item.error_message = item.error_message + 'Unique code already exist. Error'
-
             item.processed_rule_scenarios.append(rule_scenario)
 
             if transaction_type_process_instance.complex_transaction:
@@ -591,7 +583,6 @@ class TransactionImportProcess(object):
 
             if transaction_type_process_instance.has_errors:
                 if transaction_type_process_instance.uniqueness_status == "skip":
-                    item.status = "skip"
 
                     errors = []
 
@@ -600,11 +591,17 @@ class TransactionImportProcess(object):
                             errors + transaction_type_process_instance.general_errors
                         )
 
-                    item.error_message = (
-                        item.error_message
-                        + "Book Skip: "
-                        + json.dumps(errors, default=str)
+                    item.status = "skip"
+                    item.message = (
+                            "Transaction Skipped %s"
+                            % json.dumps(errors, default=str)
                     )
+
+                    # item.error_message = (
+                    #     item.error_message
+                    #     + "Book Skip: "
+                    #     + json.dumps(errors, default=str)
+                    # )
 
                     self.task.update_progress(
                         {
@@ -618,7 +615,7 @@ class TransactionImportProcess(object):
                         }
                     )
 
-                    raise BookSkipException(code=409, error_message=item.error_message)
+                    # raise BookSkipException(code=409, error_message=item.error_message)
 
                 else:
                     item.status = "error"
@@ -653,7 +650,7 @@ class TransactionImportProcess(object):
 
                     item.error_message = (
                         item.error_message
-                        + "Book Exception: "
+                        + " Book Exception: "
                         + json.dumps(errors, default=str)
                     )
 
@@ -687,9 +684,9 @@ class TransactionImportProcess(object):
             )
 
             if e.__class__.__name__ == "BookException":
-                raise BookException(code=400, error_message=str(e))
+                raise BookException(code=400, error_message=str(e)) from e
             elif e.__class__.__name__ == "BookSkipException":
-                raise BookSkipException(code=400, error_message=str(e))
+                raise BookSkipException(code=400, error_message=str(e)) from e
 
             else:
                 item.status = "error"
@@ -702,7 +699,7 @@ class TransactionImportProcess(object):
                     % (self.task, traceback.format_exc())
                 )
 
-                raise BookUnhandledException(code=500, error_message=str(e))
+                raise BookUnhandledException(code=500, error_message=str(e)) from e
 
     def fill_with_file_items(self):
         _l.info(
@@ -1121,8 +1118,8 @@ class TransactionImportProcess(object):
                                         # transaction.savepoint_rollback(sid)
 
                                         _l.error(
-                                            "Catch BookUnhandledException trying to book error_rule_scenario %s"
-                                            % e
+                                            f"Catch BookUnhandledException trying "
+                                            f"to book error_rule_scenario {e}"
                                         )
 
                                         try:
@@ -1132,12 +1129,8 @@ class TransactionImportProcess(object):
                                             # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
-                                        except (
-                                            Exception
-                                        ) as e:  # any exception will work on error scenario
-                                            _l.error(
-                                                "Could not book error scenario %s" % e
-                                            )
+                                        except Exception as e:  # any exception will work on error scenario
+                                            _l.error(f"Could not book error scenario {e}")
                                             # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
@@ -1184,20 +1177,6 @@ class TransactionImportProcess(object):
                         # transaction.savepoint_rollback(sid)
 
                 self.result.processed_rows = self.result.processed_rows + 1
-
-                # DEPRECATED
-                # send_websocket_message(data={
-                #     'type': 'transaction_import_status',
-                #     'payload': {
-                #         'parent_task_id': self.task.parent_id,
-                #         'task_id': self.task.id,
-                #         'state': CeleryTask.STATUS_PENDING,
-                #         'processed_rows': self.result.processed_rows,
-                #         'total_rows': self.result.total_rows,
-                #         'scheme_name': self.scheme.user_code,
-                #         'file_name': self.result.file_name}
-                # }, level="member",
-                #     context=self.context)
 
                 self.task.update_progress(
                     {

@@ -1,8 +1,9 @@
+from datetime import timedelta
 from logging import getLogger
 from typing import Type
-from datetime import timedelta
 
 from django.db import models, transaction
+from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -10,7 +11,6 @@ from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
-from django.views.generic.dates import timezone_today
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType
 from poms.instruments.serializers import (
@@ -100,6 +100,8 @@ class PortfolioSerializer(
         read_only=True,
     )
 
+    first_transaction = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -114,7 +116,18 @@ class PortfolioSerializer(
             "is_deleted",
             "is_enabled",
             "registers",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
 
     def __init__(self, *args, **kwargs):
         from poms.accounts.serializers import AccountViewSerializer
@@ -201,6 +214,7 @@ class PortfolioSerializer(
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
+                owner=instance.owner,
                 valuation_pricing_policy=ecosystem_default.pricing_policy,
                 valuation_currency=ecosystem_default.currency,
                 portfolio=instance,
@@ -230,6 +244,8 @@ class PortfolioSerializer(
 class PortfolioLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    first_transaction = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -242,7 +258,17 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
             "is_default",
             "is_deleted",
             "is_enabled",
+            "first_transaction"
         ]
+
+    def get_first_transaction(self, instance):
+        date_field = "accounting_date"
+
+        first_date = instance.first_transaction_date(date_field)
+        return {
+            "date_field": date_field,
+            "date": first_date,
+        }
 
 
 class PortfolioViewSerializer(ModelWithUserCodeSerializer):
@@ -355,10 +381,10 @@ class PortfolioRegisterSerializer(
         return instance
 
     def create_new_instrument(
-        self,
-        master_user,
-        new_linked_instrument: dict,
-        instance: PortfolioRegister,
+            self,
+            master_user,
+            new_linked_instrument: dict,
+            instance: PortfolioRegister,
     ):
         linked_instrument_type = new_linked_instrument["instrument_type"]
         instrument_type = (
@@ -422,6 +448,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "fx_rate",
             "cash_amount_valuation_currency",
             "valuation_currency",
+            "nav_valuation_currency",
             "nav_previous_day_valuation_currency",
             "n_shares_previous_day",
             "n_shares_added",
@@ -479,7 +506,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
+class PortfolioBundleSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:

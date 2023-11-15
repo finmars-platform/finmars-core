@@ -50,6 +50,16 @@ EXPECTED_RESPONSIBLE = {
             "classifier_object": None,
         }
     ],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "counterparties.responsible",
         "app_label": "counterparties",
@@ -78,6 +88,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible_group(self) -> ResponsibleGroup:
         return ResponsibleGroup.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -86,6 +97,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible(self) -> Responsible:
         self.responsible = Responsible.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             group=self.create_responsible_group(),
             user_code=self.random_string(),
             name=self.random_string(),

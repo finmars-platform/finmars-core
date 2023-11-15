@@ -45,15 +45,15 @@ pip install -U pip uwsgi`
 
 * Run Migrations
 
-`./local-develoment/run_migrate.sh`
+`./local-development/run_migrate.sh`
 
 * Start Celery Server
 
-`./local-develoment/run_celery.sh`
+`./local-development/run_celery.sh`
 
 * Start Django Server
 
-`./local-develoment/run_server.sh`
+`./local-development/run_server.sh`
 
 Success!
 
@@ -74,7 +74,7 @@ How to run django app
 
 4) Execute following script to runserver
 
-   `./local-develoment/run_server.sh`
+   `./local-development/run_server.sh`
    
 Profile uWSGI server 
 1) Activate venv  
@@ -322,3 +322,43 @@ frn:finmars:portfolios.portfolio:portfolio_1
 # Celery articles
 https://engineering.backmarket.com/a-story-of-kubernetes-celery-resource-and-a-rabbit-ec2ef9e37e9f
 https://ayushshanker.com/posts/celery-in-production-bugfixes/
+
+
+
+### Guideline
+
+Не используются тернарные операторы (e.g. foo ? bar : buz)
+Не используется синтаксический сахар вида `i++ (а не i = i + 1)`
+использование camelCase а не camel_case в названии переменных и методов (классы обязательно называть CamelCaseModel и тд)
+мне не нравится сложный код, я бы сократил возможно использование лямда функций
+мне нравится декларация функций внутри функции, такое просто надо сносить в utils.py какой нибудь
+Если пишет про джангу то, стараться к моделям сразу делать и админку, также прописывать все сериализаторы, чтобы в веб интерфейсе можно было запустить точку апи
+При объявлении полей модели писать help_text
+На текущий момент все @finmars_task как входной параметр должны принимать task_id (от CeleryTask)
+В таска nice to have прописывать progress этого таска
+
+
+
+Еще мне очень нравится пример:
+```
+router.register(
+r"csv",
+csv_import.CsvDataImportViewSet,
+"import_csv",
+)
+```
+
+```
+router.register(r"csv", csv_import.CsvDataImportViewSet, "import_csv")
+```
+то есть я что имею ввиду, если идет много однотипных деклараций, то лучше их без word-wrap писать
+Если функция принимает на вход хотябы 5 параметров, тогда я могу понять перенос по параметрам
+но если мы переносим по параметрам, я бы делал вид
+
+```
+router.register(
+prefix=r"csv",
+viewset=csv_import.CsvDataImportViewSet,
+basename="import_csv",
+)
+```

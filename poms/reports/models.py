@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.utils import get_last_business_day
 from poms.configuration.models import ConfigurationModel
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.users.models import EcosystemDefault, MasterUser, Member
@@ -584,6 +585,7 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='balance_report_instances_as_member'
     )
     report_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("report date")
@@ -646,6 +648,7 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='pl_report_instances_as_member'
     )
     report_date = models.DateField(
         db_index=True,
@@ -710,6 +713,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='transaction_report_instances_as_member'
     )
     begin_date = models.DateField(
         db_index=True,
@@ -743,7 +747,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         if TransactionReportInstance.objects.all().count() > 512:
             _l.warning(
                 "TransactionReportInstance amount > 512, "
-                "delete oldest PLReportInstance"
+                "delete oldest TransactionReportInstance"
             )
             TransactionReportInstance.objects.all().order_by("id")[0].delete()
 
@@ -758,6 +762,7 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='performance_report_instances_as_member'
     )
     begin_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("begin date")
@@ -982,6 +987,7 @@ class ReportSummary:
         bundles,
         currency,
         pricing_policy,
+            allocation_mode,
         master_user,
         member,
         context,
@@ -997,12 +1003,15 @@ class ReportSummary:
 
         self.currency = currency
         self.pricing_policy = pricing_policy
+        self.allocation_mode = allocation_mode
         self.portfolios = portfolios
         self.bundles = bundles
 
         self.portfolio_ids = []
+        self.portfolio_user_codes = []
 
         self.portfolio_ids.extend(portfolio.id for portfolio in self.portfolios)
+        self.portfolio_user_codes.extend(portfolio.user_code for portfolio in self.portfolios)
 
     def build_balance(self):
         st = time.perf_counter()
@@ -1046,6 +1055,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1067,14 +1077,19 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
+        pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
+
+        _l.info('build_pl_daily %s' % pl_first_date)
+
         serializer = PLReportSerializer(
             data={
-                "pl_first_date": self.date_to - timedelta(days=1),
+                "pl_first_date": pl_first_date,
                 "report_date": self.date_to,
                 "pricing_policy": self.pricing_policy.id,
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1093,17 +1108,19 @@ class ReportSummary:
     @property
     def pl_first_date_for_mtd(self):
 
-        # If self.date_to is the first day of the month
+        # If self.date_to is the first day of the month, we subtract one day to get the last day of the previous month.
+        # Otherwise, we set the date to the last day of the previous month.
         if self.date_to.day == 1:
-            # Subtract one day to get the last day of the previous month
             last_day_of_prev_month = self.date_to - timedelta(days=1)
-            # Check if it's a weekend
-            while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-                last_day_of_prev_month -= timedelta(days=1)
-            return last_day_of_prev_month.strftime('%Y-%m-%d')
         else:
-            # Return the first day of the current month
-            return self.date_to.replace(day=1).strftime('%Y-%m-%d')
+            # Subtract enough days to get to the first day of the current month and then subtract one more day
+            last_day_of_prev_month = self.date_to - timedelta(days=self.date_to.day-1) - timedelta(days=1)
+
+        # Check if it's a weekend and adjust accordingly
+        while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+            last_day_of_prev_month -= timedelta(days=1)
+
+        return last_day_of_prev_month.strftime('%Y-%m-%d')
 
     def build_pl_mtd(self):
         st = time.perf_counter()
@@ -1121,6 +1138,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1145,17 +1163,18 @@ class ReportSummary:
     @property
     def pl_first_date_for_ytd(self):
 
-        # If self.date_to is January 1st
+        # If self.date_to is January 1st, we subtract one day to get the last day of the previous year.
+        # Otherwise, we set the date to December 31st of the previous year.
         if self.date_to.month == 1 and self.date_to.day == 1:
-            # Subtract one day to get the last day of the previous year
             last_day_of_prev_year = self.date_to - timedelta(days=1)
-            # Check if it's a weekend
-            while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-                last_day_of_prev_year -= timedelta(days=1)
-            return last_day_of_prev_year.strftime('%Y-%m-%d')
         else:
-            # Return the first day of the current year
-            return self.date_to.replace(month=1, day=1).strftime('%Y-%m-%d')
+            last_day_of_prev_year = self.date_to.replace(year=self.date_to.year-1, month=12, day=31)
+
+        # Check if it's a weekend or holiday and adjust accordingly
+        while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+            last_day_of_prev_year -= timedelta(days=1)
+
+        return last_day_of_prev_year.strftime('%Y-%m-%d')
 
     def build_pl_ytd(self):
         st = time.perf_counter()
@@ -1172,6 +1191,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
+                "allocation_mode": self.allocation_mode
             },
             context=self.context,
         )
@@ -1405,6 +1425,73 @@ class ReportSummary:
         return position_return
 
 
+    def get_daily_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "days",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
+
+    def get_mtd_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+
+        _l.info('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": self.pl_first_date_for_mtd,
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "months",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
+
+    def get_ytd_performance(self):
+
+        from poms.reports.serializers import PerformanceReportSerializer
+        serializer = PerformanceReportSerializer(data={
+            "begin_date": self.pl_first_date_for_ytd,
+            "end_date": self.date_to,
+            "calculation_type": "time_weighted",
+            "segmentation_type": "months",
+            "registers": self.portfolio_user_codes,
+            "report_currency": self.currency.user_code,
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        performance_report = builder.build_report()
+
+        return performance_report.grand_return
+
+
 class ReportInstanceModel:
     def __init__(self, **kwargs):
         from poms.accounts.models import Account
@@ -1458,6 +1545,7 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='report_summary_instances_as_member'
     )
     date_from = models.DateField(
         null=True,
@@ -1487,6 +1575,10 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("pricing policy user_code"),
+    )
+    allocation_mode = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("allocation_mode"),
     )
 
     data = models.JSONField(

@@ -19,7 +19,7 @@ from poms.instruments.models import (
     Instrument,
     InstrumentType,
     LongUnderlyingExposure,
-    ShortUnderlyingExposure,
+    ShortUnderlyingExposure, Country,
 )
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
@@ -2176,6 +2176,7 @@ class BalanceReportBuilderSql:
 
         # Retrieve results
         all_dicts = []
+        # TODO probably we can do some optimization here
         for result in group_result.results:
             # Each result is an AsyncResult instance.
             # You can get the result of the task with its .result property.
@@ -2186,8 +2187,7 @@ class BalanceReportBuilderSql:
             # refresh the task instance to get the latest status from the database
             task.refresh_from_db()
 
-            if task.status != CeleryTask.STATUS_ERROR:
-                task.delete()
+            task.delete()
 
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
@@ -2263,6 +2263,17 @@ class BalanceReportBuilderSql:
                 "attributes__classifier",
             )
             .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
+
+    def add_data_items_countries(self, instruments):
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.country_id)
+
+        self.instance.item_countries = (
+            Country.objects
             .filter(id__in=ids)
         )
 
@@ -2429,6 +2440,7 @@ class BalanceReportBuilderSql:
         _l.info("add_data_items_strategies1 %s " % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_countries(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(

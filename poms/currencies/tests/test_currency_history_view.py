@@ -72,6 +72,7 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
     def create_pricing_policy(self) -> PricingPolicy:
         return PricingPolicy.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),

@@ -19,7 +19,7 @@ from poms.transactions.tests.transaction_type_dicts import (
     TRANSACTION_TYPE_BOOK_DICT,
 )
 
-DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT = settings.API_DATE_FORMAT
 
 
 class TransactionTypeViewSetTest(BaseTestCase):
@@ -36,6 +36,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         transaction_type_group = self.get_transaction_type_group()
         self.transaction_type = TransactionType.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             configuration_code=self.random_string(),
             user_code=self.random_string(7),
             name=self.random_string(),
@@ -81,6 +82,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         transaction = ComplexTransaction.objects.create(
             # mandatory fields
             master_user=self.master_user,
+            owner=self.member,
             transaction_type=transaction_type,
             date=self.random_future_date(),
             status=self.get_complex_transaction_status(),

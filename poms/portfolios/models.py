@@ -222,6 +222,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         except PortfolioBundle.DoesNotExist:
             bundle = PortfolioBundle.objects.create(
                 master_user=self.master_user,
+                owner=self.owner,
                 user_code=self.user_code,
             )
             bundle.registers.set([self])
@@ -305,6 +306,10 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         related_name="register_record_valuation_currency",
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("valuation currency"),
+    )
+    nav_valuation_currency = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav valuation currency"),
     )
     nav_previous_day_valuation_currency = models.FloatField(
         default=0.0,

@@ -290,22 +290,48 @@ def calculate_portfolio_register_record(self, task_id):
                 record.cash_amount_valuation_currency = (
                     record.cash_amount * record.fx_rate * trn.reference_fx_rate
                 )
-                # start block NAV
-                report_date = trn.accounting_date - timedelta(days=1)
+
+                # start block eod NAV
+                report_date = trn.accounting_date
                 balance_report = calculate_simple_balance_report(
                     report_date,
                     portfolio_register,
                     task.member,
                 )
 
-                nav = sum(
-                    item["market_value"]
-                    for item in balance_report.items
-                    if item["market_value"]
-                )
-                _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav}")
+                nav_valuation_currency = 0
 
-                record.nav_previous_day_valuation_currency = nav
+                for item in balance_report.items:
+                    if item["market_value"]:
+                        nav_valuation_currency = nav_valuation_currency +  item["market_value"]
+
+                _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_valuation_currency}")
+
+                record.nav_valuation_currency = nav_valuation_currency
+                # end block eod NAV
+
+                # start block previous NAV
+
+                if previous_date_record:
+                    report_date = previous_date_record.transaction_date
+                    balance_report = calculate_simple_balance_report(
+                        report_date,
+                        portfolio_register,
+                        task.member,
+                    )
+
+                    nav_previous_day_valuation_currency = 0
+
+                    for item in balance_report.items:
+                        if item["market_value"]:
+                            nav_previous_day_valuation_currency = nav_previous_day_valuation_currency +  item["market_value"]
+
+
+                    _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_previous_day_valuation_currency}")
+
+                    record.nav_previous_day_valuation_currency = nav_previous_day_valuation_currency
+                else:
+                    record.nav_previous_day_valuation_currency = 0
                 # end block NAV
 
                 # n_shares_previous_day

@@ -82,6 +82,11 @@ excluded_to_track_history_models = [
     "widgets.balancereporthistoryitem",
     "file_reports.filereport",
     "finmars_standardized_errors.errorrecord",
+    "reports.reportsummaryinstance"
+    "reports.balancereportinstance"
+    "reports.plreportinstance"
+    "reports.transactionreportinstance"
+    "reports.performancereportinstance"
 ]
 
 
