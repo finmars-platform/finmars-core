@@ -261,6 +261,11 @@ class ReportSerializer(ReportSerializerWithLogs):
     frontend_request_options = serializers.JSONField(allow_null=True,
                                                      required=False)  # for backend report calculation mode
 
+    # Pagination settings
+    count = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
+    page = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
+    page_size = serializers.IntegerField(default=40, initial=40, min_value=1, required=False)
+
     def __init__(self, *args, **kwargs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
@@ -615,6 +620,11 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     filters = serializers.JSONField(allow_null=True, required=False)  # for backend filters in transactions report
     frontend_request_options = serializers.JSONField(allow_null=True,
                                                      required=False)  # for backend report calculation mode
+
+    # Pagination settings
+    count = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
+    page = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
+    page_size = serializers.IntegerField(default=40, initial=40, min_value=1, required=False)
 
     def __init__(self, *args, **kwargs):
         super(TransactionReportSerializer, self).__init__(*args, **kwargs)
@@ -1102,7 +1112,12 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         # _l.info('unique_groups %s' % unique_groups)
 
-        groups = unique_groups
+        data['count'] = len(unique_groups)
+
+        groups = helper_service.paginate_items(unique_groups, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
 
         data['items'] = groups
         data.pop('item_currencies', [])
@@ -1228,7 +1243,15 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         #
         # data['items'] = result_items
 
-        data['items'] = full_items
+        # data['items'] = full_items
+
+        data['count'] = len(full_items)
+
+        data['items'] = helper_service.paginate_items(full_items, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
+
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
         data.pop('item_instruments', [])
@@ -1345,7 +1368,12 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         # _l.info('unique_groups %s' % unique_groups)
 
-        groups = unique_groups
+        data['count'] = len(unique_groups)
+
+        groups = helper_service.paginate_items(unique_groups, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
 
         data['items'] = groups
 
@@ -1459,7 +1487,12 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         # _l.info('full_items %s' % full_items)
 
-        data['items'] = full_items
+        data['count'] = len(full_items)
+
+        data['items'] = helper_service.paginate_items(full_items, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
         data.pop('item_instruments', [])
@@ -1560,9 +1593,15 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         # _l.info('unique_groups %s' % unique_groups)
 
-        groups = unique_groups
+        data['count'] = len(unique_groups)
+
+        groups = helper_service.paginate_items(unique_groups, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
 
         data['items'] = groups
+
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
         data.pop('item_instruments', [])
@@ -1637,7 +1676,12 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
 
         data['count'] = len(full_items)
-        data['items'] = full_items
+
+        data['items'] = helper_service.paginate_items(full_items, {
+            "page_size": data["page_size"],
+            "page": data["page"],
+        })
+
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
         data.pop('item_instruments', [])

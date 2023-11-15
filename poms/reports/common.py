@@ -88,6 +88,11 @@ class Report(BaseReport):
             serialization_time=None,
             frontend_request_options=None,
             report_instance_id=None,
+
+            page=1,
+            page_size=40,
+            count=0,
+
     ):
         super(Report, self).__init__(
             id=id,
@@ -168,6 +173,10 @@ class Report(BaseReport):
         self.frontend_request_options = frontend_request_options  # For Backend Report Calculation
         self.report_instance_id = report_instance_id  # For Backend Report Calculation
 
+        self.page = page
+        self.page_size = page_size
+        self.count = count
+
     def __str__(self):
         return (
             f"{self.__class__.__name__} for {self.master_user}/{self.member}"
@@ -235,7 +244,11 @@ class TransactionReport(BaseReport):
             filters=None,
             report_instance_name=None,
             frontend_request_options=None,
-            report_instance_id=None
+            report_instance_id=None,
+
+            page=1,
+            page_size=40,
+            count=0
     ):
         super().__init__(
             id=id,
@@ -289,6 +302,10 @@ class TransactionReport(BaseReport):
         self.report_instance_name = report_instance_name
         self.frontend_request_options = frontend_request_options
         self.report_instance_id = report_instance_id
+
+        self.page = page
+        self.page_size = page_size
+        self.count = count
 
     def __str__(self):
         return f"TransactionReport:{self.id}"
