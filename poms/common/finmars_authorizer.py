@@ -66,10 +66,7 @@ class AuthorizerService:
             "from_user_username": from_user.username,
         }
 
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/invite-member/"
-            f"?space_code={settings.BASE_API_URL}"
-        )
+        url = f"{settings.AUTHORIZER_URL}/api/v1/internal/invite-member/"
 
         _l.info(f"invite_member url={url} data={data}")
 

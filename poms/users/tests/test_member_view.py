@@ -6,6 +6,7 @@ from django.conf import settings
 from poms.common.common_base_test import BaseTestCase
 from poms.users.models import Member
 
+
 API_URL = f"/{settings.BASE_API_URL}/api/v1/users/member/"
 REQUEST_DATA = {
     "groups": [],
@@ -49,6 +50,35 @@ class MemberViewSetTest(BaseTestCase):
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 3)  # member created
 
+    def test__double_update(self):
+        from poms.ui.models import MemberLayout
+
+        # check get_or_create layout in Member method save() works properly
+        update_data = {
+            "username": self.random_string(),
+            "json_data": {"key": "value"},
+            "is_admin": True,
+            "is_owner": True,
+        }
+
+        response = self.client.patch(
+            path=f"{self.url}{self.member.id}/",
+            format="json",
+            data=update_data,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = self.client.patch(
+            path=f"{self.url}{self.member.id}/",
+            format="json",
+            data=update_data,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        layout = MemberLayout.objects.filter(member_id=self.member.id).first()
+        self.assertIsNotNone(layout)
+        self.assertEqual(layout.owner_id, self.member.id)
+
     @BaseTestCase.cases(
         ("groups", "groups"),
         ("base_api_url", "base_api_url"),
@@ -65,9 +95,6 @@ class MemberViewSetTest(BaseTestCase):
 
         response = self.client.post(path=self.url, format="json", data=data)
         self.assertEqual(response.status_code, 201, response.content)
-
-        response_json = response.json()
-        print(response_json)
 
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 3)  # member created
@@ -96,10 +123,12 @@ class MemberViewSetTest(BaseTestCase):
         data["username"] = self.random_string()
         self.assertEqual(Member.objects.all().count(), 2)
 
-        invite_member.side_effect = Exception("http error")
+        invite_member.side_effect = RuntimeError("Authorizer API error, status=500")
 
         response = self.client.post(path=self.url, format="json", data=data)
-        self.assertEqual(response.status_code, 400, response.content)
+        self.assertEqual(response.status_code, 422, response.content)
+
+        print(response.json())
 
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 2)  # member was not created

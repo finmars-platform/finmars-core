@@ -512,6 +512,7 @@ class MasterUser(models.Model):
 
                     color.name = f"Color {str(x + 1)}"
                     color.save()
+
     def create_defaults(self, user=None):
         from poms.accounts.models import Account, AccountType
         from poms.counterparties.models import (
@@ -1249,28 +1250,21 @@ class Member(FakeDeletableModel):
         ordering = ["username"]
 
     def save(self, *args, **kwargs):
-        instance = super(Member, self).save(*args, **kwargs)
-
+        from poms.configuration.utils import get_default_configuration_code
         from poms.ui.models import MemberLayout
 
-        from poms.configuration.utils import get_default_configuration_code
-
+        instance = super().save(*args, **kwargs)
         configuration_code = get_default_configuration_code()
 
-        try:
-            layout = MemberLayout.objects.get(
-                member_id=self.id,
-                user_code=f"{configuration_code}:default_member_layout",
-            )
-        except Exception as e:
-            layout = MemberLayout.objects.create(
-                member_id=self.id,
-                owner_id=self.id,
-                is_default=True,
-                configuration_code=configuration_code,
-                name="default",
-                user_code=f"{configuration_code}:default_member_layout",
-            )
+        layout, _ = MemberLayout.objects.get_or_create(
+            member_id=self.id,
+            owner_id=self.id,
+            user_code=f"{configuration_code}:default_member_layout",
+            defaults={
+                "name": "default",
+                "is_default": True,
+            },
+        )
 
         return instance
 
