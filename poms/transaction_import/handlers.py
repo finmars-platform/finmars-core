@@ -165,7 +165,9 @@ class TransactionImportProcess(object):
             description=f"{self.member.username} started import with scheme {self.scheme.name}",
         )
 
-        _l.info('self.scheme.book_uniqueness_settings %s' % self.scheme.book_uniqueness_settings)
+        _l.info(
+            f'self.scheme.book_uniqueness_settings {self.scheme.book_uniqueness_settings}'
+        )
 
     def prefetch_relations(self):
         st = time.perf_counter()
@@ -199,17 +201,7 @@ class TransactionImportProcess(object):
         )
 
     def items_has_error(self):
-        result = False
-
-        error_rows_count = 0
-
-        for result_item in self.result.items:
-            if result_item.status == "error":
-                error_rows_count = error_rows_count + 1
-                result = True
-                break
-
-        return result
+        return any(result_item.status == "error" for result_item in self.result.items)
 
     def generate_file_report(self):
         _l.info(
