@@ -374,11 +374,21 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
         return self.instrument
 
+    @staticmethod
+    def get_or_create_master_user() -> MasterUser:
+        master_user = MasterUser.objects.filter(
+            base_api_url=settings.BASE_API_URL,
+        ).first() or MasterUser.objects.create_master_user(
+            name=MASTER_USER,
+            journal_status="disabled",
+            base_api_url=settings.BASE_API_URL,
+        )
+        EcosystemDefault.objects.get_or_create(master_user=master_user)
+        return master_user
+
     def init_test_case(self):
         self.client = APIClient()
-        self.db_data = DbInitializer()
-        self.master_user = self.db_data.master_user
-        self.finmars_bot = self.db_data.finmars_bot
+        self.master_user = self.get_or_create_master_user()
         self.user, _ = User.objects.get_or_create(username=self.common_username)
         self.user.master_user = self.master_user
         self.user.save()
@@ -388,6 +398,12 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             is_admin=True,
             is_owner=True,
         )
+        self.db_data = DbInitializer(
+            master_user=self.master_user,
+            member=self.member,
+        )
+        self.finmars_bot = self.db_data.finmars_bot
+
         self.client.force_authenticate(self.user)
 
 
@@ -431,18 +447,6 @@ USD = "USD"
 
 
 class DbInitializer:
-
-    @staticmethod
-    def get_or_create_master_user() -> MasterUser:
-        master_user = MasterUser.objects.filter(
-            base_api_url=settings.BASE_API_URL,
-        ).first() or MasterUser.objects.create_master_user(
-            name=MASTER_USER,
-            journal_status="disabled",
-            base_api_url=settings.BASE_API_URL,
-        )
-        EcosystemDefault.objects.get_or_create(master_user=master_user)
-        return master_user
 
     def create_unified_group(self):
         return TransactionTypeGroup.objects.filter(
@@ -634,7 +638,7 @@ class DbInitializer:
         op_date = day or date.today()
         complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             date=op_date,
             transaction_type=self.transaction_types[DEPOSIT],
             text=notes,
@@ -643,7 +647,7 @@ class DbInitializer:
         account = portfolio.accounts.first()
         transaction = Transaction.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             account_position=account,
             account_cash=account,
             account_interim=account,
@@ -688,8 +692,9 @@ class DbInitializer:
             valuation_currency=self.usd,
         )
 
-    def __init__(self):
-        self.master_user = self.get_or_create_master_user()
+    def __init__(self, master_user, member):
+        self.master_user = master_user
+        self.member = member
         self.finmars_bot = Member.objects.get(username="finmars_bot")
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
