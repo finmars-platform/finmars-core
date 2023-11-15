@@ -217,6 +217,7 @@ class BackendReportHelperService:
             result_value = result_value.lower()
 
         # _l.info('get_filter_match.item_value %s' % item_value)
+        # _l.info('get_filter_match.result_value %s' % result_value)
 
         # Refactor someday this shitty logic
         if item_value is None:
@@ -388,7 +389,7 @@ class BackendReportHelperService:
         # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
         # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
 
-        _l.info(f'filter_by_groups_filters before len {len(items)}')
+        # _l.info(f'filter_by_groups_filters before len {len(items)}')
 
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
             filtered_items = []
@@ -410,6 +411,8 @@ class BackendReportHelperService:
                     filtered_items.append(item)
 
             # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
+
+            _l.info(f'filter_by_groups_filters after len {len(filtered_items)}')
 
             return filtered_items
 

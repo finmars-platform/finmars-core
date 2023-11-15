@@ -1579,6 +1579,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         # filter by previous groups
         full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
 
         groups = []
 
@@ -1589,6 +1590,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         columns = instance.frontend_request_options['columns']
 
         group_type = groups_types[len(groups_types) - 1]
+
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
         unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)
@@ -1678,6 +1680,8 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
         full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+
+        _l.info("full items?? %s" % len(full_items))
 
         data['count'] = len(full_items)
 
