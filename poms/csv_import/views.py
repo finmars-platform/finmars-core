@@ -11,7 +11,7 @@ from poms.common.filters import CharFilter, GroupsAttributeFilter, AttributeFilt
 from poms.common.views import AbstractAsyncViewSet, AbstractModelViewSet
 from poms.csv_import.tasks import simple_import
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet
 from ..common.mixins import UpdateModelMixinExt
 
 from ..system_messages.handlers import send_system_message

@@ -699,13 +699,13 @@ class MemberSerializer(serializers.ModelSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         from poms.iam.serializers import (
             IamAccessPolicySerializer,
             IamGroupSerializer,
             IamRoleSerializer,
         )
 
+        super().__init__(*args, **kwargs)
         self.fields["groups_object"] = IamGroupSerializer(
             source="iam_groups", many=True, read_only=True
         )
@@ -722,10 +722,9 @@ class MemberSerializer(serializers.ModelSerializer):
         username = validated_data.get("username")
         status = Member.STATUS_INVITED
         validated_data["status"] = status
-        member = super().create(validated_data)
 
-        # TODO maybe need to do more smart things here
-        member.user = User.objects.create(username=username)
+        member = super().create(validated_data)
+        member.user, _ = User.objects.get_or_create(username=username)
         member.save()
 
         return member

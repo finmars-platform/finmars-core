@@ -36,9 +36,14 @@ class CsvDataImportViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 405, response.content)
 
+    @BaseTestCase.cases(
+        ("1-dot", "instrument.json"),
+        ("2-dots", "instru.ment.json"),
+        ("3-dots", "ins.tru.ment.json"),
+    )
     @mock.patch("poms.csv_import.serializers.storage")
-    def test__create(self, storage):
-        file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
+    def test__create(self, file_name, storage):
+        file_content = SimpleUploadedFile(file_name, FILE_CONTENT)
         storage.return_value = DummyStorage()
         request_data = {"file": file_content, "scheme": self.scheme.id}
         response = self.client.post(
@@ -56,6 +61,6 @@ class CsvDataImportViewSetTest(BaseTestCase):
         celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
         options = celery_task.options_object
 
-        self.assertEqual(options["filename"], FILE_NAME)
+        self.assertEqual(options["filename"], file_name)
         self.assertEqual(options["scheme_id"], self.scheme.id)
         self.assertIsNone(options["execution_context"])
