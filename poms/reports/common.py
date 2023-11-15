@@ -303,6 +303,8 @@ class TransactionReport(BaseReport):
         self.frontend_request_options = frontend_request_options
         self.report_instance_id = report_instance_id
 
+        _l.info('TransactionReport.page %s' % page)
+
         self.page = page
         self.page_size = page_size
         self.count = count

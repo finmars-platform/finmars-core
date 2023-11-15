@@ -1114,9 +1114,11 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         data['count'] = len(unique_groups)
 
+        _l.info("BackendBalanceReportGroupsSerializer.data.page", data["page"])
+
         groups = helper_service.paginate_items(unique_groups, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
 
         data['items'] = groups
@@ -1248,8 +1250,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data['count'] = len(full_items)
 
         data['items'] = helper_service.paginate_items(full_items, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
 
         data.pop('item_currencies', [])
@@ -1371,8 +1373,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         data['count'] = len(unique_groups)
 
         groups = helper_service.paginate_items(unique_groups, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
 
         data['items'] = groups
@@ -1490,8 +1492,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         data['count'] = len(full_items)
 
         data['items'] = helper_service.paginate_items(full_items, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
         data.pop('item_currencies', [])
         data.pop('item_portfolios', [])
@@ -1595,9 +1597,11 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         data['count'] = len(unique_groups)
 
+        _l.info("BackendTransactionReportGroupsSerializer.to_representation.page %s" % data["page"])
+
         groups = helper_service.paginate_items(unique_groups, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
 
         data['items'] = groups
@@ -1616,7 +1620,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
-        _l.info('data items %s ' % data['items'])
+        # _l.info('data items %s ' % data['items'])
 
         return data
 
@@ -1678,8 +1682,8 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         data['count'] = len(full_items)
 
         data['items'] = helper_service.paginate_items(full_items, {
-            "page_size": data["page_size"],
-            "page": data["page"],
+            "page_size": instance.page_size,
+            "page": instance.page,
         })
 
         data.pop('item_currencies', [])
