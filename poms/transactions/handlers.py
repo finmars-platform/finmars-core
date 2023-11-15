@@ -160,6 +160,7 @@ class TransactionTypeProcess:
                 transaction_type=self.transaction_type,
                 date=self._now,
                 master_user=master_user,
+                owner=member,
             )
         self.complex_transaction.visibility_status = (
             self.transaction_type.visibility_status
@@ -2750,7 +2751,8 @@ class TransactionTypeProcess:
             self.complex_transaction.transaction_unique_code = None
 
         _l.info(
-            'self.complex_transaction.transaction_unique_code %s' % self.complex_transaction.transaction_unique_code)
+            f'self.complex_transaction.transaction_unique_code {self.complex_transaction.transaction_unique_code}'
+        )
 
         if self.is_rebook:
             try:
