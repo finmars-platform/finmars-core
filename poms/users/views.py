@@ -881,49 +881,47 @@ class MemberViewSet(AbstractModelViewSet):
             except AttributeError:
                 return None
 
-        return super(MemberViewSet, self).get_object()
+        return super().get_object()
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         with transaction.atomic():
+
+            self.perform_create(serializer)  # try to create member
+
+            member = serializer.instance
+
             try:
-                # Create the object in the database
-                self.perform_create(serializer)
+                AuthorizerService().invite_member(member=member, from_user=request.user)
                 headers = self.get_success_headers(serializer.data)
-
-                authorizer = AuthorizerService()
-                authorizer.invite_member(
-                    member=serializer.instance,
-                    from_user=request.user,
-                )
-
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED, headers=headers
                 )
-            except Exception as e:
+            except Exception as err:
                 # Authorizer API call failed, rollback the transaction
                 transaction.set_rollback(True)
 
-                return self._handle_authorizer_error(serializer, e)
+                return self._handle_authorizer_error(request, member, err)
 
     @staticmethod
-    def _handle_authorizer_error(serializer, e):
-        params = dict(serializer.validated_data)
-        params.pop("master_user", None)
+    def _handle_authorizer_error(request, member, err):
+        params = {
+            "base_api_url": settings.BASE_API_URL,
+            "username": member.username,
+            "is_admin": member.is_admin,
+            "from_user_username": request.user.username,
+        }
         error_message = (
-            f"Could not create/invite member, using params {params}, due to error "
-            f"{repr(e)}.  Please check username existence or authorizer settings."
+            f"Could not create/invite member, using params={params}, due to "
+            f"Authorizer error={repr(err)}"
         )
-        _l.error(
-            f"MemberViewset.create error {error_message} "
-            f"traceback  {traceback.format_exc()}"
-        )
+        _l.error(f"MemberViewset.create {error_message} trace {traceback.format_exc()}")
 
         return Response(
             {"error_message": error_message},
-            status=status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
     def update(self, request, *args, **kwargs):
