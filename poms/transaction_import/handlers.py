@@ -496,15 +496,12 @@ class TransactionImportProcess(object):
 
             except Exception as e:
                 item.status = "error"
-                item.error_message = item.error_message + "Exception " + str(e)
+                item.error_message = f"{item.error_message}Exception {str(e)}"
 
                 _l.error(
-                    "TransactionImportProcess.Task %s. get_fields_for_item %s field %s Exception %s"
-                    % (self.task, item, field, e)
-                )
-                _l.error(
-                    "TransactionImportProcess.Task %s. get_fields_for_item %s field %s Traceback %s"
-                    % (self.task, item, field, traceback.format_exc())
+                    f"TransactionImportProcess.Task {self.task}. "
+                    f"get_fields_for_item {item} field {field} Exception {e} "
+                    f"Traceback {traceback.format_exc()}"
                 )
 
                 # raise Exception(e) # Uncomment when apetrushkin will be ready
