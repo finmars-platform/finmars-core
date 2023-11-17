@@ -974,18 +974,14 @@ class TransactionImportProcess(object):
 
                     if current_level == deep:
                         _l.error(
-                            "TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Exception %s"
-                            % (self.task, scheme_calculated_input, e)
+                            f"TransactionImportProcess.Task {self.task}. recursive_preprocess calculated_input {scheme_calculated_input} Exception {e}"
                         )
-                        # _l.error(
-                        #     'TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Traceback %s' % (
-                        #         self.task, scheme_calculated_input, traceback.format_exc()))
 
         if current_level < deep:
             self.recursive_preprocess(deep, current_level + 1)
 
     def preprocess(self):
-        _l.info("TransactionImportProcess.Task %s. preprocess INIT" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. preprocess INIT")
         st = time.perf_counter()
         # self.recursive_preprocess(deep=2)
 
@@ -1005,8 +1001,7 @@ class TransactionImportProcess(object):
             self.items.append(item)
 
         _l.info(
-            "TransactionImportProcess.Task %s. preprocess DONE items %s"
-            % (self.task, len(self.preprocessed_items))
+            f"TransactionImportProcess.Task {self.task}. preprocess DONE items {len(self.preprocessed_items)}"
         )
         _l.info(
             "TransactionImportProcess: preprocess done: %s",
@@ -1014,7 +1009,7 @@ class TransactionImportProcess(object):
         )
 
     def process_items(self):
-        _l.info("TransactionImportProcess.Task %s. process_items INIT" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. process_items INIT")
         st = time.perf_counter()
         index = 0
 
@@ -1026,8 +1021,8 @@ class TransactionImportProcess(object):
 
             try:
                 _l.info(
-                    "TransactionImportProcess.Task %s. ========= process row %s/%s ========"
-                    % (self.task, str(item.row_number), str(self.result.total_rows))
+                    f"TransactionImportProcess.Task {self.task}. ========= process "
+                    f"row {str(item.row_number)}/{str(self.result.total_rows)} ========"
                 )
 
                 if self.scheme.filter_expression:
@@ -1041,29 +1036,22 @@ class TransactionImportProcess(object):
                         )
                     )
 
-                    if result:
-                        # filter passed
-                        pass
-                    else:
+                    if not result:
                         item.status = "skip"
                         item.message = "Skipped due filter"
 
                         _l.info(
-                            "TransactionImportProcess.Task %s. Row skipped due filter %s"
-                            % (self.task, str(item.row_number))
+                            f"TransactionImportProcess.Task {self.task}. "
+                            f"Row skipped due filter {str(item.row_number)}"
                         )
                         continue
 
                 rule_value = self.get_rule_value_for_item(item)
 
                 _l.info(
-                    "TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s "
-                    % (
-                        self.task,
-                        str(item.row_number),
-                        str(self.result.total_rows),
-                        rule_value,
-                    )
+                    f"TransactionImportProcess.Task {self.task}. ========= process row "
+                    f"{str(item.row_number)}/{str(self.result.total_rows)} "
+                    f"======== {rule_value} "
                 )
 
                 if rule_value:
@@ -1110,8 +1098,11 @@ class TransactionImportProcess(object):
                                             # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
-                                        except Exception as e:  # any exception will work on error scenario
-                                            _l.error(f"Could not book error scenario {e}")
+                                        except Exception as e:
+                                            # any exception will work on error scenario
+                                            _l.error(
+                                                f"Could not book error scenario {e}"
+                                            )
                                             # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
@@ -1127,16 +1118,13 @@ class TransactionImportProcess(object):
                         # _l.info("Create checkpoint for %s" % index)
 
                         item.status = "skip"
-                        item.message = (
-                            "Selector %s does not match anything in scheme" % rule_value
-                        )
+                        item.message = f"Selector {rule_value} does not match anything in scheme"
                         try:
                             self.book(item, self.default_rule_scenario)
-
                             # transaction.savepoint_commit(sid)
 
                         except Exception as e:
-                            _l.error("Could not book default scenario %s" % e)
+                            _l.error(f"Could not book default scenario {e}")
                             # transaction.savepoint_rollback(sid)
 
                 else:
@@ -1144,16 +1132,14 @@ class TransactionImportProcess(object):
                         # sid = transaction.savepoint()
 
                         item.status = "skip"
-                        item.message = (
-                            "Selector %s does not match anything in scheme" % rule_value
-                        )
+                        item.message = f"Selector {rule_value} does not match anything in scheme"
 
                         self.book(item, self.default_rule_scenario)
 
                         # transaction.savepoint_commit(sid)
 
                     except Exception as e:
-                        _l.error("Could not book default scenario %s" % e)
+                        _l.error(f"Could not book default scenario {e}")
 
                         # transaction.savepoint_rollback(sid)
 
@@ -1166,28 +1152,25 @@ class TransactionImportProcess(object):
                         "percent": round(
                             self.result.processed_rows / (len(self.items) / 100)
                         ),
-                        "description": "Row %s processed" % self.result.processed_rows,
+                        "description": f"Row {self.result.processed_rows} processed",
                     }
                 )
 
             except Exception as e:
                 item.status = "error"
-                item.message = "Error %s" % e
+                item.message = f"Error {e}"
 
                 _l.error(
-                    "TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s"
-                    % (self.task, str(item.row_number), e)
-                )
-                _l.error(
-                    "TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s"
-                    % (self.task, str(item.row_number), traceback.format_exc())
+                    f"TransactionImportProcess.Task {self.task}.  ========= process "
+                    f"row {str(item.row_number)} ======== Exception {e}"
+                    f" Traceback {traceback.format_exc()}"
                 )
             finally:
                 index = index + 1
 
         self.result.items = self.items
 
-        _l.info("TransactionImportProcess.Task %s. process_items DONE" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. process_items DONE")
         _l.info(
             "TransactionImportProcess: process_items done: %s",
             "{:3.3f}".format(time.perf_counter() - st),
@@ -1205,8 +1188,8 @@ class TransactionImportProcess(object):
                 booked_count = booked_count + len(item.booked_transactions)
 
         result = (
-            "Processed %s rows and successfully booked %s transactions. Error rows %s"
-            % (len(self.items), booked_count, error_count)
+            f"Processed {len(self.items)} rows and successfully booked {booked_count} "
+            f"transactions. Error rows {error_count}"
         )
 
         return result
