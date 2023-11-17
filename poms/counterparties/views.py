@@ -117,6 +117,7 @@ class CounterpartyFilterSet(FilterSet):
 class CounterpartyViewSet(AbstractModelViewSet):
     queryset = Counterparty.objects.select_related(
         "master_user",
+        "owner",
         "group",
     ).prefetch_related("portfolios", get_attributes_prefetch())
     serializer_class = CounterpartySerializer
@@ -275,6 +276,7 @@ class ResponsibleFilterSet(FilterSet):
 class ResponsibleViewSet(AbstractModelViewSet):
     queryset = Responsible.objects.select_related(
         "master_user",
+        "owner",
         "group",
     ).prefetch_related(
         "portfolios",

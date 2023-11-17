@@ -75,6 +75,7 @@ class ComplexTransactionUserFieldFilterSet(FilterSet):
 class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionUserField.objects.select_related(
         'master_user',
+        'owner'
     )
     serializer_class = ComplexTransactionUserFieldSerializer
     filter_class = ComplexTransactionUserFieldFilterSet
@@ -110,6 +111,7 @@ class TransactionUserFieldFilterSet(FilterSet):
 class TransactionUserFieldViewSet(AbstractModelViewSet):
     queryset = TransactionUserField.objects.select_related(
         'master_user',
+        'owner'
     )
     serializer_class = TransactionUserFieldSerializer
     filter_class = TransactionUserFieldFilterSet
@@ -243,6 +245,7 @@ class InstrumentUserFieldFilterSet(FilterSet):
 class InstrumentUserFieldViewSet(AbstractModelViewSet):
     queryset = InstrumentUserField.objects.select_related(
         'master_user',
+        'owner'
     )
     serializer_class = InstrumentUserFieldSerializer
     filter_class = InstrumentUserFieldFilterSet
