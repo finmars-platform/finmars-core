@@ -126,8 +126,7 @@ class TransactionImportProcess(object):
         self.result.task = self.task
         self.result.scheme = self.scheme
 
-        self.process_type = ProcessType.CSV
-
+        self.process_type = ProcessType.CSV  # default type
         self.find_process_type()
 
         self.file_items = []  # items from provider  (json, csv, excel)
