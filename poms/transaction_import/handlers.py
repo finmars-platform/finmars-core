@@ -404,16 +404,12 @@ class TransactionImportProcess(object):
             return formula.safe_eval(
                 self.scheme.rule_expr, names=item.inputs, context=self.context
             )
+
         except Exception as e:
             _l.info(
-                "TransactionImportProcess.Task %s. get_rule_value_for_item Exception %s"
-                % (self.task, e)
+                f"TransactionImportProcess.Task {self.task}. get_rule_value_for_item "
+                f"Exception {e} Traceback {traceback.format_exc()}"
             )
-            _l.info(
-                "TransactionImportProcess.Task %s. get_rule_value_for_item Traceback %s"
-                % (self.task, traceback.format_exc())
-            )
-
             return None
 
     def convert_value(self, item, rule_scenario, field, value):
@@ -1019,12 +1015,12 @@ class TransactionImportProcess(object):
             item.processed_rule_scenarios = []
             item.booked_transactions = []
 
-            try:
-                _l.info(
-                    f"TransactionImportProcess.Task {self.task}. ========= process "
-                    f"row {str(item.row_number)}/{str(self.result.total_rows)} ========"
-                )
+            _l.info(
+                f"TransactionImportProcess.Task {self.task}. ========= process "
+                f"row {str(item.row_number)}/{str(self.result.total_rows)} ========"
+            )
 
+            try:
                 if self.scheme.filter_expression:
                     # expr = Expression.parseString("a == 1 and b == 2")
 
