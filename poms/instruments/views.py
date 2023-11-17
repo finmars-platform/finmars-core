@@ -190,7 +190,7 @@ class PricingPolicyFilterSet(FilterSet):
 
 
 class PricingPolicyViewSet(AbstractModelViewSet):
-    queryset = PricingPolicy.objects
+    queryset = PricingPolicy.objects.select_related("owner", "master_user")
     serializer_class = PricingPolicySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -248,6 +248,7 @@ class InstrumentTypeFilterSet(FilterSet):
 class InstrumentTypeViewSet(AbstractModelViewSet):
     queryset = InstrumentType.objects.select_related(
         "master_user",
+        "owner",
         "instrument_class",
         "one_off_event",
         # 'one_off_event__group',
@@ -1221,6 +1222,7 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
     http_method_names = ["get"]
     queryset = Instrument.objects.select_related(
         "master_user",
+        "owner",
         "instrument_type",
         "instrument_type__instrument_class",
     )

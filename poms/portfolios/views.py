@@ -75,6 +75,7 @@ class PortfolioFilterSet(FilterSet):
 class PortfolioViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects.select_related(
         "master_user",
+        "owner"
     ).prefetch_related(
         get_attributes_prefetch(),
     )
