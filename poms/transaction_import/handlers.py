@@ -588,8 +588,7 @@ class TransactionImportProcess(object):
                             "percent": round(
                                 self.result.processed_rows / (len(self.items) / 100)
                             ),
-                            "description": "Going to book %s"
-                            % (rule_scenario.transaction_type),
+                            "description": f"Going to skip {rule_scenario.transaction_type}",
                         }
                     )
 
