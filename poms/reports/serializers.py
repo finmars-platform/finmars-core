@@ -1114,8 +1114,6 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         data['count'] = len(unique_groups)
 
-        _l.info("BackendBalanceReportGroupsSerializer.data.page", data["page"])
-
         groups = helper_service.paginate_items(unique_groups, {
             "page_size": instance.page_size,
             "page": instance.page,
