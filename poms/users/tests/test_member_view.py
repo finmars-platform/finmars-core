@@ -50,6 +50,25 @@ class MemberViewSetTest(BaseTestCase):
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 3)  # member created
 
+    @mock.patch("poms.common.finmars_authorizer.requests.post")
+    def test__create_member_check_called_url(self, requests_post):
+        data = copy.deepcopy(REQUEST_DATA)
+        data["username"] = self.random_string()
+        self.assertEqual(Member.objects.all().count(), 2)
+
+        requests_post.return_value = mock_response = mock.Mock()
+        mock_response.status_code = 200
+
+        response = self.client.post(path=self.url, format="json", data=data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        requests_post.assert_called_once()
+        kwargs = requests_post.call_args.kwargs
+
+        self.assertIn("?space_code=space00000", kwargs["url"])
+
+        self.assertEqual(Member.objects.all().count(), 3)  # member created
+
     def test__double_update(self):
         from poms.ui.models import MemberLayout
 
@@ -127,8 +146,6 @@ class MemberViewSetTest(BaseTestCase):
 
         response = self.client.post(path=self.url, format="json", data=data)
         self.assertEqual(response.status_code, 422, response.content)
-
-        print(response.json())
 
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 2)  # member was not created
