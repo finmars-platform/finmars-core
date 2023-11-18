@@ -455,6 +455,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "dealing_price_valuation_currency",
             "rolling_shares_of_the_day",
             "transaction",
+            "complex_transaction",
             "portfolio_register",
             "share_price_calculation_type",
         ]
