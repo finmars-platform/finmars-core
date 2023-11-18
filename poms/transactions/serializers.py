@@ -3573,8 +3573,6 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
             )
             representation["group_object"] = s.data
         except TransactionTypeGroup.DoesNotExist as e:
-            _l.error(f"Error in to_representation: {repr(e)} {traceback.format_exc()}")
-
             representation["group_object"] = None
 
         return representation

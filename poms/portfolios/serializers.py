@@ -455,7 +455,6 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "dealing_price_valuation_currency",
             "rolling_shares_of_the_day",
             "transaction",
-            "complex_transaction",
             "portfolio_register",
             "share_price_calculation_type",
         ]
@@ -481,9 +480,9 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
         self.fields["portfolio_object"] = PortfolioViewSerializer(
             source="portfolio", read_only=True
         )
-        self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
-            source="complex_transaction", read_only=True
-        )
+        # self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
+        #     source="complex_transaction", read_only=True
+        # )
         self.fields["portfolio_register_object"] = PortfolioRegisterViewSerializer(
             source="portfolio_register", read_only=True
         )
