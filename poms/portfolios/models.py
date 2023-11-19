@@ -12,6 +12,7 @@ from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
+from poms_app import settings
 
 _l = getLogger("poms.portfolios")
 
@@ -593,7 +594,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
 
-        annualized_return = (1 + self.cumulative_return) ** (365 / days_from_first_transaction) -1
+        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) -1, settings.ROUND_DIGITS)
 
         return annualized_return
 
@@ -643,7 +644,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
         try:
             self.performance_report = self.get_performance_report()
 
-            self.cumulative_return = self.performance_report.grand_return
+            self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
             self.cash_flow = self.performance_report.grand_cash_flow
             self.cash_inflow = self.performance_report.grand_cash_inflow
             self.cash_outflow = self.performance_report.grand_cash_outflow
