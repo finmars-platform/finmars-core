@@ -2736,6 +2736,7 @@ class TransactionTypeProcess:
         self.record_execution_progress("Calculating Unique Code")
 
         names = dict(self.values.items())
+
         try:
             self.complex_transaction.transaction_unique_code = formula.safe_eval(
                 self.complex_transaction.transaction_type.transaction_unique_code_expr,
@@ -2883,17 +2884,18 @@ class TransactionTypeProcess:
             else:
                 self.uniqueness_status = "error"
                 self.complex_transaction.fake_delete()
+                msg = (
+                    f"is_rebook={self.is_rebook} "
+                    f"uniqueness_reaction={self.uniqueness_reaction} "
+                    f"exist={exist} names={names}"
+                    f"complex_transaction.transaction_unique_code="
+                    f"{self.complex_transaction.transaction_unique_code}",
+                )
+                _l.error(f"execute_uniqueness_expression: invalid params: {msg}")
                 self.general_errors.append(
                     {
                         "reason": 409,
-                        "message": (
-                            f"Skipped book. Invalid combination: "
-                            f"is_rebook={self.is_rebook} "
-                            f"uniqueness_reaction={self.uniqueness_reaction} "
-                            f"exist={exist} names={names}"
-                            f"complex_transaction.transaction_unique_code="
-                            f"{self.complex_transaction.transaction_unique_code}",
-                        )
+                        "message": f"Skipped book. Invalid combination of params {msg}",
                     }
                 )
 
