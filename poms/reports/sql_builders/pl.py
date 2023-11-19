@@ -3957,6 +3957,24 @@ class PLReportBuilderSql:
             celery_task.save()
             raise e
 
+    def build_sync(self, task_id):
+
+        celery_task = CeleryTask.objects.filter(id=task_id).first()
+        if not celery_task:
+            _l.error(f"Invalid celery task_id={task_id}")
+            return
+
+        try:
+
+
+            return self.build(task_id)
+
+           
+        except Exception as e:
+            celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.save()
+            raise e
+
     def parallel_build(self):
 
         st = time.perf_counter()
@@ -4055,6 +4073,69 @@ class PLReportBuilderSql:
         _l.info('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
 
+    def build_pl_sync(self):
+        st = time.perf_counter()
+
+        self.instance.items = []
+
+        self.serial_build()
+
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+
+        _l.debug('items total %s' % len(self.instance.items))
+
+        relation_prefetch_st = time.perf_counter()
+
+        if not self.instance.only_numbers:
+            self.add_data_items()
+
+        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+
+        _l.debug('build_st done: %s' % self.instance.execution_time)
+
+        return self.instance
+
+    def serial_build(self):
+
+        st = time.perf_counter()
+
+        self.instance.bday_yesterday_of_report_date = get_last_business_day(self.instance.report_date - timedelta(days=1), to_string=True)
+
+        task = CeleryTask.objects.create(
+            master_user=self.instance.master_user,
+            member=self.instance.member,
+            verbose_name="PL Report",
+            type="calculate_pl_report",
+            options_object={
+                "report_date": self.instance.report_date,
+                "pl_first_date": self.instance.pl_first_date,
+                "bday_yesterday_of_report_date": self.instance.bday_yesterday_of_report_date,
+                "portfolios_ids": [instance.id for instance in self.instance.portfolios],
+                "accounts_ids": [instance.id for instance in self.instance.accounts],
+                "strategies1_ids": [instance.id for instance in self.instance.strategies1],
+                "strategies2_ids": [instance.id for instance in self.instance.strategies2],
+                "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                "report_currency_id": self.instance.report_currency.id,
+                "pricing_policy_id": self.instance.pricing_policy.id,
+                "cost_method_id": self.instance.cost_method.id,
+                "show_balance_exposure_details": self.instance.show_balance_exposure_details,
+                "portfolio_mode": self.instance.portfolio_mode,
+                "account_mode": self.instance.account_mode,
+                "strategy1_mode": self.instance.strategy1_mode,
+                "strategy2_mode": self.instance.strategy2_mode,
+                "strategy3_mode": self.instance.strategy3_mode,
+                "allocation_mode": self.instance.allocation_mode
+            }
+        )
+
+        result = self.build_sync(task.id)
+
+        # 'all_dicts' is now a list of all dicts returned by the tasks
+        self.instance.items = result
+
+        _l.info('parallel_build done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
+    
     def get_cash_consolidation_for_select(self):
 
         result = []

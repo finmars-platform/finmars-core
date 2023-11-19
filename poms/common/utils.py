@@ -647,3 +647,20 @@ def compare_versions(version1, version2):
 
 def is_newer_version(version1, version2):
     return compare_versions(version1, version2) > 0
+
+
+def get_last_business_day_of_previous_year(date_str):
+    """
+    Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous year.
+    """
+    # Parse the date string
+    date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+
+    # Find the last day of the previous year
+    last_day_of_previous_year = datetime.datetime(date.year - 1, 12, 31)
+
+    # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
+    while last_day_of_previous_year.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        last_day_of_previous_year -= timedelta(days=1)
+
+    return last_day_of_previous_year.strftime('%Y-%m-%d')
