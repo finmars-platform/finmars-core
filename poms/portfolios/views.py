@@ -409,9 +409,20 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related("master_user")
+    queryset = PortfolioRegisterRecord.objects.select_related("master_user", "portfolio", "instrument",
+                                                              "transaction_class", "cash_currency",
+                                                              "valuation_currency", "previous_date_record",
+                                                              "transaction",
+                                                              "portfolio_register")
     serializer_class = PortfolioRegisterRecordSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+
+
+    ]
     filter_class = PortfolioRegisterRecordFilterSet
     ordering_fields = []
 

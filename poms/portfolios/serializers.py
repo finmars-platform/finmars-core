@@ -481,9 +481,9 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
         self.fields["portfolio_object"] = PortfolioViewSerializer(
             source="portfolio", read_only=True
         )
-        self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
-            source="complex_transaction", read_only=True
-        )
+        # self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
+        #     source="complex_transaction", read_only=True
+        # )
         self.fields["portfolio_register_object"] = PortfolioRegisterViewSerializer(
             source="portfolio_register", read_only=True
         )
