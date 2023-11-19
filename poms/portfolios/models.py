@@ -664,5 +664,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         if self.error_message:
             self.status = self.STATUS_ERROR
+        else:
+            self.status = self.STATUS_OK
 
         self.save()
