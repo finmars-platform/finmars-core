@@ -2887,8 +2887,10 @@ class TransactionTypeProcess:
                     {
                         "reason": 409,
                         "message": (
-                            f"Skipped book. Invalid combination: uniqueness_reaction="
-                            f"{self.uniqueness_reaction} exist={exist} "
+                            f"Skipped book. Invalid combination: "
+                            f"is_rebook={self.is_rebook} "
+                            f"uniqueness_reaction={self.uniqueness_reaction} "
+                            f"exist={exist} names={names}"
                             f"complex_transaction.transaction_unique_code="
                             f"{self.complex_transaction.transaction_unique_code}",
                         )
