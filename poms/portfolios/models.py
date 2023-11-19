@@ -594,7 +594,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
 
-        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) -1, settings.ROUND_DIGITS)
+        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) -1, settings.ROUND_NDIGITS)
 
         return annualized_return
 
