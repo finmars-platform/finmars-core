@@ -6,7 +6,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
-from poms.common.utils import date_now
+from poms.common.utils import date_now, str_to_date
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
@@ -570,8 +570,8 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             master_user=self.master_user,
             member=self.owner,
             report_currency=self.currency,
-            begin_date=self.date_from,
-            end_date=self.date,
+            begin_date=str_to_date(self.date_from),
+            end_date=str_to_date(self.date),
             calculation_type=self.performance_method,
             segmentation_type='months',
             registers=[portfolio_register]
@@ -585,7 +585,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
     def get_annualized_return(self):
 
-        _delta = self.date - self.portfolio.first_transaction_date('accounting_date')
+        _delta = self.date - str_to_date(self.portfolio.first_transaction_date('accounting_date'))
         days_from_first_transaction = _delta.days
 
         if days_from_first_transaction == 0:
