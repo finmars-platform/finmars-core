@@ -635,6 +635,7 @@ class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
 class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
+    portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
     cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, default=CostMethod.objects.get(id=CostMethod.AVCO))
 

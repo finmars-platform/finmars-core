@@ -644,6 +644,9 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             self.performance_report = self.get_performance_report()
 
             self.cumulative_return = self.performance_report.grand_return
+            self.cash_flow = self.performance_report.grand_cash_flow
+            self.cash_inflow = self.performance_report.grand_cash_inflow
+            self.cash_outflow = self.performance_report.grand_cash_outflow
             self.annualized_return = self.get_annualized_return()
 
             # TODO implement portoflio_volatility

@@ -14,10 +14,12 @@ from poms.common.filters import (
     CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
-    NoOpFilter,
+    NoOpFilter, ModelExtMultipleChoiceFilter, ModelExtUserCodeMultipleChoiceFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
+from poms.currencies.models import Currency
+from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.portfolios.models import (
@@ -479,6 +481,19 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
 
 class PortfolioHistoryFilterSet(FilterSet):
     id = NoOpFilter()
+
+    user_code = CharFilter()
+    status = CharFilter()
+
+    period_type = CharFilter()
+
+    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
+    currency__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Currency)
+    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PricingPolicy)
+
+    date = django_filters.DateFromToRangeFilter()
+
+
 
     class Meta:
         model = PortfolioHistory
