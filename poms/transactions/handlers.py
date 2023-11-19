@@ -2843,6 +2843,7 @@ class TransactionTypeProcess:
 
             elif self.uniqueness_reaction == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
                 self.book_without_unique_code()
+
             elif (
                     self.uniqueness_reaction == TransactionType.OVERWRITE
                     and self.complex_transaction.transaction_unique_code
@@ -2877,6 +2878,20 @@ class TransactionTypeProcess:
                     {
                         "reason": 410,
                         "message": "Skipped book. Transaction Unique code error",
+                    }
+                )
+            else:
+                self.uniqueness_status = "error"
+                self.complex_transaction.fake_delete()
+                self.general_errors.append(
+                    {
+                        "reason": 409,
+                        "message": (
+                            f"Skipped book. Invalid combination: uniqueness_reaction="
+                            f"{self.uniqueness_reaction} exist={exist} "
+                            f"complex_transaction.transaction_unique_code="
+                            f"{self.complex_transaction.transaction_unique_code}",
+                        )
                     }
                 )
 
