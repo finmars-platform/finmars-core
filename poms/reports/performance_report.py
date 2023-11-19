@@ -919,6 +919,8 @@ class PerformanceReportBuilder:
 
     def build_modified_dietz(self, date_from, date_to):
 
+        _l.info('performance_report.build_modified_dietz')
+
         portfolio_registers = self.get_portfolio_registers()
         portfolios = self.get_portfolios(portfolio_registers)
 
@@ -984,7 +986,7 @@ class PerformanceReportBuilder:
                 grand_cash_flow_weighted = grand_cash_flow_weighted + (record_cash_flow * time_weight)
 
                 self.instance.execution_log['items'].append({
-                    "record": PortfolioRegisterRecordSerializer(record, context=self.context).data,
+                    "record": record.id,
                     "date_n": date_n,
                     "date_from_n": date_from_n,
                     "date_to_n": date_to_n,
