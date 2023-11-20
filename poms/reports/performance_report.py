@@ -14,7 +14,6 @@ from poms.common.utils import get_list_of_business_days_between_two_dates, \
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
-from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
 from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -68,7 +67,6 @@ class PerformanceReportBuilder:
             # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
             #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
-
             portfolio_registers_map = {}
 
             portfolios = []
@@ -110,7 +108,10 @@ class PerformanceReportBuilder:
         begin_date = self.instance.begin_date
 
         if not begin_date or begin_date == date.min:
-            begin_date = self.instance.first_transaction_date
+            # if inception date, we take -1 day of inception day
+            # 2023-11-20
+            # szhitenev
+            begin_date = get_last_business_day(self.instance.first_transaction_date)
 
         if not begin_date:
             self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
@@ -341,7 +342,7 @@ class PerformanceReportBuilder:
 
         diff = date_to - date_from
 
-        for i in range(diff.days + 1):
+        for i in range(diff.days):
             day = date_from + timedelta(days=i)
             list_result.append(day)
 
@@ -808,7 +809,6 @@ class PerformanceReportBuilder:
         elif self.instance.registers:
             portfolio_registers = self.instance.registers
 
-
         # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
         #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
@@ -961,7 +961,8 @@ class PerformanceReportBuilder:
         grand_cash_flow = 0
         grand_cash_inflow = 0
         grand_cash_outflow = 0
-        grand_cash_flow_weighted = 0
+        # should be begin nav instead of 0
+        grand_cash_flow_weighted = begin_nav
 
         for portfolio in portfolios:
 
@@ -1019,7 +1020,7 @@ class PerformanceReportBuilder:
 
         try:
             grand_return = (end_nav - begin_nav - grand_cash_flow) / (
-                    begin_nav + grand_cash_flow_weighted)
+                    grand_cash_flow_weighted)
         except Exception as e:
             _l.error("Could not calculate modified dietz return error %s" % e)
             _l.error("Could not calculate modified dietz return traceback %s" % traceback.format_exc())
