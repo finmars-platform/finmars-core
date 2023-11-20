@@ -594,7 +594,8 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
 
-        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) -1, settings.ROUND_NDIGITS)
+        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) - 1,
+                                  settings.ROUND_NDIGITS)
 
         return annualized_return
 
@@ -614,7 +615,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         nav = 0
         for item in self.balance_report.items:
-            if item["market_value"] is not None:
+            if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
                 nav = nav + item["market_value"]
             else:
                 has_nav_error = True
@@ -625,6 +626,8 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         total = 0
         for item in self.pl_report.items:
+
+            # Check position_size aswell?
             if item["total"] is not None:
                 total = total + item["total"]
             else:
@@ -636,8 +639,6 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         self.nav = nav
         self.total = total
-
-
 
         # Performance Part
 
@@ -659,7 +660,6 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         except Exception as e:
             self.error_message = self.error_message + str(e) + '\n'
-
 
         _l.info('error_message %s' % self.error_message)
 
