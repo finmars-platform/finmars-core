@@ -524,7 +524,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         else:
             options['master_user_id'] = master_user.pk
 
-            if content_type.model not in ['portfolioregisterrecord']:
+            if content_type.model not in ['portfolioregisterrecord', 'portfoliohistory']:
                 if ev_options['entity_filters']:
 
                     if content_type.model not in ['objecthistory4entry', 'generatedevent']:
