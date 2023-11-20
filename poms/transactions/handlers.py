@@ -193,7 +193,7 @@ class TransactionTypeProcess:
             self.complex_transaction.execution_log = ""
 
         self.complex_transaction.owner = self.member
-        self.complex_transaction.save()
+        # self.complex_transaction.save()
 
         self.record_execution_progress("Booking Complex Transaction")
         self.record_execution_progress(f"Start {date_now()} ")

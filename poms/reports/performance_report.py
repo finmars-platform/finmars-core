@@ -53,15 +53,21 @@ class PerformanceReportBuilder:
         try:
 
             if self.instance.bundle:
-                self.instance.bunch_portfolios = []
-                for item in self.instance.bundle.registers.all():
-                    if item.linked_instrument_id:
-                        self.instance.bunch_portfolios.append(item.linked_instrument_id)
-            else:
-                self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+                # self.instance.bunch_portfolios = []
+                # for item in self.instance.bundle.registers.all():
+                #     if item.linked_instrument_id:
+                #         self.instance.bunch_portfolios.append(item.linked_instrument_id)
 
-            portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
-                                                                   linked_instrument__in=self.instance.bunch_portfolios)
+                portfolio_registers = self.instance.bundle.registers.all()
+
+            elif self.instance.registers:
+                portfolio_registers = self.instance.registers
+            # else:
+            #     self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+            #
+            # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
+            #                                                        linked_instrument__in=self.instance.bunch_portfolios)
+
 
             portfolio_registers_map = {}
 
@@ -783,16 +789,28 @@ class PerformanceReportBuilder:
 
     def get_portfolio_registers(self):
 
-        if self.instance.bundle:
-            self.instance.bunch_portfolios = []
-            for item in self.instance.bundle.registers.all():
-                if item.linked_instrument_id:
-                    self.instance.bunch_portfolios.append(item.linked_instrument_id)
-        else:
-            self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        # if self.instance.bundle:
+        #     self.instance.bunch_portfolios = []
+        #     for item in self.instance.bundle.registers.all():
+        #         if item.linked_instrument_id:
+        #             self.instance.bunch_portfolios.append(item.linked_instrument_id)
+        # else:
+        #     self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
-        portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
-                                                               linked_instrument__in=self.instance.bunch_portfolios)
+        if self.instance.bundle:
+            # self.instance.bunch_portfolios = []
+            # for item in self.instance.bundle.registers.all():
+            #     if item.linked_instrument_id:
+            #         self.instance.bunch_portfolios.append(item.linked_instrument_id)
+
+            portfolio_registers = self.instance.bundle.registers.all()
+
+        elif self.instance.registers:
+            portfolio_registers = self.instance.registers
+
+
+        # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
+        #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
         portfolio_registers_map = {}
 

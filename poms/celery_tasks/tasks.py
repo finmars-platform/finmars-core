@@ -189,11 +189,12 @@ def bulk_delete(self, task_id):
 
     except Exception as e:
         err_msg = f"bulk_delete exception {repr(e)} {traceback.format_exc()}"
-        _l.error(err_msg)
+        _l.info(err_msg) # sentry detects it as error, but it maybe not
 
         if options_object["content_type"] in (
                 "instruments.pricehistory",
                 "currencies.currencyhistory",
+                "portfolios.portfoliohistory"
         ):
             _l.info("Going to permanent delete")
 

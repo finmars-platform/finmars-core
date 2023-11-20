@@ -64,19 +64,19 @@ class BackendReportHelperService:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
-
         # _l.info('result_groups %s' % result_groups)
         # _l.info('items %s' % items)
 
+        identifier_key = self.convert_name_key_to_user_code_key(group_type["key"])
+
         for result_group in result_groups:
-            group_items = [
-                item
-                for item in items
-                if (
-                    item.get(result_group["___group_type_key"])
-                    == result_group["___group_identifier"]
-                )
-            ]
+
+            group_items = []
+
+            for item in items:
+                if item.get(identifier_key) == result_group["___group_identifier"]:
+                    group_items.append(item)
+                    
             # _l.info('group_items %s' % group_items)
 
             result_group["subtotal"] = BackendReportSubtotalService.calculate(
@@ -202,7 +202,7 @@ class BackendReportHelperService:
                 for custom_field in item["custom_fields"]:
                     original_item[
                         "custom_fields." + custom_field["user_code"]
-                    ] = custom_field["value"]
+                        ] = custom_field["value"]
 
             original_items.append(original_item)
 
@@ -221,7 +221,7 @@ class BackendReportHelperService:
 
         # Refactor someday this shitty logic
         if item_value is None:
-            if result_value not in ("-", None): 
+            if result_value not in ("-", None):
                 # TODO this one is important, we need to split - and None in future
                 return False
         elif str(item_value).lower() != result_value:
@@ -235,7 +235,7 @@ class BackendReportHelperService:
         # Need null's checks for filters of data type number
         if filter_type in ["from_to", "out_of_range"]:
             if (regular_filter_value.get("min_value") is not None) and (
-                regular_filter_value.get("max_value") is not None
+                    regular_filter_value.get("max_value") is not None
             ):
                 return True
         elif isinstance(regular_filter_value, list):
@@ -288,8 +288,8 @@ class BackendReportHelperService:
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
         elif operation_type == "out_of_range":
             return (
-                value_to_filter <= filter_by["min_value"]
-                or value_to_filter >= filter_by["max_value"]
+                    value_to_filter <= filter_by["min_value"]
+                    or value_to_filter >= filter_by["max_value"]
             )
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
@@ -338,14 +338,14 @@ class BackendReportHelperService:
                     if key_property != "ordering":
                         if key_property in item and item[key_property] is not None:
                             if self.check_for_empty_regular_filter(
-                                filter_value, filter_type
+                                    filter_value, filter_type
                             ):
                                 value_from_table = item[key_property]
                                 filter_argument = filter_value
 
                                 if (
-                                    value_type in (10, 30)
-                                    and filter_type != "multiselector"
+                                        value_type in (10, 30)
+                                        and filter_type != "multiselector"
                                 ):
                                     value_from_table = value_from_table.lower()
                                     filter_argument = filter_argument[0].lower()
@@ -369,12 +369,12 @@ class BackendReportHelperService:
                                         ]
 
                                 if not self.filter_value_from_table(
-                                    value_from_table, filter_argument, filter_type
+                                        value_from_table, filter_argument, filter_type
                                 ):
                                     return False
                         elif exclude_empty_cells or (
-                            key_property in ["name", "instrument"]
-                            and item["item_type"] != 1
+                                key_property in ["name", "instrument"]
+                                and item["item_type"] != 1
                         ):
                             return False
             return True
@@ -464,7 +464,7 @@ class BackendReportHelperService:
         columns = options["columns"]
 
         user_columns = [column["key"] for column in columns]
-        
+
         result_items = []
         for item in items:
             result_item = {"id": item["id"]}
@@ -622,8 +622,8 @@ class BackendReportSubtotalService:
     @staticmethod
     def resolve_subtotal_function(items, column):
         if (
-            "report_settings" in column
-            and "subtotal_formula_id" in column["report_settings"]
+                "report_settings" in column
+                and "subtotal_formula_id" in column["report_settings"]
         ):
             formula_id = column["report_settings"]["subtotal_formula_id"]
             if formula_id == 1:
