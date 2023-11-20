@@ -342,7 +342,7 @@ class PerformanceReportBuilder:
 
         diff = date_to - date_from
 
-        for i in range(diff.days):
+        for i in range(diff.days + 1):
             day = date_from + timedelta(days=i)
             list_result.append(day)
 
@@ -989,6 +989,9 @@ class PerformanceReportBuilder:
                 # date_from_n = 2022-03-31
 
                 #   (30 - 2) / (30 - 1) = 28 / 29 = 0
+
+                # 319 - 13 / 319 - 1
+
                 time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
                 fx_rate = self.get_record_fx_rate(record)
