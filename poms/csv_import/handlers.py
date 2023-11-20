@@ -681,6 +681,7 @@ class SimpleImportProcess(object):
         self.process_type = ProcessType.CSV
 
         self.find_process_type()
+        # `self.attribute_types` are set inside `self.get_attribute_types()`
         self.get_attribute_types()
 
         self.file_items = []  # items from provider  (json, csv, excel)
@@ -688,7 +689,6 @@ class SimpleImportProcess(object):
         self.conversion_items = []  # items with applied converions
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
-        self.attribute_types = []
 
         self.context = {
             "master_user": self.master_user,
