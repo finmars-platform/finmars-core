@@ -618,6 +618,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
                 nav = nav + item["market_value"]
             else:
+                self.error_message = self.error_message + f'{item["name"]} has no market_value\n'
                 has_nav_error = True
 
         if has_nav_error:
@@ -631,6 +632,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             if item["total"] is not None:
                 total = total + item["total"]
             else:
+                self.error_message = self.error_message + f'{item["name"]} has no total value\n'
                 _l.info("PortfolioHistory.calculate has_total_error")
                 has_total_error = True
 
