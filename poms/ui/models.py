@@ -976,7 +976,7 @@ class MemberLayout(BaseUIModel, TimeStampedModel):
 
     class Meta(BaseLayout.Meta):
         unique_together = [
-            ["member", "user_code"],
+            ["member", "user_code", "configuration_code"],
         ]
         ordering = ["name"]
 

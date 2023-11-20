@@ -139,6 +139,12 @@ class StatsHandler():
         # ...
 
 
+
+        # for month in [date_from, date_to]:
+        #     performance_report = self.generate_performance_report(inception, month.date_to)
+        #     performance_monthly_returns_list.append(performance_report.grand_return)
+
+
         for period in self.performance_report.periods:
             performance_monthly_returns_list.append(period['total_return'])
 

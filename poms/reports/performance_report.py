@@ -3,7 +3,7 @@ import json
 import logging
 import time
 import traceback
-from datetime import timedelta, date
+from datetime import timedelta
 
 from django.forms import model_to_dict
 
@@ -14,7 +14,6 @@ from poms.common.utils import get_list_of_business_days_between_two_dates, \
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
-from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
 from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -68,7 +67,6 @@ class PerformanceReportBuilder:
             # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
             #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
-
             portfolio_registers_map = {}
 
             portfolios = []
@@ -109,8 +107,11 @@ class PerformanceReportBuilder:
 
         begin_date = self.instance.begin_date
 
-        if not begin_date or begin_date == date.min:
-            begin_date = self.instance.first_transaction_date
+        if not begin_date or begin_date <= self.instance.first_transaction_date:
+            # if inception date, we take -1 day of inception day
+            # 2023-11-20
+            # szhitenev
+            begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
         if not begin_date:
             self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
@@ -118,9 +119,6 @@ class PerformanceReportBuilder:
             self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
 
             return self.instance
-
-        if not is_business_day(begin_date):
-            begin_date = get_last_business_day(begin_date)
 
         self.instance.begin_date = begin_date
 
@@ -808,7 +806,6 @@ class PerformanceReportBuilder:
         elif self.instance.registers:
             portfolio_registers = self.instance.registers
 
-
         # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
         #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
@@ -961,69 +958,77 @@ class PerformanceReportBuilder:
         grand_cash_flow = 0
         grand_cash_inflow = 0
         grand_cash_outflow = 0
-        grand_cash_flow_weighted = 0
+        # should be begin nav instead of 0
+        grand_cash_flow_weighted = begin_nav
 
-        for portfolio in portfolios:
+        grand_return = 0
 
-            portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
-                                                                       transaction_date__gte=date_from,
-                                                                       transaction_date__lte=date_to,
-                                                                       transaction_class__in=[
-                                                                           TransactionClass.CASH_INFLOW,
-                                                                           TransactionClass.CASH_OUTFLOW,
-                                                                           TransactionClass.INJECTION,
-                                                                           TransactionClass.DISTRIBUTION]).order_by(
-                'transaction_date')
+        if date_to > date_from:
 
-            for record in portfolio_records:
-                date_n = dates_map[str(record.transaction_date)]
-                date_to_n = dates_map[str(date_to)]
-                date_from_n = dates_map[str(date_from)]
+            for portfolio in portfolios:
 
-                # 2022-03-31
-                # 2022-04-01
+                portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                           transaction_date__gte=date_from,
+                                                                           transaction_date__lte=date_to,
+                                                                           transaction_class__in=[
+                                                                               TransactionClass.CASH_INFLOW,
+                                                                               TransactionClass.CASH_OUTFLOW,
+                                                                               TransactionClass.INJECTION,
+                                                                               TransactionClass.DISTRIBUTION]).order_by(
+                    'transaction_date')
 
-                # date_n = 2022-04-01
-                # date_to_n = 2022-04-29
-                # date_from_n = 2022-03-31
+                for record in portfolio_records:
+                    date_n = dates_map[str(record.transaction_date)]
+                    date_to_n = dates_map[str(date_to)]
+                    date_from_n = dates_map[str(date_from)]
 
-                #   (30 - 2) / (30 - 1) = 28 / 29 = 0
-                time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
+                    # 2022-03-31
+                    # 2022-04-01
 
-                fx_rate = self.get_record_fx_rate(record)
+                    # date_n = 2022-04-01
+                    # date_to_n = 2022-04-29
+                    # date_from_n = 2022-03-31
 
-                record_cash_flow = record.cash_amount_valuation_currency * fx_rate
+                    #   (30 - 2) / (30 - 1) = 28 / 29 = 0
 
-                if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
-                    grand_cash_inflow = grand_cash_inflow + record_cash_flow
+                    # 319 - 13 / 319 - 1
 
-                if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW, TransactionClass.DISTRIBUTION]:
-                    grand_cash_outflow = grand_cash_outflow + record_cash_flow
+                    time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
-                grand_cash_flow = grand_cash_flow + record_cash_flow
-                grand_cash_flow_weighted = grand_cash_flow_weighted + (record_cash_flow * time_weight)
+                    fx_rate = self.get_record_fx_rate(record)
 
-                self.instance.execution_log['items'].append({
-                    "record": record.id,
-                    "date_n": date_n,
-                    "date_from_n": date_from_n,
-                    "date_to_n": date_to_n,
-                    "time_weight": time_weight,
-                    "fx_rate": fx_rate,
-                    "record_cash_flow": record_cash_flow,
-                    "grand_cash_inflow": grand_cash_inflow,
-                    "grand_cash_outflow": grand_cash_outflow,
-                    "grand_cash_flow": grand_cash_flow,
-                    "grand_cash_flow_weighted": grand_cash_flow_weighted
-                })
+                    record_cash_flow = record.cash_amount_valuation_currency * fx_rate
 
-        try:
-            grand_return = (end_nav - begin_nav - grand_cash_flow) / (
-                    begin_nav + grand_cash_flow_weighted)
-        except Exception as e:
-            _l.error("Could not calculate modified dietz return error %s" % e)
-            _l.error("Could not calculate modified dietz return traceback %s" % traceback.format_exc())
-            grand_return = 0
+                    if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
+                        grand_cash_inflow = grand_cash_inflow + record_cash_flow
+
+                    if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW, TransactionClass.DISTRIBUTION]:
+                        grand_cash_outflow = grand_cash_outflow + record_cash_flow
+
+                    grand_cash_flow = grand_cash_flow + record_cash_flow
+                    grand_cash_flow_weighted = grand_cash_flow_weighted + (record_cash_flow * time_weight)
+
+                    self.instance.execution_log['items'].append({
+                        "record": record.id,
+                        "date_n": date_n,
+                        "date_from_n": date_from_n,
+                        "date_to_n": date_to_n,
+                        "time_weight": time_weight,
+                        "fx_rate": fx_rate,
+                        "record_cash_flow": record_cash_flow,
+                        "grand_cash_inflow": grand_cash_inflow,
+                        "grand_cash_outflow": grand_cash_outflow,
+                        "grand_cash_flow": grand_cash_flow,
+                        "grand_cash_flow_weighted": grand_cash_flow_weighted
+                    })
+
+            try:
+                grand_return = (end_nav - begin_nav - grand_cash_flow) / (
+                    grand_cash_flow_weighted)
+            except Exception as e:
+                _l.error("Could not calculate modified dietz return error %s" % e)
+                _l.error("Could not calculate modified dietz return traceback %s" % traceback.format_exc())
+                grand_return = 0
 
         self.instance.grand_return = grand_return
         self.instance.grand_cash_flow = grand_cash_flow
