@@ -31,7 +31,9 @@ TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
 
 import logging
+
 _l = logging.getLogger('poms.users')
+
 
 class ResetPasswordToken(models.Model):
     class Meta:
@@ -567,7 +569,7 @@ class MasterUser(models.Model):
                 user = User.objects.create(username='finmars_bot')
 
             finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self,
-                                           is_admin=True)
+                                                is_admin=True)
 
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
@@ -816,7 +818,7 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
     def patch_currencies(
-        self, overwrite_name=False, overwrite_reference_for_pricing=False
+            self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
 
@@ -1256,15 +1258,19 @@ class Member(FakeDeletableModel):
         instance = super().save(*args, **kwargs)
         configuration_code = get_default_configuration_code()
 
-        layout, _ = MemberLayout.objects.get_or_create(
-            member_id=self.id,
-            owner_id=self.id,
-            user_code=f"{configuration_code}:default_member_layout",
-            defaults={
-                "name": "default",
-                "is_default": True,
-            },
-        )
+        try:
+            layout, _ = MemberLayout.objects.get_or_create(
+                member_id=self.id,
+                owner_id=self.id,
+                configuration_code=configuration_code,
+                user_code=f"{configuration_code}:default_member_layout",
+                defaults={
+                    "name": "default",
+                    "is_default": True,
+                },
+            )
+        except Exception as e:
+            _l.info("Could not create member layout %s" % e)
 
         return instance
 
@@ -1411,7 +1417,6 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
-
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):
