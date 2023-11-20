@@ -500,6 +500,8 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
     betta = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('betta'))
     alpha = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('alpha'))
     correlation = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('correlation'))
+    weighted_duration = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('weighted_duration'))
 
     error_message = models.TextField(
         null=True,
