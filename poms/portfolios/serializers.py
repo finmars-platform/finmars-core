@@ -637,7 +637,7 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
 
     portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
-    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, default=CostMethod.objects.get(id=CostMethod.AVCO))
+    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects)
 
     class Meta:
         model = PortfolioHistory
@@ -728,7 +728,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
 
     segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, choices=SEGMENTATION_TYPE_CHOICES)
     period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD, choices=PortfolioHistory.PERIOD_CHOICES)
-    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, default=CostMethod.objects.get(id=CostMethod.AVCO))
+    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, required=False)
     performance_method = serializers.ChoiceField(required=False, default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ, choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
 
