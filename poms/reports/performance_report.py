@@ -107,7 +107,7 @@ class PerformanceReportBuilder:
 
         begin_date = self.instance.begin_date
 
-        if not begin_date or begin_date == date.min or begin_date <= self.instance.first_transaction_date:
+        if not begin_date or begin_date <= self.instance.first_transaction_date:
             # if inception date, we take -1 day of inception day
             # 2023-11-20
             # szhitenev
