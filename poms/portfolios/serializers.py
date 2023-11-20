@@ -676,6 +676,7 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
             "betta",
             "alpha",
             "correlation",
+            "weighted_duration",
 
             "created",
             "modified",
