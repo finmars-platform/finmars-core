@@ -65,6 +65,15 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("default fx rate"),
     )
 
+    country = models.ForeignKey(
+        "instruments.Country",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("Country"),
+        on_delete=models.SET_NULL,
+    )
+
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("currency")
         verbose_name_plural = gettext_lazy("currencies")
