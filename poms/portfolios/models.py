@@ -535,6 +535,11 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             cost_method=self.cost_method,
             portfolios=[self.portfolio],
             pricing_policy=self.pricing_policy,
+            portfolio_mode=1,
+            account_mode=1,
+            strategy1_mode=0,
+            strategy2_mode=0,
+            strategy3_mode=0
         )
 
         builder = BalanceReportBuilderSql(instance=instance)
@@ -556,6 +561,11 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             cost_method=self.cost_method,
             portfolios=[self.portfolio],
             pricing_policy=self.pricing_policy,
+            portfolio_mode=1,
+            account_mode=1,
+            strategy1_mode=0,
+            strategy2_mode=0,
+            strategy3_mode=0
         )
 
         builder = PLReportBuilderSql(instance=instance)
