@@ -232,6 +232,10 @@ class BackendReportHelperService:
                     flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
                     flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
 
+                flattened_item['instrument.instrument_type.name'] = 'Cash & Cash Equivalents'
+                flattened_item['instrument.instrument_type.user_code'] = 'Cash & Cash Equivalents'
+                flattened_item['instrument.instrument_type.short_name'] = 'Cash & Cash Equivalents'
+
             if item['item_type'] == 1:
 
                 if 'instrument.country.name' in flattened_item:
