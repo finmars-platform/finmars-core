@@ -1241,7 +1241,7 @@ class TransactionReportBuilderSql:
 
         self.instance.item_countries = (
             Country.objects
-            .filter(id__in=ids)
+            .all()
         )
 
     def add_data_items_account_types(self, accounts):
