@@ -253,11 +253,9 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     if filter_type == FilterType.EMPTY and value_type == ValueType.STRING:
-        include_null_options = {}
-        include_empty_string_options = {}
+        include_null_options = {"value_string__isnull": True}
 
-        include_null_options["value_string__isnull"] = True
-        include_empty_string_options["value_string"] = ""
+        include_empty_string_options = {"value_string": ""}
 
         attributes_qs = attributes_qs.filter(
             Q(**include_null_options) | Q(**include_empty_string_options)
@@ -272,8 +270,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = int(filter_config["value"][0])
 
         if value:
-            options = {}
-            options["value_float__exact"] = value
+            options = {"value_float__exact": value}
 
             include_null_options = {}
             if not exclude_empty_cells:
@@ -546,8 +543,7 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            options = {}
-            options[key + "__name__icontains"] = value
+            options = {key + "__name__icontains": value}
 
             include_null_options = {}
             include_empty_string_options = {}
@@ -569,8 +565,7 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            options = {}
-            options[key + "__name__icontains"] = value
+            options = {key + "__name__icontains": value}
 
             exclude_nulls_options = {}
             exclude_empty_cells_options = {}
@@ -585,11 +580,9 @@ def add_filter(qs, filter_config):
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.FIELD:
-        include_null_options = {}
-        include_empty_string_options = {}
+        include_null_options = {key + "__name__isnull": True}
 
-        include_null_options[key + "__name__isnull"] = True
-        include_empty_string_options[key + "__name"] = ""
+        include_empty_string_options = {key + "__name": ""}
 
         qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
@@ -600,6 +593,8 @@ def add_filter(qs, filter_config):
 
         if len(filter_config["value"]):
             values = filter_config["value"]
+        else:
+            values = []
 
         if values:
             clauses = []
