@@ -498,6 +498,7 @@ class BackendReportHelperService:
                                 value_from_table, filter_argument, filter_type
                             ):
                                 return False
+
                     elif exclude_empty_cells or (
                         key_property in ["name", "instrument"]
                         and item["item_type"] != 1
