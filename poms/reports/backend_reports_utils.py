@@ -221,22 +221,23 @@ class BackendReportHelperService:
             else:
                 flattened_item[root_key] = value
 
-        if item['item_type'] == 2:
+        if 'item_type' in item:
+            if item['item_type'] == 2:
 
-            for attribute_type in instrument_attribute_types:
-                flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Cash Equivalents'
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Cash Equivalents'
 
-            if 'currency.country.name' in flattened_item:
-                flattened_item['instrument.country.name'] = flattened_item['currency.country.name']
-                flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
-                flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
+                if 'currency.country.name' in flattened_item:
+                    flattened_item['instrument.country.name'] = flattened_item['currency.country.name']
+                    flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
+                    flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
 
-        if item['item_type'] == 1:
+            if item['item_type'] == 1:
 
-            if 'instrument.country.name' in flattened_item:
-                flattened_item['currency.country.name'] = flattened_item['instrument.country.name']
-                flattened_item['currency.country.user_code'] = flattened_item['instrument.country.user_code']
-                flattened_item['currency.country.short_name'] = flattened_item['instrument.country.short_name']
+                if 'instrument.country.name' in flattened_item:
+                    flattened_item['currency.country.name'] = flattened_item['instrument.country.name']
+                    flattened_item['currency.country.user_code'] = flattened_item['instrument.country.user_code']
+                    flattened_item['currency.country.short_name'] = flattened_item['instrument.country.short_name']
 
         return flattened_item
 
