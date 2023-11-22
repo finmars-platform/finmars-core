@@ -1477,6 +1477,7 @@ class InstrumentLightSerializer(ModelWithUserCodeSerializer):
 class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
     pricing_currency = CurrencyEvalSerializer(read_only=True)
     accrued_currency = CurrencyEvalSerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
 
     class Meta:
         model = Instrument
@@ -1501,6 +1502,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "user_text_2",
             "user_text_3",
             "reference_for_pricing",
+            "country"
         ]
 
         read_only_fields = fields

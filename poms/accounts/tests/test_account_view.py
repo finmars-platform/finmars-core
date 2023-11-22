@@ -37,6 +37,16 @@ EXPECTED_ACCOUNT = {
             },
         }
     ],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "accounts.account",
         "app_label": "accounts",

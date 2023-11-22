@@ -19,7 +19,7 @@ class OwnerModel(models.Model):
         abstract = True
 
 
-class NamedModel(models.Model):
+class NamedModel(OwnerModel):
     user_code = models.CharField(
         max_length=1024,
         null=True,

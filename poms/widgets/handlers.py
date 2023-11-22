@@ -127,6 +127,24 @@ class StatsHandler():
 
         performance_monthly_returns_list = []
 
+
+        # YTD, date
+
+        # 2022-12-30, 2023-11-16
+        # get_months_between_two_dates(ytd_date, date)
+
+        # performance [2022-12-30, 2023-01-31] - grand_return
+        # performance [2023-01-31, 2023-02-28] - grand_return
+        # performance [2023-02-28, 2023-03-31] - grand_return
+        # ...
+
+
+
+        # for month in [date_from, date_to]:
+        #     performance_report = self.generate_performance_report(inception, month.date_to)
+        #     performance_monthly_returns_list.append(performance_report.grand_return)
+
+
         for period in self.performance_report.periods:
             performance_monthly_returns_list.append(period['total_return'])
 
@@ -144,6 +162,7 @@ class StatsHandler():
         annualized_portfolio_volatility = 0
         if portfolio_volatility:
             annualized_portfolio_volatility = portfolio_volatility * math.sqrt(12)
+            # annualized_portfolio_volatility = portfolio_volatility * math.sqrt(11) # TODO possible 11? statistical n-1
 
         return annualized_portfolio_volatility
 

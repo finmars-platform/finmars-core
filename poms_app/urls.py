@@ -21,7 +21,7 @@ urlpatterns = urlpatterns + [
 if "drf_yasg" in settings.INSTALLED_APPS:
     urlpatterns = urlpatterns + get_redoc_urlpatterns()
 
-if settings.DEBUG:
+if settings.USE_DEBUGGER:
     import debug_toolbar
 
     urlpatterns = urlpatterns + [

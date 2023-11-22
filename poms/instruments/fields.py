@@ -15,7 +15,7 @@ from poms.instruments.models import (
     PricingCondition,
     PricingPolicy,
 )
-from poms.portfolios.models import PortfolioBundle
+from poms.portfolios.models import PortfolioBundle, PortfolioRegister
 from poms.transactions.models import (
     EventClass,
     NotificationClass,
@@ -77,8 +77,8 @@ class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
 
 
 class RegisterField(UserCodeOrPrimaryKeyRelatedField):
-    queryset = Instrument.objects
-    filter_backends = [OwnerByMasterUserFilter, LinkedWithPortfolioFilter]
+    queryset = PortfolioRegister.objects
+    filter_backends = [OwnerByMasterUserFilter]
 
 
 class BundleField(UserCodeOrPrimaryKeyRelatedField):

@@ -3,10 +3,7 @@ import os
 import time
 from datetime import date, timedelta
 
-
-from celery import shared_task, group
-from django.conf import settings
-
+from celery import group
 from django.conf import settings
 from django.db import connection
 
@@ -16,7 +13,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
-from poms.instruments.models import Instrument, CostMethod, InstrumentType
+from poms.instruments.models import Instrument, CostMethod, InstrumentType, Country
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
 from poms.reports.models import PLReportCustomField, ReportInstanceModel
@@ -110,6 +107,7 @@ class PLReportBuilderSql:
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
         return self.instance
+
     @staticmethod
     def get_final_consolidation_columns(instance):
 
@@ -141,6 +139,7 @@ class PLReportBuilderSql:
             resultString = ", ".join(result) + ', '
 
         return resultString
+
     @staticmethod
     def get_final_consolidation_where_filters_columns(instance):
 
@@ -3190,6 +3189,7 @@ class PLReportBuilderSql:
             """
 
         return query
+
     @staticmethod
     def get_query_for_first_date(instance):
 
@@ -3443,8 +3443,10 @@ class PLReportBuilderSql:
 
                 query = query.format(query_first_date=query_1,
                                      query_report_date=query_2,
-                                     final_consolidation_columns=PLReportBuilderSql.get_final_consolidation_columns(instance),
-                                     final_consolidation_where_filters=PLReportBuilderSql.get_final_consolidation_where_filters_columns(instance)
+                                     final_consolidation_columns=PLReportBuilderSql.get_final_consolidation_columns(
+                                         instance),
+                                     final_consolidation_where_filters=PLReportBuilderSql.get_final_consolidation_where_filters_columns(
+                                         instance)
                                      )
 
                 if settings.SERVER_TYPE == 'local':
@@ -3471,7 +3473,6 @@ class PLReportBuilderSql:
                 ITEM_TYPE_TRANSACTION_PL = 5
                 ITEM_TYPE_MISMATCH = 6
 
-
                 ITEM_GROUP_OPENED = 10
                 ITEM_GROUP_FX_VARIATIONS = 11
                 ITEM_GROUP_FX_TRADES = 12
@@ -3491,7 +3492,7 @@ class PLReportBuilderSql:
                     else:
                         result_tmp.append(item)
 
-                _l.info("WTF??")
+                # _l.info("WTF??")
 
                 # index = 0
 
@@ -3640,8 +3641,10 @@ class PLReportBuilderSql:
 
                     result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                     result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                    result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                    result_item_opened["instrument_pricing_currency_fx_rate"] = item[
+                        "instrument_pricing_currency_fx_rate"]
+                    result_item_opened["instrument_accrued_currency_fx_rate"] = item[
+                        "instrument_accrued_currency_fx_rate"]
                     result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
                     result_item_opened["instrument_factor"] = item["instrument_factor"]
@@ -3887,7 +3890,6 @@ class PLReportBuilderSql:
                         else:
                             result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
 
-
                         result_item_closed["item_group"] = ITEM_GROUP_CLOSED
                         result_item_closed["item_group_code"] = "CLOSED"
                         result_item_closed["item_group_name"] = "Closed"
@@ -3950,6 +3952,24 @@ class PLReportBuilderSql:
 
                 return result
 
+        except Exception as e:
+            celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.save()
+            raise e
+
+    def build_sync(self, task_id):
+
+        celery_task = CeleryTask.objects.filter(id=task_id).first()
+        if not celery_task:
+            _l.error(f"Invalid celery task_id={task_id}")
+            return
+
+        try:
+
+
+            return self.build(task_id)
+
+           
         except Exception as e:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.save()
@@ -4024,7 +4044,6 @@ class PLReportBuilderSql:
 
             tasks.append(task)
 
-
         _l.info("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
@@ -4054,6 +4073,69 @@ class PLReportBuilderSql:
         _l.info('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
 
+    def build_pl_sync(self):
+        st = time.perf_counter()
+
+        self.instance.items = []
+
+        self.serial_build()
+
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+
+        _l.debug('items total %s' % len(self.instance.items))
+
+        relation_prefetch_st = time.perf_counter()
+
+        if not self.instance.only_numbers:
+            self.add_data_items()
+
+        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+
+        _l.debug('build_st done: %s' % self.instance.execution_time)
+
+        return self.instance
+
+    def serial_build(self):
+
+        st = time.perf_counter()
+
+        self.instance.bday_yesterday_of_report_date = get_last_business_day(self.instance.report_date - timedelta(days=1), to_string=True)
+
+        task = CeleryTask.objects.create(
+            master_user=self.instance.master_user,
+            member=self.instance.member,
+            verbose_name="PL Report",
+            type="calculate_pl_report",
+            options_object={
+                "report_date": self.instance.report_date,
+                "pl_first_date": self.instance.pl_first_date,
+                "bday_yesterday_of_report_date": self.instance.bday_yesterday_of_report_date,
+                "portfolios_ids": [instance.id for instance in self.instance.portfolios],
+                "accounts_ids": [instance.id for instance in self.instance.accounts],
+                "strategies1_ids": [instance.id for instance in self.instance.strategies1],
+                "strategies2_ids": [instance.id for instance in self.instance.strategies2],
+                "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                "report_currency_id": self.instance.report_currency.id,
+                "pricing_policy_id": self.instance.pricing_policy.id,
+                "cost_method_id": self.instance.cost_method.id,
+                "show_balance_exposure_details": self.instance.show_balance_exposure_details,
+                "portfolio_mode": self.instance.portfolio_mode,
+                "account_mode": self.instance.account_mode,
+                "strategy1_mode": self.instance.strategy1_mode,
+                "strategy2_mode": self.instance.strategy2_mode,
+                "strategy3_mode": self.instance.strategy3_mode,
+                "allocation_mode": self.instance.allocation_mode
+            }
+        )
+
+        result = self.build_sync(task.id)
+
+        # 'all_dicts' is now a list of all dicts returned by the tasks
+        self.instance.items = result
+
+        _l.info('parallel_build done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
+    
     def get_cash_consolidation_for_select(self):
 
         result = []
@@ -4089,6 +4171,8 @@ class PLReportBuilderSql:
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
+            "country",
+            "owner"
             # 'price_download_scheme',
             # 'price_download_scheme__provider',
         ).prefetch_related(
@@ -4105,16 +4189,27 @@ class PLReportBuilderSql:
         for instrument in instruments:
             ids.append(instrument.instrument_type_id)
 
-        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+        self.instance.item_instrument_types = InstrumentType.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_countries(self, instruments):
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.country_id)
+
+        self.instance.item_countries = (
+            Country.objects
+            .all()
+        )
+
     def add_data_items_portfolios(self, ids):
 
-        self.instance.item_portfolios = Portfolio.objects.prefetch_related(
+        self.instance.item_portfolios = Portfolio.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -4125,7 +4220,7 @@ class PLReportBuilderSql:
 
     def add_data_items_accounts(self, ids):
 
-        self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
+        self.instance.item_accounts = Account.objects.select_related('type', "owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -4138,7 +4233,7 @@ class PLReportBuilderSql:
         for account in accounts:
             ids.append(account.type_id)
 
-        self.instance.item_account_types = AccountType.objects.prefetch_related(
+        self.instance.item_account_types = AccountType.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -4147,28 +4242,28 @@ class PLReportBuilderSql:
 
     def add_data_items_currencies(self, ids):
 
-        self.instance.item_currencies = Currency.objects.prefetch_related(
+        self.instance.item_currencies = Currency.objects.select_related("country", "owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies1(self, ids):
-        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
+        self.instance.item_strategies1 = Strategy1.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
+        self.instance.item_strategies2 = Strategy2.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
+        self.instance.item_strategies3 = Strategy3.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -4249,6 +4344,7 @@ class PLReportBuilderSql:
         self.add_data_items_strategies3(strategies3_ids)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_countries(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = PLReportCustomField.objects.filter(master_user=self.instance.master_user)

@@ -23,6 +23,29 @@ class PomsClassSerializer(serializers.ModelSerializer):
         ]
 
 
+class ModelOwnerSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+
+        # print('ModelOwnerSerializer %s' % instance)
+
+        representation = super().to_representation(instance)
+
+        from poms.users.serializers import MemberViewSerializer
+
+        serializer = MemberViewSerializer(instance=instance.owner)
+
+        representation["owner"] = serializer.data
+
+        return representation
+
+    def create(self, validated_data):
+        # You should have 'request' in the serializer context
+        request = self.context.get('request', None)
+        if request and hasattr(request, "user"):
+            validated_data['owner'] = request.user.member
+        return super(ModelOwnerSerializer, self).create(validated_data)
+
+
 class ModelMetaSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -54,7 +77,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
         return data
 
 
-class ModelWithUserCodeSerializer(ModelMetaSerializer, IamProtectedSerializer):
+class ModelWithUserCodeSerializer(ModelMetaSerializer, ModelOwnerSerializer, IamProtectedSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["user_code"] = UserCodeField()

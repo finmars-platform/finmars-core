@@ -107,6 +107,16 @@ TRANSACTION_TYPE_DICT = {
     "deleted_user_code": None,
     "instrument_types_object": [],
     "portfolios_object": [],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "transactions.transactiontype",
         "app_label": "transactions",
@@ -228,6 +238,16 @@ TRANSACTION_TYPE_WITH_INPUTS_DICT = {
     "deleted_user_code": None,
     "instrument_types_object": [],
     "portfolios_object": [],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "transactions.transactiontype",
         "app_label": "transactions",

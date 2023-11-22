@@ -1096,7 +1096,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     relation_fields = [f for f in model._meta.fields if
                        isinstance(f,
-                                  ForeignKey) and f.name != 'master_user' and f.name != 'procedure_instance' and f.name != 'complex_transaction' and f.name != 'event_schedule' and f.name != 'member' and f.name != 'action' and f.name != 'previous_date_record' and f.name != 'transaction' and f.name != 'status' and f.name != 'linked_import_task' and f.name != 'content_type']
+                                  ForeignKey) and f.name != 'master_user'  and f.name != 'owner'  and f.name != 'procedure_instance' and f.name != 'complex_transaction' and f.name != 'event_schedule' and f.name != 'member' and f.name != 'action' and f.name != 'previous_date_record' and f.name != 'transaction' and f.name != 'status' and f.name != 'linked_import_task' and f.name != 'content_type']
 
     # _l.info('relation_fields %s' % relation_fields)
 
@@ -1154,6 +1154,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     if content_type.model not in ['currencyhistory', 'pricehistory', 'transaction', 'currencyhistoryerror',
+                                    'portfoliohistory',
                                   'complextransactionimportscheme', 'csvimportscheme',
                                   'pricehistoryerror', 'generatedevent', 'portfolioregisterrecord', 'complextransaction']:
         string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})

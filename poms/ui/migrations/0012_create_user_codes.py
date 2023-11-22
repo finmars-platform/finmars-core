@@ -5,50 +5,51 @@ from django.db import migrations, models
 
 def forwards_func(apps, schema_editor):
     # print("forwards_func")
+    pass
 
-    from poms.ui.models import ComplexTransactionUserField, TransactionUserField, InstrumentUserField
-
-    items = ComplexTransactionUserField.objects.all()
-
-    for item in items:
-
-        if not item.user_code:
-
-            # item.configuration_code = 'com.finmars.local'
-            from poms.configuration.utils import get_default_configuration_code
-            item.configuration_code = get_default_configuration_code()
-
-            item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
-
-            item.save()
-
-    items = TransactionUserField.objects.all()
-
-    for item in items:
-
-        if not item.user_code:
-
-            # item.configuration_code = 'com.finmars.local'
-            from poms.configuration.utils import get_default_configuration_code
-            item.configuration_code = get_default_configuration_code()
-
-            item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
-
-            item.save()
-
-    items = InstrumentUserField.objects.all()
-
-    for item in items:
-
-        if not item.user_code:
-
-            # item.configuration_code = 'com.finmars.local'
-            from poms.configuration.utils import get_default_configuration_code
-            item.configuration_code = get_default_configuration_code()
-
-            item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
-
-            item.save()
+    # from poms.ui.models import ComplexTransactionUserField, TransactionUserField, InstrumentUserField
+    #
+    # items = ComplexTransactionUserField.objects.all()
+    #
+    # for item in items:
+    #
+    #     if not item.user_code:
+    #
+    #         # item.configuration_code = 'com.finmars.local'
+    #         from poms.configuration.utils import get_default_configuration_code
+    #         item.configuration_code = get_default_configuration_code()
+    #
+    #         item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
+    #
+    #         item.save()
+    #
+    # items = TransactionUserField.objects.all()
+    #
+    # for item in items:
+    #
+    #     if not item.user_code:
+    #
+    #         # item.configuration_code = 'com.finmars.local'
+    #         from poms.configuration.utils import get_default_configuration_code
+    #         item.configuration_code = get_default_configuration_code()
+    #
+    #         item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
+    #
+    #         item.save()
+    #
+    # items = InstrumentUserField.objects.all()
+    #
+    # for item in items:
+    #
+    #     if not item.user_code:
+    #
+    #         # item.configuration_code = 'com.finmars.local'
+    #         from poms.configuration.utils import get_default_configuration_code
+    #         item.configuration_code = get_default_configuration_code()
+    #
+    #         item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
+    #
+    #         item.save()
 
 
 def reverse_func(apps, schema_editor):

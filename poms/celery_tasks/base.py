@@ -80,39 +80,40 @@ class BaseTask(_Task):
 
         self.finmars_task.add_attachment(file_report.id)
 
-    def __call__(self, *args, **kwargs):
-        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
-            logger.info("Memory Limit is not set. Probably Test or Migration context")
-
-            # call the actual task
-            result = super().__call__(*args, **kwargs)
-
-        else:
-            pr = cProfile.Profile()
-            pr.enable()
-
-            # call the actual task
-            result = super().__call__(*args, **kwargs)
-
-            pr.disable()
-            s = io.StringIO()
-            ps = pstats.Stats(pr, stream=s).sort_stats("cumulative")
-            ps.print_stats()
-
-            # Here s.getvalue() contains the profiling info, you can log it,
-            # save it to a file or do whatever you want with it.
-            text = s.getvalue()
-            if self.finmars_task and text:
-                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-                task_id = self.finmars_task.id
-                verbose_name = (
-                    f"Execution Profile {current_date_time} (Task {task_id}).txt"
-                )
-                file_name = f"execution_profile_{current_date_time}_{task_id}.txt"
-
-                self._generate_file(verbose_name, file_name, text)
-
-        return result
+    # Do not need to profile right now (2023-11-10 szhitenev)
+    # def __call__(self, *args, **kwargs):
+    #     if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+    #         logger.info("Memory Limit is not set. Probably Test or Migration context")
+    #
+    #         # call the actual task
+    #         result = super().__call__(*args, **kwargs)
+    #
+    #     else:
+    #         pr = cProfile.Profile()
+    #         pr.enable()
+    #
+    #         # call the actual task
+    #         result = super().__call__(*args, **kwargs)
+    #
+    #         pr.disable()
+    #         s = io.StringIO()
+    #         ps = pstats.Stats(pr, stream=s).sort_stats("cumulative")
+    #         ps.print_stats()
+    #
+    #         # Here s.getvalue() contains the profiling info, you can log it,
+    #         # save it to a file or do whatever you want with it.
+    #         text = s.getvalue()
+    #         if self.finmars_task and text:
+    #             current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+    #             task_id = self.finmars_task.id
+    #             verbose_name = (
+    #                 f"Execution Profile {current_date_time} (Task {task_id}).txt"
+    #             )
+    #             file_name = f"execution_profile_{current_date_time}_{task_id}.txt"
+    #
+    #             self._generate_file(verbose_name, file_name, text)
+    #
+    #     return result
 
     def _update_celery_task_with_run_info(self, kwargs: dict):
         from poms.celery_tasks.models import CeleryTask
