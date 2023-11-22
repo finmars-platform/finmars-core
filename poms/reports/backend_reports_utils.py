@@ -1,5 +1,8 @@
 import logging
 
+from poms.instruments.models import Instrument
+from poms.obj_attrs.models import GenericAttributeType
+from django.contrib.contenttypes.models import ContentType
 _l = logging.getLogger("poms.reports")
 
 
@@ -114,37 +117,133 @@ class BackendReportHelperService:
 
         return None
 
-    def flatten_and_convert_item(self, item, helper_dicts):
-        def recursively_flatten(prefix, item):
-            flattened = {}
+    # def flatten_and_convert_item(self, item, helper_dicts):
+    #     def recursively_flatten(prefix, item):
+    #         flattened = {}
+    #
+    #         for key, value in item.items():
+    #
+    #             current_key = f"{prefix}.{key}" if prefix else key
+    #
+    #             if key in helper_dicts:
+    #                 related_object = helper_dicts[key].get(value, {})
+    #
+    #                 if related_object:
+    #                     flattened.update(
+    #                         recursively_flatten(current_key, related_object)
+    #                     )
+    #                 else:
+    #                     flattened[current_key] = value
+    #
+    #             elif key == "attributes" and isinstance(value, list):
+    #                 for attribute in value:
+    #                     user_code = attribute.get("attribute_type_object", {}).get(
+    #                         "user_code"
+    #                     )
+    #                     if user_code:
+    #                         attr_value = self._get_attribute_value(attribute)
+    #                         flattened[f"{current_key}.{user_code}"] = attr_value
+    #             else:
+    #                 flattened[current_key] = value
+    #
+    #         return flattened
+    #
+    #     return recursively_flatten("", item)
 
-            for key, value in item.items():
-                current_key = f"{prefix}.{key}" if prefix else key
+    def flatten_and_convert_item(self, item, helper_dicts, instrument_attribute_types):
 
-                if key in helper_dicts:
-                    related_object = helper_dicts[key].get(value, {})
+        # Complicated function, but no need recursion here
+        # perforamnce matter
+        # basicaly code below doing
 
-                    if related_object:
-                        flattened.update(
-                            recursively_flatten(current_key, related_object)
-                        )
-                    else:
-                        flattened[current_key] = value
+        # {
+        #     'a': '1',
+        #     'b': {
+        #         'c': '2',
+        #         'd': {
+        #             'e': '4'
+        #         }
+        #     }
+        # }
 
-                elif key == "attributes" and isinstance(value, list):
-                    for attribute in value:
-                        user_code = attribute.get("attribute_type_object", {}).get(
-                            "user_code"
-                        )
-                        if user_code:
-                            attr_value = self._get_attribute_value(attribute)
-                            flattened[f"{current_key}.{user_code}"] = attr_value
+        # to
+
+        # 'a': 1',
+        # 'b.c': '2',
+        # 'b.d.e': '4'
+        # Maximum 2 levels of nesting, last level has no attributes
+
+        # I beg my pardon for what your eyes will see below
+
+        flattened_item = {}
+
+        for root_key, value in item.items():
+
+            if root_key in helper_dicts:
+                related_object = helper_dicts[root_key].get(value, {})
+
+                if related_object:
+                    for first_level_key, related_value in related_object.items():
+
+                        related_prefixed_key = f"{root_key}.{first_level_key}"
+
+                        if first_level_key == "attributes" and isinstance(related_value, list):
+                            for attribute in related_value:
+                                user_code = attribute.get("attribute_type_object", {}).get(
+                                    "user_code"
+                                )
+                                if user_code:
+                                    attr_value = self._get_attribute_value(attribute)
+                                    flattened_item[f"{related_prefixed_key}.{user_code}"] = attr_value
+                        else:
+
+                            if first_level_key in helper_dicts:
+
+                                related_related_object = helper_dicts[first_level_key].get(related_value, {})
+
+                                if related_related_object:
+
+                                    for second_level_key, related_related_value in related_related_object.items():
+
+                                        _prefixed_key = f"{root_key}.{first_level_key}.{second_level_key}"
+
+                                        flattened_item[_prefixed_key] = related_related_value
+
+                                else:
+
+                                    flattened_item[f"{root_key}.{first_level_key}"] = related_value
+
+                            else:
+                                flattened_item[f"{root_key}.{first_level_key}"] = related_value
+
                 else:
-                    flattened[current_key] = value
+                    flattened_item[root_key] = value
+            else:
+                flattened_item[root_key] = value
 
-            return flattened
+        if 'item_type' in item:
+            if item['item_type'] == 2:
 
-        return recursively_flatten("", item)
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Cash Equivalents'
+
+                if 'currency.country.name' in flattened_item:
+                    flattened_item['instrument.country.name'] = flattened_item['currency.country.name']
+                    flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
+                    flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
+
+                flattened_item['instrument.instrument_type.name'] = 'Cash & Cash Equivalents'
+                flattened_item['instrument.instrument_type.user_code'] = 'Cash & Cash Equivalents'
+                flattened_item['instrument.instrument_type.short_name'] = 'Cash & Cash Equivalents'
+
+            if item['item_type'] == 1:
+
+                if 'instrument.country.name' in flattened_item:
+                    flattened_item['currency.country.name'] = flattened_item['instrument.country.name']
+                    flattened_item['currency.country.user_code'] = flattened_item['instrument.country.user_code']
+                    flattened_item['currency.country.short_name'] = flattened_item['instrument.country.short_name']
+
+        return flattened_item
 
     def convert_report_items_to_full_items(self, data):
         original_items = []  # probably we missing user attributes
@@ -193,10 +292,16 @@ class BackendReportHelperService:
                 data["item_transaction_classes"]
             )
 
+        content_type = ContentType.objects.get_for_model(
+            Instrument
+        )
+        instrument_attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
+
         # _l.info('data helper_dicts %s' %  helper_dicts)
         # _l.info('data items %s' % data['items'][0])
         for item in data["items"]:
-            original_item = self.flatten_and_convert_item(item, helper_dicts)
+            original_item = self.flatten_and_convert_item(item, helper_dicts, instrument_attribute_types)
+
 
             if "custom_fields" in item:
                 for custom_field in item["custom_fields"]:
