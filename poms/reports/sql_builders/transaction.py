@@ -1208,6 +1208,8 @@ class TransactionReportBuilderSql:
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
+            "country",
+            "owner"
             # 'price_download_scheme',
             # 'price_download_scheme__provider',
         ).prefetch_related(
@@ -1224,7 +1226,7 @@ class TransactionReportBuilderSql:
         for instrument in instruments:
             ids.append(instrument.instrument_type_id)
 
-        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+        self.instance.item_instrument_types = InstrumentType.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1249,7 +1251,7 @@ class TransactionReportBuilderSql:
         for account in accounts:
             ids.append(account.type_id)
 
-        self.instance.item_account_types = AccountType.objects.prefetch_related(
+        self.instance.item_account_types = AccountType.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1258,7 +1260,7 @@ class TransactionReportBuilderSql:
 
     def add_data_items_portfolios(self, ids):
 
-        self.instance.item_portfolios = Portfolio.objects.prefetch_related(
+        self.instance.item_portfolios = Portfolio.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1269,7 +1271,7 @@ class TransactionReportBuilderSql:
 
     def add_data_items_accounts(self, ids):
 
-        self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
+        self.instance.item_accounts = Account.objects.select_related('type', "owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1277,7 +1279,7 @@ class TransactionReportBuilderSql:
 
     def add_data_items_currencies(self, ids):
 
-        self.instance.item_currencies = Currency.objects.prefetch_related(
+        self.instance.item_currencies = Currency.objects.select_related("country", "owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1285,7 +1287,7 @@ class TransactionReportBuilderSql:
 
     def add_data_items_counterparties(self, ids):
 
-        self.instance.item_counterparties = Counterparty.objects.prefetch_related(
+        self.instance.item_counterparties = Counterparty.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1293,28 +1295,28 @@ class TransactionReportBuilderSql:
 
     def add_data_items_responsibles(self, ids):
 
-        self.instance.item_responsibles = Responsible.objects.prefetch_related(
+        self.instance.item_responsibles = Responsible.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies1(self, ids):
-        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
+        self.instance.item_strategies1 = Strategy1.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
+        self.instance.item_strategies2 = Strategy2.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
+        self.instance.item_strategies3 = Strategy3.objects.select_related("owner").prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1322,7 +1324,7 @@ class TransactionReportBuilderSql:
 
     def add_data_items_complex_transactions(self, ids):
 
-        self.instance.item_complex_transactions = ComplexTransaction.objects.prefetch_related(
+        self.instance.item_complex_transactions = ComplexTransaction.objects.select_related("owner").prefetch_related(
             'transaction_type',
             # 'transaction_type__group',
             'attributes',

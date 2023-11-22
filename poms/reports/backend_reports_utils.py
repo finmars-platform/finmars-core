@@ -114,37 +114,75 @@ class BackendReportHelperService:
 
         return None
 
+    # def flatten_and_convert_item(self, item, helper_dicts):
+    #     def recursively_flatten(prefix, item):
+    #         flattened = {}
+    #
+    #         for key, value in item.items():
+    #
+    #             current_key = f"{prefix}.{key}" if prefix else key
+    #
+    #             if key in helper_dicts:
+    #                 related_object = helper_dicts[key].get(value, {})
+    #
+    #                 if related_object:
+    #                     flattened.update(
+    #                         recursively_flatten(current_key, related_object)
+    #                     )
+    #                 else:
+    #                     flattened[current_key] = value
+    #
+    #             elif key == "attributes" and isinstance(value, list):
+    #                 for attribute in value:
+    #                     user_code = attribute.get("attribute_type_object", {}).get(
+    #                         "user_code"
+    #                     )
+    #                     if user_code:
+    #                         attr_value = self._get_attribute_value(attribute)
+    #                         flattened[f"{current_key}.{user_code}"] = attr_value
+    #             else:
+    #                 flattened[current_key] = value
+    #
+    #         return flattened
+    #
+    #     return recursively_flatten("", item)
+
     def flatten_and_convert_item(self, item, helper_dicts):
-        def recursively_flatten(prefix, item):
-            flattened = {}
 
-            for key, value in item.items():
-                current_key = f"{prefix}.{key}" if prefix else key
+        flattened_item = {}
 
-                if key in helper_dicts:
-                    related_object = helper_dicts[key].get(value, {})
+        prefix = ''
 
-                    if related_object:
-                        flattened.update(
-                            recursively_flatten(current_key, related_object)
-                        )
-                    else:
-                        flattened[current_key] = value
+        for key, value in item.items():
 
-                elif key == "attributes" and isinstance(value, list):
-                    for attribute in value:
-                        user_code = attribute.get("attribute_type_object", {}).get(
-                            "user_code"
-                        )
-                        if user_code:
-                            attr_value = self._get_attribute_value(attribute)
-                            flattened[f"{current_key}.{user_code}"] = attr_value
+            current_key = f"{prefix}.{key}" if prefix else key
+
+            if key in helper_dicts:
+                related_object = helper_dicts[key].get(value, {})
+
+                if related_object:
+                    for related_key, related_value in related_object.items():
+
+                        related_prefixed_key = f"{current_key}.{related_key}"
+
+                        if related_key == "attributes" and isinstance(related_value, list):
+                            for attribute in related_value:
+                                user_code = attribute.get("attribute_type_object", {}).get(
+                                    "user_code"
+                                )
+                                if user_code:
+                                    attr_value = self._get_attribute_value(attribute)
+                                    flattened_item[f"{related_prefixed_key}.{user_code}"] = attr_value
+                        else:
+                            flattened_item[f"{related_prefixed_key}"] = related_value
+
+
                 else:
-                    flattened[current_key] = value
+                    flattened_item[current_key] = value
+            else:
+                flattened_item[current_key] = value
 
-            return flattened
-
-        return recursively_flatten("", item)
+        return flattened_item
 
     def convert_report_items_to_full_items(self, data):
         original_items = []  # probably we missing user attributes
@@ -197,6 +235,7 @@ class BackendReportHelperService:
         # _l.info('data items %s' % data['items'][0])
         for item in data["items"]:
             original_item = self.flatten_and_convert_item(item, helper_dicts)
+
 
             if "custom_fields" in item:
                 for custom_field in item["custom_fields"]:
