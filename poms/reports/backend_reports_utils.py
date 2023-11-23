@@ -225,16 +225,16 @@ class BackendReportHelperService:
             if item['item_type'] == 2:
 
                 for attribute_type in instrument_attribute_types:
-                    flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Cash Equivalents'
+                    flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Equivalents'
 
                 if 'currency.country.name' in flattened_item:
                     flattened_item['instrument.country.name'] = flattened_item['currency.country.name']
                     flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
                     flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
 
-                flattened_item['instrument.instrument_type.name'] = 'Cash & Cash Equivalents'
-                flattened_item['instrument.instrument_type.user_code'] = 'Cash & Cash Equivalents'
-                flattened_item['instrument.instrument_type.short_name'] = 'Cash & Cash Equivalents'
+                flattened_item['instrument.instrument_type.name'] = 'Cash & Equivalents'
+                flattened_item['instrument.instrument_type.user_code'] = 'Cash & Equivalents'
+                flattened_item['instrument.instrument_type.short_name'] = 'Cash & Equivalents'
 
             if item['item_type'] == 1:
 
@@ -354,10 +354,10 @@ class BackendReportHelperService:
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
 
-        _l.info(
-            f"filter_table_rows.filter_value_from_table value_to_filter="
-            f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
-        )
+        # _l.info(
+        #     f"filter_table_rows.filter_value_from_table value_to_filter="
+        #     f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
+        # )
 
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
@@ -435,9 +435,9 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
-                _l.info(
-                    f"filter_table_rows.match_item item={item} filter_={filter_}"
-                )
+                # _l.info(
+                #     f"filter_table_rows.match_item item={item} filter_={filter_}"
+                # )
 
                 if len(filter_value):
                     if key_property != "ordering":
