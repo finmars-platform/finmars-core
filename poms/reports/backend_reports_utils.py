@@ -354,10 +354,10 @@ class BackendReportHelperService:
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
 
-        _l.info(
-            f"filter_table_rows.filter_value_from_table value_to_filter="
-            f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
-        )
+        # _l.info(
+        #     f"filter_table_rows.filter_value_from_table value_to_filter="
+        #     f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
+        # )
 
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
@@ -435,9 +435,9 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
-                _l.info(
-                    f"filter_table_rows.match_item item={item} filter_={filter_}"
-                )
+                # _l.info(
+                #     f"filter_table_rows.match_item item={item} filter_={filter_}"
+                # )
 
                 if len(filter_value):
                     if key_property != "ordering":
