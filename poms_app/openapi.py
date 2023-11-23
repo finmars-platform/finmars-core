@@ -162,14 +162,12 @@ def get_explorer_documentation():
 
     local_urlpatterns = [
         re_path(
-            r"^" + settings.BASE_API_URL + "/api/v1/explorer/",
+            f"^{settings.BASE_API_URL}/api/v1/explorer/",
             include(explorer_router.router.urls),
-        ),
+        )
     ]
 
-    schema_view = generate_schema(local_urlpatterns)
-
-    return schema_view
+    return generate_schema(local_urlpatterns)
 
 
 def get_import_documentation():
@@ -178,18 +176,16 @@ def get_import_documentation():
 
     local_urlpatterns = [
         re_path(
-            r"^" + settings.BASE_API_URL + "/api/v1/import/",
+            f"^{settings.BASE_API_URL}/api/v1/import/",
             include(integrations_router.router.urls),
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/api/v1/import/",
+            f"^{settings.BASE_API_URL}/api/v1/import/",
             include(csv_import_router.router.urls),
         ),
     ]
 
-    schema_view = generate_schema(local_urlpatterns)
-
-    return schema_view
+    return generate_schema(local_urlpatterns)
 
 
 def get_iam_documentation():
@@ -197,14 +193,12 @@ def get_iam_documentation():
 
     local_urlpatterns = [
         re_path(
-            r"^" + settings.BASE_API_URL + "/api/v1/iam/",
+            f"^{settings.BASE_API_URL}/api/v1/iam/",
             include(iam_router.router.urls),
-        ),
+        )
     ]
 
-    schema_view = generate_schema(local_urlpatterns)
-
-    return schema_view
+    return generate_schema(local_urlpatterns)
 
 
 def get_vault_documentation():
@@ -212,14 +206,12 @@ def get_vault_documentation():
 
     local_urlpatterns = [
         re_path(
-            r"^" + settings.BASE_API_URL + "/api/v1/vault/",
+            f"^{settings.BASE_API_URL}/api/v1/vault/",
             include(vault_router.router.urls),
-        ),
+        )
     ]
 
-    schema_view = generate_schema(local_urlpatterns)
-
-    return schema_view
+    return generate_schema(local_urlpatterns)
 
 
 def render_main_page(request):
@@ -244,82 +236,80 @@ def get_redoc_urlpatterns():
     iam_schema_view = get_iam_documentation()
     vault_schema_view = get_vault_documentation()
 
-    urlpatterns = [
+    return [
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/$",
+            f"^{settings.BASE_API_URL}/docs/api/v1/$",
             render_main_page,
             name="main",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/account",
+            f"^{settings.BASE_API_URL}/docs/api/v1/account",
             account_schema_view.with_ui("redoc", cache_timeout=0),
             name="account",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/portfolio",
+            f"^{settings.BASE_API_URL}/docs/api/v1/portfolio",
             portfolio_schema_view.with_ui("redoc", cache_timeout=0),
             name="portfolio",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/currency",
+            f"^{settings.BASE_API_URL}/docs/api/v1/currency",
             currency_schema_view.with_ui("redoc", cache_timeout=0),
             name="currency",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/instrument",
+            f"^{settings.BASE_API_URL}/docs/api/v1/instrument",
             instrument_schema_view.with_ui("redoc", cache_timeout=0),
             name="instrument",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/transaction",
+            f"^{settings.BASE_API_URL}/docs/api/v1/transaction",
             transaction_schema_view.with_ui("redoc", cache_timeout=0),
             name="transaction",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/counterparty",
+            f"^{settings.BASE_API_URL}/docs/api/v1/counterparty",
             counterparty_schema_view.with_ui("redoc", cache_timeout=0),
             name="counterparty",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/strategy",
+            f"^{settings.BASE_API_URL}/docs/api/v1/strategy",
             strategy_schema_view.with_ui("redoc", cache_timeout=0),
             name="strategy",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/report",
+            f"^{settings.BASE_API_URL}/docs/api/v1/report",
             report_schema_view.with_ui("redoc", cache_timeout=0),
             name="report",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/procedure",
+            f"^{settings.BASE_API_URL}/docs/api/v1/procedure",
             procedure_schema_view.with_ui("redoc", cache_timeout=0),
             name="procedure",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/ui",
+            f"^{settings.BASE_API_URL}/docs/api/v1/ui",
             ui_schema_view.with_ui("redoc", cache_timeout=0),
             name="ui",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/explorer",
+            f"^{settings.BASE_API_URL}/docs/api/v1/explorer",
             explorer_schema_view.with_ui("redoc", cache_timeout=0),
             name="explorer",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/import",
+            f"^{settings.BASE_API_URL}/docs/api/v1/import",
             import_schema_view.with_ui("redoc", cache_timeout=0),
             name="import",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/iam",
+            f"^{settings.BASE_API_URL}/docs/api/v1/iam",
             iam_schema_view.with_ui("redoc", cache_timeout=0),
             name="iam",
         ),
         re_path(
-            r"^" + settings.BASE_API_URL + "/docs/api/v1/vault",
+            f"^{settings.BASE_API_URL}/docs/api/v1/vault",
             vault_schema_view.with_ui("redoc", cache_timeout=0),
             name="vault",
         ),
     ]
-
-    return urlpatterns
