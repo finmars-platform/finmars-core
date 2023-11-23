@@ -158,6 +158,8 @@ def export_journal_to_storage(self, task_id):
 
     # Iterate over each day in the range
     for single_date in daterange(date_from, date_to):
+
+        _l.info('single_date %s' % single_date)
         year, month, day = single_date.year, single_date.month, single_date.day
 
 
