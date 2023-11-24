@@ -32,10 +32,14 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
 
         name = capitalize_first_letter(viewset_name) + ' Full Access'
 
+        from poms.users.models import Member
+        finmars_bot = Member.objects.get(username="finmars_bot")
+
         try:
             access_policy = AccessPolicy.objects.get(user_code=user_code)
         except Exception as e:
             access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                        owner=finmars_bot,
                                                         configuration_code=configuration_code)
 
         access_policy.name = name
@@ -100,10 +104,14 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
         name = capitalize_first_letter(viewset_name) + ' Readonly Access'
         service_name = settings.SERVICE_NAME
 
+        from poms.users.models import Member
+        finmars_bot = Member.objects.get(username="finmars_bot")
+
         try:
             access_policy = AccessPolicy.objects.get(user_code=user_code)
         except Exception as e:
             access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                        owner=finmars_bot,
                                                         configuration_code=configuration_code)
 
         access_policy.name = name
@@ -152,10 +160,14 @@ def generate_balance_report_access_policy():
 
     name = 'BalanceReport Access'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -187,10 +199,14 @@ def generate_pl_report_access_policy():
 
     name = 'PLReport Access'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -222,10 +238,14 @@ def generate_transaction_report_access_policy():
 
     name = 'TransactionReport Access'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -257,10 +277,14 @@ def generate_transaction_view_access_policy():
 
     name = 'Complex Transaction View'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -292,10 +316,14 @@ def generate_transaction_book_access_policy():
 
     name = 'Complex Transaction Book'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -327,10 +355,14 @@ def generate_transaction_rebook_access_policy():
 
     name = 'Complex Transaction Rebook'
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         access_policy = AccessPolicy.objects.get(user_code=user_code)
     except Exception as e:
         access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
                                                     configuration_code=configuration_code)
 
     access_policy.name = name
@@ -354,6 +386,45 @@ def generate_transaction_rebook_access_policy():
     return access_policy
 
 
+def generate_init_configuration_install_access_policy():
+
+    service_name = settings.SERVICE_NAME
+
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-newmembersetupconfiguration-install'
+
+    name = 'NewMemberSetupConfiguration Install'
+
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
+    try:
+        access_policy = AccessPolicy.objects.get(user_code=user_code)
+    except Exception as e:
+        access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    owner=finmars_bot,
+                                                    configuration_code=configuration_code)
+
+    access_policy.name = name
+    access_policy_json = {
+        "Version": "2023-01-01",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "finmars:NewMemberSetupConfiguration:install",
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    access_policy.policy = access_policy_json
+    access_policy.save()
+
+    return access_policy
+
 
 def generate_speicifc_policies_for_viewsets():
 
@@ -363,16 +434,20 @@ def generate_speicifc_policies_for_viewsets():
     generate_transaction_view_access_policy()
     generate_transaction_book_access_policy()
     generate_transaction_rebook_access_policy()
+    generate_init_configuration_install_access_policy()
 
 
 def generate_viewer_role(readonly_access_policies):
 
     configuration_code = get_default_configuration_code()
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         role = Role.objects.get(user_code=configuration_code + ':viewer')
     except Exception as e:
-        role = Role.objects.create(user_code=configuration_code + ':viewer', configuration_code=configuration_code)
+        role = Role.objects.create(user_code=configuration_code + ':viewer', owner=finmars_bot, configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -380,6 +455,17 @@ def generate_viewer_role(readonly_access_policies):
         configuration_code + ':finmars-balancereport',
         configuration_code + ':finmars-plreport',
         configuration_code + ':finmars-transactionreport',
+
+        # UI project has only member related rules, so no worry to gave full access to it
+        configuration_code + ':finmars-listlayout-full',
+        configuration_code + ':finmars-editlayout-full',
+        configuration_code + ':finmars-dashboardlayout-full',
+        configuration_code + ':finmars-contextmenulayout-full',
+
+        # For Init Configuration of any member
+
+        configuration_code + ':finmars-newmembersetupconfiguration-install'
+
     ]
 
     extra_policies = list(AccessPolicy.objects.all().filter(user_code__in=extra_policies_user_codes))
@@ -396,10 +482,13 @@ def generate_full_data_manager_role():
 
     configuration_code = get_default_configuration_code()
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         role = Role.objects.get(user_code=configuration_code + ':full-data-manager')
     except Exception as e:
-        role = Role.objects.create(user_code=configuration_code +':full-data-manager', configuration_code=configuration_code)
+        role = Role.objects.create(user_code=configuration_code +':full-data-manager', owner=finmars_bot, configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -477,10 +566,13 @@ def generate_base_data_manager_role():
 
     configuration_code = get_default_configuration_code()
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         role = Role.objects.get(user_code=configuration_code + ':base-data-manager')
     except Exception as e:
-        role = Role.objects.create(user_code=configuration_code + ':base-data-manager', configuration_code=configuration_code)
+        role = Role.objects.create(user_code=configuration_code + ':base-data-manager', owner=finmars_bot, configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -557,10 +649,13 @@ def generate_member_role():
 
     configuration_code = get_default_configuration_code()
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         role = Role.objects.get(user_code=configuration_code + ':member')
     except Exception as e:
-        role = Role.objects.create(user_code=configuration_code + ':member', configuration_code=configuration_code)
+        role = Role.objects.create(user_code=configuration_code + ':member', owner=finmars_bot, configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -598,10 +693,14 @@ def generate_configuration_manager_role():
 
     configuration_code = get_default_configuration_code()
 
+    from poms.users.models import Member
+    finmars_bot = Member.objects.get(username="finmars_bot")
+
     try:
         role = Role.objects.get(user_code=configuration_code + ':configuration-manager')
     except Exception as e:
         role = Role.objects.create(user_code=configuration_code + ':configuration-manager',
+                                   owner=finmars_bot,
                                    configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)

@@ -58,19 +58,18 @@ class SystemMessageViewSet(AbstractModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         ordering = request.GET.get("ordering", None)
-        type = request.GET.get("type", None)
+        msg_type = request.GET.get("type", None)
         section = request.GET.get("section", None)
         action_status = request.GET.get("action_status", None)
         query = request.GET.get("query", None)
         page = request.GET.get("page", None)
-        only_new = request.GET.get("only_new", False)
+        only_new = request.GET.get("only_new", "")
+        include_workflow = request.GET.get("include_workflow", "")
+
+        if include_workflow != "true":
+            queryset = queryset.exclude(title__icontains="Workflow")
 
         if only_new == "true":
-            only_new = True
-        else:
-            only_new = False
-
-        if only_new:
             queryset = queryset.filter(
                 members__is_read=False, members__member=request.user.member
             )
@@ -79,9 +78,9 @@ class SystemMessageViewSet(AbstractModelViewSet):
             members__is_pinned=False, members__member=request.user.member
         )
 
-        if type:
-            type = type.split(",")
-            queryset = queryset.filter(type__in=type)
+        if msg_type:
+            msg_type = msg_type.split(",")
+            queryset = queryset.filter(type__in=msg_type)
 
         if section:
             section = section.split(",")
@@ -108,8 +107,8 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 members__member=request.user.member,
             )
 
-            if type:
-                pinned_queryset = pinned_queryset.filter(type__in=type)
+            if msg_type:
+                pinned_queryset = pinned_queryset.filter(type__in=msg_type)
 
             if section:
                 pinned_queryset = pinned_queryset.filter(section__in=section)
@@ -120,7 +119,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 )
 
             if len(pinned_queryset):
-                _l.info("Inject %s pinned messages " % len(pinned_queryset))
+                _l.info(f"Inject {len(pinned_queryset)} pinned messages ")
                 queryset = pinned_queryset.union(queryset, all=True)
             else:
                 queryset = queryset.distinct()
@@ -147,7 +146,6 @@ class SystemMessageViewSet(AbstractModelViewSet):
         action_status,
         member,
     ):
-
         section_mapping = {
             0: "General",
             1: "Events",
@@ -221,16 +219,10 @@ class SystemMessageViewSet(AbstractModelViewSet):
         if action_status and ("," in action_status):
             action_status = action_status.split(",")
 
-        if only_new == "true":
-            only_new = True
-        else:
-            only_new = False
-
-        result = []
-
+        only_new = (only_new == "true")
         member = request.user.member
 
-        result.append(
+        result = [
             self.get_stats_for_section(
                 SystemMessage.SECTION_EVENTS,
                 only_new,
@@ -239,9 +231,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_TRANSACTIONS,
                 only_new,
@@ -250,9 +240,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_INSTRUMENTS,
                 only_new,
@@ -261,9 +249,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_DATA,
                 only_new,
@@ -272,9 +258,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_PRICES,
                 only_new,
@@ -283,9 +267,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_REPORT,
                 only_new,
@@ -294,9 +276,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_IMPORT,
                 only_new,
@@ -305,9 +285,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_ACTIVITY_LOG,
                 only_new,
@@ -316,9 +294,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_SCHEDULES,
                 only_new,
@@ -327,9 +303,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-        result.append(
+            ),
             self.get_stats_for_section(
                 SystemMessage.SECTION_OTHER,
                 only_new,
@@ -338,9 +312,8 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 created_after,
                 action_status,
                 member,
-            )
-        )
-
+            ),
+        ]
         return Response(result)
 
     @action(detail=False, methods=["get"], url_path="mark-all-as-read")
@@ -369,14 +342,14 @@ class SystemMessageViewSet(AbstractModelViewSet):
 
         queryset = SystemMessage.objects.all()
 
-        print("mark_as_read ids %s" % ids)
+        print(f"mark_as_read ids {ids}")
         if ids:
             if not isinstance(ids, list):
                 ids = [ids]
 
             queryset = queryset.filter(id__in=ids)
 
-        print("mark_as_read sections %s" % sections)
+        print(f"mark_as_read sections {sections}")
         if sections:
             if not isinstance(sections, list):
                 sections = [sections]
@@ -384,16 +357,15 @@ class SystemMessageViewSet(AbstractModelViewSet):
             queryset = queryset.filter(section__in=sections)
 
         index = 0
-
         for message in queryset:
             for member_message in message.members.all():
                 if request.user.member.id == member_message.member_id:
                     member_message.is_read = True
                     member_message.save()
 
-                    index = index + 1
+                    index += 1
 
-        print("marked as read %s" % index)
+        print(f"marked as read {index}")
 
         return Response({"status": "ok"})
 
@@ -484,7 +456,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         system_message = SystemMessage.objects.get(id=pk)
         context = {"request": request, "master_user": request.user.master_user}
 
-        _l.info("request.data %s" % request.data)
+        _l.info(f"request.data {request.data}")
 
         comment = request.data.get("comment", None)
 

@@ -681,6 +681,7 @@ class SimpleImportProcess(object):
         self.process_type = ProcessType.CSV
 
         self.find_process_type()
+        # `self.attribute_types` are set inside `self.get_attribute_types()`
         self.get_attribute_types()
 
         self.file_items = []  # items from provider  (json, csv, excel)
@@ -688,7 +689,6 @@ class SimpleImportProcess(object):
         self.conversion_items = []  # items with applied converions
         self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
-        self.attribute_types = []
 
         self.context = {
             "master_user": self.master_user,
@@ -1646,7 +1646,7 @@ class SimpleImportProcess(object):
         except Exception as e:
             _l.error(
                 f"SimpleImportProcess.Task {self.task}.process "
-                f"Exception {e} Traceback {traceback.format_exc()}"
+                f"Exception {repr(e)} Traceback {traceback.format_exc()}"
             )
 
             error_flag = True
@@ -1679,7 +1679,9 @@ class SimpleImportProcess(object):
                 result_item.status == "error" for result_item in self.result.items
             )
             if error_rows_count:
-                error_flag = True
+                # Ignore item errors https://finmars2018.atlassian.net/browse/FN-2318
+                # error_flag = True
+
                 send_system_message(
                     master_user=self.master_user,
                     action_status="required",

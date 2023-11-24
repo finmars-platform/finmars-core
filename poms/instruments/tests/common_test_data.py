@@ -210,6 +210,16 @@ EXPECTED_INSTRUMENT = {
             "classifier_object": None,
         }
     ],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "instruments.instrument",
         "app_label": "instruments",
@@ -293,6 +303,16 @@ EXPECTED_INSTRUMENT_TYPE = {
     "configuration_code": "local.poms.space00000",
     "attributes": [],
     "deleted_user_code": None,
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "instruments.instrumenttype",
         "app_label": "instruments",

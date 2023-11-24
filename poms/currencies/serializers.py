@@ -12,7 +12,7 @@ from poms.common.serializers import (
 )
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.fields import PricingPolicyField
+from poms.instruments.fields import PricingPolicyField, CountryField
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.pricing.models import CurrencyHistoryError, CurrencyPricingPolicy
@@ -55,6 +55,7 @@ class CurrencySerializer(
             "is_deleted",
             "is_enabled",
             "pricing_policies",
+            "country"
         ]
 
     def __init__(self, *args, **kwargs):
@@ -65,6 +66,9 @@ class CurrencySerializer(
         self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
             allow_null=True, many=True, required=False
         )
+
+        from poms.instruments.serializers import CountrySerializer
+        self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
 
     def create(self, validated_data):
         pricing_policies = validated_data.pop("pricing_policies", None)

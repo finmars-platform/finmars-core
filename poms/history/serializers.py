@@ -40,3 +40,9 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
 
     def get_content_type(self, instance):
         return f"{instance.content_type.app_label}.{instance.content_type.model}"
+
+
+class ExportJournalSerializer(serializers.Serializer):
+
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=True)

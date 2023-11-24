@@ -6,21 +6,23 @@ from django.db import migrations, models
 def forwards_func(apps, schema_editor):
     # print("forwards_func")
 
-    from poms.reference_tables.models import ReferenceTable
+    pass
 
-    items = ReferenceTable.objects.all()
-
-    for item in items:
-
-        if not item.user_code:
-
-            # item.configuration_code = 'com.finmars.local'
-            from poms.configuration.utils import get_default_configuration_code
-            item.configuration_code = get_default_configuration_code()
-
-            item.user_code = item.configuration_code + ':' + item.name.replace(' ', '_').lower()
-
-            item.save()
+    # from poms.reference_tables.models import ReferenceTable
+    #
+    # items = ReferenceTable.objects.all()
+    #
+    # for item in items:
+    #
+    #     if not item.user_code:
+    #
+    #         # item.configuration_code = 'com.finmars.local'
+    #         from poms.configuration.utils import get_default_configuration_code
+    #         item.configuration_code = get_default_configuration_code()
+    #
+    #         item.user_code = item.configuration_code + ':' + item.name.replace(' ', '_').lower()
+    #
+    #         item.save()
 
 
 def reverse_func(apps, schema_editor):

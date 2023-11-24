@@ -4,17 +4,16 @@ from logging import getLogger
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import AttributeFilter, CharFilter, GroupsAttributeFilter
+from poms.common.filters import CharFilter, GroupsAttributeFilter, AttributeFilter
 from poms.common.views import AbstractAsyncViewSet, AbstractModelViewSet
 from poms.csv_import.tasks import simple_import
 from poms.users.filters import OwnerByMasterUserFilter
-
+from rest_framework.viewsets import ModelViewSet
 from ..common.mixins import UpdateModelMixinExt
+
 from ..system_messages.handlers import send_system_message
 from .filters import SchemeContentTypeFilter
 from .models import CsvImportScheme
@@ -23,6 +22,8 @@ from .serializers import (
     CsvImportSchemeLightSerializer,
     CsvImportSchemeSerializer,
 )
+
+from rest_framework.permissions import IsAuthenticated
 
 _l = getLogger("poms.csv_import")
 
@@ -41,9 +42,11 @@ def utf_8_encoder(unicode_csv_data):
         yield line.encode("utf-8")
 
 
-class SchemeViewSet(AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet):
+class SchemeViewSet(
+    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
+):
     permission_classes = [IsAuthenticated]
-    filter_backends = AbstractModelViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends +  [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter,

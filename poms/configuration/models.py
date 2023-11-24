@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.common.models import OwnerModel
 from poms_app import settings
 
 from poms.configuration.utils import replace_special_chars_and_spaces
@@ -12,7 +13,7 @@ from poms.configuration.utils import replace_special_chars_and_spaces
 _l = logging.getLogger("poms.configuration")
 
 
-class ConfigurationModel(models.Model):
+class ConfigurationModel(OwnerModel):
     """
     just a good remainder to find entity by configuration_code
     """

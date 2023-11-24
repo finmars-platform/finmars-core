@@ -50,6 +50,16 @@ EXPECTED_COUNTERPARTY = {
             "classifier_object": None,
         }
     ],
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "counterparties.counterparty",
         "app_label": "counterparties",
@@ -77,6 +87,7 @@ class CounterpartyViewSetTest(BaseTestCase):
     def create_counterparty_group(self) -> CREATE_DATA:
         return CounterpartyGroup.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -85,6 +96,7 @@ class CounterpartyViewSetTest(BaseTestCase):
     def create_counterparty(self) -> Counterparty:
         self.counterparty = Counterparty.objects.create(
             master_user=self.master_user,
+            owner=self.finmars_bot,
             group=self.create_counterparty_group(),
             user_code=self.random_string(),
             name=self.random_string(),
