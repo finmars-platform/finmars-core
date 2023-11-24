@@ -1481,7 +1481,7 @@ def _add_price_history(
     instrument,
     pricing_policy,
     principal_price=0,
-    accrued_price=0,
+    accrued_price=None,
     is_temporary_price=False,
     overwrite=True,
 ):
