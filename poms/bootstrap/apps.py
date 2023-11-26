@@ -112,6 +112,7 @@ class BootstrapConfig(AppConfig):
         from poms.users.models import MasterUser, Member, UserProfile
 
         if not settings.AUTHORIZER_URL:
+            print("Attention! AUTHORIZER_URL is not defined!")
             return
 
         try:
@@ -143,8 +144,6 @@ class BootstrapConfig(AppConfig):
 
             name = response_data["name"]
 
-            user = None
-
             try:
                 user = User.objects.get(username=response_data["owner"]["username"])
 
@@ -167,14 +166,11 @@ class BootstrapConfig(AppConfig):
 
             _l.info(f'Create owner {response_data["owner"]["username"]}')
 
-            if user:
-                user_profile, created = UserProfile.objects.get_or_create(
-                    user_id=user.pk
-                )
+            user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
 
-                _l.info("Owner User Profile Updated")
+            _l.info("Owner User Profile Updated")
 
-                user_profile.save()
+            user_profile.save()
 
             try:
                 if (
@@ -192,7 +188,9 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info(
-                        f"Master User From Backup Renamed to new Name {master_user.name} and Base API URL {master_user.base_api_url}"
+                        f"Master User From Backup Renamed to new Name "
+                        f"{master_user.name} and "
+                        f"Base API URL {master_user.base_api_url}"
                     )
                     # Member.objects.filter(is_owner=False).delete()
 
@@ -235,9 +233,9 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Admin Group Created")
 
+            master_user = MasterUser.objects.all().first()
             try:
                 # TODO, carefull if someday return to multi master user inside one db
-                master_user = MasterUser.objects.all().first()
 
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
@@ -246,6 +244,7 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(f"Could not sync base_api_url {e}")
+                raise e
 
             try:
                 current_owner_member = Member.objects.get(
