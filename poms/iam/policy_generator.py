@@ -614,7 +614,7 @@ def generate_base_data_manager_role():
         f"{configuration_code}:finmars-transactiontypeattributetype-readonly",
         f"{configuration_code}:finmars-transaction-full",
         f"{configuration_code}:finmars-complextransaction-full",
-        configuration_code + ":finmars-complextransactionattributetype-readonly",
+        f"{configuration_code}:finmars-complextransactionattributetype-readonly",
         f"{configuration_code}:finmars-portfolioattributetype-readonly",
         f"{configuration_code}:finmars-accountattributetype-readonly",
         f"{configuration_code}:finmars-accounttype-readonly",
@@ -756,14 +756,16 @@ def get_viewsets_from_app(app_name):
         except ImportError:
             continue
 
-        for name, obj in inspect.getmembers(viewsets_module):
+        viewset_classes.extend(
+            obj
+            for name, obj in inspect.getmembers(viewsets_module)
             if (
                 inspect.isclass(obj)
                 and issubclass(obj, viewsets.ViewSetMixin)
                 and obj != viewsets.ViewSetMixin
-            ):
-                if "abstract" not in name.lower():
-                    viewset_classes.append(obj)
+            )
+            and "abstract" not in name.lower()
+        )
 
     return viewset_classes
 
