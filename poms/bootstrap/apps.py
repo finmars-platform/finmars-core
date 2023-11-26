@@ -108,7 +108,6 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
         from django.contrib.auth.models import User
-
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
@@ -152,9 +151,8 @@ class BootstrapConfig(AppConfig):
                 _l.info("Owner exists")
 
             except User.DoesNotExist:
+                password = generate_random_string(10)
                 try:
-                    password = generate_random_string(10)
-
                     user = User.objects.create(
                         email=response_data["owner"]["email"],
                         username=response_data["owner"]["username"],
@@ -162,11 +160,12 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info(f'Create owner {response_data["owner"]["username"]}')
-
                 except Exception as e:
-                    _l.info(f"Create user error {e}")
-                    _l.info(f"Create user traceback {traceback.format_exc()}")
+                    err_msg = f"Create user error {repr(e)}"
+                    _l.info(err_msg)
+                    raise RuntimeError(err_msg) from e
+
+            _l.info(f'Create owner {response_data["owner"]["username"]}')
 
             if user:
                 user_profile, created = UserProfile.objects.get_or_create(
@@ -197,10 +196,13 @@ class BootstrapConfig(AppConfig):
                     )
                     # Member.objects.filter(is_owner=False).delete()
 
-            except Exception as e:
-                _l.error(f"Old backup name error {e}")
+            except MasterUser.DoesNotExist as e:
+                _l.error(
+                    f"Old backup name {response_data['old_backup_name']} "
+                    f"error {repr(e)}"
+                )
 
-            if MasterUser.objects.all().count() == 0:
+            if not MasterUser.objects.all():
                 _l.info("Empty database, create new master user")
 
                 master_user = MasterUser.objects.create_master_user(
