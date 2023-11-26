@@ -60,37 +60,35 @@ class BootstrapConfig(AppConfig):
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
+        from poms.users.models import MasterUser, Member
 
-        from poms.users.models import Member
-
-        try:
-            user = User.objects.get(username="finmars_bot")
-
-        except Exception:
-            user = User.objects.create(username="finmars_bot")
+        user = User.objects.get_or_create(username="finmars_bot")
 
         try:
-            member = Member.objects.get(user__username="finmars_bot")
+            _ = Member.objects.get(user__username="finmars_bot")
             _l.info("finmars_bot already exists")
-        except Exception:
+
+        except Member.DoesNotExist:
+            _l.info("Member not found, going to create it")
             try:
-                _l.info("Member not found, going to create it")
-
-                from poms.users.models import MasterUser
-
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                member = Member.objects.create(
+                _ = Member.objects.create(
                     user=user,
                     username="finmars_bot",
                     master_user=master_user,
                     is_admin=True,
                 )
 
-                _l.info("finmars_bot created")
+            except MasterUser.DoesNotExist as e:
+                err_msg = (
+                    f"Could not create finmars_bot {repr(e)} no master_user for "
+                    f"base_api_url={settings.BASE_API_URL}"
+                )
+                _l.error(err_msg)
+                raise RuntimeError(err_msg) from e
 
-            except Exception as e:
-                _l.error(f"Warning. Could not create finmars_bot {e}")
+        _l.info("finmars_bot created")
 
     def create_iam_access_policies_templates(self):
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
@@ -438,27 +436,6 @@ class BootstrapConfig(AppConfig):
                     self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create workflows folder")
 
-            # Deprecated, no workflows in workflows/com/finmars...
-            # if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
-            #     path = settings.BASE_API_URL + '/workflows/schemas/.init'
-            #
-            #     with NamedTemporaryFile() as tmpf:
-            #         tmpf.write(b'')
-            #         tmpf.flush()
-            #         storage.save(path, tmpf)
-            #
-            #         _l.info("create workflows schemas folder")
-            #
-            # if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
-            #     path = settings.BASE_API_URL + '/workflows/tasks/.init'
-            #
-            #     with NamedTemporaryFile() as tmpf:
-            #         tmpf.write(b'')
-            #         tmpf.flush()
-            #         storage.save(path, tmpf)
-            #
-            #         _l.info("create workflows tasks folder")
-
             members = Member.objects.all()
 
             for member in members:
@@ -470,8 +447,7 @@ class BootstrapConfig(AppConfig):
                     with NamedTemporaryFile() as tmpf:
                         self._extracted_from_create_base_folders_19(tmpf, storage, path)
         except Exception as e:
-            _l.info("create_base_folders error %s" % e)
-            _l.info("create_base_folders traceback %s" % traceback.format_exc())
+            _l.info(f"create_base_folders error {e} traceback {traceback.format_exc()}")
 
     # TODO Rename this here and in `create_base_folders`
     def _extracted_from_create_base_folders_19(self, tmpf, storage, path):
@@ -482,11 +458,9 @@ class BootstrapConfig(AppConfig):
     def create_local_configuration(self):
         from poms.configuration.models import Configuration
 
-        configuration_code = "local.poms." + settings.BASE_API_URL
+        configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
         try:
-            # configuration = Configuration.objects.get(configuration_code="com.finmars.local") # deprecated
-
             configuration = Configuration.objects.get(
                 configuration_code=configuration_code
             )
