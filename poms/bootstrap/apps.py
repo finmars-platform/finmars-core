@@ -1,16 +1,14 @@
-from __future__ import unicode_literals
-
 import json
 import logging
 import sys
 import traceback
 
-import requests
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
+import requests
 
 from poms_app import settings
 
@@ -62,6 +60,7 @@ class BootstrapConfig(AppConfig):
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
+
         from poms.users.models import Member
 
         try:
@@ -94,9 +93,7 @@ class BootstrapConfig(AppConfig):
                 _l.error(f"Warning. Could not create finmars_bot {e}")
 
     def create_iam_access_policies_templates(self):
-        from poms.iam.policy_generator import (
-            create_base_iam_access_policies_templates,
-        )
+        from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
         if "test" not in sys.argv:
             _l.info("create_iam_access_policies_templates")
@@ -113,8 +110,9 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
         from django.contrib.auth.models import User
-        from poms.users.models import Member, MasterUser, UserProfile
+
         from poms.auth_tokens.utils import generate_random_string
+        from poms.users.models import MasterUser, Member, UserProfile
 
         if not settings.AUTHORIZER_URL:
             return
@@ -272,8 +270,9 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error("load_master_user_data error %s" % e)
-            _l.error("load_master_user_data traceback %s" % traceback.format_exc())
+            _l.error(
+                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+            )
 
     def register_at_authorizer_service(self):
         if not settings.AUTHORIZER_URL:
@@ -313,16 +312,16 @@ class BootstrapConfig(AppConfig):
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     def sync_celery_workers(self):
+        from poms.celery_tasks.models import CeleryWorker
+        from poms.common.finmars_authorizer import AuthorizerService
+
         if not settings.AUTHORIZER_URL:
             return
 
         try:
             _l.info("sync_celery_workers processing")
 
-            from poms.common.finmars_authorizer import AuthorizerService
-
             authorizer_service = AuthorizerService()
-            from poms.celery_tasks.models import CeleryWorker
 
             workers = CeleryWorker.objects.all()
 
@@ -333,15 +332,15 @@ class BootstrapConfig(AppConfig):
                     if worker_status["status"] == "not_found":
                         authorizer_service.create_worker(worker)
                 except Exception as e:
-                    _l.error("sync_celery_workers: worker %s error %s" % (worker, e))
+                    _l.error(f"sync_celery_workers: worker {worker} error {e}")
 
         except Exception as e:
-            _l.info("sync_celery_workers error %s" % e)
+            _l.info(f"sync_celery_workers error {e}")
 
     def create_member_layouts(self):
         # TODO wtf is default member layout?
-        from poms.users.models import Member
         from poms.ui.models import MemberLayout
+        from poms.users.models import Member
 
         members = Member.objects.all()
 
@@ -354,7 +353,7 @@ class BootstrapConfig(AppConfig):
                 layout = MemberLayout.objects.get(
                     member=member,
                     configuration_code=configuration_code,
-                    user_code=configuration_code + ":default_member_layout",
+                    user_code=f"{configuration_code}:default_member_layout",
                 )
             except Exception as e:
                 try:
@@ -366,15 +365,17 @@ class BootstrapConfig(AppConfig):
                         name="default",
                         user_code="default_member_layout",
                     )  # configuration code will be added automatically
-                    _l.info("Created member layout for %s" % member.username)
+                    _l.info(f"Created member layout for {member.username}")
+
                 except Exception as e:
                     _l.info("Could not create member layout" % member.username)
 
     def create_base_folders(self):
-        from poms.common.storage import get_storage
         from tempfile import NamedTemporaryFile
-        from poms_app import settings
+
+        from poms.common.storage import get_storage
         from poms.users.models import Member
+        from poms_app import settings
 
         try:
             storage = get_storage()
@@ -383,38 +384,29 @@ class BootstrapConfig(AppConfig):
 
             _l.info("create base folders if not exists")
 
-            if not storage.exists(settings.BASE_API_URL + "/.system/.init"):
-                path = settings.BASE_API_URL + "/.system/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/.system/.init"):
+                path = f"{settings.BASE_API_URL}/.system/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create .system folder")
 
-            if not storage.exists(settings.BASE_API_URL + "/.system/tmp/.init"):
-                path = settings.BASE_API_URL + "/.system/tmp/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/.system/tmp/.init"):
+                path = f"{settings.BASE_API_URL}/.system/tmp/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create .system/tmp folder")
 
-            if not storage.exists(settings.BASE_API_URL + "/.system/log/.init"):
-                path = settings.BASE_API_URL + "/.system/log/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/.system/log/.init"):
+                path = f"{settings.BASE_API_URL}/.system/log/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create system log folder")
 
             if not storage.exists(
-                settings.BASE_API_URL + "/.system/new-member-setup-configurations/.init"
+                f"{settings.BASE_API_URL}/.system/new-member-setup-configurations/.init"
             ):
                 path = (
                     settings.BASE_API_URL
@@ -422,40 +414,28 @@ class BootstrapConfig(AppConfig):
                 )
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create system new-member-setup-configurations folder")
 
-            if not storage.exists(settings.BASE_API_URL + "/public/.init"):
-                path = settings.BASE_API_URL + "/public/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/public/.init"):
+                path = f"{settings.BASE_API_URL}/public/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create public folder")
 
-            if not storage.exists(settings.BASE_API_URL + "/configurations/.init"):
-                path = settings.BASE_API_URL + "/configurations/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/configurations/.init"):
+                path = f"{settings.BASE_API_URL}/configurations/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create configurations folder")
 
-            if not storage.exists(settings.BASE_API_URL + "/workflows/.init"):
-                path = settings.BASE_API_URL + "/workflows/.init"
+            if not storage.exists(f"{settings.BASE_API_URL}/workflows/.init"):
+                path = f"{settings.BASE_API_URL}/workflows/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b"")
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
+                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
                     _l.info("create workflows folder")
 
             # Deprecated, no workflows in workflows/com/finmars...
@@ -483,18 +463,21 @@ class BootstrapConfig(AppConfig):
 
             for member in members:
                 if not storage.exists(
-                    settings.BASE_API_URL + "/" + member.username + "/.init"
+                    f"{settings.BASE_API_URL}/{member.username}/.init"
                 ):
-                    path = settings.BASE_API_URL + "/" + member.username + "/.init"
+                    path = f"{settings.BASE_API_URL}/{member.username}/.init"
 
                     with NamedTemporaryFile() as tmpf:
-                        tmpf.write(b"")
-                        tmpf.flush()
-                        storage.save(path, tmpf)
-
+                        self._extracted_from_create_base_folders_19(tmpf, storage, path)
         except Exception as e:
             _l.info("create_base_folders error %s" % e)
             _l.info("create_base_folders traceback %s" % traceback.format_exc())
+
+    # TODO Rename this here and in `create_base_folders`
+    def _extracted_from_create_base_folders_19(self, tmpf, storage, path):
+        tmpf.write(b"")
+        tmpf.flush()
+        storage.save(path, tmpf)
 
     def create_local_configuration(self):
         from poms.configuration.models import Configuration
