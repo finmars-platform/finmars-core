@@ -164,3 +164,83 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             "DAY_COUNT_30_360_GERMAN",  # code 21
         )
         self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[2])
+
+    @skip("till fix the full name instrument type")
+    def test__instrument_with_periodicity_created(self):
+        instrument_code = self.random_string(11)
+        currency_code = self.random_string(3)
+        post_data = {
+            "request_id": self.task.id,
+            "task_id": None,
+            "data": {
+                "instruments": [
+                    {
+                        "instrument_type": {
+                            "user_code": "bond",
+                        },
+                        "user_code": instrument_code,
+                        "short_name": "test_short_name",
+                        "name": "test_name",
+                        "pricing_currency": {
+                            "code": currency_code,
+                        },
+                        "maturity_price": 100.0,
+                        "maturity_date": date.today(),
+                        "country": {
+                            "alpha_3": "USA",
+                        },
+                        "factor_schedules": [
+                            {"effective_date": "2023-08-08", "factor_value": 1.0},
+                            {"effective_date": "2024-02-08", "factor_value": 9.0},
+                            {"effective_date": "2025-08-08", "factor_value": 8.0},
+                        ],
+                        "accrual_calculation_schedules": [
+                            {
+                                "id": 63,
+                                "accrual_start_date": "2017-02-08",
+                                "first_payment_date": "2017-02-08",
+                                "accrual_size": 0.0875,
+                                "periodicity_n": 0,  # should be set as ANNUALLY
+                                "accrual_calculation_model": 21,
+                                "accrual_calculation_model_object": {
+                                    "id": 21,
+                                    "name": "30/360 German",
+                                    "short_name": None,
+                                    "user_code": "30/360 German",
+                                    "public_name": None,
+                                    "notes": None,
+                                },
+                                "periodicity": None,  # should be set as ANNUALLY
+                                "periodicity_object": {},
+                                "notes": "",
+                            },
+                        ],
+                    },
+                ],
+                "currencies": [
+                    {
+                        "user_code": currency_code,
+                        "short_name": f"short_{currency_code}",
+                        "name": f"name_{currency_code}",
+                        "public_name": f"public_{currency_code}",
+                    }
+                ],
+            },
+        }
+
+        response = self.client.post(path=self.url, format="json", data=post_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument = self.validate_result_instrument(instrument_code)
+        self.assertEqual(len(instrument.factor_schedules.all()), 3)
+        self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)
+
+        accrual = AccrualCalculationSchedule.objects.filter(
+            instrument=instrument
+        ).first()
+        self.assertIsNotNone(accrual)
+        self.assertEqual(
+            accrual.accrual_calculation_model.user_code,
+            "DAY_COUNT_30_360_GERMAN",  # code 21
+        )
+        self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[1])
