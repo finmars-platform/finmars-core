@@ -8,12 +8,12 @@ import re
 import traceback
 import uuid
 
-import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 
+import pandas as pd
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
@@ -1242,13 +1242,13 @@ _get_mapping_key_by_value.evaluator = True
 
 
 def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
+    from poms.integrations.models import MappingTable
+
     try:
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
-
-        from poms.integrations.models import MappingTable
 
         mapping_table = MappingTable.objects.get(
             master_user=master_user, user_code=user_code
@@ -1503,7 +1503,6 @@ def _add_price_history(
     from poms.instruments.models import PriceHistory
 
     # from poms.users.utils import get_master_user_from_context
-
     # TODO need master user check, security hole
     # context = evaluator.context
     # master_user = get_master_user_from_context(context)
@@ -4195,10 +4194,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
     from poms.celery_tasks.models import CeleryTask
     from poms.integrations.models import ComplexTransactionImportScheme
     from poms.transaction_import.tasks import transaction_import
-    from poms.users.utils import (
-        get_master_user_from_context,
-        get_member_from_context,
-    )
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
 
     try:
         _l.info(f"_run_transaction_import {filepath}")
