@@ -576,13 +576,16 @@ def _get_quarter(date):
 
     return quarter
 
+
 def _get_year(date):
     date = _parse_date(date)
     return date.year
 
+
 def _get_month(date):
     date = _parse_date(date)
     return date.month
+
 
 def _universal_parse_country(value):
     result = None
@@ -740,8 +743,10 @@ def _parse_number(a):
 def _join(data, separator):
     return separator.join(data)
 
+
 def _strip(data):
     return data.strip()
+
 
 def _reverse(items):
     if isinstance(items, str):
@@ -1481,7 +1486,7 @@ def _add_price_history(
     instrument,
     pricing_policy,
     principal_price=0,
-    accrued_price=0,
+    accrued_price=None,
     is_temporary_price=False,
     overwrite=True,
 ):
@@ -1653,10 +1658,8 @@ def _get_latest_fx_rate(
 
         _l.info("_get_latest_fx_rate results %s " % results)
 
-        if len(list(results)):
-            return results[0].fx_rate
+        return results[0].fx_rate if len(list(results)) else default_value
 
-        return default_value
     except Exception as e:
         _l.info("_get_latest_fx_rate exception %s " % e)
         return default_value
@@ -2041,14 +2044,14 @@ def _get_currency_attribute(evaluator, currency, attribute_type_user_code):
             if attribute.attribute_type.value_type == 10:
                 result = attribute.value_text
 
-            if attribute.attribute_type.value_type == 20:
+            elif attribute.attribute_type.value_type == 20:
                 result = attribute.value_float
 
-            if attribute.attribute_type.value_type == 30:
+            elif attribute.attribute_type.value_type == 30:
                 if attribute.classifier:
                     result = attribute.classifier.name
 
-            if attribute.attribute_type.value_type == 40:
+            elif attribute.attribute_type.value_type == 40:
                 result = attribute.value_date
 
     return result
@@ -2180,13 +2183,12 @@ _delete_accrual_schedules.evaluator = True
 
 def _add_event_schedule(evaluator, instrument, data):
     from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import EventSchedule
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
     instrument = _safe_get_instrument(evaluator, instrument)
-
-    from poms.instruments.models import EventSchedule
 
     result = EventSchedule(instrument=instrument)
 
@@ -2697,7 +2699,7 @@ def _set_account_user_attribute(evaluator, account, user_code, value):
                 if attribute.attribute_type.value_type == 10:
                     attribute.value_string = value
 
-                if attribute.attribute_type.value_type == 20:
+                elif attribute.attribute_type.value_type == 20:
                     attribute.value_float = value
 
                 if attribute.attribute_type.value_type == 30:
@@ -2710,7 +2712,7 @@ def _set_account_user_attribute(evaluator, account, user_code, value):
                         attribute.classifier = classifier
 
                     except Exception as e:
-                        _l.error("Error setting classifier: %s" % e)
+                        _l.error(f"Error setting classifier: {e}")
                         attribute.classifier = None
 
                 if attribute.attribute_type.value_type == 40:
@@ -2722,7 +2724,7 @@ def _set_account_user_attribute(evaluator, account, user_code, value):
     except Exception as e:
         _l.info("_set_account_user_attribute.e", e)
         _l.info("_set_account_user_attribute.traceback", traceback.print_exc())
-        raise InvalidExpression("Invalid Property")
+        raise InvalidExpression("Invalid Property") from e
 
 
 _set_account_user_attribute.evaluator = True
