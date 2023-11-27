@@ -137,9 +137,9 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info(
-                "load_master_user_data  response.status_code %s" % response.status_code
+                f"load_master_user_data  response.status_code {response.status_code} "
+                f"response.text {response.text}"
             )
-            _l.info("load_master_user_data response.text %s" % response.text)
 
             response_data = response.json()
 
@@ -379,21 +379,21 @@ class BootstrapConfig(AppConfig):
                 path = f"{settings.BASE_API_URL}/.system/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system folder")
 
             if not storage.exists(f"{settings.BASE_API_URL}/.system/tmp/.init"):
                 path = f"{settings.BASE_API_URL}/.system/tmp/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system/tmp folder")
 
             if not storage.exists(f"{settings.BASE_API_URL}/.system/log/.init"):
                 path = f"{settings.BASE_API_URL}/.system/log/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system log folder")
 
             if not storage.exists(
@@ -405,28 +405,28 @@ class BootstrapConfig(AppConfig):
                 )
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system new-member-setup-configurations folder")
 
             if not storage.exists(f"{settings.BASE_API_URL}/public/.init"):
                 path = f"{settings.BASE_API_URL}/public/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create public folder")
 
             if not storage.exists(f"{settings.BASE_API_URL}/configurations/.init"):
                 path = f"{settings.BASE_API_URL}/configurations/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create configurations folder")
 
             if not storage.exists(f"{settings.BASE_API_URL}/workflows/.init"):
                 path = f"{settings.BASE_API_URL}/workflows/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create workflows folder")
 
             members = Member.objects.all()
@@ -438,15 +438,10 @@ class BootstrapConfig(AppConfig):
                     path = f"{settings.BASE_API_URL}/{member.username}/.init"
 
                     with NamedTemporaryFile() as tmpf:
-                        self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                        self._save_tmp_to_storage(tmpf, storage, path)
+
         except Exception as e:
             _l.info(f"create_base_folders error {e} traceback {traceback.format_exc()}")
-
-    # TODO Rename this here and in `create_base_folders`
-    def _extracted_from_create_base_folders_19(self, tmpf, storage, path):
-        tmpf.write(b"")
-        tmpf.flush()
-        storage.save(path, tmpf)
 
     def create_local_configuration(self):
         from poms.configuration.models import Configuration
@@ -468,3 +463,8 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info("Local Configuration created")
+
+    def _save_tmp_to_storage(self, tmpf, storage, path):
+        tmpf.write(b"")
+        tmpf.flush()
+        storage.save(path, tmpf)
