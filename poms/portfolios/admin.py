@@ -6,7 +6,7 @@ from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord,
+    PortfolioRegisterRecord, PortfolioHistory,
 )
 
 
@@ -97,3 +97,13 @@ class PortfolioBundleAdmin(AbstractModelAdmin):
 
 
 admin.site.register(PortfolioBundle, PortfolioBundleAdmin)
+
+
+class PortfolioHistoryAdmin(AbstractModelAdmin):
+    model = PortfolioHistory
+    master_user_path = "master_user"
+    list_display = ["id", "master_user", "user_code", "portfolio", "date"]
+    raw_id_fields = ["master_user"]
+
+
+admin.site.register(PortfolioHistory, PortfolioHistoryAdmin)

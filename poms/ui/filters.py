@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.filters import BaseFilterBackend
 
-from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
+from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord, PortfolioHistory
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
 from poms.reports.models import BalanceReport, PLReport, PerformanceReport, CashFlowReport, TransactionReport
 
@@ -19,17 +19,18 @@ class LayoutContentTypeFilter(BaseFilterBackend):
         from poms.ui.models import Dashboard
 
         from poms.integrations.models import ComplexTransactionImportScheme
+        from poms.csv_import.models import CsvImportScheme
         models = [AccountType, Account, Currency, InstrumentType, Instrument,
                   PriceHistory, CurrencyHistory,
                   PriceHistoryError, CurrencyHistoryError,
                   PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio,
-                  PortfolioRegister, PortfolioRegisterRecord,
+                  PortfolioRegister, PortfolioRegisterRecord, PortfolioHistory,
                   TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction,
                   Strategy1Group, Strategy1Subgroup, Strategy1,
                   Strategy2Group, Strategy2Subgroup, Strategy2,
                   Strategy3Group, Strategy3Subgroup, Strategy3,
                   BalanceReport, PLReport, PerformanceReport, CashFlowReport, TransactionReport,
-                  Dashboard, GeneratedEvent, ComplexTransactionImportScheme]
+                  Dashboard, GeneratedEvent, ComplexTransactionImportScheme, CsvImportScheme]
         ctypes = [ContentType.objects.get_for_model(model).pk for model in models]
         return queryset.filter(pk__in=ctypes).order_by('model')
 

@@ -3,7 +3,7 @@ import shutil
 
 from rest_framework import serializers
 
-from poms.common.serializers import ModelMetaSerializer
+from poms.common.serializers import ModelMetaSerializer, ModelWithUserCodeSerializer
 from poms.common.storage import get_storage
 from poms.configuration.models import Configuration, NewMemberSetupConfiguration
 from poms_app import settings
@@ -57,7 +57,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
         return ConfigurationImport(file_path=file_path, file_name=file_name)
 
 
-class NewMemberSetupConfigurationSerializer(ModelMetaSerializer):
+class NewMemberSetupConfigurationSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     file = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
@@ -87,7 +87,7 @@ class NewMemberSetupConfigurationSerializer(ModelMetaSerializer):
             validated_data['file_url'] = file_path
             validated_data['file_name'] = file.name
 
-        return NewMemberSetupConfiguration.objects.create(**validated_data)
+        return super(NewMemberSetupConfigurationSerializer, self).create(validated_data)
 
     def update(self, instance, validated_data):
 

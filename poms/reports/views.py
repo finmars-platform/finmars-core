@@ -454,6 +454,7 @@ class SummaryViewSet(AbstractViewSet):
         _l.info('SummaryViewSet.list.date_to %s' % date_to)
 
         summary_record_count = ReportSummaryInstance.objects.filter(member=request.user.member,
+                                                                    owner=request.user.member,
                                                                     date_from=date_from,
                                                                     date_to=date_to,
                                                                     portfolios=portfolios,
@@ -518,11 +519,13 @@ class SummaryViewSet(AbstractViewSet):
             report_summary_record = ReportSummaryInstance.objects.create(
                 master_user=request.user.master_user,
                 member=request.user.member,
+                owner=request.user.member,
                 date_from=date_from,
                 date_to=date_to,
                 portfolios=portfolios,
                 currency=currency,
                 allocation_mode=allocation_mode,
+                pricing_policy=pricing_policy,
                 data=result
             )
 
@@ -532,6 +535,7 @@ class SummaryViewSet(AbstractViewSet):
         else:
 
             report_summary_record = ReportSummaryInstance.objects.filter(member=request.user.member,
+                                                                         owner=request.user.member,
                                                                          date_from=date_from,
                                                                          date_to=date_to,
                                                                          portfolios=portfolios,

@@ -43,6 +43,16 @@ EXPECTED_ACCOUNT_TYPE = {
         }
     ],
     "deleted_user_code": None,
+    "owner": {
+        "id": 1,
+        "username": "finmars_bot",
+        "first_name": "",
+        "last_name": "",
+        "display_name": "finmars_bot",
+        "is_owner": True,
+        "is_admin": True,
+        "user": 1
+    },
     "meta": {
         "content_type": "accounts.accounttype",
         "app_label": "accounts",

@@ -210,7 +210,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "postgres"),
+        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
@@ -264,8 +264,8 @@ CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", ".finmars.com")
 CSRF_TRUSTED_ORIGINS = [
     "capacitor://localhost",
     "http://localhost",
+    "http://127.0.0.1",
     "http://0.0.0.0",
-    "http://0.0.0.0:8080",
     f"http://{DOMAIN_NAME}",
     f"https://{DOMAIN_NAME}",
 ]
@@ -402,33 +402,47 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-        },
-        # "file": {
-        #     "level": DJANGO_LOG_LEVEL,
-        #     "class": "logging.FileHandler",
-        #     "filename": "/var/log/finmars/backend/django.log",
-        #     "formatter": "verbose",
-        # },
+        }
     },
     "loggers": {
-        "django.request": {"level": "ERROR", "handlers": ["console"]},
+        "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
         "provision": {
-            "handlers": ["provision-console"],
+            "handlers": ["provision-console", "file"],
             "level": "INFO",
             "propagate": True,
         },
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "level": "ERROR",
             "propagate": True,
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         }
     },
 }
+
+if SERVER_TYPE == 'local':
+
+    os.makedirs(BASE_DIR + '/log/', exist_ok=True)
+
+    LOGGING['handlers']['file'] = {
+        'level': DJANGO_LOG_LEVEL,
+        'class': 'logging.FileHandler',
+        'filename': BASE_DIR + '/log/django.log',
+        'formatter': 'verbose'
+    }
+
+else:
+
+    LOGGING['handlers']['file'] = {
+        'level': DJANGO_LOG_LEVEL,
+        'class': 'logging.FileHandler',
+        'filename': '/var/log/finmars/backend/django.log',
+        'formatter': 'verbose'
+    }
 
 # if SEND_LOGS_TO_FINMARS:
 #     LOGGING["handlers"]["logstash"] = {
@@ -615,6 +629,8 @@ AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
 
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
 AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", None)
@@ -628,10 +644,10 @@ BLOOMBERG_EMPTY_VALUE = [None, "", "N.S."]
 
 BLOOMBERG_SANDBOX = ENV_BOOL("BLOOMBERG_SANDBOX", True)
 
-if BLOOMBERG_SANDBOX:
-    print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
-else:
-    print("Bloomberg Data License Module activated 🟢")
+# if BLOOMBERG_SANDBOX:
+#     print("Bloomberg Data License Module disabled 🔴 [SANDBOX]")
+# else:
+#     print("Bloomberg Data License Module activated 🟢")
 
 BLOOMBERG_RETRY_DELAY = 0.1 if BLOOMBERG_SANDBOX else 5
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
@@ -663,6 +679,7 @@ INTERNAL_IPS = [
 if USE_DEBUGGER:
     print("Warning. Debugger is activated, could lead to low performance")
     DEBUG_TOOLBAR_PANELS = [
+        "debug_toolbar.panels.history.HistoryPanel",
         "debug_toolbar.panels.versions.VersionsPanel",
         "debug_toolbar.panels.timer.TimerPanel",
         "debug_toolbar.panels.settings.SettingsPanel",

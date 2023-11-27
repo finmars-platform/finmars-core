@@ -320,7 +320,7 @@ class AccrualCalculationModel(AbstractClassModel):
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
         (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
         (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
-        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365")),
+        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
         (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
@@ -344,6 +344,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
             AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
             AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: ql.Actual365Fixed(),
@@ -357,9 +358,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
         }
 
-        result = map_daycount_convention.get(finmars_accrual_calculation_model, default)
-
-        return result
+        return map_daycount_convention.get(finmars_accrual_calculation_model, default)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -2413,12 +2412,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_scheme = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_scheme,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_scheme = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_scheme,
@@ -2430,12 +2431,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_parameter = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_parameter,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_parameter = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_parameter,
@@ -2447,12 +2450,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             try:
                 attr_type_notes = GenericAttributeType.objects.get(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     user_code=user_code_notes,
                 )
             except GenericAttributeType.DoesNotExist:
                 attr_type_notes = GenericAttributeType.objects.create(
                     master_user=self.master_user,
+                    owner=self.owner,
                     content_type=content_type,
                     value_type=GenericAttributeType.STRING,
                     user_code=user_code_notes,
@@ -2473,8 +2478,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_scheme,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_scheme,
-                    configuration_code=configuration_code,
                 )
 
             if ipp.pricing_scheme:
@@ -2496,8 +2499,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_parameter,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_parameter,
-                    configuration_code=configuration_code,
                 )
 
             if ipp.attribute_key:
@@ -2506,6 +2507,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         code = ipp.attribute_key.split("attributes.")[1]
                         type = GenericAttributeType.objects.get(
                             master_user=self.master_user,
+                            owner=self.owner,
                             content_type=content_type,
                             user_code=code,
                         )
@@ -2554,8 +2556,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     attribute_type=attr_type_notes,
                     object_id=self.pk,
                     content_type=content_type,
-                    user_code=user_code_notes,
-                    configuration_code=configuration_code,
                 )
 
             attr_notes.value_string = ipp.notes or ""

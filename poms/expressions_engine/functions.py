@@ -1485,34 +1485,48 @@ def _add_price_history(
     is_temporary_price=False,
     overwrite=True,
 ):
-    from poms.instruments.models import PriceHistory
-    from poms.users.utils import get_master_user_from_context
+    """
+    Adds a price history entry for an instrument.
 
-    context = evaluator.context
-    master_user = get_master_user_from_context(context)
+    Args:
+    - evaluator: The evaluator object.
+    - date: The date of the price history entry.
+    - instrument: The instrument object.
+    - pricing_policy: The pricing policy object.
+    - principal_price: The principal price (default: 0).
+    - accrued_price: The accrued price (default: 0).
+    - is_temporary_price: Indicates if the price is temporary (default: False).
+    - overwrite: Indicates if existing price history should be overwritten (default: True).
+    """
+    from poms.instruments.models import PriceHistory
+    # from poms.users.utils import get_master_user_from_context
+
+    # TODO need master user check, security hole
+    # context = evaluator.context
+    # master_user = get_master_user_from_context(context)
+
+    if not overwrite:
+        return False
 
     date = _parse_date(date)
     instrument = _safe_get_instrument(evaluator, instrument)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
-
-    # TODO need master user check, security hole
+    if accrued_price is None:
+        # https://finmars2018.atlassian.net/browse/FN-2233
+        accrued_price = instrument.get_accrued_price(date)
 
     try:
         result = PriceHistory.objects.get(
             date=date, instrument=instrument, pricing_policy=pricing_policy
         )
 
-        if overwrite:
-            if principal_price is not None:
-                result.principal_price = principal_price
+        if principal_price is not None:
+            result.principal_price = principal_price
 
-            if accrued_price is not None:
-                result.accrued_price = accrued_price
+        if accrued_price is not None:
+            result.accrued_price = accrued_price
 
-            result.save()
-
-        else:
-            return False
+        result.save()
 
     except PriceHistory.DoesNotExist:
         result = PriceHistory.objects.create(
@@ -1733,9 +1747,6 @@ def _get_price_history_accrued_price(
             return default_value
 
     else:
-        date_from = None
-        date_to = None
-
         if days_to_look_back < 0:
             date_to = date
             date_from = date - datetime.timedelta(days=abs(days_to_look_back))
@@ -1744,8 +1755,9 @@ def _get_price_history_accrued_price(
             date_from = date
             date_to = date + datetime.timedelta(days=abs(days_to_look_back))
 
-        print("_get_price_history_accrued_price date_from %s" % date_from)
-        print("_get_price_history_accrued_price date_to %s" % date_to)
+        print(
+            f"_get_price_history_accrued_price date_from {date_from} date_to {date_to}"
+        )
 
         prices = PriceHistory.objects.filter(
             date__gte=date_from,
@@ -1754,10 +1766,7 @@ def _get_price_history_accrued_price(
             pricing_policy_id=pricing_policy_pk,
         ).order_by("-date")
 
-        if len(prices):
-            return prices[0].defaul_value
-        else:
-            return default_value
+        return prices[0].defaul_value if len(prices) else default_value
 
 
 _get_price_history_accrued_price.evaluator = True
@@ -1804,19 +1813,16 @@ def _get_price_history(
 
     if days_to_look_back == 0:
         try:
-            result = PriceHistory.objects.get(
-                date=date, instrument=instrument, pricing_policy_id=pricing_policy_pk
+            return PriceHistory.objects.get(
+                date=date,
+                instrument=instrument,
+                pricing_policy_id=pricing_policy_pk,
             )
-
-            return result
 
         except PriceHistory.DoesNotExist:
             return None
 
     else:
-        date_from = None
-        date_to = None
-
         if days_to_look_back < 0:
             date_to = date
             date_from = date - datetime.timedelta(days=abs(days_to_look_back))
@@ -1825,8 +1831,9 @@ def _get_price_history(
             date_from = date
             date_to = date + datetime.timedelta(days=abs(days_to_look_back))
 
-        print("_get_price_history_accrued_price date_from %s" % date_from)
-        print("_get_price_history_accrued_price date_to %s" % date_to)
+        print(
+            f"_get_price_history_accrued_price date_from {date_from} date_to {date_to}"
+        )
 
         prices = PriceHistory.objects.filter(
             date__gte=date_from,
@@ -1835,10 +1842,7 @@ def _get_price_history(
             pricing_policy_id=pricing_policy_pk,
         ).order_by("-date")
 
-        if len(prices):
-            return prices[0]
-        else:
-            return None
+        return prices[0] if len(prices) else None
 
 
 _get_price_history.evaluator = True
@@ -1895,8 +1899,6 @@ def _get_factor_from_price(
             return 1
 
     else:
-        date_from = None
-        date_to = None
 
         if days_to_look_back < 0:
             date_to = date
@@ -1906,8 +1908,9 @@ def _get_factor_from_price(
             date_from = date
             date_to = date + datetime.timedelta(days=abs(days_to_look_back))
 
-        print("_get_price_history_accrued_price date_from %s" % date_from)
-        print("_get_price_history_accrued_price date_to %s" % date_to)
+        print(
+            f"_get_price_history_accrued_price date_from {date_from} date_to {date_to}"
+        )
 
         prices = PriceHistory.objects.filter(
             date__gte=date_from,
@@ -1916,10 +1919,7 @@ def _get_factor_from_price(
             pricing_policy_id=pricing_policy_pk,
         ).order_by("-date")
 
-        if len(prices):
-            return prices[0].factor
-        else:
-            return 1
+        return prices[0].factor if len(prices) else 1
 
 
 _get_factor_from_price.evaluator = True
@@ -2583,8 +2583,6 @@ def _safe_get_instrument(evaluator, instrument):
 
     if instrument is None:
         master_user = get_master_user_from_context(context)
-        member = get_member_from_context(context)
-
         if master_user is None:
             raise ExpressionEvalError("master user in context does not find")
 
@@ -2597,8 +2595,8 @@ def _safe_get_instrument(evaluator, instrument):
             elif user_code is not None:
                 instrument = instrument_qs.get(user_code=user_code)
 
-        except Instrument.DoesNotExist:
-            raise ExpressionEvalError()
+        except Instrument.DoesNotExist as e:
+            raise ExpressionEvalError() from e
 
         context[("_instrument_get_accrued_price", instrument.pk, None)] = instrument
         context[
@@ -2606,6 +2604,52 @@ def _safe_get_instrument(evaluator, instrument):
         ] = instrument
 
     return instrument
+
+
+def _safe_get_account(evaluator, account):
+    from poms.accounts.models import Account
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+
+    if isinstance(account, Account):
+        return account
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression("Context must be specified")
+
+    pk = None
+    user_code = None
+
+    if isinstance(account, dict):
+        pk = int(account["id"])
+
+    elif isinstance(account, (int, float)):
+        pk = int(account)
+
+    elif isinstance(account, str):
+        user_code = account
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError("Invalid account")
+
+    master_user = get_master_user_from_context(context)
+    if master_user is None:
+        raise ExpressionEvalError("master user in context does not find")
+
+    account_qs = Account.objects.filter(master_user=master_user)
+
+    try:
+        if pk is not None:
+            account = account_qs.get(pk=pk)
+
+        elif user_code is not None:
+            account = account_qs.get(user_code=user_code)
+
+    except Account.DoesNotExist as e:
+        raise ExpressionEvalError() from e
+
+    return account
 
 
 def _get_currency(evaluator, currency):
@@ -2639,6 +2683,87 @@ def _get_account_type(evaluator, account_type):
 
 _get_account_type.evaluator = True
 
+def _set_account_user_attribute(evaluator, account, user_code, value):
+    context = evaluator.context
+
+    account = _safe_get_account(evaluator, account)
+
+    try:
+
+        for attribute in account.attributes.all():
+
+            if attribute.attribute_type.user_code == user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    attribute.value_string = value
+
+                if attribute.attribute_type.value_type == 20:
+                    attribute.value_float = value
+
+                if attribute.attribute_type.value_type == 30:
+                    try:
+                        from poms.obj_attrs.models import GenericClassifier
+                        classifier = GenericClassifier.objects.get(
+                            attribute_type=attribute.attribute_type, name=value
+                        )
+
+                        attribute.classifier = classifier
+
+                    except Exception as e:
+                        _l.error("Error setting classifier: %s" % e)
+                        attribute.classifier = None
+
+                if attribute.attribute_type.value_type == 40:
+                    attribute.value_date = value
+
+                attribute.save()
+
+        account.save()
+    except Exception as e:
+        _l.info("_set_account_user_attribute.e", e)
+        _l.info("_set_account_user_attribute.traceback", traceback.print_exc())
+        raise InvalidExpression("Invalid Property")
+
+
+_set_account_user_attribute.evaluator = True
+
+
+def _get_account_user_attribute(evaluator, account, user_code):
+    from poms.obj_attrs.models import GenericClassifier
+
+    try:
+        account = _safe_get_account(evaluator, account)
+
+        result = None
+        for attribute in account.attributes.all():
+
+            if attribute.attribute_type.user_code == user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    result = attribute.value_string
+
+                elif attribute.attribute_type.value_type == 20:
+                    result = attribute.value_float
+
+                elif attribute.attribute_type.value_type == 30:
+                    try:
+                        result = attribute.classifier.name
+
+                    except Exception:
+                        result = None
+
+                elif attribute.attribute_type.value_type == 40:
+                    result = attribute.value_date
+
+        return result
+
+    except Exception as e:
+        _l.error('e %s' % e)
+        return None
+
+
+_get_account_user_attribute.evaluator = True
+
 
 def _get_instrument(evaluator, instrument):
     try:
@@ -2648,7 +2773,7 @@ def _get_instrument(evaluator, instrument):
 
         from poms.instruments.serializers import InstrumentSerializer
 
-        return InstrumentSerializer(instance=instrument, context=context).data
+        return instrument
 
     except Exception as e:
         return None
@@ -2720,13 +2845,12 @@ _set_instrument_user_attribute.evaluator = True
 
 
 def _get_instrument_user_attribute(evaluator, instrument, user_code):
+    from poms.obj_attrs.models import GenericClassifier
+
     try:
         instrument = _safe_get_instrument(evaluator, instrument)
 
-        context = evaluator.context
-
         result = None
-
         for attribute in instrument.attributes.all():
 
             if attribute.attribute_type.user_code == user_code:
@@ -2734,22 +2858,21 @@ def _get_instrument_user_attribute(evaluator, instrument, user_code):
                 if attribute.attribute_type.value_type == 10:
                     result = attribute.value_string
 
-                if attribute.attribute_type.value_type == 20:
+                elif attribute.attribute_type.value_type == 20:
                     result = attribute.value_float
 
-                if attribute.attribute_type.value_type == 30:
+                elif attribute.attribute_type.value_type == 30:
                     try:
-                        from poms.obj_attrs.models import GenericClassifier
                         classifier = GenericClassifier.objects.get(
-                            attribute_type=attribute.attribute_type, name=value
+                            attribute_type=attribute.attribute_type,
+                            # name=value,  # FIXME undefined value!
                         )
-
                         result = classifier.name
 
                     except Exception:
                         result = None
 
-                if attribute.attribute_type.value_type == 40:
+                elif attribute.attribute_type.value_type == 40:
                     result = attribute.value_date
 
         return result
@@ -2758,7 +2881,7 @@ def _get_instrument_user_attribute(evaluator, instrument, user_code):
         return None
 
 
-_get_instrument.evaluator = True
+_get_instrument_user_attribute.evaluator = True
 
 
 def _set_currency_field(evaluator, currency, parameter_name, parameter_value):
@@ -4067,39 +4190,23 @@ _run_data_import.evaluator = True
 
 
 def _run_transaction_import(evaluator, filepath, scheme):
+    from poms.celery_tasks.models import CeleryTask
+    from poms.integrations.models import ComplexTransactionImportScheme
+    from poms.transaction_import.tasks import transaction_import
+    from poms.users.utils import (
+        get_master_user_from_context,
+        get_member_from_context,
+    )
+
     try:
-        _l.info("_run_transaction_import %s" % filepath)
+        _l.info(f"_run_transaction_import {filepath}")
 
         if filepath[0] == "/":
             filepath = settings.BASE_API_URL + filepath
         else:
             filepath = settings.BASE_API_URL + "/" + filepath
 
-        # pattern \.txt$
-
-        from poms.common.storage import get_storage
-        from poms.users.utils import (
-            get_master_user_from_context,
-            get_member_from_context,
-        )
-
-        storage = get_storage()
-
         context = evaluator.context
-
-        master_user = get_master_user_from_context(context)
-        member = get_member_from_context(context)
-
-        from poms.celery_tasks.models import CeleryTask
-        from poms.integrations.models import ComplexTransactionImportScheme
-        from poms.transaction_import.tasks import transaction_import
-        from poms.users.utils import (
-            get_master_user_from_context,
-            get_member_from_context,
-        )
-
-        context = evaluator.context
-
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
@@ -4115,12 +4222,12 @@ def _run_transaction_import(evaluator, filepath, scheme):
             master_user=master_user, user_code=scheme
         )
 
-        options_object = {}
-
-        options_object["file_path"] = filepath
-        options_object["filename"] = ""
-        options_object["scheme_id"] = scheme.id
-        options_object["execution_context"] = None
+        options_object = {
+            "file_path": filepath,
+            "filename": "",
+            "scheme_id": scheme.id,
+            "execution_context": None,
+        }
 
         celery_task.options_object = options_object
         celery_task.save()
@@ -4142,15 +4249,8 @@ _run_transaction_import.evaluator = True
 
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
-        if begin is None:
-            begin = float("-inf")
-        else:
-            begin = float(begin)
-
-        if end is None:
-            end = float("inf")
-        else:
-            end = float(end)
+        begin = float("-inf") if begin is None else float(begin)
+        end = float("inf") if end is None else float(end)
 
         if begin < val <= end:
             return text
@@ -4186,17 +4286,9 @@ def _date_group(evaluator, val, ranges, default=None):
     for begin, end, step, fmt in ranges:
         evaluator.check_time()
 
-        if not begin:
-            # begin = datetime.date.min
-            begin = datetime.date(1900, 1, 1)
-        else:
-            begin = _parse_date(begin)
+        begin = _parse_date(begin) if begin else datetime.date(1900, 1, 1)
 
-        if not end:
-            # end = datetime.date.max
-            end = datetime.date(2100, 12, 31)
-        else:
-            end = _parse_date(end)
+        end = _parse_date(end) if end else datetime.date(2100, 12, 31)
 
         if begin <= val <= end:
             if step:
@@ -4283,10 +4375,10 @@ class SimpleEval2Def(object):
         self.func = func
 
     def __str__(self):
-        return "<def %s>" % self.name
+        return f"<def {self.name}>"
 
     def __repr__(self):
-        return "<def %s>" % self.name
+        return f"<def {self.name}>"
 
     def __call__(self, evaluator, *args, **kwargs):
         if getattr(self.func, "evaluator", False):
@@ -4353,8 +4445,6 @@ FINMARS_FUNCTIONS = [
         "get_date_last_quarter_end_business", _get_date_last_quarter_end_business
     ),
     SimpleEval2Def("get_date_last_year_end_business", _get_date_last_year_end_business),
-    # SimpleEval2Def('format_date2', _format_date2),
-    # SimpleEval2Def('parse_date2', _parse_date2),
     SimpleEval2Def("format_number", _format_number),
     SimpleEval2Def("parse_number", _parse_number),
     SimpleEval2Def("join", _join),
@@ -4365,6 +4455,8 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_instrument", _get_instrument),
     SimpleEval2Def("get_currency", _get_currency),
     SimpleEval2Def("get_account_type", _get_account_type),
+    SimpleEval2Def("set_account_user_attribute", _set_account_user_attribute),
+    SimpleEval2Def("get_account_user_attribute", _get_account_user_attribute),
     SimpleEval2Def("get_currency_field", _get_currency_field),
     SimpleEval2Def("set_currency_field", _set_currency_field),
     SimpleEval2Def("get_instrument_field", _get_instrument_field),
@@ -4429,12 +4521,6 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("calculate_balance_report", _calculate_balance_report),
     SimpleEval2Def("calculate_pl_report", _calculate_pl_report),
     SimpleEval2Def("get_current_member", _get_current_member),
-    # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),
-    # SimpleEval2Def('get_instr_accrual_factor', _get_instrument_accrual_factor),
-    # SimpleEval2Def('get_instr_accrued_price', _get_instrument_accrued_price),
-    # SimpleEval2Def('get_instr_factor', _get_instrument_factor),
-    # SimpleEval2Def('get_instr_coupon_factor', _get_instrument_coupon_factor),
-    # SimpleEval2Def('get_instr_coupon', _get_instrument_coupon),
     SimpleEval2Def("find_name", _find_name),
     SimpleEval2Def("simple_group", _simple_group),
     SimpleEval2Def("date_group", _date_group),

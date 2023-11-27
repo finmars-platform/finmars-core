@@ -413,6 +413,18 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                       source_directory + '/ui/layouts/fxrate-journal',
                                       context)
 
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'integrations.complextransactionimportscheme',
+                                      source_directory + '/ui/layouts/complex-transaction-import-scheme',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'csv_import.csvimportscheme',
+                                      source_directory + '/ui/layouts/simple-import-scheme',
+                                      context)
+
         # Form Layouts
 
         save_serialized_entity_layout('ui.editlayout',

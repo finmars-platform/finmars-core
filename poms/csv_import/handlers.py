@@ -58,21 +58,34 @@ storage = get_storage()
 _l = getLogger("poms.csv_import")
 
 ACCRUAL_MAP = {
+    "Actual/Actual (AFB)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB,
     "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
     "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
     "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
-    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
+    "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
     "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
     "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
     "Actual/365A": AccrualCalculationModel.DAY_COUNT_ACT_365A,
     "30/360 US": AccrualCalculationModel.DAY_COUNT_30_360_US,
-    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
     "NL/365": AccrualCalculationModel.DAY_COUNT_NL_365,
     "BD/252": AccrualCalculationModel.DAY_COUNT_BD_252,
+    "30E+/360": AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
     "30E/360": AccrualCalculationModel.DAY_COUNT_30E_360,
     "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
+    "30/360 (30/360 ISMA)": AccrualCalculationModel.DAY_COUNT_30_360_ISMA,
     "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+    "30/365": AccrualCalculationModel.DAY_COUNT_30_365,
+    "Simple": AccrualCalculationModel.DAY_COUNT_SIMPLE,
+    "none": AccrualCalculationModel.DAY_COUNT_NONE,
+}
+PERIODICITY_MAP = {
+    1: Periodicity.ANNUALLY,
+    2: Periodicity.SEMI_ANNUALLY,
+    4: Periodicity.QUARTERLY,
+    6: Periodicity.BIMONTHLY,
+    12: Periodicity.MONTHLY,
 }
 
 
@@ -327,12 +340,13 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "index_linked_bonds",
             "short_term_notes",
         } and len(instrument_object["event_schedules"]):
-            coupon_event = instrument_object["event_schedules"][0]
-
-            if "first_coupon_date" in data_object:
-                coupon_event["effective_date"] = data_object["first_coupon_date"]
-
-            coupon_event["final_date"] = maturity
+            # FIXME coupon_event is not used !
+            # coupon_event = instrument_object["event_schedules"][0]
+            #
+            # if "first_coupon_date" in data_object:
+            #     coupon_event["effective_date"] = data_object["first_coupon_date"]
+            #
+            # coupon_event["final_date"] = maturity
 
             if len(instrument_object["event_schedules"]) == 2:
                 undate_events_for_instrument(instrument_object, 1, maturity)
@@ -355,16 +369,49 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             undate_events_for_instrument(instrument_object, 0, maturity)
 
 
-def set_accruals_for_instrument(instrument_object, data_object, instrument_type_obj):
+def set_default_accrual(instrument_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
+    if "bond" not in instrument_type:
+        # if not bond, no accruals
+        return
 
-    # FIXME INVALID LOGIC
-    if instrument_type == "bonds" and len(
-        instrument_object["accrual_calculation_schedules"]
-    ):
-        accrual = instrument_object["accrual_calculation_schedules"][0]
-        accrual["effective_date"] = data_object["first_coupon_date"]
-        accrual["accrual_end_date"] = data_object["maturity"]
+    if instrument_object["accrual_calculation_schedules"]:
+        # instrument already has accruals
+        return
+
+    instrument_object["accrual_calculation_schedules"] = [
+        {
+            "accrual_start_date": None,
+            "first_payment_date": None,
+            "accrual_size": None,
+            "accrual_calculation_model": 1,
+            "accrual_calculation_model_object": {
+                "id": 1,
+                "name": "none",
+                "short_name": "none",
+                "user_code": "none",
+                "public_name": "none",
+                "notes": None,
+            },
+            "periodicity": Periodicity.ANNUALLY,
+            "periodicity_object": {},
+            "periodicity_n": 1,
+            "notes": "default settings",
+        }
+    ]
+
+
+def set_periodicity_period(source_data, accrual):
+    p = int(source_data["accrual_calculation_schedules"][0]["periodicity_n"])
+
+    accrual["periodicity_n"] = p
+    try:
+        accrual["periodicity"] = PERIODICITY_MAP[p]
+    except KeyError:
+        _l.error(f"invalid/unknown periodicity_n={p} set default=ANNUALLY")
+        accrual["periodicity"] = Periodicity.ANNUALLY
+
+    _l.info(f'periodicity {accrual["periodicity"]}')
 
 
 # Global method for create instrument object from Instrument Type Defaults
@@ -425,10 +472,7 @@ def handler_instrument_object(
         object_data["maturity_date"] = source_data["maturity"]
 
     elif "maturity_date" in source_data and source_data["maturity_date"] != "":
-        if (
-            source_data["maturity_date"] == "null"
-            or source_data["maturity_date"] == "9999-00-00"
-        ):
+        if source_data["maturity_date"] in ("null", "9999-00-00"):
             object_data["maturity_date"] = None
         else:
             object_data["maturity_date"] = source_data["maturity_date"]
@@ -468,11 +512,9 @@ def handler_instrument_object(
     except Exception as e:
         _l.error(f"{func} Could not set sector {repr(e)}")
 
-    _tmp_attributes_dict = {}
-
-    for item in object_data["attributes"]:
-        _tmp_attributes_dict[item["attribute_type"]] = item
-
+    _tmp_attributes_dict = {
+        item["attribute_type"]: item for item in object_data["attributes"]
+    }
     try:
         if "attributes" in source_data and isinstance(source_data["attributes"], dict):
             for attribute_type in attribute_types:
@@ -515,7 +557,7 @@ def handler_instrument_object(
 
     object_data["attributes"] = []
 
-    for key, value in _tmp_attributes_dict.items():
+    for value in _tmp_attributes_dict.values():
         object_data["attributes"].append(value)
 
     object_data["master_user"] = master_user.id
@@ -523,151 +565,36 @@ def handler_instrument_object(
 
     set_events_for_instrument(object_data, source_data, instrument_type)
 
+    # FIXME coupon_event is not used !
+    # if (
+    #     (
+    #         "accrual_calculation_schedules" in source_data
+    #         and source_data["accrual_calculation_schedules"]
+    #     )
+    #     and (
+    #         len(source_data["accrual_calculation_schedules"])
+    #         and len(object_data["event_schedules"])
+    #     )
+    #     and "first_payment_date" in source_data["accrual_calculation_schedules"][0]
+    # ):
+    #     coupon_event = object_data["event_schedules"][0]
+    #
+    #     coupon_event["effective_date"] = source_data["accrual_calculation_schedules"][
+    #         0
+    #     ]["first_payment_date"]
+
     if (
         "accrual_calculation_schedules" in source_data
         and source_data["accrual_calculation_schedules"]
-    ) and (
-        len(source_data["accrual_calculation_schedules"])
-        and len(object_data["event_schedules"])
     ):
-        coupon_event = object_data["event_schedules"][0]
+        _l.info("Setting up accrual schedules. Overwrite Existing")
+        accrual = source_data["accrual_calculation_schedules"][0]
+        accrual.pop("id")  # remove id of finmars_database accrual object
+        set_periodicity_period(source_data, accrual)
+        object_data["accrual_calculation_schedules"] = [accrual]
 
-        if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-            coupon_event["effective_date"] = source_data[
-                "accrual_calculation_schedules"
-            ][0]["first_payment_date"]
-
-    if "accrual_calculation_schedules" in source_data:
-        if source_data["accrual_calculation_schedules"] and len(
-            source_data["accrual_calculation_schedules"]
-        ):
-            _l.info("Setting up accrual schedules. Init")
-
-            if len(object_data["accrual_calculation_schedules"]):
-                _l.info("Setting up accrual schedules. Overwrite Existing")
-
-                accrual = object_data["accrual_calculation_schedules"][0]
-
-                if "day_count_convention" in source_data:
-                    if source_data["day_count_convention"] in ACCRUAL_MAP:
-                        accrual["accrual_calculation_model"] = ACCRUAL_MAP[
-                            source_data["day_count_convention"]
-                        ]
-
-                    else:
-                        accrual[
-                            "accrual_calculation_model"
-                        ] = AccrualCalculationModel.DAY_COUNT_NONE
-
-                if (
-                    "accrual_start_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["accrual_start_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["accrual_start_date"]
-
-                if (
-                    "first_payment_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["first_payment_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["first_payment_date"]
-
-                try:
-                    accrual["accrual_size"] = float(
-                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
-                    )
-                except Exception:
-                    accrual["accrual_size"] = 0
-
-                try:
-                    accrual["periodicity_n"] = int(
-                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
-                    )
-
-                    if accrual["periodicity_n"] == 1:
-                        accrual["periodicity"] = Periodicity.ANNUALLY
-
-                    if accrual["periodicity_n"] == 2:
-                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
-
-                    if accrual["periodicity_n"] == 4:
-                        accrual["periodicity"] = Periodicity.QUARTERLY
-
-                    if accrual["periodicity_n"] == 6:
-                        accrual["periodicity"] = Periodicity.BIMONTHLY
-
-                    if accrual["periodicity_n"] == 12:
-                        accrual["periodicity"] = Periodicity.MONTHLY
-
-                    _l.info("periodicity %s" % accrual["periodicity"])
-
-                    accrual["periodicity_n"] = 0
-
-                except Exception as e:
-                    accrual["periodicity_n"] = 0
-
-            else:
-                _l.info("Setting up accrual schedules. Creating new")
-
-                accrual = {
-                    "accrual_calculation_model": AccrualCalculationModel.DAY_COUNT_SIMPLE,
-                    "periodicity": Periodicity.ANNUALLY,
-                }
-
-                if (
-                    "accrual_start_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["accrual_start_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["accrual_start_date"]
-
-                if (
-                    "first_payment_date"
-                    in source_data["accrual_calculation_schedules"][0]
-                ):
-                    accrual["first_payment_date"] = source_data[
-                        "accrual_calculation_schedules"
-                    ][0]["first_payment_date"]
-
-                try:
-                    accrual["accrual_size"] = float(
-                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
-                    )
-                except Exception:
-                    accrual["accrual_size"] = 0
-
-                try:
-                    accrual["periodicity_n"] = int(
-                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
-                    )
-
-                    if accrual["periodicity_n"] == 1:
-                        accrual["periodicity"] = Periodicity.ANNUALLY
-
-                    elif accrual["periodicity_n"] == 2:
-                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
-
-                    elif accrual["periodicity_n"] == 4:
-                        accrual["periodicity"] = Periodicity.QUARTERLY
-
-                    elif accrual["periodicity_n"] == 6:
-                        accrual["periodicity"] = Periodicity.BIMONTHLY
-
-                    elif accrual["periodicity_n"] == 12:
-                        accrual["periodicity"] = Periodicity.MONTHLY
-
-                    _l.info("periodicity %s" % accrual["periodicity"])
-
-                except Exception:
-                    accrual["periodicity_n"] = 0
-
-                object_data["accrual_calculation_schedules"].append(accrual)
     else:
-        set_accruals_for_instrument(object_data, source_data, instrument_type)
+        set_default_accrual(object_data, instrument_type)
 
     if "name" not in object_data and "user_code" in object_data:
         object_data["name"] = object_data["user_code"]
@@ -678,6 +605,25 @@ def handler_instrument_object(
     _l.info(f"{func} instrument={source_data['user_code']} object_data={object_data}")
 
     return object_data
+
+
+def set_accrual_dates_and_size(source_data, accrual):
+    if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
+        accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
+            "accrual_start_date"
+        ]
+
+    if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
+        accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
+            "first_payment_date"
+        ]
+
+    try:
+        accrual["accrual_size"] = float(
+            source_data["accrual_calculation_schedules"][0]["accrual_size"]
+        )
+    except Exception:
+        accrual["accrual_size"] = 0
 
 
 class SimpleImportProcess(object):
@@ -702,7 +648,6 @@ class SimpleImportProcess(object):
             )
 
         self.member = self.task.member
-
         self.master_user = self.task.master_user
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
@@ -716,7 +661,10 @@ class SimpleImportProcess(object):
                 user_code=self.task.options_object["scheme_user_code"]
             )
         else:
-            raise Exception("Import Scheme not found")
+            raise RuntimeError(
+                f"Import Scheme {self.task.options_object['scheme_user_code']} "
+                f"not found"
+            )
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
@@ -733,6 +681,7 @@ class SimpleImportProcess(object):
         self.process_type = ProcessType.CSV
 
         self.find_process_type()
+        # `self.attribute_types` are set inside `self.get_attribute_types()`
         self.get_attribute_types()
 
         self.file_items = []  # items from provider  (json, csv, excel)
@@ -763,30 +712,30 @@ class SimpleImportProcess(object):
             section="import",
             type="success",
             title=import_system_message_title,
-            description=f"{self.member.username} started import with scheme {self.scheme.name}",
+            description=(
+                f"{self.member.username} started import "
+                f"with scheme {self.scheme.name}"
+            ),
         )
 
     def generate_file_report(self):
         _l.info(
-            "SimpleImportProcess.generate_file_report error_handler %s"
-            % self.scheme.error_handler
-        )
-        _l.info(
-            "SimpleImportProcess.generate_file_report missing_data_handler %s"
-            % self.scheme.missing_data_handler
+            f"SimpleImportProcess.generate_file_report "
+            f"error_handler {self.scheme.error_handler} "
+            f"missing_data_handler {self.scheme.missing_data_handler}"
         )
 
         result = [
             "Type, Simple Import",
-            "Scheme, " + self.scheme.user_code,
-            "Error handle, " + self.scheme.error_handler,
+            f"Scheme, {self.scheme.user_code}",
+            f"Error handle, {self.scheme.error_handler}",
         ]
 
         if self.result.file_name:
-            result.append("Filename, " + self.result.file_name)
+            result.append(f"Filename, {self.result.file_name}")
 
         result.append(
-            "Import Rules - if object is not found, " + self.scheme.missing_data_handler
+            f"Import Rules - if object is not found {self.scheme.missing_data_handler}"
         )
 
         success_rows_count = 0
@@ -797,24 +746,23 @@ class SimpleImportProcess(object):
             if result_item.status == "error":
                 error_rows_count += 1
 
-            if result_item.status == "success":
+            elif result_item.status == "success":
                 success_rows_count += 1
 
             if "skip" in result_item.status:
                 skip_rows_count += 1
 
-        result.append("Rows total, %s" % self.result.total_rows)
-        result.append("Rows success import, %s" % success_rows_count)
-        result.append("Rows fail import, %s" % error_rows_count)
-        result.append("Rows skipped import, %s" % skip_rows_count)
-
+        result.extend(
+            (
+                f"Rows total, {self.result.total_rows}",
+                f"Rows success import, {success_rows_count}",
+                f"Rows fail import, {error_rows_count}",
+                f"Rows skipped import, {skip_rows_count}",
+            )
+        )
         columns = ["Row Number", "Status", "Message"]
 
-        column_row_list = []
-
-        for item in columns:
-            column_row_list.append('"' + str(item) + '"')
-
+        column_row_list = [f'"{str(item)}"' for item in columns]
         column_row = ",".join(column_row_list)
 
         result.append(column_row)
@@ -832,11 +780,7 @@ class SimpleImportProcess(object):
             else:
                 content.append("")
 
-            content_row_list = []
-
-            for item in content:
-                content_row_list.append('"' + str(item) + '"')
-
+            content_row_list = [f'"{str(item)}"' for item in content]
             content_row = ",".join(content_row_list)
 
             result.append(content_row)
@@ -845,7 +789,7 @@ class SimpleImportProcess(object):
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-        file_name = "file_report_%s_task_%s.csv" % (current_date_time, self.task.id)
+        file_name = f"file_report_{current_date_time}_task_{self.task.id}.csv"
 
         file_report = FileReport()
 
@@ -855,9 +799,8 @@ class SimpleImportProcess(object):
             file_name=file_name, text=result, master_user=self.master_user
         )
         file_report.master_user = self.master_user
-        file_report.name = "Simple Import %s (Task %s).csv" % (
-            current_date_time,
-            self.task.id,
+        file_report.name = (
+            f"Simple Import {current_date_time} (Task {self.task.id}).csv"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
@@ -866,38 +809,30 @@ class SimpleImportProcess(object):
 
         file_report.save()
 
-        _l.info("SimpleImportProcess.file_report %s" % file_report)
-        _l.info("SimpleImportProcess.file_report %s" % file_report.file_url)
+        _l.info(f"SimpleImportProcess.file_report {file_report} {file_report.file_url}")
 
         return file_report
 
     def generate_json_report(self):
-        serializer = SimpleImportResultSerializer(
-            instance=self.result, context=self.context
-        )
-
-        result = serializer.data
-
         # _l.debug('self.result %s' % self.result.__dict__)
 
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = "file_report_%s_task_%s.json" % (current_date_time, self.task.id)
+        file_name = f"file_report_{current_date_time}_task_{self.task.id}.json"
 
         file_report = FileReport()
 
         _l.info("SimplemportProcess.generate_json_report uploading file")
 
-        file_report.upload_file(
+        file_report.upload_json_as_local_file(
             file_name=file_name,
-            text=json.dumps(result, indent=4, default=str),
+            dict_to_json=self.task.result_object,
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
-        file_report.name = "Simple Import %s (Task %s).json" % (
-            current_date_time,
-            self.task.id,
+        file_report.name = (
+            f"Simple Import {current_date_time} (Task {self.task.id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
@@ -906,8 +841,7 @@ class SimpleImportProcess(object):
 
         file_report.save()
 
-        _l.info("SimpleImportProcess.json_report %s" % file_report)
-        _l.info("SimpleImportProcess.json_report %s" % file_report.file_url)
+        _l.info(f"SimpleImportProcess.json_report {file_report} {file_report.file_url}")
 
         return file_report
 
@@ -920,7 +854,7 @@ class SimpleImportProcess(object):
             )
 
         except Exception as e:
-            _l.error("Get attribute types excpetion %s" % e)
+            _l.error(f"Get attribute types exception {repr(e)}")
 
         self.attribute_types = attribute_types
 
@@ -935,8 +869,7 @@ class SimpleImportProcess(object):
             self.process_type = ProcessType.CSV
 
         _l.info(
-            "SimpleImportProcess.Task %s. process_type %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. process_type {self.process_type}"
         )
 
     def get_verbose_result(self):
@@ -950,16 +883,16 @@ class SimpleImportProcess(object):
                 imported_count += 1
 
         result = (
-            "Processed %s rows and successfully imported %s items. Error rows %s"
-            % (len(self.items), imported_count, error_count)
+            f"Processed {len(self.items)} rows and successfully imported "
+            f"{imported_count} items. Error rows {error_count}"
         )
 
         return result
 
     def fill_with_file_items(self):
         _l.info(
-            "SimpleImportProcess.Task %s. fill_with_raw_items INIT %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+            f"INIT {self.process_type}"
         )
 
         try:
@@ -972,14 +905,14 @@ class SimpleImportProcess(object):
 
                     self.file_items = items
 
-                except Exception as e:
+                except Exception:
                     _l.info("Trying to get json items from file")
 
                     with storage.open(self.file_path, "rb") as f:
                         self.file_items = json.loads(f.read())
 
             if self.process_type == ProcessType.CSV:
-                _l.info("ProcessType.CSV self.file_path %s" % self.file_path)
+                _l.info(f"ProcessType.CSV self.file_path {self.file_path}")
 
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
@@ -989,7 +922,10 @@ class SimpleImportProcess(object):
 
                         # TODO check encoding (maybe should be taken from scheme)
                         with open(
-                            tmpf.name, mode="rt", encoding="utf_8_sig", errors="ignore"
+                            tmpf.name,
+                            mode="rt",
+                            encoding="utf_8_sig",
+                            errors="ignore",
                         ) as cf:
                             # TODO check quotechar (maybe should be taken from scheme)
                             reader = csv.reader(
@@ -1000,110 +936,86 @@ class SimpleImportProcess(object):
                                 skipinitialspace=True,
                             )
 
-                            column_row = None
-
-                            for row_index, row in enumerate(reader):
-                                if row_index == 0:
-                                    column_row = row
-
-                                else:
-                                    file_item = {}
-
-                                    for column_index, value in enumerate(row):
-                                        key = column_row[column_index]
-                                        file_item[key] = value
-
-                                    self.file_items.append(file_item)
-
-                            self.result.total_rows = len(self.file_items)
-
+                            self.append_and_count_file_items(reader)
             if self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
-                        for chunk in f.chunks():
-                            tmpf.write(chunk)
-                        tmpf.flush()
-
-                        os.link(tmpf.name, tmpf.name + ".xlsx")
-
-                        _l.info("self.file_path %s" % self.file_path)
-                        _l.info("tmpf.name %s" % tmpf.name)
-
-                        wb = load_workbook(filename=tmpf.name + ".xlsx")
-
-                        if (
-                            self.scheme.spreadsheet_active_tab_name
-                            and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
-                        ):
-                            ws = wb[self.scheme.spreadsheet_active_tab_name]
-                        else:
-                            ws = wb.active
-
-                        reader = []
-
-                        if self.scheme.spreadsheet_start_cell == "A1":
-                            for r in ws.rows:
-                                reader.append([cell.value for cell in r])
-
-                        else:
-                            start_cell_row_number = int(
-                                re.search(r"\d+", self.scheme.spreadsheet_start_cell)[0]
-                            )
-                            start_cell_letter = (
-                                self.scheme.spreadsheet_start_cell.split(
-                                    str(start_cell_row_number)
-                                )[0]
-                            )
-
-                            start_cell_column_number = column_index_from_string(
-                                start_cell_letter
-                            )
-
-                            row_number = 1
-
-                            for r in ws.rows:
-                                row_values = []
-
-                                if row_number >= start_cell_row_number:
-                                    for cell in r:
-                                        if cell.column >= start_cell_column_number:
-                                            row_values.append(cell.value)
-
-                                    reader.append(row_values)
-
-                                row_number = row_number + 1
-
-                        column_row = None
-
-                        for row_index, row in enumerate(reader):
-                            if row_index == 0:
-                                column_row = row
-
-                            else:
-                                file_item = {}
-
-                                for column_index, value in enumerate(row):
-                                    key = column_row[column_index]
-                                    file_item[key] = value
-
-                                self.file_items.append(file_item)
-
-                        self.result.total_rows = len(self.file_items)
-
+                        self.read_from_excel_file(f, tmpf)
             _l.info(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s DONE items %s"
-                % (self.task, self.process_type, len(self.raw_items))
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} DONE items {len(self.raw_items)}"
             )
 
         except Exception as e:
-            _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Exception %s"
-                % (self.task, self.process_type, e)
+            err_msg = (
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} Exception {repr(e)} "
+                f"Traceback {traceback.format_exc()}"
             )
-            _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Traceback %s"
-                % (self.task, self.process_type, traceback.format_exc())
+            _l.error(err_msg)
+            raise e
+
+    def read_from_excel_file(self, f, tmpf):
+        for chunk in f.chunks():
+            tmpf.write(chunk)
+
+        tmpf.flush()
+
+        os.link(tmpf.name, f"{tmpf.name}.xlsx")
+
+        _l.info(f"self.file_path {self.file_path}")
+        _l.info(f"tmpf.name {tmpf.name}")
+
+        wb = load_workbook(filename=f"{tmpf.name}.xlsx")
+
+        ws = (
+            wb[self.scheme.spreadsheet_active_tab_name]
+            if (
+                self.scheme.spreadsheet_active_tab_name
+                and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
             )
+            else wb.active
+        )
+        reader = []
+
+        if self.scheme.spreadsheet_start_cell == "A1":
+            reader.extend([cell.value for cell in r] for r in ws.rows)
+        else:
+            start_cell_row_number = int(
+                re.search(r"\d+", self.scheme.spreadsheet_start_cell)[0]
+            )
+            start_cell_letter = self.scheme.spreadsheet_start_cell.split(
+                str(start_cell_row_number)
+            )[0]
+
+            start_cell_column_number = column_index_from_string(start_cell_letter)
+
+            for row_number, r in enumerate(ws.rows, start=1):
+                if row_number >= start_cell_row_number:
+                    row_values = [
+                        cell.value
+                        for cell in r
+                        if cell.column >= start_cell_column_number
+                    ]
+                    reader.append(row_values)
+
+        self.append_and_count_file_items(reader)
+
+    def append_and_count_file_items(self, reader):
+        column_row = None
+
+        for row_index, row in enumerate(reader):
+            if row_index == 0:
+                column_row = row
+
+            else:
+                file_item = {
+                    column_row[column_index]: value
+                    for column_index, value in enumerate(row)
+                }
+                self.file_items.append(file_item)
+
+        self.result.total_rows = len(self.file_items)
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
@@ -1121,49 +1033,44 @@ class SimpleImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error("Could not execute preoprocess expression. Error %s" % e)
+                _l.error(f"Could not execute preprocess expression. Error {e}")
+                raise e
 
-        _l.info("whole_file_preprocess.file_items %s" % len(self.file_items))
+        _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
         return self.file_items
 
     def fill_with_raw_items(self):
         _l.info(
-            "SimpleImportProcess.Task %s. fill_with_raw_items INIT %s"
-            % (self.task, self.process_type)
+            f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+            f"INIT {self.process_type}"
         )
 
         try:
             for file_item in self.file_items:
                 item = {}
-
                 for scheme_input in self.scheme.csv_fields.all():
                     try:
                         item[scheme_input.name] = file_item[scheme_input.column_name]
-                    except Exception as e:
+                    except Exception:
                         item[scheme_input.name] = None
 
                 self.raw_items.append(item)
+
             _l.info(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s DONE items %s"
-                % (self.task, self.process_type, len(self.raw_items))
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type} DONE items {len(self.raw_items)}"
             )
 
         except Exception as e:
             _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Exception %s"
-                % (self.task, self.process_type, e)
+                f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
+                f"{self.process_type}  error {e} trace {traceback.format_exc()}"
             )
-            _l.error(
-                "SimpleImportProcess.Task %s. fill_with_raw_items %s Traceback %s"
-                % (self.task, self.process_type, traceback.format_exc())
-            )
+            raise e
 
     def apply_conversion_to_raw_items(self):
-        # EXECUTE CONVERSIONS ON SCHEME INPUTS
-
-        row_number = 1
-        for raw_item in self.raw_items:
+        for row_number, raw_item in enumerate(self.raw_items, start=1):
             conversion_item = SimpleImportConversionItem()
             conversion_item.file_inputs = self.file_items[row_number - 1]
             conversion_item.raw_inputs = raw_item
@@ -1173,27 +1080,24 @@ class SimpleImportProcess(object):
             for scheme_input in self.scheme.csv_fields.all():
                 try:
                     names = raw_item
-
                     conversion_item.conversion_inputs[
                         scheme_input.name
                     ] = formula.safe_eval(
                         scheme_input.name_expr, names=names, context=self.context
                     )
-                except Exception as e:
+                except Exception:
                     conversion_item.conversion_inputs[scheme_input.name] = None
 
             self.conversion_items.append(conversion_item)
-
-            row_number = row_number + 1
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
     # so it means, in first iterations we will got errors in that inputs
     def recursive_preprocess(self, deep=1, current_level=0):
         if len(self.preprocessed_items) == 0:
-            row_number = 1
-
-            for conversion_item in self.conversion_items:
+            for row_number, conversion_item in enumerate(
+                self.conversion_items, start=1
+            ):
                 preprocess_item = SimpleImportProcessPreprocessItem()
                 preprocess_item.file_inputs = conversion_item.file_inputs
                 preprocess_item.raw_inputs = conversion_item.raw_inputs
@@ -1203,11 +1107,8 @@ class SimpleImportProcess(object):
 
                 self.preprocessed_items.append(preprocess_item)
 
-                row_number += 1
-
         for preprocess_item in self.preprocessed_items:
             # CREATE SCHEME INPUTS
-
             for scheme_input in self.scheme.csv_fields.all():
                 key_column_name = scheme_input.column_name
 
@@ -1220,19 +1121,14 @@ class SimpleImportProcess(object):
                     preprocess_item.inputs[scheme_input.name] = None
 
                     if current_level == deep:
-                        _l.error("key_column_name %s" % key_column_name)
-                        _l.error("scheme_input.name %s" % scheme_input.name)
                         _l.error(
-                            "preprocess_item.raw_inputs %s"
-                            % preprocess_item.conversion_inputs
-                        )
-                        _l.error(
-                            "SimpleImportProcess.Task %s. recursive_preprocess init input %s Exception %s"
-                            % (self.task, scheme_input, e)
+                            f"key_column_name {key_column_name} scheme_input.name "
+                            f"{scheme_input.name} preprocess_item.raw_inputs "
+                            f"{preprocess_item.conversion_inputs} Task {self.task}. "
+                            f"recursive_preprocess init input {scheme_input} err {e}"
                         )
 
             # CREATE CALCULATED INPUTS
-
             for scheme_calculated_input in self.scheme.calculated_inputs.all():
                 try:
                     names = preprocess_item.inputs
@@ -1255,18 +1151,15 @@ class SimpleImportProcess(object):
 
                     if current_level == deep:
                         _l.error(
-                            "SimpleImportProcess.Task %s. recursive_preprocess calculated_input %s Exception %s"
-                            % (self.task, scheme_calculated_input, e)
+                            f"SimpleImportProcess.Task {self.task} recursive_preprocess"
+                            f" calculated_input {scheme_calculated_input} err {e}"
                         )
-                        # _l.error(
-                        #     'TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Traceback %s' % (
-                        #         self.task, scheme_calculated_input, traceback.format_exc()))
 
         if current_level < deep:
             self.recursive_preprocess(deep, current_level + 1)
 
     def preprocess(self):
-        _l.info("SimpleImportProcess.Task %s. preprocess INIT" % self.task)
+        _l.info(f"SimpleImportProcess.Task {self.task}. preprocess INIT")
 
         self.recursive_preprocess(deep=2)
 
@@ -1281,68 +1174,72 @@ class SimpleImportProcess(object):
             self.items.append(item)
 
         _l.info(
-            "SimpleImportProcess.Task %s. preprocess DONE items %s"
-            % (self.task, len(self.preprocessed_items))
+            f"SimpleImportProcess.Task {self.task}. preprocess "
+            f"DONE items {len(self.preprocessed_items)}"
         )
 
     def fill_result_item_with_attributes(self, item):
         result = []
-
         for attribute_type in self.attribute_types:
             for entity_field in self.scheme.entity_fields.all():
-                if entity_field.attribute_user_code:
-                    if entity_field.attribute_user_code == attribute_type.user_code:
-                        attribute = {"attribute_type": attribute_type.id}
+                if (
+                    entity_field.attribute_user_code
+                    and entity_field.attribute_user_code == attribute_type.user_code
+                ):
+                    attribute = {"attribute_type": attribute_type.id}
 
-                        if attribute_type.value_type == GenericAttributeType.STRING:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_string"] = item.final_inputs[
+                    if (
+                        attribute_type.value_type == GenericAttributeType.STRING
+                        and item.final_inputs[entity_field.attribute_user_code]
+                    ):
+                        attribute["value_string"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
+
+                    if attribute_type.value_type == GenericAttributeType.NUMBER and (
+                        item.final_inputs[entity_field.attribute_user_code]
+                        or item.final_inputs[entity_field.attribute_user_code] == 0
+                    ):
+                        attribute["value_float"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
+
+                    if (
+                        attribute_type.value_type == GenericAttributeType.CLASSIFIER
+                        and item.final_inputs[entity_field.attribute_user_code]
+                    ):
+                        try:
+                            attribute["classifier"] = GenericClassifier.objects.get(
+                                attribute_type=attribute_type,
+                                name=item.final_inputs[
                                     entity_field.attribute_user_code
-                                ]
+                                ],
+                            ).id
+                        except Exception as e:
+                            _l.error(
+                                f"fill_result_item_with_attributes classifier error - "
+                                f"item {item} e {e}"
+                            )
 
-                        if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            if (
-                                item.final_inputs[entity_field.attribute_user_code]
-                                or item.final_inputs[entity_field.attribute_user_code]
-                                == 0
-                            ):
-                                attribute["value_float"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
+                            if not item.error_message:
+                                item.error_message = ""
 
-                        if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                try:
-                                    attribute[
-                                        "classifier"
-                                    ] = GenericClassifier.objects.get(
-                                        attribute_type=attribute_type,
-                                        name=item.final_inputs[
-                                            entity_field.attribute_user_code
-                                        ],
-                                    ).id
-                                except Exception as e:
-                                    _l.error(
-                                        "fill_result_item_with_attributes classifier error - item %s e %s"
-                                        % (item, e)
-                                    )
+                            item.error_message = f"{item.error_message}%s: %s, " % (
+                                entity_field.attribute_user_code,
+                                str(e),
+                            )
 
-                                    if not item.error_message:
-                                        item.error_message = ""
+                            attribute["classifier"] = None
 
-                                    item.error_message = (
-                                        item.error_message + "%s: %s, "
-                                    ) % (entity_field.attribute_user_code, str(e))
+                    if (
+                        item.final_inputs[entity_field.attribute_user_code]
+                        and attribute_type.value_type == GenericAttributeType.DATE
+                    ):
+                        attribute["value_date"] = item.final_inputs[
+                            entity_field.attribute_user_code
+                        ]
 
-                                    attribute["classifier"] = None
-
-                        if attribute_type.value_type == GenericAttributeType.DATE:
-                            if item.final_inputs[entity_field.attribute_user_code]:
-                                attribute["value_date"] = item.final_inputs[
-                                    entity_field.attribute_user_code
-                                ]
-
-                        result.append(attribute)
+                    result.append(attribute)
 
         return result
 
@@ -1387,16 +1284,17 @@ class SimpleImportProcess(object):
                                 ).id
                             except Exception as e:
                                 _l.error(
-                                    "fill_result_item_with_attributes classifier error - item %s e %s"
-                                    % (item, e)
+                                    f"fill_result_item_with_attributes classifier error"
+                                    f" - item {item} e {e}"
                                 )
 
                                 if not item.error_message:
                                     item.error_message = ""
 
-                                item.error_message = (
-                                    item.error_message + "%s: %s, "
-                                ) % (entity_field.attribute_user_code, str(e))
+                                item.error_message = f"{item.error_message}%s: %s, " % (
+                                    entity_field.attribute_user_code,
+                                    str(e),
+                                )
 
                                 attribute["classifier"] = None
 
@@ -1444,24 +1342,20 @@ class SimpleImportProcess(object):
         for entity_field in self.scheme.entity_fields.all():
             key = entity_field.system_property_key
 
-            if key in relation_fields_map:
-                if isinstance(result_item[key], str):
-                    try:
-                        result_item[key] = (
-                            relation_fields_map[key]
-                            .objects.get(user_code=result_item[key])
-                            .id
-                        )
-                    except Exception as e:
-                        result_item[key] = None
+            if key in relation_fields_map and isinstance(result_item[key], str):
+                try:
+                    result_item[key] = (
+                        relation_fields_map[key]
+                        .objects.get(user_code=result_item[key])
+                        .id
+                    )
+                except Exception as e:
+                    result_item[key] = None
 
-                        if not item.error_message:
-                            item.error_message = ""
+                    if not item.error_message:
+                        item.error_message = ""
 
-                        item.error_message = (item.error_message + "%s: %s, ") % (
-                            key,
-                            str(e),
-                        )
+                    item.error_message = f"{item.error_message} {key}: {e}, "
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1469,7 +1363,7 @@ class SimpleImportProcess(object):
 
     def remove_nullable_attributes(self, result_item):
         for key, value in list(result_item.items()):
-            if value == None:
+            if value is None:
                 result_item.pop(key)
 
         return result_item
@@ -1491,13 +1385,13 @@ class SimpleImportProcess(object):
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error("get_final_inputs.e %s" % e)
+                    _l.error(f"get_final_inputs.e {e}")
 
                     if not item.error_message:
                         item.error_message = ""
 
                     if entity_field.system_property_key:
-                        item.error_message = (item.error_message + "%s: %s, ") % (
+                        item.error_message = f"{item.error_message}%s: %s, " % (
                             entity_field.system_property_key,
                             str(e),
                         )
@@ -1505,25 +1399,26 @@ class SimpleImportProcess(object):
                         result[entity_field.system_property_key] = None
 
                     elif entity_field.attribute_user_code:
-                        item.error_message = (item.error_message + "%s: %s, ") % (
+                        item.error_message = f"{item.error_message}%s: %s, " % (
                             entity_field.attribute_user_code,
                             str(e),
                         )
 
                         result[entity_field.attribute_user_code] = None
 
-            else:
-                if entity_field.system_property_key:
-                    result[entity_field.system_property_key] = None
+            elif entity_field.system_property_key:
+                result[entity_field.system_property_key] = None
 
-                elif entity_field.attribute_user_code:
-                    result[entity_field.attribute_user_code] = None
+            elif entity_field.attribute_user_code:
+                result[entity_field.attribute_user_code] = None
 
         return result
 
     def import_item(self, item):
+        from poms.instruments.handlers import InstrumentTypeProcess
+
         content_type_key = (
-            self.scheme.content_type.app_label + "." + self.scheme.content_type.model
+            f"{self.scheme.content_type.app_label}.{self.scheme.content_type.model}"
         )
 
         serializer_class = get_serializer(content_type_key)
@@ -1535,10 +1430,7 @@ class SimpleImportProcess(object):
             item.final_inputs = self.get_final_inputs(item)
 
             result_item = {}
-
             if self.scheme.content_type.model == "instrument":
-                from poms.instruments.handlers import InstrumentTypeProcess
-
                 instrument_type = InstrumentType.objects.get(
                     user_code=item.final_inputs["instrument_type"]
                 )
@@ -1581,18 +1473,10 @@ class SimpleImportProcess(object):
                         item.error_message = ""
 
                     item.error_message = (
-                        item.error_message + "Post script error: %s, "
-                    ) % str(e)
+                        f"{item.error_message}Post script error: {repr(e)}, "
+                    )
 
-            item.status = "success"
-            item.message = "Item Imported %s" % serializer.instance
-
-            trn = SimpleImportImportedItem(
-                id=serializer.instance.id, user_code=str(serializer.instance)
-            )
-
-            item.imported_items.append(trn)
-
+            self.handle_successful_item_import(item, serializer)
         except Exception as e:
             # _l.error('import_item e %s' % e)
             # _l.error('import_item traceback %s' % traceback.format_exc())
@@ -1663,22 +1547,14 @@ class SimpleImportProcess(object):
                                 item.error_message = ""
 
                             item.error_message = (
-                                item.error_message + "Post script error: %s, "
-                            ) % str(e)
+                                f"{item.error_message} Post script error: {repr(e)}, "
+                            )
 
-                    item.status = "success"
-                    item.message = "Item Imported %s" % serializer.instance
-
-                    trn = SimpleImportImportedItem(
-                        id=serializer.instance.id, user_code=str(serializer.instance)
-                    )
-
-                    item.imported_items.append(trn)
-
+                    self.handle_successful_item_import(item, serializer)
                 except Exception as e:
                     item.status = "error"
                     item.error_message = (
-                        item.error_message + "==== Overwrite Exception " + str(e)
+                        f"{item.error_message}==== Overwrite Exception {e}"
                     )
                     _l.error(
                         f"import_item.overwrite model={self.scheme.content_type.model}"
@@ -1686,30 +1562,35 @@ class SimpleImportProcess(object):
                         f"{traceback.format_exc()}"
                     )
 
-
             else:
                 item.status = "error"
-                item.error_message = (
-                    item.error_message + "====  Create Exception " + str(e)
-                )
+                item.error_message = f"{item.error_message}====  Create Exception {e}"
+
+    def handle_successful_item_import(self, item, serializer):
+        item.status = "success"
+        item.message = f"Item Imported {serializer.instance}"
+
+        trn = SimpleImportImportedItem(
+            id=serializer.instance.id, user_code=str(serializer.instance)
+        )
+
+        item.imported_items.append(trn)
 
     def process_items(self):
-        _l.info("SimpleImportProcess.Task %s. process_items INIT" % self.task)
-
-        index = 0
+        _l.info(f"SimpleImportProcess.Task {self.task}. process_items INIT")
 
         for item in self.items:
             try:
                 _l.info(
-                    "SimpleImportProcess.Task %s. ========= process row %s/%s ========"
-                    % (self.task, str(item.row_number), str(self.result.total_rows))
+                    f"SimpleImportProcess.Task {self.task}. ========= process row "
+                    f"{item.row_number}/{self.result.total_rows} ========"
                 )
 
                 if self.scheme.filter_expr:
                     # expr = Expression.parseString("a == 1 and b == 2")
                     # expr = Expression.parseString(self.scheme.filter_expr)
 
-                    result = bool(
+                    success = bool(
                         formula.safe_eval(
                             self.scheme.filter_expr,
                             names=item.inputs,
@@ -1717,22 +1598,18 @@ class SimpleImportProcess(object):
                         )
                     )
 
-                    if result:
-                        # filter passed
-                        pass
-                    else:
+                    if not success:
                         item.status = "skip"
                         item.message = "Skipped due filter"
-
                         _l.info(
-                            "SimpleImportProcess.Task %s. Row skipped due filter %s"
-                            % (self.task, str(item.row_number))
+                            f"SimpleImportProcess.Task {self.task}. Row skipped "
+                            f"due filter {item.row_number}"
                         )
                         continue
 
                 self.import_item(item)
 
-                self.result.processed_rows = self.result.processed_rows + 1
+                self.result.processed_rows += 1
 
                 self.task.update_progress(
                     {
@@ -1741,41 +1618,38 @@ class SimpleImportProcess(object):
                         "percent": round(
                             self.result.processed_rows / (len(self.items) / 100)
                         ),
-                        "description": "Row %s processed" % self.result.processed_rows,
+                        "description": f"Row {self.result.processed_rows} processed",
                     }
                 )
 
             except Exception as e:
                 item.status = "error"
-                item.message = "Error %s" % e
+                item.message = f"item.row_number {item.row_number} error {repr(e)}"
 
                 _l.error(
-                    "SimpleImportProcess.Task %s.  ========= process row %s ======== Exception %s"
-                    % (self.task, str(item.row_number), e)
-                )
-                _l.error(
-                    "SimpleImportProcess.Task %s.  ========= process row %s ======== Traceback %s"
-                    % (self.task, str(item.row_number), traceback.format_exc())
+                    f"SimpleImportProcess.Task {self.task}.  ========= process row "
+                    f"{str(item.row_number)} ======== Exception {e} ====== "
+                    f"Traceback {traceback.format_exc()}"
                 )
 
         self.result.items = self.items
 
-        _l.info("SimpleImportProcess.Task %s. process_items DONE" % self.task)
+        _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
     def process(self):
+        error_flag = False
         try:
             self.process_items()
 
         except Exception as e:
             _l.error(
-                "SimpleImportProcess.Task %s. process Exception %s" % (self.task, e)
-            )
-            _l.error(
-                "SimpleImportProcess.Task %s. process Traceback %s"
-                % (self.task, traceback.format_exc())
+                f"SimpleImportProcess.Task {self.task}.process "
+                f"Exception {repr(e)} Traceback {traceback.format_exc()}"
             )
 
-            self.result.error_message = "General Import Error. Exception %s" % e
+            error_flag = True
+
+            self.result.error_message = f"General Import Error. Exception {repr(e)}"
 
             if (
                 self.execution_context
@@ -1784,81 +1658,71 @@ class SimpleImportProcess(object):
                 send_system_message(
                     master_user=self.master_user,
                     performed_by="System",
-                    description="Can't process file. Exception %s" % e,
+                    description=f"Can't process file. Exception {e}",
                 )
 
         finally:
-            if self.task.options_object and "items" in self.task.options_object:
-                pass
-            else:
-                pass
-
-            self.import_result = SimpleImportResultSerializer(
+            self.task.result_object = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
 
-            self.task.result_object = self.import_result
-
-            # _l.info("self.task.result_object %s" % self.task.result_object)
-
-            self.task.save()
+            # _l.info(f"self.task.result_object {self.task.result_object}")
 
             self.result.reports = []
-
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
+            self.task.save()
 
-            error_rows_count = 0
-            for result_item in self.result.items:
-                if result_item.status == "error":
-                    error_rows_count = error_rows_count + 1
+            error_rows_count = sum(
+                result_item.status == "error" for result_item in self.result.items
+            )
+            if error_rows_count:
+                # Ignore item errors https://finmars2018.atlassian.net/browse/FN-2318
+                # error_flag = True
 
-            if error_rows_count != 0:
                 send_system_message(
                     master_user=self.master_user,
                     action_status="required",
                     type="warning",
-                    title="Simple Import Partially Failed. Task id: %s" % self.task.id,
-                    description="Error rows %s/%s"
-                    % (error_rows_count, len(self.result.items)),
+                    title=f"Simple Import Partially Failed. Task id: {self.task.id}",
+                    description=f"Error rows {error_rows_count}/{len(self.result.items)}",
                 )
 
-            system_message_title = "New Items (import from file)"
             system_message_description = (
-                "New items created (Import scheme - "
-                + str(self.scheme.name)
-                + ") - "
-                + str(len(self.items))
+                f"New items created (Import scheme - {str(self.scheme.name)}) -"
+                f" {len(self.items)}"
             )
 
             import_system_message_title = "Simple import (finished)"
 
             system_message_performed_by = self.member.username
 
-            if self.process_type == ProcessType.JSON:
-                if (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
-                ):
-                    system_message_title = "New itmes (import from broker)"
-                    system_message_performed_by = "System"
-
-                    import_system_message_title = "Simple import from broker (finished)"
+            system_message_title = "New Items (import from file)"
+            if self.process_type == ProcessType.JSON and (
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
+            ):
+                system_message_title = "New itmes (import from broker)"
+                system_message_performed_by = "System"
+                import_system_message_title = "Simple import from broker (finished)"
 
             send_system_message(
                 master_user=self.master_user,
                 performed_by=system_message_performed_by,
                 section="import",
-                type="success",
+                type="error" if error_flag else "success",
                 title="Import Finished. Prices Recalculation Required",
-                description="Please, run schedule or execute procedures to calculate portfolio prices and nav history",
+                description=(
+                    "Please, run schedule or execute procedures to calculate portfolio "
+                    "prices and nav history"
+                ),
             )
 
         send_system_message(
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=import_system_message_title,
             attachments=[self.result.reports[0].id, self.result.reports[1].id],
         )
@@ -1867,7 +1731,7 @@ class SimpleImportProcess(object):
             master_user=self.master_user,
             performed_by=system_message_performed_by,
             section="import",
-            type="success",
+            type="error" if error_flag else "success",
             title=system_message_title,
             description=system_message_description,
         )
@@ -1877,9 +1741,9 @@ class SimpleImportProcess(object):
 
         self.task.add_attachment(self.result.reports[0].id)
         self.task.add_attachment(self.result.reports[1].id)
-
         self.task.verbose_result = self.get_verbose_result()
-
-        self.task.status = CeleryTask.STATUS_DONE
+        self.task.status = (
+            CeleryTask.STATUS_ERROR if error_flag else CeleryTask.STATUS_DONE
+        )
         self.task.mark_task_as_finished()
         self.task.save()

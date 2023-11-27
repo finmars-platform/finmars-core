@@ -139,7 +139,7 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "column", "name_expr"]
 
 
-class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
@@ -276,6 +276,22 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
                 "default_accrued" "user_text_1",
                 "user_text_2",
                 "user_text_3",
+            ],
+            "instruments.instrumentfactorschedule": [
+                "instrument",
+                "effective_date",
+                "factor_value"
+            ],
+            "instruments.accrualcalculationschedule": [
+                "instrument",
+                "accrual_start_date",
+                "first_payment_date",
+                "accrual_size",
+                "accrual_calculation_model",
+                "periodicity",
+                "periodicity_n",
+                "notes",
+                "eom"
             ],
             "instruments.pricehistory": [
                 "instrument",
@@ -459,7 +475,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
         if "calculated_inputs" in validated_data:
             calculated_inputs = validated_data.pop("calculated_inputs")
 
-        scheme = CsvImportScheme.objects.create(**validated_data)
+        # scheme = CsvImportScheme.objects.create(**validated_data)
+        scheme = super(CsvImportSchemeSerializer, self).create(validated_data)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
@@ -666,17 +683,17 @@ class SimpleImportImportedItemSerializer(serializers.Serializer):
 
 
 class SimpleImportProcessItemSerializer(serializers.Serializer):
-    row_number = serializers.IntegerField()
-    status = serializers.CharField()
-    error_message = serializers.CharField()
-    message = serializers.CharField()
-    raw_inputs = serializers.JSONField(allow_null=False)
-    inputs = serializers.JSONField(allow_null=False)
+    row_number = serializers.IntegerField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    error_message = serializers.CharField(read_only=True)
+    message = serializers.CharField(read_only=True)
+    raw_inputs = serializers.JSONField(allow_null=False, read_only=True)
+    inputs = serializers.JSONField(allow_null=False, read_only=True)
 
-    file_inputs = serializers.JSONField(allow_null=False)
-    conversion_inputs = serializers.JSONField(allow_null=False)
-    final_inputs = serializers.JSONField(allow_null=False)
-    imported_items = SimpleImportImportedItemSerializer(many=True)
+    file_inputs = serializers.JSONField(allow_null=False, read_only=True)
+    conversion_inputs = serializers.JSONField(allow_null=False, read_only=True)
+    final_inputs = serializers.JSONField(allow_null=False, read_only=True)
+    imported_items = SimpleImportImportedItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = SimpleImportProcessItem
@@ -724,14 +741,14 @@ class SimpleImportSchemeSerializer(serializers.ModelSerializer):
 
 
 class SimpleImportResultSerializer(serializers.Serializer):
-    file_name = serializers.CharField()
-    task = SimpleImportCeleryTaskSerializer()
-    scheme = SimpleImportSchemeSerializer()
-    total_rows = serializers.IntegerField()
-    items = SimpleImportProcessItemSerializer(many=True)
-    processed_rows = serializers.IntegerField()
-    error_message = serializers.CharField()
-    reports = FileReportSerializer(many=True)
+    file_name = serializers.CharField(read_only=True)
+    task = SimpleImportCeleryTaskSerializer(read_only=True)
+    scheme = SimpleImportSchemeSerializer(read_only=True)
+    total_rows = serializers.IntegerField(read_only=True)
+    items = SimpleImportProcessItemSerializer(many=True, read_only=True)
+    processed_rows = serializers.IntegerField(read_only=True)
+    error_message = serializers.CharField(read_only=True)
+    reports = FileReportSerializer(many=True, read_only=True)
 
     class Meta:
         model = TransactionImportResult

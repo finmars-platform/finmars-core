@@ -1,4 +1,5 @@
 import calendar
+import contextlib
 import copy
 import datetime
 import logging
@@ -34,13 +35,11 @@ def db_class_check_data(model, verbosity, using):
     for id, code, name in model.CLASSES:
         if id not in exists:
             if verbosity >= 2:
-                print("create %s class -> %s:%s" % (model._meta.verbose_name, id, name))
-            try:
+                print(f"create {model._meta.verbose_name} class -> {id}:{name}")
+            with contextlib.suppress(IntegrityError, ProgrammingError):
                 model.objects.using(using).create(
                     pk=id, user_code=code, short_name=name, name=name, description=name
                 )
-            except (IntegrityError, ProgrammingError):
-                pass
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
@@ -542,15 +541,18 @@ def get_serializer(content_type_key):
         MobileLayoutSerializer,
         TransactionUserFieldSerializer,
     )
-
     from poms.reports.serializers import BalanceReportCustomFieldSerializer
     from poms.reports.serializers import PLReportCustomFieldSerializer
     from poms.reports.serializers import TransactionReportCustomFieldSerializer
 
+    from poms.instruments.serializers import InstrumentFactorScheduleStandaloneSerializer
+    from poms.instruments.serializers import AccrualCalculationScheduleStandaloneSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
         "instruments.instrument": InstrumentSerializer,
+        "instruments.instrumentfactorschedule": InstrumentFactorScheduleStandaloneSerializer,
+        "instruments.accrualcalculationschedule": AccrualCalculationScheduleStandaloneSerializer,
         "instruments.instrumenttype": InstrumentTypeSerializer,
         "instruments.pricingpolicy": PricingPolicySerializer,
         "currencies.currency": CurrencySerializer,
@@ -645,3 +647,20 @@ def compare_versions(version1, version2):
 
 def is_newer_version(version1, version2):
     return compare_versions(version1, version2) > 0
+
+
+def get_last_business_day_of_previous_year(date_str):
+    """
+    Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous year.
+    """
+    # Parse the date string
+    date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+
+    # Find the last day of the previous year
+    last_day_of_previous_year = datetime.datetime(date.year - 1, 12, 31)
+
+    # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
+    while last_day_of_previous_year.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        last_day_of_previous_year -= timedelta(days=1)
+
+    return last_day_of_previous_year.strftime('%Y-%m-%d')

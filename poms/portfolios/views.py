@@ -14,17 +14,19 @@ from poms.common.filters import (
     CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
-    NoOpFilter,
+    NoOpFilter, ModelExtMultipleChoiceFilter, ModelExtUserCodeMultipleChoiceFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
+from poms.currencies.models import Currency
+from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord,
+    PortfolioRegisterRecord, PortfolioHistory,
 )
 from poms.portfolios.serializers import (
     FirstTransactionDateRequestSerializer,
@@ -35,11 +37,11 @@ from poms.portfolios.serializers import (
     PortfolioRegisterSerializer,
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer,
+    PrCalculateRecordsRequestSerializer, PortfolioHistorySerializer, CalculatePortfolioHistorySerializer,
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_register_price_history,
-    calculate_portfolio_register_record,
+    calculate_portfolio_register_record, calculate_portfolio_history,
 )
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -75,6 +77,7 @@ class PortfolioFilterSet(FilterSet):
 class PortfolioViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects.select_related(
         "master_user",
+        "owner"
     ).prefetch_related(
         get_attributes_prefetch(),
     )
@@ -304,7 +307,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        serializer = PrCalculateRecordsRequestSerializer(data=request.data)
+        serializer = PrCalculateRecordsRequestSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -408,9 +411,19 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related("master_user")
+    queryset = PortfolioRegisterRecord.objects.select_related("master_user", "portfolio", "instrument",
+                                                              "transaction_class", "cash_currency",
+                                                              "valuation_currency", "previous_date_record",
+                                                              "transaction",
+                                                              "portfolio_register")
     serializer_class = PortfolioRegisterRecordSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+
+    ]
     filter_class = PortfolioRegisterRecordFilterSet
     ordering_fields = []
 
@@ -464,3 +477,72 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed("retrieve", "not allowed", "405")
+
+
+class PortfolioHistoryFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    user_code = CharFilter()
+    status = CharFilter()
+
+    period_type = CharFilter()
+
+    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
+    currency__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Currency)
+    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PricingPolicy)
+
+    date = django_filters.DateFromToRangeFilter()
+
+
+
+    class Meta:
+        model = PortfolioHistory
+        fields = []
+
+
+class PortfolioHistoryViewSet(AbstractModelViewSet):
+    queryset = PortfolioHistory.objects.select_related("master_user", "portfolio", "currency",
+                                                       "cost_method", "pricing_policy")
+    serializer_class = PortfolioHistorySerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+
+    ]
+    filter_class = PortfolioHistoryFilterSet
+    ordering_fields = []
+
+
+    @action(detail=False, methods=["post"], url_path="calculate", serializer_class=CalculatePortfolioHistorySerializer)
+    def calculate(self, request):
+        _l.info(
+            f"{self.__class__.__name__}.calculate data={request.data}"
+        )
+        serializer = CalculatePortfolioHistorySerializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio History",
+            type="calculate_portfolio_history",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
+
+        calculate_portfolio_history.apply_async(
+            kwargs={"task_id": task.id},
+        )
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )

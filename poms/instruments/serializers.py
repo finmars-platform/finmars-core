@@ -1477,6 +1477,7 @@ class InstrumentLightSerializer(ModelWithUserCodeSerializer):
 class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
     pricing_currency = CurrencyEvalSerializer(read_only=True)
     accrued_currency = CurrencyEvalSerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
 
     class Meta:
         model = Instrument
@@ -1501,6 +1502,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "user_text_2",
             "user_text_3",
             "reference_for_pricing",
+            "country"
         ]
 
         read_only_fields = fields
@@ -1612,10 +1614,53 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class AccrualCalculationScheduleStandaloneSerializer(serializers.ModelSerializer):
+
+    instrument = InstrumentField()
+
+    accrual_calculation_model = AccrualCalculationModelField()
+    accrual_calculation_model_object = AccrualCalculationModelSerializer(
+        source="accrual_calculation_model", read_only=True
+    )
+    periodicity = PeriodicityField(allow_null=False)
+    periodicity_object = PeriodicitySerializer(source="periodicity", read_only=True)
+
+    class Meta:
+        model = AccrualCalculationSchedule
+        fields = [
+            "id",
+            "instrument",
+            "accrual_start_date",
+            "accrual_start_date_value_type",
+            "first_payment_date",
+            "first_payment_date_value_type",
+            "accrual_size",
+            "accrual_size_value_type",
+            "periodicity_n",
+            "periodicity_n_value_type",
+            "accrual_calculation_model",
+            "accrual_calculation_model_object",
+            "periodicity",
+            "periodicity_object",
+            "notes",
+        ]
+
+    def validate(self, attrs):
+        return attrs
+
+
 class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentFactorSchedule
-        fields = ["effective_date", "factor_value"]
+        fields = ["id", "effective_date", "factor_value"]
+
+
+class InstrumentFactorScheduleStandaloneSerializer(serializers.ModelSerializer):
+
+    instrument = InstrumentField()
+    class Meta:
+        model = InstrumentFactorSchedule
+        fields = ["id", "instrument", "effective_date", "factor_value"]
 
 
 class EventScheduleActionSerializer(serializers.ModelSerializer):

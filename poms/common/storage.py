@@ -396,23 +396,39 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
             )
 
     def download_directory(self, directory_path, local_destination_path):
+        _l.info('Starting download from S3 directory: %s', directory_path)
+        _l.info('Local destination path: %s', local_destination_path)
 
-        _l.info('directory_path %s' % directory_path)
-        _l.info('local_destination_path %s' % local_destination_path)
+        # Ensure the local destination path exists
+        os.makedirs(local_destination_path, exist_ok=True)
 
-        folder = os.path.dirname(local_destination_path)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
-
+        # Iterate over all objects with the specified prefix
         for obj in self.bucket.objects.filter(Prefix=directory_path):
-            local_path = os.path.join(local_destination_path, os.path.relpath(obj.key, directory_path))
-            _l.info('local_path %s' % local_path)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            self.bucket.download_file(obj.key, local_path)
+            # Construct the local file path
+            local_file_path = os.path.join(local_destination_path, os.path.relpath(obj.key, directory_path))
+            _l.info('Processing object: %s', obj.key)
 
-            # Download the blob to the local file
-            with open(local_path, "wb") as local_file, self.open(obj.key) as download_stream:
-                local_file.write(download_stream.read())
+            # Skip if the object is a directory (ends with '/')
+            if obj.key.endswith('/'):
+                # Create the directory structure locally
+                os.makedirs(local_file_path, exist_ok=True)
+            else:
+                # Ensure the local directory for the file exists
+                local_file_dir = os.path.dirname(local_file_path)
+                os.makedirs(local_file_dir, exist_ok=True)
+
+                # Open the S3 object and write its content to the local file
+                try:
+                    with open(local_file_path, 'wb') as local_file:
+                        with self.open(obj.key) as s3_file:
+                            # Read the S3 file in chunks
+                            for chunk in iter(lambda: s3_file.read(4096), b''):
+                                local_file.write(chunk)
+                except Exception as e:
+                    _l.error('Failed to download %s to %s: %s', obj.key, local_file_path, e)
+                    continue  # Skip this file and continue with the next one
+
+        _l.info('Download completed successfully.')
 
     def download_directory_as_zip(self, directory_path):
 

@@ -585,6 +585,7 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='balance_report_instances_as_member'
     )
     report_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("report date")
@@ -647,6 +648,7 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='pl_report_instances_as_member'
     )
     report_date = models.DateField(
         db_index=True,
@@ -711,6 +713,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='transaction_report_instances_as_member'
     )
     begin_date = models.DateField(
         db_index=True,
@@ -744,7 +747,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         if TransactionReportInstance.objects.all().count() > 512:
             _l.warning(
                 "TransactionReportInstance amount > 512, "
-                "delete oldest PLReportInstance"
+                "delete oldest TransactionReportInstance"
             )
             TransactionReportInstance.objects.all().order_by("id")[0].delete()
 
@@ -759,6 +762,7 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='performance_report_instances_as_member'
     )
     begin_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("begin date")
@@ -1541,6 +1545,7 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
+        related_name='report_summary_instances_as_member'
     )
     date_from = models.DateField(
         null=True,

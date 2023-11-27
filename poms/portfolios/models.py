@@ -1,5 +1,4 @@
 from datetime import date
-
 from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -7,12 +6,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
-from poms.common.utils import date_now
+from poms.common.utils import date_now, str_to_date
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, PricingPolicy
+from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
+from poms_app import settings
 
 _l = getLogger("poms.portfolios")
 
@@ -222,6 +222,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         except PortfolioBundle.DoesNotExist:
             bundle = PortfolioBundle.objects.create(
                 master_user=self.master_user,
+                owner=self.owner,
                 user_code=self.user_code,
             )
             bundle.registers.set([self])
@@ -305,6 +306,10 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         related_name="register_record_valuation_currency",
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("valuation currency"),
+    )
+    nav_valuation_currency = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav valuation currency"),
     )
     nav_previous_day_valuation_currency = models.FloatField(
         default=0.0,
@@ -401,3 +406,280 @@ class PortfolioBundle(NamedModel, DataTimeStampedModel):
         verbose_name = gettext_lazy("portfolio bundle")
         verbose_name_plural = gettext_lazy("portfolio bundles")
         index_together = [["master_user", "user_code"]]
+
+
+class PortfolioHistory(NamedModel, DataTimeStampedModel):
+    PERIOD_YTD = 'ytd'
+    PERIOD_MTD = 'mtd'
+    PERIOD_QTD = 'qtd'
+    PERIOD_INCEPTION = 'inception'
+
+    PERIOD_CHOICES = (
+        (PERIOD_YTD, "YTD"),
+        (PERIOD_MTD, "MTD"),
+        (PERIOD_QTD, "QTD"),
+        (PERIOD_INCEPTION, "Inception"),
+    )
+
+    PERFORMANCE_METHOD_MODIFIED_DIETZ = 'modified_dietz'
+    PERFORMANCE_METHOD_TIME_WEIGHTED = 'time_weighted'
+
+    PERFORMANCE_METHOD_CHOICES = (
+        (PERFORMANCE_METHOD_MODIFIED_DIETZ, "Modified Dietz"),
+        (PERFORMANCE_METHOD_TIME_WEIGHTED, "Time Weighted"),
+    )
+
+    STATUS_OK = 'ok'
+    STATUS_ERROR = 'error'
+
+    STATUS_CHOICES = (
+        (STATUS_OK, "Ok"),
+        (STATUS_ERROR, "error"),
+    )
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    user_code = models.CharField(
+        max_length=1024,
+        unique=True,
+        verbose_name=gettext_lazy("user code"),
+        help_text=gettext_lazy(
+            "Unique Code for this object. Used in Configuration and Permissions Logic"
+        ),
+    )
+
+    date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
+    date_from = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date from'))
+
+    period_type = models.CharField(
+        max_length=255,
+        default=PERIOD_YTD,
+        choices=PERIOD_CHOICES,
+        verbose_name="period_type",
+    )
+
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE,
+                                  verbose_name=gettext_lazy('portfolio'))
+
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name=gettext_lazy('currency'))
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE,
+                                       verbose_name=gettext_lazy('pricing policy'))
+
+    cost_method = models.ForeignKey(CostMethod, on_delete=models.CASCADE, verbose_name=gettext_lazy('cost method'),
+                                    help_text="AVCO / FIFO")
+    performance_method = models.CharField(
+        max_length=255,
+        default=PERFORMANCE_METHOD_MODIFIED_DIETZ,
+        choices=PERFORMANCE_METHOD_CHOICES,
+        verbose_name="performance method",
+    )
+
+    benchmark = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('benchmark'))
+
+    nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'),
+                            help_text="Net Asset Value")
+    cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash flow'))
+    cash_inflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash inflow'))
+    cash_outflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash outflow'))
+
+    total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('total'),
+                              help_text="Total Value of the Portfolio from P&L Report")
+
+    cumulative_return = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('cumulative return'))
+    annualized_return = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('annualized return'))
+    portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True,
+                                             verbose_name=gettext_lazy('portfolio volatility'))
+    annualized_portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True,
+                                                        verbose_name=gettext_lazy('annualized portfolio volatility'))
+    sharpe_ratio = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('sharpe_ratio'))
+    max_annualized_drawdown = models.FloatField(default=0.0, null=True, blank=True,
+                                                verbose_name=gettext_lazy('max_annualized_drawdown'))
+    betta = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('betta'))
+    alpha = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('alpha'))
+    correlation = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('correlation'))
+    weighted_duration = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('weighted_duration'))
+
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("error_message"),
+        help_text="Error message if any",
+    )
+
+    status = models.CharField(
+        max_length=255,
+        default=STATUS_OK,
+        choices=STATUS_CHOICES,
+        verbose_name="status",
+    )
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'user_code'],
+        ]
+
+    def get_balance_report(self):
+
+        from poms.reports.common import Report
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+
+        instance = Report(
+            master_user=self.master_user,
+            member=self.owner,
+            report_currency=self.currency,
+            report_date=self.date,
+            cost_method=self.cost_method,
+            portfolios=[self.portfolio],
+            pricing_policy=self.pricing_policy,
+            portfolio_mode=1,
+            account_mode=1,
+            strategy1_mode=0,
+            strategy2_mode=0,
+            strategy3_mode=0
+        )
+
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance_sync()
+
+        return instance
+
+    def get_pl_report(self):
+
+        from poms.reports.common import Report
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+
+        instance = Report(
+            master_user=self.master_user,
+            member=self.owner,
+            report_currency=self.currency,
+            pl_first_date=self.date_from,
+            report_date=self.date,
+            cost_method=self.cost_method,
+            portfolios=[self.portfolio],
+            pricing_policy=self.pricing_policy,
+            portfolio_mode=1,
+            account_mode=1,
+            strategy1_mode=0,
+            strategy2_mode=0,
+            strategy3_mode=0
+        )
+
+        builder = PLReportBuilderSql(instance=instance)
+        instance = builder.build_pl_sync()
+
+        return instance
+
+    def get_performance_report(self):
+
+        from poms.reports.common import PerformanceReport
+
+        portfolio_register = PortfolioRegister.objects.get(portfolio=self.portfolio)
+
+        instance = PerformanceReport(
+            master_user=self.master_user,
+            member=self.owner,
+            report_currency=self.currency,
+            begin_date=str_to_date(self.date_from),
+            end_date=str_to_date(self.date),
+            calculation_type=self.performance_method,
+            segmentation_type='months',
+            registers=[portfolio_register]
+        )
+
+        from poms.reports.performance_report import PerformanceReportBuilder
+        builder = PerformanceReportBuilder(instance=instance)
+        instance = builder.build_report()
+
+        return instance
+
+    def get_annualized_return(self):
+
+        _delta = self.date - str_to_date(self.portfolio.first_transaction_date('accounting_date'))
+        days_from_first_transaction = _delta.days
+
+        if days_from_first_transaction == 0:
+            return 0
+
+        _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
+
+        annualized_return = round((1 + self.cumulative_return) ** (365 / days_from_first_transaction) - 1,
+                                  settings.ROUND_NDIGITS)
+
+        return annualized_return
+
+    def calculate(self):
+
+        self.error_message = ''
+
+        self.balance_report = self.get_balance_report()
+        self.pl_report = self.get_pl_report()
+
+        # _l.info('balance_report.items %s' % len(balance_report.items))
+        # if len(balance_report.items):
+        #     _l.info('balance_report.items %s' % balance_report.items[0])
+
+        has_nav_error = False
+        has_total_error = False
+
+        nav = 0
+        for item in self.balance_report.items:
+            if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
+                nav = nav + item["market_value"]
+            else:
+                self.error_message = self.error_message + f'{item["name"]} has no market_value\n'
+                has_nav_error = True
+
+        if has_nav_error:
+            _l.info("PortfolioHistory.calculate has_nav_error")
+            self.error_message = self.error_message + 'NAV is wrong, some positions has no market value\n'
+
+        total = 0
+        for item in self.pl_report.items:
+
+            # Check position_size aswell?
+            if item["total"] is not None:
+                total = total + item["total"]
+            else:
+                self.error_message = self.error_message + f'{item["name"]} has no total value\n'
+                _l.info("PortfolioHistory.calculate has_total_error")
+                has_total_error = True
+
+        if has_total_error:
+            self.error_message = self.error_message + 'Total is wrong, some positions has no total value\n'
+
+        self.nav = nav
+        self.total = total
+
+        # Performance Part
+
+        try:
+            self.performance_report = self.get_performance_report()
+
+            self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
+            self.cash_flow = self.performance_report.grand_cash_flow
+            self.cash_inflow = self.performance_report.grand_cash_inflow
+            self.cash_outflow = self.performance_report.grand_cash_outflow
+            self.annualized_return = self.get_annualized_return()
+
+            # TODO implement portoflio_volatility
+            # TODO implement annualized_portoflio_volatility
+            # TODO implement max_annualized_drawdown
+            # TODO implement betta
+            # TODO implement alpha
+            # TODO implement correltaion
+
+        except Exception as e:
+            self.error_message = self.error_message + str(e) + '\n'
+
+        _l.info('error_message %s' % self.error_message)
+
+        if self.error_message:
+            self.status = self.STATUS_ERROR
+        else:
+            self.status = self.STATUS_OK
+
+        self.save()

@@ -1,16 +1,20 @@
 import json
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Iterable
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from django.core.files.base import ContentFile
+from django.core.serializers import serialize
 from django.db import transaction
 from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
+from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
+from poms.common.utils import str_to_date
 from poms.history.models import HistoricalRecord
 from poms.history.utils import (
     get_local_path,
@@ -20,6 +24,7 @@ from poms.history.utils import (
     vacuum_table,
 )
 from poms.users.models import MasterUser
+from poms_app import settings
 
 log = f"history_{Path(__name__).stem}.clear_old_journal_records:"
 _l = logging.getLogger("poms.history")
@@ -123,3 +128,79 @@ def clear_old_journal_records():
 
         chunk_no += 1
         start = end
+
+
+# Generate days range
+def daterange(start_date, end_date):
+    for n in range(int((end_date - start_date).days) + 1):
+        yield start_date + timedelta(n)
+
+
+@finmars_task(name="history.export_journal_to_storage", bind=True)
+def export_journal_to_storage(self, task_id):
+    """
+    Export historical records to storage
+    """
+
+    task = CeleryTask.objects.get(id=task_id)
+    task.celery_task_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+    date_from = str_to_date(task.options_object.get("date_from"))
+    date_to = str_to_date(task.options_object.get("date_to"))
+
+    storage = get_storage()
+
+    total = HistoricalRecord.objects.filter(created__range=[date_from, date_to]).count()
+
+    count = 0
+
+    # Iterate over each day in the range
+    for single_date in daterange(date_from, date_to):
+
+        _l.info('single_date %s' % single_date)
+        year, month, day = single_date.year, single_date.month, single_date.day
+
+
+        records = HistoricalRecord.objects.filter(created__date=single_date)
+
+        _l.info('records count %s' % records.count())
+
+        if records.exists():
+            # Serialize the records to JSON
+            data = serialize('json', records)
+
+            # Create a ContentFile to hold the JSON data
+            json_file = ContentFile(data.encode("utf-8"))
+
+            path = settings.BASE_API_URL + '/.system/journal'
+
+            # Define the file name, including the year and month
+            file_name = f'{path}/{year}/{month}/{day}.json'
+
+            # Save the file to storage
+            storage.save(file_name, json_file)
+
+            count = count + records.count()
+
+            # Optionally, delete the records if needed
+            records.delete()
+
+            task.update_progress(
+                {
+                    "current": count,
+                    "total": total,
+                    "percent": round(count / (total / 100)),
+                    "description": f"Going to export for {year} {month} {day}",
+                }
+            )
+
+        result_object = {
+            "message": f"Exported {count} records to storage",
+        }
+        task.result_object = result_object
+
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()

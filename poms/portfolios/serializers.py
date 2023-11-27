@@ -1,8 +1,9 @@
+from datetime import timedelta
 from logging import getLogger
 from typing import Type
-from datetime import timedelta
 
 from django.db import models, transaction
+from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -10,9 +11,10 @@ from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
-from django.views.generic.dates import timezone_today
+from poms.currencies.fields import CurrencyField, CurrencyDefault
+from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import Instrument, InstrumentType
+from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
     InstrumentSerializer,
     InstrumentViewSerializer,
@@ -24,10 +26,10 @@ from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord,
+    PortfolioRegisterRecord, PortfolioHistory,
 )
 from poms.portfolios.utils import get_price_calculation_type
-from poms.users.fields import MasterUserField
+from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 
 _l = getLogger("poms.portfolios")
@@ -214,6 +216,7 @@ class PortfolioSerializer(
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
+                owner=instance.owner,
                 valuation_pricing_policy=ecosystem_default.pricing_policy,
                 valuation_currency=ecosystem_default.currency,
                 portfolio=instance,
@@ -261,7 +264,6 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
         ]
 
     def get_first_transaction(self, instance):
-
         date_field = "accounting_date"
 
         first_date = instance.first_transaction_date(date_field)
@@ -269,7 +271,6 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
             "date_field": date_field,
             "date": first_date,
         }
-
 
 
 class PortfolioViewSerializer(ModelWithUserCodeSerializer):
@@ -382,10 +383,10 @@ class PortfolioRegisterSerializer(
         return instance
 
     def create_new_instrument(
-        self,
-        master_user,
-        new_linked_instrument: dict,
-        instance: PortfolioRegister,
+            self,
+            master_user,
+            new_linked_instrument: dict,
+            instance: PortfolioRegister,
     ):
         linked_instrument_type = new_linked_instrument["instrument_type"]
         instrument_type = (
@@ -449,6 +450,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "fx_rate",
             "cash_amount_valuation_currency",
             "valuation_currency",
+            "nav_valuation_currency",
             "nav_previous_day_valuation_currency",
             "n_shares_previous_day",
             "n_shares_added",
@@ -463,7 +465,6 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
     def __init__(self, *args, **kwargs):
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.transactions.serializers import (
-            ComplexTransactionViewSerializer,
             TransactionClassSerializer,
         )
 
@@ -481,9 +482,9 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
         self.fields["portfolio_object"] = PortfolioViewSerializer(
             source="portfolio", read_only=True
         )
-        self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
-            source="complex_transaction", read_only=True
-        )
+        # self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
+        #     source="complex_transaction", read_only=True
+        # )
         self.fields["portfolio_register_object"] = PortfolioRegisterViewSerializer(
             source="portfolio_register", read_only=True
         )
@@ -506,7 +507,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
+class PortfolioBundleSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -629,3 +630,108 @@ class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
             raise ValidationError("date_from must be <= date_to")
 
         return attrs
+
+
+class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    portfolio = PortfolioField(required=True)
+    currency = CurrencyField(default=CurrencyDefault())
+    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects)
+
+    class Meta:
+        model = PortfolioHistory
+        fields = [
+            "id",
+
+            "user_code",
+
+            "master_user",
+            "portfolio",
+            "currency",
+            "pricing_policy",
+
+            "date",
+            "date_from",
+            "period_type",
+
+            "cost_method",
+            "performance_method",
+
+            "benchmark",
+            "nav",
+            "cash_flow",
+            "cash_inflow",
+            "cash_outflow",
+            "total",
+
+            "cumulative_return",
+            "annualized_return",
+            "portfolio_volatility",
+            "annualized_portfolio_volatility",
+
+            "sharpe_ratio",
+            "max_annualized_drawdown",
+
+            "betta",
+            "alpha",
+            "correlation",
+            "weighted_duration",
+
+            "created",
+            "modified",
+
+            "is_enabled",
+
+            "error_message",
+            "status"
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        from poms.currencies.serializers import CurrencyViewSerializer
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["currency_object"] = CurrencyViewSerializer(
+            source="currency", read_only=True
+        )
+
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
+
+        self.fields["pricing_policy_object"] = PricingPolicySerializer(
+            source="pricing_policy", read_only=True
+        )
+
+
+class CalculatePortfolioHistorySerializer(serializers.Serializer):
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+
+    # SEGMENTATION_TYPE_DAYS = "days"
+    SEGMENTATION_TYPE_BUSINESS_DAYS = "business_days"
+    SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS = "business_days_end_of_months"
+    SEGMENTATION_TYPE_CHOICES = (
+        (SEGMENTATION_TYPE_BUSINESS_DAYS, "Business Days"),
+        (SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, "Business Days End Of Months"),
+    )
+
+
+    portfolio = PortfolioField(required=True)
+    currency = CurrencyField(default=CurrencyDefault())
+    pricing_policy = PricingPolicyField(default=SystemPricingPolicyDefault())
+
+    date = serializers.DateField(required=True)
+    date_from = serializers.DateField(required=False)
+
+    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, choices=SEGMENTATION_TYPE_CHOICES)
+    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD, choices=PortfolioHistory.PERIOD_CHOICES)
+    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, required=False)
+    performance_method = serializers.ChoiceField(required=False, default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ, choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
+    benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
+
+
+
