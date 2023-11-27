@@ -52,28 +52,30 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
         if issubclass(viewset_class, CreateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:create")
 
-        if issubclass(viewset_class, RetrieveModelMixin):
+        elif issubclass(viewset_class, RetrieveModelMixin):
             actions.append(f"{service_name}:{viewset_name}:retrieve")
 
-        if issubclass(viewset_class, UpdateModelMixin):
+        elif issubclass(viewset_class, UpdateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:update")
 
-        if issubclass(viewset_class, DestroyModelMixin):
+        elif issubclass(viewset_class, DestroyModelMixin):
             actions.append(f"{service_name}:{viewset_name}:destroy")
 
-        if issubclass(viewset_class, ListModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list")
-
-        if issubclass(viewset_class, ListLightModelMixin):
+        elif issubclass(viewset_class, ListLightModelMixin):
             actions.append(f"{service_name}:{viewset_name}:list_light")
 
-        if issubclass(viewset_class, ListEvModelMixin):
+        elif issubclass(viewset_class, ListEvModelMixin):
             actions.extend(
                 (
                     f"{service_name}:{viewset_name}:list_ev_item",
                     f"{service_name}:{viewset_name}:list_ev_group",
                 )
             )
+
+        # must be last, cause ListLightModelMixin & ListEvModelMixin are its subclasses
+        elif issubclass(viewset_class, ListModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:list")
+
         if len(actions):
             access_policy_json = {
                 "Version": "2023-01-01",
