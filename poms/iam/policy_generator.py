@@ -94,6 +94,8 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
 
 
 def generate_readonly_access_policies_for_viewsets(viewset_classes):
+    from poms.users.models import Member
+
     access_policies = []
 
     for viewset_class in viewset_classes:
@@ -109,8 +111,6 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
         name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
         service_name = settings.SERVICE_NAME
-
-        from poms.users.models import Member
 
         finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -165,14 +165,14 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
 
 def generate_balance_report_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-balancereport"
 
     name = "BalanceReport Access"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -207,14 +207,14 @@ def generate_balance_report_access_policy():
 
 
 def generate_pl_report_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-plreport"
 
     name = "PLReport Access"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -249,14 +249,14 @@ def generate_pl_report_access_policy():
 
 
 def generate_transaction_report_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-transactionreport"
 
     name = "TransactionReport Access"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -291,14 +291,14 @@ def generate_transaction_report_access_policy():
 
 
 def generate_transaction_view_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-complextransaction-view"
 
     name = "Complex Transaction View"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -333,14 +333,14 @@ def generate_transaction_view_access_policy():
 
 
 def generate_transaction_book_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-complextransaction-book"
 
     name = "Complex Transaction Book"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -375,14 +375,14 @@ def generate_transaction_book_access_policy():
 
 
 def generate_transaction_rebook_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-complextransaction-rebook"
 
     name = "Complex Transaction Rebook"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -417,6 +417,8 @@ def generate_transaction_rebook_access_policy():
 
 
 def generate_init_configuration_install_access_policy():
+    from poms.users.models import Member
+
     service_name = settings.SERVICE_NAME
 
     configuration_code = get_default_configuration_code()
@@ -425,8 +427,6 @@ def generate_init_configuration_install_access_policy():
     )
 
     name = "NewMemberSetupConfiguration Install"
-
-    from poms.users.models import Member
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -471,9 +471,9 @@ def generate_speicifc_policies_for_viewsets():
 
 
 def generate_viewer_role(readonly_access_policies):
-    configuration_code = get_default_configuration_code()
-
     from poms.users.models import Member
+
+    configuration_code = get_default_configuration_code()
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -697,9 +697,9 @@ def generate_member_role():
 
 
 def generate_configuration_manager_role():
-    configuration_code = get_default_configuration_code()
-
     from poms.users.models import Member
+
+    configuration_code = get_default_configuration_code()
 
     finmars_bot = Member.objects.get(username="finmars_bot")
 
