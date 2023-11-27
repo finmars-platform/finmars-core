@@ -21,6 +21,8 @@ _l = logging.getLogger("poms.iam")
 
 
 def generate_full_access_policies_for_viewsets(viewset_classes):
+    from poms.users.models import Member
+
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
         actions = []
@@ -34,13 +36,11 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
 
         name = f"{capitalize_first_letter(viewset_name)} Full Access"
 
-        from poms.users.models import Member
-
         finmars_bot = Member.objects.get(username="finmars_bot")
 
         try:
             access_policy = AccessPolicy.objects.get(user_code=user_code)
-        except Exception as e:
+        except AccessPolicy.DoesNotExist:
             access_policy = AccessPolicy.objects.create(
                 user_code=user_code,
                 owner=finmars_bot,
@@ -91,8 +91,6 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
             access_policy.save()
         else:
             access_policy.delete()
-
-    return []
 
 
 def generate_readonly_access_policies_for_viewsets(viewset_classes):
@@ -783,24 +781,19 @@ def get_viewsets_from_all_apps():
     return all_viewsets
 
 
+def _create_access_policy(configuration_code, suffix):
+    policy = AccessPolicy.objects.get(user_code=f"{configuration_code}:{suffix}")
+    add_to_list_if_not_exists(
+        "finmars:ListLayout:ping", policy.policy["Statement"][0]["Action"]
+    )
+    policy.save()
+
+
 def patch_generated_policies():
     configuration_code = get_default_configuration_code()
 
-    item = AccessPolicy.objects.get(
-        user_code=configuration_code + ":finmars-listlayout-readonly"
-    )
-    add_to_list_if_not_exists(
-        "finmars:ListLayout:ping", item.policy["Statement"][0]["Action"]
-    )
-    item.save()
-
-    item = AccessPolicy.objects.get(
-        user_code=configuration_code + ":finmars-listlayout-full"
-    )
-    add_to_list_if_not_exists(
-        "finmars:ListLayout:ping", item.policy["Statement"][0]["Action"]
-    )
-    item.save()
+    _create_access_policy(configuration_code, "finmars-listlayout-readonly")
+    _create_access_policy(configuration_code, "finmars-listlayout-full")
 
 
 def create_base_iam_access_policies_templates():
@@ -815,20 +808,23 @@ def create_base_iam_access_policies_templates():
 
     if AccessPolicy.objects.filter(configuration_code=configuration_code).count() == 0:
         _l.info(
-            "create_base_iam_access_policies_templates Access Policies are not found. Generating..."
+            "create_base_iam_access_policies_templates Access Policies are not found. "
+            "Generating..."
         )
 
         generate_full_access_policies_for_viewsets(viewsets)
 
         _l.info(
-            "create_base_iam_access_policies_templates.generate_full_access_policies_for_viewsets done"
+            "create_base_iam_access_policies_templates."
+            "generate_full_access_policies_for_viewsets done"
         )
         readonly_access_policies = generate_readonly_access_policies_for_viewsets(
             viewsets
         )
 
         _l.info(
-            "create_base_iam_access_policies_templates.generate_readonly_access_policies_for_viewsets done"
+            "create_base_iam_access_policies_templates."
+            "generate_readonly_access_policies_for_viewsets done"
         )
 
         _l.info(
