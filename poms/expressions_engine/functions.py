@@ -8,12 +8,12 @@ import re
 import traceback
 import uuid
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 
-import pandas as pd
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
@@ -576,16 +576,13 @@ def _get_quarter(date):
 
     return quarter
 
-
 def _get_year(date):
     date = _parse_date(date)
     return date.year
 
-
 def _get_month(date):
     date = _parse_date(date)
     return date.month
-
 
 def _universal_parse_country(value):
     result = None
@@ -743,10 +740,8 @@ def _parse_number(a):
 def _join(data, separator):
     return separator.join(data)
 
-
 def _strip(data):
     return data.strip()
-
 
 def _reverse(items):
     if isinstance(items, str):
@@ -1022,8 +1017,8 @@ def _set_complex_transaction_user_field(evaluator, field, value):
 
 _set_complex_transaction_user_field.evaluator = True
 
-
 def _get_complex_transaction(evaluator, identifier):
+
     context = evaluator.context
     from poms.transactions.models import ComplexTransaction
 
@@ -1032,11 +1027,11 @@ def _get_complex_transaction(evaluator, identifier):
     except Exception as e:
         result = ComplexTransaction.objects.get(code=identifier)
 
+
     return result
 
 
 _get_complex_transaction.evaluator = True
-
 
 def _get_relation_by_user_code(evaluator, content_type, user_code):
     try:
@@ -1211,16 +1206,15 @@ def _get_currencies(evaluator, **kwargs):
 
 _get_currencies.evaluator = True
 
-
 def _get_mapping_key_by_value(evaluator, user_code, value, **kwargs):
     try:
+
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
 
         from poms.integrations.models import MappingTable
-
         mapping_table = MappingTable.objects.get(
             master_user=master_user, user_code=user_code
         )
@@ -1228,6 +1222,7 @@ def _get_mapping_key_by_value(evaluator, user_code, value, **kwargs):
         result = None
 
         for item in mapping_table.items.all():
+
             if item.value == value:
                 result = item.key
                 break
@@ -1240,16 +1235,15 @@ def _get_mapping_key_by_value(evaluator, user_code, value, **kwargs):
 
 _get_mapping_key_by_value.evaluator = True
 
-
 def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
-    from poms.integrations.models import MappingTable
-
     try:
+
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
 
+        from poms.integrations.models import MappingTable
         mapping_table = MappingTable.objects.get(
             master_user=master_user, user_code=user_code
         )
@@ -1257,6 +1251,7 @@ def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
         result = None
 
         for item in mapping_table.items.all():
+
             if item.key == key:
                 result = item.value
                 break
@@ -1269,16 +1264,15 @@ def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
 
 _get_mapping_value_by_key.evaluator = True
 
-
-def _get_mapping_keys(evaluator, user_code, **kwargs):
+def _get_mapping_keys(evaluator, user_code,  **kwargs):
     try:
+
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
 
         from poms.integrations.models import MappingTable
-
         mapping_table = MappingTable.objects.get(
             master_user=master_user, user_code=user_code
         )
@@ -1286,6 +1280,7 @@ def _get_mapping_keys(evaluator, user_code, **kwargs):
         result = []
 
         for item in mapping_table.items.all():
+
             result.append(item.key)
 
         return result
@@ -1297,15 +1292,15 @@ def _get_mapping_keys(evaluator, user_code, **kwargs):
 _get_mapping_keys.evaluator = True
 
 
-def _get_mapping_key_values(evaluator, user_code, key, **kwargs):
+def _get_mapping_key_values(evaluator, user_code, key,  **kwargs):
     try:
+
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
 
         from poms.integrations.models import MappingTable
-
         mapping_table = MappingTable.objects.get(
             master_user=master_user, user_code=user_code
         )
@@ -1313,7 +1308,9 @@ def _get_mapping_key_values(evaluator, user_code, key, **kwargs):
         result = []
 
         for item in mapping_table.items.all():
+
             if item.key == key:
+
                 result.append(item.value)
 
         return result
@@ -1323,6 +1320,7 @@ def _get_mapping_key_values(evaluator, user_code, key, **kwargs):
 
 
 _get_mapping_key_values.evaluator = True
+
 
 
 def _convert_to_number(
@@ -1483,7 +1481,7 @@ def _add_price_history(
     instrument,
     pricing_policy,
     principal_price=0,
-    accrued_price=None,
+    accrued_price=0,
     is_temporary_price=False,
     overwrite=True,
 ):
@@ -1501,8 +1499,8 @@ def _add_price_history(
     - overwrite: Indicates if existing price history should be overwritten (default: True).
     """
     from poms.instruments.models import PriceHistory
-
     # from poms.users.utils import get_master_user_from_context
+
     # TODO need master user check, security hole
     # context = evaluator.context
     # master_user = get_master_user_from_context(context)
@@ -1515,15 +1513,7 @@ def _add_price_history(
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
     if accrued_price is None:
         # https://finmars2018.atlassian.net/browse/FN-2233
-        try:
-            accrued_price = instrument.get_accrued_price(date)
-        except Exception as e:
-            _l.error(
-                f"functions._add_price_history get_accrued_price  date={date} "
-                f"instrument={instrument.user_code}, "
-                f"error={repr(e)} traceback={traceback.format_exc()}"
-            )
-            accrued_price = 0
+        accrued_price = instrument.get_accrued_price(date)
 
     try:
         result = PriceHistory.objects.get(
@@ -1783,7 +1773,7 @@ _get_price_history_accrued_price.evaluator = True
 
 
 def _get_price_history(
-    evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
 ):
     from poms.instruments.models import PriceHistory, PricingPolicy
     from poms.users.utils import get_master_user_from_context
@@ -1859,7 +1849,7 @@ _get_price_history.evaluator = True
 
 
 def _get_factor_from_price(
-    evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
 ):
     from poms.instruments.models import PriceHistory, PricingPolicy
     from poms.users.utils import get_master_user_from_context
@@ -1909,6 +1899,7 @@ def _get_factor_from_price(
             return 1
 
     else:
+
         if days_to_look_back < 0:
             date_to = date
             date_from = date - datetime.timedelta(days=abs(days_to_look_back))
@@ -2692,15 +2683,17 @@ def _get_account_type(evaluator, account_type):
 
 _get_account_type.evaluator = True
 
-
 def _set_account_user_attribute(evaluator, account, user_code, value):
     context = evaluator.context
 
     account = _safe_get_account(evaluator, account)
 
     try:
+
         for attribute in account.attributes.all():
+
             if attribute.attribute_type.user_code == user_code:
+
                 if attribute.attribute_type.value_type == 10:
                     attribute.value_string = value
 
@@ -2710,7 +2703,6 @@ def _set_account_user_attribute(evaluator, account, user_code, value):
                 if attribute.attribute_type.value_type == 30:
                     try:
                         from poms.obj_attrs.models import GenericClassifier
-
                         classifier = GenericClassifier.objects.get(
                             attribute_type=attribute.attribute_type, name=value
                         )
@@ -2744,7 +2736,9 @@ def _get_account_user_attribute(evaluator, account, user_code):
 
         result = None
         for attribute in account.attributes.all():
+
             if attribute.attribute_type.user_code == user_code:
+
                 if attribute.attribute_type.value_type == 10:
                     result = attribute.value_string
 
@@ -2764,7 +2758,7 @@ def _get_account_user_attribute(evaluator, account, user_code):
         return result
 
     except Exception as e:
-        _l.error("e %s" % e)
+        _l.error('e %s' % e)
         return None
 
 
@@ -2813,8 +2807,11 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
     instrument = _safe_get_instrument(evaluator, instrument)
 
     try:
+
         for attribute in instrument.attributes.all():
+
             if attribute.attribute_type.user_code == user_code:
+
                 if attribute.attribute_type.value_type == 10:
                     attribute.value_string = value
 
@@ -2824,7 +2821,6 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
                 if attribute.attribute_type.value_type == 30:
                     try:
                         from poms.obj_attrs.models import GenericClassifier
-
                         classifier = GenericClassifier.objects.get(
                             attribute_type=attribute.attribute_type, name=value
                         )
@@ -2856,7 +2852,9 @@ def _get_instrument_user_attribute(evaluator, instrument, user_code):
 
         result = None
         for attribute in instrument.attributes.all():
+
             if attribute.attribute_type.user_code == user_code:
+
                 if attribute.attribute_type.value_type == 10:
                     result = attribute.value_string
 
@@ -3672,9 +3670,12 @@ _update_task.evaluator = True
 def _run_task(evaluator, task_name, options={}):
     from poms_app import celery_app
 
+
     _l.info("_run_task task_name: %s" % task_name)
 
     try:
+
+
         context = evaluator.context
         from poms.users.utils import (
             get_master_user_from_context,
@@ -4174,9 +4175,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        simple_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
-        )
+        simple_import.apply(kwargs={"task_id": celery_task.id}, queue='backend-background-queue')
 
         return {"task_id": celery_task.id}
 
@@ -4194,7 +4193,10 @@ def _run_transaction_import(evaluator, filepath, scheme):
     from poms.celery_tasks.models import CeleryTask
     from poms.integrations.models import ComplexTransactionImportScheme
     from poms.transaction_import.tasks import transaction_import
-    from poms.users.utils import get_master_user_from_context, get_member_from_context
+    from poms.users.utils import (
+        get_master_user_from_context,
+        get_member_from_context,
+    )
 
     try:
         _l.info(f"_run_transaction_import {filepath}")
@@ -4230,9 +4232,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        transaction_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
-        )
+        transaction_import.apply(kwargs={"task_id": celery_task.id}, queue='backend-background-queue')
 
         return None
 
@@ -4507,10 +4507,12 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_relation_by_user_code", _get_relation_by_user_code),
     SimpleEval2Def("get_instruments", _get_instruments),
     SimpleEval2Def("get_currencies", _get_currencies),
+
     SimpleEval2Def("get_mapping_key_by_value", _get_mapping_key_by_value),
     SimpleEval2Def("get_mapping_value_by_key", _get_mapping_value_by_key),
     SimpleEval2Def("get_mapping_keys", _get_mapping_keys),
     SimpleEval2Def("get_mapping_key_values", _get_mapping_key_values),
+
     SimpleEval2Def("get_rt_value", _get_rt_value),
     SimpleEval2Def("convert_to_number", _convert_to_number),
     SimpleEval2Def("if_null", _if_null),
