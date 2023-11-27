@@ -2,17 +2,17 @@ import logging
 import traceback
 from datetime import date, datetime, timedelta
 
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.views.generic.dates import timezone_today
 
-from celery.utils.log import get_task_logger
-
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
-from poms.common.utils import get_list_of_dates_between_two_dates
-from poms.currencies.models import CurrencyHistory
-from poms.instruments.models import PricingPolicy
-from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
+from poms.common.utils import get_list_of_dates_between_two_dates, get_last_business_day_of_previous_year, \
+    get_last_bdays_of_months_between_two_dates
+from poms.currencies.models import CurrencyHistory, Currency
+from poms.instruments.models import PricingPolicy, CostMethod
+from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord, Portfolio, PortfolioHistory
 from poms.portfolios.utils import get_price_calculation_type
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -25,7 +25,7 @@ celery_logger = get_task_logger(__name__)
 
 
 def calculate_simple_balance_report(
-    report_date: date, portfolio_register: PortfolioRegister, member: Member
+        report_date: date, portfolio_register: PortfolioRegister, member: Member
 ):
     """
     Probably is a duplicated method. Here we're just getting Balance Report instance
@@ -77,8 +77,8 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
     for transaction in transactions:
         if (
-            transaction.transaction_currency
-            == portfolio_register.linked_instrument.pricing_currency
+                transaction.transaction_currency
+                == portfolio_register.linked_instrument.pricing_currency
         ):
             fx_rate = 1
         else:
@@ -102,7 +102,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
                 fx_rate = 0
 
         cash_flow = cash_flow + (
-            transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
+                transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
         )
 
     if error:
@@ -252,8 +252,8 @@ def calculate_portfolio_register_record(self, task_id):
                         valuation_ccy_fx_rate = (
                             1
                             if (
-                                record.valuation_currency_id
-                                == ecosystem_defaults.currency_id
+                                    record.valuation_currency_id
+                                    == ecosystem_defaults.currency_id
                             )
                             else CurrencyHistory.objects.get(
                                 currency_id=record.valuation_currency_id,
@@ -288,7 +288,7 @@ def calculate_portfolio_register_record(self, task_id):
 
                 # why use cash amount after, not record.cash_amount_valuation_currency
                 record.cash_amount_valuation_currency = (
-                    record.cash_amount * record.fx_rate * trn.reference_fx_rate
+                        record.cash_amount * record.fx_rate * trn.reference_fx_rate
                 )
 
                 # start block eod NAV
@@ -303,7 +303,7 @@ def calculate_portfolio_register_record(self, task_id):
 
                 for item in balance_report.items:
                     if item["market_value"]:
-                        nav_valuation_currency = nav_valuation_currency +  item["market_value"]
+                        nav_valuation_currency = nav_valuation_currency + item["market_value"]
 
                 _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_valuation_currency}")
 
@@ -324,8 +324,8 @@ def calculate_portfolio_register_record(self, task_id):
 
                     for item in balance_report.items:
                         if item["market_value"]:
-                            nav_previous_day_valuation_currency = nav_previous_day_valuation_currency +  item["market_value"]
-
+                            nav_previous_day_valuation_currency = nav_previous_day_valuation_currency + item[
+                                "market_value"]
 
                     _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_previous_day_valuation_currency}")
 
@@ -350,8 +350,8 @@ def calculate_portfolio_register_record(self, task_id):
                         # let's MOVE block NAV here
                         record.dealing_price_valuation_currency = (
                             (
-                                record.nav_previous_day_valuation_currency
-                                / record.n_shares_previous_day
+                                    record.nav_previous_day_valuation_currency
+                                    / record.n_shares_previous_day
                             )
                             if record.n_shares_previous_day
                             else 0
@@ -370,8 +370,8 @@ def calculate_portfolio_register_record(self, task_id):
                 else:
                     # why  use cashamount , not    record.cash_amount_valuation_currency
                     record.n_shares_added = (
-                        record.cash_amount_valuation_currency
-                        / record.dealing_price_valuation_currency
+                            record.cash_amount_valuation_currency
+                            / record.dealing_price_valuation_currency
                     )
 
                 # record.n_shares_end_of_the_day =
@@ -381,8 +381,8 @@ def calculate_portfolio_register_record(self, task_id):
 
                 if previous_record:
                     record.rolling_shares_of_the_day = (
-                        previous_record.rolling_shares_of_the_day
-                        + record.n_shares_added
+                            previous_record.rolling_shares_of_the_day
+                            + record.n_shares_added
                     )
                 else:
                     record.rolling_shares_of_the_day = record.n_shares_added
@@ -598,8 +598,8 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                     )
 
                     if (
-                        registry_record
-                        and registry_record.rolling_shares_of_the_day != 0
+                            registry_record
+                            and registry_record.rolling_shares_of_the_day != 0
                     ):
                         balance_report = calculate_simple_balance_report(
                             day,
@@ -621,7 +621,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         )
 
                         principal_price = (
-                            nav / registry_record.rolling_shares_of_the_day
+                                nav / registry_record.rolling_shares_of_the_day
                         )
 
                         for pricing_policy in pricing_policies:
@@ -696,3 +696,120 @@ def calculate_portfolio_register_price_history(self, task_id: int):
         task.save()
 
         _l.error(err_msg)
+
+
+@finmars_task(name="portfolios.calculate_portfolio_history", bind=True)
+def calculate_portfolio_history(self, task_id: int):
+    """
+    Right now trigger only by manual request
+
+    """
+    from poms.celery_tasks.models import CeleryTask
+
+    task = CeleryTask.objects.filter(id=task_id).first()
+    if not task:
+        raise RuntimeError(
+            f"calculate_portfolio_history, no such task={task_id}"
+        )
+
+    if not task.options_object:
+        err_msg = "No task options supplied"
+        send_system_message(
+            master_user=task.master_user,
+            action_status="required",
+            type="error",
+            title="Task Failed. Name: calculate_portfolio_history",
+            description=err_msg,
+        )
+        task.error_message = err_msg
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        return
+
+    task.celery_tasks_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    if not task.notes:
+        task.notes = ""
+
+    task.save()
+
+    _l.info(
+        f"calculate_portfolio_history: "
+        f"task_options={task.options_object}"
+    )
+
+    date = task.options_object.get("date")
+    date_from = task.options_object.get("date_from")
+
+    period_type = task.options_object.get("period_type")
+    portfolio = task.options_object.get("portfolio")
+    currency = task.options_object.get("currency")
+    pricing_policy = task.options_object.get("pricing_policy")
+    segmentation_type = task.options_object.get("segmentation_type")
+    benchmark = task.options_object.get("benchmark")
+    cost_method = task.options_object.get("cost_method")
+    performance_method = task.options_object.get("performance_method")
+
+    portfolio = Portfolio.objects.get(user_code=portfolio)
+    currency = Currency.objects.get(user_code=currency)
+    pricing_policy = PricingPolicy.objects.get(user_code=pricing_policy)
+    cost_method = CostMethod.objects.get(user_code=cost_method)
+
+    if not date_from:
+        if period_type == 'ytd':
+            date_from = get_last_business_day_of_previous_year(date)
+        if period_type == 'inception':
+            date_from = portfolio.first_transaction_date()
+
+    if segmentation_type != 'business_days_end_of_months':
+        raise NotImplementedError("Only business_days_end_of_months segmentation type is supported")
+
+    _l.info('calculate_portfolio_history: date_from %s' % date_from)
+
+    dates = get_last_bdays_of_months_between_two_dates(date_from, date)
+
+    task.update_progress(
+        {
+            "current": 0,
+            "total": len(dates),
+            "percent": 0,
+            "description": "Going to calculate portfolio history",
+        }
+    )
+
+    count = 1
+
+    for d in dates:
+
+        task.update_progress(
+            {
+                "current": count,
+                "total": len(dates),
+                "percent": round(count / (len(dates) / 100)),
+                "description": f"Going to calculate portfolio {portfolio.user_code} for {d}",
+            }
+        )
+
+        user_code = f'portfolio_history_{portfolio.user_code}_{currency.user_code}_{pricing_policy.user_code}_{date_from}_{d}_{period_type}_{cost_method.user_code}_{performance_method}_{benchmark}'
+
+        try:
+            portfolio_history = PortfolioHistory.objects.get(user_code=user_code)
+        except Exception as e:
+            portfolio_history = PortfolioHistory.objects.create(
+                master_user=task.master_user,
+                owner=task.member,
+                user_code=user_code,
+                portfolio=portfolio,
+                currency=currency,
+                pricing_policy=pricing_policy,
+                date=d,
+                date_from=date_from,
+                period_type=period_type,
+                cost_method=cost_method,
+                performance_method=performance_method,
+                benchmark=benchmark
+            )
+
+        portfolio_history.calculate()
+
+        count = count + 1

@@ -105,18 +105,31 @@ class PLReportHistoryItem(models.Model):
 # "alpha": stats_handler.get_alpha(),
 # "correlation": stats_handler.get_correlation()
 
+
 class WidgetStats(models.Model):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
 
+    # period = YTD, QTD, MTD, INCEPTION
+    # date_from = calculate_based_on_period
+    # date_to = date
+
     portfolio = models.ForeignKey('portfolios.Portfolio', blank=True, on_delete=models.CASCADE,
                                   verbose_name=gettext_lazy('portfolio'))
+
+    # currency =
+    # pricing_policy =
+    # cost_method = avco/fifo
+    # performance_method = dietz/..
+
     benchmark = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('benchmark'))
+
 
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'))
     total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('total'))
+
     cumulative_return = models.FloatField(default=0.0, null=True, blank=True,
                                           verbose_name=gettext_lazy('cumulative return'))
     annualized_return = models.FloatField(default=0.0, null=True, blank=True,

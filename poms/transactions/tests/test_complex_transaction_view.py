@@ -261,6 +261,7 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         self.transaction = ComplexTransaction.objects.create(
             # mandatory fields
             master_user=self.master_user,
+            owner=self.member,
             transaction_type=self.create_transaction_type(),
             date=self.random_future_date(),
             status=self.get_complex_transaction_status(),

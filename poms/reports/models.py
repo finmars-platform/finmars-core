@@ -747,7 +747,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         if TransactionReportInstance.objects.all().count() > 512:
             _l.warning(
                 "TransactionReportInstance amount > 512, "
-                "delete oldest PLReportInstance"
+                "delete oldest TransactionReportInstance"
             )
             TransactionReportInstance.objects.all().order_by("id")[0].delete()
 

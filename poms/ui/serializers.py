@@ -22,7 +22,7 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
         ]
 
 
-class ComplexTransactionUserFieldSerializer(ModelMetaSerializer):
+class ComplexTransactionUserFieldSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -30,7 +30,7 @@ class ComplexTransactionUserFieldSerializer(ModelMetaSerializer):
         fields = ['id', 'master_user', 'key', 'name', 'is_active', 'user_code', 'configuration_code']
 
 
-class TransactionUserFieldSerializer(ModelMetaSerializer):
+class TransactionUserFieldSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -44,7 +44,7 @@ class ColorPaletteColorSerializer(serializers.ModelSerializer):
         fields = ['id', 'order', 'name', 'value', 'tooltip']
 
 
-class ColorPaletteSerializer(serializers.ModelSerializer):
+class ColorPaletteSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     colors = ColorPaletteColorSerializer(many=True)
@@ -130,7 +130,7 @@ class ColumnSortDataSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'name', 'user_code', 'column_key', 'is_common', 'data']
 
 
-class InstrumentUserFieldSerializer(ModelMetaSerializer):
+class InstrumentUserFieldSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:

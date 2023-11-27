@@ -31,7 +31,9 @@ TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
 
 import logging
+
 _l = logging.getLogger('poms.users')
+
 
 class ResetPasswordToken(models.Model):
     class Meta:
@@ -512,6 +514,7 @@ class MasterUser(models.Model):
 
                     color.name = f"Color {str(x + 1)}"
                     color.save()
+
     def create_defaults(self, user=None):
         from poms.accounts.models import Account, AccountType
         from poms.counterparties.models import (
@@ -566,7 +569,7 @@ class MasterUser(models.Model):
                 user = User.objects.create(username='finmars_bot')
 
             finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self,
-                                           is_admin=True)
+                                                is_admin=True)
 
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
@@ -760,7 +763,9 @@ class MasterUser(models.Model):
         ecosystem_defaults = EcosystemDefault()
 
         ecosystem_defaults.master_user = self
-        ecosystem_defaults.currency = ccy
+        # ecosystem_defaults.currency = ccy
+        # Should be  usd by default 2023-11-14 szhitenev
+        ecosystem_defaults.currency = ccy_usd
         ecosystem_defaults.account_type = account_type
         ecosystem_defaults.account = account
         ecosystem_defaults.counterparty_group = counterparty_group
@@ -813,7 +818,7 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
     def patch_currencies(
-        self, overwrite_name=False, overwrite_reference_for_pricing=False
+            self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
 
@@ -1247,30 +1252,25 @@ class Member(FakeDeletableModel):
         ordering = ["username"]
 
     def save(self, *args, **kwargs):
-        instance = super(Member, self).save(*args, **kwargs)
-
+        from poms.configuration.utils import get_default_configuration_code
         from poms.ui.models import MemberLayout
 
-        from poms.configuration.utils import get_default_configuration_code
-
+        instance = super().save(*args, **kwargs)
         configuration_code = get_default_configuration_code()
 
         try:
-            layout = MemberLayout.objects.get(
+            layout, _ = MemberLayout.objects.get_or_create(
                 member_id=self.id,
                 owner_id=self.id,
                 configuration_code=configuration_code,
                 user_code=f"{configuration_code}:default_member_layout",
+                defaults={
+                    "name": "default",
+                    "is_default": True,
+                },
             )
         except Exception as e:
-            layout = MemberLayout.objects.create(
-                member_id=self.id,
-                owner_id=self.id,
-                is_default=True,
-                configuration_code=configuration_code,
-                name="default",
-                user_code=f"{configuration_code}:default_member_layout",
-            )
+            _l.info("Could not create member layout %s" % e)
 
         return instance
 
@@ -1417,7 +1417,6 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
-
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):

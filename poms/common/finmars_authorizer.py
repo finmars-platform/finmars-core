@@ -11,7 +11,7 @@ _l = getLogger("poms.authorizer")
 
 
 class AuthorizerService:
-    # ?space_code=... needs for JWT Auth purpose
+    # ?space_code=... needs for JWT Auth purpose !!!
 
     @staticmethod
     def prepare_refresh_token() -> RefreshToken:
@@ -20,11 +20,7 @@ class AuthorizerService:
         # Probably need to come up with something more smart
         bot = User.objects.get(username="finmars_bot")
 
-        refresh = RefreshToken.for_user(bot)
-
-        refresh["space_code"] = settings.BASE_API_URL  # FIXME ???
-
-        return refresh
+        return RefreshToken.for_user(bot)
 
     def prepare_headers(self) -> dict:
         refresh = self.prepare_refresh_token()

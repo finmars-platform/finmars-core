@@ -402,13 +402,7 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-        },
-        "file": {
-            "level": DJANGO_LOG_LEVEL,
-            "class": "logging.FileHandler",
-            "filename": "/var/log/finmars/backend/django.log",
-            "formatter": "verbose",
-        },
+        }
     },
     "loggers": {
         "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
@@ -429,6 +423,26 @@ LOGGING = {
         }
     },
 }
+
+if SERVER_TYPE == 'local':
+
+    os.makedirs(BASE_DIR + '/log/', exist_ok=True)
+
+    LOGGING['handlers']['file'] = {
+        'level': DJANGO_LOG_LEVEL,
+        'class': 'logging.FileHandler',
+        'filename': BASE_DIR + '/log/django.log',
+        'formatter': 'verbose'
+    }
+
+else:
+
+    LOGGING['handlers']['file'] = {
+        'level': DJANGO_LOG_LEVEL,
+        'class': 'logging.FileHandler',
+        'filename': '/var/log/finmars/backend/django.log',
+        'formatter': 'verbose'
+    }
 
 # if SEND_LOGS_TO_FINMARS:
 #     LOGGING["handlers"]["logstash"] = {
@@ -665,6 +679,7 @@ INTERNAL_IPS = [
 if USE_DEBUGGER:
     print("Warning. Debugger is activated, could lead to low performance")
     DEBUG_TOOLBAR_PANELS = [
+        "debug_toolbar.panels.history.HistoryPanel",
         "debug_toolbar.panels.versions.VersionsPanel",
         "debug_toolbar.panels.timer.TimerPanel",
         "debug_toolbar.panels.settings.SettingsPanel",

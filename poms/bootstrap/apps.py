@@ -33,6 +33,8 @@ class BootstrapConfig(AppConfig):
         if settings.SEND_LOGS_TO_FINMARS:
             _l.info("Logs will be sending to Finmars")
 
+        _l.info("space_code: %s" % settings.BASE_API_URL )
+
         post_migrate.connect(self.bootstrap, sender=self)
         _l.info("Finmars Application is running 💚")
 
@@ -318,12 +320,16 @@ class BootstrapConfig(AppConfig):
                                                   configuration_code=configuration_code,
                                                   user_code=configuration_code + ':default_member_layout')
             except Exception as e:
-                layout = MemberLayout.objects.create(member=member,
-                                                     is_default=True,
-                                                     configuration_code=configuration_code,
-                                                     name='default',
-                                                     user_code='default_member_layout')  # configuration code will be added automatically
-                _l.info("Created member layout for %s" % member.username)
+                try:
+                    layout = MemberLayout.objects.create(member=member,
+                                                         owner=member,
+                                                         is_default=True,
+                                                         configuration_code=configuration_code,
+                                                         name='default',
+                                                         user_code='default_member_layout')  # configuration code will be added automatically
+                    _l.info("Created member layout for %s" % member.username)
+                except Exception as e:
+                    _l.info("Could not create member layout" % member.username)
 
     def create_base_folders(self):
         from poms.common.storage import get_storage

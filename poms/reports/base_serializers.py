@@ -8,11 +8,11 @@ from rest_framework import serializers
 from poms.accounts.models import Account, AccountType
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.counterparties.serializers import ResponsibleSerializer, \
     CounterpartySerializer
 from poms.currencies.models import CurrencyHistory, Currency
-from poms.instruments.models import Instrument, InstrumentType, PriceHistory
+from poms.instruments.models import Instrument, InstrumentType, PriceHistory, Country
 from poms.instruments.serializers import AccrualCalculationScheduleSerializer, InstrumentClassSerializer
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericClassifierViewSerializer
@@ -97,6 +97,7 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
         fields = [
             'id', 'user_code', 'name', 'short_name', 'notes',
             'reference_for_pricing', 'default_fx_rate',
+            'country'
         ]
         read_only_fields = fields
 
@@ -119,6 +120,20 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
         read_only_fields = fields
 
 
+class ReportCountrySerializer(ModelMetaSerializer):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('read_only', True)
+
+        super(ReportCountrySerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Country
+        fields = [
+            'id',
+            'user_code', 'name', 'short_name'
+        ]
+        read_only_fields = fields
+
 class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
 
     def __init__(self, *args, **kwargs):
@@ -140,7 +155,9 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
             'reference_for_pricing',
             'payment_size_detail',
             'daily_pricing_model',
-            'maturity_date', 'maturity_price'
+            'maturity_date', 'maturity_price',
+
+            'country'
 
         ]
         read_only_fields = fields

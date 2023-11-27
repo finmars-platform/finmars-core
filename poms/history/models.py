@@ -35,6 +35,7 @@ excluded_to_track_history_models = [
     "django_celery_beat.crontabschedule",
     "csv_import.csvfield",
     "csv_import.entityfield",
+    "portfolios.portfoliohistory",
     "pricing.instrumentpricingschemetype",
     "pricing.currencypricingschemetype",
     "pricing.instrumentpricingpolicy",
@@ -82,6 +83,11 @@ excluded_to_track_history_models = [
     "widgets.balancereporthistoryitem",
     "file_reports.filereport",
     "finmars_standardized_errors.errorrecord",
+    "reports.reportsummaryinstance",
+    "reports.balancereportinstance",
+    "reports.plreportinstance",
+    "reports.transactionreportinstance",
+    "reports.performancereportinstance"
 ]
 
 

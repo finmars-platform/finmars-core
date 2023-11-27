@@ -189,11 +189,15 @@ def bulk_delete(self, task_id):
 
     except Exception as e:
         err_msg = f"bulk_delete exception {repr(e)} {traceback.format_exc()}"
-        _l.error(err_msg)
+        _l.info(err_msg)  # sentry detects it as error, but it maybe not
+
+        _l.info('options_object["content_type"] %s' % options_object["content_type"])
 
         if options_object["content_type"] in (
                 "instruments.pricehistory",
                 "currencies.currencyhistory",
+                "portfolios.portfoliohistory",
+                "portfolios.portfolioregisterrecord",
         ):
             _l.info("Going to permanent delete")
 
@@ -201,10 +205,12 @@ def bulk_delete(self, task_id):
 
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.mark_task_as_finished()
+            celery_task.save()
 
         else:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.error_message = err_msg
+            celery_task.save()
 
     finally:
         celery_task.save()
