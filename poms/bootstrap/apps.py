@@ -1,14 +1,16 @@
+from __future__ import unicode_literals
+
 import json
 import logging
 import sys
 import traceback
 
+import requests
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
-import requests
 
 from poms_app import settings
 
@@ -31,7 +33,7 @@ class BootstrapConfig(AppConfig):
         if settings.SEND_LOGS_TO_FINMARS:
             _l.info("Logs will be sending to Finmars")
 
-        _l.info(f"space_code: {settings.BASE_API_URL}")
+        _l.info("space_code: %s" % settings.BASE_API_URL)
 
         post_migrate.connect(self.bootstrap, sender=self)
         _l.info("Finmars Application is running 💚")
@@ -39,6 +41,7 @@ class BootstrapConfig(AppConfig):
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         """
         In idea it should be the first methods that should be executed on backend server startup
+
 
         :param app_config:
         :param verbosity:
@@ -60,41 +63,45 @@ class BootstrapConfig(AppConfig):
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
-        from poms.users.models import MasterUser, Member
-
-        user = User.objects.get_or_create(username="finmars_bot")
 
         try:
-            _ = Member.objects.get(user__username="finmars_bot")
-            _l.info("finmars_bot already exists")
+            user = User.objects.get(username="finmars_bot")
 
-        except Member.DoesNotExist:
-            _l.info("Member not found, going to create it")
+        except Exception as e:
+            user = User.objects.create(username="finmars_bot")
+
+        try:
+            from poms.users.models import Member
+
+            member = Member.objects.get(user__username="finmars_bot")
+            _l.info("finmars_bot already exists")
+        except Exception as e:
             try:
+                _l.info("Member not found, going to create it")
+
+                from poms.users.models import MasterUser
+
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                _ = Member.objects.create(
+                member = Member.objects.create(
                     user=user,
                     username="finmars_bot",
                     master_user=master_user,
                     is_admin=True,
                 )
 
-            except MasterUser.DoesNotExist as e:
-                err_msg = (
-                    f"Could not create finmars_bot {repr(e)} no master_user for "
-                    f"base_api_url={settings.BASE_API_URL}"
-                )
-                _l.error(err_msg)
-                raise RuntimeError(err_msg) from e
+                _l.info("finmars_bot created")
 
-        _l.info("finmars_bot created")
+            except Exception as e:
+                _l.error("Warning. Could not create finmars_bot %s" % e)
 
     def create_iam_access_policies_templates(self):
-        from poms.iam.policy_generator import create_base_iam_access_policies_templates
-
-        if "test" not in sys.argv:
+        if not "test" in sys.argv:
             _l.info("create_iam_access_policies_templates")
+
+            from poms.iam.policy_generator import (
+                create_base_iam_access_policies_templates,
+            )
 
             create_base_iam_access_policies_templates()
 
@@ -108,11 +115,9 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
         from django.contrib.auth.models import User
-        from poms.auth_tokens.utils import generate_random_string
-        from poms.users.models import MasterUser, Member, UserProfile
+        from poms.users.models import Member, MasterUser, UserProfile
 
         if not settings.AUTHORIZER_URL:
-            print("Attention! AUTHORIZER_URL is not defined!")
             return
 
         try:
@@ -124,9 +129,9 @@ class BootstrapConfig(AppConfig):
                 "base_api_url": settings.BASE_API_URL,
             }
 
-            url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+            url = settings.AUTHORIZER_URL + "/backend-master-user-data/"
 
-            _l.info(f"load_master_user_data url {url}")
+            _l.info("load_master_user_data url %s" % url)
 
             response = requests.post(
                 url=url,
@@ -136,13 +141,15 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info(
-                f"load_master_user_data  response.status_code "
-                f"{response.status_code} response.text {response.text}"
+                "load_master_user_data  response.status_code %s" % response.status_code
             )
+            _l.info("load_master_user_data response.text %s" % response.text)
 
             response_data = response.json()
 
             name = response_data["name"]
+
+            user = None
 
             try:
                 user = User.objects.get(username=response_data["owner"]["username"])
@@ -150,8 +157,11 @@ class BootstrapConfig(AppConfig):
                 _l.info("Owner exists")
 
             except User.DoesNotExist:
-                password = generate_random_string(10)
                 try:
+                    from poms.auth_tokens.utils import generate_random_string
+
+                    password = generate_random_string(10)
+
                     user = User.objects.create(
                         email=response_data["owner"]["email"],
                         username=response_data["owner"]["username"],
@@ -159,18 +169,20 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
+                    _l.info(f'Create owner {response_data["owner"]["username"]}')
+
                 except Exception as e:
-                    err_msg = f"Create user error {repr(e)}"
-                    _l.info(err_msg)
-                    raise RuntimeError(err_msg) from e
+                    _l.info(f"Create user error {e}")
+                    _l.info("Create user traceback %s" % traceback.format_exc())
 
-            _l.info(f'Create owner {response_data["owner"]["username"]}')
+            if user:
+                user_profile, created = UserProfile.objects.get_or_create(
+                    user_id=user.pk
+                )
 
-            user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
+                _l.info("Owner User Profile Updated")
 
-            _l.info("Owner User Profile Updated")
-
-            user_profile.save()
+                user_profile.save()
 
             try:
                 if (
@@ -188,19 +200,14 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info(
-                        f"Master User From Backup Renamed to new Name "
-                        f"{master_user.name} and "
-                        f"Base API URL {master_user.base_api_url}"
+                        f"Master User From Backup Renamed to new Name {master_user.name} and Base API URL {master_user.base_api_url}"
                     )
                     # Member.objects.filter(is_owner=False).delete()
 
-            except MasterUser.DoesNotExist as e:
-                _l.error(
-                    f"Old backup name {response_data['old_backup_name']} "
-                    f"error {repr(e)}"
-                )
+            except Exception as e:
+                _l.error(f"Old backup name error {e}")
 
-            if not MasterUser.objects.all():
+            if MasterUser.objects.all().count() == 0:
                 _l.info("Empty database, create new master user")
 
                 master_user = MasterUser.objects.create_master_user(
@@ -233,9 +240,9 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Admin Group Created")
 
-            master_user = MasterUser.objects.all().first()
             try:
                 # TODO, carefull if someday return to multi master user inside one db
+                master_user = MasterUser.objects.all().first()
 
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
@@ -244,7 +251,6 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(f"Could not sync base_api_url {e}")
-                raise e
 
             try:
                 current_owner_member = Member.objects.get(
@@ -269,9 +275,8 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error(
-                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
-            )
+            _l.error("load_master_user_data error %s" % e)
+            _l.error("load_master_user_data traceback %s" % traceback.format_exc())
 
     def register_at_authorizer_service(self):
         if not settings.AUTHORIZER_URL:
@@ -307,20 +312,20 @@ class BootstrapConfig(AppConfig):
             )
 
         except Exception as e:
-            _l.info(f"register_at_authorizer_service error {e}")
+            _l.info("register_at_authorizer_service error %s" % e)
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     def sync_celery_workers(self):
-        from poms.celery_tasks.models import CeleryWorker
-        from poms.common.finmars_authorizer import AuthorizerService
-
         if not settings.AUTHORIZER_URL:
             return
 
         try:
             _l.info("sync_celery_workers processing")
 
+            from poms.common.finmars_authorizer import AuthorizerService
+
             authorizer_service = AuthorizerService()
+            from poms.celery_tasks.models import CeleryWorker
 
             workers = CeleryWorker.objects.all()
 
@@ -331,15 +336,15 @@ class BootstrapConfig(AppConfig):
                     if worker_status["status"] == "not_found":
                         authorizer_service.create_worker(worker)
                 except Exception as e:
-                    _l.error(f"sync_celery_workers: worker {worker} error {e}")
+                    _l.error("sync_celery_workers: worker %s error %s" % (worker, e))
 
         except Exception as e:
-            _l.info(f"sync_celery_workers error {e}")
+            _l.info("sync_celery_workers error %s" % e)
 
     def create_member_layouts(self):
         # TODO wtf is default member layout?
-        from poms.ui.models import MemberLayout
         from poms.users.models import Member
+        from poms.ui.models import MemberLayout
 
         members = Member.objects.all()
 
@@ -352,7 +357,7 @@ class BootstrapConfig(AppConfig):
                 layout = MemberLayout.objects.get(
                     member=member,
                     configuration_code=configuration_code,
-                    user_code=f"{configuration_code}:default_member_layout",
+                    user_code=configuration_code + ":default_member_layout",
                 )
             except Exception as e:
                 try:
@@ -364,17 +369,15 @@ class BootstrapConfig(AppConfig):
                         name="default",
                         user_code="default_member_layout",
                     )  # configuration code will be added automatically
-                    _l.info(f"Created member layout for {member.username}")
-
+                    _l.info("Created member layout for %s" % member.username)
                 except Exception as e:
                     _l.info("Could not create member layout" % member.username)
 
     def create_base_folders(self):
-        from tempfile import NamedTemporaryFile
-
         from poms.common.storage import get_storage
-        from poms.users.models import Member
+        from tempfile import NamedTemporaryFile
         from poms_app import settings
+        from poms.users.models import Member
 
         try:
             storage = get_storage()
@@ -383,29 +386,38 @@ class BootstrapConfig(AppConfig):
 
             _l.info("create base folders if not exists")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/.init"):
-                path = f"{settings.BASE_API_URL}/.system/.init"
+            if not storage.exists(settings.BASE_API_URL + "/.system/.init"):
+                path = settings.BASE_API_URL + "/.system/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create .system folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/tmp/.init"):
-                path = f"{settings.BASE_API_URL}/.system/tmp/.init"
+            if not storage.exists(settings.BASE_API_URL + "/.system/tmp/.init"):
+                path = settings.BASE_API_URL + "/.system/tmp/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create .system/tmp folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/log/.init"):
-                path = f"{settings.BASE_API_URL}/.system/log/.init"
+            if not storage.exists(settings.BASE_API_URL + "/.system/log/.init"):
+                path = settings.BASE_API_URL + "/.system/log/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create system log folder")
 
             if not storage.exists(
-                f"{settings.BASE_API_URL}/.system/new-member-setup-configurations/.init"
+                settings.BASE_API_URL + "/.system/new-member-setup-configurations/.init"
             ):
                 path = (
                     settings.BASE_API_URL
@@ -413,55 +425,88 @@ class BootstrapConfig(AppConfig):
                 )
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create system new-member-setup-configurations folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/public/.init"):
-                path = f"{settings.BASE_API_URL}/public/.init"
+            if not storage.exists(settings.BASE_API_URL + "/public/.init"):
+                path = settings.BASE_API_URL + "/public/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create public folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/configurations/.init"):
-                path = f"{settings.BASE_API_URL}/configurations/.init"
+            if not storage.exists(settings.BASE_API_URL + "/configurations/.init"):
+                path = settings.BASE_API_URL + "/configurations/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create configurations folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/workflows/.init"):
-                path = f"{settings.BASE_API_URL}/workflows/.init"
+            if not storage.exists(settings.BASE_API_URL + "/workflows/.init"):
+                path = settings.BASE_API_URL + "/workflows/.init"
 
                 with NamedTemporaryFile() as tmpf:
-                    self._extracted_from_create_base_folders_19(tmpf, storage, path)
+                    tmpf.write(b"")
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
                     _l.info("create workflows folder")
+
+            # Deprecated, no workflows in workflows/com/finmars...
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/schemas/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows schemas folder")
+            #
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/tasks/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows tasks folder")
 
             members = Member.objects.all()
 
             for member in members:
                 if not storage.exists(
-                    f"{settings.BASE_API_URL}/{member.username}/.init"
+                    settings.BASE_API_URL + "/" + member.username + "/.init"
                 ):
-                    path = f"{settings.BASE_API_URL}/{member.username}/.init"
+                    path = settings.BASE_API_URL + "/" + member.username + "/.init"
 
                     with NamedTemporaryFile() as tmpf:
-                        self._extracted_from_create_base_folders_19(tmpf, storage, path)
-        except Exception as e:
-            _l.info(f"create_base_folders error {e} traceback {traceback.format_exc()}")
+                        tmpf.write(b"")
+                        tmpf.flush()
+                        storage.save(path, tmpf)
 
-    # TODO Rename this here and in `create_base_folders`
-    def _extracted_from_create_base_folders_19(self, tmpf, storage, path):
-        tmpf.write(b"")
-        tmpf.flush()
-        storage.save(path, tmpf)
+        except Exception as e:
+            _l.info("create_base_folders error %s" % e)
+            _l.info("create_base_folders traceback %s" % traceback.format_exc())
 
     def create_local_configuration(self):
         from poms.configuration.models import Configuration
 
-        configuration_code = f"local.poms.{settings.BASE_API_URL}"
+        configuration_code = "local.poms." + settings.BASE_API_URL
 
         try:
+            # configuration = Configuration.objects.get(configuration_code="com.finmars.local") # deprecated
+
             configuration = Configuration.objects.get(
                 configuration_code=configuration_code
             )
