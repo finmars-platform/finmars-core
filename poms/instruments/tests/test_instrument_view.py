@@ -91,6 +91,9 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
+
+        print(response_json["results"])
+
         self.assertEqual(len(response_json["results"]), 4)  # default + 2 test + new
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method

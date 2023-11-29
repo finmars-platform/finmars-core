@@ -98,12 +98,9 @@ class ListDatesFilter(BaseFilterBackend):
 
         dates = request.query_params.getlist('dates', None)
 
-        print('dates %s' % dates )
+        _l.info(f'ListDatesFilter: dates={dates}')
 
-        if dates:
-            return queryset.filter(date__in=dates)
-
-        return queryset
+        return queryset.filter(date__in=dates) if dates else queryset
 
 
 class InstrumentsUserCodeFilter(BaseFilterBackend):
