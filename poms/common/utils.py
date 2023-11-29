@@ -312,6 +312,7 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
+
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(
             date_from, settings.API_DATE_FORMAT
@@ -654,18 +655,59 @@ def is_newer_version(version1, version2):
     return compare_versions(version1, version2) > 0
 
 
-def get_last_business_day_of_previous_year(date_str):
+def get_last_business_day_of_previous_year(date):
     """
     Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous year.
     """
     # Parse the date string
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
 
     # Find the last day of the previous year
-    last_day_of_previous_year = datetime.datetime(date.year - 1, 12, 31)
+    last_day_of_previous_year = datetime.date(date.year - 1, 12, 31)
 
     # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
     while last_day_of_previous_year.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
         last_day_of_previous_year -= timedelta(days=1)
 
-    return last_day_of_previous_year.strftime('%Y-%m-%d')
+    return last_day_of_previous_year
+
+
+def get_last_business_day_of_previous_month(date):
+    """
+    Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous month.
+    """
+    # Parse the date string
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    # Find the last day of the previous month
+    first_day_of_month = datetime.date(date.year, date.month, 1)
+    last_day_of_previous_month = first_day_of_month - timedelta(days=1)
+
+    # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
+    while last_day_of_previous_month.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        last_day_of_previous_month -= timedelta(days=1)
+
+    return last_day_of_previous_month
+
+
+def get_start_date_of_qtd(date):
+    """
+    Given a date in 'YYYY-MM-DD' format, returns the start date of the Quarter-To-Date (QTD) period.
+    """
+
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    # Determine the start of the current quarter
+    if date.month in [1, 2, 3]:
+        start_date = datetime.date(date.year, 1, 1)
+    elif date.month in [4, 5, 6]:
+        start_date = datetime.date(date.year, 4, 1)
+    elif date.month in [7, 8, 9]:
+        start_date = datetime.date(date.year, 7, 1)
+    else:
+        start_date = datetime.date(date.year, 10, 1)
+
+    return start_date
