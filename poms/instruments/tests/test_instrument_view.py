@@ -92,8 +92,6 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print(response_json["results"])
-
         self.assertEqual(len(response_json["results"]), 4)  # default + 2 test + new
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
@@ -199,3 +197,15 @@ class InstrumentViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__list(self):
+        self.create_instrument()
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json["results"]), 4)
+        print("len=", len(response_json["results"][0]))
+        self.assertTrue(all(len(result) == 58 for result in response_json["results"]))
+        self.assertTrue(all("pricing_condition" in result for result in response_json["results"]))
