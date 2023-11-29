@@ -10,7 +10,7 @@ from django.forms import model_to_dict
 from poms.accounts.models import Account, AccountType
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
-    last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
+    get_last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
@@ -402,7 +402,7 @@ class PerformanceReportBuilder:
             year_month = str(year) + '-' + str(month)
 
             # month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
-            month_end = last_business_day_in_month(year, month)
+            month_end = get_last_business_day_in_month(year, month)
 
             if month_end >= self.end_date:
                 month_end = self.end_date
@@ -420,7 +420,7 @@ class PerformanceReportBuilder:
             #     days=1)
 
             # TODO check?
-            # previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
+            # previous_end_of_month_of_begin_date = get_last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
 
             if begin_date > month_start:
                 month_start = begin_date

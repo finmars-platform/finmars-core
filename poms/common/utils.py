@@ -369,7 +369,7 @@ def get_first_transaction(portfolio_instance) -> object:
     )[0]
 
 
-def last_business_day_in_month(year: int, month: int, to_string=False):
+def get_last_business_day_in_month(year: int, month: int, to_string=False):
     """
     Get last business day of month
     :param year:
@@ -404,15 +404,20 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
         # _l.info(month)
         # _l.info(d_date_to)
 
-        if last_business_day_in_month(month.year, month.month) > d_date_to:
+        last_business_day = get_last_business_day_in_month(month.year, month.month)
+
+        if month.year == d_date_to.year and month.month == d_date_to.month:
+
             if to_string:
                 end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
             else:
                 end_of_months.append(d_date_to)
+
         else:
-            end_of_months.append(
-                last_business_day_in_month(month.year, month.month, to_string)
-            )
+            if to_string:
+                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
+            else:
+                end_of_months.append(last_business_day)
 
     return end_of_months
 
