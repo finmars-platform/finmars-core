@@ -206,6 +206,7 @@ class InstrumentViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(len(response_json["results"]), 4)
-        print("len=", len(response_json["results"][0]))
         self.assertTrue(all(len(result) == 58 for result in response_json["results"]))
-        self.assertTrue(all("pricing_condition" in result for result in response_json["results"]))
+        self.assertTrue(
+            all("pricing_condition" in result for result in response_json["results"])
+        )
