@@ -585,7 +585,7 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='balance_report_instances_as_member'
+        related_name="balance_report_instances_as_member",
     )
     report_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("report date")
@@ -648,7 +648,7 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='pl_report_instances_as_member'
+        related_name="pl_report_instances_as_member",
     )
     report_date = models.DateField(
         db_index=True,
@@ -713,7 +713,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='transaction_report_instances_as_member'
+        related_name="transaction_report_instances_as_member",
     )
     begin_date = models.DateField(
         db_index=True,
@@ -762,7 +762,7 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='performance_report_instances_as_member'
+        related_name="performance_report_instances_as_member",
     )
     begin_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("begin date")
@@ -987,7 +987,7 @@ class ReportSummary:
         bundles,
         currency,
         pricing_policy,
-            allocation_mode,
+        allocation_mode,
         master_user,
         member,
         context,
@@ -1011,12 +1011,15 @@ class ReportSummary:
         self.portfolio_user_codes = []
 
         self.portfolio_ids.extend(portfolio.id for portfolio in self.portfolios)
-        self.portfolio_user_codes.extend(portfolio.user_code for portfolio in self.portfolios)
+        self.portfolio_user_codes.extend(
+            portfolio.user_code for portfolio in self.portfolios
+        )
 
     def build_balance(self):
-        st = time.perf_counter()
-
         from poms.reports.serializers import BalanceReportSerializer
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+
+        st = time.perf_counter()
 
         serializer = BalanceReportSerializer(
             data={
@@ -1033,8 +1036,6 @@ class ReportSummary:
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
-
         self.balance_report = BalanceReportBuilderSql(instance=instance).build_balance()
 
         _l.info(
@@ -1043,9 +1044,10 @@ class ReportSummary:
         )
 
     def build_pl_range(self):
-        st = time.perf_counter()
-
         from poms.reports.serializers import PLReportSerializer
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+
+        st = time.perf_counter()
 
         serializer = PLReportSerializer(
             data={
@@ -1055,15 +1057,13 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        from poms.reports.sql_builders.pl import PLReportBuilderSql
 
         self.pl_report_range = PLReportBuilderSql(instance=instance).build_report()
 
@@ -1073,13 +1073,14 @@ class ReportSummary:
         )
 
     def build_pl_daily(self):
-        st = time.perf_counter()
-
         from poms.reports.serializers import PLReportSerializer
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+
+        st = time.perf_counter()
 
         pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
 
-        _l.info('build_pl_daily %s' % pl_first_date)
+        _l.info(f"build_pl_daily {pl_first_date}")
 
         serializer = PLReportSerializer(
             data={
@@ -1089,7 +1090,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1097,38 +1098,41 @@ class ReportSummary:
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        from poms.reports.sql_builders.pl import PLReportBuilderSql
-
         self.pl_report_daily = PLReportBuilderSql(instance=instance).build_report()
 
         _l.info(
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
+
     @property
     def pl_first_date_for_mtd(self):
-
-        # If self.date_to is the first day of the month, we subtract one day to get the last day of the previous month.
+        # If self.date_to is the first day of the month, we subtract
+        # one day to get the last day of the previous month.
         # Otherwise, we set the date to the last day of the previous month.
         if self.date_to.day == 1:
             last_day_of_prev_month = self.date_to - timedelta(days=1)
         else:
-            # Subtract enough days to get to the first day of the current month and then subtract one more day
-            last_day_of_prev_month = self.date_to - timedelta(days=self.date_to.day-1) - timedelta(days=1)
+            # Subtract enough days to get to the first day of the
+            # current month and then subtract one more day
+            last_day_of_prev_month = (
+                self.date_to - timedelta(days=self.date_to.day - 1) - timedelta(days=1)
+            )
 
         # Check if it's a weekend and adjust accordingly
-        while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        while last_day_of_prev_month.weekday() > 4:
+            # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
             last_day_of_prev_month -= timedelta(days=1)
 
-        return last_day_of_prev_month.strftime('%Y-%m-%d')
+        return last_day_of_prev_month.strftime("%Y-%m-%d")
 
     def build_pl_mtd(self):
+        from poms.reports.serializers import PLReportSerializer
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+
         st = time.perf_counter()
 
-        from poms.reports.serializers import PLReportSerializer
-
-        _l.info('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
-
+        _l.info(f"pl_first_date_for_mtd {self.pl_first_date_for_mtd}")
 
         serializer = PLReportSerializer(
             data={
@@ -1138,7 +1142,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1151,8 +1155,6 @@ class ReportSummary:
             f"report_date {instance.report_date}"
         )
 
-        from poms.reports.sql_builders.pl import PLReportBuilderSql
-
         self.pl_report_mtd = PLReportBuilderSql(instance=instance).build_report()
 
         _l.info(
@@ -1162,26 +1164,29 @@ class ReportSummary:
 
     @property
     def pl_first_date_for_ytd(self):
-
-        # If self.date_to is January 1st, we subtract one day to get the last day of the previous year.
+        # If self.date_to is January 1st, we subtract one day to get the
+        # last day of the previous year.
         # Otherwise, we set the date to December 31st of the previous year.
         if self.date_to.month == 1 and self.date_to.day == 1:
             last_day_of_prev_year = self.date_to - timedelta(days=1)
         else:
-            last_day_of_prev_year = self.date_to.replace(year=self.date_to.year-1, month=12, day=31)
+            last_day_of_prev_year = self.date_to.replace(
+                year=self.date_to.year - 1, month=12, day=31
+            )
 
         # Check if it's a weekend or holiday and adjust accordingly
-        while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        while last_day_of_prev_year.weekday() > 4:
+            # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
             last_day_of_prev_year -= timedelta(days=1)
 
-        return last_day_of_prev_year.strftime('%Y-%m-%d')
+        return last_day_of_prev_year.strftime("%Y-%m-%d")
 
     def build_pl_ytd(self):
-        st = time.perf_counter()
-
         from poms.reports.serializers import PLReportSerializer
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
 
-        _l.info('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
+        st = time.perf_counter()
+        _l.info(f"pl_first_date_for_ytd {self.pl_first_date_for_ytd}")
 
         serializer = PLReportSerializer(
             data={
@@ -1191,15 +1196,13 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        from poms.reports.sql_builders.pl import PLReportBuilderSql
 
         self.pl_report_ytd = PLReportBuilderSql(instance=instance).build_report()
 
@@ -1209,11 +1212,10 @@ class ReportSummary:
         )
 
     def build_pl_inception_to_date(self):
+        from poms.reports.serializers import PLReportSerializer
         from poms.reports.sql_builders.pl import PLReportBuilderSql
 
         st = time.perf_counter()
-
-        from poms.reports.serializers import PLReportSerializer
 
         serializer = PLReportSerializer(
             data={
@@ -1259,11 +1261,11 @@ class ReportSummary:
 
         for item in self.pl_report_range.items:
             if (
-                    portfolio_id
-                    and item["portfolio_id"] == portfolio_id
-                    and item["total"]
-                    or not portfolio_id
-                    and item["total"]
+                portfolio_id
+                and item["portfolio_id"] == portfolio_id
+                and item["total"]
+                or not portfolio_id
+                and item["total"]
             ):
                 total = total + item["total"]
 
@@ -1424,68 +1426,78 @@ class ReportSummary:
 
         return position_return
 
-
     def get_daily_performance(self):
-
+        from poms.reports.performance_report import PerformanceReportBuilder
         from poms.reports.serializers import PerformanceReportSerializer
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "days",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "days",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        from poms.reports.performance_report import PerformanceReportBuilder
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
         return performance_report.grand_return
 
     def get_mtd_performance(self):
-
+        from poms.reports.performance_report import PerformanceReportBuilder
         from poms.reports.serializers import PerformanceReportSerializer
 
-        _l.info('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.info(
+            f"get_mtd_performance self.pl_first_date_for_mtd {self.pl_first_date_for_mtd}"
+        )
 
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": self.pl_first_date_for_mtd,
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "months",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": self.pl_first_date_for_mtd,
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "months",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        from poms.reports.performance_report import PerformanceReportBuilder
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
         return performance_report.grand_return
 
     def get_ytd_performance(self):
-
         from poms.reports.serializers import PerformanceReportSerializer
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": self.pl_first_date_for_ytd,
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "months",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": self.pl_first_date_for_ytd,
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "months",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         from poms.reports.performance_report import PerformanceReportBuilder
+
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
@@ -1545,11 +1557,10 @@ class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='report_summary_instances_as_member'
+        related_name="report_summary_instances_as_member",
     )
     date_from = models.DateField(
-        null=True,
-        db_index=True, verbose_name=gettext_lazy("date from")
+        null=True, db_index=True, verbose_name=gettext_lazy("date from")
     )
     date_to = models.DateField(
         null=True,
