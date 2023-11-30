@@ -254,8 +254,7 @@ def download_instrument_async(self, task_id=None):
         task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-
-            _l.info('download_instrument_async.result %s' % result )
+            _l.info(f"download_instrument_async.result {result}")
 
             task.status = CeleryTask.STATUS_DONE
             task.result_object = result
@@ -364,7 +363,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
     }
     short_type = instrument_data["instrument_type"]["user_code"]
     try:
-        # remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
                 "default_exchange" in instrument_data
@@ -1113,7 +1111,9 @@ def download_instrument_pricing_async(self, task_id):
     return task_id
 
 
-@finmars_task(name="integrations.test_certificate_async", bind=True, ignore_result=False)
+@finmars_task(
+    name="integrations.test_certificate_async", bind=True, ignore_result=False
+)
 def test_certificate_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
     _l.info(
@@ -4253,7 +4253,7 @@ def complex_transaction_csv_file_import_by_procedure(
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
                             kwargs={"task_id": sub_task.id},
-                            queue='backend-background-queue'
+                            queue="backend-background-queue",
                         )
                     )
 
@@ -4362,7 +4362,7 @@ def complex_transaction_csv_file_import_by_procedure_json(
                     "task_id": celery_task.id,
                     "procedure_instance_id": procedure_instance_id,
                 },
-                queue='backend-background-queue'
+                queue="backend-background-queue",
             )
         )
 
@@ -4499,7 +4499,7 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
 
     else:
         _l.error(f"{func} invalid currency data {serializer.errors}")
-        raise Exception(serializer.errors)
+        raise RuntimeError(serializer.errors)
 
 
 def handle_currency_and_instrument_api_data(
