@@ -741,8 +741,7 @@ def calculate_portfolio_history(self, task_id: int):
 
     date = task.options_object.get("date")
 
-    if not isinstance(date, datetime.date):
-        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+    date = datetime.strptime(date, settings.API_DATE_FORMAT).date()
 
     calculation_period_date_from = task.options_object.get("calculation_period_date_from")
 
@@ -770,9 +769,6 @@ def calculate_portfolio_history(self, task_id: int):
         date_from = str(get_last_business_day_of_previous_year(date))
     if period_type == 'inception':
         date_from = str(portfolio.first_transaction_date())
-
-    if segmentation_type != 'business_days_end_of_months':
-        raise NotImplementedError("Only business_days_end_of_months segmentation type is supported")
 
     _l.info('calculate_portfolio_history: date_from %s' % date_from)
 
