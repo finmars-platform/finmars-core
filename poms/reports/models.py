@@ -1479,6 +1479,7 @@ class ReportSummary:
         return performance_report.grand_return
 
     def get_ytd_performance(self):
+        from poms.reports.performance_report import PerformanceReportBuilder
         from poms.reports.serializers import PerformanceReportSerializer
 
         serializer = PerformanceReportSerializer(
@@ -1495,8 +1496,6 @@ class ReportSummary:
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        from poms.reports.performance_report import PerformanceReportBuilder
 
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
