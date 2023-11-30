@@ -693,9 +693,7 @@ class PerformanceReportViewSet(AbstractViewSet):
 
         if bundle:
             bundle_instance = PortfolioBundle.objects.get(id=bundle)
-
             portfolios = [item.portfolio_id for item in bundle_instance.registers.all()]
-
             transactions = transactions.filter(portfolio_id__in=portfolios)
 
         transactions = transactions.order_by("accounting_date")
@@ -767,9 +765,8 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
 
@@ -799,9 +796,8 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
 
@@ -833,9 +829,8 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
 
@@ -865,9 +860,8 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        if not instance.report_instance_id:
+            # Check to_representation comments to find why is that
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
 

@@ -2667,14 +2667,13 @@ def build(self, task_id):
                 filter_query_for_balance_in_multipliers_table="",
                 bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
             )
-            # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+            # filter_query_for_balance_in_multipliers_table=' where multiplier = 1')
+            # TODO ask for right where expression
 
             ######################################
 
             # language=PostgreSQL
-
             query = """
-                    
                     with unioned_transactions_for_balance as (
                         
                         select 
@@ -2839,7 +2838,6 @@ def build(self, task_id):
                                strategy2_cash_id,
                                strategy3_cash_id,
                                
-                               
                                strategy1_position_id,
                                strategy2_position_id,
                                strategy3_position_id,
@@ -2892,7 +2890,6 @@ def build(self, task_id):
                                strategy1_position_id,
                                strategy2_position_id,
                                strategy3_position_id,
-                               
                                
                                -- modification
                                0 as position_size_with_sign,
