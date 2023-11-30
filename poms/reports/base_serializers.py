@@ -97,6 +97,7 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
         fields = [
             'id', 'user_code', 'name', 'short_name', 'notes',
             'reference_for_pricing', 'default_fx_rate',
+            'country'
         ]
         read_only_fields = fields
 

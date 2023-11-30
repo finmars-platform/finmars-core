@@ -290,6 +290,12 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         save_serialized_entity_layout('ui.listlayout',
                                       configuration.configuration_code,
+                                      'portfolios.portfoliohistory',
+                                      source_directory + '/ui/layouts/portfolio-history',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
                                       'accounts.accounttype',
                                       source_directory + '/ui/layouts/account-type',
                                       context)
@@ -431,6 +437,12 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                       configuration.configuration_code,
                                       'portfolios.portfolio',
                                       source_directory + '/ui/form-layouts/portfolio',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfoliohistory',
+                                      source_directory + '/ui/form-layouts/portfolio-history',
                                       context)
 
         save_serialized_entity_layout('ui.editlayout',

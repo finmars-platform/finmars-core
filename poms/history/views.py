@@ -1,24 +1,24 @@
 import json
+import logging
 
 import django_filters
-from django_filters.rest_framework import FilterSet
 from django_filters.fields import Lookup
+from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
-from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter, ModelExtMultipleChoiceFilter
+from poms.celery_tasks.models import CeleryTask
+from poms.common.filters import NoOpFilter
 from poms.common.views import AbstractModelViewSet
 from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter, HistoryContentTypeFilter, \
     HistoryDateRangeFilter
 from poms.history.models import HistoricalRecord
-from poms.history.serializers import HistoricalRecordSerializer
+from poms.history.serializers import HistoricalRecordSerializer, ExportJournalSerializer
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 
-from poms.users.models import Member
-
-import logging
 _l = logging.getLogger('poms.history')
+
 
 class ContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -42,7 +42,6 @@ class ContentTypeFilter(django_filters.CharFilter):
             'content_type__model__%s' % lookup: model,
         })
         return qs
-
 
 
 class HistoricalRecordFilterSet(FilterSet):
@@ -77,6 +76,31 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
         'created', 'user_code', 'member'
     ]
 
+    @action(detail=False, methods=['post'], url_path='export', serializer_class=ExportJournalSerializer)
+    def export(self, request):
+
+        serializer = ExportJournalSerializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        options_object = {}
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Export Journal To Storage",
+            type='export_journal_to_storage'
+        )
+        task.options_object = serializer.validated_data
+        task.save()
+
+        from poms_app import celery_app
+
+        celery_app.send_task('history.export_journal_to_storage', kwargs={"task_id": task.id},
+                             queue='backend-background-queue')
+
+        return Response({"task_id": task.id})
+
     @action(detail=True, methods=['get'], url_path='data')
     def get_data(self, request, pk):
         instance = self.get_object()
@@ -84,17 +108,16 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='content-types')
     def get_content_types(self, request):
-
         result = {
             'results': []
         }
 
-        items = HistoricalRecord.objects.select_related('content_type').order_by().values('content_type__app_label', 'content_type__model').distinct()
+        items = HistoricalRecord.objects.select_related('content_type').order_by().values('content_type__app_label',
+                                                                                          'content_type__model').distinct()
 
         # _l.info('items %s' % items)
 
         for item in items:
-
             result['results'].append({
                 'key': item['content_type__app_label'] + '.' + item['content_type__model']
             })
@@ -102,15 +125,10 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
         return Response(result)
 
     def create(self, request, *args, **kwargs):
-
         raise PermissionDenied("History could not be created")
 
     def update(self, request, *args, **kwargs):
-
         raise PermissionDenied("History could not be updated")
 
     def perform_destroy(self, request, *args, **kwargs):
-
         raise PermissionDenied("History could not be deleted")
-
-
