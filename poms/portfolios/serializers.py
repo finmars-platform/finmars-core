@@ -712,6 +712,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     member = HiddenMemberField()
 
     # SEGMENTATION_TYPE_DAYS = "days"
+    SEGMENTATION_TYPE_DAYS = "days"
     SEGMENTATION_TYPE_BUSINESS_DAYS = "business_days"
     SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS = "business_days_end_of_months"
     SEGMENTATION_TYPE_CHOICES = (
@@ -725,7 +726,9 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     pricing_policy = PricingPolicyField(default=SystemPricingPolicyDefault())
 
     date = serializers.DateField(required=True)
-    date_from = serializers.DateField(required=False)
+    calculation_period_date_from = serializers.DateField(required=False)
+    # Important, date_from for metrics itself is ready only
+    # its is calculated from date and period_type
 
     segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, choices=SEGMENTATION_TYPE_CHOICES)
     period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD, choices=PortfolioHistory.PERIOD_CHOICES)
