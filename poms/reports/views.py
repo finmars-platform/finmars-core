@@ -576,6 +576,8 @@ class SummaryViewSet(AbstractViewSet):
             portfolios,
             bundles,
             currency,
+            None,  # pricing policy,
+            None,  # allocation_mode
             request.user.master_user,
             request.user.member,
             context,
