@@ -834,13 +834,19 @@ class PerformanceReportSerializer(serializers.Serializer):
 
     save_report = serializers.BooleanField(default=False)
 
-    begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
-    end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
+    begin_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
     calculation_type = serializers.ChoiceField(allow_null=True,
-                                               initial=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
-                                               default=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
+                                               initial=PerformanceReport.CALCULATION_TYPE_MODIFIED_DIETZ,
+                                               default=PerformanceReport.CALCULATION_TYPE_MODIFIED_DIETZ,
                                                choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True,
                                                required=False)
+
+    period_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.PERIOD_TYPE_YTD,
+                                          default=PerformanceReport.PERIOD_TYPE_YTD,
+                                          choices=PerformanceReport.PERIOD_TYPE_CHOICES, allow_blank=True,
+                                          required=False)
+
     segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
                                                 default=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
                                                 choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES, allow_blank=True,
@@ -1591,7 +1597,6 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         columns = instance.frontend_request_options['columns']
 
         group_type = groups_types[len(groups_types) - 1]
-
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
         unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)

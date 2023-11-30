@@ -116,22 +116,28 @@ class KeycloakAuthentication(TokenAuthentication):
             user = User.objects.get(username=userinfo['preferred_username'])
         except Exception as e:
             # _l.error("User not found %s" % e)
-            try:
-                user = User.objects.create_user(username=userinfo['preferred_username'],
-                                                password=generate_random_string(12))
 
-            except Exception as e:
+            raise exceptions.AuthenticationFailed(e)
 
-                try:
-                    # TODO
-                    # Do not remove this thing
-                    # Because we create user on a fly
-                    # It could be 2 request at same time trying to create new user
-                    # So, we trying to lookup again if first request already created it
-                    user = User.objects.get(username=userinfo['preferred_username'])
-
-                except Exception as e:
-                    # _l.error("Error create new user %s" % e)
-                    raise exceptions.AuthenticationFailed(e)
+            # Security hole, we should not create user on a fly
+            # Was in use when we have poor invites implementation
+            # Not is not need
+            # try:
+            #     user = User.objects.create_user(username=userinfo['preferred_username'],
+            #                                     password=generate_random_string(12))
+            #
+            # except Exception as e:
+            #
+            #     try:
+            #         # TODO
+            #         # Do not remove this thing
+            #         # Because we create user on a fly
+            #         # It could be 2 request at same time trying to create new user
+            #         # So, we trying to lookup again if first request already created it
+            #         user = User.objects.get(username=userinfo['preferred_username'])
+            #
+            #     except Exception as e:
+            #         # _l.error("Error create new user %s" % e)
+            #         raise exceptions.AuthenticationFailed(e)
 
         return user, key

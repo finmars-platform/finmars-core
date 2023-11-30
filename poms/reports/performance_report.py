@@ -10,7 +10,8 @@ from django.forms import model_to_dict
 from poms.accounts.models import Account, AccountType
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
-    last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
+    get_last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday, \
+    get_last_business_day_of_previous_year, get_last_business_day_of_previous_month, get_start_date_of_qtd
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
@@ -35,6 +36,7 @@ class PerformanceReportBuilder:
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
         _l.info('self.instance master_user %s' % self.instance.master_user)
+        _l.info('self.instance period_type %s' % self.instance.period_type)
         _l.info('self.instance begin_date %s' % self.instance.begin_date)
         _l.info('self.instance end_date %s' % self.instance.end_date)
 
@@ -93,9 +95,21 @@ class PerformanceReportBuilder:
     def build_report(self):
         st = time.perf_counter()
 
+        self.instance.first_transaction_date = self.get_first_transaction()
+
+        if not self.instance.first_transaction_date:
+
+            self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+            self.instance.items = []
+            self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
+
+            return self.instance
+
         self.instance.items = []
 
         self.end_date = self.instance.end_date
+
+        _l.info("typeof end_date %s" % type(self.end_date))
 
         if not self.instance.end_date:
             self.end_date = get_closest_bday_of_yesterday()
@@ -103,30 +117,45 @@ class PerformanceReportBuilder:
         if not is_business_day(self.instance.end_date):
             self.instance.end_date = get_last_business_day(self.instance.end_date)
 
-        self.instance.first_transaction_date = self.get_first_transaction()
 
-        begin_date = self.instance.begin_date
+        begin_date = None
 
-        if not begin_date or begin_date <= self.instance.first_transaction_date:
-            # if inception date, we take -1 day of inception day
-            # 2023-11-20
-            # szhitenev
-            begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
-        if not begin_date:
-            self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
-            self.instance.items = []
-            self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
+        if not self.instance.begin_date and self.instance.period_type:
+            _l.info("No begin date passed, calculating begin date based on period_type and end_date")
 
-            return self.instance
+            if self.instance.period_type == 'inception':
 
-        self.instance.begin_date = begin_date
+                begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
-        # if begin_date < first_transaction_date:
-        #     begin_date = first_transaction_date
+            elif self.instance.period_type == 'ytd':
+                begin_date = get_last_business_day_of_previous_year(self.instance.end_date)
 
-        # _l.info('build_report.begin_date %s' % begin_date)
-        # _l.info('build_report.end_date %s' % self.end_date)
+            elif self.instance.period_type == 'qtd':
+                begin_date = get_start_date_of_qtd(self.instance.end_date)
+
+            elif self.instance.period_type == 'mtd':
+                begin_date = get_last_business_day_of_previous_month(self.instance.end_date)
+
+            elif self.instance.period_type == 'daily':
+                begin_date = get_last_business_day(self.instance.end_date - timedelta(days=1))
+
+
+        else:
+
+            begin_date = self.instance.begin_date
+
+            if not begin_date or begin_date <= self.instance.first_transaction_date:
+                # if inception date, we take -1 day of inception day
+                # 2023-11-20
+                # szhitenev
+                begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
+
+
+            self.instance.begin_date = begin_date
+
+        _l.info("typeof end_date %s" % type(self.end_date))
+        _l.info("typeof begin_date %s" % type(begin_date))
 
         if self.end_date < begin_date:
             self.end_date = begin_date
@@ -402,7 +431,7 @@ class PerformanceReportBuilder:
             year_month = str(year) + '-' + str(month)
 
             # month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
-            month_end = last_business_day_in_month(year, month)
+            month_end = get_last_business_day_in_month(year, month)
 
             if month_end >= self.end_date:
                 month_end = self.end_date
@@ -420,7 +449,7 @@ class PerformanceReportBuilder:
             #     days=1)
 
             # TODO check?
-            # previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
+            # previous_end_of_month_of_begin_date = get_last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
 
             if begin_date > month_start:
                 month_start = begin_date
