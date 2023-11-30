@@ -272,7 +272,6 @@ class BalanceReportViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
         instance.auth_time = self.auth_time
 
         builder = BalanceReportBuilderSql(instance=instance)
