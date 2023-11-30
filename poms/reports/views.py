@@ -318,8 +318,7 @@ class SummaryViewSet(AbstractViewSet):
         if date_from >= date_to:
             date_from = date_to - timedelta(days=1)
 
-        _l.info("SummaryViewSet.list.date_from %s" % date_from)
-        _l.info("SummaryViewSet.list.date_to %s" % date_to)
+        _l.info(f"SummaryViewSet.list.date_from {date_from} date_to {date_to}")
 
         summary_record_count = ReportSummaryInstance.objects.filter(
             member=request.user.member,
@@ -332,7 +331,7 @@ class SummaryViewSet(AbstractViewSet):
             allocation_mode=allocation_mode,
         ).count()
 
-        _l.info("summary_record_count %s" % summary_record_count)
+        _l.info(f"summary_record_count {summary_record_count}")
 
         if calculate_new or summary_record_count == 0:
             bundles = []
