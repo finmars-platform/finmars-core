@@ -39,11 +39,11 @@ router.register(
     reports.PLReportViewSet,
     "PlReport",
 )
-router.register(
+router.register(  # deprecated, delete soon
     r"pl-report-sql",
     reports.PLReportViewSet,
     "PlReportSyncSql",
-)  # deprecated, delete soon
+)
 router.register(
     r"pl-report/custom-field",
     reports.PLReportCustomFieldViewSet,
@@ -74,11 +74,11 @@ router.register(
     reports.PerformanceReportViewSet,
     "PerformanceReport",
 )
-router.register(
+router.register(  # deprecated
     r"price-history-check-sql",
     reports.PriceHistoryCheckViewSet,
     "PriceHistoryCheckSql",
-)  # deprecated
+)
 router.register(
     r"price-history-check",
     reports.PriceHistoryCheckViewSet,
