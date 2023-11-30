@@ -740,6 +740,10 @@ def calculate_portfolio_history(self, task_id: int):
     )
 
     date = task.options_object.get("date")
+
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
     calculation_period_date_from = task.options_object.get("calculation_period_date_from")
 
     period_type = task.options_object.get("period_type")

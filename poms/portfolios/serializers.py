@@ -716,6 +716,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     SEGMENTATION_TYPE_BUSINESS_DAYS = "business_days"
     SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS = "business_days_end_of_months"
     SEGMENTATION_TYPE_CHOICES = (
+        (SEGMENTATION_TYPE_DAYS, "Days"),
         (SEGMENTATION_TYPE_BUSINESS_DAYS, "Business Days"),
         (SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, "Business Days End Of Months"),
     )
