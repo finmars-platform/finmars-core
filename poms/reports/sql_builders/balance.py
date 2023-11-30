@@ -90,7 +90,7 @@ class BalanceReportBuilderSql:
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
-        _l.debug("items total %s" % len(self.instance.items))
+        _l.debug(f"items total {len(self.instance.items)}")
 
         relation_prefetch_st = time.perf_counter()
 
@@ -101,7 +101,7 @@ class BalanceReportBuilderSql:
             "{:3.3f}".format(time.perf_counter() - relation_prefetch_st)
         )
 
-        _l.debug("build_st done: %s" % self.instance.execution_time)
+        _l.debug(f"build_st done: {self.instance.execution_time}")
 
         return self.instance
 
@@ -211,7 +211,8 @@ class BalanceReportBuilderSql:
                     filter_query_for_balance_in_multipliers_table="",
                     bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
                 )
-                # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+                # filter_query_for_balance_in_multipliers_table=' where multiplier = 1')
+                # TODO ask for right where expression
 
                 ######################################
 
@@ -2388,12 +2389,8 @@ class BalanceReportBuilderSql:
         )
 
     def add_data_items_countries(self, instruments):
-        ids = []
-
-        for instrument in instruments:
-            ids.append(instrument.country_id)
-
-        self.instance.item_countries = Country.objects.all()
+        ids = [instrument.country_id for instrument in instruments]
+        self.instance.item_countries = Country.objects.filter(id__in=ids)
 
     def add_data_items_portfolios(self, ids):
         self.instance.item_portfolios = (
