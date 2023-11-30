@@ -167,11 +167,16 @@ class ReportCountrySerializer(ModelMetaSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
 
-        super(ReportCountrySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = Country
-        fields = ["id", "user_code", "name", "short_name"]
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+        ]
         read_only_fields = fields
 
 
@@ -216,7 +221,6 @@ class ReportInstrumentSerializer(
         read_only_fields = fields
 
     def to_representation(self, instance):
-
         return super(ReportInstrumentSerializer, self).to_representation(instance)
 
 
@@ -313,7 +317,6 @@ class ReportAccountSerializer(
 
 
 class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
 
@@ -334,7 +337,6 @@ class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
 
 
 class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
 
@@ -355,7 +357,6 @@ class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
 
 
 class ReportStrategy3Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
 
