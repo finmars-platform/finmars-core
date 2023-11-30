@@ -409,12 +409,14 @@ class PortfolioBundle(NamedModel, DataTimeStampedModel):
 
 
 class PortfolioHistory(NamedModel, DataTimeStampedModel):
+    PERIOD_DAILY = 'daily'
     PERIOD_YTD = 'ytd'
     PERIOD_MTD = 'mtd'
     PERIOD_QTD = 'qtd'
     PERIOD_INCEPTION = 'inception'
 
     PERIOD_CHOICES = (
+        (PERIOD_DAILY, "daily"),
         (PERIOD_YTD, "YTD"),
         (PERIOD_MTD, "MTD"),
         (PERIOD_QTD, "QTD"),
