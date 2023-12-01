@@ -1753,9 +1753,13 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
             report_instance.save()
 
         else:
-            report_instance = TransactionReportInstance.objects.get(
+            report_instance = TransactionReportInstance.objects.filter(
                 id=instance.report_instance_id
-            )
+            ).first()
+            if not report_instance:
+                raise ValidationError(
+                    f"invalid report_instance_id={instance.report_instance_id}"
+                )
 
             data = report_instance.data
 
