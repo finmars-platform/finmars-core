@@ -1240,7 +1240,6 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            # TODO consider something more logical, we got here date conversion error
             report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
@@ -1385,10 +1384,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            # TODO consider something more logical, we got here date conversion error
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
-            )  
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
@@ -1476,7 +1472,6 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             report_uuid = str(uuid.uuid4())
 
-            report_instance_name = ""
             if self.instance.report_instance_name:
                 report_instance_name = self.instance.report_instance_name
             else:
@@ -1513,7 +1508,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             report_instance.data = json.loads(
                 json.dumps(data, default=str)
-            )  # TODO consider something more logical, we got here date conversion error
+            )
 
             report_instance.save()
 
@@ -1607,7 +1602,6 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
             report_uuid = str(uuid.uuid4())
 
-            report_instance_name = ""
             if self.instance.report_instance_name:
                 report_instance_name = self.instance.report_instance_name
             else:
@@ -1642,9 +1636,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
-            )  # TODO consider something more logical, we got here date conversion error
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
@@ -1725,9 +1717,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         helper_service = BackendReportHelperService()
 
         if not instance.report_instance_id:
-            data = super(
-                BackendTransactionReportGroupsSerializer, self
-            ).to_representation(instance)
+            data = super().to_representation(instance)
 
             report_uuid = str(uuid.uuid4())
 
@@ -1750,7 +1740,6 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
             report_instance.report_uuid = report_uuid
             report_instance.begin_date = instance.begin_date
             report_instance.end_date = instance.end_date
-
             report_instance.report_uuid = report_uuid
 
             data["report_uuid"] = report_uuid
@@ -1759,9 +1748,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
-            )  # TODO consider something more logical, we got here date conversion error
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
@@ -1803,7 +1790,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         data["count"] = len(unique_groups)
 
         _l.info(
-            f'BackendTransactionReportGroupsSerializer.'
+            f"BackendTransactionReportGroupsSerializer."
             f'to_representation.page {data["page"]}'
         )
 
@@ -1875,7 +1862,6 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
             full_items = helper_service.convert_report_items_to_full_items(data)
             data["items"] = full_items
 
-            # TODO consider something more logical, we got here date conversion error
             report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
