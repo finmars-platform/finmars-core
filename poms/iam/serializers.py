@@ -11,6 +11,23 @@ _l = logging.getLogger('poms.iam')
 User = get_user_model()
 
 
+class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
+    modified = serializers.ReadOnlyField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def validate(self, data):
+        if (
+                self.instance
+                and "modified" in data
+                and data["modified"] != self.instance.modified
+        ):
+            raise serializers.ValidationError("Synchronization error")
+
+        return data
+
+
 class IamProtectedSerializer(serializers.ModelSerializer):
 
     '''
@@ -58,7 +75,30 @@ class IamProtectedSerializer(serializers.ModelSerializer):
             }
 
 
-class IamModelMetaSerializer(serializers.ModelSerializer):
+class IamModelOwnerSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+
+        # print('ModelOwnerSerializer %s' % instance)
+
+        representation = super().to_representation(instance)
+
+        from poms.users.serializers import MemberViewSerializer
+
+        serializer = MemberViewSerializer(instance=instance.owner)
+
+        representation["owner"] = serializer.data
+
+        return representation
+
+    def create(self, validated_data):
+        # You should have 'request' in the serializer context
+        request = self.context.get('request', None)
+        if request and hasattr(request, "user"):
+            validated_data['owner'] = Member.objects.get(user=request.user)
+        return super(IamModelOwnerSerializer, self).create(validated_data)
+
+
+class IamModelMetaSerializer(IamModelOwnerSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -130,7 +170,7 @@ class AccessPolicyUserCodeField(serializers.RelatedField):
             raise serializers.ValidationError('AccessPolicy with user_code {} does not exist.'.format(data))
 
 
-class RoleSerializer(IamModelMetaSerializer):
+class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
 
@@ -145,17 +185,30 @@ class RoleSerializer(IamModelMetaSerializer):
         fields = ['id', 'name', 'description', 'user_code', 'configuration_code',
                   'members', 'members_object',
                   'groups', 'groups_object',
-                  'access_policies', 'access_policies_object'
+                  'access_policies', 'access_policies_object',
+                  'created', 'modified'
                   ]
 
     def create(self, validated_data):
         # role_access_policies_data = self.context['request'].data.get('access_policies', [])
+
+        _l.info("validated_data %s" % validated_data)
+
         access_policies_data = validated_data.pop('access_policies', [])
         members_data = validated_data.pop('members', [])
+        groups_data = validated_data.pop('iam_groups', [])
+
+        request = self.context.get('request', None)
+        if request and hasattr(request, "user"):
+            validated_data['owner'] = Member.objects.get(user=request.user)
+
+
+
         instance = Role.objects.create(**validated_data)
 
         # Update members
         instance.members.set(members_data)
+        instance.iam_groups.set(groups_data)
         # Update members
         instance.access_policies.set(access_policies_data)
 
@@ -164,6 +217,7 @@ class RoleSerializer(IamModelMetaSerializer):
     def update(self, instance, validated_data):
         access_policies_data = validated_data.pop('access_policies', [])
         members_data = validated_data.pop('members', [])
+        groups_data = validated_data.pop('iam_groups', [])
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description', instance.description)
         ''' You cannot change configuration code or user_code in existing object'''
@@ -171,13 +225,14 @@ class RoleSerializer(IamModelMetaSerializer):
 
         # Update users
         instance.members.set(members_data)
+        instance.iam_groups.set(groups_data)
         # Update members
         instance.access_policies.set(access_policies_data)
 
         return instance
 
 
-class GroupSerializer(IamModelMetaSerializer):
+class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
 
@@ -195,7 +250,8 @@ class GroupSerializer(IamModelMetaSerializer):
                   'access_policies',
                   'members', 'members_object',
                   'roles', 'roles_object',
-                  'access_policies', 'access_policies_object'
+                  'access_policies', 'access_policies_object',
+                  'created', 'modified'
                   ]
 
     def __init__(self, *args, **kwargs):
@@ -206,6 +262,11 @@ class GroupSerializer(IamModelMetaSerializer):
         access_policies_data = validated_data.pop('access_policies', [])
         members_data = validated_data.pop('members', [])
         roles_data = validated_data.pop('roles', [])
+
+        request = self.context.get('request', None)
+        if request and hasattr(request, "user"):
+            validated_data['owner'] = Member.objects.get(user=request.user)
+
         instance = Group.objects.create(**validated_data)
 
         # Update members
@@ -236,7 +297,7 @@ class GroupSerializer(IamModelMetaSerializer):
         return instance
 
 
-class AccessPolicySerializer(IamModelMetaSerializer):
+class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     class Meta:
         model = AccessPolicy
-        fields = ['id', 'name', 'user_code', 'configuration_code', 'policy', 'description']
+        fields = ['id', 'name', 'user_code', 'configuration_code', 'policy', 'description', 'created', 'modified']
