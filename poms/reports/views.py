@@ -771,7 +771,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
             instance = builder.build_balance()
 
             instance.task_id = 1  # deprecated, but not to remove
-            instance.task_status = "SUCCESS"  # deprecated, but not to remove
+            instance.task_status = "SUCCESS"  # deprecated, but do not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
