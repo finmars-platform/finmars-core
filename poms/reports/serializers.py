@@ -1874,6 +1874,11 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
             report_instance = TransactionReportInstance.objects.get(
                 id=instance.report_instance_id
             )
+            if not report_instance:
+                raise ValidationError(
+                    f"invalid report_instance_id={instance.report_instance_id}"
+                )
+
             data = report_instance.data
             full_items = report_instance.data["items"]
 
