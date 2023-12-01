@@ -1,18 +1,18 @@
 from datetime import timedelta
 from logging import getLogger
-from typing import Type
 
 from django.db import models, transaction
 from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from typing import Type
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
-from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault
+from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault, CostMethodField
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
@@ -707,7 +707,6 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
 
 
 class CalculatePortfolioHistorySerializer(serializers.Serializer):
-
     master_user = MasterUserField()
     member = HiddenMemberField()
 
@@ -721,7 +720,6 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         (SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, "Business Days End Of Months"),
     )
 
-
     portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
     pricing_policy = PricingPolicyField(default=SystemPricingPolicyDefault())
@@ -731,11 +729,13 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     # Important, date_from for metrics itself is ready only
     # its is calculated from date and period_type
 
-    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, choices=SEGMENTATION_TYPE_CHOICES)
-    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD, choices=PortfolioHistory.PERIOD_CHOICES)
-    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, required=False)
-    performance_method = serializers.ChoiceField(required=False, default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ, choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
+    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+                                                default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+                                                choices=SEGMENTATION_TYPE_CHOICES)
+    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD,
+                                          choices=PortfolioHistory.PERIOD_CHOICES)
+    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO)
+    performance_method = serializers.ChoiceField(required=False,
+                                                 default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
+                                                 choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
-
-
-

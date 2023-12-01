@@ -89,7 +89,7 @@ class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
 
 
-class CostMethodField(PrimaryKeyRelatedFilteredField):
+class CostMethodField(UserCodeOrPrimaryKeyRelatedField):
     queryset = CostMethod.objects
 
 
