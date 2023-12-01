@@ -60,7 +60,7 @@ class RoleFilterSet(FilterSet):
     user_code = django_filters.CharFilter()
 
     class Meta:
-        model = Group
+        model = Role
         fields = {
             'name': ['exact', 'contains', 'icontains'],
             'user_code': ['exact', 'contains', 'icontains'],
