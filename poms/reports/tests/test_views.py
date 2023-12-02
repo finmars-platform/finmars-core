@@ -7,7 +7,7 @@ DATE_FORMAT = settings.API_DATE_FORMAT
 API_URL = f"/{settings.BASE_API_URL}/api/v1/reports/backend-transaction-report"
 
 
-class BackendBalanceReporItemsViewSetTest(BaseTestCase):
+class BackendBalanceReportItemsViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -38,3 +38,6 @@ class BackendBalanceReportGroupsTest(BaseTestCase):
     def test__check_with_payload(self):
         response = self.client.post(path=self.url, format="json", data=GROUPS_PAYLOAD)
         self.assertEqual(response.status_code, 400, response.content)
+
+        response_json = response.json()
+        print(response_json)
