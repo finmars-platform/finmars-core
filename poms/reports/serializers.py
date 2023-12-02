@@ -1282,9 +1282,12 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         )
 
         groups_types = instance.frontend_request_options["groups_types"]
-        columns = instance.frontend_request_options["columns"]
+        if not groups_types or "key" not in groups_types[-1]:
+            raise ValidationError(f"invalid groups_types={groups_types}")
 
-        group_type = groups_types[len(groups_types) - 1]
+        group_type = groups_types[-1]
+
+        columns = instance.frontend_request_options["columns"]
 
         unique_groups = helper_service.get_unique_groups(
             full_items, group_type, columns, total_market_value

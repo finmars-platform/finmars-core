@@ -58,6 +58,9 @@ class BackendReportHelperService:
         return result_group
 
     def get_unique_groups(self, items, group_type, columns, total_value=None):
+        if not group_type or "key" not in group_type:
+            raise RuntimeError(f"get_unique_groups: invalid group_type={group_type}")
+
         seen_group_identifiers = set()
         result_groups = []
 
