@@ -1268,7 +1268,8 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         except Exception as e:
             _l.error(
-                f"Could not calculate market_value, some prices/fxrates are missing {e}"
+                f"Could not calculate market_value, "
+                f"some prices/fxrates are missing {repr(e)}"
             )
             total_market_value = None
 
