@@ -481,7 +481,6 @@ class BackendReportHelperService:
 
         # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
         # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
-
         # _l.info(f'filter_by_groups_filters before len {len(items)}')
 
         if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
@@ -645,11 +644,10 @@ class BackendReportHelperService:
 
     def paginate_items(self, items, options):
         page_size = options.get("page_size", 40)
-
         page = options.get("page", 1)
-
         start_index = (page - 1) * page_size
         end_index = start_index + page_size
+
         return items[start_index:end_index]
 
 
