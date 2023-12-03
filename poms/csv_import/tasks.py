@@ -203,7 +203,7 @@ def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_i
         celery_task.save()
     except Exception as e:
         err_msg = (
-            f"simple_import.data_csv_file_import_by_procedure_json celery_task {task_id} error {repr(e)} "
+            f"simple_import.simple_import_bulk_insert_final_updates_procedure celery_task {task_id} error {repr(e)} "
             f"traceback {traceback.format_exc()}"
         )
         _l.error(err_msg)

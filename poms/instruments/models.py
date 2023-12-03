@@ -1803,27 +1803,30 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 settlementDays = 0
 
                 if first_accrual:
-                    start = ql.Date(
-                        str(first_accrual.accrual_start_date), self.date_pattern
-                    )  # Start accrual date
-                    periodicity = Periodicity.get_quantlib_periodicity(
-                        first_accrual.periodicity
-                    )
+                    try:
+                        start = ql.Date(
+                            str(first_accrual.accrual_start_date), self.date_pattern
+                        )  # Start accrual date
+                        periodicity = Periodicity.get_quantlib_periodicity(
+                            first_accrual.periodicity
+                        )
 
-                    schedule = ql.MakeSchedule(
-                        start, maturity, periodicity
-                    )  # period - semiannual
+                        schedule = ql.MakeSchedule(
+                            start, maturity, periodicity
+                        )  # period - semiannual
 
-                    float_accrual_size = float(first_accrual.accrual_size) / 100
-                    day_count = AccrualCalculationModel.get_quantlib_day_count(
-                        first_accrual.accrual_calculation_model
-                    )
+                        float_accrual_size = float(first_accrual.accrual_size) / 100
+                        day_count = AccrualCalculationModel.get_quantlib_day_count(
+                            first_accrual.accrual_calculation_model
+                        )
 
-                    coupons = [float_accrual_size]
+                        coupons = [float_accrual_size]
 
-                    face_value = 100 # probably self.default_price
+                        face_value = 100 # probably self.default_price
 
-                    bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
+                        bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
+                    except Exception as e:
+                        _l.error("get_quantlib_bond Error")
 
                 else:
                     bond = ql.ZeroCouponBond(
@@ -3002,8 +3005,8 @@ class PriceHistory(DataTimeStampedModel):
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
-                _l.error('PriceHistory.error get_accrued_price e %s' % e)
-                _l.error('PriceHistory.error get_accrued_price traceback %s' % traceback.format_exc())
+                # _l.error('PriceHistory.error get_accrued_price e %s' % e)
+                # _l.error('PriceHistory.error get_accrued_price traceback %s' % traceback.format_exc())
                 _l.error('PriceHistory cound not get_accrued_price')
                 self.accrued_price = 0
 
