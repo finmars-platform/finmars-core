@@ -4,8 +4,6 @@ from django.conf import settings
 class DbRouter:
     route_app_labels = [
         "reports",
-        "transactions",
-        "csv_import",
     ]
 
     def db_for_read(self, model, **hints):
@@ -20,13 +18,13 @@ class DbRouter:
         """
         return settings.DB_DEFAULT
 
-    def allow_relation(self, *args, **hints):
+    def allow_relation(self, obj_1, obj_2, **hints):
         """
-        Relations between objects in replica & master are not allowed
+        Allow relations between objects in replica & master
         """
-        return None
+        return True
 
-    def allow_migrate(self, db, *args, **hints):
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
         """
         Migrations are allowed only in master/default db
         """
