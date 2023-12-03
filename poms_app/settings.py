@@ -206,32 +206,18 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # = Database =
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-DB_DEFAULT = "default"
-DB_REPLICA = "replica"
-DATABASES = {
-    DB_DEFAULT: {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
-        "USER": ENV_STR("DB_USER", "postgres"),
-        "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
-        "HOST": ENV_STR("DB_HOST", "localhost"),
-        "PORT": ENV_INT("DB_PORT", 5432),
-        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-    },
-    DB_REPLICA: {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
-        "USER": ENV_STR("DB_USER", "postgres"),
-        "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
-        "HOST": ENV_STR("DB_HOST", "localhost"),
-        "PORT": ENV_INT("DB_PORT", 5432),
-        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-    },
-}
-DATABASE_ROUTERS = [
-    "poms.common.db_router.DbRouter",
-]
 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
+        "USER": ENV_STR("DB_USER", "postgres"),
+        "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
+        "HOST": ENV_STR("DB_HOST", "localhost"),
+        "PORT": ENV_INT("DB_PORT", 5432),
+        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+    }
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
