@@ -501,6 +501,11 @@ class PLReportSerializer(ReportSerializer):
 
     item_instruments = serializers.SerializerMethodField()
 
+
+    period_type = serializers.ChoiceField(allow_null=True,
+                                          choices=Report.PERIOD_TYPE_CHOICES, allow_blank=True,
+                                          required=False)
+
     def get_items(self, obj):
 
         result = []
@@ -841,11 +846,11 @@ class PerformanceReportSerializer(serializers.Serializer):
                                                default=PerformanceReport.CALCULATION_TYPE_MODIFIED_DIETZ,
                                                choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True,
                                                required=False)
-
     period_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.PERIOD_TYPE_YTD,
                                           default=PerformanceReport.PERIOD_TYPE_YTD,
                                           choices=PerformanceReport.PERIOD_TYPE_CHOICES, allow_blank=True,
                                           required=False)
+
 
     segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
                                                 default=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
@@ -997,7 +1002,6 @@ class PerformanceReportSerializer(serializers.Serializer):
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
-
 
 class PriceHistoryCheckSerializer(ReportSerializer):
     items = serializers.SerializerMethodField()
