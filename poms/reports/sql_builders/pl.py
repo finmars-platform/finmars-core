@@ -47,6 +47,9 @@ class PLReportBuilderSql:
         self.transform_to_allowed_portfolios()
         self.transform_to_allowed_accounts()
 
+        if not self.instance.pl_first_date and not self.instance.period_type:
+            _l.info("No pl_first_date, no period_type settings to ytd")
+            self.instance.period_type = 'ytd'
 
         if not self.instance.pl_first_date and self.instance.period_type:
             
