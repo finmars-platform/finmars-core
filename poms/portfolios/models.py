@@ -141,7 +141,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
             self.master_user.portfolio_id == self.id if self.master_user_id else False
         )
 
-    def first_transaction_date(self, date_field: str) -> date:
+    def first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
         Try to return the 1st transaction date for the portfolio
         """
