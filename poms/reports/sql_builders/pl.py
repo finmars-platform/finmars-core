@@ -11,7 +11,7 @@ from poms.accounts.models import Account, AccountType
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day, \
-    get_last_business_day_of_previous_year, get_start_date_of_qtd, get_last_business_day_of_previous_month
+    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, CostMethod, InstrumentType, Country
@@ -67,7 +67,7 @@ class PLReportBuilderSql:
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
             elif self.instance.period_type == 'qtd':
-                self.instance.pl_first_date = get_start_date_of_qtd(self.instance.report_date)
+                self.instance.pl_first_date = get_last_business_day_in_previous_quarter(self.instance.report_date)
 
             elif self.instance.period_type == 'mtd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_month(self.instance.report_date)

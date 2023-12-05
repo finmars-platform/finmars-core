@@ -9,7 +9,7 @@ from django.views.generic.dates import timezone_today
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates, get_last_business_day_of_previous_year, \
-    get_last_bdays_of_months_between_two_dates, get_start_date_of_qtd, get_last_business_day_of_previous_month, \
+    get_last_bdays_of_months_between_two_dates, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month, \
     get_last_business_day, get_list_of_business_days_between_two_dates
 from poms.currencies.models import CurrencyHistory, Currency
 from poms.instruments.models import PricingPolicy, CostMethod
@@ -764,7 +764,7 @@ def calculate_portfolio_history(self, task_id: int):
     if period_type == 'mtd':
         date_from = str(get_last_business_day_of_previous_month(date))
     if period_type == 'qtd':
-        date_from = str(get_start_date_of_qtd(date))
+        date_from = str(get_last_business_day_in_previous_quarter(date))
     if period_type == 'ytd':
         date_from = str(get_last_business_day_of_previous_year(date))
     if period_type == 'inception':
