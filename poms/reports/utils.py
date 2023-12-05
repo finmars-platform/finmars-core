@@ -110,6 +110,9 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'depth_level' in _data:
         report_options['depth_level'] = _data['depth_level']
 
+    if 'period_type' in _data:
+        report_options['period_type'] = _data['period_type']
+
     if 'filters' in _data:
         report_options['filters'] = str(_data['filters'])
 

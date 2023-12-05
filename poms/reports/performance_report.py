@@ -123,6 +123,7 @@ class PerformanceReportBuilder:
 
         if not self.instance.begin_date and self.instance.period_type:
             _l.info("No begin date passed, calculating begin date based on period_type and end_date")
+            _l.info('self.instance.period_type %s' % self.instance.period_type)
 
             if self.instance.period_type == 'inception':
 
@@ -152,7 +153,8 @@ class PerformanceReportBuilder:
                 begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
 
-            self.instance.begin_date = begin_date
+
+        self.instance.begin_date = begin_date
 
         _l.info("typeof end_date %s" % type(self.end_date))
         _l.info("typeof begin_date %s" % type(begin_date))
