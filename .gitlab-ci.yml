@@ -129,9 +129,18 @@ Push Version:
     - apt install curl git
   script:
     - |
+      if [[ "$CI_COMMIT_REF_NAME" == *"-rc" ]]; then
+          CHANNEL="rc"
+      elif [[ "$CI_COMMIT_REF_NAME" == *"-stable" ]]; then
+          CHANNEL="stable"
+      else
+          CHANNEL="unknown"
+      fi
+
+
       # Create the JSON payload
       NOTES=$(git log -1 --pretty=%f)
-      JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\" }"
+      JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\", \"channel\": \"$CHANNEL\"  }"
 
       # Pass the payload to curl
       #      response=$(curl --request POST https://license.finmars.com/api/v1/version/ \
@@ -159,7 +168,7 @@ Push Version:
       fi
 
   only:
-    - /^.*-rc$/
+    - /^.*-(rc|stable)$/
     - tags
 
 

@@ -413,10 +413,10 @@ def set_default_accrual(instrument_object, instrument_type_obj):
                 "public_name": "none",
                 "notes": None,
             },
-            "periodicity": 0,
+            "periodicity": Periodicity.ANNUALLY,
             "periodicity_object": {},
-            "periodicity_n": 0,
-            "notes": "default none settings",
+            "periodicity_n": 1,
+            "notes": "default settings",
         }
     ]
 
@@ -428,8 +428,8 @@ def set_periodicity_period(source_data, accrual):
     try:
         accrual["periodicity"] = PERIODICITY_MAP[p]
     except KeyError:
-        _l.error(f'invalid/unknown periodicity_n={p}')
-        accrual["periodicity"] = 0
+        _l.error(f"invalid/unknown periodicity_n={p} set default=ANNUALLY")
+        accrual["periodicity"] = Periodicity.ANNUALLY
 
     _l.info(f'periodicity {accrual["periodicity"]}')
 
