@@ -6,13 +6,13 @@ class DbRouter:
 
     def db_for_read(self, model, **hints):
         """
-        Reads always from replica db
+        Which db to use for readingR
         """
         return settings.DB_DEFAULT
 
     def db_for_write(self, model, **hints):
         """
-        Write always into master/default db
+        Which db to use for writing
         """
         return settings.DB_DEFAULT
 

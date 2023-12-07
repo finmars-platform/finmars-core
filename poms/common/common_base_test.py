@@ -496,7 +496,7 @@ class DbInitializer:
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
-            instrument_type = InstrumentType.objects.get_or_create(
+            instrument_type, _ = InstrumentType.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 instrument_class_id=class_id,
@@ -507,7 +507,7 @@ class DbInitializer:
                     public_name=type_,
                 )
             )
-            instrument = Instrument.objects.get_or_create(
+            instrument, _ = Instrument.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 instrument_type=instrument_type,

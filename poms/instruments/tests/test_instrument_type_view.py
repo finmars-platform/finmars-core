@@ -6,6 +6,8 @@ from poms.instruments.tests.common_test_data import EXPECTED_INSTRUMENT_TYPE
 
 
 class InstrumentTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

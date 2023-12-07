@@ -208,6 +208,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # = Database =
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+ACTIVATE_REPLICA = ENV_BOOL("ACTIVATE_REPLICA", False)
 DB_DEFAULT = "default"
 DB_REPLICA = "replica"
 DATABASES = {
@@ -230,9 +231,11 @@ DATABASES = {
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
     },
 }
-DATABASE_ROUTERS = [
-    "poms_app.db_router.DbRouter",
-]
+if ACTIVATE_REPLICA:
+    DATABASE_ROUTERS = [
+        "poms_app.db_router.DbRouter",
+    ]
+
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
