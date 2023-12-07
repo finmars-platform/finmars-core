@@ -22,6 +22,8 @@ def complex_task(task_id):
 
 # @skip("temporally")
 class FinmarsTaskTestCase(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
