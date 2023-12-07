@@ -95,7 +95,8 @@ class TransactionReportBuilderSql:
 
     def add_user_filters(self):
 
-        result = ''
+        if not self.instance.user_filters:
+            return ""
 
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
@@ -103,13 +104,8 @@ class TransactionReportBuilderSql:
 
         _l.info("add_user_filters.instruments count %s" % len(instruments))
 
+        result = ""
         try:
-
-            for filter in self.instance.filters:
-
-                if filter['key'] in ['entry_item_type']:
-                    item_type_filter = filter
-
             for filter in self.instance.filters:
 
                 if filter['options']['enabled'] and filter['options']['filter_values']:
@@ -226,28 +222,6 @@ class TransactionReportBuilderSql:
 
             _l.error("User filters layout error %s" % e)
             _l.error("User filters layout traceback %s" % traceback.format_exc())
-
-        # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
-        #
-        # accounts_dict = {}
-        #
-        # for account in accounts:
-        #     accounts_dict[account[2]] = account[1] # account[2] - user code
-        #
-        # for filter in self.instance.filters:
-        #
-        #     if filter['key'] == 'entry_account.user_code':
-        #
-        #         # "'acc1', 'acc2'"
-        #
-        #         accounts = ['acc1', 'acc2']
-        #         res = "'" + "\',\'".join(accounts)
-        #         res = res + "'"
-        #
-        #
-        #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
-
-        # _l.info('add_user_filters result %s' % result)
 
         return result
 
