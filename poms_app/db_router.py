@@ -2,15 +2,13 @@ from django.conf import settings
 
 
 class DbRouter:
-    route_app_labels = [
-        "reports",
-    ]
+    route_app_labels = settings.INSTALLED_APPS
 
     def db_for_read(self, model, **hints):
         """
         Reads always from replica db
         """
-        return settings.DB_REPLICA
+        return settings.DB_DEFAULT
 
     def db_for_write(self, model, **hints):
         """

@@ -224,10 +224,10 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return random.choice(choices)
 
     def create_attribute_type(self) -> GenericAttributeType:
-        self.attribute_type = GenericAttributeType.objects.using(MAIN).create(
+        self.attribute_type = GenericAttributeType.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
-            content_type=ContentType.objects.using(MAIN).first(),
+            content_type=ContentType.objects.first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             value_type=GenericAttributeType.NUMBER,
@@ -240,9 +240,9 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return self.attribute_type
 
     def create_attribute(self) -> GenericAttribute:
-        self.attribute = GenericAttribute.objects.using(MAIN).create(
+        self.attribute = GenericAttribute.objects.create(
             attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.using(MAIN).last(),
+            content_type=ContentType.objects.last(),
             object_id=self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
@@ -251,7 +251,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return self.attribute
 
     def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.using(MAIN).create(
+        self.account_type = AccountType.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             user_code=self.random_string(),
@@ -263,7 +263,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return self.account_type
 
     def create_account(self) -> Account:
-        self.account = Account.objects.using(MAIN).create(
+        self.account = Account.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             type=self.create_account_type(),
@@ -276,50 +276,50 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     @staticmethod
     def get_instrument_type(instrument_type: str = "bond") -> InstrumentType:
-        return InstrumentType.objects.using(MAIN).get(user_code__contains=instrument_type)
+        return InstrumentType.objects.get(user_code__contains=instrument_type)
 
     @staticmethod
     def get_currency(user_code: str = "EUR") -> InstrumentType:
-        return Currency.objects.using(MAIN).get(user_code=user_code)
+        return Currency.objects.get(user_code=user_code)
 
     @staticmethod
     def get_pricing_condition(model_id=PricingCondition.NO_VALUATION):
-        return PricingCondition.objects.using(MAIN).get(id=model_id)
+        return PricingCondition.objects.get(id=model_id)
 
     @staticmethod
     def get_exposure_calculation(model_id=ExposureCalculationModel.MARKET_VALUE):
-        return ExposureCalculationModel.objects.using(MAIN).get(id=model_id)
+        return ExposureCalculationModel.objects.get(id=model_id)
 
     @staticmethod
     def get_payment_size(model_id=PaymentSizeDetail.PERCENT):
-        return PaymentSizeDetail.objects.using(MAIN).get(id=model_id)
+        return PaymentSizeDetail.objects.get(id=model_id)
 
     @staticmethod
     def get_daily_pricing(model_id=DailyPricingModel.DEFAULT):
-        return DailyPricingModel.objects.using(MAIN).get(id=model_id)
+        return DailyPricingModel.objects.get(id=model_id)
 
     @staticmethod
     def get_long_under_exp(model_id=LongUnderlyingExposure.ZERO):
-        return LongUnderlyingExposure.objects.using(MAIN).get(id=model_id)
+        return LongUnderlyingExposure.objects.get(id=model_id)
 
     @staticmethod
     def get_short_under_exp(model_id=ShortUnderlyingExposure.ZERO):
-        return ShortUnderlyingExposure.objects.using(MAIN).get(id=model_id)
+        return ShortUnderlyingExposure.objects.get(id=model_id)
 
     @staticmethod
     def get_country(name="Italy"):
-        return Country.objects.using(MAIN).get(name=name)
+        return Country.objects.get(name=name)
 
     @staticmethod
     def get_accrual_calculation_model(model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA):
-        return AccrualCalculationModel.objects.using(MAIN).get(id=model_id)
+        return AccrualCalculationModel.objects.get(id=model_id)
 
     @staticmethod
     def get_periodicity(model_id=Periodicity.N_DAY):
-        return Periodicity.objects.using(MAIN).get(id=model_id)
+        return Periodicity.objects.get(id=model_id)
 
     def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
-        return AccrualCalculationSchedule.objects.using(MAIN).create(
+        return AccrualCalculationSchedule.objects.create(
             instrument=instrument,
             accrual_start_date=date.today(),
             accrual_start_date_value_type=SystemValueType.DATE,
@@ -333,7 +333,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         )
 
     def create_factor(self, instrument: Instrument) -> InstrumentFactorSchedule:
-        return InstrumentFactorSchedule.objects.using(MAIN).create(
+        return InstrumentFactorSchedule.objects.create(
             instrument=instrument,
             effective_date=self.random_future_date(),
             factor_value=self.random_percent(),
@@ -345,7 +345,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         currency_code: str = "EUR",
     ) -> Instrument:
         currency = self.get_currency(user_code=currency_code)
-        self.instrument = Instrument.objects.using(MAIN).create(
+        self.instrument = Instrument.objects.create(
             # mandatory fields
             master_user=self.master_user,
             owner=self.finmars_bot,
@@ -378,23 +378,23 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     @staticmethod
     def get_or_create_master_user() -> MasterUser:
-        master_user = MasterUser.objects.using(MAIN).filter(
+        master_user = MasterUser.objects.filter(
             base_api_url=settings.BASE_API_URL,
         ).first() or MasterUser.objects.create_master_user(
             name=MASTER_USER,
             journal_status="disabled",
             base_api_url=settings.BASE_API_URL,
         )
-        EcosystemDefault.objects.using(MAIN).get_or_create(master_user=master_user)
+        EcosystemDefault.objects.get_or_create(master_user=master_user)
         return master_user
 
     def init_test_case(self):
         self.client = APIClient()
         self.master_user = self.get_or_create_master_user()
-        self.user, _ = User.objects.using(MAIN).get_or_create(username=self.common_username)
+        self.user, _ = User.objects.get_or_create(username=self.common_username)
         self.user.master_user = self.master_user
         self.user.save()
-        self.member = Member.objects.using(MAIN).create(
+        self.member = Member.objects.create(
             user=self.user,
             master_user=self.master_user,
             is_admin=True,
@@ -451,11 +451,11 @@ USD = "USD"
 class DbInitializer:
 
     def create_unified_group(self):
-        return TransactionTypeGroup.objects.using(MAIN).filter(
+        return TransactionTypeGroup.objects.filter(
             name=UNIFIED,
             user_code=UNIFIED,
             short_name=UNIFIED,
-        ).first() or TransactionTypeGroup.objects.using(MAIN).create(
+        ).first() or TransactionTypeGroup.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name=UNIFIED,
@@ -464,16 +464,16 @@ class DbInitializer:
         )
 
     def get_or_create_default_instrument(self):
-        return Instrument.objects.using(MAIN).filter(
+        return Instrument.objects.filter(
             user_code="-",
-        ).first() or Instrument.objects.using(MAIN).create(
+        ).first() or Instrument.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name="-",
             user_code="-",
             short_name="-",
             public_name="-",
-            instrument_type=InstrumentType.objects.using(MAIN).first(),
+            instrument_type=InstrumentType.objects.first(),
             accrued_currency=self.usd,
             pricing_currency=self.usd,
             maturity_date=date.today(),
@@ -481,7 +481,7 @@ class DbInitializer:
 
     def create_instruments_types(self):
         return [
-            InstrumentType.objects.using(MAIN).create(
+            InstrumentType.objects.create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 instrument_class_id=InstrumentClass.GENERAL,
@@ -496,27 +496,27 @@ class DbInitializer:
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
-            instrument_type = InstrumentType.objects.using(MAIN).filter(
-                name=type_,
-            ).first() or InstrumentType.objects.using(MAIN).create(
+            instrument_type = InstrumentType.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 instrument_class_id=class_id,
                 name=type_,
-                user_code=type_,
-                short_name=type_,
-                public_name=type_,
+                defaults=dict(
+                    user_code=type_,
+                    short_name=type_,
+                    public_name=type_,
+                )
             )
-            instrument = Instrument.objects.using(MAIN).filter(
-                name=name,
-            ).first() or Instrument.objects.using(MAIN).create(
+            instrument = Instrument.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 instrument_type=instrument_type,
                 name=name,
-                accrued_currency=self.usd,
-                pricing_currency=self.usd,
-                maturity_date=date.today(),
+                defaults=dict(
+                    accrued_currency=self.usd,
+                    pricing_currency=self.usd,
+                    maturity_date=date.today(),
+                )
             )
             if not instrument.maturity_date:
                 instrument.maturity_date = date.today()
@@ -529,10 +529,10 @@ class DbInitializer:
         portfolios = {}
         accounts = {}
         for name in PORTFOLIOS:
-            account = Account.objects.using(MAIN).filter(
+            account = Account.objects.filter(
                 name=name,
                 user_code=name,
-            ).first() or Account.objects.using(MAIN).create(
+            ).first() or Account.objects.create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 name=name,
@@ -540,10 +540,10 @@ class DbInitializer:
             )
             accounts[name] = account
 
-            portfolio = Portfolio.objects.using(MAIN).filter(
+            portfolio = Portfolio.objects.filter(
                 name=name,
                 user_code=name,
-            ).first() or Portfolio.objects.using(MAIN).create(
+            ).first() or Portfolio.objects.create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 name=name,
@@ -558,9 +558,9 @@ class DbInitializer:
         return accounts, portfolios
 
     def get_or_create_currency_usd(self):
-        return Currency.objects.using(MAIN).filter(
+        return Currency.objects.filter(
             user_code=USD,
-        ).first() or Currency.objects.using(MAIN).create(
+        ).first() or Currency.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             user_code=USD,
@@ -571,9 +571,9 @@ class DbInitializer:
     def get_or_create_transaction_types(self) -> dict:
         types = {}
         for name in TRANSACTIONS_TYPES:
-            type_obj = TransactionType.objects.using(MAIN).filter(
+            type_obj = TransactionType.objects.filter(
                 user_code=name,
-            ).first() or TransactionType.objects.using(MAIN).create(
+            ).first() or TransactionType.objects.create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 name=name,
@@ -590,9 +590,9 @@ class DbInitializer:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
-            record = TransactionClass.objects.using(MAIN).filter(
+            record = TransactionClass.objects.filter(
                 id=class_id
-            ).first() or TransactionClass.objects.using(MAIN).create(
+            ).first() or TransactionClass.objects.create(
                 id=class_id,
                 user_code=name,
                 name=name,
@@ -604,8 +604,8 @@ class DbInitializer:
     def get_or_create_strategies(self):
         strategies = {}
         for i, model in enumerate([Strategy1, Strategy2, Strategy3]):
-            if not (strategy := model.objects.using(MAIN).first()):
-                strategy = model.objects.using(MAIN).create(
+            if not (strategy := model.objects.first()):
+                strategy = model.objects.create(
                     master_user=self.master_user,
                     owner=self.finmars_bot,
                     name=f"strategy_{i+1}",
@@ -615,7 +615,7 @@ class DbInitializer:
 
     def create_counter_party(self):
         name = "test_counter_party"
-        return Counterparty.objects.using(MAIN).first() or Counterparty.objects.using(MAIN).create(
+        return Counterparty.objects.first() or Counterparty.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name=name,
@@ -625,7 +625,7 @@ class DbInitializer:
 
     def create_responsible(self):
         name = "test_responsible"
-        return Responsible.objects.using(MAIN).first() or Responsible.objects.using(MAIN).create(
+        return Responsible.objects.first() or Responsible.objects.create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name=name,
@@ -638,7 +638,7 @@ class DbInitializer:
     ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
-        complex_transaction = ComplexTransaction.objects.using(MAIN).create(
+        complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
             owner=self.member,
             date=op_date,
@@ -647,7 +647,7 @@ class DbInitializer:
             user_text_10="1M",
         )
         account = portfolio.accounts.first()
-        transaction = Transaction.objects.using(MAIN).create(
+        transaction = Transaction.objects.create(
             master_user=self.master_user,
             owner=self.member,
             account_position=account,
@@ -683,11 +683,11 @@ class DbInitializer:
         return complex_transaction, transaction
 
     def create_portfolio_register(self, portfolio: Portfolio, instrument: Instrument):
-        return PortfolioRegister.objects.using(MAIN).filter(
+        return PortfolioRegister.objects.filter(
             portfolio=portfolio,
             linked_instrument=instrument,
-        ).first() or PortfolioRegister.objects.using(MAIN).create(
-            master_user=self.master_user or MasterUser.objects.using(MAIN).first(),
+        ).first() or PortfolioRegister.objects.create(
+            master_user=self.master_user or MasterUser.objects.first(),
             owner=self.finmars_bot,
             portfolio=portfolio,
             linked_instrument=instrument,
@@ -697,7 +697,7 @@ class DbInitializer:
     def __init__(self, master_user, member):
         self.master_user = master_user
         self.member = member
-        self.finmars_bot = Member.objects.using(MAIN).get(username="finmars_bot")
+        self.finmars_bot = Member.objects.get(username="finmars_bot")
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
         self.strategies = self.get_or_create_strategies()
