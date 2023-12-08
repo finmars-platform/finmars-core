@@ -277,7 +277,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return InstrumentType.objects.get(user_code__contains=instrument_type)
 
     @staticmethod
-    def get_currency(user_code: str = "EUR") -> InstrumentType:
+    def get_currency(user_code: str = "EUR") -> Currency:
         return Currency.objects.get(user_code=user_code)
 
     @staticmethod
@@ -309,7 +309,9 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return Country.objects.get(name=name)
 
     @staticmethod
-    def get_accrual_calculation_model(model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA):
+    def get_accrual_calculation_model(
+        model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
+    ):
         return AccrualCalculationModel.objects.get(id=model_id)
 
     @staticmethod
@@ -447,7 +449,6 @@ USD = "USD"
 
 
 class DbInitializer:
-
     def create_unified_group(self):
         return TransactionTypeGroup.objects.filter(
             name=UNIFIED,
@@ -462,20 +463,39 @@ class DbInitializer:
         )
 
     def get_or_create_default_instrument(self):
-        return Instrument.objects.filter(
-            user_code="-",
-        ).first() or Instrument.objects.create(
+        instrument_type, _ = InstrumentType.objects.get_or_create(
+            master_user=self.master_user,
+            owner=self.finmars_bot,
+            instrument_class_id=InstrumentClass.GENERAL,
+            name="-",
+            defaults=dict(
+                user_code="-",
+                short_name="-",
+                public_name="-",
+            ),
+        )
+        instrument, _ = Instrument.objects.get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name="-",
-            user_code="-",
-            short_name="-",
-            public_name="-",
-            instrument_type=InstrumentType.objects.first(),
+            instrument_type=instrument_type,
             accrued_currency=self.usd,
             pricing_currency=self.usd,
             maturity_date=date.today(),
+            defaults=dict(
+                user_code="-",
+                short_name="-",
+                public_name="-",
+            ),
         )
+        return instrument
+
+    def get_or_create_default_ecosystem(self):
+        ecosystem, _ = EcosystemDefault.objects.get_or_create(
+            master_user=self.master_user,
+            defaults={},
+        )
+        return ecosystem
 
     def create_instruments_types(self):
         return [
@@ -503,7 +523,7 @@ class DbInitializer:
                     user_code=type_,
                     short_name=type_,
                     public_name=type_,
-                )
+                ),
             )
             instrument, _ = Instrument.objects.get_or_create(
                 master_user=self.master_user,
@@ -514,7 +534,7 @@ class DbInitializer:
                     accrued_currency=self.usd,
                     pricing_currency=self.usd,
                     maturity_date=date.today(),
-                )
+                ),
             )
             if not instrument.maturity_date:
                 instrument.maturity_date = date.today()
@@ -707,6 +727,7 @@ class DbInitializer:
         self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
+        self.default_ecosystem = self.get_or_create_default_ecosystem()
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )

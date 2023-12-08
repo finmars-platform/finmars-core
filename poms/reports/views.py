@@ -381,48 +381,6 @@ class BalanceReportViewSet(AbstractViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        # _l.info("Create start")
-        #
-        # st = time.perf_counter()
-        #
-        # key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
-        #                                   request.user.member)
-        #
-        # cached_data = cache.get(key)
-        #
-        # if not cached_data:
-        #     _l.info("Could not find in cache")
-        #
-        #     serializer = self.get_serializer(data=request.data)
-        #     serializer.is_valid(raise_exception=True)
-        #     instance = serializer.save()
-        #
-        #     instance.auth_time = self.auth_time
-        #
-        #
-        #
-        #     builder = BalanceReportBuilderSql(instance=instance)
-        #     instance = builder.build_balance()
-        #
-        #     instance.task_id = 1
-        #     instance.task_status = "SUCCESS"
-        #
-        #     serialize_report_st = time.perf_counter()
-        #     serializer = self.get_serializer(instance=instance, many=False)
-        #
-        #     cached_data = serializer.data
-        #
-        #     _l.info('serializer.data.auth_time %s' % serializer.data['auth_time'])
-        #     _l.info('serializer.data.execution_time %s' % serializer.data['execution_time'])
-        #     _l.info('serializer.data.relation_prefetch_time %s' % serializer.data['relation_prefetch_time'])
-        #     _l.info('serializer.data.serialization_time %s' % serializer.data['serialization_time'])
-        #
-        #     cache.set(key, cached_data)
-        #
-        # _l.debug('BalanceReportViewSet done: %s' % "{:3.3f}".format(time.perf_counter() - st))
-        #
-        # return Response(cached_data, status=status.HTTP_200_OK)
-
 
 class SummaryViewSet(AbstractViewSet):
     serializer_class = SummarySerializer
