@@ -60,6 +60,8 @@ CREATE_DATA = {
 
 
 class CurrencyHistoryViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
