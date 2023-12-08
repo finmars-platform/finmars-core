@@ -11,6 +11,8 @@ from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
 
 
 class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

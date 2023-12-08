@@ -11,6 +11,8 @@ from poms.counterparties.models import Counterparty
 
 
 class ImportCompanyDatabaseViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

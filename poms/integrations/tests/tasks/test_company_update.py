@@ -5,6 +5,8 @@ from poms.counterparties.serializers import CounterpartySerializer
 
 
 class DatabaseClientTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

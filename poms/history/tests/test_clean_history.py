@@ -15,6 +15,8 @@ TEST_AMOUNT = 50
 
 
 class CalculateDailySumTestCase(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

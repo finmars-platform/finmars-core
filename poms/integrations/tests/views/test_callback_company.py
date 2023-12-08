@@ -6,6 +6,8 @@ from poms.counterparties.models import Counterparty
 
 
 class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

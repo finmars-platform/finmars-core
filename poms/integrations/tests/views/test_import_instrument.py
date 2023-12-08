@@ -11,6 +11,8 @@ from poms.instruments.models import Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
