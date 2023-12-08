@@ -43,6 +43,46 @@ from poms.transactions.models import (
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
+MASTER_USER = "Experimental_Master"
+BUY_SELL = "Buy/Sell_unified"
+DEPOSIT = "Deposits/Withdraw_unified"
+FX = "FX/Forwards_unified"
+INSTRUMENT_EXP = "Expense/Income (Instrument)_unified"
+NON_INSTRUMENT_EXP = "Expense/Income (Non-Instrument)_unified"
+
+TRANSACTIONS_TYPES = [
+    BUY_SELL,
+    DEPOSIT,
+    FX,
+    INSTRUMENT_EXP,
+    NON_INSTRUMENT_EXP,
+]
+TYPE_PREFIX = "local.poms.space00000:"
+INSTRUMENTS_TYPES = [
+    f"{TYPE_PREFIX}stock",
+    f"{TYPE_PREFIX}bond",
+]
+INSTRUMENTS = [
+    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL),
+    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL),
+    # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
+]
+TRANSACTIONS_CLASSES = [
+    TransactionClass.CASH_INFLOW,
+    TransactionClass.CASH_OUTFLOW,
+    TransactionClass.BUY,  # must include instrument
+    TransactionClass.SELL,  # must include instrument
+    TransactionClass.FX_TRADE,
+    TransactionClass.TRANSACTION_PL,
+    TransactionClass.INSTRUMENT_PL,  # must include instrument
+]
+BIG = "Big"
+SMALL = "Small"
+PORTFOLIOS = [BIG, SMALL]
+UNIFIED = "Unified"
+USD = "USD"
+
+
 def show_all_urls():
     """
     Print all urls in the project
@@ -273,7 +313,9 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return self.account
 
     @staticmethod
-    def get_instrument_type(instrument_type: str = "bond") -> InstrumentType:
+    def get_instrument_type(
+        instrument_type: str = f"{TYPE_PREFIX}bond",
+    ) -> InstrumentType:
         return InstrumentType.objects.get(user_code__contains=instrument_type)
 
     @staticmethod
@@ -409,45 +451,6 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.client.force_authenticate(self.user)
 
 
-MASTER_USER = "Experimental_Master"
-BUY_SELL = "Buy/Sell_unified"
-DEPOSIT = "Deposits/Withdraw_unified"
-FX = "FX/Forwards_unified"
-INSTRUMENT_EXP = "Expense/Income (Instrument)_unified"
-NON_INSTRUMENT_EXP = "Expense/Income (Non-Instrument)_unified"
-
-TRANSACTIONS_TYPES = [
-    BUY_SELL,
-    DEPOSIT,
-    FX,
-    INSTRUMENT_EXP,
-    NON_INSTRUMENT_EXP,
-]
-INSTRUMENTS_TYPES = [
-    "stock",
-    "bond",
-]
-INSTRUMENTS = [
-    ("Apple", "stock", InstrumentClass.GENERAL),
-    ("Tesla B.", "bond", InstrumentClass.GENERAL),
-    # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
-]
-TRANSACTIONS_CLASSES = [
-    TransactionClass.CASH_INFLOW,
-    TransactionClass.CASH_OUTFLOW,
-    TransactionClass.BUY,  # must include instrument
-    TransactionClass.SELL,  # must include instrument
-    TransactionClass.FX_TRADE,
-    TransactionClass.TRANSACTION_PL,
-    TransactionClass.INSTRUMENT_PL,  # must include instrument
-]
-BIG = "Big"
-SMALL = "Small"
-PORTFOLIOS = [BIG, SMALL]
-UNIFIED = "Unified"
-USD = "USD"
-
-
 class DbInitializer:
     def create_unified_group(self):
         return TransactionTypeGroup.objects.filter(
@@ -465,48 +468,51 @@ class DbInitializer:
     def get_or_create_default_instrument(self):
         instrument_type, _ = InstrumentType.objects.get_or_create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
-            instrument_class_id=InstrumentClass.GENERAL,
-            name="-",
+            user_code=f"{TYPE_PREFIX}_",
             defaults=dict(
-                user_code="-",
+                master_user=self.master_user,
+                owner=self.finmars_bot,
+                instrument_class_id=InstrumentClass.GENERAL,
+                name="-",
                 short_name="-",
                 public_name="-",
             ),
         )
         instrument, _ = Instrument.objects.get_or_create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
-            name="-",
-            instrument_type=instrument_type,
-            accrued_currency=self.usd,
-            pricing_currency=self.usd,
-            maturity_date=date.today(),
+            user_code="-",
             defaults=dict(
-                user_code="-",
+                owner=self.finmars_bot,
+                instrument_type=instrument_type,
+                name="-",
                 short_name="-",
                 public_name="-",
+                accrued_currency=self.usd,
+                pricing_currency=self.usd,
+                maturity_date=date.today(),
             ),
         )
         return instrument
 
     def get_or_create_default_ecosystem(self):
         ecosystem, _ = EcosystemDefault.objects.get_or_create(
-            master_user=self.master_user,
+            master_user=self.master_user or MasterUser.objects.first(),
             defaults={},
         )
         return ecosystem
 
     def create_instruments_types(self):
         return [
-            InstrumentType.objects.create(
+            InstrumentType.objects.get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
-                instrument_class_id=InstrumentClass.GENERAL,
-                name=type_,
                 user_code=type_,
-                short_name=type_,
-                public_name=type_,
+                defaults=dict(
+                    owner=self.finmars_bot,
+                    instrument_class_id=InstrumentClass.GENERAL,
+                    name=type_,
+                    short_name=type_,
+                    public_name=type_,
+                ),
             )
             for type_ in INSTRUMENTS_TYPES
         ]
@@ -516,21 +522,24 @@ class DbInitializer:
         for name, type_, class_id in INSTRUMENTS:
             instrument_type, _ = InstrumentType.objects.get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
-                instrument_class_id=class_id,
-                name=type_,
+                user_code=type_,
                 defaults=dict(
-                    user_code=type_,
+                    owner=self.finmars_bot,
+                    instrument_class_id=class_id,
+                    name=type_,
                     short_name=type_,
                     public_name=type_,
                 ),
             )
             instrument, _ = Instrument.objects.get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
-                instrument_type=instrument_type,
-                name=name,
+                user_code=name,
                 defaults=dict(
+                    owner=self.finmars_bot,
+                    instrument_type=instrument_type,
+                    name=name,
+                    short_name=name,
+                    public_name=name,
                     accrued_currency=self.usd,
                     pricing_currency=self.usd,
                     maturity_date=date.today(),
@@ -724,9 +733,9 @@ class DbInitializer:
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
+        self.default_instrument = self.get_or_create_default_instrument()
         self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
-        self.default_instrument = self.get_or_create_default_instrument()
         self.default_ecosystem = self.get_or_create_default_ecosystem()
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
