@@ -3,7 +3,6 @@ Django settings for the main Backend project.
 """
 
 
-
 import os
 from datetime import timedelta
 
@@ -208,7 +207,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # = Database =
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-ACTIVATE_REPLICA = ENV_BOOL("ACTIVATE_REPLICA", False)
+USE_DB_REPLICA = ENV_BOOL("ACTIVATE_REPLICA", False)
 DB_DEFAULT = "default"
 DB_REPLICA = "replica"
 DATABASES = {
@@ -229,13 +228,12 @@ DATABASES = {
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+        "TEST": {"MIRROR": DB_DEFAULT},
     },
 }
-if ACTIVATE_REPLICA:
-    DATABASE_ROUTERS = [
-        "poms_app.db_router.DbRouter",
-    ]
-
+DATABASE_ROUTERS = [
+    "poms_app.db_router.DbRouter",
+]
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -418,10 +416,10 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        }
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
@@ -439,28 +437,26 @@ LOGGING = {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True,
-        }
+        },
     },
 }
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == "local":
+    os.makedirs(f"{BASE_DIR}/log/", exist_ok=True)
 
-    os.makedirs(f'{BASE_DIR}/log/', exist_ok=True)
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': f'{BASE_DIR}/log/django.log',
-        'formatter': 'verbose',
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": f"{BASE_DIR}/log/django.log",
+        "formatter": "verbose",
     }
 
 else:
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': '/var/log/finmars/backend/django.log',
-        'formatter': 'verbose'
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": "/var/log/finmars/backend/django.log",
+        "formatter": "verbose",
     }
 
 # if SEND_LOGS_TO_FINMARS:
@@ -648,7 +644,7 @@ AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
 
-AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
