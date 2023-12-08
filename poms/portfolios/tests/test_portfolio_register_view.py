@@ -21,6 +21,8 @@ EXPECTED_RESPONSE_RECORD = {
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -66,6 +68,8 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
 
 
 class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -94,6 +98,8 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
 
 
 class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

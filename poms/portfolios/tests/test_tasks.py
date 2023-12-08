@@ -12,6 +12,8 @@ PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
 
 
 class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
