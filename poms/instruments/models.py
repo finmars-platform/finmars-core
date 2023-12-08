@@ -1826,7 +1826,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
                         bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
                     except Exception as e:
-                        _l.error("get_quantlib_bond Error")
+                        _l.error(f"get_quantlib_bond Error {e}")
 
                 else:
                     bond = ql.ZeroCouponBond(
