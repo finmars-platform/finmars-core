@@ -23,6 +23,8 @@ DATE_FORMAT = settings.API_DATE_FORMAT
 
 
 class TransactionTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
