@@ -42,8 +42,6 @@ from poms.transactions.models import (
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
-MAIN = settings.DB_DEFAULT
-
 
 def show_all_urls():
     """

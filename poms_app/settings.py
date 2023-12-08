@@ -6,12 +6,15 @@ Django settings for the main Backend project.
 import os
 from datetime import timedelta
 
-import sentry_sdk
+from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import gettext_lazy
+
+import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
+
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
@@ -138,8 +141,13 @@ INSTALLED_APPS = [
 ]
 
 if USE_DEBUGGER:
-    INSTALLED_APPS.append("debug_toolbar")
-    INSTALLED_APPS.append("pympler")
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar",
+            "pympler",
+        ]
+    )
+
 
 # CRAZY, this settings MUST be before MIDDLEWARE prop
 CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
@@ -208,8 +216,8 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 USE_DB_REPLICA = ENV_BOOL("ACTIVATE_REPLICA", False)
-DB_DEFAULT = "default"
-DB_REPLICA = "replica"
+DB_DEFAULT = DEFAULT_DB_ALIAS
+DB_REPLICA = "ro_replica"
 DATABASES = {
     DB_DEFAULT: {
         "ENGINE": "django.db.backends.postgresql",
