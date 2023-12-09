@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.reports.tests.test_data import REQUEST_PAYLOAD
+from poms.reports.tests.common_test_data import REQUEST_PAYLOAD
 
 DATE_FORMAT = settings.API_DATE_FORMAT
 API_URL = f"/{settings.BASE_API_URL}/api/v1/reports/backend-transaction-report"

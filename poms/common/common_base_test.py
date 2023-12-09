@@ -43,7 +43,9 @@ from poms.transactions.models import (
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
-MASTER_USER = "Experimental_Master"
+MASTER_USER = "finmars_master"
+FINMARS_BOT = "finmars_bot"
+FINMARS_USER = "finmars_user"
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"
 FX = "FX/Forwards_unified"
@@ -196,7 +198,6 @@ class TestMetaClass(type):
 class BaseTestCase(TestCase, metaclass=TestMetaClass):
     client: APIClient = None
     patchers: list = []
-    common_username = "test_bot"
 
     @classmethod
     def cases(cls, *cases):
@@ -264,7 +265,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_attribute_type(self) -> GenericAttributeType:
         self.attribute_type = GenericAttributeType.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             content_type=ContentType.objects.first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
@@ -291,7 +292,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_account_type(self) -> AccountType:
         self.account_type = AccountType.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
@@ -303,7 +304,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def create_account(self) -> Account:
         self.account = Account.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             type=self.create_account_type(),
             user_code=self.random_string(),
             short_name=self.random_string(3),
@@ -390,7 +391,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.instrument = Instrument.objects.create(
             # mandatory fields
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             instrument_type=self.get_instrument_type(instrument_type),
             pricing_currency=currency,
             accrued_currency=currency,
@@ -418,51 +419,45 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
         return self.instrument
 
-    def get_or_create_master_user(self) -> MasterUser:
-        master_user, _ = MasterUser.objects.get_or_create(
+    def init_test_case(self):
+        self.client = APIClient()
+        self.master_user, _ = MasterUser.objects.get_or_create(
             base_api_url=settings.BASE_API_URL,
             defaults=dict(
                 name=MASTER_USER,
                 journal_status="disabled",
             )
         )
-        member, _ = Member.objects.get_or_create(
-
-        )
-        EcosystemDefault.objects.get_or_create(
-            master_user=master_user,
-            defaults=None,
-        )
-        return master_user
-
-    def init_test_case(self):
-        self.client = APIClient()
-        self.master_user = self.get_or_create_master_user()
-        self.user, _ = User.objects.get_or_create(username=self.common_username)
+        self.user, _ = User.objects.get_or_create(username=FINMARS_USER)
         self.user.master_user = self.master_user
         self.user.save()
+        self.client.force_authenticate(self.user)
         self.member, _ = Member.objects.get_or_create(
             user=self.user,
             master_user=self.master_user,
-            username="finmars_bot",
+            username=FINMARS_BOT,
             defaults=dict(
                 is_admin=True,
                 is_owner=True,
             )
         )
+        self.ecosystem = EcosystemDefault.objects.get_or_create(
+            master_user=self.master_user,
+            defaults=None,
+        )
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
+            ecosystem=self.ecosystem,
         )
-        self.finmars_bot = self.db_data.finmars_bot
-        self.client.force_authenticate(self.user)
 
 
 class DbInitializer:
-    def __init__(self, master_user, member):
+    def __init__(self, master_user, member, ecosystem):
         self.master_user = master_user
         self.member = member
-        self.finmars_bot = Member.objects.get(username="finmars_bot")
+        self.finmars_bot = member
+        self.default_ecosystem = ecosystem
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
         self.strategies = self.get_or_create_strategies()
@@ -474,7 +469,6 @@ class DbInitializer:
         self.default_instrument = self.get_or_create_default_instrument()
         self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
-        self.default_ecosystem = self.get_or_create_default_ecosystem()
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
