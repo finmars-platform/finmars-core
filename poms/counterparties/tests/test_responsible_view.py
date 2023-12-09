@@ -149,7 +149,8 @@ class ResponsibleViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 2)  # default + new
+        self.assertEqual(len(response_json["results"]), 1)
+        self.assertEqual(response_json["results"][0]["user_code"], responsible.user_code)
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         responsible = self.create_responsible()

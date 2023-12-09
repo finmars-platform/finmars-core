@@ -462,20 +462,20 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 class DbInitializer:
     def __init__(self, master_user, member, ecosystem):
         self.master_user = master_user
-        self.member = member
-        self.finmars_bot = member
+        self.member = self.finmars_bot = member
         self.default_ecosystem = ecosystem
         self.create_currencies()
-        self.create_instruments_types()
-
         self.usd = Currency.objects.get(user_code=USD)
-        self.counter_party = self.create_counter_party()
-        self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-        self.transaction_types = self.get_or_create_transaction_types()
-        self.transaction_classes = self.get_or_create_classes()
+        self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
 
+        self.portfolios = self.create_accounts_and_portfolios()
+
+        self.counter_party = self.create_counter_party()
+        self.transaction_types = self.get_or_create_transaction_types()
+        self.transaction_classes = self.get_or_create_classes()
         self.instruments = self.get_or_create_instruments()
+
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
@@ -570,36 +570,31 @@ class DbInitializer:
             instruments[name] = instrument
         return instruments
 
-    def create_accounts_and_portfolios(self) -> tuple:
+    def create_accounts_and_portfolios(self) -> dict:
         portfolios = {}
-        accounts = {}
         for name in PORTFOLIOS:
-            account = Account.objects.filter(
-                name=name,
-                user_code=name,
-            ).first() or Account.objects.create(
+            account, _ = Account.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
-                name=name,
                 user_code=name,
+                defaults=dict(
+                    name=name,
+                )
             )
-            accounts[name] = account
-
-            portfolio = Portfolio.objects.filter(
-                name=name,
-                user_code=name,
-            ).first() or Portfolio.objects.create(
+            portfolio, _ = Portfolio.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
-                name=name,
                 user_code=name,
+                defaults=dict(
+                    name=name,
+                )
             )
             portfolio.accounts.clear()
             portfolio.accounts.add(account)
             portfolio.save()
             portfolios[name] = portfolio
 
-        return accounts, portfolios
+        return portfolios
 
     def create_unified_transaction_group(self):
         group, _ = TransactionTypeGroup.objects.get_or_create(
@@ -617,17 +612,16 @@ class DbInitializer:
         tr_group = self.create_unified_transaction_group()
         types = {}
         for name in TRANSACTIONS_TYPES:
-            type_obj = TransactionType.objects.filter(
-                user_code=name,
-            ).first() or TransactionType.objects.create(
+            types[name], _ = TransactionType.objects.get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
-                name=name,
                 user_code=name,
-                short_name=name,
-                group=tr_group,
+                defaults=dict(
+                    group=tr_group.user_code,
+                    name=name,
+                    short_name=name,
+                )
             )
-            types[name] = type_obj
 
         return types
 
@@ -636,15 +630,14 @@ class DbInitializer:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
-            record = TransactionClass.objects.filter(
-                id=class_id
-            ).first() or TransactionClass.objects.create(
+            classes[class_id], _ = TransactionClass.objects.get_or_create(
                 id=class_id,
-                user_code=name,
-                name=name,
-                short_name=name,
+                defaults=dict(
+                    user_code=name,
+                    name=name,
+                    short_name=name,
+                )
             )
-            classes[class_id] = record
         return classes
 
     def get_or_create_strategies(self):

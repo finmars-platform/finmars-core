@@ -217,7 +217,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Responsible(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     """
     One of Core Finmars entities, real world meaning is to indicate
     who is executing/initiator of Transaction
