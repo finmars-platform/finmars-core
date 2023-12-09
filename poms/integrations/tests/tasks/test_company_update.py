@@ -14,36 +14,33 @@ class DatabaseClientTest(BaseTestCase):
         proxy_request = ProxyRequest(proxy_user)
         self.context = {"request": proxy_request}
         self.user_code = self.random_string()
+        self.group = self.db_data.create_counterparty_group()
         self.company_data = {
             "user_code": self.user_code,
             "name": self.user_code,
             "short_name": self.user_code,
             "public_name": self.random_string(),
             "notes": self.random_string(),
+            "group": self.group.id,
         }
 
-    def check_serializer_get_counterparty(self, serializer):
-        self.assertTrue(serializer.is_valid())
+    def create_company(self):
+        serializer = CounterpartySerializer(
+            data=self.company_data, context=self.context
+        )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Counterparty.objects.get(
-            master_user=self.master_user,
-            user_code=self.user_code,
+            master_user=self.master_user, user_code=self.user_code
         )
 
     def test__create(self):
-        serializer = CounterpartySerializer(data=self.company_data)
-
-        company = self.check_serializer_get_counterparty(serializer)
+        company = self.create_company()
         self.assertIsNotNone(company)
         self.assertEqual(company.user_code, self.user_code)
 
     def test__update(self):
-        serializer = CounterpartySerializer(
-            data=self.company_data,
-            context=self.context,
-        )
-
-        instance = self.check_serializer_get_counterparty(serializer)
+        instance = self.create_company()
         new_serializer = CounterpartySerializer(
             data=self.company_data,
             context=self.context,
