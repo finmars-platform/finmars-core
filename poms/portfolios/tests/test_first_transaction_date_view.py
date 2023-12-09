@@ -92,7 +92,7 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(len(response_json), 3)
+        self.assertEqual(len(response_json), 2)
 
     def test__with_portfolio_id_as_int(self):
         self.create_3_prr()

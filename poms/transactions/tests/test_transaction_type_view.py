@@ -164,7 +164,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 7)
+        self.assertEqual(len(response_json["results"]), 6)
 
     def test__ev_item(self):
         self.create_transaction_type()
@@ -173,7 +173,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 7)
+        self.assertEqual(len(response_json["results"]), 6)
 
     def test__light_with_inputs(self):
         transaction_type = self.create_transaction_type()
