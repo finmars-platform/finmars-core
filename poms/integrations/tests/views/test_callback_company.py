@@ -19,8 +19,8 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.url = BACKEND_CALLBACK_URLS["company"]
 
     def test__company_created(self):
-        name = self.random_string(10)
-        short_name = self.random_string(10)
+        name = self.random_string()
+        short_name = self.random_string()
         post_data = {
             "request_id": self.task.id,
             "task_id": None,
