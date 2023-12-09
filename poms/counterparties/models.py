@@ -67,7 +67,7 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Counterparty(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     """
     One of Core Finmars entities, real world meaning is hold here

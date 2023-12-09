@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.counterparties.models import Counterparty, CounterpartyGroup
+from poms.counterparties.models import Counterparty
 from poms.counterparties.serializers import CounterpartySerializer
 
 
@@ -13,7 +13,6 @@ class DatabaseClientTest(BaseTestCase):
         proxy_user = ProxyUser(self.member, self.master_user)
         proxy_request = ProxyRequest(proxy_user)
         self.context = {"request": proxy_request}
-        self.group = CounterpartyGroup.objects.get(master_user=self.master_user)
         self.user_code = self.random_string()
         self.company_data = {
             "user_code": self.user_code,
@@ -21,7 +20,6 @@ class DatabaseClientTest(BaseTestCase):
             "short_name": self.user_code,
             "public_name": self.random_string(),
             "notes": self.random_string(),
-            "group": self.group.id,
         }
 
     def check_serializer_get_counterparty(self, serializer):
