@@ -11,6 +11,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
+        self.group = self.db_data.create_counterparty_group()
         self.task = self.create_task(
             name="Import Company From Finmars Database",
             func="import_company_finmars_database",
@@ -30,6 +31,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
                 "user_code": name,
                 "public_name": name,
                 "notes": name,
+                "group": self.group.id,
             },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
