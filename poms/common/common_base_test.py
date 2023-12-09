@@ -82,7 +82,13 @@ BIG = "Big"
 SMALL = "Small"
 PORTFOLIOS = [BIG, SMALL]
 UNIFIED = "Unified"
+
 USD = "USD"
+EUR = "EUR"
+CURRENCIES = [
+    (USD, 1),
+    (EUR, 1.1),
+]
 
 
 def show_all_urls():
@@ -262,57 +268,6 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def random_choice(cls, choices: list):
         return random.choice(choices)
 
-    def create_attribute_type(self) -> GenericAttributeType:
-        self.attribute_type = GenericAttributeType.objects.create(
-            master_user=self.master_user,
-            owner=self.member,
-            content_type=ContentType.objects.first(),
-            user_code=self.random_string(5),
-            short_name=self.random_string(2),
-            value_type=GenericAttributeType.NUMBER,
-            kind=GenericAttributeType.USER,
-            tooltip=self.random_string(),
-            favorites=self.random_string(),
-            prefix=self.random_string(3),
-            expr=self.random_string(),
-        )
-        return self.attribute_type
-
-    def create_attribute(self) -> GenericAttribute:
-        self.attribute = GenericAttribute.objects.create(
-            attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.last(),
-            object_id=self.random_int(),
-            value_string=self.random_string(),
-            value_float=self.random_int(),
-            value_date=date.today(),
-        )
-        return self.attribute
-
-    def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.create(
-            master_user=self.master_user,
-            owner=self.member,
-            user_code=self.random_string(),
-            short_name=self.random_string(3),
-            transaction_details_expr=self.random_string(),
-        )
-        self.account_type.attributes.set([self.create_attribute()])
-        self.account_type.save()
-        return self.account_type
-
-    def create_account(self) -> Account:
-        self.account = Account.objects.create(
-            master_user=self.master_user,
-            owner=self.member,
-            type=self.create_account_type(),
-            user_code=self.random_string(),
-            short_name=self.random_string(3),
-        )
-        self.account.attributes.set([self.create_attribute()])
-        self.account.save()
-        return self.account
-
     @staticmethod
     def get_instrument_type(
         instrument_type: str = INSTRUMENTS_TYPES[0],
@@ -419,6 +374,57 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
         return self.instrument
 
+    def create_attribute_type(self) -> GenericAttributeType:
+        self.attribute_type = GenericAttributeType.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            content_type=ContentType.objects.first(),
+            user_code=self.random_string(5),
+            short_name=self.random_string(2),
+            value_type=GenericAttributeType.NUMBER,
+            kind=GenericAttributeType.USER,
+            tooltip=self.random_string(),
+            favorites=self.random_string(),
+            prefix=self.random_string(3),
+            expr=self.random_string(),
+        )
+        return self.attribute_type
+
+    def create_attribute(self) -> GenericAttribute:
+        self.attribute = GenericAttribute.objects.create(
+            attribute_type=self.create_attribute_type(),
+            content_type=ContentType.objects.last(),
+            object_id=self.random_int(),
+            value_string=self.random_string(),
+            value_float=self.random_int(),
+            value_date=date.today(),
+        )
+        return self.attribute
+
+    def create_account_type(self) -> AccountType:
+        self.account_type = AccountType.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            short_name=self.random_string(3),
+            transaction_details_expr=self.random_string(),
+        )
+        self.account_type.attributes.set([self.create_attribute()])
+        self.account_type.save()
+        return self.account_type
+
+    def create_account(self) -> Account:
+        self.account = Account.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            type=self.create_account_type(),
+            user_code=self.random_string(),
+            short_name=self.random_string(3),
+        )
+        self.account.attributes.set([self.create_attribute()])
+        self.account.save()
+        return self.account
+
     def init_test_case(self):
         self.client = APIClient()
         self.master_user, _ = MasterUser.objects.get_or_create(
@@ -426,7 +432,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             defaults=dict(
                 name=MASTER_USER,
                 journal_status="disabled",
-            )
+            ),
         )
         self.user, _ = User.objects.get_or_create(username=FINMARS_USER)
         self.user.master_user = self.master_user
@@ -439,8 +445,9 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             defaults=dict(
                 is_admin=True,
                 is_owner=True,
-            )
+            ),
         )
+        self.finmars_bot = self.member
         self.ecosystem = EcosystemDefault.objects.get_or_create(
             master_user=self.master_user,
             defaults=None,
@@ -459,7 +466,7 @@ class DbInitializer:
         self.finmars_bot = member
         self.default_ecosystem = ecosystem
         self.group = self.create_unified_group()
-        self.usd = self.get_or_create_currency_usd()
+        self.usd = self.get_or_create_currencies()
         self.strategies = self.get_or_create_strategies()
         self.counter_party = self.create_counter_party()
         self.responsible = self.create_responsible()
@@ -474,17 +481,29 @@ class DbInitializer:
         )
 
     def create_unified_group(self):
-        return TransactionTypeGroup.objects.filter(
-            name=UNIFIED,
-            user_code=UNIFIED,
-            short_name=UNIFIED,
-        ).first() or TransactionTypeGroup.objects.create(
+        group, _ = TransactionTypeGroup.objects.get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name=UNIFIED,
-            user_code=UNIFIED,
-            short_name=UNIFIED,
+            defaults=dict(
+                user_code=UNIFIED,
+                short_name=UNIFIED,
+            )
         )
+        return group
+
+    def get_or_create_currencies(self) -> Currency:
+        for currency in CURRENCIES:
+            Currency.objects.get_or_create(
+                master_user=self.master_user,
+                owner=self.finmars_bot,
+                user_code=currency[0],
+                defaults=dict(
+                    name=currency[0],
+                    default_fx_rate=currency[1],
+                )
+            )
+        return Currency.objects.get(user_code=USD)
 
     def get_or_create_default_instrument(self):
         instrument_type, _ = InstrumentType.objects.get_or_create(
@@ -514,13 +533,6 @@ class DbInitializer:
             ),
         )
         return instrument
-
-    def get_or_create_default_ecosystem(self):
-        ecosystem, _ = EcosystemDefault.objects.get_or_create(
-            master_user=self.master_user or MasterUser.objects.first(),
-            defaults={},
-        )
-        return ecosystem
 
     def create_instruments_types(self):
         return [
@@ -604,17 +616,6 @@ class DbInitializer:
             portfolios[name] = portfolio
 
         return accounts, portfolios
-
-    def get_or_create_currency_usd(self):
-        return Currency.objects.filter(
-            user_code=USD,
-        ).first() or Currency.objects.create(
-            master_user=self.master_user,
-            owner=self.finmars_bot,
-            user_code=USD,
-            name=USD,
-            default_fx_rate=1,
-        )
 
     def get_or_create_transaction_types(self) -> dict:
         types = {}
