@@ -59,8 +59,8 @@ TRANSACTIONS_TYPES = [
 ]
 TYPE_PREFIX = "local.poms.space00000:"
 INSTRUMENTS_TYPES = [
-    f"{TYPE_PREFIX}stock",
     f"{TYPE_PREFIX}bond",
+    f"{TYPE_PREFIX}stock",
 ]
 INSTRUMENTS = [
     ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL),
@@ -314,7 +314,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     @staticmethod
     def get_instrument_type(
-        instrument_type: str = f"{TYPE_PREFIX}bond",
+        instrument_type: str = INSTRUMENTS_TYPES[0],
     ) -> InstrumentType:
         return InstrumentType.objects.get(user_code__contains=instrument_type)
 
@@ -383,7 +383,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     def create_instrument(
         self,
-        instrument_type: str = "bond",
+        instrument_type: str = INSTRUMENTS_TYPES[0],
         currency_code: str = "EUR",
     ) -> Instrument:
         currency = self.get_currency(user_code=currency_code)
@@ -412,22 +412,27 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         )
         self.instrument.attributes.set([self.create_attribute()])
         self.instrument.save()
-        if instrument_type == "bond":
+        if instrument_type == INSTRUMENTS_TYPES[0]:
             self.create_accrual(self.instrument)
             self.create_factor(self.instrument)
 
         return self.instrument
 
-    @staticmethod
-    def get_or_create_master_user() -> MasterUser:
-        master_user = MasterUser.objects.filter(
+    def get_or_create_master_user(self) -> MasterUser:
+        master_user, _ = MasterUser.objects.get_or_create(
             base_api_url=settings.BASE_API_URL,
-        ).first() or MasterUser.objects.create_master_user(
-            name=MASTER_USER,
-            journal_status="disabled",
-            base_api_url=settings.BASE_API_URL,
+            defaults=dict(
+                name=MASTER_USER,
+                journal_status="disabled",
+            )
         )
-        EcosystemDefault.objects.get_or_create(master_user=master_user)
+        member, _ = Member.objects.get_or_create(
+
+        )
+        EcosystemDefault.objects.get_or_create(
+            master_user=master_user,
+            defaults=None,
+        )
         return master_user
 
     def init_test_case(self):
@@ -436,22 +441,44 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.user, _ = User.objects.get_or_create(username=self.common_username)
         self.user.master_user = self.master_user
         self.user.save()
-        self.member = Member.objects.create(
+        self.member, _ = Member.objects.get_or_create(
             user=self.user,
             master_user=self.master_user,
-            is_admin=True,
-            is_owner=True,
+            username="finmars_bot",
+            defaults=dict(
+                is_admin=True,
+                is_owner=True,
+            )
         )
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
         )
         self.finmars_bot = self.db_data.finmars_bot
-
         self.client.force_authenticate(self.user)
 
 
 class DbInitializer:
+    def __init__(self, master_user, member):
+        self.master_user = master_user
+        self.member = member
+        self.finmars_bot = Member.objects.get(username="finmars_bot")
+        self.group = self.create_unified_group()
+        self.usd = self.get_or_create_currency_usd()
+        self.strategies = self.get_or_create_strategies()
+        self.counter_party = self.create_counter_party()
+        self.responsible = self.create_responsible()
+        self.accounts, self.portfolios = self.create_accounts_and_portfolios()
+        self.transaction_types = self.get_or_create_transaction_types()
+        self.transaction_classes = self.get_or_create_classes()
+        self.default_instrument = self.get_or_create_default_instrument()
+        self.instrument_type = self.create_instruments_types()
+        self.instruments = self.get_or_create_instruments()
+        self.default_ecosystem = self.get_or_create_default_ecosystem()
+        print(
+            f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
+        )
+
     def create_unified_group(self):
         return TransactionTypeGroup.objects.filter(
             name=UNIFIED,
@@ -719,24 +746,4 @@ class DbInitializer:
             portfolio=portfolio,
             linked_instrument=instrument,
             valuation_currency=self.usd,
-        )
-
-    def __init__(self, master_user, member):
-        self.master_user = master_user
-        self.member = member
-        self.finmars_bot = Member.objects.get(username="finmars_bot")
-        self.group = self.create_unified_group()
-        self.usd = self.get_or_create_currency_usd()
-        self.strategies = self.get_or_create_strategies()
-        self.counter_party = self.create_counter_party()
-        self.responsible = self.create_responsible()
-        self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-        self.transaction_types = self.get_or_create_transaction_types()
-        self.transaction_classes = self.get_or_create_classes()
-        self.default_instrument = self.get_or_create_default_instrument()
-        self.instrument_type = self.create_instruments_types()
-        self.instruments = self.get_or_create_instruments()
-        self.default_ecosystem = self.get_or_create_default_ecosystem()
-        print(
-            f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
