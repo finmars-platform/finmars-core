@@ -434,10 +434,13 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
                 journal_status="disabled",
             ),
         )
-        self.user, _ = User.objects.get_or_create(username=FINMARS_USER)
-        self.user.master_user = self.master_user
-        self.user.save()
+        self.user, _ = User.objects.get_or_create(
+            username=FINMARS_USER,
+            is_staff=True,
+            is_superuser=True,
+        )
         self.client.force_authenticate(self.user)
+
         self.member, _ = Member.objects.get_or_create(
             user=self.user,
             master_user=self.master_user,
@@ -450,7 +453,6 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.finmars_bot = self.member
         self.ecosystem = EcosystemDefault.objects.get_or_create(
             master_user=self.master_user,
-            defaults=None,
         )
         self.db_data = DbInitializer(
             master_user=self.master_user,
