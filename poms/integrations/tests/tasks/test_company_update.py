@@ -13,35 +13,29 @@ class DatabaseClientTest(BaseTestCase):
         proxy_user = ProxyUser(self.member, self.master_user)
         proxy_request = ProxyRequest(proxy_user)
         self.context = {"request": proxy_request}
-        self.group = CounterpartyGroup.objects.get(
-            master_user=self.master_user,
-            user_code="-",
-        )
+        self.group = CounterpartyGroup.objects.get(master_user=self.master_user)
         self.user_code = self.random_string()
         self.company_data = {
             "user_code": self.user_code,
-            "name": self.random_string(),
-            "short_name": self.random_string(),
+            "name": self.user_code,
+            "short_name": self.user_code,
             "public_name": self.random_string(),
             "notes": self.random_string(),
             "group": self.group.id,
         }
 
-    def test__create(self):
-        serializer = CounterpartySerializer(
-            data=self.company_data,
-            context=self.context,
-        )
-
+    def check_serializer_get_counterparty(self, serializer):
         self.assertTrue(serializer.is_valid())
-
         serializer.save()
-
-        company = Counterparty.objects.get(
+        return Counterparty.objects.get(
             master_user=self.master_user,
             user_code=self.user_code,
         )
 
+    def test__create(self):
+        serializer = CounterpartySerializer(data=self.company_data)
+
+        company = self.check_serializer_get_counterparty(serializer)
         self.assertIsNotNone(company)
         self.assertEqual(company.user_code, self.user_code)
 
@@ -51,18 +45,11 @@ class DatabaseClientTest(BaseTestCase):
             context=self.context,
         )
 
-        self.assertTrue(serializer.is_valid())
-
-        serializer.save()
-
-        instance = Counterparty.objects.get(
-            master_user=self.master_user,
-            user_code=self.user_code,
-        )
+        instance = self.check_serializer_get_counterparty(serializer)
         new_serializer = CounterpartySerializer(
             data=self.company_data,
             context=self.context,
             instance=instance,
         )
         self.assertTrue(new_serializer.is_valid())
-        updated_instance = new_serializer.save()
+        new_serializer.save()

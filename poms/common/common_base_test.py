@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 
 from poms.accounts.models import Account, AccountType
 from poms.common.constants import SystemValueType
-from poms.counterparties.models import Counterparty, Responsible
+from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -465,34 +465,22 @@ class DbInitializer:
         self.member = member
         self.finmars_bot = member
         self.default_ecosystem = ecosystem
-        self.group = self.create_unified_group()
-        self.usd = self.get_or_create_currencies()
-        self.strategies = self.get_or_create_strategies()
+        self.create_currencies()
+        self.create_instruments_types()
+
+        self.usd = Currency.objects.get(user_code=USD)
         self.counter_party = self.create_counter_party()
-        self.responsible = self.create_responsible()
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
         self.default_instrument = self.get_or_create_default_instrument()
-        self.instrument_type = self.create_instruments_types()
+
         self.instruments = self.get_or_create_instruments()
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
 
-    def create_unified_group(self):
-        group, _ = TransactionTypeGroup.objects.get_or_create(
-            master_user=self.master_user,
-            owner=self.finmars_bot,
-            name=UNIFIED,
-            defaults=dict(
-                user_code=UNIFIED,
-                short_name=UNIFIED,
-            )
-        )
-        return group
-
-    def get_or_create_currencies(self) -> Currency:
+    def create_currencies(self):
         for currency in CURRENCIES:
             Currency.objects.get_or_create(
                 master_user=self.master_user,
@@ -501,9 +489,8 @@ class DbInitializer:
                 defaults=dict(
                     name=currency[0],
                     default_fx_rate=currency[1],
-                )
+                ),
             )
-        return Currency.objects.get(user_code=USD)
 
     def get_or_create_default_instrument(self):
         instrument_type, _ = InstrumentType.objects.get_or_create(
@@ -535,7 +522,7 @@ class DbInitializer:
         return instrument
 
     def create_instruments_types(self):
-        return [
+        for type_ in INSTRUMENTS_TYPES:
             InstrumentType.objects.get_or_create(
                 master_user=self.master_user,
                 user_code=type_,
@@ -547,8 +534,6 @@ class DbInitializer:
                     public_name=type_,
                 ),
             )
-            for type_ in INSTRUMENTS_TYPES
-        ]
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
@@ -612,12 +597,24 @@ class DbInitializer:
             portfolio.accounts.clear()
             portfolio.accounts.add(account)
             portfolio.save()
-
             portfolios[name] = portfolio
 
         return accounts, portfolios
 
+    def create_unified_transaction_group(self):
+        group, _ = TransactionTypeGroup.objects.get_or_create(
+            master_user=self.master_user,
+            owner=self.finmars_bot,
+            name=UNIFIED,
+            defaults=dict(
+                user_code=UNIFIED,
+                short_name=UNIFIED,
+            ),
+        )
+        return group
+
     def get_or_create_transaction_types(self) -> dict:
+        tr_group = self.create_unified_transaction_group()
         types = {}
         for name in TRANSACTIONS_TYPES:
             type_obj = TransactionType.objects.filter(
@@ -628,7 +625,7 @@ class DbInitializer:
                 name=name,
                 user_code=name,
                 short_name=name,
-                group=self.group,
+                group=tr_group,
             )
             types[name] = type_obj
 
@@ -662,31 +659,52 @@ class DbInitializer:
             strategies[i + 1] = strategy
         return strategies
 
-    def create_counter_party(self):
-        name = "test_counter_party"
-        return Counterparty.objects.first() or Counterparty.objects.create(
+    def create_counterparty_group(self) -> CounterpartyGroup:
+        group_name = "test_counterparty_group"
+        cp_group, _ = CounterpartyGroup.objects.get_or_create(
             master_user=self.master_user,
+            user_code=group_name,
             owner=self.finmars_bot,
-            name=name,
-            user_code=name,
-            short_name=name,
+            defaults=dict(
+                name=group_name,
+                short_name=group_name,
+            )
         )
+        return cp_group
 
-    def create_responsible(self):
-        name = "test_responsible"
-        return Responsible.objects.first() or Responsible.objects.create(
+    def create_counter_party(self) -> Counterparty:
+        name = "test_company"
+        company, _ = Counterparty.objects.get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
-            name=name,
+            group=self.create_counterparty_group(),
             user_code=name,
-            short_name=name,
+            defaults=dict(
+                name=name,
+                short_name=name,
+            ),
         )
+        return company
+
+    def create_responsible(self) -> Responsible:
+        name = "test_responsible"
+        responsible, _ = Responsible.objects.get_or_create(
+            master_user=self.master_user,
+            owner=self.finmars_bot,
+            user_code=name,
+            defaults=dict(
+                name=name,
+                short_name=name,
+            ),
+        )
+        return responsible
 
     def cash_in_transaction(
         self, portfolio: Portfolio, amount: int = 1000, day=None
     ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
+        strategies = self.get_or_create_strategies()
         complex_transaction = ComplexTransaction.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -695,6 +713,7 @@ class DbInitializer:
             text=notes,
             user_text_10="1M",
         )
+        responsible = self.create_responsible()
         account = portfolio.accounts.first()
         transaction = Transaction.objects.create(
             master_user=self.master_user,
@@ -720,25 +739,25 @@ class DbInitializer:
             linked_instrument=self.default_instrument,
             allocation_balance=self.default_instrument,
             counterparty=self.counter_party,
-            responsible=self.responsible,
-            strategy1_cash=self.strategies[1],
-            strategy1_position=self.strategies[1],
-            strategy2_cash=self.strategies[2],
-            strategy2_position=self.strategies[2],
-            strategy3_cash=self.strategies[3],
-            strategy3_position=self.strategies[3],
+            responsible=responsible,
+            strategy1_cash=strategies[1],
+            strategy1_position=strategies[1],
+            strategy2_cash=strategies[2],
+            strategy2_position=strategies[2],
+            strategy3_cash=strategies[3],
+            strategy3_position=strategies[3],
             notes=notes,
         )
         return complex_transaction, transaction
 
-    def create_portfolio_register(self, portfolio: Portfolio, instrument: Instrument):
-        return PortfolioRegister.objects.filter(
-            portfolio=portfolio,
-            linked_instrument=instrument,
-        ).first() or PortfolioRegister.objects.create(
+    def create_portfolio_register(
+        self, portfolio: Portfolio, instrument: Instrument
+    ) -> PortfolioRegister:
+        pr, _ = PortfolioRegister.objects.get_or_create(
             master_user=self.master_user or MasterUser.objects.first(),
             owner=self.finmars_bot,
             portfolio=portfolio,
             linked_instrument=instrument,
-            valuation_currency=self.usd,
+            defaults=dict(valuation_currency=self.usd),
         )
+        return pr
