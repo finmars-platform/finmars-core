@@ -451,6 +451,36 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
                 ),
             )
 
+    def get_or_create_default_instrument(self):
+        instrument_type, _ = InstrumentType.objects.get_or_create(
+            master_user=self.master_user,
+            user_code=f"{TYPE_PREFIX}_",
+            defaults=dict(
+                master_user=self.master_user,
+                owner=self.finmars_bot,
+                instrument_class_id=InstrumentClass.GENERAL,
+                name="-",
+                short_name="-",
+                public_name="-",
+            ),
+        )
+
+        instrument, _ = Instrument.objects.get_or_create(
+            master_user=self.master_user,
+            user_code="-",
+            defaults=dict(
+                owner=self.finmars_bot,
+                instrument_type=instrument_type,
+                name="-",
+                short_name="-",
+                public_name="-",
+                accrued_currency=self.usd,
+                pricing_currency=self.usd,
+                maturity_date=date.today(),
+            ),
+        )
+        return instrument
+
     def init_test_case(self):
         self.client = APIClient()
         self.master_user, _ = MasterUser.objects.get_or_create(
@@ -479,10 +509,14 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.finmars_bot = self.member
 
         self.create_currencies()
+        self.usd = Currency.objects.get(user_code=USD)
+
         self.create_instruments_types()
+        self.default_instrument = self.get_or_create_default_instrument()
         self.ecosystem = EcosystemDefault.objects.get_or_create(
             master_user=self.master_user,
-            currency=Currency.objects.get(user_code=USD)
+            currency=self.usd,
+            instrument=self.default_instrument,
         )
 
         self.db_data = DbInitializer(
@@ -499,9 +533,7 @@ class DbInitializer:
         self.default_ecosystem = ecosystem
 
         self.usd = Currency.objects.get(user_code=USD)
-
-        self.default_instrument = self.get_or_create_default_instrument()
-
+        self.default_instrument = Instrument.objects.get(user_code="-")
         self.portfolios = self.create_accounts_and_portfolios()
 
         self.counter_party = self.create_counter_party()
@@ -512,35 +544,6 @@ class DbInitializer:
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
-
-    def get_or_create_default_instrument(self):
-        instrument_type, _ = InstrumentType.objects.get_or_create(
-            master_user=self.master_user,
-            user_code=f"{TYPE_PREFIX}_",
-            defaults=dict(
-                master_user=self.master_user,
-                owner=self.finmars_bot,
-                instrument_class_id=InstrumentClass.GENERAL,
-                name="-",
-                short_name="-",
-                public_name="-",
-            ),
-        )
-        instrument, _ = Instrument.objects.get_or_create(
-            master_user=self.master_user,
-            user_code="-",
-            defaults=dict(
-                owner=self.finmars_bot,
-                instrument_type=instrument_type,
-                name="-",
-                short_name="-",
-                public_name="-",
-                accrued_currency=self.usd,
-                pricing_currency=self.usd,
-                maturity_date=date.today(),
-            ),
-        )
-        return instrument
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
