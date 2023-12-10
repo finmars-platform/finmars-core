@@ -1748,7 +1748,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         full_items = helper_service.calculate_market_value_percent(
             full_items, total_market_value
         )
-        _l.info("PL BEFORE AFTER ALL FILTERS full_items len %s" % len(full_items))
+        _l.info(f"PL BEFORE AFTER ALL FILTERS full_items len {len(full_items)}")
 
         data["count"] = len(full_items)
 
