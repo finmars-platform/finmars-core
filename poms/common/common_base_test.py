@@ -572,6 +572,22 @@ class DbInitializer:
             instruments[name] = instrument
         return instruments
 
+    def create_portfolio_register(
+        self, portfolio: Portfolio, instrument: Instrument
+    ) -> PortfolioRegister:
+        user_code = BaseTestCase.random_string()
+        pr, _ = PortfolioRegister.objects.get_or_create(
+            master_user=self.master_user,
+            user_code=user_code,
+            portfolio=portfolio,
+            defaults=dict(
+                owner=self.finmars_bot,
+                linked_instrument=instrument,
+                valuation_currency=self.usd,
+            ),
+        )
+        return pr
+
     def create_accounts_and_portfolios(self) -> dict:
         portfolios = {}
         for name in PORTFOLIOS:
@@ -581,7 +597,7 @@ class DbInitializer:
                 user_code=name,
                 defaults=dict(
                     name=name,
-                )
+                ),
             )
             portfolio, _ = Portfolio.objects.get_or_create(
                 master_user=self.master_user,
@@ -589,12 +605,16 @@ class DbInitializer:
                 user_code=name,
                 defaults=dict(
                     name=name,
-                )
+                ),
             )
             portfolio.accounts.clear()
             portfolio.accounts.add(account)
             portfolio.save()
             portfolios[name] = portfolio
+            self.create_portfolio_register(
+                portfolio=portfolio,
+                instrument=self.default_instrument,
+            )
 
         return portfolios
 
@@ -622,7 +642,7 @@ class DbInitializer:
                     group=tr_group.user_code,
                     name=name,
                     short_name=name,
-                )
+                ),
             )
 
         return types
@@ -638,7 +658,7 @@ class DbInitializer:
                     user_code=name,
                     name=name,
                     short_name=name,
-                )
+                ),
             )
         return classes
 
@@ -663,7 +683,7 @@ class DbInitializer:
             defaults=dict(
                 name=group_name,
                 short_name=group_name,
-            )
+            ),
         )
         return cp_group
 
@@ -695,7 +715,7 @@ class DbInitializer:
         return responsible
 
     def cash_in_transaction(
-        self, portfolio: Portfolio, amount: int = 1000, day=None
+        self, portfolio: Portfolio, amount: int = 1000, day: date = None
     ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
@@ -744,15 +764,3 @@ class DbInitializer:
             notes=notes,
         )
         return complex_transaction, transaction
-
-    def create_portfolio_register(
-        self, portfolio: Portfolio, instrument: Instrument
-    ) -> PortfolioRegister:
-        pr, _ = PortfolioRegister.objects.get_or_create(
-            master_user=self.master_user or MasterUser.objects.first(),
-            owner=self.finmars_bot,
-            portfolio=portfolio,
-            linked_instrument=instrument,
-            defaults=dict(valuation_currency=self.usd),
-        )
-        return pr

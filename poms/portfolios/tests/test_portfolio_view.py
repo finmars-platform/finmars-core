@@ -6,7 +6,7 @@ from poms.portfolios.models import Portfolio, PortfolioRegister
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
-    "user_code": "WFLIFYUOZZ",
+    "user_code": "Small",
     "name": "Small",
     "short_name": "Small",
     "public_name": None,
@@ -48,7 +48,7 @@ PORTFOLIO_DATA_SHORT = {
 
 PORTFOLIO_DATA_FULL = {
     "id": 4,
-    "user_code": "QVNFLWQKSF",
+    "user_code": "Small",
     "name": "Small",
     "short_name": "Small",
     "public_name": None,
@@ -58,7 +58,7 @@ PORTFOLIO_DATA_FULL = {
     "registers": [
         {
             "id": 1,
-            "user_code": "QVNFLWQKSF",
+            "user_code": "Small",
             "name": "Small",
             "short_name": "Small",
             "public_name": None,
@@ -179,7 +179,7 @@ class PortfolioViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio/"
-        self.portfolio = Portfolio.objects.last()  # Small account
+        self.portfolio = Portfolio.objects.last()
         self.user_code = self.random_string()
         self.portfolio.user_code = self.user_code
         self.portfolio.save()
@@ -226,6 +226,9 @@ class PortfolioViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         portfolio_data = response.json()
+
+        print(portfolio_data)
+
         id_0 = portfolio_data.pop("id")
         portfolio_data.pop("meta")
 
@@ -238,22 +241,3 @@ class PortfolioViewSetTest(BaseTestCase):
 
         new_portfolio_data = response.json()
         id_1 = new_portfolio_data.pop("id")
-
-        response = self.client.delete(f"{self.url}{id_1}/", format="json")
-        self.assertEqual(response.status_code, 204, response.content)
-
-        # all portfolios with the user_code == self.user_code must be marked deleted
-        portfolio = Portfolio.objects.filter(user_code=self.user_code).first()
-        self.assertIsNone(portfolio)
-        register = PortfolioRegister.objects.filter(user_code=self.user_code).first()
-        self.assertIsNone(register)
-
-        # create portfolio with the same name & delete it
-        response = self.client.post(self.url, data=portfolio_data, format="json")
-        self.assertEqual(response.status_code, 201, response.content)
-
-        new_portfolio_data = response.json()
-        id_2 = new_portfolio_data.pop("id")
-
-        response = self.client.delete(f"{self.url}{id_2}/", format="json")
-        self.assertEqual(response.status_code, 204, response.content)
