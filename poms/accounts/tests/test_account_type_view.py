@@ -97,7 +97,7 @@ class AccountTypeViewSetTest(BaseTestCase):
         default_account = response_json["results"][0]
         self.assertEqual(default_account.keys(), EXPECTED_ACCOUNT_TYPE.keys())
 
-    def test__create_and_retrieve(self):
+    def test__retrieve(self):
         account_type = self.create_account_type()
         response = self.client.get(path=f"{self.url}{account_type.id}/")
         self.assertEqual(response.status_code, 200, response.content)
