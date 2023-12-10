@@ -1,14 +1,15 @@
 import random
 import string
-import dateutil.utils
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from rest_framework.test import APIClient
+
+import dateutil.utils
 
 from poms.accounts.models import Account, AccountType
 from poms.common.constants import SystemValueType
@@ -42,7 +43,7 @@ from poms.transactions.models import (
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
-
+TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
 MASTER_USER = "finmars_master"
 FINMARS_BOT = "finmars_bot"
 FINMARS_USER = "finmars_user"
@@ -201,9 +202,8 @@ class TestMetaClass(type):
         dct[test_method_name] = test_method
 
 
-class BaseTestCase(TestCase, metaclass=TestMetaClass):
+class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     client: APIClient = None
-    patchers: list = []
 
     @classmethod
     def cases(cls, *cases):
@@ -481,6 +481,17 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         )
         return instrument
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ecosystem = None
+        self.default_instrument = None
+        self.usd = None
+        self.finmars_bot = None
+        self.member = None
+        self.user = None
+        self.master_user = None
+        self.db_data = None
+
     def init_test_case(self):
         self.client = APIClient()
         self.master_user, _ = MasterUser.objects.get_or_create(
@@ -509,6 +520,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.finmars_bot = self.member
 
         self.create_currencies()
+        print([c.user_code for c in Currency.objects.all()])
         self.usd = Currency.objects.get(user_code=USD)
 
         self.create_instruments_types()
@@ -518,7 +530,6 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             currency=self.usd,
             instrument=self.default_instrument,
         )
-
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
