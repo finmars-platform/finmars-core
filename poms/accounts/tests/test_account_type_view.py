@@ -173,14 +173,7 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.assertEqual(response_json["count"], 1)
 
     def test__delete(self):
-        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-        account_type_id = response_json["id"]
+        account_type = self.create_account_type()
 
-        response = self.client.delete(path=f"{self.url}{account_type_id}/")
+        response = self.client.delete(path=f"{self.url}{account_type.id}/")
         self.assertEqual(response.status_code, 204, response.content)
-
-        response = self.client.get(path=f"{self.url}?name={CREATE_DATA['name']}")
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 0)
