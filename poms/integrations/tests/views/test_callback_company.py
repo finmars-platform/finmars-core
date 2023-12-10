@@ -31,7 +31,6 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
                 "user_code": name,
                 "public_name": name,
                 "notes": name,
-                "group": self.group.id,
             },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
