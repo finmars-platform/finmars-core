@@ -7,7 +7,7 @@ DATE_FORMAT = settings.API_DATE_FORMAT
 API_URL = f"/{settings.BASE_API_URL}/api/v1/reports/backend-transaction-report"
 
 
-class ReportsViewSetTest(BaseTestCase):
+class ReportsViewItemsSetTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
