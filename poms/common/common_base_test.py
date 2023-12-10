@@ -343,7 +343,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         currency_code: str = "EUR",
     ) -> Instrument:
         currency = self.get_currency(user_code=currency_code)
-        self.instrument = Instrument.objects.create(
+        instrument = Instrument.objects.create(
             # mandatory fields
             master_user=self.master_user,
             owner=self.member,
@@ -366,16 +366,16 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             co_directional_exposure_currency=currency,
             country=self.get_country(),
         )
-        self.instrument.attributes.set([self.create_attribute()])
-        self.instrument.save()
+        instrument.attributes.set([self.create_attribute()])
+        instrument.save()
         if instrument_type == INSTRUMENTS_TYPES[0]:
-            self.create_accrual(self.instrument)
-            self.create_factor(self.instrument)
+            self.create_accrual(instrument)
+            self.create_factor(instrument)
 
-        return self.instrument
+        return instrument
 
     def create_attribute_type(self) -> GenericAttributeType:
-        self.attribute_type = GenericAttributeType.objects.create(
+        return GenericAttributeType.objects.create(
             master_user=self.master_user,
             owner=self.member,
             content_type=ContentType.objects.first(),
@@ -388,10 +388,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             prefix=self.random_string(3),
             expr=self.random_string(),
         )
-        return self.attribute_type
 
     def create_attribute(self) -> GenericAttribute:
-        self.attribute = GenericAttribute.objects.create(
+        return GenericAttribute.objects.create(
             attribute_type=self.create_attribute_type(),
             content_type=ContentType.objects.last(),
             object_id=self.random_int(),
@@ -399,31 +398,30 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             value_float=self.random_int(),
             value_date=date.today(),
         )
-        return self.attribute
 
     def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.create(
+        account_type = AccountType.objects.create(
             master_user=self.master_user,
             owner=self.member,
             user_code=self.random_string(),
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
         )
-        self.account_type.attributes.set([self.create_attribute()])
-        self.account_type.save()
-        return self.account_type
+        account_type.attributes.set([self.create_attribute()])
+        account_type.save()
+        return account_type
 
     def create_account(self) -> Account:
-        self.account = Account.objects.create(
+        account = Account.objects.create(
             master_user=self.master_user,
             owner=self.member,
             type=self.create_account_type(),
             user_code=self.random_string(),
             short_name=self.random_string(3),
         )
-        self.account.attributes.set([self.create_attribute()])
-        self.account.save()
-        return self.account
+        account.attributes.set([self.create_attribute()])
+        account.save()
+        return account
 
     def create_instruments_types(self):
         for type_ in INSTRUMENTS_TYPES:
@@ -520,7 +518,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.finmars_bot = self.member
 
         self.create_currencies()
-        print([c.user_code for c in Currency.objects.all()])
+        # print([c.user_code for c in Currency.objects.all()])
         self.usd = Currency.objects.get(user_code=USD)
 
         self.create_instruments_types()
