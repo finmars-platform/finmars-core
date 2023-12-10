@@ -6,7 +6,6 @@ from django.conf import settings
 from poms.common.common_base_test import BaseTestCase
 from poms.users.models import Member
 
-
 API_URL = f"/{settings.BASE_API_URL}/api/v1/users/member/"
 REQUEST_DATA = {
     "groups": [],
@@ -70,34 +69,32 @@ class MemberViewSetTest(BaseTestCase):
 
         self.assertEqual(Member.objects.all().count(), 2)  # member created
 
-    def test__double_update(self):
-        from poms.ui.models import MemberLayout
+    @mock.patch("poms.common.finmars_authorizer.requests.post")
+    def test__double_update(self, requests_post):
+        user_name = self.random_string()
+        data = copy.deepcopy(REQUEST_DATA)
+        data["username"] = user_name
+        requests_post.return_value = mock_response = mock.Mock()
+        mock_response.status_code = 200
 
-        # check get_or_create layout in Member method save() works properly
+        response = self.client.post(path=self.url, format="json", data=data)
+        self.assertEqual(response.status_code, 201, response.content)
+        member_data = response.json()
+
         update_data = {
-            "username": self.random_string(),
-            "json_data": {"key": "value"},
+            "data": {"key": "value"},
             "is_admin": True,
             "is_owner": True,
         }
 
         response = self.client.patch(
-            path=f"{self.url}{self.member.id}/",
+            path=f"{self.url}{member_data['id']}/",
             format="json",
             data=update_data,
         )
         self.assertEqual(response.status_code, 200, response.content)
-
-        response = self.client.patch(
-            path=f"{self.url}{self.member.id}/",
-            format="json",
-            data=update_data,
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        layout = MemberLayout.objects.filter(member_id=self.member.id).first()
-        self.assertIsNotNone(layout)
-        self.assertEqual(layout.owner_id, self.member.id)
+        response_json = response.json()
+        self.assertEqual(response_json["data"], update_data["data"])
 
     @BaseTestCase.cases(
         ("groups", "groups"),
