@@ -9,6 +9,8 @@ from poms.configuration.tests.common_test_data import *
 
 
 class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
