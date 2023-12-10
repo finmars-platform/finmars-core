@@ -66,6 +66,7 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         portfolio_register = self.db_data.create_portfolio_register(
             self.portfolio,
             instrument,
+            user_code=self.random_string(),
         )
         prr_data = {
             "master_user": self.master_user,

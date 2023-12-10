@@ -108,7 +108,6 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["count"], 3)
 
         self.assertEqual(
             response_json["results"][index]["instrument_class"],

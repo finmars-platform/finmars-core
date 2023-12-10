@@ -425,6 +425,32 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.account.save()
         return self.account
 
+    def create_instruments_types(self):
+        for type_ in INSTRUMENTS_TYPES:
+            InstrumentType.objects.get_or_create(
+                master_user=self.master_user,
+                user_code=type_,
+                defaults=dict(
+                    owner=self.finmars_bot,
+                    instrument_class_id=InstrumentClass.GENERAL,
+                    name=type_,
+                    short_name=type_,
+                    public_name=type_,
+                ),
+            )
+
+    def create_currencies(self):
+        for currency in CURRENCIES:
+            Currency.objects.get_or_create(
+                master_user=self.master_user,
+                owner=self.finmars_bot,
+                user_code=currency[0],
+                defaults=dict(
+                    name=currency[0],
+                    default_fx_rate=currency[1],
+                ),
+            )
+
     def init_test_case(self):
         self.client = APIClient()
         self.master_user, _ = MasterUser.objects.get_or_create(
@@ -451,9 +477,13 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             ),
         )
         self.finmars_bot = self.member
+
+        self.create_instruments_types()
         self.ecosystem = EcosystemDefault.objects.get_or_create(
             master_user=self.master_user,
         )
+        self.create_currencies()
+
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
@@ -466,9 +496,9 @@ class DbInitializer:
         self.master_user = master_user
         self.member = self.finmars_bot = member
         self.default_ecosystem = ecosystem
-        self.create_currencies()
+
         self.usd = Currency.objects.get(user_code=USD)
-        self.create_instruments_types()
+
         self.default_instrument = self.get_or_create_default_instrument()
 
         self.portfolios = self.create_accounts_and_portfolios()
@@ -481,18 +511,6 @@ class DbInitializer:
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
         )
-
-    def create_currencies(self):
-        for currency in CURRENCIES:
-            Currency.objects.get_or_create(
-                master_user=self.master_user,
-                owner=self.finmars_bot,
-                user_code=currency[0],
-                defaults=dict(
-                    name=currency[0],
-                    default_fx_rate=currency[1],
-                ),
-            )
 
     def get_or_create_default_instrument(self):
         instrument_type, _ = InstrumentType.objects.get_or_create(
@@ -522,20 +540,6 @@ class DbInitializer:
             ),
         )
         return instrument
-
-    def create_instruments_types(self):
-        for type_ in INSTRUMENTS_TYPES:
-            InstrumentType.objects.get_or_create(
-                master_user=self.master_user,
-                user_code=type_,
-                defaults=dict(
-                    owner=self.finmars_bot,
-                    instrument_class_id=InstrumentClass.GENERAL,
-                    name=type_,
-                    short_name=type_,
-                    public_name=type_,
-                ),
-            )
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
@@ -573,9 +577,8 @@ class DbInitializer:
         return instruments
 
     def create_portfolio_register(
-        self, portfolio: Portfolio, instrument: Instrument
+        self, portfolio: Portfolio, instrument: Instrument, user_code: str
     ) -> PortfolioRegister:
-        user_code = BaseTestCase.random_string()
         pr, _ = PortfolioRegister.objects.get_or_create(
             master_user=self.master_user,
             user_code=user_code,
@@ -584,6 +587,8 @@ class DbInitializer:
                 owner=self.finmars_bot,
                 linked_instrument=instrument,
                 valuation_currency=self.usd,
+                name=user_code,
+                short_name=user_code,
             ),
         )
         return pr
@@ -597,6 +602,7 @@ class DbInitializer:
                 user_code=name,
                 defaults=dict(
                     name=name,
+                    short_name=name,
                 ),
             )
             portfolio, _ = Portfolio.objects.get_or_create(
@@ -605,6 +611,7 @@ class DbInitializer:
                 user_code=name,
                 defaults=dict(
                     name=name,
+                    short_name=name,
                 ),
             )
             portfolio.accounts.clear()
@@ -614,6 +621,7 @@ class DbInitializer:
             self.create_portfolio_register(
                 portfolio=portfolio,
                 instrument=self.default_instrument,
+                user_code=name,
             )
 
         return portfolios
