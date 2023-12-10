@@ -478,11 +478,12 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         )
         self.finmars_bot = self.member
 
+        self.create_currencies()
         self.create_instruments_types()
         self.ecosystem = EcosystemDefault.objects.get_or_create(
             master_user=self.master_user,
+            currency=Currency.objects.get(user_code=USD)
         )
-        self.create_currencies()
 
         self.db_data = DbInitializer(
             master_user=self.master_user,
