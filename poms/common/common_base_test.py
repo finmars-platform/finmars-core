@@ -272,52 +272,62 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def get_instrument_type(
         instrument_type: str = INSTRUMENTS_TYPES[0],
     ) -> InstrumentType:
-        return InstrumentType.objects.get(user_code__contains=instrument_type)
+        return InstrumentType.objects.using(settings.DB_DEFAULT).get(
+            user_code__contains=instrument_type
+        )
 
     @staticmethod
     def get_currency(user_code: str = "EUR") -> Currency:
-        return Currency.objects.get(user_code=user_code)
+        return Currency.objects.using(settings.DB_DEFAULT).get(user_code=user_code)
 
     @staticmethod
     def get_pricing_condition(model_id=PricingCondition.NO_VALUATION):
-        return PricingCondition.objects.get(id=model_id)
+        return PricingCondition.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_exposure_calculation(model_id=ExposureCalculationModel.MARKET_VALUE):
-        return ExposureCalculationModel.objects.get(id=model_id)
+        return ExposureCalculationModel.objects.using(settings.DB_DEFAULT).get(
+            id=model_id
+        )
 
     @staticmethod
     def get_payment_size(model_id=PaymentSizeDetail.PERCENT):
-        return PaymentSizeDetail.objects.get(id=model_id)
+        return PaymentSizeDetail.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_daily_pricing(model_id=DailyPricingModel.DEFAULT):
-        return DailyPricingModel.objects.get(id=model_id)
+        return DailyPricingModel.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_long_under_exp(model_id=LongUnderlyingExposure.ZERO):
-        return LongUnderlyingExposure.objects.get(id=model_id)
+        return LongUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(
+            id=model_id
+        )
 
     @staticmethod
     def get_short_under_exp(model_id=ShortUnderlyingExposure.ZERO):
-        return ShortUnderlyingExposure.objects.get(id=model_id)
+        return ShortUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(
+            id=model_id
+        )
 
     @staticmethod
     def get_country(name="Italy"):
-        return Country.objects.get(name=name)
+        return Country.objects.using(settings.DB_DEFAULT).get(name=name)
 
     @staticmethod
     def get_accrual_calculation_model(
         model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     ):
-        return AccrualCalculationModel.objects.get(id=model_id)
+        return AccrualCalculationModel.objects.using(settings.DB_DEFAULT).get(
+            id=model_id
+        )
 
     @staticmethod
     def get_periodicity(model_id=Periodicity.N_DAY):
-        return Periodicity.objects.get(id=model_id)
+        return Periodicity.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
-        return AccrualCalculationSchedule.objects.create(
+        return AccrualCalculationSchedule.objects.using(settings.DB_DEFAULT).create(
             instrument=instrument,
             accrual_start_date=date.today(),
             accrual_start_date_value_type=SystemValueType.DATE,
@@ -331,7 +341,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
 
     def create_factor(self, instrument: Instrument) -> InstrumentFactorSchedule:
-        return InstrumentFactorSchedule.objects.create(
+        return InstrumentFactorSchedule.objects.using(settings.DB_DEFAULT).create(
             instrument=instrument,
             effective_date=self.random_future_date(),
             factor_value=self.random_percent(),
@@ -343,7 +353,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         currency_code: str = "EUR",
     ) -> Instrument:
         currency = self.get_currency(user_code=currency_code)
-        instrument = Instrument.objects.create(
+        instrument = Instrument.objects.using(settings.DB_DEFAULT).create(
             # mandatory fields
             master_user=self.master_user,
             owner=self.member,
@@ -375,10 +385,10 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return instrument
 
     def create_attribute_type(self) -> GenericAttributeType:
-        return GenericAttributeType.objects.create(
+        return GenericAttributeType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            content_type=ContentType.objects.first(),
+            content_type=ContentType.objects.using(settings.DB_DEFAULT).first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             value_type=GenericAttributeType.NUMBER,
@@ -390,9 +400,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
 
     def create_attribute(self) -> GenericAttribute:
-        return GenericAttribute.objects.create(
+        return GenericAttribute.objects.using(settings.DB_DEFAULT).create(
             attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.last(),
+            content_type=ContentType.objects.using(settings.DB_DEFAULT).last(),
             object_id=self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
@@ -400,7 +410,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
 
     def create_account_type(self) -> AccountType:
-        account_type = AccountType.objects.create(
+        account_type = AccountType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             user_code=self.random_string(),
@@ -412,7 +422,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return account_type
 
     def create_account(self) -> Account:
-        account = Account.objects.create(
+        account = Account.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             type=self.create_account_type(),
@@ -425,7 +435,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def create_instruments_types(self):
         for type_ in INSTRUMENTS_TYPES:
-            InstrumentType.objects.get_or_create(
+            InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=type_,
                 defaults=dict(
@@ -439,7 +449,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def create_currencies(self):
         for currency in CURRENCIES:
-            Currency.objects.get_or_create(
+            Currency.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 user_code=currency[0],
@@ -450,7 +460,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             )
 
     def get_or_create_default_instrument(self):
-        instrument_type, _ = InstrumentType.objects.get_or_create(
+        instrument_type, _ = InstrumentType.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             master_user=self.master_user,
             user_code=f"{TYPE_PREFIX}_",
             defaults=dict(
@@ -463,7 +475,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             ),
         )
 
-        instrument, _ = Instrument.objects.get_or_create(
+        instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code="-",
             defaults=dict(
@@ -492,21 +504,23 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def init_test_case(self):
         self.client = APIClient()
-        self.master_user, _ = MasterUser.objects.get_or_create(
+        self.master_user, _ = MasterUser.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             base_api_url=settings.BASE_API_URL,
             defaults=dict(
                 name=MASTER_USER,
                 journal_status="disabled",
             ),
         )
-        self.user, _ = User.objects.get_or_create(
+        self.user, _ = User.objects.using(settings.DB_DEFAULT).get_or_create(
             username=FINMARS_USER,
             is_staff=True,
             is_superuser=True,
         )
         self.client.force_authenticate(self.user)
 
-        self.member, _ = Member.objects.get_or_create(
+        self.member, _ = Member.objects.using(settings.DB_DEFAULT).get_or_create(
             user=self.user,
             master_user=self.master_user,
             username=FINMARS_BOT,
@@ -518,12 +532,13 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.finmars_bot = self.member
 
         self.create_currencies()
-        # print([c.user_code for c in Currency.objects.all()])
-        self.usd = Currency.objects.get(user_code=USD)
+        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
 
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
-        self.ecosystem = EcosystemDefault.objects.get_or_create(
+        self.ecosystem = EcosystemDefault.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             master_user=self.master_user,
             currency=self.usd,
             instrument=self.default_instrument,
@@ -541,8 +556,10 @@ class DbInitializer:
         self.member = self.finmars_bot = member
         self.default_ecosystem = ecosystem
 
-        self.usd = Currency.objects.get(user_code=USD)
-        self.default_instrument = Instrument.objects.get(user_code="-")
+        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
+        self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(
+            user_code="-"
+        )
         self.portfolios = self.create_accounts_and_portfolios()
 
         self.counter_party = self.create_counter_party()
@@ -557,7 +574,9 @@ class DbInitializer:
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
-            instrument_type, _ = InstrumentType.objects.get_or_create(
+            instrument_type, _ = InstrumentType.objects.using(
+                settings.DB_DEFAULT
+            ).get_or_create(
                 master_user=self.master_user,
                 user_code=type_,
                 defaults=dict(
@@ -568,7 +587,7 @@ class DbInitializer:
                     public_name=type_,
                 ),
             )
-            instrument, _ = Instrument.objects.get_or_create(
+            instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=name,
                 defaults=dict(
@@ -592,7 +611,7 @@ class DbInitializer:
     def create_portfolio_register(
         self, portfolio: Portfolio, instrument: Instrument, user_code: str
     ) -> PortfolioRegister:
-        pr, _ = PortfolioRegister.objects.get_or_create(
+        pr, _ = PortfolioRegister.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code=user_code,
             portfolio=portfolio,
@@ -609,7 +628,7 @@ class DbInitializer:
     def create_accounts_and_portfolios(self) -> dict:
         portfolios = {}
         for name in PORTFOLIOS:
-            account, _ = Account.objects.get_or_create(
+            account, _ = Account.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 user_code=name,
@@ -618,7 +637,7 @@ class DbInitializer:
                     short_name=name,
                 ),
             )
-            portfolio, _ = Portfolio.objects.get_or_create(
+            portfolio, _ = Portfolio.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 user_code=name,
@@ -640,7 +659,9 @@ class DbInitializer:
         return portfolios
 
     def create_unified_transaction_group(self):
-        group, _ = TransactionTypeGroup.objects.get_or_create(
+        group, _ = TransactionTypeGroup.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             name=UNIFIED,
@@ -655,7 +676,9 @@ class DbInitializer:
         tr_group = self.create_unified_transaction_group()
         types = {}
         for name in TRANSACTIONS_TYPES:
-            types[name], _ = TransactionType.objects.get_or_create(
+            types[name], _ = TransactionType.objects.using(
+                settings.DB_DEFAULT
+            ).get_or_create(
                 master_user=self.master_user,
                 owner=self.finmars_bot,
                 user_code=name,
@@ -673,7 +696,9 @@ class DbInitializer:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
-            classes[class_id], _ = TransactionClass.objects.get_or_create(
+            classes[class_id], _ = TransactionClass.objects.using(
+                settings.DB_DEFAULT
+            ).get_or_create(
                 id=class_id,
                 defaults=dict(
                     user_code=name,
@@ -686,8 +711,8 @@ class DbInitializer:
     def get_or_create_strategies(self):
         strategies = {}
         for i, model in enumerate([Strategy1, Strategy2, Strategy3]):
-            if not (strategy := model.objects.first()):
-                strategy = model.objects.create(
+            if not (strategy := model.objects.using(settings.DB_DEFAULT).first()):
+                strategy = model.objects.using(settings.DB_DEFAULT).create(
                     master_user=self.master_user,
                     owner=self.finmars_bot,
                     name=f"strategy_{i+1}",
@@ -697,7 +722,9 @@ class DbInitializer:
 
     def create_counterparty_group(self) -> CounterpartyGroup:
         group_name = "test_counterparty_group"
-        cp_group, _ = CounterpartyGroup.objects.get_or_create(
+        cp_group, _ = CounterpartyGroup.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             master_user=self.master_user,
             user_code=group_name,
             owner=self.finmars_bot,
@@ -710,7 +737,7 @@ class DbInitializer:
 
     def create_counter_party(self) -> Counterparty:
         name = "test_company"
-        company, _ = Counterparty.objects.get_or_create(
+        company, _ = Counterparty.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             group=self.create_counterparty_group(),
@@ -724,7 +751,7 @@ class DbInitializer:
 
     def create_responsible(self) -> Responsible:
         name = "test_responsible"
-        responsible, _ = Responsible.objects.get_or_create(
+        responsible, _ = Responsible.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             owner=self.finmars_bot,
             user_code=name,
@@ -741,7 +768,9 @@ class DbInitializer:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
         strategies = self.get_or_create_strategies()
-        complex_transaction = ComplexTransaction.objects.create(
+        complex_transaction = ComplexTransaction.objects.using(
+            settings.DB_DEFAULT
+        ).create(
             master_user=self.master_user,
             owner=self.member,
             date=op_date,
@@ -751,7 +780,7 @@ class DbInitializer:
         )
         responsible = self.create_responsible()
         account = portfolio.accounts.first()
-        transaction = Transaction.objects.create(
+        transaction = Transaction.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             account_position=account,
