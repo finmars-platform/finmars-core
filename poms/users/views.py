@@ -925,27 +925,28 @@ class MemberViewSet(AbstractModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
-        if self.get_object().username == "finmars_bot":
+        member = self.get_object()
+        if member.username == "finmars_bot":
             raise PermissionDenied()
 
-        if request.user.member.id != self.get_object().id:
+        if request.user.member.id != member.id:
             if not request.user.member.is_admin:
                 raise PermissionDenied()
 
             form_data_is_owner = request.data.get("is_owner", False)
             form_data_is_admin = request.data.get("is_admin", False)
 
-            if self.get_object().is_owner and form_data_is_owner is False:
+            if member.is_owner and form_data_is_owner is False:
                 raise ValidationError("Could not remove owner rights from owner")
 
             if (
-                self.get_object().is_owner
-                and self.get_object().is_admin
+                member.is_owner
+                and member.is_admin
                 and form_data_is_admin is False
             ):
                 raise ValidationError("Could not remove admin rights from owner")
 
-        if request.user.member.id == self.get_object().id:
+        if request.user.member.id == member.id:
             self.validate_member_settings(request)
 
         return super().update(request, *args, **kwargs)
