@@ -95,7 +95,6 @@ class MasterUserCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         name = validated_data.get("name")
-        description = validated_data.get("description")
 
         if MasterUser.objects.filter(name=name).exists():
             error = {"name": [gettext_lazy("Name already in use.")]}
