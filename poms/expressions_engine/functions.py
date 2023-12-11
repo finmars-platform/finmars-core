@@ -4364,7 +4364,7 @@ def _print_message(evaluator, text):
 
 _print_message.evaluator = True
 
-def _if_valid_isin(isin: str) -> bool:
+def _if_valid_isin(evaluator, isin: str) -> bool:
     # see https://en.wikipedia.org/wiki/International_Securities_Identification_Number
     # Uppercase & remove '-'
     isin = isin.upper().replace('-','')
@@ -4412,6 +4412,8 @@ def _if_valid_isin(isin: str) -> bool:
         return False
 
     return True
+
+_if_valid_isin.evaluator = True
 
 def _print(message, *args, **kwargs):
     _l.debug(message, *args, **kwargs)
