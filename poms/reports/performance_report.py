@@ -998,15 +998,34 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
-                                                                           transaction_date__gte=date_from,
-                                                                           transaction_date__lte=date_to,
-                                                                           transaction_class__in=[
-                                                                               TransactionClass.CASH_INFLOW,
-                                                                               TransactionClass.CASH_OUTFLOW,
-                                                                               TransactionClass.INJECTION,
-                                                                               TransactionClass.DISTRIBUTION]).order_by(
-                    'transaction_date')
+                if date_from == portfolio.first_transaction_date():
+
+
+                    portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                               transaction_date__gte=date_from,
+                                                                               transaction_date__lte=date_to,
+                                                                               transaction_class__in=[
+                                                                                   TransactionClass.CASH_INFLOW,
+                                                                                   TransactionClass.CASH_OUTFLOW,
+                                                                                   TransactionClass.INJECTION,
+                                                                                   TransactionClass.DISTRIBUTION]).order_by(
+                        'transaction_date')
+
+                else:
+
+                    # transaction_date__gt !!!
+                    # for case when it is not first transaction date, we need only greater_then
+
+                    portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                               transaction_date__gt=date_from,
+                                                                               transaction_date__lte=date_to,
+                                                                               transaction_class__in=[
+                                                                                   TransactionClass.CASH_INFLOW,
+                                                                                   TransactionClass.CASH_OUTFLOW,
+                                                                                   TransactionClass.INJECTION,
+                                                                                   TransactionClass.DISTRIBUTION]).order_by(
+                        'transaction_date')
+
 
                 for record in portfolio_records:
                     date_n = dates_map[str(record.transaction_date)]
