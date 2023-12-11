@@ -4369,6 +4369,62 @@ def _print(message, *args, **kwargs):
     _l.debug(message, *args, **kwargs)
 
 
+def _clean_str_val(
+    evaluator,
+    value: [str, int, float],
+    if_empty_str_is_none: bool = False,
+    if_number: bool = False,
+    decimal_sep: str = ".",
+    default_value: [str, int, float] = None
+) -> [str, int, float]:
+    """
+    Cleans and processes string value based on specified criteria.
+
+    :param value: The input value to be cleaned.
+    :type value: [str, int, float]
+    :param if_empty_str_is_none: If True, returns default_value for empty strings, defaults to False.
+    :type if_empty_str_is_none: bool, optional
+    :param if_number: If True, processes the value as a number, removing symbols, defaults to False.
+    :type if_number: bool, optional
+    :param decimal_sep: The decimal separator used in the number, defaults to ".".
+    :type decimal_sep: str, optional
+    :param default_value: The value to be returned if the input is None or doesn't meet the criteria, defaults to None.
+    :type default_value: [str, int, float], optional
+    :return: Cleaned and processed string value based on specified criteria.
+    :rtype: [str, int, float]
+    """
+    if value is None:
+        return default_value
+    value_str = str(value)
+    # remove leading and trailing zeroes
+    clean_value = value_str.strip()
+    # Remove consecutive spaces
+    clean_value = ' '.join(clean_value.split())
+    if if_empty_str_is_none:
+        if clean_value == "":
+            return default_value
+    # If it's a number value
+    if if_number:
+        if clean_value == "":
+            return default_value
+        # remove all symbols except numbers, minus sign, comma and point
+        sign = 1
+        if clean_value[0] == "-":
+            sign = -1
+        clean_value = [
+            char for char in clean_value if char.isdigit() or char == decimal_sep]
+        clean_value = "".join(clean_value)
+        clean_value = clean_value.replace(decimal_sep, ".")
+        try:
+            clean_value = sign*float(clean_value)
+        except ValueError:
+            return default_value
+    return clean_value
+
+
+_clean_str_val.evaluator = True
+
+
 class SimpleEval2Def(object):
     def __init__(self, name, func):
         self.name = name
@@ -4554,4 +4610,5 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("put_file_to_storage", _put_file_to_storage),
     SimpleEval2Def("run_data_import", _run_data_import),
     SimpleEval2Def("run_transaction_import", _run_transaction_import),
+    SimpleEval2Def("clean_str_val", _clean_str_val),
 ]
