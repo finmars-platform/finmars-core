@@ -41,7 +41,6 @@ from poms.common.views import (
     AbstractModelViewSet,
     AbstractViewSet,
 )
-
 from poms.complex_import.models import ComplexImportScheme
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType
@@ -888,7 +887,6 @@ class MemberViewSet(AbstractModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         with transaction.atomic():
-
             self.perform_create(serializer)  # try to create member
 
             member = serializer.instance
