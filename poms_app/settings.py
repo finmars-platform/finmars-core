@@ -2,6 +2,8 @@
 Django settings for the main Backend project.
 """
 
+
+
 import os
 from datetime import timedelta
 
@@ -426,13 +428,13 @@ LOGGING = {
 
 if SERVER_TYPE == 'local':
 
-    os.makedirs(BASE_DIR + '/log/', exist_ok=True)
+    os.makedirs(f'{BASE_DIR}/log/', exist_ok=True)
 
     LOGGING['handlers']['file'] = {
         'level': DJANGO_LOG_LEVEL,
         'class': 'logging.FileHandler',
-        'filename': BASE_DIR + '/log/django.log',
-        'formatter': 'verbose'
+        'filename': f'{BASE_DIR}/log/django.log',
+        'formatter': 'verbose',
     }
 
 else:

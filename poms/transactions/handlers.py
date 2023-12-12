@@ -193,7 +193,7 @@ class TransactionTypeProcess:
             self.complex_transaction.execution_log = ""
 
         self.complex_transaction.owner = self.member
-        # self.complex_transaction.save()
+        # self.complex_transaction.save()  # it will create empty transaction in db!
 
         self.record_execution_progress("Booking Complex Transaction")
         self.record_execution_progress(f"Start {date_now()} ")
@@ -2736,6 +2736,7 @@ class TransactionTypeProcess:
         self.record_execution_progress("Calculating Unique Code")
 
         names = dict(self.values.items())
+
         try:
             self.complex_transaction.transaction_unique_code = formula.safe_eval(
                 self.complex_transaction.transaction_type.transaction_unique_code_expr,
@@ -2751,7 +2752,8 @@ class TransactionTypeProcess:
             self.complex_transaction.transaction_unique_code = None
 
         _l.info(
-            f'self.complex_transaction.transaction_unique_code {self.complex_transaction.transaction_unique_code}'
+            f'self.complex_transaction.transaction_unique_code '
+            f'{self.complex_transaction.transaction_unique_code}'
         )
 
         if self.is_rebook:
@@ -2818,9 +2820,8 @@ class TransactionTypeProcess:
             ).first()
 
             _l.info(
-                f"execute_uniqueness_expression.uniqueness_reaction "
-                f"{self.uniqueness_reaction}"
-                f"{exist}"
+                f"execute_uniqueness_expression.uniqueness_reaction="
+                f"{self.uniqueness_reaction} exist={exist}"
             )
 
             if (
@@ -2837,13 +2838,13 @@ class TransactionTypeProcess:
             ):
                 # Just create complex transaction
                 self.uniqueness_status = "create"
-
                 self.record_execution_progress(
                     "Unique code is free, can create transaction. (SKIP)"
                 )
 
             elif self.uniqueness_reaction == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
                 self.book_without_unique_code()
+
             elif (
                     self.uniqueness_reaction == TransactionType.OVERWRITE
                     and self.complex_transaction.transaction_unique_code
@@ -2880,6 +2881,23 @@ class TransactionTypeProcess:
                         "message": "Skipped book. Transaction Unique code error",
                     }
                 )
+            else:
+                self.uniqueness_status = "error"
+                self.complex_transaction.fake_delete()
+                msg = (
+                    f"is_rebook={self.is_rebook} "
+                    f"uniqueness_reaction={self.uniqueness_reaction} "
+                    f"exist={exist} names={names}"
+                    f"complex_transaction.transaction_unique_code="
+                    f"{self.complex_transaction.transaction_unique_code}",
+                )
+                _l.error(f"execute_uniqueness_expression: invalid params: {msg}")
+                self.general_errors.append(
+                    {
+                        "reason": 409,
+                        "message": f"Skipped book. Invalid combination of params {msg}",
+                    }
+                )
 
         self.record_execution_progress(
             f"Unique Code: {self.complex_transaction.transaction_unique_code} "
@@ -2901,15 +2919,15 @@ class TransactionTypeProcess:
         self.complex_transaction.transaction_unique_code = None
 
     def run_procedures_after_book(self):
+        # from poms.portfolios.tasks import (
+        #     calculate_portfolio_register_price_history,
+        #     calculate_portfolio_register_record,
+        # )
+
+        # _l.debug("TransactionTypeProcess.run_procedures_after_book. execution_context
+        # %s" % self.execution_context)
+
         try:
-            from celery import Celery
-
-            # _l.debug("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
-            from poms.portfolios.tasks import (
-                calculate_portfolio_register_price_history,
-                calculate_portfolio_register_record,
-            )
-
             if self.execution_context == "manual":
                 cache.clear()
 
@@ -2929,7 +2947,8 @@ class TransactionTypeProcess:
                         if _date_from < date_from:
                             date_from = _date_from
 
-                    # _l.debug("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
+                    # _l.debug("TransactionTypeProcess.run_procedures_after_book.
+                    # recalculating from %s" % date_from)
 
                     # TODO trigger recalc after manual book properly
                     # calculate_portfolio_register_record.apply_async(link=[
@@ -2937,9 +2956,9 @@ class TransactionTypeProcess:
                     # ])
 
         except Exception as e:
-            _l.error(f"TransactionTypeProcess.run_procedures_after_book e {e}")
             _l.error(
-                f"TransactionTypeProcess.run_procedures_after_book traceback {traceback.format_exc()}"
+                f"TransactionTypeProcess.run_procedures_after_book e {e} "
+                f"traceback {traceback.format_exc()}"
             )
 
     def process_as_pending(self):

@@ -757,9 +757,9 @@ def calculate_portfolio_history(self, task_id: int):
 
     if not date_from:
         if period_type == 'ytd':
-            date_from = get_last_business_day_of_previous_year(date)
+            date_from = str(get_last_business_day_of_previous_year(date))
         if period_type == 'inception':
-            date_from = portfolio.first_transaction_date()
+            date_from = str(portfolio.first_transaction_date())
 
     if segmentation_type != 'business_days_end_of_months':
         raise NotImplementedError("Only business_days_end_of_months segmentation type is supported")
