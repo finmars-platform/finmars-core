@@ -97,7 +97,6 @@ class TransactionImportProcess(object):
             )
 
         self.member = self.task.member
-
         self.master_user = self.task.master_user
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
@@ -115,7 +114,6 @@ class TransactionImportProcess(object):
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
-        # self.preprocess_file = self.task.options_object['preprocess_file']
 
         self.ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.master_user
@@ -128,8 +126,7 @@ class TransactionImportProcess(object):
         self.result.task = self.task
         self.result.scheme = self.scheme
 
-        self.process_type = ProcessType.CSV
-
+        self.process_type = ProcessType.CSV  # default type
         self.find_process_type()
 
         self.file_items = []  # items from provider  (json, csv, excel)
@@ -154,6 +151,7 @@ class TransactionImportProcess(object):
             import_system_message_performed_by = "System"
             import_system_message_title = "Transaction import from broker (start)"
 
+        self.prefetched_relations = {}
         self.prefetch_relations()
 
         send_system_message(
@@ -165,31 +163,31 @@ class TransactionImportProcess(object):
             description=f"{self.member.username} started import with scheme {self.scheme.name}",
         )
 
-        _l.info('self.scheme.book_uniqueness_settings %s' % self.scheme.book_uniqueness_settings)
+        _l.info(
+            f"self.scheme.book_uniqueness_settings {self.scheme.book_uniqueness_settings}"
+        )
 
     def prefetch_relations(self):
+        def as_dict(items):
+            result_dict = {}
+            for item in items:
+                result_dict[item.user_code] = item
+            return result_dict
+
         st = time.perf_counter()
 
-        result = {}
-
-        def as_dict(items):
-            result = {}
-
-            for item in items:
-                result[item.user_code] = item
-
-            return result
-
-        result["accounts.account"] = as_dict(Account.objects.all())
-        result["portfolios.portfolio"] = as_dict(Portfolio.objects.all())
-        result["currencies.currency"] = as_dict(Currency.objects.all())
-        result["instruments.instrument"] = as_dict(Instrument.objects.all())
-        result["strategies.strategy1"] = as_dict(Strategy1.objects.all())
-        result["strategies.strategy2"] = as_dict(Strategy2.objects.all())
-        result["strategies.strategy3"] = as_dict(Strategy3.objects.all())
-        result["counterparties.counterparty"] = as_dict(Counterparty.objects.all())
-        result["counterparties.responsible"] = as_dict(Responsible.objects.all())
-        result["instruments.instrumenttype"] = as_dict(InstrumentType.objects.all())
+        result = {
+            "accounts.account": as_dict(Account.objects.all()),
+            "portfolios.portfolio": as_dict(Portfolio.objects.all()),
+            "currencies.currency": as_dict(Currency.objects.all()),
+            "instruments.instrument": as_dict(Instrument.objects.all()),
+            "strategies.strategy1": as_dict(Strategy1.objects.all()),
+            "strategies.strategy2": as_dict(Strategy2.objects.all()),
+            "strategies.strategy3": as_dict(Strategy3.objects.all()),
+            "counterparties.counterparty": as_dict(Counterparty.objects.all()),
+            "counterparties.responsible": as_dict(Responsible.objects.all()),
+            "instruments.instrumenttype": as_dict(InstrumentType.objects.all()),
+        }
 
         self.prefetched_relations = result
 
@@ -199,17 +197,7 @@ class TransactionImportProcess(object):
         )
 
     def items_has_error(self):
-        result = False
-
-        error_rows_count = 0
-
-        for result_item in self.result.items:
-            if result_item.status == "error":
-                error_rows_count = error_rows_count + 1
-                result = True
-                break
-
-        return result
+        return any(result_item.status == "error" for result_item in self.result.items)
 
     def generate_file_report(self):
         _l.info(
@@ -221,12 +209,12 @@ class TransactionImportProcess(object):
             % self.scheme.missing_data_handler
         )
 
-        result = []
-
-        result.append("Type, Transaction Import")
-        result.append("Scheme, " + self.scheme.user_code)
-        result.append("Error handle, " + self.scheme.error_handler)
-        result.append("Uniqueness settings, " + str(self.scheme.book_uniqueness_settings))
+        result = [
+            "Type, Transaction Import",
+            "Scheme, " + self.scheme.user_code,
+            "Error handle, " + self.scheme.error_handler,
+            "Uniqueness settings, " + str(self.scheme.book_uniqueness_settings),
+        ]
 
         if self.result.file_name:
             result.append("Filename, " + self.result.file_name)
@@ -416,16 +404,12 @@ class TransactionImportProcess(object):
             return formula.safe_eval(
                 self.scheme.rule_expr, names=item.inputs, context=self.context
             )
+
         except Exception as e:
             _l.info(
-                "TransactionImportProcess.Task %s. get_rule_value_for_item Exception %s"
-                % (self.task, e)
+                f"TransactionImportProcess.Task {self.task}. get_rule_value_for_item "
+                f"Exception {e} Traceback {traceback.format_exc()}"
             )
-            _l.info(
-                "TransactionImportProcess.Task %s. get_rule_value_for_item Traceback %s"
-                % (self.task, traceback.format_exc())
-            )
-
             return None
 
     def convert_value(self, item, rule_scenario, field, value):
@@ -459,7 +443,9 @@ class TransactionImportProcess(object):
                 try:
                     # optimized way of getting from prefetched dictionary
 
-                    content_type_key = f"{i.content_type.app_label}.{i.content_type.model}"
+                    content_type_key = (
+                        f"{i.content_type.app_label}.{i.content_type.model}"
+                    )
 
                     v = self.prefetched_relations[content_type_key][value]
 
@@ -510,15 +496,12 @@ class TransactionImportProcess(object):
 
             except Exception as e:
                 item.status = "error"
-                item.error_message = item.error_message + "Exception " + str(e)
+                item.error_message = f"{item.error_message}Exception {str(e)}"
 
                 _l.error(
-                    "TransactionImportProcess.Task %s. get_fields_for_item %s field %s Exception %s"
-                    % (self.task, item, field, e)
-                )
-                _l.error(
-                    "TransactionImportProcess.Task %s. get_fields_for_item %s field %s Traceback %s"
-                    % (self.task, item, field, traceback.format_exc())
+                    f"TransactionImportProcess.Task {self.task}. "
+                    f"get_fields_for_item {item} field {field} Exception {e} "
+                    f"Traceback {traceback.format_exc()}"
                 )
 
                 # raise Exception(e) # Uncomment when apetrushkin will be ready
@@ -583,7 +566,6 @@ class TransactionImportProcess(object):
 
             if transaction_type_process_instance.has_errors:
                 if transaction_type_process_instance.uniqueness_status == "skip":
-
                     errors = []
 
                     if transaction_type_process_instance.general_errors:
@@ -592,16 +574,9 @@ class TransactionImportProcess(object):
                         )
 
                     item.status = "skip"
-                    item.message = (
-                            "Transaction Skipped %s"
-                            % json.dumps(errors, default=str)
+                    item.message = "Transaction Skipped %s" % json.dumps(
+                        errors, default=str
                     )
-
-                    # item.error_message = (
-                    #     item.error_message
-                    #     + "Book Skip: "
-                    #     + json.dumps(errors, default=str)
-                    # )
 
                     self.task.update_progress(
                         {
@@ -610,8 +585,7 @@ class TransactionImportProcess(object):
                             "percent": round(
                                 self.result.processed_rows / (len(self.items) / 100)
                             ),
-                            "description": "Going to book %s"
-                            % (rule_scenario.transaction_type),
+                            "description": f"Going to skip {rule_scenario.transaction_type}",
                         }
                     )
 
@@ -865,7 +839,6 @@ class TransactionImportProcess(object):
         st = time.perf_counter()
 
         for file_item in self.file_items:
-
             item = {}
             for scheme_input in self.scheme.inputs.all():
                 try:
@@ -993,18 +966,14 @@ class TransactionImportProcess(object):
 
                     if current_level == deep:
                         _l.error(
-                            "TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Exception %s"
-                            % (self.task, scheme_calculated_input, e)
+                            f"TransactionImportProcess.Task {self.task}. recursive_preprocess calculated_input {scheme_calculated_input} Exception {e}"
                         )
-                        # _l.error(
-                        #     'TransactionImportProcess.Task %s. recursive_preprocess calculated_input %s Traceback %s' % (
-                        #         self.task, scheme_calculated_input, traceback.format_exc()))
 
         if current_level < deep:
             self.recursive_preprocess(deep, current_level + 1)
 
     def preprocess(self):
-        _l.info("TransactionImportProcess.Task %s. preprocess INIT" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. preprocess INIT")
         st = time.perf_counter()
         # self.recursive_preprocess(deep=2)
 
@@ -1024,8 +993,7 @@ class TransactionImportProcess(object):
             self.items.append(item)
 
         _l.info(
-            "TransactionImportProcess.Task %s. preprocess DONE items %s"
-            % (self.task, len(self.preprocessed_items))
+            f"TransactionImportProcess.Task {self.task}. preprocess DONE items {len(self.preprocessed_items)}"
         )
         _l.info(
             "TransactionImportProcess: preprocess done: %s",
@@ -1033,7 +1001,7 @@ class TransactionImportProcess(object):
         )
 
     def process_items(self):
-        _l.info("TransactionImportProcess.Task %s. process_items INIT" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. process_items INIT")
         st = time.perf_counter()
         index = 0
 
@@ -1043,12 +1011,12 @@ class TransactionImportProcess(object):
             item.processed_rule_scenarios = []
             item.booked_transactions = []
 
-            try:
-                _l.info(
-                    "TransactionImportProcess.Task %s. ========= process row %s/%s ========"
-                    % (self.task, str(item.row_number), str(self.result.total_rows))
-                )
+            _l.info(
+                f"TransactionImportProcess.Task {self.task}. ========= process "
+                f"row {str(item.row_number)}/{str(self.result.total_rows)} ========"
+            )
 
+            try:
                 if self.scheme.filter_expression:
                     # expr = Expression.parseString("a == 1 and b == 2")
 
@@ -1060,29 +1028,22 @@ class TransactionImportProcess(object):
                         )
                     )
 
-                    if result:
-                        # filter passed
-                        pass
-                    else:
+                    if not result:
                         item.status = "skip"
                         item.message = "Skipped due filter"
 
                         _l.info(
-                            "TransactionImportProcess.Task %s. Row skipped due filter %s"
-                            % (self.task, str(item.row_number))
+                            f"TransactionImportProcess.Task {self.task}. "
+                            f"Row skipped due filter {str(item.row_number)}"
                         )
                         continue
 
                 rule_value = self.get_rule_value_for_item(item)
 
                 _l.info(
-                    "TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s "
-                    % (
-                        self.task,
-                        str(item.row_number),
-                        str(self.result.total_rows),
-                        rule_value,
-                    )
+                    f"TransactionImportProcess.Task {self.task}. ========= process row "
+                    f"{str(item.row_number)}/{str(self.result.total_rows)} "
+                    f"======== {rule_value} "
                 )
 
                 if rule_value:
@@ -1129,8 +1090,11 @@ class TransactionImportProcess(object):
                                             # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
-                                        except Exception as e:  # any exception will work on error scenario
-                                            _l.error(f"Could not book error scenario {e}")
+                                        except Exception as e:
+                                            # any exception will work on error scenario
+                                            _l.error(
+                                                f"Could not book error scenario {e}"
+                                            )
                                             # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
@@ -1146,16 +1110,13 @@ class TransactionImportProcess(object):
                         # _l.info("Create checkpoint for %s" % index)
 
                         item.status = "skip"
-                        item.message = (
-                            "Selector %s does not match anything in scheme" % rule_value
-                        )
+                        item.message = f"Selector {rule_value} does not match anything in scheme"
                         try:
                             self.book(item, self.default_rule_scenario)
-
                             # transaction.savepoint_commit(sid)
 
                         except Exception as e:
-                            _l.error("Could not book default scenario %s" % e)
+                            _l.error(f"Could not book default scenario {e}")
                             # transaction.savepoint_rollback(sid)
 
                 else:
@@ -1163,16 +1124,14 @@ class TransactionImportProcess(object):
                         # sid = transaction.savepoint()
 
                         item.status = "skip"
-                        item.message = (
-                            "Selector %s does not match anything in scheme" % rule_value
-                        )
+                        item.message = f"Selector {rule_value} does not match anything in scheme"
 
                         self.book(item, self.default_rule_scenario)
 
                         # transaction.savepoint_commit(sid)
 
                     except Exception as e:
-                        _l.error("Could not book default scenario %s" % e)
+                        _l.error(f"Could not book default scenario {e}")
 
                         # transaction.savepoint_rollback(sid)
 
@@ -1185,28 +1144,25 @@ class TransactionImportProcess(object):
                         "percent": round(
                             self.result.processed_rows / (len(self.items) / 100)
                         ),
-                        "description": "Row %s processed" % self.result.processed_rows,
+                        "description": f"Row {self.result.processed_rows} processed",
                     }
                 )
 
             except Exception as e:
                 item.status = "error"
-                item.message = "Error %s" % e
+                item.message = f"Error {e}"
 
                 _l.error(
-                    "TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s"
-                    % (self.task, str(item.row_number), e)
-                )
-                _l.error(
-                    "TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s"
-                    % (self.task, str(item.row_number), traceback.format_exc())
+                    f"TransactionImportProcess.Task {self.task}.  ========= process "
+                    f"row {str(item.row_number)} ======== Exception {e}"
+                    f" Traceback {traceback.format_exc()}"
                 )
             finally:
                 index = index + 1
 
         self.result.items = self.items
 
-        _l.info("TransactionImportProcess.Task %s. process_items DONE" % self.task)
+        _l.info(f"TransactionImportProcess.Task {self.task}. process_items DONE")
         _l.info(
             "TransactionImportProcess: process_items done: %s",
             "{:3.3f}".format(time.perf_counter() - st),
@@ -1224,8 +1180,8 @@ class TransactionImportProcess(object):
                 booked_count = booked_count + len(item.booked_transactions)
 
         result = (
-            "Processed %s rows and successfully booked %s transactions. Error rows %s"
-            % (len(self.items), booked_count, error_count)
+            f"Processed {len(self.items)} rows and successfully booked {booked_count} "
+            f"transactions. Error rows {error_count}"
         )
 
         return result
@@ -1236,15 +1192,11 @@ class TransactionImportProcess(object):
 
         except Exception as e:
             _l.error(
-                "TransactionImportProcess.Task %s. process Exception %s"
-                % (self.task, e)
-            )
-            _l.error(
-                "TransactionImportProcess.Task %s. process Traceback %s"
-                % (self.task, traceback.format_exc())
+                f"TransactionImportProcess.Task {self.task}. process Exception {e} "
+                f"Traceback {traceback.format_exc()}"
             )
 
-            self.result.error_message = "General Import Error. Exception %s" % e
+            self.result.error_message = f"General Import Error. Exception {e}"
 
             if (
                 self.execution_context
@@ -1253,37 +1205,10 @@ class TransactionImportProcess(object):
                 send_system_message(
                     master_user=self.master_user,
                     performed_by="System",
-                    description="Can't process file. Exception %s" % e,
+                    description=f"Can't process file. Exception {e}",
                 )
 
         finally:
-            if self.task.options_object and "items" in self.task.options_object:
-                pass
-            else:
-                pass
-                # storage.delete(self.file_path)
-
-            # DEPRECATED
-            # send_websocket_message(data={
-            #     'type': 'transaction_import_status',
-            #     'payload': {
-            #         'parent_task_id': self.task.parent_id,
-            #         'task_id': self.task.id,
-            #         'state': CeleryTask.STATUS_DONE,
-            #         'processed_rows': self.result.processed_rows,
-            #         'total_rows': self.result.total_rows,
-            #         'file_name': self.result.file_name,
-            #         'scheme': self.scheme.id,
-            #         'scheme_object': {
-            #             'id': self.scheme.id,
-            #             'scheme_name': self.scheme.user_code,
-            #             'delimiter': self.scheme.delimiter,
-            #             'error_handler': self.scheme.error_handler,
-            #             'missing_data_handler': self.scheme.missing_data_handler
-            #         }}
-            # }, level="member",
-            #     context=self.context)
-
             self.import_result = TransactionImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
@@ -1292,7 +1217,6 @@ class TransactionImportProcess(object):
 
             self.result.reports = []
 
-            # if self.items_has_error():
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
@@ -1307,46 +1231,30 @@ class TransactionImportProcess(object):
                         master_user=self.master_user,
                         action_status="required",
                         type="warning",
-                        title="Transaction Import Partially Failed. Task id: %s"
-                        % self.task.id,
-                        description="Error rows %s/%s"
-                        % (error_rows_count, len(self.result.items)),
+                        title=f"Transaction Import Partially Failed. Task id: {self.task.id}",
+                        description=f"Error rows {error_rows_count}/{len(self.result.items)}",
                     )
 
-            system_message_title = "New transactions (import from file)"
             system_message_description = (
-                "New transactions created (Import scheme - "
-                + str(self.scheme.name)
-                + ") - "
-                + str(len(self.items))
+                f"New transactions created (Import scheme - {str(self.scheme.name)}) "
+                f"- {len(self.items)}"
             )
 
             import_system_message_title = "Transaction import (finished)"
 
             system_message_performed_by = self.member.username
 
-            if self.process_type == ProcessType.JSON:
-                if (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
-                ):
-                    system_message_title = "New transactions (import from broker)"
-                    system_message_performed_by = "System"
+            system_message_title = "New transactions (import from file)"
+            if self.process_type == ProcessType.JSON and (
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
+            ):
+                system_message_title = "New transactions (import from broker)"
+                system_message_performed_by = "System"
 
-                    import_system_message_title = (
-                        "Transaction import from broker (finished)"
-                    )
-
-                    # if self.execution_context['date_from']:
-
-                    # TODO too long, need refactor
-                    # from poms.portfolios.tasks import calculate_portfolio_register_record, \
-                    #     calculate_portfolio_register_price_history
-                    #
-                    # calculate_portfolio_register_record.apply_async(link=[
-                    #     calculate_portfolio_register_price_history.s(
-                    #         date_from=str(self.execution_context['date_from']))
-                    # ])
+                import_system_message_title = (
+                    "Transaction import from broker (finished)"
+                )
 
             send_system_message(
                 master_user=self.master_user,
@@ -1354,7 +1262,10 @@ class TransactionImportProcess(object):
                 section="import",
                 type="success",
                 title="Import Finished. Prices Recalculation Required",
-                description="Please, run schedule or execute procedures to calculate portfolio prices and nav history",
+                description=(
+                    "Please, run schedule or execute procedures to calculate portfolio "
+                    "prices and nav history"
+                ),
             )
 
         attachments = []
@@ -1392,7 +1303,6 @@ class TransactionImportProcess(object):
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
-
             names = {"data": self.file_items}
 
             try:
@@ -1407,7 +1317,7 @@ class TransactionImportProcess(object):
                 # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
-                _l.error(f"Could not execute preoprocess expression. Error {repr(e)}")
+                _l.error(f"Could not execute preprocess expression. Error {repr(e)}")
 
         _l.info(f"whole_file_preprocess.file_items {len(self.file_items)}")
 
