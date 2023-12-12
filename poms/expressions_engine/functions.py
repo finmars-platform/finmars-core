@@ -4365,50 +4365,30 @@ def _print_message(evaluator, text):
 _print_message.evaluator = True
 
 def _if_valid_isin(evaluator, isin: str) -> bool:
-    # see https://en.wikipedia.org/wiki/International_Securities_Identification_Number
-    # Uppercase & remove '-'
     isin = isin.upper().replace('-','')
-
-    # ISIN must be length of 12 (excl. '-')
+    
     if len(isin) != 12:
-        # print("ISIN must be length of 12 (excl. '-')")
         return False
-    
-    # All characters in the ISIN string must be  alphanumeric (i.e., either letters or digits)
     if not isin.isalnum():
-        # print("All characters in the ISIN string must be  alphanumeric (i.e., either letters or digits)")
         return False
     
-    # Check if checksum digit is digit
     if not isin[-1].isdigit():
-        # print("Last character in ISIN  must be a numeric check digit")
         return False
     
-    # Issuing country code must be alphabetic
     if not isin[:2].isalpha():
-        # print("Issuing country code (first two characters) must be alphabetic")
         return False
 
-    ## Calculate checksum
-    # Convert any letters to numbers by taking the ASCII code of the capital letter and subtracting 55
     converted_digits = [str(ord(char) - 55) if char.isalpha() else char for char in isin[:-1]]
     converted_digits_str = "".join(converted_digits)
-    # Multiply digits characters by 2 starting from rightmost one over one
     converted_digits_str_multiplied = [
-            # str(int(char) * 2) 
             int(char) * 2 
             if i%2 == 0 else char 
             for i, char in enumerate(converted_digits_str[::-1])
         ][::-1]
-    # Add up the individual digits
-    # summed_digits = sum(int(digit) for char in converted_digits_str_multiplied for digit in str(int(char)))
     summed_digits = sum(int(digit) for char in converted_digits_str_multiplied for digit in str(char))
-    # Calculate the final checksum digit
     checksum = (10 - (summed_digits % 10)) % 10
 
-    # Check digit vs Checksum
     if isin[-1] != str(checksum):
-        # print("Check digit is not equal to check sum")
         return False
 
     return True
