@@ -9,6 +9,7 @@ from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
 import requests
+
 from poms_app import settings
 
 _l = logging.getLogger("provision")
@@ -60,7 +61,6 @@ class BootstrapConfig(AppConfig):
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
-        from poms.users.models import MasterUser, Member
 
         from poms.users.models import MasterUser, Member
 
@@ -99,9 +99,7 @@ class BootstrapConfig(AppConfig):
                 _l.error(f"Warning. Could not create finmars_bot {e}")
 
     def create_iam_access_policies_templates(self):
-        from poms.iam.policy_generator import (
-            create_base_iam_access_policies_templates,
-        )
+        from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
         if "test" not in sys.argv:
             _l.info("create_iam_access_policies_templates")
@@ -119,7 +117,7 @@ class BootstrapConfig(AppConfig):
     def load_master_user_data(self):
         from django.contrib.auth.models import User
 
-from poms.auth_tokens.utils import generate_random_string
+        from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
         if not settings.AUTHORIZER_URL:
@@ -182,9 +180,7 @@ from poms.auth_tokens.utils import generate_random_string
             if user:
                 user_profile, created = UserProfile.objects.using(
                     settings.DB_DEFAULT
-                ).get_or_create(
-                    user_id=user.pk
-                )
+                ).get_or_create(user_id=user.pk)
 
                 _l.info("Owner User Profile Updated")
 
@@ -217,8 +213,7 @@ from poms.auth_tokens.utils import generate_random_string
 
                 master_user = MasterUser.objects.using(
                     settings.DB_DEFAULT
-                ).create_master_user(user=user, language="en", name=name
-                )
+                ).create_master_user(user=user, language="en", name=name)
 
                 master_user.base_api_url = response_data["base_api_url"]
 
@@ -289,19 +284,15 @@ from poms.auth_tokens.utils import generate_random_string
         if not settings.AUTHORIZER_URL:
             return
 
+        _l.info("register_at_authorizer_service processing")
+
+        headers = {"Content-type": "application/json", "Accept": "application/json"}
+        data = {"base_api_url": settings.BASE_API_URL}
+        url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
+
+        _l.info(f"register_at_authorizer_service url {url} data {data}")
+
         try:
-            _l.info("register_at_authorizer_service processing")
-
-            headers = {"Content-type": "application/json", "Accept": "application/json"}
-
-            data = {
-                "base_api_url": settings.BASE_API_URL,
-            }
-
-            url = settings.AUTHORIZER_URL + "/backend-is-ready/"
-
-            _l.info("register_at_authorizer_service url %s" % url)
-
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
@@ -310,21 +301,22 @@ from poms.auth_tokens.utils import generate_random_string
             )
 
             _l.info(
-                "register_at_authorizer_service backend-is-ready response.status_code %s"
-                % response.status_code
-            )
-            _l.info(
-                "register_at_authorizer_service backend-is-ready response.text %s"
-                % response.text
+                f"register_at_authorizer_service backend-is-ready response.status_code"
+                f" {response.status_code} response.text {response.text}"
             )
 
+            response.raise_for_status()
+
         except Exception as e:
-            _l.info(f"register_at_authorizer_service error {e}")
+            _l.info(
+                f"register_at_authorizer_service error {repr(e)} "
+                f"traceback {traceback.format_exc()}"
+            )
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     def sync_celery_workers(self):
-        from poms.common.finmars_authorizer import AuthorizerService
         from poms.celery_tasks.models import CeleryWorker
+        from poms.common.finmars_authorizer import AuthorizerService
 
         if not settings.AUTHORIZER_URL:
             return
@@ -381,6 +373,7 @@ from poms.auth_tokens.utils import generate_random_string
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
+
         from poms.common.storage import get_storage
         from poms.users.models import Member
         from poms_app import settings
