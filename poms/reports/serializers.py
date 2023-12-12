@@ -1,16 +1,16 @@
-from __future__ import unicode_literals
-
 import json
 import logging
 import time
 import traceback
 import uuid
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.db.models import ForeignKey
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from poms_app import settings
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
@@ -21,31 +21,73 @@ from poms.common.utils import date_now, date_yesterday
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.expressions_engine import formula
-from poms.instruments.fields import RegisterField, BundleField, PricingPolicyField, SystemPricingPolicyDefault
+from poms.instruments.fields import (
+    BundleField,
+    PricingPolicyField,
+    RegisterField,
+    SystemPricingPolicyDefault,
+)
 from poms.instruments.models import CostMethod
-from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
+from poms.instruments.serializers import (
+    CostMethodSerializer,
+    PricingPolicyViewSerializer,
+)
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.backend_reports_utils import BackendReportHelperService
-from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
-    ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
-    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
-    ReportCounterpartySerializer, ReportComplexTransactionSerializer, ReportCountrySerializer
-from poms.reports.common import Report, PerformanceReport, TransactionReport
-from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
-    TransactionReportCustomFieldField, ReportCurrencyField, ReportPricingPolicyField
-from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
-    PLReportInstance, BalanceReportInstance, PerformanceReportInstance, \
-    PerformanceReportInstanceItem, TransactionReportInstance
-from poms.reports.serializers_helpers import serialize_price_checker_item, serialize_price_checker_item_instrument, \
-    serialize_transaction_report_item, serialize_pl_report_item, serialize_report_item_instrument, \
-    serialize_balance_report_item
+from poms.reports.base_serializers import (
+    ReportAccountSerializer,
+    ReportAccountTypeSerializer,
+    ReportComplexTransactionSerializer,
+    ReportCounterpartySerializer,
+    ReportCountrySerializer,
+    ReportCurrencySerializer,
+    ReportInstrumentSerializer,
+    ReportInstrumentTypeSerializer,
+    ReportPortfolioSerializer,
+    ReportResponsibleSerializer,
+    ReportStrategy1Serializer,
+    ReportStrategy2Serializer,
+    ReportStrategy3Serializer,
+)
+from poms.reports.common import PerformanceReport, Report, TransactionReport
+from poms.reports.fields import (
+    BalanceReportCustomFieldField,
+    PLReportCustomFieldField,
+    ReportCurrencyField,
+    ReportPricingPolicyField,
+    TransactionReportCustomFieldField,
+)
+from poms.reports.models import (
+    BalanceReportCustomField,
+    BalanceReportInstance,
+    PerformanceReportInstance,
+    PerformanceReportInstanceItem,
+    PLReportCustomField,
+    PLReportInstance,
+    TransactionReportCustomField,
+    TransactionReportInstance,
+)
+from poms.reports.serializers_helpers import (
+    serialize_balance_report_item,
+    serialize_pl_report_item,
+    serialize_price_checker_item,
+    serialize_price_checker_item_instrument,
+    serialize_report_item_instrument,
+    serialize_transaction_report_item,
+)
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
-from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
+from poms.strategies.serializers import (
+    Strategy1ViewSerializer,
+    Strategy2ViewSerializer,
+    Strategy3ViewSerializer,
+)
 from poms.transactions.models import TransactionClass
-from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionStatusSerializer
-from poms.users.fields import MasterUserField, HiddenMemberField
-from poms_app import settings
+from poms.transactions.serializers import (
+    ComplexTransactionStatusSerializer,
+    TransactionClassSerializer,
+)
+from poms.users.fields import HiddenMemberField, MasterUserField
 
 _l = logging.getLogger('poms.reports')
 
