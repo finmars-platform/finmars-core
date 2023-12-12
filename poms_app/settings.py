@@ -214,7 +214,8 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # = Database =
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-USE_DB_REPLICA = ENV_BOOL("ACTIVATE_REPLICA", False)
+
+USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", False)
 DB_DEFAULT = DEFAULT_DB_ALIAS
 DB_REPLICA = "ro_replica"
 DATABASES = {
