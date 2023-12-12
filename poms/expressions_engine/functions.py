@@ -2667,19 +2667,17 @@ def _get_currency(evaluator, currency):
 
 _get_currency.evaluator = True
 
-
 def _check_currency(evaluator, currency):
+    from poms.currencies.serializers import CurrencySerializer
+
     try:
         if isinstance(currency, str) and len(currency) > 3:
             return None        
         currency = _safe_get_currency(evaluator, currency)
 
         context = evaluator.context
-
-        from poms.currencies.serializers import CurrencySerializer
-
         return CurrencySerializer(instance=currency, context=context).data
-    except ExpressionEvalError as e:
+    except ExpressionEvalError:
         return { 
             "id": None,
             "master_user": None,
