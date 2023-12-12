@@ -2665,6 +2665,36 @@ def _get_currency(evaluator, currency):
 
 _get_currency.evaluator = True
 
+def _check_currency(evaluator, currency):
+    from poms.currencies.serializers import CurrencySerializer
+
+    try:
+        if isinstance(currency, str) and len(currency) > 3:
+            return None        
+        currency = _safe_get_currency(evaluator, currency)
+
+        context = evaluator.context
+        return CurrencySerializer(instance=currency, context=context).data
+    except ExpressionEvalError:
+        return { 
+            "id": None,
+            "master_user": None,
+            "user_code": currency,
+            "name": currency,
+            "short_name": currency,
+            "notes": None,
+            "reference_for_pricing": "",
+            "pricing_condition": None,
+            "default_fx_rate": None,
+            "is_deleted": None,
+            "is_enabled": None,
+            "pricing_policies": None,
+            "country": None
+        }
+
+
+_check_currency.evaluator = True
+
 
 def _get_account_type(evaluator, account_type):
     try:
@@ -4493,6 +4523,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("simple_price", _simple_price),
     SimpleEval2Def("get_instrument", _get_instrument),
     SimpleEval2Def("get_currency", _get_currency),
+    SimpleEval2Def("check_currency", _check_currency), 
     SimpleEval2Def("get_account_type", _get_account_type),
     SimpleEval2Def("set_account_user_attribute", _set_account_user_attribute),
     SimpleEval2Def("get_account_user_attribute", _get_account_user_attribute),
