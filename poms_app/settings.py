@@ -2,7 +2,6 @@
 Django settings for the main Backend project.
 """
 
-
 import os
 from datetime import timedelta
 

@@ -21,10 +21,9 @@ def transaction_import(self, task_id, procedure_instance_id=None):
                 "current": 0,
                 "total": len(instance.raw_items),
                 "percent": 0,
-                "description": "Going to parse raw items",
+                "description": "Parse raw items",
             }
         )
-
         instance.fill_with_file_items()
 
         if instance.scheme.data_preprocess_expression:
@@ -33,6 +32,14 @@ def transaction_import(self, task_id, procedure_instance_id=None):
                     f"Going to execute {instance.scheme.data_preprocess_expression}"
                 )
 
+                self.finmars_task.update_progress(
+                    {
+                        "current": 0,
+                        "total": len(instance.raw_items),
+                        "percent": 0,
+                        "description": "File preprocess",
+                    }
+                )
                 new_file_items = instance.whole_file_preprocess()
                 instance.file_items = new_file_items
 
@@ -41,6 +48,14 @@ def transaction_import(self, task_id, procedure_instance_id=None):
                 _l.error(err_msg)
                 raise RuntimeError(err_msg) from e
 
+        self.finmars_task.update_progress(
+            {
+                "current": 0,
+                "total": len(instance.raw_items),
+                "percent": 0,
+                "description": "Fill raw items",
+            }
+        )
         instance.fill_with_raw_items()
 
         self.finmars_task.update_progress(
@@ -48,19 +63,11 @@ def transaction_import(self, task_id, procedure_instance_id=None):
                 "current": 0,
                 "total": len(instance.raw_items),
                 "percent": 0,
-                "description": "Parse raw items",
+                "description": "Apply conversion",
             }
         )
         instance.apply_conversion_to_raw_items()
-        self.finmars_task.update_progress(
-            {
-                "current": 0,
-                "total": len(instance.raw_items),
-                "percent": 0,
-                "description": "Apply Conversion",
-            }
-        )
-        instance.preprocess()
+
         self.finmars_task.update_progress(
             {
                 "current": 0,
@@ -69,6 +76,8 @@ def transaction_import(self, task_id, procedure_instance_id=None):
                 "description": "Preprocess items",
             }
         )
+        instance.preprocess()
+
         instance.process()
 
         # _l.info(f"instance.import_result {instance.import_result}")
