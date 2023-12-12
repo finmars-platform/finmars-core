@@ -8,12 +8,11 @@ import django_filters
 from django.conf import settings
 from django.db.models import Prefetch
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from django_filters.rest_framework import FilterSet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,10 +23,11 @@ from celery.result import AsyncResult
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import (
-    ByIdFilterBackend,
     CharFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter, GroupsAttributeFilter, AttributeFilter,
+    NoOpFilter,
+    GroupsAttributeFilter,
+    AttributeFilter,
 )
 from poms.common.mixins import (
     BulkModelMixin,
@@ -1411,7 +1411,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             "execution_context": None,
         }
 
-        _l.info(f'options_object {options_object}')
+        _l.info(f"options_object {options_object}")
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
