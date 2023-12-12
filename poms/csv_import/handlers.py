@@ -551,10 +551,10 @@ def handler_instrument_object(
                         if attribute_type.value_type == 10:
                             attribute["value_string"] = value
 
-                        if attribute_type.value_type == 20:
+                        elif attribute_type.value_type == 20:
                             attribute["value_float"] = value
 
-                        if attribute_type.value_type == 30:
+                        elif attribute_type.value_type == 30:
                             try:
                                 classifier = GenericClassifier.objects.get(
                                     attribute_type=attribute_type, name=value
@@ -565,7 +565,7 @@ def handler_instrument_object(
                             except Exception:
                                 attribute["classifier"] = None
 
-                        if attribute_type.value_type == 40:
+                        elif attribute_type.value_type == 40:
                             attribute["value_date"] = value
 
                         _tmp_attributes_dict[attribute["attribute_type"]] = attribute
@@ -1475,7 +1475,7 @@ class SimpleImportProcess(object):
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error(f"get_final_inputs.e {e}")
+                    _l.error(f"get_final_inputs.error {e}")
 
                     if not item.error_message:
                         item.error_message = ""
@@ -1561,16 +1561,17 @@ class SimpleImportProcess(object):
                         item.error_message = ""
 
                     item.error_message = (
-                        f"{item.error_message}Post script error: {repr(e)}, "
+                        f"{item.error_message} Post script error: {repr(e)}, "
                     )
 
             self.handle_successful_item_import(item, serializer)
+
         except Exception as e:
             if self.scheme.mode == "overwrite":
                 try:
                     model = self.scheme.content_type.model_class()
 
-                    if self.scheme.content_type.model in ["pricehistory"]:
+                    if self.scheme.content_type.model == "pricehistory":
                         instance = model.objects.get(
                             key_model_user_code=item.final_inputs["instrument"],
                             pricing_policy__user_code=item.final_inputs[
@@ -1578,7 +1579,7 @@ class SimpleImportProcess(object):
                             ],
                             date=item.final_inputs["date"],
                         )
-                    elif self.scheme.content_type.model in ["currencyhistory"]:
+                    elif self.scheme.content_type.model == "currencyhistory":
                         instance = model.objects.get(
                             currency__user_code=item.final_inputs["currency"],
                             pricing_policy__user_code=item.final_inputs[
@@ -1636,10 +1637,11 @@ class SimpleImportProcess(object):
                             )
 
                     self.handle_successful_item_import(item, serializer)
+
                 except Exception as e:
                     item.status = "error"
                     item.error_message = (
-                        f"{item.error_message}==== Overwrite Exception {e}"
+                        f"{item.error_message} ==== Overwrite Exception {e}"
                     )
                     _l.error(
                         f"import_item.overwrite model={self.scheme.content_type.model}"
@@ -1649,7 +1651,7 @@ class SimpleImportProcess(object):
 
             else:
                 item.status = "error"
-                item.error_message = f"{item.error_message}====  Create Exception {e}"
+                item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
 
     def import_items_by_batche_indexes(self, batche_indexes, filter_for_async_functions_eval):
