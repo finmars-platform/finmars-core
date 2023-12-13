@@ -11,7 +11,7 @@ from poms.accounts.models import Account, AccountType
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
     get_last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday, \
-    get_last_business_day_of_previous_year, get_last_business_day_of_previous_month, get_start_date_of_qtd
+    get_last_business_day_of_previous_year, get_last_business_day_of_previous_month, get_last_business_day_in_previous_quarter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
@@ -123,6 +123,7 @@ class PerformanceReportBuilder:
 
         if not self.instance.begin_date and self.instance.period_type:
             _l.info("No begin date passed, calculating begin date based on period_type and end_date")
+            _l.info('self.instance.period_type %s' % self.instance.period_type)
 
             if self.instance.period_type == 'inception':
 
@@ -132,7 +133,7 @@ class PerformanceReportBuilder:
                 begin_date = get_last_business_day_of_previous_year(self.instance.end_date)
 
             elif self.instance.period_type == 'qtd':
-                begin_date = get_start_date_of_qtd(self.instance.end_date)
+                begin_date = get_last_business_day_in_previous_quarter(self.instance.end_date)
 
             elif self.instance.period_type == 'mtd':
                 begin_date = get_last_business_day_of_previous_month(self.instance.end_date)
@@ -152,7 +153,8 @@ class PerformanceReportBuilder:
                 begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
 
-            self.instance.begin_date = begin_date
+
+        self.instance.begin_date = begin_date
 
         _l.info("typeof end_date %s" % type(self.end_date))
         _l.info("typeof begin_date %s" % type(begin_date))
@@ -996,15 +998,34 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
-                                                                           transaction_date__gte=date_from,
-                                                                           transaction_date__lte=date_to,
-                                                                           transaction_class__in=[
-                                                                               TransactionClass.CASH_INFLOW,
-                                                                               TransactionClass.CASH_OUTFLOW,
-                                                                               TransactionClass.INJECTION,
-                                                                               TransactionClass.DISTRIBUTION]).order_by(
-                    'transaction_date')
+                if date_from == portfolio.first_transaction_date():
+
+
+                    portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                               transaction_date__gte=date_from,
+                                                                               transaction_date__lte=date_to,
+                                                                               transaction_class__in=[
+                                                                                   TransactionClass.CASH_INFLOW,
+                                                                                   TransactionClass.CASH_OUTFLOW,
+                                                                                   TransactionClass.INJECTION,
+                                                                                   TransactionClass.DISTRIBUTION]).order_by(
+                        'transaction_date')
+
+                else:
+
+                    # transaction_date__gt !!!
+                    # for case when it is not first transaction date, we need only greater_then
+
+                    portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
+                                                                               transaction_date__gt=date_from,
+                                                                               transaction_date__lte=date_to,
+                                                                               transaction_class__in=[
+                                                                                   TransactionClass.CASH_INFLOW,
+                                                                                   TransactionClass.CASH_OUTFLOW,
+                                                                                   TransactionClass.INJECTION,
+                                                                                   TransactionClass.DISTRIBUTION]).order_by(
+                        'transaction_date')
+
 
                 for record in portfolio_records:
                     date_n = dates_map[str(record.transaction_date)]

@@ -153,7 +153,7 @@ class AbstractClassModel(models.Model):
         ordering = ["name"]
 
     def __str__(self):
-        return self.name
+        return self.user_code
 
     @classmethod
     def get_by_id(cls, pk):

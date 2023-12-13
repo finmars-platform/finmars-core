@@ -9,7 +9,8 @@ from django.views.generic.dates import timezone_today
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates, get_last_business_day_of_previous_year, \
-    get_last_bdays_of_months_between_two_dates
+    get_last_bdays_of_months_between_two_dates, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month, \
+    get_last_business_day, get_list_of_business_days_between_two_dates
 from poms.currencies.models import CurrencyHistory, Currency
 from poms.instruments.models import PricingPolicy, CostMethod
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord, Portfolio, PortfolioHistory
@@ -739,7 +740,10 @@ def calculate_portfolio_history(self, task_id: int):
     )
 
     date = task.options_object.get("date")
-    date_from = task.options_object.get("date_from")
+
+    date = datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    calculation_period_date_from = task.options_object.get("calculation_period_date_from")
 
     period_type = task.options_object.get("period_type")
     portfolio = task.options_object.get("portfolio")
@@ -755,18 +759,30 @@ def calculate_portfolio_history(self, task_id: int):
     pricing_policy = PricingPolicy.objects.get(user_code=pricing_policy)
     cost_method = CostMethod.objects.get(user_code=cost_method)
 
-    if not date_from:
-        if period_type == 'ytd':
-            date_from = str(get_last_business_day_of_previous_year(date))
-        if period_type == 'inception':
-            date_from = str(portfolio.first_transaction_date())
-
-    if segmentation_type != 'business_days_end_of_months':
-        raise NotImplementedError("Only business_days_end_of_months segmentation type is supported")
+    if period_type == 'daily':
+        date_from = get_last_business_day(date - timedelta(days=1))
+    if period_type == 'mtd':
+        date_from = str(get_last_business_day_of_previous_month(date))
+    if period_type == 'qtd':
+        date_from = str(get_last_business_day_in_previous_quarter(date))
+    if period_type == 'ytd':
+        date_from = str(get_last_business_day_of_previous_year(date))
+    if period_type == 'inception':
+        date_from = str(portfolio.first_transaction_date())
 
     _l.info('calculate_portfolio_history: date_from %s' % date_from)
 
-    dates = get_last_bdays_of_months_between_two_dates(date_from, date)
+    if not calculation_period_date_from:
+        calculation_period_date_from = date_from
+
+    if segmentation_type == 'business_days_end_of_months':
+        dates = get_last_bdays_of_months_between_two_dates(calculation_period_date_from, date)
+
+    if segmentation_type == 'business_days':
+        dates = get_list_of_business_days_between_two_dates(calculation_period_date_from, date)
+
+    if segmentation_type == 'days':
+        dates = get_list_of_dates_between_two_dates(calculation_period_date_from, date)
 
     task.update_progress(
         {

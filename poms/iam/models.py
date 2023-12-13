@@ -27,7 +27,7 @@ class TimeStampedModel(models.Model):
         ]
 
 
-class AccessPolicy(ConfigurationModel):
+class AccessPolicy(ConfigurationModel, TimeStampedModel):
     name = models.CharField(
         max_length=255,
         null=True,
@@ -61,7 +61,7 @@ class AccessPolicy(ConfigurationModel):
         return str(self.name)
 
 
-class Role(ConfigurationModel):
+class Role(ConfigurationModel, TimeStampedModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     user_code = models.CharField(
@@ -86,7 +86,7 @@ class Role(ConfigurationModel):
         return str(self.name)
 
 
-class Group(ConfigurationModel):
+class Group(ConfigurationModel, TimeStampedModel):
     """
     Part of configuration and thus has configuration_code
     """

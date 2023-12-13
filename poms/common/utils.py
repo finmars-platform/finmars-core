@@ -692,7 +692,7 @@ def get_last_business_day_of_previous_month(date):
     return last_day_of_previous_month
 
 
-def get_start_date_of_qtd(date):
+def get_last_business_day_in_previous_quarter(date):
     """
     Given a date in 'YYYY-MM-DD' format, returns the start date of the Quarter-To-Date (QTD) period.
     """
@@ -709,5 +709,9 @@ def get_start_date_of_qtd(date):
         start_date = datetime.date(date.year, 7, 1)
     else:
         start_date = datetime.date(date.year, 10, 1)
+
+    # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
+    while start_date.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        start_date -= timedelta(days=1)
 
     return start_date
