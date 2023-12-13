@@ -19,9 +19,9 @@ class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if (
-                self.instance
-                and "modified" in data
-                and data["modified"] != self.instance.modified
+            self.instance
+            and "modified" in data
+            and data["modified"] != self.instance.modified
         ):
             raise serializers.ValidationError("Synchronization error")
 
@@ -76,8 +76,8 @@ class IamProtectedSerializer(serializers.ModelSerializer):
             }
 
 
-class IamModelOwnerSerializer(serializers.ModelSerializer):def to_representation(self, instance):
-
+class IamModelOwnerSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
         # print('ModelOwnerSerializer %s' % instance)
 
         representation = super().to_representation(instance)
@@ -92,9 +92,9 @@ class IamModelOwnerSerializer(serializers.ModelSerializer):def to_representation
 
     def create(self, validated_data):
         # You should have 'request' in the serializer context
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request and hasattr(request, "user"):
-            validated_data['owner'] = Member.objects.get(user=request.user)
+            validated_data["owner"] = Member.objects.get(user=request.user)
         return super(IamModelOwnerSerializer, self).create(validated_data)
 
 
@@ -197,12 +197,21 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
     class Meta:
         model = Role
-        fields = ['id', 'name', 'description', 'user_code', 'configuration_code',
-                  'members', 'members_object',
-                  'groups', 'groups_object',
-                  'access_policies', 'access_policies_object',
-                  'created', 'modified'
-                  ]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "user_code",
+            "configuration_code",
+            "members",
+            "members_object",
+            "groups",
+            "groups_object",
+            "access_policies",
+            "access_policies_object",
+            "created",
+            "modified",
+        ]
 
     def create(self, validated_data):
         # role_access_policies_data = self.context['request'].data.get('access_policies', [])
@@ -211,12 +220,11 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
         access_policies_data = validated_data.pop("access_policies", [])
         members_data = validated_data.pop("members", [])
-        groups_data = validated_data.pop('iam_groups', [])
+        groups_data = validated_data.pop("iam_groups", [])
 
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request and hasattr(request, "user"):
-            validated_data['owner'] = Member.objects.get(user=request.user)
-
+            validated_data["owner"] = Member.objects.get(user=request.user)
 
         instance = Role.objects.create(**validated_data)
 
@@ -231,7 +239,7 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     def update(self, instance, validated_data):
         access_policies_data = validated_data.pop("access_policies", [])
         members_data = validated_data.pop("members", [])
-        groups_data = validated_data.pop('iam_groups', [])
+        groups_data = validated_data.pop("iam_groups", [])
         instance.name = validated_data.get("name", instance.name)
         instance.description = validated_data.get("description", instance.description)
 
@@ -264,15 +272,22 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
     class Meta:
         model = Group
-        fields = ['id',
-                  'user_code', 'configuration_code',
-                  'name', 'description',
-                  'access_policies',
-                  'members', 'members_object',
-                  'roles', 'roles_object',
-                  'access_policies', 'access_policies_object',
-                  'created', 'modified'
-                  ]
+        fields = [
+            "id",
+            "user_code",
+            "configuration_code",
+            "name",
+            "description",
+            "access_policies",
+            "members",
+            "members_object",
+            "roles",
+            "roles_object",
+            "access_policies",
+            "access_policies_object",
+            "created",
+            "modified",
+        ]
 
     def __init__(self, *args, **kwargs):
         super(GroupSerializer, self).__init__(*args, **kwargs)
@@ -283,9 +298,9 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         members_data = validated_data.pop("members", [])
         roles_data = validated_data.pop("roles", [])
 
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request and hasattr(request, "user"):
-            validated_data['owner'] = Member.objects.get(user=request.user)
+            validated_data["owner"] = Member.objects.get(user=request.user)
         instance = Group.objects.create(**validated_data)
 
         # Update members
@@ -319,4 +334,13 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     class Meta:
         model = AccessPolicy
-        fields = ['id', 'name', 'user_code', 'configuration_code', 'policy', 'description', 'created', 'modified']
+        fields = [
+            "id",
+            "name",
+            "user_code",
+            "configuration_code",
+            "policy",
+            "description",
+            "created",
+            "modified",
+        ]
