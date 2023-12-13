@@ -998,7 +998,7 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                if date_from == portfolio.first_transaction_date():
+                if date_from == portfolio.first_transaction_date() or date_from < portfolio.first_transaction_date():
 
 
                     portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
