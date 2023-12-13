@@ -520,9 +520,9 @@ class CostMethod(AbstractClassModel):
     FIFO = 2
     LIFO = 3
     CLASSES = (
-        (AVCO, "AVCO", gettext_lazy("AVCO")),
-        (FIFO, "FIFO", gettext_lazy("FIFO")),
-        # (LIFO, gettext_lazy('LIFO')),
+        (AVCO, "avco", gettext_lazy("AVCO")),
+        (FIFO, "fifo", gettext_lazy("FIFO")),
+        # (LIFO, "lifo", gettext_lazy('LIFO')),
     )
 
     class Meta(AbstractClassModel.Meta):
