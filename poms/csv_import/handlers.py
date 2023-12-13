@@ -1924,7 +1924,7 @@ class SimpleImportProcess(object):
 
         filter_for_async_functions_eval = []
 
-        while item_index < (len(self.items)-1):
+        while item_index < len(self.items):
             success = True
             if self.scheme.filter_expr:
                 try:
@@ -1960,7 +1960,7 @@ class SimpleImportProcess(object):
             # increment while index
             item_index = item_index + 1
 
-            if len(batche_indexes) >= items_per_batche or not (item_index < (len(self.items)-1)):
+            if len(batche_indexes) >= items_per_batche or not (item_index < len(self.items)):
                 batche_rows_count = self.import_items_by_batche_indexes(batche_indexes, filter_for_async_functions_eval)
                 self.result.processed_rows = self.result.processed_rows + batche_rows_count 
                 batche_indexes = []                
