@@ -314,26 +314,47 @@ def calculate_portfolio_register_record(self, task_id):
                 # start block previous NAV
 
                 if previous_date_record:
-                    report_date = previous_date_record.transaction_date
+                    previous_date_record_report_date = previous_date_record.transaction_date
                     balance_report = calculate_simple_balance_report(
-                        report_date,
+                        previous_date_record_report_date,
                         portfolio_register,
                         task.member,
                     )
 
-                    nav_previous_day_valuation_currency = 0
+                    nav_previous_register_record_day_valuation_currency = 0
 
                     for item in balance_report.items:
                         if item["market_value"]:
-                            nav_previous_day_valuation_currency = nav_previous_day_valuation_currency + item[
+                            nav_previous_register_record_day_valuation_currency = nav_previous_register_record_day_valuation_currency + item[
                                 "market_value"]
 
-                    _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_previous_day_valuation_currency}")
+                    _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav_previous_register_record_day_valuation_currency}")
 
-                    record.nav_previous_day_valuation_currency = nav_previous_day_valuation_currency
+                    record.nav_previous_register_record_day_valuation_currency = nav_previous_register_record_day_valuation_currency
                 else:
-                    record.nav_previous_day_valuation_currency = 0
+                    record.nav_previous_register_record_day_valuation_currency = 0
                 # end block NAV
+
+                # get nav of yesterday business day
+
+                previous_business_day = get_last_business_day(report_date - timedelta(days=1))
+                previous_business_day_balance_report = calculate_simple_balance_report(
+                    previous_business_day,
+                    portfolio_register,
+                    task.member,
+                )
+
+                nav_previous_business_day_valuation_currency = 0
+
+                for item in previous_business_day_balance_report.items:
+                    if item["market_value"]:
+                        nav_previous_business_day_valuation_currency = nav_previous_business_day_valuation_currency + item[
+                            "market_value"]
+
+                _l.info(f"{log} len(items)={len(previous_business_day_balance_report.items)} nav={nav_previous_business_day_valuation_currency}")
+
+                record.nav_previous_business_day_valuation_currency = nav_previous_business_day_valuation_currency
+
 
                 # n_shares_previous_day
                 if previous_date_record:
@@ -351,7 +372,7 @@ def calculate_portfolio_register_record(self, task_id):
                         # let's MOVE block NAV here
                         record.dealing_price_valuation_currency = (
                             (
-                                    record.nav_previous_day_valuation_currency
+                                    record.nav_previous_business_day_valuation_currency
                                     / record.n_shares_previous_day
                             )
                             if record.n_shares_previous_day

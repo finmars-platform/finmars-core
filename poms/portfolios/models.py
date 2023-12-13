@@ -311,9 +311,14 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         default=0.0,
         verbose_name=gettext_lazy("nav valuation currency"),
     )
-    nav_previous_day_valuation_currency = models.FloatField(
+    # Should be rename to previous record date
+    nav_previous_register_record_day_valuation_currency = models.FloatField(
         default=0.0,
-        verbose_name=gettext_lazy("nav previous day valuation currency"),
+        verbose_name=gettext_lazy("nav previous register record day valuation currency"),
+    )
+    nav_previous_business_day_valuation_currency = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav previous business day valuation currency"),
     )
     n_shares_previous_day = models.FloatField(
         default=0.0,
