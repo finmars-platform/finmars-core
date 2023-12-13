@@ -1960,7 +1960,7 @@ class SimpleImportProcess(object):
             # increment while index
             item_index = item_index + 1
 
-            if len(batche_indexes) >= items_per_batche or item_index >= len(self.items):
+            if len(batche_indexes) >= items_per_batche or not (item_index < (len(self.items)-1)):
                 batche_rows_count = self.import_items_by_batche_indexes(batche_indexes, filter_for_async_functions_eval)
                 self.result.processed_rows = self.result.processed_rows + batche_rows_count 
                 batche_indexes = []                
@@ -2181,7 +2181,7 @@ class SimpleImportFinalUpdatesProcess(object):
                 models_q_filter_list.append(Q(**filter_for_async_functions_eval[item_index]))
                 item_index = item_index + 1
 
-                if len(models_q_filter_list) >= items_per_batche or item_index >= total_models_for_update:
+                if len(models_q_filter_list) >= items_per_batche or not (item_index < total_models_for_update):
                     conditions = reduce(or_, models_q_filter_list)
                     model_objects_for_update = self.model.objects.filter(conditions)
 
