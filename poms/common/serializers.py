@@ -41,7 +41,7 @@ class ModelOwnerSerializer(serializers.ModelSerializer):
         if request and hasattr(request, "user"):
             validated_data["owner"] = request.user.member
 
-        return super(ModelOwnerSerializer, self).create(validated_data)
+        return super().create(validated_data)
 
 
 class ModelMetaSerializer(serializers.ModelSerializer):

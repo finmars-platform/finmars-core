@@ -215,7 +215,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", False)
+USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", True)
 DB_DEFAULT = DEFAULT_DB_ALIAS
 DB_REPLICA = "ro_replica"
 DATABASES = {
@@ -226,7 +226,9 @@ DATABASES = {
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
+        # "ATOMIC_REQUESTS": True,
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+
     },
     DB_REPLICA: {
         "ENGINE": "django.db.backends.postgresql",
@@ -235,6 +237,7 @@ DATABASES = {
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
+        # "ATOMIC_REQUESTS": True,
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
         "TEST": {"MIRROR": DB_DEFAULT},
     },
