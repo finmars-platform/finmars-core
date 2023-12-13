@@ -10,7 +10,8 @@ from django.db import connection
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
-from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
+from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day, \
+    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, CostMethod, InstrumentType, Country
@@ -45,6 +46,34 @@ class PLReportBuilderSql:
         '''Important security methods'''
         self.transform_to_allowed_portfolios()
         self.transform_to_allowed_accounts()
+
+        if not self.instance.pl_first_date and not self.instance.period_type:
+            _l.info("No pl_first_date, no period_type settings to ytd")
+            self.instance.period_type = 'ytd'
+
+        if not self.instance.pl_first_date and self.instance.period_type:
+            
+            _l.info("No pl_first_date, calculating by period_type...")
+
+            if self.instance.period_type == 'inception':
+                # TODO wtf is first transaction when multi portfolios?
+                # TODO ask oleg what to do with inception
+                # szhitenev 2023-12-04
+                
+                first_portfolio = self.instance.portfolios.first()
+                
+                self.instance.pl_first_date = get_last_business_day(first_portfolio.first_transaction_date('accounting_date') - timedelta(days=1))
+            elif self.instance.period_type == 'ytd':
+                self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
+
+            elif self.instance.period_type == 'qtd':
+                self.instance.pl_first_date = get_last_business_day_in_previous_quarter(self.instance.report_date)
+
+            elif self.instance.period_type == 'mtd':
+                self.instance.pl_first_date = get_last_business_day_of_previous_month(self.instance.report_date)
+
+            elif self.instance.period_type == 'daily':
+                self.instance.pl_first_date = get_last_business_day(self.instance.report_date - timedelta(days=1))
 
     def transform_to_allowed_portfolios(self):
 

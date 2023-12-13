@@ -42,6 +42,19 @@ class Report(BaseReport):
         (TYPE_PL, "P&L"),
     )
 
+    PERIOD_TYPE_DAILY = "daily"
+    PERIOD_TYPE_MTD = "mtd"
+    PERIOD_TYPE_QTD = "qtd"
+    PERIOD_TYPE_YTD = "ytd"
+    PERIOD_TYPE_INCEPTION = "inception"
+    PERIOD_TYPE_CHOICES = (
+        (PERIOD_TYPE_DAILY, "Daily"),
+        (PERIOD_TYPE_MTD, "MTD"),
+        (PERIOD_TYPE_QTD, "QTD"),
+        (PERIOD_TYPE_YTD, "YTD"),
+        (PERIOD_TYPE_INCEPTION, "Inception"),
+    )
+
     def __init__(
             self,
             id=None,
@@ -92,6 +105,8 @@ class Report(BaseReport):
             page=1,
             page_size=40,
             count=0,
+
+            period_type=None,
 
     ):
         super(Report, self).__init__(
@@ -176,6 +191,8 @@ class Report(BaseReport):
         self.page = page
         self.page_size = page_size
         self.count = count
+
+        self.period_type = period_type
 
     def __str__(self):
         return (

@@ -8,12 +8,12 @@ import re
 import traceback
 import uuid
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 
-import pandas as pd
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
@@ -2665,6 +2665,36 @@ def _get_currency(evaluator, currency):
 
 _get_currency.evaluator = True
 
+def _check_currency(evaluator, currency):
+    from poms.currencies.serializers import CurrencySerializer
+
+    try:
+        if isinstance(currency, str) and len(currency) > 3:
+            return None
+        currency = _safe_get_currency(evaluator, currency)
+
+        context = evaluator.context
+        return CurrencySerializer(instance=currency, context=context).data
+    except ExpressionEvalError:
+        return {
+            "id": None,
+            "master_user": None,
+            "user_code": currency,
+            "name": currency,
+            "short_name": currency,
+            "notes": None,
+            "reference_for_pricing": "",
+            "pricing_condition": None,
+            "default_fx_rate": None,
+            "is_deleted": None,
+            "is_enabled": None,
+            "pricing_policies": None,
+            "country": None
+        }
+
+
+_check_currency.evaluator = True
+
 
 def _get_account_type(evaluator, account_type):
     try:
@@ -4347,9 +4377,95 @@ def _print_message(evaluator, text):
 
 _print_message.evaluator = True
 
+def _if_valid_isin(evaluator, isin: str) -> bool:
+    isin = isin.upper().replace('-','')
+
+    if len(isin) != 12:
+        return False
+    if not isin.isalnum():
+        return False
+
+    if not isin[-1].isdigit():
+        return False
+
+    if not isin[:2].isalpha():
+        return False
+
+    converted_digits = [str(ord(char) - 55) if char.isalpha() else char for char in isin[:-1]]
+    converted_digits_str = "".join(converted_digits)
+    converted_digits_str_multiplied = [
+            int(char) * 2
+            if i%2 == 0 else char
+            for i, char in enumerate(converted_digits_str[::-1])
+        ][::-1]
+    summed_digits = sum(int(digit) for char in converted_digits_str_multiplied for digit in str(char))
+    checksum = (10 - (summed_digits % 10)) % 10
+
+    if isin[-1] != str(checksum):
+        return False
+
+    return True
+
+_if_valid_isin.evaluator = True
 
 def _print(message, *args, **kwargs):
     _l.debug(message, *args, **kwargs)
+
+
+def _clean_str_val(
+    evaluator,
+    value: [str, int, float],
+    if_empty_str_is_none: bool = False,
+    if_number: bool = False,
+    decimal_sep: str = ".",
+    default_value: [str, int, float] = None
+) -> [str, int, float]:
+    """
+    Cleans and processes string value based on specified criteria.
+
+    :param value: The input value to be cleaned.
+    :type value: [str, int, float]
+    :param if_empty_str_is_none: If True, returns default_value for empty strings, defaults to False.
+    :type if_empty_str_is_none: bool, optional
+    :param if_number: If True, processes the value as a number, removing symbols, defaults to False.
+    :type if_number: bool, optional
+    :param decimal_sep: The decimal separator used in the number, defaults to ".".
+    :type decimal_sep: str, optional
+    :param default_value: The value to be returned if the input is None or doesn't meet the criteria, defaults to None.
+    :type default_value: [str, int, float], optional
+    :return: Cleaned and processed string value based on specified criteria.
+    :rtype: [str, int, float]
+    """
+    if value is None:
+        return default_value
+    value_str = str(value)
+    # remove leading and trailing zeroes
+    clean_value = value_str.strip()
+    # Remove consecutive spaces
+    clean_value = ' '.join(clean_value.split())
+    if if_empty_str_is_none:
+        if clean_value == "":
+            return default_value
+    # If it's a number value
+    if if_number:
+        if clean_value == "":
+            return default_value
+        # remove all symbols except numbers, minus sign, comma and point
+        sign = 1
+        if clean_value[0] == "-":
+            sign = -1
+        clean_value = [
+            char for char in clean_value if char.isdigit() or char == decimal_sep]
+        clean_value = "".join(clean_value)
+        clean_value = clean_value.replace(decimal_sep, ".")
+        try:
+            clean_value = sign*float(clean_value)
+        except ValueError:
+            return default_value
+    return clean_value
+
+
+_clean_str_val.evaluator = True
 
 
 class SimpleEval2Def(object):
@@ -4437,6 +4553,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("simple_price", _simple_price),
     SimpleEval2Def("get_instrument", _get_instrument),
     SimpleEval2Def("get_currency", _get_currency),
+    SimpleEval2Def("check_currency", _check_currency),
     SimpleEval2Def("get_account_type", _get_account_type),
     SimpleEval2Def("set_account_user_attribute", _set_account_user_attribute),
     SimpleEval2Def("get_account_user_attribute", _get_account_user_attribute),
@@ -4535,4 +4652,6 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("put_file_to_storage", _put_file_to_storage),
     SimpleEval2Def("run_data_import", _run_data_import),
     SimpleEval2Def("run_transaction_import", _run_transaction_import),
+    SimpleEval2Def("clean_str_val", _clean_str_val),
+    SimpleEval2Def("if_valid_isin", _if_valid_isin),
 ]
