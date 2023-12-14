@@ -2682,10 +2682,10 @@ def _check_currency(evaluator, currency) -> Optional[dict]:
     if isinstance(currency, str):
         if len(currency) == 3 and currency.isupper() and currency.isalpha():
             try:
-                currency = _safe_get_currency(evaluator, currency)
+                currency_obj = _safe_get_currency(evaluator, currency)
 
                 context = evaluator.context
-                return CurrencySerializer(instance=currency, context=context).data
+                return CurrencySerializer(instance=currency_obj, context=context).data
             except ExpressionEvalError:
                 return {
                     "id": None,
