@@ -8,12 +8,12 @@ import re
 import traceback
 import uuid
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 
-import pandas as pd
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
@@ -2668,28 +2668,29 @@ _get_currency.evaluator = True
 def _check_currency(evaluator, currency):
     from poms.currencies.serializers import CurrencySerializer
 
-    if isinstance(currency, str) and len(currency) == 3:
-        try:
-            currency = _safe_get_currency(evaluator, currency)
+    if isinstance(currency, str):
+        if len(currency) == 3 and currency.isupper() and currency.isalpha():
+            try:
+                currency = _safe_get_currency(evaluator, currency)
 
-            context = evaluator.context
-            return CurrencySerializer(instance=currency, context=context).data
-        except ExpressionEvalError:
-            return {
-                "id": None,
-                "master_user": None,
-                "user_code": currency,
-                "name": currency,
-                "short_name": currency,
-                "notes": None,
-                "reference_for_pricing": "",
-                "pricing_condition": None,
-                "default_fx_rate": None,
-                "is_deleted": None,
-                "is_enabled": None,
-                "pricing_policies": None,
-                "country": None
-            }
+                context = evaluator.context
+                return CurrencySerializer(instance=currency, context=context).data
+            except ExpressionEvalError:
+                return {
+                    "id": None,
+                    "master_user": None,
+                    "user_code": currency,
+                    "name": currency,
+                    "short_name": currency,
+                    "notes": None,
+                    "reference_for_pricing": "",
+                    "pricing_condition": None,
+                    "default_fx_rate": None,
+                    "is_deleted": None,
+                    "is_enabled": None,
+                    "pricing_policies": None,
+                    "country": None
+                }
     return None
 
 
@@ -4377,6 +4378,36 @@ def _print_message(evaluator, text):
 
 _print_message.evaluator = True
 
+def _if_valid_isin(evaluator, isin: str) -> bool:
+    isin = isin.upper().replace('-','')
+
+    if len(isin) != 12:
+        return False
+    if not isin.isalnum():
+        return False
+
+    if not isin[-1].isdigit():
+        return False
+
+    if not isin[:2].isalpha():
+        return False
+
+    converted_digits = [str(ord(char) - 55) if char.isalpha() else char for char in isin[:-1]]
+    converted_digits_str = "".join(converted_digits)
+    converted_digits_str_multiplied = [
+            int(char) * 2
+            if i%2 == 0 else char
+            for i, char in enumerate(converted_digits_str[::-1])
+        ][::-1]
+    summed_digits = sum(int(digit) for char in converted_digits_str_multiplied for digit in str(char))
+    checksum = (10 - (summed_digits % 10)) % 10
+
+    if isin[-1] != str(checksum):
+        return False
+
+    return True
+
+_if_valid_isin.evaluator = True
 
 def _print(message, *args, **kwargs):
     _l.debug(message, *args, **kwargs)
@@ -4523,7 +4554,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("simple_price", _simple_price),
     SimpleEval2Def("get_instrument", _get_instrument),
     SimpleEval2Def("get_currency", _get_currency),
-    SimpleEval2Def("check_currency", _check_currency), 
+    SimpleEval2Def("check_currency", _check_currency),
     SimpleEval2Def("get_account_type", _get_account_type),
     SimpleEval2Def("set_account_user_attribute", _set_account_user_attribute),
     SimpleEval2Def("get_account_user_attribute", _get_account_user_attribute),
@@ -4623,4 +4654,5 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("run_data_import", _run_data_import),
     SimpleEval2Def("run_transaction_import", _run_transaction_import),
     SimpleEval2Def("clean_str_val", _clean_str_val),
+    SimpleEval2Def("if_valid_isin", _if_valid_isin),
 ]
