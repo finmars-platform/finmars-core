@@ -862,41 +862,54 @@ class PerformanceReportViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash(
-            "report",
-            "performance",
-            request.data,
-            request.user.master_user,
-            request.user.member,
-        )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
 
-        cached_data = cache.get(key)
+        builder = PerformanceReportBuilder(instance=instance)
+        instance = builder.build_report()
 
-        if not cached_data:
-            _l.info("Could not find in cache")
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
 
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+        serializer = self.get_serializer(instance=instance, many=False)
 
-            builder = PerformanceReportBuilder(instance=instance)
-            instance = builder.build_report()
+        # DEPRECATED
+        # key = generate_report_unique_hash(
+        #     "report",
+        #     "performance",
+        #     request.data,
+        #     request.user.master_user,
+        #     request.user.member,
+        # )
+        #
+        # cached_data = cache.get(key)
+        #
+        # if not cached_data:
+        #     _l.info("Could not find in cache")
+        #
+        #     serializer = self.get_serializer(data=request.data)
+        #     serializer.is_valid(raise_exception=True)
+        #     instance = serializer.save()
+        #
+        #     builder = PerformanceReportBuilder(instance=instance)
+        #     instance = builder.build_report()
+        #
+        #     instance.task_id = 1
+        #     instance.task_status = "SUCCESS"
+        #
+        #     serializer = self.get_serializer(instance=instance, many=False)
+        #
+        #     _l.debug(
+        #         "Performance Report done: %s"
+        #         % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        #     )
+        #
+        #     cached_data = serializer.data
+        #
+        #     cache.set(key, cached_data)
 
-            instance.task_id = 1
-            instance.task_status = "SUCCESS"
-
-            serializer = self.get_serializer(instance=instance, many=False)
-
-            _l.debug(
-                "Performance Report done: %s"
-                % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-            )
-
-            cached_data = serializer.data
-
-            cache.set(key, cached_data)
-
-        return Response(cached_data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BackendBalanceReportViewSet(AbstractViewSet):

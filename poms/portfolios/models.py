@@ -141,7 +141,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
             self.master_user.portfolio_id == self.id if self.master_user_id else False
         )
 
-    def first_transaction_date(self, date_field: str) -> date:
+    def first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
         Try to return the 1st transaction date for the portfolio
         """
@@ -311,9 +311,14 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         default=0.0,
         verbose_name=gettext_lazy("nav valuation currency"),
     )
-    nav_previous_day_valuation_currency = models.FloatField(
+    # Should be rename to previous record date
+    nav_previous_register_record_day_valuation_currency = models.FloatField(
         default=0.0,
-        verbose_name=gettext_lazy("nav previous day valuation currency"),
+        verbose_name=gettext_lazy("nav previous register record day valuation currency"),
+    )
+    nav_previous_business_day_valuation_currency = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav previous business day valuation currency"),
     )
     n_shares_previous_day = models.FloatField(
         default=0.0,
@@ -409,12 +414,14 @@ class PortfolioBundle(NamedModel, DataTimeStampedModel):
 
 
 class PortfolioHistory(NamedModel, DataTimeStampedModel):
+    PERIOD_DAILY = 'daily'
     PERIOD_YTD = 'ytd'
     PERIOD_MTD = 'mtd'
     PERIOD_QTD = 'qtd'
     PERIOD_INCEPTION = 'inception'
 
     PERIOD_CHOICES = (
+        (PERIOD_DAILY, "daily"),
         (PERIOD_YTD, "YTD"),
         (PERIOD_MTD, "MTD"),
         (PERIOD_QTD, "QTD"),
