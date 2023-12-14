@@ -266,6 +266,11 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "instrument_type",
                 "pricing_currency",
                 "accrued_currency",
+
+                "co_directional_exposure_currency",
+                "counter_directional_exposure_currency",
+                "exposure_calculation_model",
+
                 "payment_size_detail",
                 "pricing_condition",
                 "price_multiplier",
