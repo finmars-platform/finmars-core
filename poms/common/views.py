@@ -134,65 +134,66 @@ class AbstractEvGroupViewSet(
     ]
 
     # DEPRECATED
-    def list(self, request):
-        if len(request.query_params.getlist("groups_types")) == 0:
-            return Response(
-                {
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": "No groups provided.",
-                    "data": [],
-                }
-            )
-
-        start_time = time.time()
-        master_user = request.user.master_user
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        filtered_qs = self.get_queryset()
-
-        filtered_qs = filtered_qs.filter(id__in=qs)
-
-        filtered_qs = filtered_qs.filter(master_user=master_user)
-
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
-
-        try:
-            filtered_qs.model._meta.get_field("is_enabled")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_enabled = self.request.query_params.get("is_enabled", "true")
-            if is_enabled == "true":
-                filtered_qs = filtered_qs.filter(is_enabled=True)
-
-        try:
-            filtered_qs.model._meta.get_field("is_deleted")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_deleted = self.request.query_params.get("is_deleted", "true")
-            if is_deleted == "true":
-                filtered_qs = filtered_qs.filter(is_deleted=True)
-            else:
-                filtered_qs = filtered_qs.filter(is_deleted=False)
-
-        filtered_qs = handle_groups(
-            filtered_qs, request, self.get_queryset(), content_type
-        )
-
-        page = self.paginate_queryset(filtered_qs)
-
-        _l.debug(f"List {time.time() - start_time} seconds ")
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(filtered_qs)
+    def list(self, request, *args, **kwargs):
+        # if len(request.query_params.getlist("groups_types")) == 0:
+        #     return Response(
+        #         {
+        #             "status": status.HTTP_404_NOT_FOUND,
+        #             "message": "No groups provided.",
+        #             "data": [],
+        #         }
+        #     )
+        # 
+        # start_time = time.time()
+        # master_user = request.user.master_user
+        # 
+        # qs = self.get_queryset()
+        # 
+        # qs = self.filter_queryset(qs)
+        # 
+        # filtered_qs = self.get_queryset()
+        # 
+        # filtered_qs = filtered_qs.filter(id__in=qs)
+        # 
+        # filtered_qs = filtered_qs.filter(master_user=master_user)
+        # 
+        # content_type = ContentType.objects.get_for_model(
+        #     self.serializer_class.Meta.model
+        # )
+        # 
+        # try:
+        #     filtered_qs.model._meta.get_field("is_enabled")
+        # except FieldDoesNotExist:
+        #     pass
+        # else:
+        #     is_enabled = self.request.query_params.get("is_enabled", "true")
+        #     if is_enabled == "true":
+        #         filtered_qs = filtered_qs.filter(is_enabled=True)
+        # 
+        # try:
+        #     filtered_qs.model._meta.get_field("is_deleted")
+        # except FieldDoesNotExist:
+        #     pass
+        # else:
+        #     is_deleted = self.request.query_params.get("is_deleted", "true")
+        #     if is_deleted == "true":
+        #         filtered_qs = filtered_qs.filter(is_deleted=True)
+        #     else:
+        #         filtered_qs = filtered_qs.filter(is_deleted=False)
+        # 
+        # filtered_qs = handle_groups(
+        #     filtered_qs, request, self.get_queryset(), content_type
+        # )
+        # 
+        # page = self.paginate_queryset(filtered_qs)
+        # 
+        # _l.debug(f"List {time.time() - start_time} seconds ")
+        # 
+        # if page is not None:
+        #     return self.get_paginated_response(page)
+        # return Response(filtered_qs)
+    
+        return Response([])
 
     @action(detail=False, methods=["post"], url_path="filtered")
     def filtered_list(self, request, *args, **kwargs):
@@ -396,19 +397,7 @@ class AbstractModelViewSet(
 
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
-
-        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
-
-        return result
-
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["post"], url_path="ev-group")
     def list_ev_group(self, request, *args, **kwargs):
@@ -639,17 +628,17 @@ class AbstractSyncViewSet(AbstractViewSet):
 
 
 def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=False):
-    '''
+    """
     :param model:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param key:
     :param filter_kw: Keyword arguments for method .filter()
     :type filter_kw: dict
     :param include_deleted:
-    '''
-    filter_kw[key + "__isnull"] = False
+    """
+    filter_kw[f"{key}__isnull"] = False
 
-    if value_type not in [10, 20, 40, 'field']:
+    if value_type not in [10, 20, 40, "field"]:
         return Response(
             {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -680,6 +669,7 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             .values_list(key + "__user_code", flat=True)
             .distinct(key + "__user_code")
         )
+
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
@@ -774,7 +764,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_string__isnull=False
+                        value_string__isnull=False,
                     )
                     .order_by("value_string")
                     .values_list("value_string", flat=True)
@@ -785,7 +775,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_float__isnull=False
+                        value_float__isnull=False,
                     )
                     .order_by("value_float")
                     .values_list("value_float", flat=True)
@@ -796,7 +786,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        classifier__name__isnull=False
+                        classifier__name__isnull=False,
                     )
                     .order_by("classifier__name")
                     .values_list("classifier__name", flat=True)
@@ -807,58 +797,50 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_date__isnull=False
+                        value_date__isnull=False,
                     )
                     .order_by("value_date")
                     .values_list("value_date", flat=True)
                     .distinct("value_date")
                 )
 
+        elif content_type_name == "instruments.pricehistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"instrument__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name == "currencies.currencyhistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"currency__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name in [
+            "transactions.transactionclass",
+            "instruments.country",
+        ]:
+            results = (
+                model.objects.all()
+                .order_by(key)
+                .values_list(key, flat=True)
+                .distinct(key)
+            )
+
         else:
-
-            if content_type_name == "instruments.pricehistory":
-
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"instrument__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "currencies.currencyhistory":
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"currency__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "transactions.transactionclass":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            elif content_type_name == "instruments.country":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            else:
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"master_user": master_user},
-                    include_deleted
-                )
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"master_user": master_user},
+                include_deleted,
+            )
 
         _l.debug(f"model {model}")
 
