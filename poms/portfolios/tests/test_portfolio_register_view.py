@@ -1,6 +1,8 @@
 from django.conf import settings
 
 from poms.common.common_base_test import BIG, BaseTestCase
+from poms.configuration.utils import get_default_configuration_code
+from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister
 
 PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
@@ -27,6 +29,14 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.url = f"{PORTFOLIO_API}/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
+        self.pricing_policy = PricingPolicy.objects.create(
+            master_user=self.master_user,
+            owner=self.finmars_bot,
+            user_code=self.random_string(),
+            configuration_code=get_default_configuration_code(),
+            default_instrument_pricing_scheme=None,
+            default_currency_pricing_scheme=None,
+        )
         self.pr_data = {
             "portfolio": self.portfolio.id,
             "linked_instrument": self.instrument.id,
