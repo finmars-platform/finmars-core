@@ -31,6 +31,7 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             "portfolio": self.portfolio.id,
             "linked_instrument": self.instrument.id,
             "valuation_currency": self.db_data.usd.id,
+            "valuation_pricing_policy": self.pricing_policy,
             "name": "name",
             "short_name": "short_name",
             "user_code": "user_code",
