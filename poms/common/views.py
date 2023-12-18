@@ -143,24 +143,24 @@ class AbstractEvGroupViewSet(
         #             "data": [],
         #         }
         #     )
-        # 
+        #
         # start_time = time.time()
         # master_user = request.user.master_user
-        # 
+        #
         # qs = self.get_queryset()
-        # 
+        #
         # qs = self.filter_queryset(qs)
-        # 
+        #
         # filtered_qs = self.get_queryset()
-        # 
+        #
         # filtered_qs = filtered_qs.filter(id__in=qs)
-        # 
+        #
         # filtered_qs = filtered_qs.filter(master_user=master_user)
-        # 
+        #
         # content_type = ContentType.objects.get_for_model(
         #     self.serializer_class.Meta.model
         # )
-        # 
+        #
         # try:
         #     filtered_qs.model._meta.get_field("is_enabled")
         # except FieldDoesNotExist:
@@ -169,7 +169,7 @@ class AbstractEvGroupViewSet(
         #     is_enabled = self.request.query_params.get("is_enabled", "true")
         #     if is_enabled == "true":
         #         filtered_qs = filtered_qs.filter(is_enabled=True)
-        # 
+        #
         # try:
         #     filtered_qs.model._meta.get_field("is_deleted")
         # except FieldDoesNotExist:
@@ -180,19 +180,19 @@ class AbstractEvGroupViewSet(
         #         filtered_qs = filtered_qs.filter(is_deleted=True)
         #     else:
         #         filtered_qs = filtered_qs.filter(is_deleted=False)
-        # 
+        #
         # filtered_qs = handle_groups(
         #     filtered_qs, request, self.get_queryset(), content_type
         # )
-        # 
+        #
         # page = self.paginate_queryset(filtered_qs)
-        # 
+        #
         # _l.debug(f"List {time.time() - start_time} seconds ")
-        # 
+        #
         # if page is not None:
         #     return self.get_paginated_response(page)
         # return Response(filtered_qs)
-    
+
         return Response([])
 
     @action(detail=False, methods=["post"], url_path="filtered")
@@ -638,7 +638,7 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
     """
     filter_kw[f"{key}__isnull"] = False
 
-    if value_type not in [10, 20, 40, "field"]:
+    if value_type not in {10, 20, 40, "field"}:
         return Response(
             {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -648,13 +648,13 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
         )
 
     try:
-        if model._meta.get_field("is_deleted"):
-            if not include_deleted:
-                filter_kw["is_deleted"] = False
+        if model._meta.get_field("is_deleted") and not include_deleted:
+            filter_kw["is_deleted"] = False
+
     except FieldDoesNotExist:
         pass
 
-    if value_type in [10, 20, 40]:
+    if value_type in {10, 20, 40}:
         return (
             model.objects.filter(**filter_kw)
             .order_by(key)
@@ -672,7 +672,7 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
 
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         results = []
 
         content_type_name = request.query_params.get("content_type", None)
@@ -713,7 +713,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         if value_type != "field":
             try:
                 value_type = int(value_type)
-            except Exception as e:
+            except Exception:
                 return Response(
                     {
                         "status": status.HTTP_404_NOT_FOUND,
@@ -721,8 +721,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                         "results": [],
                     }
                 )
-
-        # endregion Exceptions
 
         content_type_pieces = content_type_name.split(".")
 
@@ -770,7 +768,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     .values_list("value_string", flat=True)
                     .distinct("value_string")
                 )
-            if value_type == 20:
+            elif value_type == 20:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
@@ -781,7 +779,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     .values_list("value_float", flat=True)
                     .distinct("value_float")
                 )
-            if value_type == 30:
+            elif value_type == 30:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
@@ -792,7 +790,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     .values_list("classifier__name", flat=True)
                     .distinct("classifier__name")
                 )
-            if value_type == 40:
+            elif value_type == 40:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
