@@ -42,6 +42,9 @@ class PortfolioPortfolioRegisterSerializer(
 ):
     master_user = MasterUserField()
 
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
+
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
     )
@@ -307,6 +310,9 @@ class PortfolioRegisterSerializer(
     ModelWithTimeStampSerializer,
 ):
     master_user = MasterUserField()
+
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
 
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
