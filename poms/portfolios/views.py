@@ -14,7 +14,8 @@ from poms.common.filters import (
     CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
-    NoOpFilter, ModelExtMultipleChoiceFilter, ModelExtUserCodeMultipleChoiceFilter,
+    ModelExtUserCodeMultipleChoiceFilter,
+    NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
@@ -25,23 +26,27 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierV
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
+    PortfolioHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioHistory,
+    PortfolioRegisterRecord,
 )
 from poms.portfolios.serializers import (
+    CalculatePortfolioHistorySerializer,
     FirstTransactionDateRequestSerializer,
     FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
+    PortfolioHistorySerializer,
     PortfolioLightSerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer, PortfolioHistorySerializer, CalculatePortfolioHistorySerializer,
+    PrCalculateRecordsRequestSerializer,
 )
 from poms.portfolios.tasks import (
+    calculate_portfolio_history,
     calculate_portfolio_register_price_history,
-    calculate_portfolio_register_record, calculate_portfolio_history,
+    calculate_portfolio_register_record,
 )
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -76,8 +81,7 @@ class PortfolioFilterSet(FilterSet):
 
 class PortfolioViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects.select_related(
-        "master_user",
-        "owner"
+        "master_user", "owner"
     ).prefetch_related(
         get_attributes_prefetch(),
     )
@@ -265,7 +269,6 @@ class PortfolioViewSet(AbstractModelViewSet):
 class PortfolioRegisterAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = PortfolioRegister
     target_model_serializer = PortfolioRegisterSerializer
-
     permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
@@ -307,7 +310,9 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        serializer = PrCalculateRecordsRequestSerializer(data=request.data, context=self.get_serializer_context())
+        serializer = PrCalculateRecordsRequestSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -411,18 +416,22 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related("master_user", "portfolio", "instrument",
-                                                              "transaction_class", "cash_currency",
-                                                              "valuation_currency", "previous_date_record",
-                                                              "transaction",
-                                                              "portfolio_register")
+    queryset = PortfolioRegisterRecord.objects.select_related(
+        "master_user",
+        "portfolio",
+        "instrument",
+        "transaction_class",
+        "cash_currency",
+        "valuation_currency",
+        "previous_date_record",
+        "transaction",
+        "portfolio_register",
+    )
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-
     ]
     filter_class = PortfolioRegisterRecordFilterSet
     ordering_fields = []
@@ -489,11 +498,11 @@ class PortfolioHistoryFilterSet(FilterSet):
 
     portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
     currency__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Currency)
-    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PricingPolicy)
+    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(
+        model=PricingPolicy
+    )
 
     date = django_filters.DateFromToRangeFilter()
-
-
 
     class Meta:
         model = PortfolioHistory
@@ -501,26 +510,29 @@ class PortfolioHistoryFilterSet(FilterSet):
 
 
 class PortfolioHistoryViewSet(AbstractModelViewSet):
-    queryset = PortfolioHistory.objects.select_related("master_user", "portfolio", "currency",
-                                                       "cost_method", "pricing_policy")
+    queryset = PortfolioHistory.objects.select_related(
+        "master_user", "portfolio", "currency", "cost_method", "pricing_policy"
+    )
     serializer_class = PortfolioHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-
     ]
     filter_class = PortfolioHistoryFilterSet
     ordering_fields = []
 
-
-    @action(detail=False, methods=["post"], url_path="calculate", serializer_class=CalculatePortfolioHistorySerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate",
+        serializer_class=CalculatePortfolioHistorySerializer,
+    )
     def calculate(self, request):
-        _l.info(
-            f"{self.__class__.__name__}.calculate data={request.data}"
+        _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
+        serializer = CalculatePortfolioHistorySerializer(
+            data=request.data, context=self.get_serializer_context()
         )
-        serializer = CalculatePortfolioHistorySerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
