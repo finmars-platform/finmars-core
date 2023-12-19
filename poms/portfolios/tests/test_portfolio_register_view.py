@@ -22,7 +22,7 @@ EXPECTED_RESPONSE_RECORD = {
 }
 
 
-class PortfolioRegisterRecordViewSetTest(BaseTestCase):
+class PortfolioRegisterViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
