@@ -7,7 +7,6 @@ from rest_framework.exceptions import ValidationError
 
 from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
-from poms.instruments.serializers import AccrualCalculationScheduleSerializer
 
 _l = logging.getLogger('poms.api')
 
@@ -66,7 +65,6 @@ class ExpressionSerializer(serializers.Serializer):
     is_eval = serializers.BooleanField()
     result = serializers.ReadOnlyField()
     log = serializers.ReadOnlyField()
-    result = serializers.ReadOnlyField()
     # help_raw = serializers.SerializerMethodField()
     # help = serializers.SerializerMethodField()
 
