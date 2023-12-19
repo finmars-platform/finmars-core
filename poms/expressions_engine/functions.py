@@ -7,8 +7,8 @@ import random
 import re
 import traceback
 import uuid
+from typing import Optional
 
-import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -2119,13 +2119,13 @@ _get_currency_pricing_scheme.evaluator = True
 
 def _add_accrual_schedule(evaluator, instrument, data):
     from poms.users.utils import get_master_user_from_context
+    from poms.instruments.serializers import AccrualCalculationScheduleSerializer
+    from poms.instruments.models import AccrualCalculationSchedule
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
     instrument = _safe_get_instrument(evaluator, instrument)
-
-    from poms.instruments.models import AccrualCalculationSchedule
 
     result = AccrualCalculationSchedule(instrument=instrument)
 
@@ -2157,7 +2157,7 @@ def _add_accrual_schedule(evaluator, instrument, data):
 
     result.save()
 
-    return result
+    return AccrualCalculationScheduleSerializer(result).data
 
 
 _add_accrual_schedule.evaluator = True
@@ -2665,32 +2665,44 @@ def _get_currency(evaluator, currency):
 
 _get_currency.evaluator = True
 
-def _check_currency(evaluator, currency):
+def _check_currency(evaluator, currency) -> Optional[dict]:
+    """
+    Check if the given currency is valid and return its serialized data.
+
+    Parameters:
+    - evaluator: The evaluator object used for expression evaluation.
+    - currency: The currency code to check.
+
+    Returns:
+    - Optional[dict]: The serialized data of the currency if it is valid, or None if it is not valid.
+    """
+
     from poms.currencies.serializers import CurrencySerializer
 
-    try:
-        if isinstance(currency, str) and len(currency) > 3:
-            return None
-        currency = _safe_get_currency(evaluator, currency)
+    if isinstance(currency, str):
+        if len(currency) == 3 and currency.isupper() and currency.isalpha():
+            try:
+                currency_obj = _safe_get_currency(evaluator, currency)
 
-        context = evaluator.context
-        return CurrencySerializer(instance=currency, context=context).data
-    except ExpressionEvalError:
-        return {
-            "id": None,
-            "master_user": None,
-            "user_code": currency,
-            "name": currency,
-            "short_name": currency,
-            "notes": None,
-            "reference_for_pricing": "",
-            "pricing_condition": None,
-            "default_fx_rate": None,
-            "is_deleted": None,
-            "is_enabled": None,
-            "pricing_policies": None,
-            "country": None
-        }
+                context = evaluator.context
+                return CurrencySerializer(instance=currency_obj, context=context).data
+            except ExpressionEvalError:
+                return {
+                    "id": None,
+                    "master_user": None,
+                    "user_code": currency,
+                    "name": currency,
+                    "short_name": currency,
+                    "notes": None,
+                    "reference_for_pricing": "",
+                    "pricing_condition": None,
+                    "default_fx_rate": None,
+                    "is_deleted": None,
+                    "is_enabled": None,
+                    "pricing_policies": None,
+                    "country": None
+                }
+    return None
 
 
 _check_currency.evaluator = True
