@@ -400,7 +400,7 @@ class PortfolioRegisterSerializer(
                 master_user=master_user,
                 id=linked_instrument_type,
             ).first()
-            if isinstance(new_linked_instrument, int)
+            if isinstance(linked_instrument_type, int)
             else InstrumentType.objects.filter(
                 master_user=master_user,
                 user_code=linked_instrument_type,
