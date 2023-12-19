@@ -67,7 +67,7 @@ class BootstrapConfig(AppConfig):
         try:
             user = User.objects.using(settings.DB_DEFAULT).get(username="finmars_bot")
 
-        except Exception as e:
+        except Exception:
             user = User.objects.using(settings.DB_DEFAULT).create(
                 username="finmars_bot"
             )
@@ -78,7 +78,7 @@ class BootstrapConfig(AppConfig):
             )
             _l.info("finmars_bot already exists")
 
-        except Exception as e:
+        except Exception:
             try:
                 _l.info("Member not found, going to create it")
 
@@ -239,7 +239,9 @@ class BootstrapConfig(AppConfig):
 
             try:
                 # TODO, carefull if someday return to multi master user inside one db
-                master_user = MasterUser.objects.all().first()
+                master_user = (
+                    MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+                )
 
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
@@ -248,10 +250,12 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(f"Could not sync base_api_url {e}")
+                raise e
 
             try:
                 current_owner_member = Member.objects.using(settings.DB_DEFAULT).get(
-                    username=response_data["owner"]["username"], master_user=master_user
+                    username=response_data["owner"]["username"],
+                    master_user=master_user,
                 )
 
                 current_owner_member.is_owner = True
@@ -265,9 +269,7 @@ class BootstrapConfig(AppConfig):
                     username=response_data["owner"]["username"]
                 )
 
-                user = User.objects.get(username=response_data["owner"]["username"])
-
-                current_owner_member = Member.objects.create(
+                current_owner_member = Member.objects.using(settings.DB_DEFAULT).create(
                     username=response_data["owner"]["username"],
                     user=user,
                     master_user=master_user,
@@ -357,7 +359,7 @@ class BootstrapConfig(AppConfig):
                     configuration_code=configuration_code,
                     user_code=f"{configuration_code}:default_member_layout",
                 )
-            except Exception as e:
+            except Exception:
                 try:
                     layout = MemberLayout.objects.using(settings.DB_DEFAULT).create(
                         member=member,
@@ -368,7 +370,7 @@ class BootstrapConfig(AppConfig):
                         user_code="default_member_layout",
                     )  # configuration code will be added automatically
                     _l.info(f"Created member layout for {member.username}")
-                except Exception as e:
+                except Exception:
                     _l.info("Could not create member layout" % member.username)
 
     def create_base_folders(self):
