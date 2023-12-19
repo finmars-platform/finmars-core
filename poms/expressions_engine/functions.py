@@ -7,8 +7,8 @@ import random
 import re
 import traceback
 import uuid
+from typing import Optional
 
-import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -2665,16 +2665,27 @@ def _get_currency(evaluator, currency):
 
 _get_currency.evaluator = True
 
-def _check_currency(evaluator, currency):
+def _check_currency(evaluator, currency) -> Optional[dict]:
+    """
+    Check if the given currency is valid and return its serialized data.
+
+    Parameters:
+    - evaluator: The evaluator object used for expression evaluation.
+    - currency: The currency code to check.
+
+    Returns:
+    - Optional[dict]: The serialized data of the currency if it is valid, or None if it is not valid.
+    """
+
     from poms.currencies.serializers import CurrencySerializer
 
     if isinstance(currency, str):
         if len(currency) == 3 and currency.isupper() and currency.isalpha():
             try:
-                currency = _safe_get_currency(evaluator, currency)
+                currency_obj = _safe_get_currency(evaluator, currency)
 
                 context = evaluator.context
-                return CurrencySerializer(instance=currency, context=context).data
+                return CurrencySerializer(instance=currency_obj, context=context).data
             except ExpressionEvalError:
                 return {
                     "id": None,
