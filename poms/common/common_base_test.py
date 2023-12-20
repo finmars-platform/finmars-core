@@ -159,6 +159,48 @@ def change_created_time(instance: models.Model, new_time: datetime):
         )
 
 
+def print_all_users(title: str):
+
+    print(f"=================={title}=======================")
+
+    print("user - default")
+    for user in User.objects.using("default").all():
+        print(user.id, user.username,)
+    print("+")
+    print("user - replica")
+    for user in User.objects.using("replica").all():
+        print(user.id, user.username, )
+
+    print("-"*40)
+
+    print("member - default")
+    for member in Member.objects.using("default").all():
+        print(member.id, member.username)
+    print("+")
+    print("member - replica")
+    for member in Member.objects.using("replica").all():
+        print(member.id, member.username)
+
+    print("-"*40)
+
+    print("master - default")
+    for master in MasterUser.objects.using("default").all():
+        print(master.id, master.name)
+    print("+")
+    print("master - replica")
+    for master in MasterUser.objects.using("replica").all():
+        print(master.id, master.name)
+
+
+def clear_users_tables(db_name: str = settings.DB_REPLICA):
+    from django.db import connections
+
+    with connections[db_name].cursor() as cursor:
+        # for table_name in connection.introspection.table_names():
+        for table_name in ["auth_user", "users_member", "users_masteruser"]:
+            cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE;")
+
+
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
@@ -491,64 +533,21 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return instrument
 
-    @staticmethod
-    def print_all_users(title: str):
-
-        print(f"=================={title}=======================")
-
-        print("user - default")
-        for user in User.objects.using("default").all():
-            print(user.id, user.username,)
-        print("+")
-        print("user - replica")
-        for user in User.objects.using("replica").all():
-            print(user.id, user.username, )
-
-        print("-"*40)
-
-        print("member - default")
-        for member in Member.objects.using("default").all():
-            print(member.id, member.username)
-        print("+")
-        print("member - replica")
-        for member in Member.objects.using("replica").all():
-            print(member.id, member.username)
-
-        print("-"*40)
-
-        print("master - default")
-        for master in MasterUser.objects.using("default").all():
-            print(master.id, master.name)
-        print("+")
-        print("master - replica")
-        for master in MasterUser.objects.using("replica").all():
-            print(master.id, master.name)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ecosystem = None
         self.default_instrument = None
         self.usd = None
-        self.finmars_bot = None
         self.member = None
         self.user = None
         self.master_user = None
         self.db_data = None
 
-    @staticmethod
-    def clear_users_tables(db_name: str = settings.DB_REPLICA):
-        from django.db import connections
-
-        with connections[db_name].cursor() as cursor:
-            # for table_name in connection.introspection.table_names():
-            for table_name in ["auth_user", "users_member", "users_masteruser"]:
-                cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE;")
-
     def init_test_case(self):
         self.client = APIClient()
 
-        self.clear_users_tables()
-        self.print_all_users("start init_test_case")
+        clear_users_tables()
+        print_all_users("start init_test_case")
 
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
@@ -589,7 +588,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             instrument=self.default_instrument,
         )
 
-        self.print_all_users("before DbInitializer")
+        print_all_users("before DbInitializer")
 
         self.db_data = DbInitializer(
             master_user=self.master_user,
@@ -597,14 +596,18 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             ecosystem=self.ecosystem,
         )
 
-        self.print_all_users("end init_test_case")
+        print_all_users("after DbInitializer")
 
 
 class DbInitializer:
     def __init__(self, master_user, member, ecosystem):
         self.master_user = master_user
-        self.member = self.finmars_bot = member
+        self.member = member
         self.default_ecosystem = ecosystem
+
+        print(self.master_user, self.member, self.default_ecosystem)
+
+        print_all_users("init DbInitializer")
 
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
         self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(
@@ -630,7 +633,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 user_code=type_,
                 defaults=dict(
-                    owner=self.finmars_bot,
+                    owner=self.member,
                     instrument_class_id=class_id,
                     name=type_,
                     short_name=type_,
@@ -641,7 +644,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 user_code=name,
                 defaults=dict(
-                    owner=self.finmars_bot,
+                    owner=self.member,
                     instrument_type=instrument_type,
                     name=name,
                     short_name=name,
@@ -666,7 +669,7 @@ class DbInitializer:
             user_code=user_code,
             portfolio=portfolio,
             defaults=dict(
-                owner=self.finmars_bot,
+                owner=self.member,
                 linked_instrument=instrument,
                 valuation_currency=self.usd,
                 name=user_code,
@@ -680,7 +683,7 @@ class DbInitializer:
         for name in PORTFOLIOS:
             account, _ = Account.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
+                owner=self.member,
                 user_code=name,
                 defaults=dict(
                     name=name,
@@ -689,7 +692,7 @@ class DbInitializer:
             )
             portfolio, _ = Portfolio.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
+                owner=self.member,
                 user_code=name,
                 defaults=dict(
                     name=name,
@@ -713,7 +716,7 @@ class DbInitializer:
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             name=UNIFIED,
             defaults=dict(
                 user_code=UNIFIED,
@@ -730,7 +733,7 @@ class DbInitializer:
                 settings.DB_DEFAULT
             ).get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
+                owner=self.member,
                 user_code=name,
                 defaults=dict(
                     group=tr_group.user_code,
@@ -764,7 +767,7 @@ class DbInitializer:
             if not (strategy := model.objects.using(settings.DB_DEFAULT).first()):
                 strategy = model.objects.using(settings.DB_DEFAULT).create(
                     master_user=self.master_user,
-                    owner=self.finmars_bot,
+                    owner=self.member,
                     name=f"strategy_{i+1}",
                 )
             strategies[i + 1] = strategy
@@ -777,7 +780,7 @@ class DbInitializer:
         ).get_or_create(
             master_user=self.master_user,
             user_code=group_name,
-            owner=self.finmars_bot,
+            owner=self.member,
             defaults=dict(
                 name=group_name,
                 short_name=group_name,
@@ -789,7 +792,7 @@ class DbInitializer:
         name = "test_company"
         company, _ = Counterparty.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_counterparty_group(),
             user_code=name,
             defaults=dict(
@@ -803,7 +806,7 @@ class DbInitializer:
         name = "test_responsible"
         responsible, _ = Responsible.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=name,
             defaults=dict(
                 name=name,
