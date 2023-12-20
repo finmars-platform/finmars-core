@@ -501,7 +501,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             print(user.id, user.username,)
         print("+")
         print("user - replica")
-        for user in User.objects.using("ro_replica").all():
+        for user in User.objects.using("replica").all():
             print(user.id, user.username, )
 
         print("-"*40)
@@ -511,7 +511,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             print(member.id, member.username)
         print("+")
         print("member - replica")
-        for member in Member.objects.using("ro_replica").all():
+        for member in Member.objects.using("replica").all():
             print(member.id, member.username)
 
         print("-"*40)
@@ -521,7 +521,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             print(master.id, master.name)
         print("+")
         print("master - replica")
-        for master in MasterUser.objects.using("ro_replica").all():
+        for master in MasterUser.objects.using("replica").all():
             print(master.id, master.name)
 
     def __init__(self, *args, **kwargs):
