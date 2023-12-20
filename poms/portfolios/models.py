@@ -223,6 +223,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             bundle = PortfolioBundle.objects.create(
                 master_user=self.master_user,
                 owner=self.owner,
+                name=self.user_code,
                 user_code=self.user_code,
             )
             bundle.registers.set([self])
