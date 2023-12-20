@@ -164,31 +164,31 @@ def print_all_users(title: str):
     print(f"=================={title}=======================")
 
     print("user - default")
-    for user in User.objects.using("default").all():
+    for user in User.objects.using(settings.DB_DEFAULT).all():
         print(user.id, user.username,)
     print("+")
     print("user - replica")
-    for user in User.objects.using("replica").all():
+    for user in User.objects.using(settings.DB_REPLICA).all():
         print(user.id, user.username, )
 
     print("-"*40)
 
     print("member - default")
-    for member in Member.objects.using("default").all():
+    for member in Member.objects.using(settings.DB_DEFAULT).all():
         print(member.id, member.username)
     print("+")
     print("member - replica")
-    for member in Member.objects.using("replica").all():
+    for member in Member.objects.using(settings.DB_REPLICA).all():
         print(member.id, member.username)
 
     print("-"*40)
 
     print("master - default")
-    for master in MasterUser.objects.using("default").all():
+    for master in MasterUser.objects.using(settings.DB_DEFAULT).all():
         print(master.id, master.name)
     print("+")
     print("master - replica")
-    for master in MasterUser.objects.using("replica").all():
+    for master in MasterUser.objects.using(settings.DB_REPLICA).all():
         print(master.id, master.name)
 
 

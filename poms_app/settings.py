@@ -217,7 +217,6 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 
 USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", True)
 DB_DEFAULT = DEFAULT_DB_ALIAS
-DB_REPLICA = "replica"
 DATABASES = {
     DB_DEFAULT: {
         "ENGINE": "django.db.backends.postgresql",
@@ -230,7 +229,10 @@ DATABASES = {
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
 
     },
-    DB_REPLICA: {
+}
+if USE_DB_REPLICA:
+    DB_REPLICA = "replica"
+    DATABASES[DB_REPLICA] = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
@@ -239,11 +241,13 @@ DATABASES = {
         "PORT": ENV_INT("DB_PORT", 5432),
         # "ATOMIC_REQUESTS": True,
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-    },
-}
-DATABASE_ROUTERS = [
-    "poms_app.db_router.DbRouter",
-]
+        "TEST": {
+            "MIRROR": DB_DEFAULT,
+        },
+    }
+    DATABASE_ROUTERS = [
+        "poms_app.db_router.DbRouter",
+    ]
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
