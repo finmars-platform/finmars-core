@@ -42,6 +42,9 @@ class PortfolioPortfolioRegisterSerializer(
 ):
     master_user = MasterUserField()
 
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
+
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
     )
@@ -308,6 +311,9 @@ class PortfolioRegisterSerializer(
 ):
     master_user = MasterUserField()
 
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
+
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
     )
@@ -394,7 +400,7 @@ class PortfolioRegisterSerializer(
                 master_user=master_user,
                 id=linked_instrument_type,
             ).first()
-            if isinstance(new_linked_instrument, int)
+            if isinstance(linked_instrument_type, int)
             else InstrumentType.objects.filter(
                 master_user=master_user,
                 user_code=linked_instrument_type,

@@ -376,7 +376,7 @@ def calculate_portfolio_register_record(self, task_id):
                                     / record.n_shares_previous_day
                             )
                             if record.n_shares_previous_day
-                            else 0
+                            else portfolio_register.default_price
                         )
                     else:
                         record.dealing_price_valuation_currency = (
