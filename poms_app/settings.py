@@ -217,7 +217,7 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 
 USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", True)
 DB_DEFAULT = DEFAULT_DB_ALIAS
-DB_REPLICA = "ro_replica"
+DB_REPLICA = "replica"
 DATABASES = {
     DB_DEFAULT: {
         "ENGINE": "django.db.backends.postgresql",
@@ -239,7 +239,6 @@ DATABASES = {
         "PORT": ENV_INT("DB_PORT", 5432),
         # "ATOMIC_REQUESTS": True,
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-        "TEST": {"MIRROR": DB_DEFAULT},
     },
 }
 DATABASE_ROUTERS = [

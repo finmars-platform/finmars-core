@@ -491,6 +491,39 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return instrument
 
+    @staticmethod
+    def print_all_users(title: str):
+
+        print(f"=================={title}=======================")
+
+        print("user - default")
+        for user in User.objects.using("default").all():
+            print(user.id, user.username,)
+        print("+")
+        print("user - replica")
+        for user in User.objects.using("ro_replica").all():
+            print(user.id, user.username, )
+
+        print("-"*40)
+
+        print("member - default")
+        for member in Member.objects.using("default").all():
+            print(member.id, member.username)
+        print("+")
+        print("member - replica")
+        for member in Member.objects.using("ro_replica").all():
+            print(member.id, member.username)
+
+        print("-"*40)
+
+        print("master - default")
+        for master in MasterUser.objects.using("default").all():
+            print(master.id, master.name)
+        print("+")
+        print("master - replica")
+        for master in MasterUser.objects.using("ro_replica").all():
+            print(master.id, master.name)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ecosystem = None
@@ -502,8 +535,24 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user = None
         self.db_data = None
 
+        # self.print_all_users("__init__")
+
+    @staticmethod
+    def clear_all_tables(db_name: str = "replica"):
+        from django.db import connections
+
+        with connections[db_name].cursor() as cursor:
+            # for table_name in connection.introspection.table_names():
+            for table_name in ["auth_user", "users_member", "users_masteruser"]:
+                cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE;")
+
     def init_test_case(self):
         self.client = APIClient()
+
+        self.clear_all_tables()
+
+        self.print_all_users("start init_test_case")
+
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
@@ -548,6 +597,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             member=self.member,
             ecosystem=self.ecosystem,
         )
+
+        self.print_all_users("end init_test_case")
 
 
 class DbInitializer:
