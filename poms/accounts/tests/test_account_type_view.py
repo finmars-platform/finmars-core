@@ -4,8 +4,7 @@ from django.conf import settings
 
 from poms.accounts.models import AccountType
 from poms.common.common_base_test import BaseTestCase
-from django.contrib.auth.models import User
-from poms.users.models import Member
+# from poms.accounts.tests.common_procs import print_users_and_members
 
 
 EXPECTED_ACCOUNT_TYPE = {
@@ -86,18 +85,6 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.attribute_type = None
         self.attribute = None
         self.account_type = None
-
-        print(f"user.id={self.user.id} user.username={self.user.username}")
-        for m in User.objects.using("default").all():
-            print(f"default: u.id={m.id} u.username={m.username}")
-        for m in User.objects.using("ro_replica").all():
-            print(f"ro_replica: u.id={m.id} u.username={m.username}")
-
-        print(f"member.id={self.member.id} member.username={self.member.username}")
-        for m in Member.objects.using("default").all():
-            print(f"default: m.id={m.id} m.username={m.username}")
-        for m in Member.objects.using("ro_replica").all():
-            print(f"ro_replica: m.id={m.id} m.username={m.username}")
 
     def test__list_and_default(self):
         self.create_account_type()
