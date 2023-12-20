@@ -44,9 +44,9 @@ from poms.transactions.models import (
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
-MASTER_USER = "finmars_master"
-FINMARS_BOT = "finmars_bot"
-FINMARS_USER = "finmars_user"
+MASTER_USER = "test_master"
+FINMARS_BOT = "test_bot"
+FINMARS_USER = "test_user"
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"
 FX = "FX/Forwards_unified"
@@ -439,7 +439,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 master_user=self.master_user,
                 user_code=type_,
                 defaults=dict(
-                    owner=self.finmars_bot,
+                    owner=self.member,
                     instrument_class_id=InstrumentClass.GENERAL,
                     name=type_,
                     short_name=type_,
@@ -451,7 +451,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         for currency in CURRENCIES:
             Currency.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
+                owner=self.member,
                 user_code=currency[0],
                 defaults=dict(
                     name=currency[0],
@@ -467,7 +467,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             user_code=f"{TYPE_PREFIX}_",
             defaults=dict(
                 master_user=self.master_user,
-                owner=self.finmars_bot,
+                owner=self.member,
                 instrument_class_id=InstrumentClass.GENERAL,
                 name="-",
                 short_name="-",
@@ -479,7 +479,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             master_user=self.master_user,
             user_code="-",
             defaults=dict(
-                owner=self.finmars_bot,
+                owner=self.member,
                 instrument_type=instrument_type,
                 name="-",
                 short_name="-",
@@ -535,10 +535,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user = None
         self.db_data = None
 
-        # self.print_all_users("__init__")
-
     @staticmethod
-    def clear_all_tables(db_name: str = "replica"):
+    def clear_users_tables(db_name: str = settings.DB_REPLICA):
         from django.db import connections
 
         with connections[db_name].cursor() as cursor:
@@ -549,8 +547,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def init_test_case(self):
         self.client = APIClient()
 
-        self.clear_all_tables()
-
+        self.clear_users_tables()
         self.print_all_users("start init_test_case")
 
         self.master_user, _ = MasterUser.objects.using(
@@ -578,7 +575,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 is_owner=True,
             ),
         )
-        self.finmars_bot = self.member
 
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
@@ -592,6 +588,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             currency=self.usd,
             instrument=self.default_instrument,
         )
+
+        self.print_all_users("before DbInitializer")
+
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
