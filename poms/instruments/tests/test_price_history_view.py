@@ -162,7 +162,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
     def create_pricing_policy(self) -> PricingPolicy:
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),

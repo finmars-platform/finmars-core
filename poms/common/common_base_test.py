@@ -537,12 +537,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         super().__init__(*args, **kwargs)
         self.ecosystem = None
         self.default_instrument = None
-        self.usd = None
-        self.member = None
-        self.user = None
         self.master_user = None
+        self.member = None
+        self.usd = None
+        self.user = None
         self.db_data = None
-        self.finmars_bot = None
 
     def init_test_case(self):
         self.client = APIClient()
@@ -576,7 +575,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 is_owner=True,
             ),
         )
-        self.finmars_bot = self.member
+        # self.finmars_bot = self.member
 
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)

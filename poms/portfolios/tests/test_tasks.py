@@ -25,7 +25,7 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
         self.user_code = self.random_string(5)
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
             default_instrument_pricing_scheme=None,

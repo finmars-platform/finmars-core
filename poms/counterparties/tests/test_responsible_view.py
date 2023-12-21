@@ -90,7 +90,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible_group(self) -> ResponsibleGroup:
         return ResponsibleGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -99,7 +99,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible(self) -> Responsible:
         self.responsible = Responsible.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_responsible_group(),
             user_code=self.random_string(),
             name=self.random_string(),
