@@ -618,8 +618,8 @@ class DbInitializer:
         self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(
             user_code="-"
         )
-        self.portfolios = self.create_accounts_and_portfolios()
 
+        self.portfolios = self.create_accounts_and_portfolios()
         self.counter_party = self.create_counter_party()
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
@@ -673,9 +673,9 @@ class DbInitializer:
             master_user=self.master_user,
             user_code=user_code,
             portfolio=portfolio,
+            owner=self.member,
+            linked_instrument=instrument,
             defaults=dict(
-                owner=self.member,
-                linked_instrument=instrument,
                 valuation_currency=self.usd,
                 name=user_code,
                 short_name=user_code,
