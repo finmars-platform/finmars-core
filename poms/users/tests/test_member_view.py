@@ -36,7 +36,7 @@ class MemberViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json["results"]), 1)
 
         username = response_json["results"][0]["user"]["username"]
-        self.assertEqual(username, "finmars_user")
+        self.assertEqual(username, self.user.username)
 
     @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
     def test__create_member(self, invite_member):
