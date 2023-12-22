@@ -738,45 +738,50 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def resolve_subtotal_function(items, column):
-        if (
-            "report_settings" in column
-            and "subtotal_formula_id" in column["report_settings"]
-        ):
-            formula_id = column["report_settings"]["subtotal_formula_id"]
-            if formula_id == 1:
-                return BackendReportSubtotalService.sum(items, column)
-            elif formula_id == 2:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "market_value"
-                )
-            elif formula_id == 3:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "market_value_percent"
-                )
-            elif formula_id == 4:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "exposure"
-                )
-            elif formula_id == 5:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "exposure_percent"
-                )
-            elif formula_id == 6:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "market_value"
-                )
-            elif formula_id == 7:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "market_value_percent"
-                )
-            elif formula_id == 8:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "exposure"
-                )
-            elif formula_id == 9:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "exposure_percent"
-                )
+        return BackendReportSubtotalService.sum(items, column)
+        # TODO
+        # szhitenev 2023-12-21
+        # implement other formulas
+        # if (
+        #     "report_settings" in column
+        #     and "subtotal_formula_id" in column["report_settings"]
+        # ):
+
+            # formula_id = column["report_settings"]["subtotal_formula_id"]
+            # if formula_id == 1:
+            #     return BackendReportSubtotalService.sum(items, column)
+            # elif formula_id == 2:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "market_value"
+            #     )
+            # elif formula_id == 3:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "market_value_percent"
+            #     )
+            # elif formula_id == 4:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "exposure"
+            #     )
+            # elif formula_id == 5:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "exposure_percent"
+            #     )
+            # elif formula_id == 6:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "market_value"
+            #     )
+            # elif formula_id == 7:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "market_value_percent"
+            #     )
+            # elif formula_id == 8:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "exposure"
+            #     )
+            # elif formula_id == 9:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "exposure_percent"
+            #     )
 
     @staticmethod
     def calculate(items, columns):
