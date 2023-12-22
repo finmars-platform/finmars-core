@@ -45,6 +45,11 @@ class DbRouter:
         """
         Which db to use for reading
         """
+
+        # instance = hints.get("instance")  # to handle objects stuck to db
+        # if instance is not None and instance._state.db:
+        #     return instance._state.db
+
         return settings.DB_REPLICA if settings.USE_DB_REPLICA else settings.DB_DEFAULT
 
     @staticmethod

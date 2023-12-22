@@ -85,6 +85,12 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.attribute = None
         self.account_type = None
 
+    def test__aaaaa_stub(self):
+        # This is a dirty hack, for multi-database testing!
+        # It should be the 1st test from all tests, to ensure
+        # replica-db starts mirroring the master one
+        pass
+
     def test__list_and_default(self):
         self.create_account_type()
 
