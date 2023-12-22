@@ -212,19 +212,17 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
-        try:
-            PortfolioBundle.objects.get(
+        bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=self.user_code,
+                defaults=dict(
+                    owner=self.owner,
+                    name=self.user_code,
+                )
             )
-            _l.info("Bundle already exists")
-
-        except PortfolioBundle.DoesNotExist:
-            bundle = PortfolioBundle.objects.create(
-                master_user=self.master_user,
-                owner=self.owner,
-                name=self.user_code,
-                user_code=self.user_code,
+        if created:
+            _l.info(
+                f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
             )
             bundle.registers.set([self])
             bundle.save()
