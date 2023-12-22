@@ -546,10 +546,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def init_test_case(self):
         self.client = APIClient()
 
-        if settings.USE_DB_REPLICA:
-            # clear_users_tables()
-            print_all_users("start init_test_case")
-
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
@@ -589,9 +585,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             instrument=self.default_instrument,
         )
 
-        if settings.USE_DB_REPLICA:
-            print_all_users("before DbInitializer")
-
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
@@ -606,7 +599,7 @@ class DbInitializer:
         self.default_ecosystem = ecosystem
 
         if settings.USE_DB_REPLICA:
-            print_all_users("init DbInitializer")
+            print_all_users("DbInitializer")
 
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
         self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(
