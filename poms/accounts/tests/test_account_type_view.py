@@ -4,7 +4,6 @@ from django.conf import settings
 
 from poms.accounts.models import AccountType
 from poms.common.common_base_test import BaseTestCase
-# from poms.accounts.tests.common_procs import print_users_and_members
 
 
 EXPECTED_ACCOUNT_TYPE = {
