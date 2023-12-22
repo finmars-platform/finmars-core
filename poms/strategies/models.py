@@ -5,7 +5,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
-from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -61,7 +60,7 @@ class _SubgroupSystemAttrsMixin:
     def get_system_attrs():
         '''
         Returns system attributes for subgroups of strategies.
-    
+
         :param strategy_number:
         :type strategy_number: str
         :return: Attributes that front end uses
@@ -142,7 +141,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         return self.master_user.strategy1_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy1(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies1', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
@@ -220,7 +219,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         return self.master_user.strategy2_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy2(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies2', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
@@ -298,7 +297,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         return self.master_user.strategy3_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy3(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies3', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,

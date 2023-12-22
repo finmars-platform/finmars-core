@@ -24,7 +24,7 @@ from poms.common.models import (
     NamedModel,
 )
 from poms.common.utils import date_now, isclose
-from poms.common.wrapper_models import NamedModelAutoMapping
+# from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
@@ -653,7 +653,7 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
 
 
 class InstrumentType(
-    NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
 ):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
@@ -1326,7 +1326,7 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
 
 # noinspection PyUnresolvedReferences
-class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3

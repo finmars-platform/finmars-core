@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now, str_to_date
-from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
@@ -18,7 +17,7 @@ _l = getLogger("poms.portfolios")
 
 
 # noinspection PyUnresolvedReferences
-class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     """
     Portfolio Entity - Way of grouping transactions in user-defined way.
     """
