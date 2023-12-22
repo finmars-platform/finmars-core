@@ -179,6 +179,7 @@ class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
 
 class TransactionTypeFilterSet(FilterSet):
     id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
     user_code = CharExactFilter()
     name = CharFilter()
     short_name = CharFilter()

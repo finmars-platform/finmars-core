@@ -1,16 +1,16 @@
-from __future__ import unicode_literals
-
 import json
 import logging
 import time
 import traceback
 import uuid
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.db.models import ForeignKey
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from poms_app import settings
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
@@ -21,31 +21,73 @@ from poms.common.utils import date_now, date_yesterday
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.expressions_engine import formula
-from poms.instruments.fields import RegisterField, BundleField, PricingPolicyField, SystemPricingPolicyDefault
+from poms.instruments.fields import (
+    BundleField,
+    PricingPolicyField,
+    RegisterField,
+    SystemPricingPolicyDefault,
+)
 from poms.instruments.models import CostMethod
-from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
+from poms.instruments.serializers import (
+    CostMethodSerializer,
+    PricingPolicyViewSerializer,
+)
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.backend_reports_utils import BackendReportHelperService
-from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
-    ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
-    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
-    ReportCounterpartySerializer, ReportComplexTransactionSerializer, ReportCountrySerializer
-from poms.reports.common import Report, PerformanceReport, TransactionReport
-from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
-    TransactionReportCustomFieldField, ReportCurrencyField, ReportPricingPolicyField
-from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
-    PLReportInstance, BalanceReportInstance, PerformanceReportInstance, \
-    PerformanceReportInstanceItem, TransactionReportInstance
-from poms.reports.serializers_helpers import serialize_price_checker_item, serialize_price_checker_item_instrument, \
-    serialize_transaction_report_item, serialize_pl_report_item, serialize_report_item_instrument, \
-    serialize_balance_report_item
+from poms.reports.base_serializers import (
+    ReportAccountSerializer,
+    ReportAccountTypeSerializer,
+    ReportComplexTransactionSerializer,
+    ReportCounterpartySerializer,
+    ReportCountrySerializer,
+    ReportCurrencySerializer,
+    ReportInstrumentSerializer,
+    ReportInstrumentTypeSerializer,
+    ReportPortfolioSerializer,
+    ReportResponsibleSerializer,
+    ReportStrategy1Serializer,
+    ReportStrategy2Serializer,
+    ReportStrategy3Serializer,
+)
+from poms.reports.common import PerformanceReport, Report, TransactionReport
+from poms.reports.fields import (
+    BalanceReportCustomFieldField,
+    PLReportCustomFieldField,
+    ReportCurrencyField,
+    ReportPricingPolicyField,
+    TransactionReportCustomFieldField,
+)
+from poms.reports.models import (
+    BalanceReportCustomField,
+    BalanceReportInstance,
+    PerformanceReportInstance,
+    PerformanceReportInstanceItem,
+    PLReportCustomField,
+    PLReportInstance,
+    TransactionReportCustomField,
+    TransactionReportInstance,
+)
+from poms.reports.serializers_helpers import (
+    serialize_balance_report_item,
+    serialize_pl_report_item,
+    serialize_price_checker_item,
+    serialize_price_checker_item_instrument,
+    serialize_report_item_instrument,
+    serialize_transaction_report_item,
+)
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
-from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
+from poms.strategies.serializers import (
+    Strategy1ViewSerializer,
+    Strategy2ViewSerializer,
+    Strategy3ViewSerializer,
+)
 from poms.transactions.models import TransactionClass
-from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionStatusSerializer
-from poms.users.fields import MasterUserField, HiddenMemberField
-from poms_app import settings
+from poms.transactions.serializers import (
+    ComplexTransactionStatusSerializer,
+    TransactionClassSerializer,
+)
+from poms.users.fields import HiddenMemberField, MasterUserField
 
 _l = logging.getLogger('poms.reports')
 
@@ -501,6 +543,11 @@ class PLReportSerializer(ReportSerializer):
 
     item_instruments = serializers.SerializerMethodField()
 
+
+    period_type = serializers.ChoiceField(allow_null=True,
+                                          choices=Report.PERIOD_TYPE_CHOICES, allow_blank=True,
+                                          required=False)
+
     def get_items(self, obj):
 
         result = []
@@ -834,13 +881,19 @@ class PerformanceReportSerializer(serializers.Serializer):
 
     save_report = serializers.BooleanField(default=False)
 
-    begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
-    end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
+    begin_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
     calculation_type = serializers.ChoiceField(allow_null=True,
-                                               initial=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
-                                               default=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
+                                               initial=PerformanceReport.CALCULATION_TYPE_MODIFIED_DIETZ,
+                                               default=PerformanceReport.CALCULATION_TYPE_MODIFIED_DIETZ,
                                                choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True,
                                                required=False)
+    period_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.PERIOD_TYPE_YTD,
+                                          default=PerformanceReport.PERIOD_TYPE_YTD,
+                                          choices=PerformanceReport.PERIOD_TYPE_CHOICES, allow_blank=True,
+                                          required=False)
+
+
     segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
                                                 default=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
                                                 choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES, allow_blank=True,
@@ -991,7 +1044,6 @@ class PerformanceReportSerializer(serializers.Serializer):
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
-
 
 class PriceHistoryCheckSerializer(ReportSerializer):
     items = serializers.SerializerMethodField()
@@ -1591,7 +1643,6 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
         columns = instance.frontend_request_options['columns']
 
         group_type = groups_types[len(groups_types) - 1]
-
 
         unique_groups = helper_service.get_unique_groups(full_items, group_type, columns)
         unique_groups = helper_service.sort_groups(unique_groups, instance.frontend_request_options)

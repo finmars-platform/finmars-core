@@ -1,18 +1,18 @@
 from datetime import timedelta
 from logging import getLogger
-from typing import Type
 
 from django.db import models, transaction
 from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from typing import Type
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
-from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault
+from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault, CostMethodField
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
@@ -41,6 +41,9 @@ class PortfolioPortfolioRegisterSerializer(
     ModelWithTimeStampSerializer,
 ):
     master_user = MasterUserField()
+
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
 
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
@@ -308,6 +311,9 @@ class PortfolioRegisterSerializer(
 ):
     master_user = MasterUserField()
 
+    valuation_currency = CurrencyField(default=CurrencyDefault())
+    valuation_pricing_policy = PricingPolicyField()
+
     valuation_currency_object = serializers.PrimaryKeyRelatedField(
         source="valuation_currency", read_only=True
     )
@@ -394,7 +400,7 @@ class PortfolioRegisterSerializer(
                 master_user=master_user,
                 id=linked_instrument_type,
             ).first()
-            if isinstance(new_linked_instrument, int)
+            if isinstance(linked_instrument_type, int)
             else InstrumentType.objects.filter(
                 master_user=master_user,
                 user_code=linked_instrument_type,
@@ -414,6 +420,11 @@ class PortfolioRegisterSerializer(
         instrument_object["short_name"] = new_linked_instrument["short_name"]
         instrument_object["user_code"] = new_linked_instrument["user_code"]
         instrument_object["public_name"] = new_linked_instrument["public_name"]
+
+        instrument_object["pricing_currency"] = instance.valuation_currency_id
+        instrument_object["accrued_currency"] = instance.valuation_currency_id
+        instrument_object["co_directional_exposure_currency"] = instance.valuation_currency_id
+        instrument_object["counter_directional_exposure_currency"] = instance.valuation_currency_id
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -451,7 +462,8 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             "cash_amount_valuation_currency",
             "valuation_currency",
             "nav_valuation_currency",
-            "nav_previous_day_valuation_currency",
+            "nav_previous_business_day_valuation_currency",
+            "nav_previous_register_record_day_valuation_currency",
             "n_shares_previous_day",
             "n_shares_added",
             "dealing_price_valuation_currency",
@@ -707,31 +719,35 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
 
 
 class CalculatePortfolioHistorySerializer(serializers.Serializer):
-
     master_user = MasterUserField()
     member = HiddenMemberField()
 
     # SEGMENTATION_TYPE_DAYS = "days"
+    SEGMENTATION_TYPE_DAYS = "days"
     SEGMENTATION_TYPE_BUSINESS_DAYS = "business_days"
     SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS = "business_days_end_of_months"
     SEGMENTATION_TYPE_CHOICES = (
+        (SEGMENTATION_TYPE_DAYS, "Days"),
         (SEGMENTATION_TYPE_BUSINESS_DAYS, "Business Days"),
         (SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, "Business Days End Of Months"),
     )
-
 
     portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
     pricing_policy = PricingPolicyField(default=SystemPricingPolicyDefault())
 
     date = serializers.DateField(required=True)
-    date_from = serializers.DateField(required=False)
+    calculation_period_date_from = serializers.DateField(required=False)
+    # Important, date_from for metrics itself is ready only
+    # its is calculated from date and period_type
 
-    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS, choices=SEGMENTATION_TYPE_CHOICES)
-    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD, choices=PortfolioHistory.PERIOD_CHOICES)
-    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, required=False)
-    performance_method = serializers.ChoiceField(required=False, default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ, choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
+    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+                                                default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+                                                choices=SEGMENTATION_TYPE_CHOICES)
+    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD,
+                                          choices=PortfolioHistory.PERIOD_CHOICES)
+    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO)
+    performance_method = serializers.ChoiceField(required=False,
+                                                 default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
+                                                 choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
-
-
-

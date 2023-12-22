@@ -2091,7 +2091,7 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
             )
             representation["group_object"] = s.data
         except Exception as e:
-            _l.error(f"Error in to_representation: {repr(e)} {traceback.format_exc()}")
+            # _l.info(f"Error in to_representation: {repr(e)} {traceback.format_exc()}")
 
             representation["group_object"] = None
 

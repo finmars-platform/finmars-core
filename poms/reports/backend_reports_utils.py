@@ -1,8 +1,10 @@
 import logging
 
+from django.contrib.contenttypes.models import ContentType
+
 from poms.instruments.models import Instrument
 from poms.obj_attrs.models import GenericAttributeType
-from django.contrib.contenttypes.models import ContentType
+
 _l = logging.getLogger("poms.reports")
 
 
@@ -73,13 +75,12 @@ class BackendReportHelperService:
         identifier_key = self.convert_name_key_to_user_code_key(group_type["key"])
 
         for result_group in result_groups:
+            group_items = [
+                item
+                for item in items
+                if item.get(identifier_key) == result_group["___group_identifier"]
+            ]
 
-            group_items = []
-
-            for item in items:
-                if item.get(identifier_key) == result_group["___group_identifier"]:
-                    group_items.append(item)
-                    
             # _l.info('group_items %s' % group_items)
 
             result_group["subtotal"] = BackendReportSubtotalService.calculate(
@@ -151,7 +152,6 @@ class BackendReportHelperService:
     #     return recursively_flatten("", item)
 
     def flatten_and_convert_item(self, item, helper_dicts, instrument_attribute_types):
-
         # Complicated function, but no need recursion here
         # perforamnce matter
         # basicaly code below doing
@@ -178,70 +178,88 @@ class BackendReportHelperService:
         flattened_item = {}
 
         for root_key, value in item.items():
-
             if root_key in helper_dicts:
                 related_object = helper_dicts[root_key].get(value, {})
 
                 if related_object:
                     for first_level_key, related_value in related_object.items():
-
                         related_prefixed_key = f"{root_key}.{first_level_key}"
 
-                        if first_level_key == "attributes" and isinstance(related_value, list):
+                        if first_level_key == "attributes" and isinstance(
+                            related_value, list
+                        ):
                             for attribute in related_value:
-                                user_code = attribute.get("attribute_type_object", {}).get(
-                                    "user_code"
-                                )
+                                user_code = attribute.get(
+                                    "attribute_type_object", {}
+                                ).get("user_code")
                                 if user_code:
                                     attr_value = self._get_attribute_value(attribute)
-                                    flattened_item[f"{related_prefixed_key}.{user_code}"] = attr_value
-                        else:
+                                    flattened_item[
+                                        f"{related_prefixed_key}.{user_code}"
+                                    ] = attr_value
+                        elif first_level_key in helper_dicts:
+                            related_related_object = helper_dicts[first_level_key].get(
+                                related_value, {}
+                            )
 
-                            if first_level_key in helper_dicts:
+                            if related_related_object:
+                                for (
+                                    second_level_key,
+                                    related_related_value,
+                                ) in related_related_object.items():
+                                    _prefixed_key = f"{root_key}.{first_level_key}.{second_level_key}"
 
-                                related_related_object = helper_dicts[first_level_key].get(related_value, {})
-
-                                if related_related_object:
-
-                                    for second_level_key, related_related_value in related_related_object.items():
-
-                                        _prefixed_key = f"{root_key}.{first_level_key}.{second_level_key}"
-
-                                        flattened_item[_prefixed_key] = related_related_value
-
-                                else:
-
-                                    flattened_item[f"{root_key}.{first_level_key}"] = related_value
+                                    flattened_item[
+                                        _prefixed_key
+                                    ] = related_related_value
 
                             else:
-                                flattened_item[f"{root_key}.{first_level_key}"] = related_value
+                                flattened_item[
+                                    f"{root_key}.{first_level_key}"
+                                ] = related_value
+
+                        else:
+                            flattened_item[
+                                f"{root_key}.{first_level_key}"
+                            ] = related_value
 
                 else:
                     flattened_item[root_key] = value
             else:
                 flattened_item[root_key] = value
 
-        if 'item_type' in item:
-            if item['item_type'] == 2:
-
+        if "item_type" in item:
+            if item["item_type"] == 2:
                 for attribute_type in instrument_attribute_types:
-                    flattened_item[f'instrument.attributes.{attribute_type.user_code}'] = 'Cash & Equivalents'
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "Cash & Equivalents"
 
-                if 'currency.country.name' in flattened_item:
-                    flattened_item['instrument.country.name'] = flattened_item['currency.country.name']
-                    flattened_item['instrument.country.user_code'] = flattened_item['currency.country.user_code']
-                    flattened_item['instrument.country.short_name'] = flattened_item['currency.country.short_name']
+                if "currency.country.name" in flattened_item:
+                    flattened_item["instrument.country.name"] = flattened_item[
+                        "currency.country.name"
+                    ]
+                    flattened_item["instrument.country.user_code"] = flattened_item[
+                        "currency.country.user_code"
+                    ]
+                    flattened_item["instrument.country.short_name"] = flattened_item[
+                        "currency.country.short_name"
+                    ]
 
                 flattened_item['instrument.instrument_type.name'] = 'Cash & Equivalents'
                 flattened_item['instrument.instrument_type.user_code'] = 'Cash & Equivalents'
                 flattened_item['instrument.instrument_type.short_name'] = 'Cash & Equivalents'
 
-            if item['item_type'] == 1:
-
-                if 'instrument.country.name' in flattened_item:
-                    flattened_item['currency.country.name'] = flattened_item['instrument.country.name']
-                    flattened_item['currency.country.user_code'] = flattened_item['instrument.country.user_code']
-                    flattened_item['currency.country.short_name'] = flattened_item['instrument.country.short_name']
+            if item["item_type"] == 1 and "instrument.country.name" in flattened_item:
+                flattened_item["currency.country.name"] = flattened_item[
+                    "instrument.country.name"
+                ]
+                flattened_item["currency.country.user_code"] = flattened_item[
+                    "instrument.country.user_code"
+                ]
+                flattened_item["currency.country.short_name"] = flattened_item[
+                    "instrument.country.short_name"
+                ]
 
         return flattened_item
 
@@ -292,22 +310,23 @@ class BackendReportHelperService:
                 data["item_transaction_classes"]
             )
 
-        content_type = ContentType.objects.get_for_model(
-            Instrument
+        content_type = ContentType.objects.get_for_model(Instrument)
+        instrument_attribute_types = GenericAttributeType.objects.filter(
+            content_type=content_type
         )
-        instrument_attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
 
         # _l.info('data helper_dicts %s' %  helper_dicts)
         # _l.info('data items %s' % data['items'][0])
         for item in data["items"]:
-            original_item = self.flatten_and_convert_item(item, helper_dicts, instrument_attribute_types)
-
+            original_item = self.flatten_and_convert_item(
+                item, helper_dicts, instrument_attribute_types
+            )
 
             if "custom_fields" in item:
                 for custom_field in item["custom_fields"]:
                     original_item[
                         "custom_fields." + custom_field["user_code"]
-                        ] = custom_field["value"]
+                    ] = custom_field["value"]
 
             original_items.append(original_item)
 
@@ -340,7 +359,7 @@ class BackendReportHelperService:
         # Need null's checks for filters of data type number
         if filter_type in ["from_to", "out_of_range"]:
             if (regular_filter_value.get("min_value") is not None) and (
-                    regular_filter_value.get("max_value") is not None
+                regular_filter_value.get("max_value") is not None
             ):
                 return True
         elif isinstance(regular_filter_value, list):
@@ -353,8 +372,7 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-
-        # _l.info(
+       # _l.info(
         #     f"filter_table_rows.filter_value_from_table value_to_filter="
         #     f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
         # )
@@ -393,8 +411,8 @@ class BackendReportHelperService:
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
         elif operation_type == "out_of_range":
             return (
-                    value_to_filter <= filter_by["min_value"]
-                    or value_to_filter >= filter_by["max_value"]
+                value_to_filter <= filter_by["min_value"]
+                or value_to_filter >= filter_by["max_value"]
             )
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
@@ -435,53 +453,51 @@ class BackendReportHelperService:
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
-                # _l.info(
-                #     f"filter_table_rows.match_item item={item} filter_={filter_}"
-                # )
+                #_l.info(#f"filter_table_rows.match_item item={item} filter_={filter_}"# )
 
-                if len(filter_value):
-                    if key_property != "ordering":
-                        if key_property in item and item[key_property] is not None:
-                            if self.check_for_empty_regular_filter(
-                                    filter_value, filter_type
-                            ):
-                                value_from_table = item[key_property]
-                                filter_argument = filter_value
-
-                                if (
-                                        value_type in (10, 30)
-                                        and filter_type != "multiselector"
-                                ):
-                                    value_from_table = value_from_table.lower()
-                                    filter_argument = filter_argument[0].lower()
-
-                                elif value_type == 40:
-                                    _l.info(
-                                        "BackendReportHelperService.filter_table_rows"
-                                        f".match_item value_type=40 "
-                                        f"value_from_table={value_from_table} "
-                                        f"filter_argument={filter_argument}"
-                                    )
-                                    if filter_type in ["equal", "not_equal"]:
-                                        filter_argument = filter_argument[0]
-
-                                    elif filter_type in ["from_to", "out_of_range"]:
-                                        filter_argument["min_value"] = filter_argument[
-                                            "min_value"
-                                        ]
-                                        filter_argument["max_value"] = filter_argument[
-                                            "max_value"
-                                        ]
-
-                                if not self.filter_value_from_table(
-                                        value_from_table, filter_argument, filter_type
-                                ):
-                                    return False
-                        elif exclude_empty_cells or (
-                                key_property in ["name", "instrument"]
-                                and item["item_type"] != 1
+                if len(filter_value) and key_property != "ordering":
+                    if key_property in item and item[key_property] is not None:
+                        if self.check_for_empty_regular_filter(
+                            filter_value, filter_type
                         ):
-                            return False
+                            value_from_table = item[key_property]
+                            filter_argument = filter_value
+
+                            if (
+                                value_type in (10, 30)
+                                and filter_type != "multiselector"
+                            ):
+                                value_from_table = value_from_table.lower()
+                                filter_argument = filter_argument[0].lower()
+
+                            elif value_type == 40:
+                                _l.info(
+                                    "BackendReportHelperService.filter_table_rows"
+                                    f".match_item value_type=40 "
+                                    f"value_from_table={value_from_table} "
+                                    f"filter_argument={filter_argument}"
+                                )
+                                if filter_type in ["equal", "not_equal"]:
+                                    filter_argument = filter_argument[0]
+
+                                elif filter_type in ["from_to", "out_of_range"]:
+                                    filter_argument["min_value"] = filter_argument[
+                                        "min_value"
+                                    ]
+                                    filter_argument["max_value"] = filter_argument[
+                                        "max_value"
+                                    ]
+
+                            if not self.filter_value_from_table(
+                                value_from_table, filter_argument, filter_type
+                            ):
+                                return False
+
+                    elif exclude_empty_cells or (
+                        key_property in ["name", "instrument"]
+                        and item["item_type"] != 1
+                    ):
+                        return False
             return True
 
         return [item for item in items if match_item(item)]
@@ -517,11 +533,11 @@ class BackendReportHelperService:
 
             # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
 
-            _l.info(f'filter_by_groups_filters after len {len(filtered_items)}')
+            _l.info(f"filter_by_groups_filters after len {len(filtered_items)}")
 
             return filtered_items
 
-        _l.info(f'filter_by_groups_filters after len {len(items)}')
+        _l.info(f"filter_by_groups_filters after len {len(items)}")
 
         return items
 
@@ -597,10 +613,7 @@ class BackendReportHelperService:
             if a[property] < b[property]:
                 return -1 * sort_order
 
-            if a[property] > b[property]:
-                return 1 * sort_order
-
-            return 0
+            return 1 * sort_order if a[property] > b[property] else 0
 
         return comparator
 
@@ -623,7 +636,7 @@ class BackendReportHelperService:
             property = "___group_name"  # TODO consider refactor someday
 
             if options["groups_order"] == "desc":
-                property = "-" + property
+                property = f"-{property}"
 
             return self.sort_items_by_property(items, property)
 
@@ -634,20 +647,19 @@ class BackendReportHelperService:
             property = options["ordering"]
 
             if options["items_order"] == "desc":
-                property = "-" + property
+                property = f"-{property}"
 
             return self.sort_items_by_property(items, property)
 
         return items
 
     def calculate_market_value_percent(self, items, total_market_value):
-        if total_market_value:
-            for item in items:
+        for item in items:
+            if total_market_value:
                 item["market_value_percent"] = round(
                     (item["market_value"] / total_market_value) * 100, 2
                 )
-        else:
-            for item in items:
+            else:
                 item["market_value_percent"] = "No Data"
 
         return items
@@ -726,63 +738,65 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def resolve_subtotal_function(items, column):
-        if (
-                "report_settings" in column
-                and "subtotal_formula_id" in column["report_settings"]
-        ):
-            formula_id = column["report_settings"]["subtotal_formula_id"]
-            if formula_id == 1:
-                return BackendReportSubtotalService.sum(items, column)
-            elif formula_id == 2:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "market_value"
-                )
-            elif formula_id == 3:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "market_value_percent"
-                )
-            elif formula_id == 4:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "exposure"
-                )
-            elif formula_id == 5:
-                return BackendReportSubtotalService.get_weighted_value(
-                    items, column["key"], "exposure_percent"
-                )
-            elif formula_id == 6:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "market_value"
-                )
-            elif formula_id == 7:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "market_value_percent"
-                )
-            elif formula_id == 8:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "exposure"
-                )
-            elif formula_id == 9:
-                return BackendReportSubtotalService.get_weighted_average_value(
-                    items, column["key"], "exposure_percent"
-                )
+        return BackendReportSubtotalService.sum(items, column)
+        # TODO
+        # szhitenev 2023-12-21
+        # implement other formulas
+        # if (
+        #     "report_settings" in column
+        #     and "subtotal_formula_id" in column["report_settings"]
+        # ):
+
+            # formula_id = column["report_settings"]["subtotal_formula_id"]
+            # if formula_id == 1:
+            #     return BackendReportSubtotalService.sum(items, column)
+            # elif formula_id == 2:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "market_value"
+            #     )
+            # elif formula_id == 3:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "market_value_percent"
+            #     )
+            # elif formula_id == 4:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "exposure"
+            #     )
+            # elif formula_id == 5:
+            #     return BackendReportSubtotalService.get_weighted_value(
+            #         items, column["key"], "exposure_percent"
+            #     )
+            # elif formula_id == 6:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "market_value"
+            #     )
+            # elif formula_id == 7:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "market_value_percent"
+            #     )
+            # elif formula_id == 8:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "exposure"
+            #     )
+            # elif formula_id == 9:
+            #     return BackendReportSubtotalService.get_weighted_average_value(
+            #         items, column["key"], "exposure_percent"
+            #     )
 
     @staticmethod
     def calculate(items, columns):
-        result = {}
-        for column in columns:
-            if column["value_type"] == 20:
-                result[
-                    column["key"]
-                ] = BackendReportSubtotalService.resolve_subtotal_function(
-                    items, column
-                )
-        return result
+        return {
+            column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
+                items, column
+            )
+            for column in columns
+            if column["value_type"] == 20
+        }
 
     @staticmethod
     def calculate_column(items, column):
-        result = {
+        return {
             column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
                 items, column
             )
         }
-        return result

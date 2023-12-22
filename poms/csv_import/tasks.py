@@ -7,7 +7,6 @@ from django.db import transaction
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
-from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvImportScheme
 from poms.system_messages.handlers import send_system_message
 
@@ -18,6 +17,8 @@ storage = get_storage()
 
 @finmars_task(name="csv_import.simple_import", bind=True)
 def simple_import(self, task_id, procedure_instance_id=None):
+    from poms.csv_import.handlers import SimpleImportProcess
+
     try:
         celery_task = CeleryTask.objects.get(pk=task_id)
         # Important (record history rely on that)
@@ -187,3 +188,41 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
         procedure_instance.save()
+
+
+
+@finmars_task(name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True)
+def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_instance_id=None):
+    from poms.csv_import.handlers import SimpleImportFinalUpdatesProcess
+
+    try:
+        celery_task = CeleryTask.objects.get(pk=task_id)
+        # Important (record history rely on that)
+        celery_task.celery_task_id = self.request.id
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.save()
+    except Exception as e:
+        err_msg = (
+            f"simple_import.simple_import_bulk_insert_final_updates_procedure celery_task {task_id} error {repr(e)} "
+            f"traceback {traceback.format_exc()}"
+        )
+        _l.error(err_msg)
+        raise RuntimeError(err_msg) from e
+
+    try:
+        instance = SimpleImportFinalUpdatesProcess(
+            task_id=task_id,
+            procedure_instance_id=procedure_instance_id,
+        )
+
+        instance.process()
+
+        return json.dumps(instance.task.result_object, default=str)
+
+    except Exception as e:
+        err_msg = f"simple_import.data_csv_file_import_by_procedure_json celery_task error {repr(e)} trace {traceback.format_exc()}"
+        _l.error(err_msg)
+
+        celery_task.error_message = err_msg
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.save()

@@ -65,7 +65,6 @@ class ExpressionSerializer(serializers.Serializer):
     is_eval = serializers.BooleanField()
     result = serializers.ReadOnlyField()
     log = serializers.ReadOnlyField()
-
     # help_raw = serializers.SerializerMethodField()
     # help = serializers.SerializerMethodField()
 

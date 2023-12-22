@@ -42,6 +42,19 @@ class Report(BaseReport):
         (TYPE_PL, "P&L"),
     )
 
+    PERIOD_TYPE_DAILY = "daily"
+    PERIOD_TYPE_MTD = "mtd"
+    PERIOD_TYPE_QTD = "qtd"
+    PERIOD_TYPE_YTD = "ytd"
+    PERIOD_TYPE_INCEPTION = "inception"
+    PERIOD_TYPE_CHOICES = (
+        (PERIOD_TYPE_DAILY, "Daily"),
+        (PERIOD_TYPE_MTD, "MTD"),
+        (PERIOD_TYPE_QTD, "QTD"),
+        (PERIOD_TYPE_YTD, "YTD"),
+        (PERIOD_TYPE_INCEPTION, "Inception"),
+    )
+
     def __init__(
             self,
             id=None,
@@ -92,6 +105,8 @@ class Report(BaseReport):
             page=1,
             page_size=40,
             count=0,
+
+            period_type=None,
 
     ):
         super(Report, self).__init__(
@@ -176,6 +191,8 @@ class Report(BaseReport):
         self.page = page
         self.page_size = page_size
         self.count = count
+
+        self.period_type = period_type
 
     def __str__(self):
         return (
@@ -321,6 +338,19 @@ class PerformanceReport(BaseReport):
     report_type = 0  # VirtualTransaction
     report_date = date.min  # VirtualTransaction
 
+    PERIOD_TYPE_DAILY = "daily"
+    PERIOD_TYPE_MTD = "mtd"
+    PERIOD_TYPE_QTD = "qtd"
+    PERIOD_TYPE_YTD = "ytd"
+    PERIOD_TYPE_INCEPTION = "inception"
+    PERIOD_TYPE_CHOICES = (
+        (PERIOD_TYPE_DAILY, "Daily"),
+        (PERIOD_TYPE_MTD, "MTD"),
+        (PERIOD_TYPE_QTD, "QTD"),
+        (PERIOD_TYPE_YTD, "YTD"),
+        (PERIOD_TYPE_INCEPTION, "Inception"),
+    )
+
     CALCULATION_TYPE_TIME_WEIGHTED = "time_weighted"
     CALCULATION_TYPE_MODIFIED_DIETZ = "modified_dietz"
     CALCULATION_TYPE_CHOICES = (
@@ -370,6 +400,7 @@ class PerformanceReport(BaseReport):
             strategies3=None,
             custom_fields=None,
             items=None,
+            period_type=PERIOD_TYPE_YTD
     ):
         super().__init__(
             id=id,
@@ -382,7 +413,7 @@ class PerformanceReport(BaseReport):
         self.has_errors = False
 
         d = date_now() - timedelta(days=1)
-        self.begin_date = begin_date or date(d.year, 1, 1)
+        self.begin_date = begin_date
         self.end_date = end_date or d
 
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
@@ -422,6 +453,11 @@ class PerformanceReport(BaseReport):
         self.item_strategies1 = []
         self.item_strategies2 = []
         self.item_strategies3 = []
+
+        self.period_type = period_type
+
+        if not self.begin_date and not self.period_type:
+            self.period_type = 'ytd'
 
     def __str__(self):
         return f"PerformanceReport:{self.id}"
