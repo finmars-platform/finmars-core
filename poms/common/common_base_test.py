@@ -1,5 +1,6 @@
 import random
 import string
+import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
@@ -547,7 +548,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.client = APIClient()
 
         if settings.USE_DB_REPLICA:
-            clear_users_tables()
+            # clear_users_tables()
             print_all_users("start init_test_case")
 
         self.master_user, _ = MasterUser.objects.using(
@@ -601,6 +602,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
         if settings.USE_DB_REPLICA:
             print_all_users("after DbInitializer")
+            time.sleep(0.5)  # give time to update replica values
 
 
 class DbInitializer:

@@ -238,6 +238,7 @@ class PortfolioRegisterCreateTest(BaseTestCase):
 
         created_in = Instrument.objects.filter(user_code=self.pr_user_code).first()
         self.assertIsNotNone(created_in)
+        self.assertTrue(created_in.has_linked_with_portfolio)
 
         self.assertEqual(response_json["user_code"], self.pr_user_code)
         self.assertEqual(

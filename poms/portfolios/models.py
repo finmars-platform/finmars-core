@@ -208,7 +208,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if self.linked_instrument:
+        if self.linked_instrument and not self.linked_instrument.has_linked_with_portfolio:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
