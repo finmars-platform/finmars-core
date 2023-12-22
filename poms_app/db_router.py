@@ -1,8 +1,44 @@
 from django.conf import settings
 
 
+APPS = {
+    "poms.history",
+    "poms.system",
+    "poms.users",
+    "poms.iam",
+    "poms.notifications",
+    "poms.obj_attrs",
+    "poms.ui",
+    "poms.accounts",
+    "poms.counterparties",
+    "poms.currencies",
+    "poms.instruments",
+    "poms.portfolios",
+    "poms.strategies",
+    "poms.transactions",
+    "poms.integrations",
+    "poms.reports",
+    "poms.csv_import",
+    "poms.transaction_import",
+    "poms.complex_import",
+    "poms.reference_tables",
+    "poms.celery_tasks",
+    "poms.reconciliation",
+    "poms.file_reports",
+    "poms.pricing",
+    "poms.schedules",
+    "poms.procedures",
+    "poms.credentials",
+    "poms.vault",
+    "poms.system_messages",
+    "poms.configuration",
+    "poms.auth_tokens",
+    "poms.widgets",
+}
+
+
 class DbRouter:
-    route_app_labels = settings.INSTALLED_APPS
+    route_app_labels = APPS
 
     @staticmethod
     def db_for_read(model, **hints):
