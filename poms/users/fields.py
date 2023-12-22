@@ -10,19 +10,13 @@ from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import MasterUser, Member
 
 
-class CurrentMasterUserDefault(object):
+class CurrentMasterUserDefault:
     requires_context = True
 
     def set_context(self, serializer_field):
-        # if 'master_user' in serializer_field.context:
-        #     master_user = serializer_field.context['master_user']
-        # else:
-        #     request = serializer_field.context['request']
-        #     master_user = request.user.master_user
-
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-
-        self._master_user = master_user
+        self._master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
+            base_api_url=settings.BASE_API_URL,
+        )
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
@@ -30,7 +24,7 @@ class CurrentMasterUserDefault(object):
         return self._master_user
 
 
-class CurrentUserDefaultLocal(object):
+class CurrentUserDefaultLocal:
     requires_context = True
 
     def set_context(self, serializer_field):
