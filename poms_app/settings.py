@@ -215,31 +215,30 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", False)
+USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", True)
+DB_ENGINE = "django.db.backends.postgresql"
 DB_DEFAULT = DEFAULT_DB_ALIAS
 DB_REPLICA = "replica"
 DATABASES = {
     DB_DEFAULT: {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": DB_ENGINE,
         "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
-        # "ATOMIC_REQUESTS": True,
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
 
     },
 }
 if USE_DB_REPLICA:
     DATABASES[DB_REPLICA] = {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": ENV_STR("DB_NAME", "finmars_dev"),
-        "USER": ENV_STR("DB_USER", "postgres"),
-        "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
-        "HOST": ENV_STR("DB_HOST", "localhost"),
-        "PORT": ENV_INT("DB_PORT", 5432),
-        # "ATOMIC_REQUESTS": True,
+        "ENGINE": DB_ENGINE,
+        "NAME": ENV_STR("REPLICA_DB_NAME", "finmars_dev"),
+        "USER": ENV_STR("REPLICA_DB_USER", "postgres"),
+        "PASSWORD": ENV_STR("REPLICA_DB_PASSWORD", "postgres"),
+        "HOST": ENV_STR("REPLICA_DB_HOST", "localhost"),
+        "PORT": ENV_INT("REPLICA_DB_PORT", 5432),
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
         "TEST": {
             "MIRROR": DB_DEFAULT,
