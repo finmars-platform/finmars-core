@@ -1,6 +1,5 @@
 import random
 import string
-import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
@@ -576,14 +575,13 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 is_owner=True,
             ),
         )
-        # self.finmars_bot = self.member
 
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
 
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
-        self.ecosystem = EcosystemDefault.objects.using(
+        self.ecosystem, _ = EcosystemDefault.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
@@ -600,18 +598,12 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             ecosystem=self.ecosystem,
         )
 
-        if settings.USE_DB_REPLICA:
-            print_all_users("after DbInitializer")
-            time.sleep(0.5)  # give time to update replica values
-
 
 class DbInitializer:
     def __init__(self, master_user, member, ecosystem):
         self.master_user = master_user
         self.member = member
         self.default_ecosystem = ecosystem
-
-        print(self.master_user, self.member, self.default_ecosystem)
 
         if settings.USE_DB_REPLICA:
             print_all_users("init DbInitializer")
