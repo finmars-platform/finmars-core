@@ -47,17 +47,20 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
-
-        self.create_local_configuration()
-        self.add_view_and_manage_permissions()
-        self.load_master_user_data()
-        self.create_finmars_bot()
-        self.create_member_layouts()
-        self.create_base_folders()
-        self.register_at_authorizer_service()
-        self.sync_celery_workers()
-
-        self.create_iam_access_policies_templates()
+        if (
+            "test" not in sys.argv
+            and "makemigrations" not in sys.argv
+            and "migrate" not in sys.argv
+        ):
+            self.create_local_configuration()
+            self.add_view_and_manage_permissions()
+            self.load_master_user_data()
+            self.create_finmars_bot()
+            self.create_member_layouts()
+            self.create_base_folders()
+            self.register_at_authorizer_service()
+            self.sync_celery_workers()
+            self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
@@ -95,16 +98,11 @@ class BootstrapConfig(AppConfig):
     def create_iam_access_policies_templates(self):
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
-        if (
-            "test" not in sys.argv
-            and "makemigrations" not in sys.argv
-            and "migrate" not in sys.argv
-        ):
-            _l.info("create_iam_access_policies_templates")
+        _l.info("create_iam_access_policies_templates")
 
-            create_base_iam_access_policies_templates()
+        create_base_iam_access_policies_templates()
 
-            _l.info("create_iam_access_policies_templates done")
+        _l.info("create_iam_access_policies_templates done")
 
     # Probably deprecated
     def add_view_and_manage_permissions(self):
