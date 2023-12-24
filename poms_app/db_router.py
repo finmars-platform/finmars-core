@@ -71,4 +71,5 @@ class DbRouter:
         """
         Migrations are allowed only in master/default db
         """
-        return db == settings.DB_DEFAULT
+        # return db == settings.DB_DEFAULT
+        return True
