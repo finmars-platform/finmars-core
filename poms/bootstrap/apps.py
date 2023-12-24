@@ -68,23 +68,17 @@ class BootstrapConfig(AppConfig):
             user = User.objects.get(username="finmars_bot")
 
         except Exception:
-            user = User.objects.create(
-                username="finmars_bot"
-            )
+            user = User.objects.create(username="finmars_bot")
 
         try:
-            member = Member.objects.get(
-                user__username="finmars_bot"
-            )
+            member = Member.objects.get(user__username="finmars_bot")
             _l.info("finmars_bot already exists")
 
         except Exception:
             try:
                 _l.info("Member not found, going to create it")
 
-                master_user = MasterUser.objects.get(
-                    base_api_url=settings.BASE_API_URL
-                )
+                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
                 member = Member.objects.create(
                     user=user,
@@ -101,7 +95,11 @@ class BootstrapConfig(AppConfig):
     def create_iam_access_policies_templates(self):
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
-        if "test" not in sys.argv:
+        if (
+            "test" not in sys.argv
+            and "makemigrations" not in sys.argv
+            and "migrate" not in sys.argv
+        ):
             _l.info("create_iam_access_policies_templates")
 
             create_base_iam_access_policies_templates()
@@ -155,9 +153,7 @@ class BootstrapConfig(AppConfig):
             user = None
 
             try:
-                user = User.objects.get(
-                    username=response_data["owner"]["username"]
-                )
+                user = User.objects.get(username=response_data["owner"]["username"])
 
                 _l.info("Owner exists")
 
@@ -239,9 +235,7 @@ class BootstrapConfig(AppConfig):
 
             try:
                 # TODO, carefull if someday return to multi master user inside one db
-                master_user = (
-                    MasterUser.objects.all().first()
-                )
+                master_user = MasterUser.objects.all().first()
 
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
@@ -265,9 +259,7 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Could not find current owner member {e} ")
 
-                user = User.objects.get(
-                    username=response_data["owner"]["username"]
-                )
+                user = User.objects.get(username=response_data["owner"]["username"])
 
                 current_owner_member = Member.objects.create(
                     username=response_data["owner"]["username"],
