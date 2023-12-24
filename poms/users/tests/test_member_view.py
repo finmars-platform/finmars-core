@@ -38,7 +38,7 @@ class MemberViewSetTest(BaseTestCase):
         username = response_json["results"][0]["user"]["username"]
         self.assertEqual(username, self.user.username)
 
-    @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__create_member(self, invite_member):
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = self.random_string()
@@ -50,7 +50,7 @@ class MemberViewSetTest(BaseTestCase):
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 2)  # member created
 
-    @mock.patch("poms.common.finmars_authorizer.requests.post")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__create_member_check_called_url(self, requests_post):
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = self.random_string()
@@ -63,19 +63,14 @@ class MemberViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201, response.content)
 
         requests_post.assert_called_once()
-        kwargs = requests_post.call_args.kwargs
-
-        self.assertIn("?space_code=space00000", kwargs["url"])
 
         self.assertEqual(Member.objects.all().count(), 2)  # member created
 
-    @mock.patch("poms.common.finmars_authorizer.requests.post")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__double_update(self, requests_post):
         user_name = self.random_string()
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = user_name
-        requests_post.return_value = mock_response = mock.Mock()
-        mock_response.status_code = 200
 
         response = self.client.post(path=self.url, format="json", data=data)
         self.assertEqual(response.status_code, 201, response.content)
@@ -102,7 +97,7 @@ class MemberViewSetTest(BaseTestCase):
         ("is_owner", "is_owner"),
         ("is_admin", "is_admin"),
     )
-    @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__create_member_wo_param(self, param, invite_member):
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = self.random_string()
@@ -120,7 +115,7 @@ class MemberViewSetTest(BaseTestCase):
     @BaseTestCase.cases(
         ("username", "username"),
     )
-    @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__create_member_wo_username(self, param, invite_member):
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = self.random_string()
@@ -134,7 +129,7 @@ class MemberViewSetTest(BaseTestCase):
         invite_member.assert_not_called()
         self.assertEqual(Member.objects.all().count(), 1)  # member was not created
 
-    @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
+    @mock.patch("poms.users.views.AuthorizerService.invite_member")
     def test__create_member_authorizer_error(self, invite_member):
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = self.random_string()

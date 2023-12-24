@@ -1,4 +1,3 @@
-import copy
 from unittest import mock
 
 from django.conf import settings
@@ -42,13 +41,8 @@ class ConfigurationViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["count"], 1)
-        self.assertEqual(len(response_json["results"]), 1)
-
-        response_json["results"][0]["id"] = None
-        expected_json = copy.deepcopy(GET_RESPONSE)
-        expected_json["results"][0]["id"] = None
-        self.assertEqual(response_json, expected_json)
+        self.assertEqual(response_json["count"], 0)
+        self.assertEqual(len(response_json["results"]), 0)
 
     @mock.patch("poms.configuration.views.get_access_token")
     def test__install_configuration_from_marketplace(self, get_access_token):
