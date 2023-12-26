@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
@@ -19,6 +20,10 @@ class SchedulesConfig(AppConfig):
         self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            _l.info("update_periodic_tasks ignored - TEST MODE")
+            return
 
         _l.info(f"update_periodic_tasks start, using {using} database")
 
@@ -129,6 +134,10 @@ class SchedulesConfig(AppConfig):
         self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from poms.schedules.utils import sync_schedules
+
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            _l.info("sync_user_schedules_with_celery_beat ignored - TEST MODE")
+            return
 
         _l.info(f"sync_user_schedules_with_celery_beat start, using {using} database")
 
