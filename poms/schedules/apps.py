@@ -1,14 +1,18 @@
+import logging
+
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
+
+_l = logging.getLogger("provision")
 
 
 class SchedulesConfig(AppConfig):
     name = "poms.schedules"
 
     def ready(self):
-        post_migrate.connect(self.update_periodic_tasks, sender=self)
         post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
+        post_migrate.connect(self.update_periodic_tasks, sender=self)
 
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(
@@ -16,7 +20,7 @@ class SchedulesConfig(AppConfig):
     ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
-        print(f"\n\n!!!!!!!!!!!!!!! using={using} !!!!!!!!!!!!!!!!\n\n")
+        _l.info(f"update_periodic_tasks start, using {using} database")
 
         crontabs = {}
         crontabs["every_30_min"], _ = CrontabSchedule.objects.using(
@@ -124,5 +128,7 @@ class SchedulesConfig(AppConfig):
         self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from poms.schedules.utils import sync_schedules
+
+        _l.info(f"sync_user_schedules_with_celery_beat start, using {using} database")
 
         sync_schedules(using=using)

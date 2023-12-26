@@ -54,8 +54,6 @@ def handle_schedules(using=settings.DB_DEFAULT):
 
 
 def sync_schedules(using=settings.DB_DEFAULT):
-    _l.info("sync_schedules start")
-
     try:
         handle_schedules(using=using)
 
