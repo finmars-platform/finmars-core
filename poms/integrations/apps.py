@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
@@ -72,18 +71,18 @@ class IntegrationsConfig(AppConfig):
             },
         ]
 
-        providers_exists = DataProvider.objects.using(settings.DB_DEFAULT).values_list(
+        providers_exists = DataProvider.objects.using(using).values_list(
             "pk", flat=True
         )
 
-        for type in provider_types:
-            if type["id"] in providers_exists:
-                item = DataProvider.objects.using(settings.DB_DEFAULT).get(id=type["id"])
+        for type_ in provider_types:
+            if type_["id"] in providers_exists:
+                item = DataProvider.objects.using(using).get(id=type_["id"])
 
-                item.name = type["name"]
-                item.user_code = type["user_code"]
+                item.name = type_["name"]
+                item.user_code = type_["user_code"]
 
                 item.save()
 
             else:
-                DataProvider.objects.using(settings.DB_DEFAULT).create(**type)
+                DataProvider.objects.using(using).create(**type_)
