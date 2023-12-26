@@ -11,8 +11,8 @@ class SchedulesConfig(AppConfig):
     name = "poms.schedules"
 
     def ready(self):
-        post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
         post_migrate.connect(self.update_periodic_tasks, sender=self)
+        post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
 
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(
@@ -122,6 +122,7 @@ class SchedulesConfig(AppConfig):
                 item.save()
 
             else:
+                _l.info(f"create PeriodicTask data={task}")
                 PeriodicTask.objects.using(using).create(**task)
 
     def sync_user_schedules_with_celery_beat(
