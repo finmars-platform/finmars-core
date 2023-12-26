@@ -96,7 +96,7 @@ class SchedulesConfig(AppConfig):
 
         for task in periodic_tasks:
             if task["id"] in periodic_tasks_exists:
-                item = PeriodicTask.objects.get(id=task["id"])
+                item = PeriodicTask.objects.using(using).get(id=task["id"])
                 item.name = task["name"]
                 item.task = task["task"]
                 item.crontab = task["crontab"]
