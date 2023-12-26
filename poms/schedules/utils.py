@@ -42,8 +42,8 @@ def handle_schedules(using=settings.DB_DEFAULT):
 
     _l.info(
         f"sync_schedules: existing_ids {existing_ids} "
-        f"updated {len(schedules)} "
-        f"deleted {PeriodicTask.objects.using(using).exclude(id__in=existing_ids).count()}"
+        f"updated {len(schedules)} deleted "
+        f"{PeriodicTask.objects.using(using).exclude(id__in=existing_ids).count()}"
     )
 
     PeriodicTask.objects.using(using).exclude(

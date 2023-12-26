@@ -16,6 +16,8 @@ class SchedulesConfig(AppConfig):
     ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
+        print(f"\n\n!!!!!!!!!!!!!!! using={using} !!!!!!!!!!!!!!!!\n\n")
+
         crontabs = {}
         crontabs["every_30_min"], _ = CrontabSchedule.objects.using(
             using
@@ -26,7 +28,9 @@ class SchedulesConfig(AppConfig):
             day_of_month="*",
             month_of_year="*",
         )
-        crontabs["every_5_min"], _ = CrontabSchedule.objects.using(using).get_or_create(
+        crontabs["every_5_min"], _ = CrontabSchedule.objects.using(
+            using,
+        ).get_or_create(
             minute="*/5",
             hour="*",
             day_of_week="*",
@@ -34,7 +38,7 @@ class SchedulesConfig(AppConfig):
             month_of_year="*",
         )
         crontabs["daily_morning"], _ = CrontabSchedule.objects.using(
-            using
+            using,
         ).get_or_create(
             minute="0",
             hour="6",
@@ -42,7 +46,9 @@ class SchedulesConfig(AppConfig):
             day_of_month="*",
             month_of_year="*",
         )
-        crontabs["daily_noon"], _ = CrontabSchedule.objects.using(using).get_or_create(
+        crontabs["daily_noon"], _ = CrontabSchedule.objects.using(
+            using,
+        ).get_or_create(
             minute="0",
             hour="12",
             day_of_week="*",
@@ -94,13 +100,18 @@ class SchedulesConfig(AppConfig):
             },
         ]
 
-        periodic_tasks_exists = PeriodicTask.objects.using(using).values_list(
-            "pk", flat=True
+        periodic_tasks_exists = PeriodicTask.objects.using(
+            using,
+        ).values_list(
+            "pk",
+            flat=True,
         )
 
         for task in periodic_tasks:
             if task["id"] in periodic_tasks_exists:
-                item = PeriodicTask.objects.using(using).get(id=task["id"])
+                item = PeriodicTask.objects.using(
+                    using,
+                ).get(id=task["id"])
                 item.name = task["name"]
                 item.task = task["task"]
                 item.crontab = task["crontab"]
