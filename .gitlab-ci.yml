@@ -89,7 +89,8 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - coverage run manage.py test --parallel=6
+#    - coverage run manage.py test --parallel=6
+    - coverage run manage.py test
     - coverage combine && coverage report && coverage html
   artifacts:
     paths:
