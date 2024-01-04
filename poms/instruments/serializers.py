@@ -22,6 +22,7 @@ from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
     AccrualCalculationModelField,
+    AccrualPriceEvalField,
     CountryField,
     DailyPricingModelField,
     InstrumentField,
@@ -1769,22 +1770,6 @@ class EventScheduleSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         return attrs
 
-    # def get_display_name(self, obj):
-    #     r = self.root
-    #     if isinstance(r, ListSerializer):
-    #         r = r.child
-    #     if isinstance(r, GeneratedEventSerializer):
-    #         return r.generate_text(obj.name)
-    #     return None
-    #
-    # def get_display_description(self, obj):
-    #     r = self.root
-    #     if isinstance(r, ListSerializer):
-    #         r = r.child
-    #     if isinstance(r, GeneratedEventSerializer):
-    #         return r.generate_text(obj.description)
-    #     return None
-
 
 class InstrumentCalculatePricesAccruedPriceSerializer(serializers.Serializer):
     begin_date = serializers.DateField(required=False, allow_null=True)
@@ -1806,7 +1791,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
         source="pricing_policy", read_only=True
     )
     principal_price = FloatEvalField()
-    accrued_price = FloatEvalField()
+    accrued_price = AccrualPriceEvalField()
     procedure_modified_datetime = ReadOnlyField()
     ytm = ReadOnlyField()
 

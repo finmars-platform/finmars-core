@@ -1,6 +1,7 @@
 from poms.common.fields import (
     PrimaryKeyRelatedFilteredField,
     UserCodeOrPrimaryKeyRelatedField,
+    FloatEvalField,
 )
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -136,3 +137,7 @@ class SystemPricingPolicyDefault:
         ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
 
         return ecosystem_default.pricing_policy
+
+
+class AccrualPriceEvalField(FloatEvalField):
+    pass
