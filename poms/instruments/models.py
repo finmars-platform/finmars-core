@@ -2219,7 +2219,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_accrued_price(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
-        if price_date >= self.maturity_date:
+        if not self.maturity_date or price_date >= self.maturity_date:
             return 0.0
 
         accrual = self.find_accrual(price_date)

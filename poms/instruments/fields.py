@@ -1,7 +1,7 @@
 from poms.common.fields import (
+    FloatEvalField,
     PrimaryKeyRelatedFilteredField,
     UserCodeOrPrimaryKeyRelatedField,
-    FloatEvalField,
 )
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -24,6 +24,8 @@ from poms.transactions.models import (
     TransactionTypeInputSettings,
 )
 from poms.users.filters import OwnerByMasterUserFilter
+
+AUTO_CALCULATE = float("-inf")
 
 
 class InstrumentTypeDefault(object):
@@ -130,9 +132,9 @@ class SystemPricingPolicyDefault:
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
-        self.set_context(serializer_field)
-
         from poms.users.models import EcosystemDefault
+
+        self.set_context(serializer_field)
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
 
@@ -140,12 +142,5 @@ class SystemPricingPolicyDefault:
 
 
 class AccrualPriceEvalField(FloatEvalField):
-
     def run_validation(self, data):
-        return None if data is None else super().run_validation(data)
-
-    def to_internal_value(self, data):
-        if data:
-            return super().to_internal_value(data)
-        else:
-            return 77777.77777
+        return AUTO_CALCULATE if data is None else super().run_validation(data)

@@ -21,6 +21,7 @@ from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
+    AUTO_CALCULATE,
     AccrualCalculationModelField,
     AccrualPriceEvalField,
     CountryField,
@@ -1503,7 +1504,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "user_text_2",
             "user_text_3",
             "reference_for_pricing",
-            "country"
+            "country",
         ]
 
         read_only_fields = fields
@@ -1616,7 +1617,6 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
 
 
 class AccrualCalculationScheduleStandaloneSerializer(serializers.ModelSerializer):
-
     instrument = InstrumentField()
 
     accrual_calculation_model = AccrualCalculationModelField()
@@ -1657,8 +1657,8 @@ class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
 
 
 class InstrumentFactorScheduleStandaloneSerializer(serializers.ModelSerializer):
-
     instrument = InstrumentField()
+
     class Meta:
         model = InstrumentFactorSchedule
         fields = ["id", "instrument", "effective_date", "factor_value"]
@@ -1814,8 +1814,26 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "short_delta",
             "is_temporary_price",
             "ytm",
-            "modified_duration"
+            "modified_duration",
         ]
+
+    def validate(self, attrs: dict) -> dict:
+        if "accrued_price" in attrs and attrs["accrued_price"] == AUTO_CALCULATE:
+            price_date = attrs.get("date")
+            if not price_date:
+                raise ValidationError(
+                    "To calculate 'accrued_price', valid 'date' must be provided"
+                )
+            instrument: Instrument = attrs["instrument"]
+            if not instrument.maturity_date:
+                raise ValidationError(
+                    f"To calculate 'accrued_price', instrument {instrument.user_code} "
+                    f"needs to have not null 'maturity_date'"
+                )
+
+            attrs["accrued_price"] = instrument.get_accrued_price(price_date=price_date)
+
+        return attrs
 
     @staticmethod
     def create_price_history_error(instance):
