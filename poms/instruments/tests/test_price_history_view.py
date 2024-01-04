@@ -155,8 +155,6 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.pricing_policy = None
         self.pricing_history = None
         self.instrument = Instrument.objects.first()
-        self.instrument.maturity_date = self.today() + timedelta(days=100)
-        self.instrument.save()
         self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
         self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
 
