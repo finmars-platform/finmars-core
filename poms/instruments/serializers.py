@@ -1828,7 +1828,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
             if not instrument.maturity_date:
                 raise ValidationError(
                     f"To calculate 'accrued_price', instrument {instrument.user_code} "
-                    f"needs to have not null 'maturity_date'"
+                    f"must to have not null 'maturity_date'"
                 )
 
             attrs["accrued_price"] = instrument.get_accrued_price(price_date=price_date)

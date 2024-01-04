@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import timedelta
 
 from django.conf import settings
 
@@ -154,6 +155,8 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.pricing_policy = None
         self.pricing_history = None
         self.instrument = Instrument.objects.first()
+        self.instrument.maturity_date = self.today() + timedelta(days=100)
+        self.instrument.save()
         self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
         self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
 
@@ -329,6 +332,4 @@ class PriceHistoryViewSetTest(BaseTestCase):
         create_data["accrued_price"] = None
 
         response = self.client.post(path=self.url, format="json", data=create_data)
-        # self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-        print(response_json)
+        self.assertEqual(response.status_code, 201, response.content)
