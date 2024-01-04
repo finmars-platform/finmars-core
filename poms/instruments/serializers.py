@@ -1874,11 +1874,10 @@ class PriceHistorySerializer(ModelMetaSerializer):
             section="prices",
             type="success",
             title="New Price (manual)",
-            description=instance.instrument.user_code
-            + " "
-            + str(instance.date)
-            + " "
-            + str(instance.principal_price),
+            description=(
+                f"{instance.instrument.user_code} {str(instance.date)} "
+                f"{str(instance.principal_price)}"
+            ),
         )
 
         return instance
