@@ -1428,9 +1428,9 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")
-        #     # Here we just return the errors as part of the response.
-        #     # You may want to log them or handle them differently depending on your needs.
-        #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+            # Here we just return the errors as part of the response.
+            # You may want to log them or handle them differently
+            # return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_201_CREATED)
 
