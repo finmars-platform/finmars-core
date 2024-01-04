@@ -140,4 +140,12 @@ class SystemPricingPolicyDefault:
 
 
 class AccrualPriceEvalField(FloatEvalField):
-    pass
+
+    def run_validation(self, data):
+        return None if data is None else super().run_validation(data)
+
+    def to_internal_value(self, data):
+        if data:
+            return super().to_internal_value(data)
+        else:
+            return 77777.77777
