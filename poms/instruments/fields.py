@@ -22,7 +22,7 @@ from poms.transactions.models import (
     TransactionTypeInput,
     TransactionTypeInputSettings,
 )
-from poms.users.filters import LinkedWithPortfolioFilter, OwnerByMasterUserFilter
+from poms.users.filters import OwnerByMasterUserFilter
 
 
 class InstrumentTypeDefault(object):
