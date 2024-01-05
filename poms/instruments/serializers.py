@@ -1818,15 +1818,18 @@ class PriceHistorySerializer(ModelMetaSerializer):
         ]
 
     def validate(self, attrs: dict) -> dict:
-        if "accrued_price" in attrs and attrs["accrued_price"] == AUTO_CALCULATE:
-            price_date = attrs.get("date")
-            if not price_date:
+        if self.context["view"].action in {"create", "bulk_create"}:
+            if "date" not in attrs or not attrs["date"]:
                 raise ValidationError(
                     "To calculate 'accrued_price', valid 'date' must be provided"
                 )
 
-            instrument: Instrument = attrs["instrument"]
-            attrs["accrued_price"] = instrument.get_accrued_price(price_date=price_date)
+            if attrs["accrued_price"] == AUTO_CALCULATE:
+                price_date = attrs["date"]
+                instrument: Instrument = attrs["instrument"]
+                attrs["accrued_price"] = instrument.get_accrued_price(
+                    price_date=price_date
+                )
 
         return attrs
 

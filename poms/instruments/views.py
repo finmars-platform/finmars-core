@@ -1029,11 +1029,7 @@ class InstrumentViewSet(AbstractModelViewSet):
             date_from + datetime.timedelta(days=i)
             for i in range((date_to - date_from).days + 1)
         ]
-
         tasks_ids = []
-
-        print(f"dates {dates}")
-
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
                 kwargs={

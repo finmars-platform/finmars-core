@@ -1,5 +1,4 @@
 from copy import deepcopy
-from datetime import timedelta
 
 from django.conf import settings
 
@@ -331,3 +330,11 @@ class PriceHistoryViewSetTest(BaseTestCase):
 
         response = self.client.post(path=self.url, format="json", data=create_data)
         self.assertEqual(response.status_code, 201, response.content)
+
+    def test__create_without_date_error(self):
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = None
+        create_data["date"] = None
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 400, response.content)
