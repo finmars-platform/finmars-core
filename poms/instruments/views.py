@@ -22,7 +22,6 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 import requests
-from poms_app import settings
 
 from poms.common.authentication import get_access_token
 from poms.common.filters import (
@@ -46,9 +45,9 @@ from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentSelectSpecialQueryFilter,
+    InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
-    InstrumentsUserCodeFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -116,6 +115,7 @@ from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import EcosystemDefault, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly
+from poms_app import settings
 
 _l = logging.getLogger("poms.instruments")
 
