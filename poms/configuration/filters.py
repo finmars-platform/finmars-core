@@ -3,13 +3,11 @@ from rest_framework.filters import BaseFilterBackend
 
 
 class ConfigurationQueryFilter(BaseFilterBackend):
-
     def filter_queryset(self, request, queryset, view):
-        query = request.query_params.get('query', None)
+        query = request.query_params.get("query", None)
 
         if query:
-
-            pieces = query.split(' ')
+            pieces = query.split(" ")
 
             name_q = Q()
             short_name_q = Q()

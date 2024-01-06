@@ -6,9 +6,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import OwnerModel
-from poms_app import settings
-
 from poms.configuration.utils import replace_special_chars_and_spaces
+from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
 
@@ -33,19 +32,16 @@ class ConfigurationModel(OwnerModel):
     class Meta:
         abstract = True
 
-    """
-    That is because we still need unique value e.g.
-        
-        - com.finmars.hnwi:buy_sell
-        - com.finmars.asset_manager:buy_sell
-        
-        frn:finmars:backend:::transactions.transactiontype:local.poms.space0000:*
-        frn:finmars:backend:::transactions.transactiontype:com.finmars.hnwi:*
-        
-        in that case con.finmars.hnwi already a user_code
-        and :* is user_code qualifier
-        
-    """
+    # That is because we still need unique value e.g.
+    #     - com.finmars.hnwi:buy_sell
+    #     - com.finmars.asset_manager:buy_sell
+    #
+    #     frn:finmars:backend:::transactions.transactiontype:local.poms.space0000:*
+    #     frn:finmars:backend:::transactions.transactiontype:com.finmars.hnwi:*
+    #
+    #     in that case con.finmars.hnwi already a user_code
+    #     and :* is user_code qualifier
+
 
     def save(self, *args, **kwargs):
         # _l.info('self.configuration_code %s' % self.configuration_code)
@@ -152,7 +148,6 @@ class Configuration(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-
         if self.is_primary:
             qs = Configuration.objects.filter(is_primary=True)
             if self.pk:
@@ -160,7 +155,6 @@ class Configuration(models.Model):
             qs.update(is_primary=False)
 
         super().save(*args, **kwargs)
-
 
     @property
     def manifest(self):
@@ -214,9 +208,7 @@ class NewMemberSetupConfiguration(ConfigurationModel):
         help_text="Notes, any useful information about the object",
     )
 
-    """
-    Either provide configuration_code with version or upload zip
-    """
+    # Either provide configuration_code with version or upload zip
     target_configuration_code = models.CharField(
         max_length=255,
         null=True,
