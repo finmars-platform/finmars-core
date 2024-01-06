@@ -46,15 +46,18 @@ class ConfigurationViewSetTest(BaseTestCase):
     def test__create(self):
         data = CONFIG_DATA.copy()
         data.pop("id")
-        data["configuration_code"] = self.random_string()
+        space = f"space{self.random_string(5)}"
+        data["configuration_code"] = space
+        data["short_name"] = space
 
         response = self.client.post(path=self.url, format="json", data=data)
         self.assertEqual(response.status_code, 201, response.content)
 
         response_json = response.json()
-        print(response_json)
-
-        # self.assertEqual(response_json, GET_RESPONSE)
+        self.assertEqual(response_json["configuration_code"], space)
+        self.assertEqual(response_json["short_name"], space)
+        self.assertEqual(response_json["name"], data["name"])
+        self.assertEqual(response_json["version"], data["version"])
 
     @mock.patch("poms.configuration.views.get_access_token")
     def test__install_configuration_from_marketplace(self, get_access_token):
