@@ -12,10 +12,10 @@ from django.core.files.base import ContentFile
 from django.http import FileResponse
 
 import requests
-from poms_app import settings
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_content_type_by_name, get_serializer
+from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
 
@@ -127,10 +127,10 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
             configuration_code=configuration_code
         ).exclude(user_code=dash)
 
-    SerializerClass = get_serializer(content_type)
+    serializer_class = get_serializer(content_type)
 
     for item in filtered_objects:
-        serializer = SerializerClass(item, context=context)
+        serializer = serializer_class(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
 
         if "is_deleted" in serialized_data:
@@ -184,8 +184,10 @@ def save_serialized_attribute_type(
         save_json_to_file(path, serialized_data)
 
 
-def save_serialized_custom_fields(configuration_code, report_content_type, source_directory, context):
-    '''
+def save_serialized_custom_fields(
+    configuration_code, report_content_type, source_directory, context
+):
+    """
 
     :param configuration_code:
     :param report_content_type: Allowed values: 'reports.balancereport', 'reports.plreport', 'reports.transactionreport'
@@ -193,7 +195,7 @@ def save_serialized_custom_fields(configuration_code, report_content_type, sourc
     :param source_directory:
     :param context:
     :return:
-    '''
+    """
     from poms.reports.models import (
         BalanceReportCustomField,
         PLReportCustomField,
@@ -208,7 +210,7 @@ def save_serialized_custom_fields(configuration_code, report_content_type, sourc
     custom_fields_map = {
         "reports.balancereport": [
             BalanceReportCustomField,
-            BalanceReportCustomFieldSerializer
+            BalanceReportCustomFieldSerializer,
         ],
         "reports.plreport": [
             PLReportCustomField,
@@ -239,6 +241,7 @@ def save_serialized_custom_fields(configuration_code, report_content_type, sourc
         path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
 
         save_json_to_file(path, serialized_data)
+
 
 def save_serialized_layout(content_type, configuration_code, source_directory, context):
     try:
@@ -394,8 +397,9 @@ def upload_directory_to_storage(local_directory, storage_directory):
 def run_workflow(user_code, payload=None):
     from django.contrib.auth import get_user_model
 
-    from poms_app import settings
     from rest_framework_simplejwt.tokens import RefreshToken
+
+    from poms_app import settings
 
     User = get_user_model()
 
@@ -423,8 +427,9 @@ def run_workflow(user_code, payload=None):
 def get_workflow(workflow_id: int):
     from django.contrib.auth import get_user_model
 
-    from poms_app import settings
     from rest_framework_simplejwt.tokens import RefreshToken
+
+    from poms_app import settings
 
     User = get_user_model()
 
