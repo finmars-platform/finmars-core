@@ -164,5 +164,3 @@ class MemberViewSetTest(BaseTestCase):
         user_data = response_json["user"]
         self.assertEqual(user_data["username"], "test_bot")
         self.assertEqual(user_data["id"], self.user.id)
-
-        print(response_json)
