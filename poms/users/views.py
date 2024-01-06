@@ -858,7 +858,7 @@ class MemberViewSet(AbstractModelViewSet):
     pagination_class = BigPagination
 
     def list(self, request, *args, **kwargs):
-        # Rewriting parent list, we must show deleted members
+        # Rewriting the parent list, we must show deleted members
 
         queryset = self.filter_queryset(Member.objects.all())
 
@@ -877,6 +877,7 @@ class MemberViewSet(AbstractModelViewSet):
         if lookup_value == "0":
             try:
                 return self.request.user.member
+
             except AttributeError:
                 return None
 
@@ -915,7 +916,7 @@ class MemberViewSet(AbstractModelViewSet):
             f"Could not create/invite member, using params={params}, due to "
             f"Authorizer error={repr(err)}"
         )
-        _l.error(f"MemberViewset.create {error_message} trace {traceback.format_exc()}")
+        _l.error(f"MemberViewSet.create {error_message} trace {traceback.format_exc()}")
 
         return Response(
             {"error_message": error_message},
@@ -987,7 +988,7 @@ class MemberViewSet(AbstractModelViewSet):
         instance.status = Member.STATUS_DELETED
         instance.save()
 
-        return super(MemberViewSet, self).perform_destroy(instance)
+        return super().perform_destroy(instance)
 
     @action(detail=True, methods=("PUT",), url_path="send-invite")
     def send_invite(self, request, pk=None):
