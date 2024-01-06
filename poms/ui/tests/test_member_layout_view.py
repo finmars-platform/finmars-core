@@ -25,11 +25,14 @@ class MemberLayoutViewSetTest(BaseTestCase):
         self.assertTrue(layout_data["is_default"])
 
     def test__ping(self):
-        layout = MemberLayout.objects.first()
+        layout = MemberLayout.objects.get(member=self.member, is_default=True)
         response = self.client.get(path=f"{self.url}{layout.id}/ping/")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
         self.assertEqual(response_json["id"], layout.id)
-        self.assertEqual(response_json["modified"], layout.modified)
-        self.assertEqual(response_json["is_default"], layout.is_default)
+        self.assertTrue(response_json["is_default"])
+        self.assertEqual(
+            response_json["modified"],
+            layout.modified.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        )
