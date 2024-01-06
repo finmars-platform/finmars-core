@@ -1238,9 +1238,10 @@ class Member(FakeDeletableModel):
         blank=True,
         verbose_name=gettext_lazy("json data"),
     )
-
     status = models.CharField(
-        max_length=255, choices=MEMBER_STATUS_CHOICES, default="active"
+        max_length=255,
+        choices=MEMBER_STATUS_CHOICES,
+        default="active",
     )
 
     @property
@@ -1284,7 +1285,7 @@ class Member(FakeDeletableModel):
                 },
             )
         except Exception as e:
-            _l.info("Could not create member layout %s" % e)
+            _l.info(f"Could not create member layout {e}")
 
         return instance
 
