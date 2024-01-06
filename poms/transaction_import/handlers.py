@@ -1,3 +1,4 @@
+from copy import deepcopy
 import csv
 import json
 import logging
@@ -468,16 +469,12 @@ class TransactionImportProcess(object):
 
                 else:
                     item.status = "error"
-                    item.error_message = (
-                        item.error_message
-                        + " Can't find relation of "
-                        + "["
-                        + field.transaction_type_input
-                        + "]"
-                        + "(value:"
-                        + value
-                        + ")"
-                    )
+                    item.error_message = "%(error_message)s Can't find relation of [%(transaction_type_input)s](value:%(value)s)"  % {
+                        'error_message': item.error_message,
+                        'transaction_type_input': field.transaction_type_input,
+                        'value': value
+                    }
+                    
 
             return v
 
@@ -514,6 +511,7 @@ class TransactionImportProcess(object):
 
         try:
             fields = self.get_fields_for_item(item, rule_scenario)
+
             if error:
                 fields["error_message"] = str(error)
 
@@ -877,8 +875,15 @@ class TransactionImportProcess(object):
             conversion_item.row_number = row_number
 
             for scheme_input in self.scheme.inputs.all():
+                ## passing first column from shema page
                 try:
-                    names = raw_item
+                    ## functional by FN-2436: Pass None value to Imported Columns expression when 
+                    ## the field is absent but expected in the data received 
+                    # deepcopy raw_item.source item data remains untouched                  
+                    names = deepcopy(raw_item)
+
+                    if scheme_input.name not in names.keys():
+                        names[scheme_input.name] = None
 
                     conversion_item.conversion_inputs[
                         scheme_input.name
@@ -948,6 +953,7 @@ class TransactionImportProcess(object):
                 try:
                     names = preprocess_item.inputs
 
+                    # passing second column formulas on schema page
                     value = formula.safe_eval(
                         scheme_calculated_input.name_expr,
                         names=names,
