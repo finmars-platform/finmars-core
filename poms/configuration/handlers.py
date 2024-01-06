@@ -817,6 +817,5 @@ def export_configuration_to_directory(
         )
 
     except Exception as e:
-        _l.error(f"Error exporting configuration {e}")
-        _l.error("Error exporting configuration traceback: %s" % traceback.format_exc())
+        _l.error(f"Error exporting configuration {e} trace {traceback.format_exc()}")
         raise e
