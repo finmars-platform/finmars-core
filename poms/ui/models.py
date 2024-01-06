@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import gettext_lazy
+
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -205,7 +206,12 @@ class PortalInterfaceAccessModel(AbstractClassModel):
             "report_activity_log",
             gettext_lazy("Reporting layer: Activity Log"),
         ),
-        (1013, REPORT_FORUM, "report_forum", gettext_lazy("Reporting layer: Forum")),
+        (
+            1013,
+            REPORT_FORUM,
+            "report_forum",
+            gettext_lazy("Reporting layer: Forum"),
+        ),
         (
             2001,
             CONFIGURATION_ACCOUNT_TYPE,
