@@ -196,9 +196,7 @@ class ColorPaletteFilterSet(FilterSet):
 
 
 class ColorPaletteViewSet(AbstractModelViewSet):
-    queryset = ColorPalette.objects.select_related(
-        "master_user"
-    )
+    queryset = ColorPalette.objects.select_related("master_user")
     serializer_class = ColorPaletteSerializer
     filter_class = ColorPaletteFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -216,9 +214,7 @@ class EntityTooltipFilterSet(FilterSet):
 
 
 class EntityTooltipViewSet(AbstractModelViewSet):
-    queryset = EntityTooltip.objects.select_related(
-        "master_user"
-    )
+    queryset = EntityTooltip.objects.select_related("master_user")
     serializer_class = EntityTooltipSerializer
     filter_class = EntityTooltipFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -236,9 +232,7 @@ class CrossEntityAttributeExtensionFilterSet(FilterSet):
 
 
 class CrossEntityAttributeExtensionViewSet(AbstractModelViewSet):
-    queryset = CrossEntityAttributeExtension.objects.select_related(
-        "master_user"
-    )
+    queryset = CrossEntityAttributeExtension.objects.select_related("master_user")
     serializer_class = CrossEntityAttributeExtensionSerializer
     filter_class = CrossEntityAttributeExtensionFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -259,9 +253,7 @@ class ColumnSortDataFilterSet(FilterSet):
 
 
 class ColumnSortDataViewSet(AbstractModelViewSet):
-    queryset = ColumnSortData.objects.select_related(
-        "member"
-    )
+    queryset = ColumnSortData.objects.select_related("member")
     serializer_class = ColumnSortDataSerializer
     filter_class = ColumnSortDataFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -316,9 +308,7 @@ class TemplateLayoutFilterSet(FilterSet):
 
 
 class TemplateLayoutViewSet(AbstractModelViewSet):
-    queryset = TemplateLayout.objects.select_related(
-        "member",
-    )
+    queryset = TemplateLayout.objects.select_related("member")
     serializer_class = TemplateLayoutSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMemberFilter,
@@ -553,9 +543,7 @@ class ConfigurationExportLayoutFilterSet(FilterSet):
 
 
 class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
-    queryset = ConfigurationExportLayout.objects.select_related(
-        "member",
-    )
+    queryset = ConfigurationExportLayout.objects.select_related("member")
     serializer_class = ConfigurationExportLayoutSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMemberFilter,
