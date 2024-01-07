@@ -205,7 +205,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='user-detail')
     profile = UserProfileSerializer()
 
     class Meta:
@@ -289,10 +288,10 @@ class UserUnsubscribeSerializer(serializers.Serializer):
         user = get_user_from_context(self.context)
         if attrs["email"] != user.email:
             raise serializers.ValidationError({"email": "Invalid email"})
+
         return attrs
 
     def create(self, validated_data):
-        email = validated_data["email"]
         return validated_data
 
     def update(self, instance, validated_data):
@@ -300,7 +299,6 @@ class UserUnsubscribeSerializer(serializers.Serializer):
 
 
 class MasterUserSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(
         choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
@@ -327,7 +325,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
 
 
 class MasterUserLightSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(
         choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
@@ -390,7 +387,11 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 class OtpTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtpToken
-        fields = ["id", "name", "is_active"]
+        fields = [
+            "id",
+            "name",
+            "is_active",
+        ]
 
 
 class EcosystemDefaultSerializer(serializers.ModelSerializer):
@@ -423,6 +424,7 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         model = EcosystemDefault
         fields = [
             "id",
+            "master_user",
             "currency",
             "account_type",
             "account",
@@ -762,4 +764,9 @@ class UsercodePrefixSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsercodePrefix
-        fields = ["id", "master_user", "value", "notes"]
+        fields = [
+            "id",
+            "master_user",
+            "value",
+            "notes",
+        ]

@@ -6,6 +6,7 @@ from poms.users.models import EcosystemDefault
 
 EXPECTED_RESPONSE_DATA = {
     "id": 1,
+    "master_user": 1,
     "currency": 2,
     "account_type": 1,
     "account": 1,
@@ -1063,38 +1064,17 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), len(EXPECTED_RESPONSE_DATA))
 
-    # @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
-    # def test__create_member(self, invite_member):
-    #     data = copy.deepcopy(REQUEST_DATA)
-    #     data["username"] = self.random_string()
-    #     self.assertEqual(Member.objects.all().count(), 2)
-    #
-    #     response = self.client.post(path=self.url, format="json", data=data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #
-    #     invite_member.assert_called_once()
-    #     self.assertEqual(Member.objects.all().count(), 3)  # member created
-    #
-    # @mock.patch("poms.common.finmars_authorizer.requests.post")
-    # def test__create_member_check_called_url(self, requests_post):
-    #     data = copy.deepcopy(REQUEST_DATA)
-    #     data["username"] = self.random_string()
-    #     self.assertEqual(Member.objects.all().count(), 2)
-    #
-    #     requests_post.return_value = mock_response = mock.Mock()
-    #     mock_response.status_code = 200
-    #
-    #     response = self.client.post(path=self.url, format="json", data=data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #
-    #     requests_post.assert_called_once()
-    #     kwargs = requests_post.call_args.kwargs
-    #
-    #     self.assertIn("?space_code=space00000", kwargs["url"])
-    #
-    #     self.assertEqual(Member.objects.all().count(), 3)  # member created
-    #
-    # def test__double_update(self):
+    def test__create(self):
+        data = {
+            key: value
+            for key, value in EXPECTED_RESPONSE_DATA.items()
+            if "object" not in key and key != "id"
+        }
+        data["master_user"] = self.master_user.id
+        response = self.client.post(path=self.url, format="json", data=data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+    # def test__update(self):
     #     from poms.ui.models import MemberLayout
     #
     #     # check get_or_create layout in Member method save() works properly
@@ -1122,70 +1102,3 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
     #     layout = MemberLayout.objects.filter(member_id=self.member.id).first()
     #     self.assertIsNotNone(layout)
     #     self.assertEqual(layout.owner_id, self.member.id)
-    #
-    # @BaseTestCase.cases(
-    #     ("groups", "groups"),
-    #     ("base_api_url", "base_api_url"),
-    #     ("is_owner", "is_owner"),
-    #     ("is_admin", "is_admin"),
-    # )
-    # @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
-    # def test__create_member_wo_param(self, param, invite_member):
-    #     data = copy.deepcopy(REQUEST_DATA)
-    #     data["username"] = self.random_string()
-    #     data.pop(param)
-    #
-    #     self.assertEqual(Member.objects.all().count(), 2)
-    #
-    #     response = self.client.post(path=self.url, format="json", data=data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #
-    #     invite_member.assert_called_once()
-    #     self.assertEqual(Member.objects.all().count(), 3)  # member created
-    #     self.assertIsNotNone(Member.objects.filter(username=data["username"]).first())
-    #
-    # @BaseTestCase.cases(
-    #     ("username", "username"),
-    # )
-    # @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
-    # def test__create_member_wo_username(self, param, invite_member):
-    #     data = copy.deepcopy(REQUEST_DATA)
-    #     data["username"] = self.random_string()
-    #     data.pop(param)
-    #
-    #     self.assertEqual(Member.objects.all().count(), 2)
-    #
-    #     response = self.client.post(path=self.url, format="json", data=data)
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    #     invite_member.assert_not_called()
-    #     self.assertEqual(Member.objects.all().count(), 2)  # member was not created
-    #
-    # @mock.patch("poms.common.finmars_authorizer.AuthorizerService.invite_member")
-    # def test__create_member_authorizer_error(self, invite_member):
-    #     data = copy.deepcopy(REQUEST_DATA)
-    #     data["username"] = self.random_string()
-    #     self.assertEqual(Member.objects.all().count(), 2)
-    #
-    #     invite_member.side_effect = RuntimeError("Authorizer API error, status=500")
-    #
-    #     response = self.client.post(path=self.url, format="json", data=data)
-    #     self.assertEqual(response.status_code, 422, response.content)
-    #
-    #     invite_member.assert_called_once()
-    #     self.assertEqual(Member.objects.all().count(), 2)  # member was not created
-    #
-    # def test__retrieve_0(self):
-    #     response = self.client.get(path=f"{self.url}0/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     self.assertTrue(response_json["is_owner"])
-    #     self.assertTrue(response_json["is_admin"])
-    #     self.assertTrue(response_json["is_superuser"])
-    #     self.assertFalse(response_json["is_deleted"])
-    #
-    #     user_data = response_json["user"]
-    #     self.assertEqual(user_data["username"], "test_bot")
-    #     self.assertEqual(user_data["id"], self.user.id)
