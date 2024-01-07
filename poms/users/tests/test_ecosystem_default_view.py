@@ -1072,33 +1072,5 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         }
         data["master_user"] = self.master_user.id
         response = self.client.post(path=self.url, format="json", data=data)
-        self.assertEqual(response.status_code, 201, response.content)
 
-    # def test__update(self):
-    #     from poms.ui.models import MemberLayout
-    #
-    #     # check get_or_create layout in Member method save() works properly
-    #     update_data = {
-    #         "username": self.random_string(),
-    #         "json_data": {"key": "value"},
-    #         "is_admin": True,
-    #         "is_owner": True,
-    #     }
-    #
-    #     response = self.client.patch(
-    #         path=f"{self.url}{self.member.id}/",
-    #         format="json",
-    #         data=update_data,
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response = self.client.patch(
-    #         path=f"{self.url}{self.member.id}/",
-    #         format="json",
-    #         data=update_data,
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     layout = MemberLayout.objects.filter(member_id=self.member.id).first()
-    #     self.assertIsNotNone(layout)
-    #     self.assertEqual(layout.owner_id, self.member.id)
+        self.assertEqual(response.status_code, 201, response.content)
