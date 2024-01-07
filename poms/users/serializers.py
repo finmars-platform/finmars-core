@@ -201,7 +201,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["language", "timezone", "two_factor_verification"]
+        fields = [
+            "language",
+            "timezone",
+            "two_factor_verification",
+        ]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -209,8 +213,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "profile"]
-        read_only_fields = ["username"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "profile",
+        ]
+        read_only_fields = [
+            "username",
+        ]
 
     def create(self, validated_data):
         return None
@@ -311,7 +324,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "user_code_counters",
-            # 'is_current', 'is_admin', 'is_owner',
             "language",
             "status",
             "timezone",
