@@ -1065,12 +1065,16 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json), len(EXPECTED_RESPONSE_DATA))
 
     def test__create(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+        ecosystem_data = response.json()["results"][0]
         data = {
             key: value
-            for key, value in EXPECTED_RESPONSE_DATA.items()
+            for key, value in ecosystem_data.items()
             if "object" not in key and key != "id"
         }
         data["master_user"] = self.master_user.id
+
         response = self.client.post(path=self.url, format="json", data=data)
 
         self.assertEqual(response.status_code, 201, response.content)

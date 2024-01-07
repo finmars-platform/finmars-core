@@ -812,6 +812,8 @@ class EcosystemDefaultViewSet(AbstractModelViewSet):
         "strategy3__subgroup__group",
         "mismatch_portfolio",
         "mismatch_account",
+    ).order_by(
+        "master_user",
     )
     serializer_class = EcosystemDefaultSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
