@@ -417,7 +417,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
     mismatch_account = AccountField()
     pricing_policy = PricingPolicyField()
     transaction_type = TransactionTypeField()
-
     periodicity = PeriodicityField()
 
     class Meta:
@@ -457,8 +456,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(EcosystemDefaultSerializer, self).__init__(*args, **kwargs)
-
         from poms.accounts.serializers import (
             AccountTypeViewSerializer,
             AccountViewSerializer,
@@ -497,6 +494,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             Strategy3ViewSerializer,
         )
         from poms.transactions.serializers import TransactionTypeViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields[
             "accrual_calculation_model_object"
