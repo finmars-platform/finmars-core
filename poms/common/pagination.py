@@ -16,6 +16,7 @@ def _positive_int(integer_string, strict=False, cutoff=None):
     ret = int(integer_string)
     if ret < 0 or (ret == 0 and strict):
         raise ValueError()
+
     if cutoff:
         ret = min(ret, cutoff)
     return ret
