@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import time
@@ -404,12 +405,6 @@ class AbstractModelViewSet(
 
         return result
 
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
-
     @action(detail=False, methods=["post"], url_path="ev-group")
     def list_ev_group(self, request, *args, **kwargs):
         start_time = time.time()
@@ -639,17 +634,17 @@ class AbstractSyncViewSet(AbstractViewSet):
 
 
 def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=False):
-    '''
+    """
     :param model:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param key:
     :param filter_kw: Keyword arguments for method .filter()
     :type filter_kw: dict
     :param include_deleted:
-    '''
-    filter_kw[key + "__isnull"] = False
+    """
+    filter_kw[f"{key}__isnull"] = False
 
-    if value_type not in [10, 20, 40, 'field']:
+    if value_type not in {10, 20, 40, "field"}:
         return Response(
             {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -658,14 +653,11 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             }
         )
 
-    try:
-        if model._meta.get_field("is_deleted"):
-            if not include_deleted:
-                filter_kw["is_deleted"] = False
-    except FieldDoesNotExist:
-        pass
+    with contextlib.suppress(FieldDoesNotExist):
+        if model._meta.get_field("is_deleted") and not include_deleted:
+            filter_kw["is_deleted"] = False
 
-    if value_type in [10, 20, 40]:
+    if value_type in {10, 20, 40}:
         return (
             model.objects.filter(**filter_kw)
             .order_by(key)
@@ -681,16 +673,15 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             .distinct(key + "__user_code")
         )
 
+
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
-        results = []
-
         content_type_name = request.query_params.get("content_type", None)
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
         include_deleted = request.query_params.get("include_deleted", None)
-
         master_user = request.user.master_user
+        results = []
 
         # region Exceptions
         if not content_type_name:
@@ -774,91 +765,83 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_string__isnull=False
+                        value_string__isnull=False,
                     )
                     .order_by("value_string")
                     .values_list("value_string", flat=True)
                     .distinct("value_string")
                 )
-            if value_type == 20:
+            elif value_type == 20:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_float__isnull=False
+                        value_float__isnull=False,
                     )
                     .order_by("value_float")
                     .values_list("value_float", flat=True)
                     .distinct("value_float")
                 )
-            if value_type == 30:
+            elif value_type == 30:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        classifier__name__isnull=False
+                        classifier__name__isnull=False,
                     )
                     .order_by("classifier__name")
                     .values_list("classifier__name", flat=True)
                     .distinct("classifier__name")
                 )
-            if value_type == 40:
+            elif value_type == 40:
                 results = (
                     GenericAttribute.objects.filter(
                         content_type=content_type,
                         attribute_type=attribute_type,
-                        value_date__isnull=False
+                        value_date__isnull=False,
                     )
                     .order_by("value_date")
                     .values_list("value_date", flat=True)
                     .distinct("value_date")
                 )
 
+        elif content_type_name == "instruments.pricehistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"instrument__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name == "currencies.currencyhistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"currency__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name in [
+            "transactions.transactionclass",
+            "instruments.country",
+        ]:
+            results = (
+                model.objects.all()
+                .order_by(key)
+                .values_list(key, flat=True)
+                .distinct(key)
+            )
+
         else:
-
-            if content_type_name == "instruments.pricehistory":
-
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"instrument__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "currencies.currencyhistory":
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"currency__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "transactions.transactionclass":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            elif content_type_name == "instruments.country":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            else:
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"master_user": master_user},
-                    include_deleted
-                )
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"master_user": master_user},
+                include_deleted,
+            )
 
         _l.debug(f"model {model}")
 
@@ -890,17 +873,16 @@ class DebugLogViewSet(AbstractViewSet):
         except Exception as e:
             raise Http404("Cannot access file") from e
 
-        context = {}
-
         if seek_to == 0:
             seek_to = file_length - 1000
 
-            if seek_to < 0:
-                seek_to = 0
+        elif seek_to < 0:
+            seek_to = 0
 
-        if seek_to > file_length:
+        elif seek_to > file_length:
             seek_to = file_length
 
+        context = {}
         try:
             context["log"] = open(log_file, "r")
             context["log"].seek(seek_to)
