@@ -536,7 +536,7 @@ class UserViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
-        methods=("PUT",),
+        methods=["put"],
         url_path="set-password",
         serializer_class=UserSetPasswordSerializer,
     )
@@ -548,7 +548,7 @@ class UserViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
-        methods=("PUT",),
+        methods=["put"],
         url_path="unsubscribe",
         serializer_class=UserUnsubscribeSerializer,
     )
@@ -594,7 +594,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         if lookup_value == "0":
             return self.request.user.master_user
-        obj = super(MasterUserViewSet, self).get_object()
+        obj = super().get_object()
 
         _l.debug(f"set_master_user get_object done: {time.perf_counter() - set_st}")
 
@@ -633,7 +633,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return Response({"status": "OK"})
 
-    @action(detail=False, methods=["POST"], url_path="update")
+    @action(detail=False, methods=["post"], url_path="update")
     def update_master_user(self, request, *args, **kwargs):
         # Name and Description only available for change
 
@@ -715,10 +715,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
     @action(
         detail=False,
-        methods=(
-            "PUT",
-            "PATCH",
-        ),
+        methods=["put", "patch"],
         url_path="generate-code",
         permission_classes=[IsAuthenticated],
     )
@@ -744,10 +741,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
     @action(
         detail=False,
-        methods=(
-            "PUT",
-            "PATCH",
-        ),
+        methods=["put", "patch"],
         url_path="validate-code",
         permission_classes=[],
     )
@@ -990,7 +984,7 @@ class MemberViewSet(AbstractModelViewSet):
 
         return super().perform_destroy(instance)
 
-    @action(detail=True, methods=("PUT",), url_path="send-invite")
+    @action(detail=True, methods=["put"], url_path="send-invite")
     def send_invite(self, request, pk=None):
         member = self.get_object()
 
@@ -1045,10 +1039,7 @@ class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
-class DeleteMasterUserViewSet(
-    AbstractApiView,
-    ViewSet,
-):
+class DeleteMasterUserViewSet(AbstractApiView, ViewSet):
     permission_classes = [IsAuthenticated]
 
     @method_decorator(ensure_csrf_cookie)
