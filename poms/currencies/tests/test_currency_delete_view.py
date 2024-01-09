@@ -27,3 +27,14 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
 
         response = self.client.delete(path=f"{self.url}/{currency.id}/")
         self.assertEqual(response.status_code, 204)
+
+    def test_bulk_delete(self):
+        currencies = Currency.objects.all()
+        ids_tuples = currencies.values_list('id', flat=True)
+        ids_list = list(ids_tuples)
+
+        data = {"ids": ids_list}
+        response = self.client.post(path=f"{self.url}/bulk-delete/", data=data)
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertIsInstance(response_data["task_id"], int)
