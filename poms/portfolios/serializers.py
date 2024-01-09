@@ -561,9 +561,9 @@ class PortfolioEvalSerializer(
 
 def belongs_to_model(field: str, model: Type[models.Model]) -> bool:
     model_fields = model._meta.get_fields()
-    field_names = [  # Exclude relation fields
-        field.name for field in model_fields if field.is_relation is False
-    ]
+    field_names = {  # Exclude relation fields
+        field.name for field in model_fields if not field.is_relation
+    }
     return field in field_names
 
 

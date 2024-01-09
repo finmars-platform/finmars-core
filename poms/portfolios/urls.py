@@ -44,7 +44,6 @@ router.register(
     portfolios.PortfolioFirstTransactionViewSet,
     "firsttransactiondate",
 )
-
 router.register(
     r"portfolio-history",
     portfolios.PortfolioHistoryViewSet,
