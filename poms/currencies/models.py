@@ -14,6 +14,7 @@ from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
+from poms.currencies.constants import MAIN_CURRENCIES
 
 
 # Probably Deprecated
@@ -132,6 +133,9 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             },
         ]
 
+    def fake_delete(self):
+        if not self.user_code in MAIN_CURRENCIES:
+            return super().fake_delete()
 
 class CurrencyHistory(DataTimeStampedModel):
     """
