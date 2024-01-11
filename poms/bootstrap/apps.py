@@ -198,7 +198,6 @@ class BootstrapConfig(AppConfig):
                         f"Master User From Backup Renamed to new Name {master_user.name}"
                         f" and Base API URL {master_user.base_api_url}"
                     )
-                    # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
@@ -215,7 +214,8 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info(
-                    f"Master user with name {master_user.name} and base_api_url {master_user.base_api_url} created"
+                    f"Master user with name {master_user.name} and "
+                    f"base_api_url {master_user.base_api_url} created"
                 )
 
                 member = Member.objects.create(
@@ -450,6 +450,7 @@ class BootstrapConfig(AppConfig):
                 configuration_code=configuration_code
             )
             _l.info("Local Configuration is already created")
+
         except Configuration.DoesNotExist:
             Configuration.objects.create(
                 configuration_code=configuration_code,
