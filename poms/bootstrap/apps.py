@@ -139,6 +139,7 @@ class BootstrapConfig(AppConfig):
                 headers=HEADERS,
                 verify=settings.VERIFY_SSL,
             )
+            response.raise_for_status()
 
             _l.info(
                 f"load_master_user_data  response.status_code {response.status_code} "
@@ -147,10 +148,7 @@ class BootstrapConfig(AppConfig):
 
             response_data = response.json()
 
-            name = response_data["name"]
-
             user = None
-
             try:
                 user = User.objects.get(username=response_data["owner"]["username"])
 
@@ -181,6 +179,7 @@ class BootstrapConfig(AppConfig):
 
                 user_profile.save()
 
+            name = response_data["name"]
             try:
                 if (
                     "old_backup_name" in response_data
