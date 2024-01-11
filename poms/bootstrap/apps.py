@@ -14,6 +14,11 @@ from poms_app import settings
 
 _l = logging.getLogger("provision")
 
+HEADERS = {
+    "Content-type": "application/json",
+    "Accept": "application/json",
+}
+
 
 class BootstrapConfig(AppConfig):
     name = "poms.bootstrap"
@@ -61,6 +66,7 @@ class BootstrapConfig(AppConfig):
 
     def create_finmars_bot(self):
         from django.contrib.auth.models import User
+
         from poms.users.models import MasterUser, Member
 
         try:
@@ -91,9 +97,7 @@ class BootstrapConfig(AppConfig):
                 _l.error(f"Warning. Could not create finmars_bot {e}")
 
     def create_iam_access_policies_templates(self):
-        from poms.iam.policy_generator import (
-            create_base_iam_access_policies_templates,
-        )
+        from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
         if "test" not in sys.argv:
             _l.info("create_iam_access_policies_templates")
@@ -110,8 +114,9 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
         from django.contrib.auth.models import User
+
         from poms.auth_tokens.utils import generate_random_string
-        from poms.users.models import Member, MasterUser, UserProfile
+        from poms.users.models import MasterUser, Member, UserProfile
 
         if not settings.AUTHORIZER_URL:
             return
@@ -119,20 +124,18 @@ class BootstrapConfig(AppConfig):
         try:
             _l.info("load_master_user_data processing")
 
-            headers = {"Content-type": "application/json", "Accept": "application/json"}
-
             data = {
                 "base_api_url": settings.BASE_API_URL,
             }
 
             url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
 
-            _l.info("load_master_user_data url %s" % url)
+            _l.info(f"load_master_user_data url {url}")
 
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
-                headers=headers,
+                headers=HEADERS,
                 verify=settings.VERIFY_SSL,
             )
 
@@ -163,11 +166,10 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info("Create owner %s" % response_data["owner"]["username"])
+                    _l.info(f'Create owner {response_data["owner"]["username"]}')
 
                 except Exception as e:
-                    _l.info("Create user error %s" % e)
-                    _l.info("Create user traceback %s" % traceback.format_exc())
+                    _l.info(f"Create user error {e} trace {traceback.format_exc()}")
 
             if user:
                 user_profile, created = UserProfile.objects.get_or_create(
@@ -193,13 +195,13 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info(
-                        "Master User From Backup Renamed to new Name %s and Base API URL %s"
-                        % (master_user.name, master_user.base_api_url)
+                        f"Master User From Backup Renamed to new Name {master_user.name}"
+                        f" and Base API URL {master_user.base_api_url}"
                     )
                     # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
-                _l.error("Old backup name error %s" % e)
+                _l.error(f"Old backup name error {e}")
 
             if MasterUser.objects.all().count() == 0:
                 _l.info("Empty database, create new master user")
@@ -213,8 +215,7 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info(
-                    "Master user with name %s and base_api_url %s created"
-                    % (master_user.name, master_user.base_api_url)
+                    f"Master user with name {master_user.name} and base_api_url {master_user.base_api_url} created"
                 )
 
                 member = Member.objects.create(
@@ -240,7 +241,8 @@ class BootstrapConfig(AppConfig):
                 _l.info("Master User base_api_url synced")
 
             except Exception as e:
-                _l.error("Could not sync base_api_url %s" % e)
+                _l.error(f"Could not sync base_api_url {e}")
+                raise e
 
             try:
                 current_owner_member = Member.objects.get(
@@ -252,7 +254,7 @@ class BootstrapConfig(AppConfig):
                 current_owner_member.save()
 
             except Exception as e:
-                _l.error("Could not find current owner member %s " % e)
+                _l.error(f"Could not find current owner member {e} ")
 
                 user = User.objects.get(username=response_data["owner"]["username"])
 
@@ -265,49 +267,43 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error("load_master_user_data error %s" % e)
-            _l.error("load_master_user_data traceback %s" % traceback.format_exc())
+            _l.error(f"load_master_user_data error {e} trace {traceback.format_exc()}")
 
     def register_at_authorizer_service(self):
         if not settings.AUTHORIZER_URL:
             return
 
+        _l.info("register_at_authorizer_service processing")
+
+        data = {
+            "base_api_url": settings.BASE_API_URL,
+        }
+        url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
+
+        _l.info(f"register_at_authorizer_service url {url}")
+
         try:
-            _l.info("register_at_authorizer_service processing")
-
-            headers = {"Content-type": "application/json", "Accept": "application/json"}
-
-            data = {
-                "base_api_url": settings.BASE_API_URL,
-            }
-
-            url = settings.AUTHORIZER_URL + "/backend-is-ready/"
-
-            _l.info("register_at_authorizer_service url %s" % url)
-
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
-                headers=headers,
+                headers=HEADERS,
                 verify=settings.VERIFY_SSL,
             )
+            response.raise_for_status()
 
             _l.info(
-                "register_at_authorizer_service backend-is-ready response.status_code %s"
-                % response.status_code
-            )
-            _l.info(
-                "register_at_authorizer_service backend-is-ready response.text %s"
-                % response.text
+                f"register_at_authorizer_service backend-is-ready "
+                f"response.status_code {response.status_code}"
+                f"response.text {response.text}"
             )
 
         except Exception as e:
-            _l.info("register_at_authorizer_service error %s" % e)
+            _l.info(f"register_at_authorizer_service error {e}")
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     def sync_celery_workers(self):
-        from poms.common.finmars_authorizer import AuthorizerService
         from poms.celery_tasks.models import CeleryWorker
+        from poms.common.finmars_authorizer import AuthorizerService
 
         if not settings.AUTHORIZER_URL:
             return
@@ -326,16 +322,16 @@ class BootstrapConfig(AppConfig):
                     if worker_status["status"] == "not_found":
                         authorizer_service.create_worker(worker)
                 except Exception as e:
-                    _l.error("sync_celery_workers: worker %s error %s" % (worker, e))
+                    _l.error(f"sync_celery_workers: worker {worker} error {e}")
 
         except Exception as e:
-            _l.info("sync_celery_workers error %s" % e)
+            _l.info(f"sync_celery_workers error {e}")
 
     def create_member_layouts(self):
         # TODO wtf is default member layout?
+        from poms.configuration.utils import get_default_configuration_code
         from poms.ui.models import MemberLayout
         from poms.users.models import Member
-        from poms.configuration.utils import get_default_configuration_code
 
         members = Member.objects.all()
 
@@ -364,6 +360,7 @@ class BootstrapConfig(AppConfig):
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
+
         from poms.common.storage import get_storage
         from poms.users.models import Member
         from poms_app import settings
