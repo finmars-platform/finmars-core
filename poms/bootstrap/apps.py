@@ -78,6 +78,7 @@ class BootstrapConfig(AppConfig):
         try:
             member = Member.objects.get(user__username="finmars_bot")
             _l.info("finmars_bot already exists")
+
         except Exception as e:
             try:
                 _l.info("Member not found, going to create it")
