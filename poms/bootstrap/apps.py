@@ -39,6 +39,7 @@ class BootstrapConfig(AppConfig):
         _l.info(f"space_code: {settings.BASE_API_URL}")
 
         post_migrate.connect(self.bootstrap, sender=self)
+
         _l.info("Finmars Application is running 💚")
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
@@ -64,7 +65,8 @@ class BootstrapConfig(AppConfig):
 
         self.create_iam_access_policies_templates()
 
-    def create_finmars_bot(self):
+    @staticmethod
+    def create_finmars_bot():
         from django.contrib.auth.models import User
 
         from poms.users.models import MasterUser, Member
@@ -97,7 +99,8 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Warning. Could not create finmars_bot {e}")
 
-    def create_iam_access_policies_templates(self):
+    @staticmethod
+    def create_iam_access_policies_templates():
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
         if "test" not in sys.argv:
@@ -113,7 +116,8 @@ class BootstrapConfig(AppConfig):
 
         add_view_and_manage_permissions()
 
-    def load_master_user_data(self):
+    @staticmethod
+    def load_master_user_data():
         from django.contrib.auth.models import User
 
         from poms.auth_tokens.utils import generate_random_string
@@ -257,7 +261,8 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.error(f"load_master_user_data error {e} trace {traceback.format_exc()}")
 
-    def register_at_authorizer_service(self):
+    @staticmethod
+    def register_at_authorizer_service():
         if not settings.AUTHORIZER_URL:
             return
 
@@ -288,7 +293,8 @@ class BootstrapConfig(AppConfig):
             _l.info(f"register_at_authorizer_service error {e}")
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
-    def sync_celery_workers(self):
+    @staticmethod
+    def sync_celery_workers():
         from poms.celery_tasks.models import CeleryWorker
         from poms.common.finmars_authorizer import AuthorizerService
 
@@ -314,7 +320,8 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info(f"sync_celery_workers error {e}")
 
-    def create_member_layouts(self):
+    @staticmethod
+    def create_member_layouts():
         # TODO wtf is default member layout?
         from poms.configuration.utils import get_default_configuration_code
         from poms.ui.models import MemberLayout
@@ -427,7 +434,8 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info(f"create_base_folders error {e} traceback {traceback.format_exc()}")
 
-    def create_local_configuration(self):
+    @staticmethod
+    def create_local_configuration():
         from poms.configuration.models import Configuration
 
         configuration_code = f"local.poms.{settings.BASE_API_URL}"
@@ -449,7 +457,8 @@ class BootstrapConfig(AppConfig):
 
             _l.info("Local Configuration created")
 
-    def _save_tmp_to_storage(self, tmpf, storage, path):
+    @staticmethod
+    def _save_tmp_to_storage(tmpf, storage, path):
         tmpf.write(b"")
         tmpf.flush()
         storage.save(path, tmpf)
