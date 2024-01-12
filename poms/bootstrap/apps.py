@@ -120,18 +120,16 @@ class BootstrapConfig(AppConfig):
         from poms.users.models import MasterUser, Member, UserProfile
 
         if not settings.AUTHORIZER_URL:
+            _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
             return
 
+        _l.info("load_master_user_data started ...")
+
         try:
-            _l.info("load_master_user_data processing")
-
-            data = {
-                "base_api_url": settings.BASE_API_URL,
-            }
-
+            data = {"base_api_url": settings.BASE_API_URL}
             url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
 
-            _l.info(f"load_master_user_data url {url}")
+            _l.info(f"load_master_user_data post to url={url} data={data}")
 
             response = requests.post(
                 url=url,
@@ -139,48 +137,42 @@ class BootstrapConfig(AppConfig):
                 headers=HEADERS,
                 verify=settings.VERIFY_SSL,
             )
-            response.raise_for_status()
 
-            _l.info(
-                f"load_master_user_data  response.status_code {response.status_code} "
-                f"response.text {response.text}"
-            )
+            _l.info(f"status_code={response.status_code} text={response.text}")
+
+            response.raise_for_status()
 
             response_data = response.json()
 
-            user = None
             try:
-                user = User.objects.get(username=response_data["owner"]["username"])
+                username = response_data["owner"]["username"]
+                user = User.objects.get(username=username)
 
-                _l.info("Owner exists")
+                _l.info(f"Owner {username} exists")
 
             except User.DoesNotExist:
                 try:
                     password = generate_random_string(10)
-
+                    username = response_data["owner"]["username"]
                     user = User.objects.create(
                         email=response_data["owner"]["email"],
-                        username=response_data["owner"]["username"],
+                        username=username,
                         password=password,
                     )
                     user.save()
 
-                    _l.info(f'Create owner {response_data["owner"]["username"]}')
+                    _l.info(f'Owner {username} created')
 
                 except Exception as e:
                     _l.info(f"Create user error {e} trace {traceback.format_exc()}")
+                    raise e
 
-            if user:
-                user_profile, created = UserProfile.objects.get_or_create(
-                    user_id=user.pk
-                )
+            user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
 
-                _l.info("Owner User Profile Updated")
+            _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
-                user_profile.save()
-
-            name = response_data["name"]
             try:
+                name = response_data["name"]
                 if (
                     "old_backup_name" in response_data
                     and response_data["old_backup_name"]
@@ -189,7 +181,6 @@ class BootstrapConfig(AppConfig):
                     master_user = MasterUser.objects.get(
                         name=response_data["old_backup_name"]
                     )
-
                     master_user.name = name
                     master_user.base_api_url = response_data["base_api_url"]
                     master_user.save()
