@@ -3,6 +3,7 @@ import logging
 import time
 from os.path import getsize
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
@@ -681,6 +682,100 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             .distinct(key + "__user_code")
         )
 
+
+def _get_values_of_generic_attribute(master_user, value_type, content_type, key):
+    '''
+    :param master_user:
+    :param value_type: Allowed values: 10, 20, 30, 40, 'field'
+    :param content_type:
+    :param key:
+    '''
+
+    attribute_type_user_code = key.split("attributes.")[1]
+
+    attribute_type = GenericAttributeType.objects.get(
+        master_user=master_user,
+        user_code=attribute_type_user_code,
+        content_type=content_type,
+    )
+
+    if value_type == 10:
+        return (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_string__isnull=False
+            )
+            .order_by("value_string")
+            .values_list("value_string", flat=True)
+            .distinct("value_string")
+        )
+    if value_type == 20:
+        return (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_float__isnull=False
+            )
+            .order_by("value_float")
+            .values_list("value_float", flat=True)
+            .distinct("value_float")
+        )
+    if value_type == 30:
+        return (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                classifier__name__isnull=False
+            )
+            .order_by("classifier__name")
+            .values_list("classifier__name", flat=True)
+            .distinct("classifier__name")
+        )
+    if value_type == 40:
+        return (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_date__isnull=False
+            )
+            .order_by("value_date")
+            .values_list("value_date", flat=True)
+            .distinct("value_date")
+        )
+
+    return []
+
+
+def _get_values_from_report(content_type, report_instance_id, key):
+    '''
+    Returns unique value from items for custom field or system attribute
+    of report
+
+    :param content_type:
+    :param report_instance_id:
+    :type report_instance_id: int
+    :param key:
+    '''
+
+    report_instance_model = apps.get_model(content_type + 'instance')
+
+    report_instance = report_instance_model.objects.get(id=report_instance_id)
+
+    # data = report_instance.data
+
+    full_items = report_instance.data['items']
+    values = set()
+
+    for item in full_items:
+        if key in item and item[key] not in (None, ''):
+            values.add(item[key])
+
+    values = list(values)
+    values.sort()
+
+    return values
+
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
         results = []
@@ -689,8 +784,12 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
         include_deleted = request.query_params.get("include_deleted", None)
+        report_instance_id = request.query_params.get("report_instance_id", None)
 
         master_user = request.user.master_user
+
+        # keys of attributes that are not relations (e.g. not: instrument.name, currency.user_code etc.)
+        report_system_attrs_keys_list = []
 
         # region Exceptions
         if not content_type_name:
@@ -734,6 +833,10 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         # endregion Exceptions
 
+        # report_instance_id is required only in some cases
+        if report_instance_id is not None:
+            report_instance_id = int(report_instance_id)
+
         content_type_pieces = content_type_name.split(".")
 
         try:
@@ -751,14 +854,24 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         model = content_type.model_class()
 
+        is_report = content_type_name in ("reports.balancereport",
+                                          "reports.plreport",
+                                          "reports.transactionreport")
+
+        if is_report:
+
+            report_system_attrs_keys_list = [
+                item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
+            ]
+
         if "attributes." in key:
-            attribute_type_user_code = key.split("attributes.")[1]
 
             try:
-                attribute_type = GenericAttributeType.objects.get(
-                    master_user=master_user,
-                    user_code=attribute_type_user_code,
-                    content_type=content_type,
+                results = _get_values_of_generic_attribute(
+                    master_user,
+                    value_type,
+                    content_type,
+                    key
                 )
             except GenericAttributeType.DoesNotExist:
                 return Response(
@@ -769,50 +882,18 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-            if value_type == 10:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_string__isnull=False
-                    )
-                    .order_by("value_string")
-                    .values_list("value_string", flat=True)
-                    .distinct("value_string")
+        elif is_report and (key in report_system_attrs_keys_list or "custom_fields." in key):
+
+            if report_instance_id is None:
+                return Response(
+                    {
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "message": "report_instance_id needed for such combination of a content_type and a key",
+                        "results": [],
+                    }
                 )
-            if value_type == 20:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_float__isnull=False
-                    )
-                    .order_by("value_float")
-                    .values_list("value_float", flat=True)
-                    .distinct("value_float")
-                )
-            if value_type == 30:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        classifier__name__isnull=False
-                    )
-                    .order_by("classifier__name")
-                    .values_list("classifier__name", flat=True)
-                    .distinct("classifier__name")
-                )
-            if value_type == 40:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_date__isnull=False
-                    )
-                    .order_by("value_date")
-                    .values_list("value_date", flat=True)
-                    .distinct("value_date")
-                )
+
+            results = _get_values_from_report(content_type_name, report_instance_id, key)
 
         else:
 
@@ -863,7 +944,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         _l.debug(f"model {model}")
 
         return Response({"results": results})
-
 
 class DebugLogViewSet(AbstractViewSet):
     def iter_json(self, context):
