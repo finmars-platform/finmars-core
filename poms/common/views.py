@@ -640,14 +640,14 @@ class AbstractSyncViewSet(AbstractViewSet):
 
 
 def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=False):
-    '''
+    """
     :param model:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param key:
     :param filter_kw: Keyword arguments for method .filter()
     :type filter_kw: dict
     :param include_deleted:
-    '''
+    """
     filter_kw[key + "__isnull"] = False
 
     if value_type not in [10, 20, 40, 'field']:
@@ -684,13 +684,15 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
 
 
 def _get_values_of_generic_attribute(master_user, value_type, content_type, key):
-    '''
+    """
     :param master_user:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param content_type:
     :param key:
-    '''
+    :return list:
+    """
 
+    results = []
     attribute_type_user_code = key.split("attributes.")[1]
 
     attribute_type = GenericAttributeType.objects.get(
@@ -700,7 +702,7 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
     )
 
     if value_type == 10:
-        return (
+        results = (
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
@@ -710,8 +712,8 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             .values_list("value_string", flat=True)
             .distinct("value_string")
         )
-    if value_type == 20:
-        return (
+    elif value_type == 20:
+        results = (
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
@@ -721,8 +723,8 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             .values_list("value_float", flat=True)
             .distinct("value_float")
         )
-    if value_type == 30:
-        return (
+    elif value_type == 30:
+        results = (
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
@@ -732,8 +734,8 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             .values_list("classifier__name", flat=True)
             .distinct("classifier__name")
         )
-    if value_type == 40:
-        return (
+    elif value_type == 40:
+        results = (
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
@@ -744,11 +746,11 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             .distinct("value_date")
         )
 
-    return []
+    return list(results)
 
 
 def _get_values_from_report(content_type, report_instance_id, key):
-    '''
+    """
     Returns unique value from items for custom field or system attribute
     of report
 
@@ -756,20 +758,21 @@ def _get_values_from_report(content_type, report_instance_id, key):
     :param report_instance_id:
     :type report_instance_id: int
     :param key:
-    '''
+    :return list:
+    """
 
     report_instance_model = apps.get_model(content_type + 'instance')
 
     report_instance = report_instance_model.objects.get(id=report_instance_id)
 
-    # data = report_instance.data
-
     full_items = report_instance.data['items']
-    values = set()
 
-    for item in full_items:
-        if key in item and item[key] not in (None, ''):
-            values.add(item[key])
+    # for item in full_items:
+    #     if key in item and item[key] not in (None, ''):
+    #         values.add(item[key])
+    values = {item[key] for item in full_items
+              if key in item and
+              item[key] not in (None, '')}
 
     values = list(values)
     values.sort()
