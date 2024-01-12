@@ -171,8 +171,8 @@ class BootstrapConfig(AppConfig):
 
             _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
+            name = response_data["name"]
             try:
-                name = response_data["name"]
                 if (
                     "old_backup_name" in response_data
                     and response_data["old_backup_name"]
@@ -211,7 +211,7 @@ class BootstrapConfig(AppConfig):
 
                 member = Member.objects.create(
                     user=user,
-                    username=user.username,
+                    username=username,
                     master_user=master_user,
                     is_owner=True,
                     is_admin=True,
@@ -225,7 +225,6 @@ class BootstrapConfig(AppConfig):
             try:
                 # TODO, carefull if someday return to multi master user inside one db
                 master_user = MasterUser.objects.all().first()
-
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
 
@@ -237,20 +236,18 @@ class BootstrapConfig(AppConfig):
 
             try:
                 current_owner_member = Member.objects.get(
-                    username=response_data["owner"]["username"], master_user=master_user
+                    username=username, master_user=master_user
                 )
 
                 current_owner_member.is_owner = True
                 current_owner_member.is_admin = True
                 current_owner_member.save()
 
-            except Exception as e:
-                _l.error(f"Could not find current owner member {e} ")
+            except Member.DoesNotExist as e:
+                _l.error(f"Could not find current owner member {e}")
 
-                user = User.objects.get(username=response_data["owner"]["username"])
-
-                current_owner_member = Member.objects.create(
-                    username=response_data["owner"]["username"],
+                Member.objects.create(
+                    username=username,
                     user=user,
                     master_user=master_user,
                     is_owner=True,
@@ -280,13 +277,12 @@ class BootstrapConfig(AppConfig):
                 headers=HEADERS,
                 verify=settings.VERIFY_SSL,
             )
-            response.raise_for_status()
-
             _l.info(
                 f"register_at_authorizer_service backend-is-ready "
                 f"response.status_code {response.status_code}"
                 f"response.text {response.text}"
             )
+            response.raise_for_status()
 
         except Exception as e:
             _l.info(f"register_at_authorizer_service error {e}")
