@@ -146,9 +146,9 @@ class BootstrapConfig(AppConfig):
             response.raise_for_status()
 
             response_data = response.json()
+            username = response_data["owner"]["username"]
 
             try:
-                username = response_data["owner"]["username"]
                 user = User.objects.get(username=username)
 
                 _l.info(f"Owner {username} exists")
@@ -156,7 +156,6 @@ class BootstrapConfig(AppConfig):
             except User.DoesNotExist:
                 try:
                     password = generate_random_string(10)
-                    username = response_data["owner"]["username"]
                     user = User.objects.create(
                         email=response_data["owner"]["email"],
                         username=username,
@@ -247,7 +246,7 @@ class BootstrapConfig(AppConfig):
                 current_owner_member.save()
 
             except Member.DoesNotExist as e:
-                _l.error(f"Could not find current owner member {e}")
+                _l.error(f"Could not find current owner member {e}, create new one")
 
                 Member.objects.create(
                     username=username,

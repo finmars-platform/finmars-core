@@ -11,17 +11,18 @@ class FinmarsTaskTestCase(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.mock_response_data = {
-            "name": "new_master",
+            "name": "master_from_backup",
             "description": "description",
             "is_from_backup": True,
             "old_backup_name": None,
             "version": "6.6.6",
             "base_api_url": "space11111",
-            "owner": {"username": self.user.username, "email": None},
+            "owner": {"username": "new_owner", "email": "test@mail.ru"},
             "status": 0,  # INITIAL
         }
         self.mock_response = mock.Mock()
         self.mock_response.status_code = 200
+        self.mock_response.text = "nice mocked text"
         self.mock_response.json.return_value = self.mock_response_data
 
     @mock.patch("poms.bootstrap.apps.requests.post")
