@@ -4,13 +4,12 @@ import sys
 import traceback
 
 from django.apps import AppConfig
+from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
 import requests
-
-from poms_app import settings
 
 _l = logging.getLogger("provision")
 
@@ -165,7 +164,7 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info(f'Owner {username} created')
+                    _l.info(f"Owner {username} created")
 
                 except Exception as e:
                     _l.info(f"Create user error {e} trace {traceback.format_exc()}")

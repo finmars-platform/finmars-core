@@ -31,4 +31,4 @@ class FinmarsTaskTestCase(BaseTestCase):
 
         BootstrapConfig.load_master_user_data()
 
-        mock_post.assert_not_called()
+        mock_post.assert_called()
