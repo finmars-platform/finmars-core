@@ -372,10 +372,6 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-       # _l.info(
-        #     f"filter_table_rows.filter_value_from_table value_to_filter="
-        #     f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
-        # )
 
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
@@ -447,19 +443,23 @@ class BackendReportHelperService:
 
         def match_item(item):
             for filter_ in regular_filters:
+
                 key_property = filter_["key"]
                 value_type = filter_["value_type"]
                 filter_type = filter_["filter_type"]
                 exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
-                #_l.info(#f"filter_table_rows.match_item item={item} filter_={filter_}"# )
+                if key_property != "ordering":
+                    if item.get(key_property) or item.get(key_property) == 0:
 
-                if len(filter_value) and key_property != "ordering":
-                    if key_property in item and item[key_property] is not None:
+                        if filter_type == 'empty':
+                            return False
+
                         if self.check_for_empty_regular_filter(
                             filter_value, filter_type
                         ):
+
                             value_from_table = item[key_property]
                             filter_argument = filter_value
 
@@ -470,6 +470,11 @@ class BackendReportHelperService:
                                 value_from_table = value_from_table.lower()
                                 filter_argument = filter_argument[0].lower()
 
+                            elif value_type == 20:
+
+                                if filter_type not in ('from_to', 'out_of_range'):
+                                    filter_argument = filter_argument[0]
+
                             elif value_type == 40:
                                 _l.info(
                                     "BackendReportHelperService.filter_table_rows"
@@ -477,26 +482,24 @@ class BackendReportHelperService:
                                     f"value_from_table={value_from_table} "
                                     f"filter_argument={filter_argument}"
                                 )
-                                if filter_type in ["equal", "not_equal"]:
-                                    filter_argument = filter_argument[0]
 
-                                elif filter_type in ["from_to", "out_of_range"]:
-                                    filter_argument["min_value"] = filter_argument[
-                                        "min_value"
-                                    ]
-                                    filter_argument["max_value"] = filter_argument[
-                                        "max_value"
-                                    ]
+                                if filter_type not in {"from_to", "out_of_range", "date_tree"}:
+                                    filter_argument = filter_argument[0]
 
                             if not self.filter_value_from_table(
                                 value_from_table, filter_argument, filter_type
                             ):
                                 return False
 
-                    elif exclude_empty_cells or (
-                        key_property in ["name", "instrument"]
-                        and item["item_type"] != 1
-                    ):
+                    # Strange logic migrated from front end. May be not needed.
+                    #
+                    # item_type 1 == "instrument"
+                    # elif exclude_empty_cells or (
+                    #         key_property in ["name", "instrument"]
+                    #         and item["item_type"] != 1
+                    # ):
+
+                    elif exclude_empty_cells:
                         return False
             return True
 
