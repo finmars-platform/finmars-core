@@ -8,6 +8,8 @@ from poms.transactions.models import TransactionClass
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -32,6 +34,7 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         portfolio_register = self.db_data.create_portfolio_register(
             self.portfolio,
             instrument,
+            user_code=self.random_string(),
         )
         self.prr_data = {
             "portfolio": self.portfolio.id,

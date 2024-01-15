@@ -23,6 +23,7 @@ EXPECTED_RESPONSE_RECORD = {
 
 
 class PortfolioRegisterViewSetTest(BaseTestCase):
+    databases = "__all__"
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -31,7 +32,7 @@ class PortfolioRegisterViewSetTest(BaseTestCase):
         self.instrument = self.db_data.instruments["Apple"]
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
             default_instrument_pricing_scheme=None,
@@ -77,6 +78,8 @@ class PortfolioRegisterViewSetTest(BaseTestCase):
 
 
 class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -105,6 +108,8 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
 
 
 class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
