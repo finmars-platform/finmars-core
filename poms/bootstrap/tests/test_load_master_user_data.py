@@ -4,6 +4,7 @@ from django.test import override_settings
 
 from poms.bootstrap.apps import BootstrapConfig
 from poms.common.common_base_test import BaseTestCase
+from poms.users.models import Member
 
 
 class FinmarsTaskTestCase(BaseTestCase):
@@ -24,6 +25,12 @@ class FinmarsTaskTestCase(BaseTestCase):
         self.mock_response.status_code = 200
         self.mock_response.text = "nice mocked text"
         self.mock_response.json.return_value = self.mock_response_data
+        self.old_member = Member.objects.create(
+            master_user=self.master_user,
+            is_admin=True,
+            is_owner=False,
+            is_deleted=False,
+        )
 
     @mock.patch("poms.bootstrap.apps.requests.post")
     @override_settings(AUTHORIZER_URL="authorizer/api/")
@@ -33,3 +40,6 @@ class FinmarsTaskTestCase(BaseTestCase):
         BootstrapConfig.load_master_user_data()
 
         mock_post.assert_called()
+
+        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.assertTrue(self.old_member.is_deleted)

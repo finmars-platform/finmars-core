@@ -195,6 +195,10 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
 
+            old_members = Member.objects.filter(is_owner=False, is_deleted=False).all()
+            old_members.update(is_deleted=True)
+            _l.info(f"{old_members.count()} old members were marked as deleted")
+
             if MasterUser.objects.all().count() == 0:
                 _l.info("Empty database, create new master user")
 
@@ -240,10 +244,13 @@ class BootstrapConfig(AppConfig):
                 current_owner_member = Member.objects.get(
                     username=username, master_user=master_user
                 )
-
-                current_owner_member.is_owner = True
-                current_owner_member.is_admin = True
-                current_owner_member.save()
+                if (
+                    not current_owner_member.is_owner
+                    or not current_owner_member.is_admin
+                ):
+                    current_owner_member.is_owner = True
+                    current_owner_member.is_admin = True
+                    current_owner_member.save()
 
             except Member.DoesNotExist as e:
                 _l.error(f"Could not find current owner member {e}, create new one")
