@@ -409,6 +409,398 @@ class PLReport(models.Model):
         verbose_name = gettext_lazy("p&l report")
         verbose_name_plural = gettext_lazy("p&l report")
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "item_type_name",
+                "name": "Item Type",
+                "value_type": 10
+            },
+            {
+                "key": "position_size",
+                "name": "Position size",
+                "value_type": 20
+            },
+            {
+                "key": "nominal_position_size",
+                "name": "Nominal Position size",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "instrument_pricing_currency_fx_rate",
+                "name": "Pricing currency fx rate",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrued_currency_fx_rate",
+                "name": "Accrued currency FX rate",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_accrual_size",
+                "name": "Current Payment Size",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_object_name",
+                "name": "Current Payment Frequency",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_n",
+                "name": "Current Payment Periodicity N",
+                "value_type": 20
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "ytm",
+                "name": "YTM",
+                "value_type": 20
+            },
+            {
+                "key": "ytm_at_cost",
+                "name": "YTM at cost",
+                "value_type": 20
+            },
+            {
+                "key": "modified_duration",
+                "name": "Modified duration",
+                "value_type": 20
+            },
+            {
+                "key": "last_notes",
+                "name": "Last notes",
+                "value_type": 10
+            },
+            {
+                "key": "mismatch",
+                "name": "Mismatch",
+                "value_type": 20
+            },
+            {
+                "key": "gross_cost_price_loc",
+                "name": "Gross cost price (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "net_cost_price_loc",
+                "name": "Net cost price (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "currency",
+                "name": "Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "market_value",
+                "name": "Market value",
+                "value_type": 20
+            },
+            {
+                "key": "market_value_loc",
+                "name": "Market value (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "market_value_percent",
+                "name": "Market value %",
+                "value_type": 20
+            },
+            {
+                "key": "exposure",
+                "name": "Exposure",
+                "value_type": 20
+            },
+            {
+                "key": "exposure_percent",
+                "name": "Exposure %",
+                "value_type": 20
+            },
+            {
+                "key": "exposure_loc",
+                "name": "Exposure (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_principal_price",
+                "name": "Current Price",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrued_price",
+                "name": "Current Accrued",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_factor",
+                "name": "Factor",
+                "value_type": 20
+            },
+            {
+                "key": "detail",
+                "name": "Transaction Detail",
+                "value_type": 10
+            },
+            # region Pl report performance attributes
+            {
+                "key": "item_group_name",
+                "name": "Group Name",
+                "value_type": 10
+            },
+            {
+                "key": "item_subtype_name",
+                "name": "Subtype Name",
+                "value_type": 10
+            },
+            # region This models needed to facilitate linking to report dates
+            {
+                "key": "pl_first_date",
+                "name": "Date-from",
+                "value_type": 40
+            },
+            {
+                "key": "report_date",
+                "name": "Date-to",
+                "value_type": 40
+            },
+            # endregion This models needed to facilitate linking to report dates
+            {
+                "key": "net_position_return",
+                "name": "Net position return",
+                "value_type": 20
+            },
+            {
+                "key": "net_position_return_loc",
+                "name": "Net position return (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "net_position_return_fixed",
+                "name": "Net position return fixed",
+                "value_type": 20
+            },
+            {
+                "key": "net_position_return_fixed_loc",
+                "name": "Net position return Fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "time_invested",
+                "name": "Time invested",
+                "value_type": 20
+            },
+            {
+                "key": "position_return",
+                "name": "Position return",
+                "value_type": 20
+            },
+            {
+                "key": "position_return_loc",
+                "name": "Position return (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "position_return_fixed",
+                "name": "Position Return Fixed",
+                "value_type": 20
+            },
+            {
+                "key": "position_return_fixed_loc",
+                "name": "Position Return Fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "daily_price_change",
+                "name": "Daily price change",
+                "value_type": 20
+            },
+            {
+                "key": "mtd_price_change",
+                "name": "MTD price change",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fx",
+                "name": "Principal FX",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fx_loc",
+                "name": "Principal FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fixed",
+                "name": "Principal fixed",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fixed_loc",
+                "name": "Principal fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "carry_fx",
+                "name": "Carry FX",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fx_loc",
+                "name": "Carry FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fixed",
+                "name": "Carry fixed",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fixed_loc",
+                "name": "Carry fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "overheads_fx",
+                "name": "Overheads FX",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fx_loc",
+                "name": "Overheads FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fixed",
+                "name": "Overheads fixed",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fixed_loc",
+                "name": "Overheads fixed (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "principal",
+                "name": "Principal",
+                "value_type": 20
+            },
+            {
+                "key": "carry",
+                "name": "Carry",
+                "value_type": 20
+            },
+            {
+                "key": "overheads",
+                "name": "Overheads",
+                "value_type": 20
+            },
+            {
+                "key": "total",
+                "name": "Total",
+                "value_type": 20
+            },
+            {
+                "key": "principal_loc",
+                "name": "Principal (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "carry_loc",
+                "name": "Carry (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_loc",
+                "name": "Overheads (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "total_loc",
+                "name": "Total (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "total_fx",
+                "name": "Total FX",
+                "value_type": 20
+            },
+            {
+                "key": "total_fx_loc",
+                "name": "Total FX (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "total_fixed",
+                "name": "Total fixed",
+                "value_type": 20
+            },
+            # endregion Pl report performance attributes
+            # region Pl report mismatch attributes
+            {
+                "key": "mismatch",
+                "name": "Mismatch",
+                "value_type": 20
+            },
+            {
+                "key": "mismatch_portfolio",
+                "name": "Mismatch Portfolio",
+                "value_content_type": "portfolios.portfolio",
+                "value_entity": "portfolio",
+                "value_type": "field"
+            },
+            {
+                "key": "mismatch_account",
+                "name": "Mismatch Account",
+                "value_content_type": "accounts.account",
+                "value_entity": "account",
+                "value_type": "field"
+            }
+            # endregion Pl report mismatch attributes
+        ]
+
 
 class PerformanceReport(models.Model):
     master_user = models.ForeignKey(
