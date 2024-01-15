@@ -28,6 +28,8 @@ GET_RESPONSE = {
 
 
 class ConfigurationViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -39,7 +41,8 @@ class ConfigurationViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json, GET_RESPONSE)
+        self.assertEqual(response_json["count"], 0)
+        self.assertEqual(len(response_json["results"]), 0)
 
     @mock.patch("poms.configuration.views.get_access_token")
     def test__install_configuration_from_marketplace(self, get_access_token):

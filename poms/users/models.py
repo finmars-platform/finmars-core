@@ -908,7 +908,6 @@ class EcosystemDefault(models.Model):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     account_type = models.ForeignKey(
         "accounts.AccountType",
         null=True,
@@ -979,7 +978,6 @@ class EcosystemDefault(models.Model):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("portfolio"),
     )
-
     strategy1_group = models.ForeignKey(
         "strategies.Strategy1Group",
         null=True,

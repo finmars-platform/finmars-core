@@ -4403,14 +4403,14 @@ def create_counterparty_from_callback_data(data, master_user, member) -> Counter
         "member": member,
     }
 
-    group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
+    group = CounterpartyGroup.objects.filter(master_user=master_user).first()
     company_data = {
         "user_code": data.get("user_code"),
         "name": data.get("name"),
         "short_name": data.get("short_name"),
         "public_name": data.get("public_name"),
         "notes": data.get("notes"),
-        "group": group.id,
+        "group": group.id if group else None,
     }
 
     _l.info(f"{func} started, company_data={company_data}")

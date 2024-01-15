@@ -2,17 +2,18 @@
 Django settings for the main Backend project.
 """
 
-
-
 import os
 from datetime import timedelta
 
-import sentry_sdk
+from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import gettext_lazy
+
+import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
+
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
@@ -139,8 +140,13 @@ INSTALLED_APPS = [
 ]
 
 if USE_DEBUGGER:
-    INSTALLED_APPS.append("debug_toolbar")
-    INSTALLED_APPS.append("pympler")
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar",
+            "pympler",
+        ]
+    )
+
 
 # CRAZY, this settings MUST be before MIDDLEWARE prop
 CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
@@ -209,17 +215,39 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", True)
+DB_ENGINE = "django.db.backends.postgresql"
+DB_DEFAULT = DEFAULT_DB_ALIAS
+DB_REPLICA = "replica"
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
+    DB_DEFAULT: {
+        "ENGINE": DB_ENGINE,
         "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-    }
+
+    },
 }
+if USE_DB_REPLICA:
+    DATABASES[DB_REPLICA] = {
+        "ENGINE": DB_ENGINE,
+        "NAME": ENV_STR("REPLICA_DB_NAME", "finmars_dev"),
+        "USER": ENV_STR("REPLICA_DB_USER", "postgres"),
+        "PASSWORD": ENV_STR("REPLICA_DB_PASSWORD", "postgres"),
+        "HOST": ENV_STR("REPLICA_DB_HOST", "localhost"),
+        "PORT": ENV_INT("REPLICA_DB_PORT", 5432),
+        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+        "TEST": {
+            "MIRROR": DB_DEFAULT,
+        },
+    }
+    DATABASE_ROUTERS = [
+        "poms_app.db_router.DbRouter",
+    ]
+
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
@@ -401,10 +429,10 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        }
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
@@ -422,28 +450,26 @@ LOGGING = {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True,
-        }
+        },
     },
 }
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == "local":
+    os.makedirs(f"{BASE_DIR}/log/", exist_ok=True)
 
-    os.makedirs(f'{BASE_DIR}/log/', exist_ok=True)
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': f'{BASE_DIR}/log/django.log',
-        'formatter': 'verbose',
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": f"{BASE_DIR}/log/django.log",
+        "formatter": "verbose",
     }
 
 else:
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': '/var/log/finmars/backend/django.log',
-        'formatter': 'verbose'
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": "/var/log/finmars/backend/django.log",
+        "formatter": "verbose",
     }
 
 # if SEND_LOGS_TO_FINMARS:
@@ -631,7 +657,7 @@ AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
 
-AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)

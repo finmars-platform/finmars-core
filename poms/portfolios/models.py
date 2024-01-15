@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now, str_to_date
-from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
@@ -18,7 +17,7 @@ _l = getLogger("poms.portfolios")
 
 
 # noinspection PyUnresolvedReferences
-class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     """
     Portfolio Entity - Way of grouping transactions in user-defined way.
     """
@@ -208,23 +207,21 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if self.linked_instrument:
+        if self.linked_instrument and not self.linked_instrument.has_linked_with_portfolio:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
-        try:
-            PortfolioBundle.objects.get(
+        bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=self.user_code,
+                defaults=dict(
+                    owner=self.owner,
+                    name=self.user_code,
+                )
             )
-            _l.info("Bundle already exists")
-
-        except PortfolioBundle.DoesNotExist:
-            bundle = PortfolioBundle.objects.create(
-                master_user=self.master_user,
-                owner=self.owner,
-                name=self.user_code,
-                user_code=self.user_code,
+        if created:
+            _l.info(
+                f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
             )
             bundle.registers.set([self])
             bundle.save()

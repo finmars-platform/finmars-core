@@ -185,6 +185,8 @@ EXPECTED_RESPONSE = {
 
 
 class PortfolioRegisterCreateTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -194,7 +196,7 @@ class PortfolioRegisterCreateTest(BaseTestCase):
         self.instrument_type = InstrumentType.objects.first()
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
             default_instrument_pricing_scheme=None,
@@ -236,6 +238,7 @@ class PortfolioRegisterCreateTest(BaseTestCase):
 
         created_in = Instrument.objects.filter(user_code=self.pr_user_code).first()
         self.assertIsNotNone(created_in)
+        self.assertTrue(created_in.has_linked_with_portfolio)
 
         self.assertEqual(response_json["user_code"], self.pr_user_code)
         self.assertEqual(
