@@ -38,7 +38,18 @@ from poms.instruments.models import (
 )
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import Portfolio, PortfolioRegister
-from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.strategies.models import (
+    Strategy1,
+    Strategy2,
+    Strategy3,
+    Strategy1Group,
+    Strategy2Group,
+    Strategy3Group,
+    Strategy1Subgroup,
+    Strategy2Subgroup,
+    Strategy3Subgroup,
+)
+
 from poms.transactions.models import (
     ComplexTransaction,
     Transaction,
@@ -627,7 +638,8 @@ class DbInitializer:
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
         self.instruments = self.get_or_create_instruments()
-        self.strategies = self.get_or_create_strategies()
+        self.strategies = self.create_strategies()
+        self.strategy_groups = self.create_strategy_groups()
 
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
@@ -770,7 +782,21 @@ class DbInitializer:
             )
         return classes
 
-    def get_or_create_strategies(self):
+    def create_strategy_groups(self):
+        groups = {}
+        for i, model in enumerate([Strategy1Group, Strategy2Group, Strategy3Group]):
+            group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
+                master_user=self.master_user,
+                owner=self.member,
+                defaults={
+                    "name": f"strategy_group_{i+1}",
+                },
+            )
+            groups[i + 1] = group
+
+        return groups
+
+    def create_strategies(self):
         strategies = {}
         for i, model in enumerate([Strategy1, Strategy2, Strategy3]):
             if not (strategy := model.objects.using(settings.DB_DEFAULT).first()):
