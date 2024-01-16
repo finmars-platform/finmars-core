@@ -1093,9 +1093,9 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
             "strategy3_group": self.db_data.strategy_groups[3].id,
             "strategy3_subgroup": self.db_data.strategy_subgroups[3].id,
             "strategy3": self.db_data.strategies[3].id,
-            "mismatch_portfolio": None,
-            "mismatch_account": None,
-            "pricing_policy": None,
+            "mismatch_portfolio": self.db_data.portfolios[BIG].id,
+            "mismatch_account": self.account.id,
+            "pricing_policy": self.create_pricing_policy().id,
             "transaction_type": self.db_data.transaction_types[BUY_SELL].id,
             "periodicity": self.get_periodicity().id,
         }

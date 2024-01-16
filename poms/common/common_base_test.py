@@ -34,6 +34,7 @@ from poms.instruments.models import (
     PaymentSizeDetail,
     Periodicity,
     PricingCondition,
+    PricingPolicy,
     ShortUnderlyingExposure,
 )
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -554,6 +555,16 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             ),
         )
         return instrument
+
+    def create_pricing_policy(self) -> GenericAttributeType:
+        name = "pricing_policy"
+        return PricingPolicy.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=name,
+            name=name,
+
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
