@@ -2961,7 +2961,7 @@ class PriceHistory(DataTimeStampedModel):
                     f" {traceback.format_exc()}"
                 )
 
-        if not self.accrued_price:
+        if self.accrued_price is None:
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
