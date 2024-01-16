@@ -3,6 +3,7 @@ import logging
 import time
 from os.path import getsize
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
@@ -292,7 +293,6 @@ class AbstractModelViewSet(
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
         ByIsEnabledFilterBackend,
-        # DjangoFilterBackend, # Create duplicate error, possibly inheriths from AbstractFinmarsAccessPolicyViewSet
         OrderingFilter,
         OrderingPostFilter,
     ]
@@ -335,8 +335,6 @@ class AbstractModelViewSet(
 
     @action(detail=False, methods=["post"], url_path="ev-item")
     def list_ev_item(self, request, *args, **kwargs):
-        start_time = time.perf_counter()
-
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
         content_type = ContentType.objects.get_for_model(
@@ -344,7 +342,6 @@ class AbstractModelViewSet(
         )
         master_user = request.user.master_user
 
-        filters_st = time.perf_counter()
         queryset = self.filter_queryset(self.get_queryset())
 
         if content_type.model not in [
@@ -370,15 +367,9 @@ class AbstractModelViewSet(
         _l.debug(f"ordering {ordering}")
 
         if ordering:
-            sort_st = time.perf_counter()
             queryset = sort_by_dynamic_attrs(
                 queryset, ordering, master_user, content_type
             )
-            # _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
-
-        # _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
-
-        page_st = time.perf_counter()
 
         if global_table_search:
             queryset = handle_global_table_search(
@@ -390,25 +381,9 @@ class AbstractModelViewSet(
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 
-        # _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
-
-        serialize_st = time.perf_counter()
-
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
-
-        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
-
-        return result
-
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["post"], url_path="ev-group")
     def list_ev_group(self, request, *args, **kwargs):
@@ -433,8 +408,6 @@ class AbstractModelViewSet(
 
         filtered_qs = filtered_qs.filter(id__in=qs)
 
-        # print('len before handle filters %s' % len(filtered_qs))
-
         filtered_qs = handle_filters(
             filtered_qs, filter_settings, master_user, content_type
         )
@@ -446,13 +419,6 @@ class AbstractModelViewSet(
                 self.serializer_class.Meta.model,
                 content_type,
             )
-
-        # print('len after handle filters %s' % len(filtered_qs))
-
-        # filtered_qs = filtered_qs.filter(id__in=qs)
-
-        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-        #     filtered_qs = filtered_qs.filter(is_deleted=False)
 
         if content_type.model not in [
             "currencyhistory",
@@ -639,14 +605,14 @@ class AbstractSyncViewSet(AbstractViewSet):
 
 
 def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=False):
-    '''
+    """
     :param model:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param key:
     :param filter_kw: Keyword arguments for method .filter()
     :type filter_kw: dict
     :param include_deleted:
-    '''
+    """
     filter_kw[key + "__isnull"] = False
 
     if value_type not in [10, 20, 40, 'field']:
@@ -681,6 +647,103 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             .distinct(key + "__user_code")
         )
 
+
+def _get_values_of_generic_attribute(master_user, value_type, content_type, key):
+    """
+    :param master_user:
+    :param value_type: Allowed values: 10, 20, 30, 40, 'field'
+    :param content_type:
+    :param key:
+    :return list:
+    """
+
+    results = []
+    attribute_type_user_code = key.split("attributes.")[1]
+
+    attribute_type = GenericAttributeType.objects.get(
+        master_user=master_user,
+        user_code=attribute_type_user_code,
+        content_type=content_type,
+    )
+
+    if value_type == 10:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_string__isnull=False
+            )
+            .order_by("value_string")
+            .values_list("value_string", flat=True)
+            .distinct("value_string")
+        )
+    elif value_type == 20:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_float__isnull=False
+            )
+            .order_by("value_float")
+            .values_list("value_float", flat=True)
+            .distinct("value_float")
+        )
+    elif value_type == 30:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                classifier__name__isnull=False
+            )
+            .order_by("classifier__name")
+            .values_list("classifier__name", flat=True)
+            .distinct("classifier__name")
+        )
+    elif value_type == 40:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_date__isnull=False
+            )
+            .order_by("value_date")
+            .values_list("value_date", flat=True)
+            .distinct("value_date")
+        )
+
+    return list(results)
+
+
+def _get_values_from_report(content_type, report_instance_id, key):
+    """
+    Returns unique value from items for custom field or system attribute
+    of report
+
+    :param content_type:
+    :param report_instance_id:
+    :type report_instance_id: int
+    :param key:
+    :return list:
+    """
+
+    report_instance_model = apps.get_model(content_type + 'instance')
+
+    report_instance = report_instance_model.objects.get(id=report_instance_id)
+
+    full_items = report_instance.data['items']
+
+    # for item in full_items:
+    #     if key in item and item[key] not in (None, ''):
+    #         values.add(item[key])
+    values = {item[key] for item in full_items
+              if key in item and
+              item[key] not in (None, '')}
+
+    values = list(values)
+    values.sort()
+
+    return values
+
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
         results = []
@@ -689,8 +752,12 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
         include_deleted = request.query_params.get("include_deleted", None)
+        report_instance_id = request.query_params.get("report_instance_id", None)
 
         master_user = request.user.master_user
+
+        # keys of attributes that are not relations (e.g. not: instrument.name, currency.user_code etc.)
+        report_system_attrs_keys_list = []
 
         # region Exceptions
         if not content_type_name:
@@ -734,6 +801,10 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         # endregion Exceptions
 
+        # report_instance_id is required only in some cases
+        if report_instance_id is not None:
+            report_instance_id = int(report_instance_id)
+
         content_type_pieces = content_type_name.split(".")
 
         try:
@@ -751,14 +822,24 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         model = content_type.model_class()
 
+        is_report = content_type_name in ("reports.balancereport",
+                                          "reports.plreport",
+                                          "reports.transactionreport")
+
+        if is_report:
+
+            report_system_attrs_keys_list = [
+                item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
+            ]
+
         if "attributes." in key:
-            attribute_type_user_code = key.split("attributes.")[1]
 
             try:
-                attribute_type = GenericAttributeType.objects.get(
-                    master_user=master_user,
-                    user_code=attribute_type_user_code,
-                    content_type=content_type,
+                results = _get_values_of_generic_attribute(
+                    master_user,
+                    value_type,
+                    content_type,
+                    key
                 )
             except GenericAttributeType.DoesNotExist:
                 return Response(
@@ -769,50 +850,18 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-            if value_type == 10:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_string__isnull=False
-                    )
-                    .order_by("value_string")
-                    .values_list("value_string", flat=True)
-                    .distinct("value_string")
+        elif is_report and (key in report_system_attrs_keys_list or "custom_fields." in key):
+
+            if report_instance_id is None:
+                return Response(
+                    {
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "message": "report_instance_id needed for such combination of a content_type and a key",
+                        "results": [],
+                    }
                 )
-            if value_type == 20:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_float__isnull=False
-                    )
-                    .order_by("value_float")
-                    .values_list("value_float", flat=True)
-                    .distinct("value_float")
-                )
-            if value_type == 30:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        classifier__name__isnull=False
-                    )
-                    .order_by("classifier__name")
-                    .values_list("classifier__name", flat=True)
-                    .distinct("classifier__name")
-                )
-            if value_type == 40:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_date__isnull=False
-                    )
-                    .order_by("value_date")
-                    .values_list("value_date", flat=True)
-                    .distinct("value_date")
-                )
+
+            results = _get_values_from_report(content_type_name, report_instance_id, key)
 
         else:
 
@@ -863,7 +912,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         _l.debug(f"model {model}")
 
         return Response({"results": results})
-
 
 class DebugLogViewSet(AbstractViewSet):
     def iter_json(self, context):

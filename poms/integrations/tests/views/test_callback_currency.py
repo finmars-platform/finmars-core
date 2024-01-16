@@ -6,6 +6,8 @@ from poms.currencies.models import Currency
 
 
 class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

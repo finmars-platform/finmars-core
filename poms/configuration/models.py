@@ -62,29 +62,6 @@ class ConfigurationModel(OwnerModel):
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
             self.user_code = f"{str(self.configuration_code)}:{str(self.user_code)}"
 
-        # Content types are not needed anymore FN-2046
-        # # TODO  ADD configuration_code to POST data
-        # if self.user_code and self.configuration_code not in self.user_code:
-        #     self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
-        #
-        #     if (
-        #         hasattr(self, "content_type") and self.content_type
-        #     ):  # In case if it Attribute Type or Layout
-        #         content_type_key = (
-        #             f"{self.content_type.app_label}.{self.content_type.model}"
-        #         )
-        #
-        #         self.user_code = (
-        #             str(self.configuration_code)
-        #             + ":"
-        #             + content_type_key
-        #             + ":"
-        #             + str(self.user_code)
-        #         )
-        #
-        #     else:
-        #         self.user_code = f"{str(self.configuration_code)}:{str(self.user_code)}"
-
         super().save(*args, **kwargs)
 
 

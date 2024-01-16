@@ -95,21 +95,17 @@ class TransactionReportBuilderSql:
 
     def add_user_filters(self):
 
-        result = ''
+        if not self.instance.filters:
+            return ""
 
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
-        _l.info("add_user_filters.instruments count %s" % len(instruments))
+        _l.info(f"add_user_filters.instruments count {len(instruments)}")
 
+        result = ""
         try:
-
-            for filter in self.instance.filters:
-
-                if filter['key'] in ['entry_item_type']:
-                    item_type_filter = filter
-
             for filter in self.instance.filters:
 
                 if filter['options']['enabled'] and filter['options']['filter_values']:
@@ -123,38 +119,41 @@ class TransactionReportBuilderSql:
 
                         for portfolio in portfolios:
 
-                            for value in filter['options']['filter_values']:
-
-                                if value == portfolio[field_key]:
-                                    portfolio_ids.append(str(portfolio['id']))
-
-                        _l.info('portfolio_ids %s' % portfolio_ids)
+                            portfolio_ids.extend(
+                                str(portfolio['id'])
+                                for value in filter['options']['filter_values']
+                                if value == portfolio[field_key]
+                            )
+                        _l.info(f'portfolio_ids {portfolio_ids}')
 
                         if portfolio_ids:
                             res = "'" + "\',\'".join(portfolio_ids)
-                            res = res + "'"
+                            res = f"{res}'"
 
-                            result = result + 'and t.portfolio_id IN (%s)' % res
+                            result = f'{result}and t.portfolio_id IN ({res})'
 
-                    if filter['key'] in ['instrument.user_code', 'instrument.name', 'instrument.short_name',
-                                         'instrument.public_name']:
+                    if filter['key'] in {
+                        'instrument.user_code',
+                        'instrument.name',
+                        'instrument.short_name',
+                        'instrument.public_name',
+                    }:
 
                         field_key = filter['key'].split('.')[1]
 
                         instrument_ids = []
 
                         for instrument in instruments:
-
-                            for value in filter['options']['filter_values']:
-
-                                if value == instrument[field_key]:
-                                    instrument_ids.append(str(instrument['id']))
+                            instrument_ids.extend(
+                                str(instrument['id'])
+                                for value in filter['options']['filter_values']
+                                if value == instrument[field_key]
+                            )
 
                         if instrument_ids:
                             res = "'" + "\',\'".join(instrument_ids)
-                            res = res + "'"
-
-                            result = result + 'and t.instrument_id IN (%s)' % res
+                            res = f"{res}'"
+                            result = f'{result}and t.instrument_id IN ({res})'
 
                     if filter['key'] in ['entry_item_user_code']:
 
@@ -162,92 +161,64 @@ class TransactionReportBuilderSql:
 
                         for instrument in instruments:
 
-                            for value in filter['options']['filter_values']:
-
-                                if value == instrument['user_code']:
-                                    instrument_ids.append(str(instrument['id']))
-
-                        _l.info('instrument_ids %s' % instrument_ids)
+                            instrument_ids.extend(
+                                str(instrument['id'])
+                                for value in filter['options']['filter_values']
+                                if value == instrument['user_code']
+                            )
+                        _l.info(f'instrument_ids {instrument_ids}')
 
                         instrument_expression = ''
 
                         if instrument_ids:
                             res = "'" + "\',\'".join(instrument_ids)
-                            res = res + "'"
+                            res = f"{res}'"
 
-                            instrument_expression = 't.instrument_id IN (%s)' % res
+                            instrument_expression = f't.instrument_id IN ({res})'
 
                         currencies_ids = []
 
                         for currency in currencies:
 
-                            for value in filter['options']['filter_values']:
-
-                                if value == currency['user_code']:
-                                    currencies_ids.append(str(currency['id']))
-
-                        _l.info('currencies_ids %s' % currencies_ids)
+                            currencies_ids.extend(
+                                str(currency['id'])
+                                for value in filter['options']['filter_values']
+                                if value == currency['user_code']
+                            )
+                        _l.info(f'currencies_ids {currencies_ids}')
 
                         settlement_currency_expression = ''
                         transaction_currency_expression = ''
 
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
-                            res = res + "'"
+                            res = f"{res}'"
 
-                            settlement_currency_expression = 't.settlement_currency_id IN (%s)' % res
-                            # TODO add or for transaction_currency_id
-
-                        if currencies_ids:
+                            settlement_currency_expression = f't.settlement_currency_id IN ({res})'
                             res = "'" + "\',\'".join(currencies_ids)
-                            res = res + "'"
+                            res = f"{res}'"
 
-                            transaction_currency_expression = 't.transaction_currency_id IN (%s)' % res
-                            # TODO add or for transaction_currency_id
-
+                            transaction_currency_expression = f't.transaction_currency_id IN ({res})'
                         # _l.info('result %s' % result)
 
                         if instrument_expression and (
                                 settlement_currency_expression and transaction_currency_expression):
 
-                            result = result + 'and (%s or %s or %s)' % (
-                            instrument_expression, settlement_currency_expression, transaction_currency_expression)
+                            result = f'{result}and ({instrument_expression} or {settlement_currency_expression} or {transaction_currency_expression})'
 
-                        elif instrument_expression and not (
-                                settlement_currency_expression and transaction_currency_expression):
-                            result = result + 'and %s' % instrument_expression
+                        elif instrument_expression:
+                            result = f'{result}and {instrument_expression}'
 
-                        elif not instrument_expression and (
-                                settlement_currency_expression and transaction_currency_expression):
-                            result = result + 'and (%s or %s)' % (
-                            settlement_currency_expression, transaction_currency_expression)
+                        elif (
+                            settlement_currency_expression
+                            and transaction_currency_expression
+                        ):
+                            result = f'{result}and ({settlement_currency_expression} or {transaction_currency_expression})'
 
         except Exception as e:
 
-            _l.error("User filters layout error %s" % e)
-            _l.error("User filters layout traceback %s" % traceback.format_exc())
-
-        # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
-        #
-        # accounts_dict = {}
-        #
-        # for account in accounts:
-        #     accounts_dict[account[2]] = account[1] # account[2] - user code
-        #
-        # for filter in self.instance.filters:
-        #
-        #     if filter['key'] == 'entry_account.user_code':
-        #
-        #         # "'acc1', 'acc2'"
-        #
-        #         accounts = ['acc1', 'acc2']
-        #         res = "'" + "\',\'".join(accounts)
-        #         res = res + "'"
-        #
-        #
-        #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
-
-        # _l.info('add_user_filters result %s' % result)
+            _l.error(f"User filters layout error {e}")
+            _l.error(f"User filters layout traceback {traceback.format_exc()}")
 
         return result
 

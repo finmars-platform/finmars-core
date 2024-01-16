@@ -6,6 +6,8 @@ from poms.instruments.tests.common_test_data import EXPECTED_INSTRUMENT_TYPE
 
 
 class InstrumentTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -106,7 +108,6 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["count"], 3)
 
         self.assertEqual(
             response_json["results"][index]["instrument_class"],

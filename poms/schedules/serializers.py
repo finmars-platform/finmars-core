@@ -6,7 +6,8 @@ from rest_framework.fields import empty
 from poms.common.fields import DateTimeTzAwareField
 from poms.common.serializers import ModelMetaSerializer
 from poms.schedules.models import ScheduleProcedure, Schedule
-from poms.users.fields import MasterUserField
+from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 _l = logging.getLogger('poms.schedules')
 
@@ -30,6 +31,7 @@ class RunScheduleSerializer(serializers.Serializer):
 
 class ScheduleSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
+    owner = HiddenMemberField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)
 
@@ -43,7 +45,7 @@ class ScheduleSerializer(ModelMetaSerializer):
             'is_enabled', 'cron_expr', 'procedures',
             'last_run_at', 'next_run_at', 'error_handler',
             'data',
-            'configuration_code'
+            'configuration_code', 'owner'
         ]
         read_only_fields = ['last_run_at', 'next_run_at']
 
@@ -52,6 +54,7 @@ class ScheduleSerializer(ModelMetaSerializer):
         _l.debug("create validated_data %s" % validated_data)
 
         procedures = validated_data.pop('procedures', empty)
+
 
         instance = super(ScheduleSerializer, self).create(validated_data)
 
@@ -66,6 +69,7 @@ class ScheduleSerializer(ModelMetaSerializer):
         _l.debug("update validated_data %s" % validated_data)
 
         procedures = validated_data.pop('procedures', empty)
+
 
         instance = super(ScheduleSerializer, self).update(instance, validated_data)
 
