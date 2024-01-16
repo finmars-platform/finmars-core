@@ -17,6 +17,7 @@ HEADERS = {
     "Content-type": "application/json",
     "Accept": "application/json",
 }
+FINMARS_BOT = "finmars_bot"
 
 
 class BootstrapConfig(AppConfig):
@@ -74,32 +75,34 @@ class BootstrapConfig(AppConfig):
         from poms.users.models import MasterUser, Member
 
         try:
-            user = User.objects.get(username="finmars_bot")
+            user = User.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
 
         except Exception:
-            user = User.objects.create(username="finmars_bot")
+            user = User.objects.using(settings.DB_DEFAULT).create(username=FINMARS_BOT)
 
         try:
-            member = Member.objects.get(user__username="finmars_bot")
-            _l.info("finmars_bot already exists")
+            Member.objects.using(settings.DB_DEFAULT).get(user__username=FINMARS_BOT)
+            _l.info(f"{FINMARS_BOT} already exists")
 
         except Exception:
             try:
                 _l.info("Member not found, going to create it")
 
-                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+                master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
+                    base_api_url=settings.BASE_API_URL
+                )
 
-                member = Member.objects.create(
+                Member.objects.using(settings.DB_DEFAULT).create(
                     user=user,
-                    username="finmars_bot",
+                    username=FINMARS_BOT,
                     master_user=master_user,
                     is_admin=True,
                 )
 
-                _l.info("finmars_bot created")
+                _l.info(f"{FINMARS_BOT} created")
 
             except Exception as e:
-                _l.error(f"Warning. Could not create finmars_bot {e}")
+                _l.error(f"Warning. Could not create {FINMARS_BOT} {e}")
 
     @staticmethod
     def create_iam_access_policies_templates():
@@ -151,14 +154,14 @@ class BootstrapConfig(AppConfig):
             username = response_data["owner"]["username"]
 
             try:
-                user = User.objects.get(username=username)
+                user = User.objects.using(settings.DB_DEFAULT).get(username=username)
 
                 _l.info(f"Owner {username} exists")
 
             except User.DoesNotExist:
                 try:
                     password = generate_random_string(10)
-                    user = User.objects.create(
+                    user = User.objects.using(settings.DB_DEFAULT).create(
                         email=response_data["owner"]["email"],
                         username=username,
                         password=password,
@@ -172,8 +175,8 @@ class BootstrapConfig(AppConfig):
                     raise e
 
             user_profile, created = UserProfile.objects.using(
-                    settings.DB_DEFAULT
-                ).get_or_create(user_id=user.pk)
+                settings.DB_DEFAULT
+            ).get_or_create(user_id=user.pk)
 
             _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
@@ -184,7 +187,7 @@ class BootstrapConfig(AppConfig):
                     and response_data["old_backup_name"]
                 ):
                     # If From backup
-                    master_user = MasterUser.objects.get(
+                    master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
                         name=response_data["old_backup_name"]
                     )
                     master_user.name = name
@@ -199,12 +202,16 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
 
-            if MasterUser.objects.all().count() == 0:
+            if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                 _l.info("Empty database, create new master user")
 
                 master_user = MasterUser.objects.using(
                     settings.DB_DEFAULT
-                ).create_master_user(user=user, language="en", name=name)
+                ).create_master_user(
+                    user=user,
+                    language="en",
+                    name=name,
+                )
 
                 master_user.base_api_url = response_data["base_api_url"]
 
@@ -215,7 +222,7 @@ class BootstrapConfig(AppConfig):
                     f"base_api_url {master_user.base_api_url} created"
                 )
 
-                member = Member.objects.create(
+                member = Member.objects.using(settings.DB_DEFAULT).create(
                     user=user,
                     username=username,
                     master_user=master_user,
@@ -224,13 +231,13 @@ class BootstrapConfig(AppConfig):
                 )
                 member.save()
 
-                _l.info("Owner Member created")
-
-                _l.info("Admin Group Created")
+                _l.info("Owner Member & Admin Group created")
 
             try:
                 # TODO, carefull if someday return to multi master user inside one db
-                master_user = MasterUser.objects.all().first()
+                master_user = (
+                    MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+                )
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
 
@@ -241,7 +248,7 @@ class BootstrapConfig(AppConfig):
                 raise e
 
             try:
-                current_owner_member = Member.objects.get(
+                current_owner_member = Member.objects.using(settings.DB_DEFAULT).get(
                     username=username,
                     master_user=master_user,
                 )
@@ -256,7 +263,7 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Could not find current owner member {e} ")
 
-                Member.objects.create(
+                Member.objects.using(settings.DB_DEFAULT).create(
                     username=username,
                     user=user,
                     master_user=master_user,
@@ -318,7 +325,7 @@ class BootstrapConfig(AppConfig):
 
             authorizer_service = AuthorizerService()
 
-            workers = CeleryWorker.objects.all()
+            workers = CeleryWorker.objects.using(settings.DB_DEFAULT).all()
 
             for worker in workers:
                 try:
@@ -339,30 +346,32 @@ class BootstrapConfig(AppConfig):
         from poms.ui.models import MemberLayout
         from poms.users.models import Member
 
-        members = Member.objects.all()
+        members = Member.objects.using(settings.DB_DEFAULT).all()
 
         configuration_code = get_default_configuration_code()
 
         for member in members:
             try:
-                layout = MemberLayout.objects.get(
+                MemberLayout.objects.using(settings.DB_DEFAULT).get(
                     member=member,
                     configuration_code=configuration_code,
                     user_code=f"{configuration_code}:default_member_layout",
                 )
             except Exception:
                 try:
-                    layout = MemberLayout.objects.create(
+                    # configuration code will be added automatically
+                    MemberLayout.objects.using(settings.DB_DEFAULT).create(
                         member=member,
                         owner=member,
                         is_default=True,
                         configuration_code=configuration_code,
                         name="default",
                         user_code="default_member_layout",
-                    )  # configuration code will be added automatically
+                    )
                     _l.info(f"Created member layout for {member.username}")
+
                 except Exception:
-                    _l.info("Could not create member layout" % member.username)
+                    _l.info(f"Could not create member layout {member.username}")
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
@@ -432,7 +441,7 @@ class BootstrapConfig(AppConfig):
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create workflows folder")
 
-            members = Member.objects.all()
+            members = Member.objects.using(settings.DB_DEFAULT).all()
 
             for member in members:
                 if not storage.exists(
@@ -453,13 +462,13 @@ class BootstrapConfig(AppConfig):
         configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
         try:
-            configuration = Configuration.objects.get(
+            Configuration.objects.using(settings.DB_DEFAULT).get(
                 configuration_code=configuration_code
             )
             _l.info("Local Configuration is already created")
 
         except Configuration.DoesNotExist:
-            Configuration.objects.create(
+            Configuration.objects.using(settings.DB_DEFAULT).create(
                 configuration_code=configuration_code,
                 name="Local Configuration",
                 is_primary=True,
