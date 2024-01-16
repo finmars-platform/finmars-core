@@ -13,7 +13,12 @@ import dateutil.utils
 
 from poms.accounts.models import Account, AccountType
 from poms.common.constants import SystemValueType
-from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible
+from poms.counterparties.models import (
+    Counterparty,
+    CounterpartyGroup,
+    Responsible,
+    ResponsibleGroup,
+)
 from poms.currencies.models import Currency
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -160,18 +165,23 @@ def change_created_time(instance: models.Model, new_time: datetime):
 
 
 def print_all_users(title: str):
-
     print(f"=================={title}=======================")
 
     print("user - default")
     for user in User.objects.using(settings.DB_DEFAULT).all():
-        print(user.id, user.username,)
+        print(
+            user.id,
+            user.username,
+        )
     print("+")
     print("user - replica")
     for user in User.objects.using(settings.DB_REPLICA).all():
-        print(user.id, user.username, )
+        print(
+            user.id,
+            user.username,
+        )
 
-    print("-"*40)
+    print("-" * 40)
 
     print("member - default")
     for member in Member.objects.using(settings.DB_DEFAULT).all():
@@ -181,7 +191,7 @@ def print_all_users(title: str):
     for member in Member.objects.using(settings.DB_REPLICA).all():
         print(member.id, member.username)
 
-    print("-"*40)
+    print("-" * 40)
 
     print("master - default")
     for master in MasterUser.objects.using(settings.DB_DEFAULT).all():
@@ -452,14 +462,14 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
 
     def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.using(settings.DB_DEFAULT).create(
+        account_type = AccountType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             user_code=self.random_string(),
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
         )
-        return self._add_attributes(self.account_type)
+        return self._add_attributes(account_type)
 
     def create_account(self) -> Account:
         self.account = Account.objects.using(settings.DB_DEFAULT).create(
@@ -589,6 +599,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             currency=self.usd,
             instrument=self.default_instrument,
         )
+        self.account_type = self.create_account_type()
+        self.account = self.create_account()
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
@@ -615,6 +627,7 @@ class DbInitializer:
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
         self.instruments = self.get_or_create_instruments()
+        self.strategies = self.get_or_create_strategies()
 
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
@@ -798,12 +811,26 @@ class DbInitializer:
         )
         return company
 
+    def create_responsible_group(self) -> ResponsibleGroup:
+        name = "test_responsible_group"
+        group, _ = ResponsibleGroup.objects.using(settings.DB_DEFAULT).get_or_create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=name,
+            defaults=dict(
+                name=name,
+                short_name=name,
+            ),
+        )
+        return group
+
     def create_responsible(self) -> Responsible:
         name = "test_responsible"
         responsible, _ = Responsible.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             owner=self.member,
             user_code=name,
+            group=self.create_responsible_group(),
             defaults=dict(
                 name=name,
                 short_name=name,
@@ -816,7 +843,6 @@ class DbInitializer:
     ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
-        strategies = self.get_or_create_strategies()
         complex_transaction = ComplexTransaction.objects.using(
             settings.DB_DEFAULT
         ).create(
@@ -854,12 +880,12 @@ class DbInitializer:
             allocation_balance=self.default_instrument,
             counterparty=self.counter_party,
             responsible=responsible,
-            strategy1_cash=strategies[1],
-            strategy1_position=strategies[1],
-            strategy2_cash=strategies[2],
-            strategy2_position=strategies[2],
-            strategy3_cash=strategies[3],
-            strategy3_position=strategies[3],
+            strategy1_cash=self.strategies[1],
+            strategy1_position=self.strategies[1],
+            strategy2_cash=self.strategies[2],
+            strategy2_position=self.strategies[2],
+            strategy3_cash=self.strategies[3],
+            strategy3_position=self.strategies[3],
             notes=notes,
         )
         return complex_transaction, transaction
