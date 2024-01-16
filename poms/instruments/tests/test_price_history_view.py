@@ -331,6 +331,19 @@ class PriceHistoryViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=create_data)
         self.assertEqual(response.status_code, 201, response.content)
 
+        response_json = response.json()
+        self.assertIsNotNone(response_json["accrued_price"])
+
+    def test__create_with_0_accrued_price(self):
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = 0
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["accrued_price"], 0)
+
     def test__create_without_date_error(self):
         create_data = self.prepare_data_for_create()
         create_data["accrued_price"] = None
