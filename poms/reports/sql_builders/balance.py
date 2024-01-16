@@ -1279,8 +1279,8 @@ class BalanceReportBuilderSql:
                             {consolidated_position_columns}
                             
                             position_size,
-                            case when coalesce(factor,0) = 0
-                                    then 0
+                            case when coalesce(factor,1) = 0
+                                    then position_size
                                     else
                                         position_size / factor
                             end as nominal_position_size,
@@ -3739,8 +3739,8 @@ def build(self, task_id):
                             {consolidated_position_columns}
                             
                             position_size,
-                            case when coalesce(factor,0) = 0
-                                    then 0
+                            case when coalesce(factor,1) = 0
+                                    then position_size
                                     else
                                         position_size / factor
                             end as nominal_position_size,
