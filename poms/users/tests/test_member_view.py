@@ -155,5 +155,5 @@ class MemberViewSetTest(BaseTestCase):
         self.assertFalse(response_json["is_deleted"])
 
         user_data = response_json["user"]
-        self.assertEqual(user_data["username"], "test_bot")
+        self.assertEqual(user_data["username"], "test_user")
         self.assertEqual(user_data["id"], self.user.id)

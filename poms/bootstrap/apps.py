@@ -115,7 +115,8 @@ class BootstrapConfig(AppConfig):
         _l.info("create_iam_access_policies_templates done")
 
     # Probably deprecated
-    def add_view_and_manage_permissions(self):
+    @staticmethod
+    def add_view_and_manage_permissions():
         from poms.common.utils import add_view_and_manage_permissions
 
         add_view_and_manage_permissions()
@@ -201,6 +202,10 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
+
+            old_members = Member.objects.all()
+            old_members.update(is_deleted=True)
+            _l.info(f"{old_members.count()} old members were marked as deleted")
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                 _l.info("Empty database, create new master user")
