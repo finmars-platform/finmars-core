@@ -225,6 +225,7 @@ DATABASES = {
     },
 }
 if USE_DB_REPLICA:
+    print("Warning. DB Replica RO mode activated!")
     DATABASES[DB_REPLICA] = {
         "ENGINE": DB_ENGINE,
         "NAME": ENV_STR("REPLICA_DB_NAME", "finmars_dev"),

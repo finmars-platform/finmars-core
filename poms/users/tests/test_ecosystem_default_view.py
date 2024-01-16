@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BaseTestCase, BUY_SELL
 from poms.users.models import EcosystemDefault
 
 
@@ -1055,6 +1055,9 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
 
         ecosystem_data = response_json["results"][0]
         self.assertEqual(len(ecosystem_data), len(EXPECTED_RESPONSE_DATA))
+        self.assertEqual(ecosystem_data["master_user"], self.master_user.id)
+        self.assertEqual(ecosystem_data["instrument"], self.default_instrument.id)
+        self.assertEqual(ecosystem_data["currency"], self.usd.id)
 
     def test__retrieve(self):
         ecosystem_default = EcosystemDefault.objects.first()
@@ -1065,15 +1068,34 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json), len(EXPECTED_RESPONSE_DATA))
 
     def test__create(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
-        ecosystem_data = response.json()["results"][0]
         data = {
-            key: value
-            for key, value in ecosystem_data.items()
-            if "object" not in key and key != "id"
+            "master_user": self.master_user.id,
+            "currency": self.eur.id,
+            "account_type": self.account_type.id,
+            "account": self.account.id,
+            "counterparty_group": None,
+            "counterparty": self.db_data.counter_party,
+            "responsible_group": None,
+            "responsible": self.db_data.create_responsible(),
+            "instrument_type": self.instrument_type,
+            "instrument": self.default_instrument.id,
+            "portfolio": None,
+            "strategy1_group": None,
+            "strategy1_subgroup": None,
+            "strategy1": None,
+            "strategy2_group": None,
+            "strategy2_subgroup": None,
+            "strategy2": None,
+            "strategy3_group": None,
+            "strategy3_subgroup": None,
+            "strategy3": None,
+            "mismatch_portfolio": None,
+            "mismatch_account": None,
+            "pricing_policy": None,
+            "transaction_type": self.db_data.transaction_types[BUY_SELL],
+            "periodicity": self.get_periodicity(),
+
         }
-        data["master_user"] = self.master_user.id
 
         response = self.client.post(path=self.url, format="json", data=data)
 

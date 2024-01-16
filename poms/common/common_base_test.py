@@ -452,28 +452,29 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
 
     def create_account_type(self) -> AccountType:
-        account_type = AccountType.objects.using(settings.DB_DEFAULT).create(
+        self.account_type = AccountType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             user_code=self.random_string(),
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
         )
-        account_type.attributes.set([self.create_attribute()])
-        account_type.save()
-        return account_type
+        return self._add_attributes(self.account_type)
 
     def create_account(self) -> Account:
-        account = Account.objects.using(settings.DB_DEFAULT).create(
+        self.account = Account.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             type=self.create_account_type(),
             user_code=self.random_string(),
             short_name=self.random_string(3),
         )
-        account.attributes.set([self.create_attribute()])
-        account.save()
-        return account
+        return self._add_attributes(self.account)
+
+    def _add_attributes(self, model):
+        model.attributes.set([self.create_attribute()])
+        model.save()
+        return model
 
     def create_instruments_types(self):
         for type_ in INSTRUMENTS_TYPES:
@@ -502,7 +503,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             )
 
     def get_or_create_default_instrument(self):
-        instrument_type, _ = InstrumentType.objects.using(
+        self.instrument_type, _ = InstrumentType.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
@@ -522,7 +523,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             user_code="-",
             defaults=dict(
                 owner=self.member,
-                instrument_type=instrument_type,
+                instrument_type=self.instrument_type,
                 name="-",
                 short_name="-",
                 public_name="-",
@@ -540,7 +541,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user = None
         self.member = None
         self.usd = None
+        self.eur = None
         self.user = None
+        self.account_type = None
+        self.account = None
+        self.instrument_type = None
         self.db_data = None
 
     def init_test_case(self):
@@ -574,7 +579,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
-
+        self.eur = Currency.objects.using(settings.DB_DEFAULT).get(user_code=EUR)
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
         self.ecosystem, _ = EcosystemDefault.objects.using(
@@ -584,7 +589,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             currency=self.usd,
             instrument=self.default_instrument,
         )
-
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
