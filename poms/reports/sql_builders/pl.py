@@ -1197,8 +1197,8 @@ class PLReportBuilderSql:
                         
                         position_size,
                         -- (position_size / cur_factor) as nominal_position_size,
-                        case when coalesce(cur_factor,0) = 0
-                                then 0
+                        case when coalesce(cur_factor,1) = 0
+                                then position_size
                                 else
                                     position_size / cur_factor
                         end as nominal_position_size,
