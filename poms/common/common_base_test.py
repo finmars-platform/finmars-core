@@ -640,6 +640,7 @@ class DbInitializer:
         self.instruments = self.get_or_create_instruments()
         self.strategies = self.create_strategies()
         self.strategy_groups = self.create_strategy_groups()
+        self.strategy_subgroups = self.create_strategy_subgroups()
 
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
@@ -795,6 +796,23 @@ class DbInitializer:
             groups[i + 1] = group
 
         return groups
+
+    def create_strategy_subgroups(self):
+        sub_groups = {}
+        for i, model in enumerate(
+            [Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup],
+            start=1
+        ):
+            sub_group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
+                master_user=self.master_user,
+                owner=self.member,
+                defaults={
+                    "name": f"sub_strategy_group_{i}",
+                },
+            )
+            sub_groups[i] = sub_group
+
+        return sub_groups
 
     def create_strategies(self):
         strategies = {}
