@@ -6,9 +6,12 @@ from poms.counterparties.models import Counterparty
 
 
 class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
+        self.group = self.db_data.create_counterparty_group()
         self.task = self.create_task(
             name="Import Company From Finmars Database",
             func="import_company_finmars_database",
@@ -16,8 +19,8 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.url = BACKEND_CALLBACK_URLS["company"]
 
     def test__company_created(self):
-        name = self.random_string(10)
-        short_name = self.random_string(10)
+        name = self.random_string()
+        short_name = self.random_string()
         post_data = {
             "request_id": self.task.id,
             "task_id": None,

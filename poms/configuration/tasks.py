@@ -10,8 +10,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import File
 from django.db import transaction
 from django.utils.timezone import now
-
-import requests
+from django.core.files.base import File
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -45,7 +44,7 @@ storage = get_storage()
 @finmars_task(name="configuration.import_configuration", bind=True)
 def import_configuration(self, task_id):
     _l.info("import_configuration")
-    _l.info("import_configuration %s" % task_id)
+    _l.info(f"import_configuration {task_id}")
 
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
@@ -56,7 +55,7 @@ def import_configuration(self, task_id):
         result = stats
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = "file_report_%s_task_%s.json" % (current_date_time, task.id)
+        file_name = f"file_report_{current_date_time}_task_{task.id}.json"
 
         file_report = FileReport()
 
@@ -68,9 +67,8 @@ def import_configuration(self, task_id):
             master_user=task.master_user,
         )
         file_report.master_user = task.master_user
-        file_report.name = "Configuration Import %s (Task %s).json" % (
-            current_date_time,
-            task.id,
+        file_report.name = (
+            f"Configuration Import {current_date_time} (Task {task.id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "configuration.import_configuration"
@@ -79,8 +77,8 @@ def import_configuration(self, task_id):
 
         file_report.save()
 
-        _l.info("ConfigurationImportManager.json_report %s" % file_report)
-        _l.info("ConfigurationImportManager.json_report %s" % file_report.file_url)
+        _l.info(f"ConfigurationImportManager.json_report {file_report}")
+        _l.info(f"ConfigurationImportManager.json_report {file_report.file_url}")
 
         return file_report
 
@@ -95,35 +93,35 @@ def import_configuration(self, task_id):
 
     file_path = task.options_object["file_path"]
 
-    output_directory = os.path.join(settings.BASE_DIR, "tmp/task_" + str(task.id) + "/")
+    output_directory = os.path.join(settings.BASE_DIR, f"tmp/task_{str(task.id)}/")
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory, exist_ok=True)
 
     local_file_path = storage.download_file_and_save_locally(
-        file_path, output_directory + "file.zip"
+        file_path, f"{output_directory}file.zip"
     )
 
-    _l.info("import_configuration got %s" % file_path)
+    _l.info(f"import_configuration got {file_path}")
 
     output_directory = os.path.join(
-        settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+        settings.BASE_DIR, f"configurations/{str(task.id)}/source"
     )
 
     if not os.path.exists(
-        os.path.join(settings.BASE_DIR, "configurations/" + str(task.id) + "/source")
+        os.path.join(settings.BASE_DIR, f"configurations/{str(task.id)}/source")
     ):
         os.makedirs(output_directory, exist_ok=True)
 
     unzip_to_directory(local_file_path, output_directory)
 
-    _l.info("import_configuration unzip_to_directory %s" % output_directory)
+    _l.info(f"import_configuration unzip_to_directory {output_directory}")
 
     try:
         manifest = read_json_file(os.path.join(output_directory, "manifest.json"))
 
     except Exception as e:
-        _l.error("import_configuration read_json_file %s" % e)
+        _l.error(f"import_configuration read_json_file {e}")
         manifest = None
 
         if not task.notes:
@@ -160,7 +158,7 @@ def import_configuration(self, task_id):
                 "current": index,
                 "total": len(json_files),
                 "percent": round(index / (len(json_files) / 100)),
-                "description": "Going to import %s" % json_file,
+                "description": f"Going to import {json_file}",
             }
         )
 
@@ -183,8 +181,6 @@ def import_configuration(self, task_id):
                     ).first()
                 except FieldDoesNotExist:
                     instance = Model.objects.filter(user_code=user_code).first()
-                    pass
-
             else:
                 instance = None
 
@@ -203,7 +199,7 @@ def import_configuration(self, task_id):
                         "current": index,
                         "total": len(json_files),
                         "percent": round(index / (len(json_files) / 100)),
-                        "description": "Imported %s" % json_file,
+                        "description": f"Imported {json_file}",
                     }
                 )
 
@@ -220,13 +216,12 @@ def import_configuration(self, task_id):
                         "current": index,
                         "total": len(json_files),
                         "percent": round(index / (len(json_files) / 100)),
-                        "description": "Error %s" % json_file,
+                        "description": f"Error {json_file}",
                     }
                 )
 
         except Exception as e:
-            _l.error("import_configuration e %s" % e)
-            _l.error("import_configuration traceback %s" % traceback.format_exc())
+            _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
 
             stats["configuration"][json_file] = {
                 "status": "error",
@@ -238,7 +233,7 @@ def import_configuration(self, task_id):
                     "current": index,
                     "total": len(json_files),
                     "percent": round(index / (len(json_files) / 100)),
-                    "description": "Error %s" % json_file,
+                    "description": f"Error {json_file}",
                 }
             )
 
@@ -252,13 +247,13 @@ def import_configuration(self, task_id):
         configuration_code_as_path = "/".join(manifest["configuration_code"].split("."))
 
         dest_workflow_directory = (
-            settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
+            f"{settings.BASE_API_URL}/workflows/{configuration_code_as_path}"
         )
 
-        _l.info("dest_workflow_directory %s" % dest_workflow_directory)
+        _l.info(f"dest_workflow_directory {dest_workflow_directory}")
 
         upload_directory_to_storage(
-            output_directory + "/workflows", dest_workflow_directory
+            f"{output_directory}/workflows", dest_workflow_directory
         )
 
         if manifest.get("actions", None):
@@ -268,8 +263,7 @@ def import_configuration(self, task_id):
                 if workflow:
                     try:
                         _l.info(
-                            "import_configuration.going to execute workflow %s"
-                            % workflow
+                            f"import_configuration.going to execute workflow {workflow}"
                         )
 
                         response_data = run_workflow(workflow, {})
@@ -279,14 +273,13 @@ def import_configuration(self, task_id):
                         response_data = wait_workflow_until_end(id)
 
                         _l.info(
-                            "import_configuration.workflow finished %s" % response_data
+                            f"import_configuration.workflow finished {response_data}"
                         )
 
                     except Exception as e:
-                        _l.error("Could not execute workflow e %s" % e)
                         _l.error(
-                            "Could not execute workflow traceback %s"
-                            % traceback.format_exc()
+                            f"Could not execute workflow {e} "
+                            f"traceback {traceback.format_exc()}"
                         )
 
     _l.info("Workflows uploaded")
@@ -312,14 +305,11 @@ def export_configuration(self, task_id):
 
     configuration = Configuration.objects.get(configuration_code=configuration_code)
 
-    _l.info("configuration %s" % configuration)
+    _l.info(f"configuration {configuration}")
 
-    # zip_filename = configuration.name + '.zip'
     source_directory = os.path.join(
-        settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+        settings.BASE_DIR, f"configurations/{str(task.id)}/source"
     )
-    # output_zipfile = os.path.join(settings.BASE_DIR,
-    #   'configurations/' + str(task.id) + '/' + zip_filename)
 
     if not os.path.exists(source_directory):
         os.makedirs(source_directory, exist_ok=True)
@@ -345,7 +335,7 @@ def export_configuration(self, task_id):
         task.notes = task.notes + "Workflow is not found ⚠️ \n"
         task.notes = task.notes + str(e)
 
-    manifest_filepath = source_directory + "/manifest.json"
+    manifest_filepath = f"{source_directory}/manifest.json"
 
     manifest = configuration.manifest or {
         "name": configuration.name,
@@ -356,36 +346,18 @@ def export_configuration(self, task_id):
 
     save_json_to_file(manifest_filepath, manifest)
 
-    if configuration.is_from_marketplace:
-        storage_directory = (
-            settings.BASE_API_URL
-            + "/configurations/"
-            + configuration.configuration_code
-            + "/"
-            + configuration.version
-            + "/"
-        )
-    else:
-        storage_directory = (
-            settings.BASE_API_URL
-            + "/configurations/custom/"
-            + configuration.configuration_code
-            + "/"
-            + configuration.version
-            + "/"
-        )
 
+        storage_directory = (
+            f"{settings.BASE_API_URL
+            }/configurations/{ configuration.configuration_code
+            }/{configuration.version}/"
+            if configuration.is_from_marketplace
+        else f"{
+            settings.BASE_API_URL
+            }/configurations/custom/{ configuration.configuration_code
+            }/{configuration.version}/"
+            )
     save_directory_to_storage(source_directory, storage_directory)
-
-    # Create Configuration zip file
-    # zip_directory(source_directory, output_zipfile)
-
-    # storage.save(output_zipfile, tmpf)
-
-    # response = DeleteFileAfterResponse(open(output_zipfile, 'rb'), content_type='application/zip',
-    #                                    path_to_delete=output_zipfile)
-    # response['Content-Disposition'] = u'attachment; filename="{filename}'.format(
-    #     filename=zip_filename)
 
     _l.info("export_configuration. Done")
 
@@ -422,7 +394,6 @@ def push_configuration_to_marketplace(self, task_id):
         if configuration.is_from_marketplace
         else f"/configurations/custom/{configuration.configuration_code}/{configuration.version}/"
     )
-    path = str(path)
 
     _l.info(f"path {path}")
 
@@ -438,15 +409,11 @@ def push_configuration_to_marketplace(self, task_id):
         "manifest": json.dumps(configuration.manifest),
     }
 
-    _l.info(f"push_configuration_to_marketplace.data {data}")
-    _l.info(f"push_configuration_to_marketplace.zip_file_path {zip_file_path}")
+    _l.info(
+        f"push_configuration_to_marketplace.data {data} zip_file_path {zip_file_path}"
+    )
 
     files = {"file": open(zip_file_path, "rb")}
-
-    # headers = {}
-    # headers['Authorization'] = 'Token ' + access_token
-
-    # _l.info('refresh %s' % refresh.access_token)
 
     headers = {"Content-type": "application/json", "Accept": "application/json"}
 
@@ -463,8 +430,6 @@ def push_configuration_to_marketplace(self, task_id):
     token = auth_data["token"]
 
     headers = {"Authorization": f"Token {token}"}
-
-    # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
     response = requests.post(
         url="https://marketplace.finmars.com/api/v1/configuration/push/",
@@ -534,14 +499,14 @@ def install_configuration_from_marketplace(self, **kwargs):
 
     if response.status_code != 200:
         task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(response.text)
+        task.error_message = response.text
         task.save()
         raise Exception(response.text)
 
     remote_configuration_release = response.json()
     remote_configuration = remote_configuration_release["configuration_object"]
 
-    _l.info("remote_configuration %s" % remote_configuration_release)
+    _l.info(f"remote_configuration {remote_configuration_release}")
 
     try:
         configuration = Configuration.objects.get(
@@ -552,20 +517,6 @@ def install_configuration_from_marketplace(self, **kwargs):
             configuration_code=remote_configuration["configuration_code"],
             version="0.0.0",
         )
-
-    # Probably deprecated
-    # if not is_newer_version(remote_configuration_release['version'], configuration.version):
-    #
-    #     if remote_configuration_release['version'] == configuration.version:
-    #         task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
-    #             configuration.version, remote_configuration_release['version'])}
-    #     else:
-    #         task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
-    #             configuration.version, remote_configuration_release['version'])}
-    #
-    #     task.status = CeleryTask.STATUS_DONE
-    #     task.save()
-    #     return
 
     configuration.name = remote_configuration["name"]
     configuration.description = remote_configuration["description"]
@@ -584,11 +535,7 @@ def install_configuration_from_marketplace(self, **kwargs):
             total = len(task.parent.options_object["dependencies"])
             percent = int((step / total) * 100)
 
-            description = "Step %s/%s is installing. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+            description = f"Step {step}/{total} is installing {configuration.name}"
 
             task.parent.update_progress(
                 {
@@ -607,27 +554,23 @@ def install_configuration_from_marketplace(self, **kwargs):
     )
 
     destination_path = os.path.join(
-        settings.BASE_DIR, "configurations/" + str(task.id) + "/archive.zip"
+        settings.BASE_DIR, f"configurations/{str(task.id)}/archive.zip"
     )
-    storage_file_path = None
 
     if response.status_code != 200:
         task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(response.text)
+        task.error_message = response.text
         task.save()
-        raise Exception(response.text)
+        raise RuntimeError(response.text)
 
-    else:
-        os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+    os.makedirs(os.path.dirname(destination_path), exist_ok=True)
 
-        storage_file_path = "/public/import-configurations/%s" % (
-            str(task.id) + "_archive.zip"
-        )
+    storage_file_path = f"/public/import-configurations/{str(task.id)}_archive.zip"
 
-        byte_stream = io.BytesIO(response.content)
-        storage.save(
-            storage_file_path, File(byte_stream, str(task.id) + "_archive.zip")
-        )
+    byte_stream = io.BytesIO(response.content)
+    storage.save(
+        storage_file_path, File(byte_stream, f"{str(task.id)}_archive.zip")
+    )
 
     import_configuration_celery_task = CeleryTask.objects.create(
         master_user=task.master_user,
@@ -647,10 +590,8 @@ def install_configuration_from_marketplace(self, **kwargs):
     # sync call
     # .si is important, we do not need to pass result from previous task
 
-    import_configuration(
-        import_configuration_celery_task.id
-    )  # seems self is not needed
-    # result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
+    import_configuration(import_configuration_celery_task.id)
+    # seems self is not needed
 
     if task.parent:
         with transaction.atomic():
@@ -660,11 +601,7 @@ def install_configuration_from_marketplace(self, **kwargs):
             total = len(task.parent.options_object["dependencies"])
             percent = int((step / total) * 100)
 
-            description = "Step %s/%s is installed. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+            description = f"Step {step}/{total} is installed. {configuration.name}"
 
             task.parent.update_progress(
                 {
@@ -825,8 +762,8 @@ def install_package_from_marketplace(self, task_id):
         _l.info(
             f"parent_task id={parent_task.id} options={parent_task.options_object} "
             f"progres={parent_task.progress}"
-            f"created {len(parent_task.options_object['dependencies']) + 1} child tasks, "
-            f"starting workflow..."
+            f"created {len(parent_task.options_object.get('dependencies', [])) + 1}"
+            f" child tasks, starting workflow..."
         )
 
     for celery_task in celery_task_list:
@@ -850,7 +787,7 @@ def install_package_from_marketplace(self, task_id):
             primary_configuration.save()
 
     except Exception as e:
-        _l.error("install_package_from_marketplace error: %s" % str(e))
+        _l.error(f"install_package_from_marketplace error: {str(e)}")
 
     parent_task.status = CeleryTask.STATUS_DONE
     parent_task.verbose_result = "Configuration package installed successfully"

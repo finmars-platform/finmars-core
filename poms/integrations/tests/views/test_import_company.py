@@ -1,6 +1,5 @@
 from unittest import mock
 
-# from django import urls
 from django.conf import settings
 
 from poms.celery_tasks.models import CeleryTask
@@ -11,10 +10,12 @@ from poms.counterparties.models import Counterparty
 
 
 class ImportCompanyDatabaseViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        # self.url = urls.reverse("import_company_database")
+        self.group = self.db_data.create_counterparty_group()
         self.url = f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/company/"
 
     def test__400(self):
@@ -36,8 +37,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-
-        print("task_ready", response_json)
 
         self.assertNotIn("result_id", response_json)
         self.assertIn("errors", response_json)
@@ -69,6 +68,7 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
                 "short_name": self.random_string(),
                 "name": self.random_string(),
                 "public_name": self.random_string(),
+                "group": self.group.id,
             },
         )
         request_data = {"company_id": code}
@@ -79,8 +79,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         mock_get_monad.assert_called_once()
 
         response_json = response.json()
-
-        print("data_ready", response_json)
 
         self.assertIn("task", response_json)
         self.assertIn("result_id", response_json)
@@ -103,8 +101,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-
-        print("error", response_json)
 
         self.assertNotIn("result_id", response_json)
 

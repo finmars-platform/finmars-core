@@ -1,3 +1,4 @@
-'''
-Do not delete this file, its required to migrate triggers BootstrapConfig.ready in apps.py
-'''
+"""
+Do not delete this file!
+It's required to migrate triggers BootstrapConfig.ready in apps.py
+"""

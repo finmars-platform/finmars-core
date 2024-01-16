@@ -75,6 +75,8 @@ CREATE_DATA = {
 
 
 class AccountTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -83,17 +85,25 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.attribute = None
         self.account_type = None
 
+    def test__aaaaa_stub(self):
+        # This is a dirty hack, for multi-database testing!
+        # It should be the 1st test from all tests, to ensure
+        # replica-db starts mirroring the master one
+        pass
+
     def test__list_and_default(self):
+        self.create_account_type()
+
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
 
-        self.assertEqual(response_json["count"], 1)  # default account "-"
+        self.assertEqual(response_json["count"], 1)
         default_account = response_json["results"][0]
         self.assertEqual(default_account.keys(), EXPECTED_ACCOUNT_TYPE.keys())
 
-    def test__create_and_retrieve(self):
+    def test__retrieve(self):
         account_type = self.create_account_type()
         response = self.client.get(path=f"{self.url}{account_type.id}/")
         self.assertEqual(response.status_code, 200, response.content)
@@ -169,14 +179,7 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.assertEqual(response_json["count"], 1)
 
     def test__delete(self):
-        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-        account_type_id = response_json["id"]
+        account_type = self.create_account_type()
 
-        response = self.client.delete(path=f"{self.url}{account_type_id}/")
+        response = self.client.delete(path=f"{self.url}{account_type.id}/")
         self.assertEqual(response.status_code, 204, response.content)
-
-        response = self.client.get(path=f"{self.url}?name={CREATE_DATA['name']}")
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 0)

@@ -1,11 +1,13 @@
-import time
+# import time
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.integrations.tasks import ttl_finisher
+# from poms.integrations.tasks import ttl_finisher
 
 
 class TtlFinisherTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()

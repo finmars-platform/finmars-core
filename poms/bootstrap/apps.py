@@ -43,7 +43,7 @@ class BootstrapConfig(AppConfig):
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         """
-        In idea it should be the first methods that should be executed
+        It should be the first methods that should be executed
         on backend server startup
 
         :param app_config:
@@ -52,17 +52,20 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
-
-        self.create_local_configuration()
-        self.add_view_and_manage_permissions()
-        self.load_master_user_data()
-        self.create_finmars_bot()
-        self.create_member_layouts()
-        self.create_base_folders()
-        self.register_at_authorizer_service()
-        self.sync_celery_workers()
-
-        self.create_iam_access_policies_templates()
+        if (
+            "test" not in sys.argv
+            and "makemigrations" not in sys.argv
+            and "migrate" not in sys.argv
+        ):
+            self.create_local_configuration()
+            self.add_view_and_manage_permissions()
+            self.load_master_user_data()
+            self.create_finmars_bot()
+            self.create_member_layouts()
+            self.create_base_folders()
+            self.register_at_authorizer_service()
+            self.sync_celery_workers()
+            self.create_iam_access_policies_templates()
 
     @staticmethod
     def create_finmars_bot():
@@ -73,14 +76,14 @@ class BootstrapConfig(AppConfig):
         try:
             user = User.objects.get(username="finmars_bot")
 
-        except Exception as e:
+        except Exception:
             user = User.objects.create(username="finmars_bot")
 
         try:
             member = Member.objects.get(user__username="finmars_bot")
             _l.info("finmars_bot already exists")
 
-        except Exception as e:
+        except Exception:
             try:
                 _l.info("Member not found, going to create it")
 
@@ -102,12 +105,11 @@ class BootstrapConfig(AppConfig):
     def create_iam_access_policies_templates():
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
 
-        if "test" not in sys.argv:
-            _l.info("create_iam_access_policies_templates")
+        _l.info("create_iam_access_policies_templates")
 
-            create_base_iam_access_policies_templates()
+        create_base_iam_access_policies_templates()
 
-            _l.info("create_iam_access_policies_templates done")
+        _l.info("create_iam_access_policies_templates done")
 
     # Probably deprecated
     def add_view_and_manage_permissions(self):
@@ -132,7 +134,7 @@ class BootstrapConfig(AppConfig):
             data = {"base_api_url": settings.BASE_API_URL}
             url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
 
-            _l.info(f"load_master_user_data post to url={url} data={data}")
+            _l.info(f"load_master_user_data url {url}")
 
             response = requests.post(
                 url=url,
@@ -163,13 +165,15 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info(f"Owner {username} created")
+                    _l.info(f'Create owner {response_data["owner"]["username"]}')
 
                 except Exception as e:
                     _l.info(f"Create user error {e} trace {traceback.format_exc()}")
                     raise e
 
-            user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
+            user_profile, created = UserProfile.objects.using(
+                    settings.DB_DEFAULT
+                ).get_or_create(user_id=user.pk)
 
             _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
@@ -188,23 +192,19 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info(
-                        f"Master User From Backup Renamed to new Name {master_user.name}"
-                        f" and Base API URL {master_user.base_api_url}"
+                        f"Master User From Backup Renamed to Name {master_user.name}"
+                        f"and Base API URL {master_user.base_api_url}"
                     )
 
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
 
-            old_members = Member.objects.filter(is_owner=False, is_deleted=False).all()
-            old_members.update(is_deleted=True)
-            _l.info(f"{old_members.count()} old members were marked as deleted")
-
             if MasterUser.objects.all().count() == 0:
                 _l.info("Empty database, create new master user")
 
-                master_user = MasterUser.objects.create_master_user(
-                    user=user, language="en", name=name
-                )
+                master_user = MasterUser.objects.using(
+                    settings.DB_DEFAULT
+                ).create_master_user(user=user, language="en", name=name)
 
                 master_user.base_api_url = response_data["base_api_url"]
 
@@ -242,7 +242,8 @@ class BootstrapConfig(AppConfig):
 
             try:
                 current_owner_member = Member.objects.get(
-                    username=username, master_user=master_user
+                    username=username,
+                    master_user=master_user,
                 )
                 if (
                     not current_owner_member.is_owner
@@ -252,8 +253,8 @@ class BootstrapConfig(AppConfig):
                     current_owner_member.is_admin = True
                     current_owner_member.save()
 
-            except Member.DoesNotExist as e:
-                _l.error(f"Could not find current owner member {e}, create new one")
+            except Exception as e:
+                _l.error(f"Could not find current owner member {e} ")
 
                 Member.objects.create(
                     username=username,
@@ -264,7 +265,9 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error(f"load_master_user_data error {e} trace {traceback.format_exc()}")
+            _l.error(
+                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+            )
 
     @staticmethod
     def register_at_authorizer_service():
@@ -292,10 +295,14 @@ class BootstrapConfig(AppConfig):
                 f"response.status_code {response.status_code}"
                 f"response.text {response.text}"
             )
+
             response.raise_for_status()
 
         except Exception as e:
-            _l.info(f"register_at_authorizer_service error {e}")
+            _l.info(
+                f"register_at_authorizer_service error {repr(e)} "
+                f"traceback {traceback.format_exc()}"
+            )
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     @staticmethod
@@ -343,7 +350,7 @@ class BootstrapConfig(AppConfig):
                     configuration_code=configuration_code,
                     user_code=f"{configuration_code}:default_member_layout",
                 )
-            except Exception as e:
+            except Exception:
                 try:
                     layout = MemberLayout.objects.create(
                         member=member,
@@ -354,7 +361,7 @@ class BootstrapConfig(AppConfig):
                         user_code="default_member_layout",
                     )  # configuration code will be added automatically
                     _l.info(f"Created member layout for {member.username}")
-                except Exception as e:
+                except Exception:
                     _l.info("Could not create member layout" % member.username)
 
     def create_base_folders(self):

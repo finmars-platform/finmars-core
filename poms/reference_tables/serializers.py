@@ -5,6 +5,7 @@ from rest_framework import serializers
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.reference_tables.models import ReferenceTableRow, ReferenceTable
 from poms.users.fields import MasterUserField
+from poms.users.utils import get_member_from_context
 
 
 class ReferenceTableRowSerializer(serializers.ModelSerializer):
@@ -25,7 +26,6 @@ class ReferenceTableSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSe
         fields = [
             'id', 'master_user',
             'name', 'user_code', 'configuration_code',
-
             'rows'
         ]
 
@@ -37,7 +37,10 @@ class ReferenceTableSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSe
 
     def create(self, validated_data):
         rows = validated_data.pop('rows')
-        instance = ReferenceTable.objects.create(**validated_data)
+
+        member = get_member_from_context(self.context)
+
+        instance = ReferenceTable.objects.create(**validated_data, owner=member)
 
         self.set_rows(instance=instance, rows=rows)
 
@@ -47,6 +50,9 @@ class ReferenceTableSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSe
         rows = validated_data.pop('rows')
 
         instance.name = validated_data.get('name', instance.name)
+
+        member = get_member_from_context(self.context)
+        instance.owner = member
 
         self.set_rows(instance=instance, rows=rows)
 

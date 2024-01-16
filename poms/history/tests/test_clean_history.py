@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest import skip
 
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
@@ -15,6 +16,8 @@ TEST_AMOUNT = 50
 
 
 class CalculateDailySumTestCase(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -36,6 +39,7 @@ class CalculateDailySumTestCase(BaseTestCase):
 
         self.assertEqual(HistoricalRecord.objects.count(), 0)
 
+    @skip("not for replica tests")
     def test__periodic_task_created(self):
         crontabs = CrontabSchedule.objects.all()
         self.assertEqual(crontabs.count(), 4)

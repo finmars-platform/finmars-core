@@ -79,6 +79,8 @@ CREATE_DATA = {
 
 
 class ResponsibleViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -88,7 +90,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible_group(self) -> ResponsibleGroup:
         return ResponsibleGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -97,7 +99,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible(self) -> Responsible:
         self.responsible = Responsible.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_responsible_group(),
             user_code=self.random_string(),
             name=self.random_string(),
@@ -147,7 +149,8 @@ class ResponsibleViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 2)  # default + new
+        self.assertEqual(len(response_json["results"]), 1)
+        self.assertEqual(response_json["results"][0]["user_code"], responsible.user_code)
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         responsible = self.create_responsible()

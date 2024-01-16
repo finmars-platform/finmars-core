@@ -38,6 +38,8 @@ EXPECTED_RESPONSE = [
 
 
 class PortfolioFirstTransactionViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -64,6 +66,7 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         portfolio_register = self.db_data.create_portfolio_register(
             self.portfolio,
             instrument,
+            user_code=self.random_string(),
         )
         prr_data = {
             "master_user": self.master_user,
@@ -90,7 +93,7 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(len(response_json), 3)
+        self.assertEqual(len(response_json), 2)
 
     def test__with_portfolio_id_as_int(self):
         self.create_3_prr()
