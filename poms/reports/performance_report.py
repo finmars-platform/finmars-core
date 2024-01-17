@@ -1091,7 +1091,7 @@ class PerformanceReportBuilder:
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
 
-        self.instance.grand_absolute_pl = 1
+        self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
 
 
 def add_data_items_instruments(self, ids):
