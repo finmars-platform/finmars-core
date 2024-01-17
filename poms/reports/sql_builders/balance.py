@@ -1282,7 +1282,7 @@ class BalanceReportBuilderSql:
                             case when coalesce(factor,1) = 0
                                     then position_size
                                     else
-                                        position_size / factor
+                                        position_size / coalesce(factor,1)
                             end as nominal_position_size,
     
                             (1) as item_type,
@@ -3746,7 +3746,7 @@ def build(self, task_id):
                             case when coalesce(factor,1) = 0
                                 then position_size
                                 else
-                                    position_size / factor
+                                    position_size / coalesce(factor,1)
                             end as nominal_position_size,
     
                             (1) as item_type,
