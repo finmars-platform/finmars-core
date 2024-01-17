@@ -1890,9 +1890,13 @@ class BalanceReportBuilderSql:
                     result_item["position_size"] = round(
                         item["position_size"], settings.ROUND_NDIGITS
                     )
-                    result_item["nominal_position_size"] = round(
-                        item["nominal_position_size"], settings.ROUND_NDIGITS
-                    )
+                    # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                    if item["nominal_position_size"] is not None:
+                        result_item["nominal_position_size"] = round(
+                            item["nominal_position_size"], settings.ROUND_NDIGITS
+                        )
+                    else:
+                        result_item["nominal_position_size"] = None
 
                     result_item["ytm"] = item["ytm"]
                     result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -3740,9 +3744,9 @@ def build(self, task_id):
                             
                             position_size,
                             case when coalesce(factor,1) = 0
-                                    then position_size
-                                    else
-                                        position_size / factor
+                                then position_size
+                                else
+                                    position_size / factor
                             end as nominal_position_size,
     
                             (1) as item_type,
@@ -4334,9 +4338,13 @@ def build(self, task_id):
                 result_item["position_size"] = round(
                     item["position_size"], settings.ROUND_NDIGITS
                 )
-                result_item["nominal_position_size"] = round(
-                    item["nominal_position_size"], settings.ROUND_NDIGITS
-                )
+                # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                if item["nominal_position_size"] is not None:
+                    result_item["nominal_position_size"] = round(
+                        item["nominal_position_size"], settings.ROUND_NDIGITS
+                    )
+                else:
+                    result_item["nominal_position_size"] = None
 
                 result_item["ytm"] = item["ytm"]
                 result_item["ytm_at_cost"] = item["ytm_at_cost"]

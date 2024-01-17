@@ -1245,6 +1245,12 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
         blank=True,
         verbose_name=gettext_lazy("grand nav"),
     )
+    grand_absolute_pl = models.FloatField(
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("grand absolute pl"),
+    )
 
 
 class PerformanceReportInstanceItem(models.Model):
