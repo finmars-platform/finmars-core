@@ -5,12 +5,13 @@ import os
 import traceback
 from datetime import date
 
-import requests
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
+from django.core.files.base import File
 from django.db import transaction
 from django.utils.timezone import now
-from django.core.files.base import File
+
+import requests
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -268,9 +269,7 @@ def import_configuration(self, task_id):
 
                         response_data = run_workflow(workflow, {})
 
-                        id = response_data["id"]
-
-                        response_data = wait_workflow_until_end(id)
+                        response_data = wait_workflow_until_end(response_data["id"])
 
                         _l.info(
                             f"import_configuration.workflow finished {response_data}"
@@ -347,9 +346,11 @@ def export_configuration(self, task_id):
     save_json_to_file(manifest_filepath, manifest)
 
     storage_directory = (
-        f"{settings.BASE_API_URL}/configurations/{configuration.configuration_code}/{configuration.version}/"
+        f"{settings.BASE_API_URL}/configurations/{configuration.configuration_code}"
+        f"/{configuration.version}/"
         if configuration.is_from_marketplace
-        else f"{settings.BASE_API_URL}/configurations/custom/{configuration.configuration_code}/{configuration.version}/"
+        else f"{settings.BASE_API_URL}/configurations/custom/"
+        f"{configuration.configuration_code}/{configuration.version}/"
     )
     save_directory_to_storage(source_directory, storage_directory)
 
@@ -562,9 +563,7 @@ def install_configuration_from_marketplace(self, **kwargs):
     storage_file_path = f"/public/import-configurations/{str(task.id)}_archive.zip"
 
     byte_stream = io.BytesIO(response.content)
-    storage.save(
-        storage_file_path, File(byte_stream, f"{str(task.id)}_archive.zip")
-    )
+    storage.save(storage_file_path, File(byte_stream, f"{str(task.id)}_archive.zip"))
 
     import_configuration_celery_task = CeleryTask.objects.create(
         master_user=task.master_user,
