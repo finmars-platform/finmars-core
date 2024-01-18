@@ -1825,11 +1825,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
                 )
 
             if attrs["accrued_price"] == AUTO_CALCULATE:
-                price_date = attrs["date"]
-                instrument: Instrument = attrs["instrument"]
-                attrs["accrued_price"] = instrument.get_accrued_price(
-                    price_date=price_date
-                )
+                attrs["accrued_price"] = None
 
         return attrs
 
@@ -1942,6 +1938,16 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def __init__(self, *args, **kwargs):
+        from poms.accounts.serializers import AccountViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
+        from poms.transactions.serializers import TransactionTypeViewSerializer
+        from poms.users.serializers import MemberViewSerializer
+
         super(GeneratedEventSerializer, self).__init__(*args, **kwargs)
         self._current_instance = None
 
@@ -1952,22 +1958,12 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
             source="instrument", read_only=True
         )
 
-        from poms.portfolios.serializers import PortfolioViewSerializer
-
         self.fields["portfolio_object"] = PortfolioViewSerializer(
             source="portfolio", read_only=True
         )
 
-        from poms.accounts.serializers import AccountViewSerializer
-
         self.fields["account_object"] = AccountViewSerializer(
             source="account", read_only=True
-        )
-
-        from poms.strategies.serializers import (
-            Strategy1ViewSerializer,
-            Strategy2ViewSerializer,
-            Strategy3ViewSerializer,
         )
 
         self.fields["strategy1_object"] = Strategy1ViewSerializer(
@@ -1984,13 +1980,9 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
             source="action", read_only=True
         )
 
-        from poms.transactions.serializers import TransactionTypeViewSerializer
-
         self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
             source="transaction_type", read_only=True
         )
-
-        from poms.users.serializers import MemberViewSerializer
 
         self.fields["member_object"] = MemberViewSerializer(
             source="member", read_only=True

@@ -2965,9 +2965,7 @@ class PriceHistory(DataTimeStampedModel):
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
-                # _l.error('PriceHistory.error get_accrued_price e %s' % e)
-                # _l.error('PriceHistory.error get_accrued_price traceback %s' % traceback.format_exc())
-                _l.error('PriceHistory cound not get_accrued_price')
+                _l.error(f"PriceHistory could not get accrued_price, due to {repr(e)}")
                 self.accrued_price = 0
 
         super().save(*args, **kwargs)
