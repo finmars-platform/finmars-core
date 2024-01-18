@@ -8,6 +8,39 @@ PRICE_HISTORY = [
     }
 ]
 
+SCHEMA_20 = {
+    # "id": 20,
+    # "master_user_id": 1,
+    # "owner_id": 1,
+    # "created": "2023-09-21 10:24:23.151372 +00:00",
+    # "modified": "2024-01-16 11:59:51.299484 +00:00",
+    # "content_type_id": 73,  instruments - pricehistory
+
+    "user_code": "com.finmars.standard-import-from-file:instruments.pricehistory:price_from_file",
+
+    "filter_expr": "",
+    "classifier_handler": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "throw_error",
+    "mode": "overwrite",
+    "is_enabled": True,
+    "name": "STD - Prices (from File)",
+    "notes": None,
+    "public_name": None,
+    "short_name": "STD - Prices (from File)",
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.standard-import-from-file",
+    "deleted_user_code": None,
+    "is_deleted": False,
+  },
+
+
 INSTRUMENT = {
     "instrument_type": 17,
     "instrument_type_object": {

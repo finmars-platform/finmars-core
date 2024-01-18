@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
-from poms.csv_import.tests.common_test_data import PRICE_HISTORY
+from poms.csv_import.tests.common_test_data import PRICE_HISTORY, SCHEMA_20
 
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
@@ -27,9 +27,16 @@ class ImportPriceHistoryTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = API_URL
-        self.scheme_20 = CsvImportScheme.objects.create(
-            content_type=ContentType.objects.first(),
-            master_user=self.master_user,
-            owner=self.member,
-            user_code=self.random_string(length=5),
+        content_type = ContentType.objects.get(
+            app_label="instruments",
+            model="pricehistory",
         )
+        schema_data = SCHEMA_20
+        schema_data.update(
+            {
+                "content_type": content_type.id,
+                "master_user_id": self.master_user.id,
+                "owner_id": self.member.id,
+            }
+        )
+        self.scheme_20 = CsvImportScheme.objects.create(**schema_data)
