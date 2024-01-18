@@ -1,3 +1,13 @@
+PRICE_HISTORY = [
+    {
+        "Date": "2024-01-05",
+        "Instrument": "USP37341AA50",
+        "Principal Price": 109.72,
+        "Accrued Price": None,
+        "Factor": None,
+    }
+]
+
 INSTRUMENT = {
     "instrument_type": 17,
     "instrument_type_object": {

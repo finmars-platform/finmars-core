@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
-from poms.csv_import.tests.instrument_data import INSTRUMENT
+from poms.csv_import.tests.common_test_data import INSTRUMENT
 
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import"
 FILE_CONTENT = json.dumps(INSTRUMENT).encode("utf-8")
