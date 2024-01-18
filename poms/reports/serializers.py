@@ -1107,6 +1107,8 @@ class PerformanceReportSerializer(serializers.Serializer):
     grand_cash_outflow = serializers.ReadOnlyField()
     grand_nav = serializers.ReadOnlyField()
 
+    grand_absolute_pl = serializers.ReadOnlyField()
+
     def __init__(self, *args, **kwargs):
         super(PerformanceReportSerializer, self).__init__(*args, **kwargs)
 
@@ -1176,6 +1178,7 @@ class PerformanceReportSerializer(serializers.Serializer):
             report_instance.grand_cash_inflow = instance.grand_cash_inflow
             report_instance.grand_cash_outflow = instance.grand_cash_outflow
             report_instance.grand_nav = instance.grand_nav
+            report_instance.grand_absolute_pl = instance.grand_absolute_pl
 
             report_instance.report_uuid = report_uuid
             report_instance.save()
