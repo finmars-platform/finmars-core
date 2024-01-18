@@ -10,14 +10,9 @@ from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.tests.common_test_data import PRICE_HISTORY, SCHEMA_20
 
-API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv"
+API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
 FILE_NAME = "price_history.json"
-
-
-class DummyStorage:
-    def save(self):
-        return
 
 
 class ImportPriceHistoryTest(BaseTestCase):
@@ -28,13 +23,15 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.init_test_case()
         self.url = API_URL
         self.scheme_20 = self.create_schema_20()
+        self.storage = mock.Mock()
+        self.storage.save.return_value = None
 
     def create_schema_20(self):
         content_type = ContentType.objects.get(
             app_label="instruments",
             model="pricehistory",
         )
-        schema_data = SCHEMA_20
+        schema_data = SCHEMA_20.copy()
         schema_data.update(
             {
                 "content_type_id": content_type.id,
@@ -44,5 +41,24 @@ class ImportPriceHistoryTest(BaseTestCase):
         )
         return CsvImportScheme.objects.create(**schema_data)
 
-    def test(self):
-        pass
+    @mock.patch("poms.csv_import.serializers.storage")
+    def test(self, mock_storage):
+        file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
+        mock_storage.return_value = self.storage
+        request_data = {"file": file_content, "scheme": self.scheme_20.id}
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertIn("task_id", response_json)
+        self.assertIn("task_status", response_json)
+        self.assertEqual(response_json["task_status"], CeleryTask.STATUS_INIT)
+
+        celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
+        options = celery_task.options_object
+
+        self.assertEqual(options["filename"], FILE_NAME)
+        self.assertEqual(options["scheme_id"], self.scheme_20.id)
