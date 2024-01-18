@@ -143,9 +143,6 @@ class Expression2Field(CharField):
 
 
 class FloatEvalField(FloatField):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def run_validation(self, data=empty):
         value = super().run_validation(data)
         if data is not None:
