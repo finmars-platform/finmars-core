@@ -13,7 +13,12 @@ import dateutil.utils
 
 from poms.accounts.models import Account, AccountType
 from poms.common.constants import SystemValueType
-from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible
+from poms.counterparties.models import (
+    Counterparty,
+    CounterpartyGroup,
+    Responsible,
+    ResponsibleGroup,
+)
 from poms.currencies.models import Currency
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -29,11 +34,23 @@ from poms.instruments.models import (
     PaymentSizeDetail,
     Periodicity,
     PricingCondition,
+    PricingPolicy,
     ShortUnderlyingExposure,
 )
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import Portfolio, PortfolioRegister
-from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.strategies.models import (
+    Strategy1,
+    Strategy2,
+    Strategy3,
+    Strategy1Group,
+    Strategy2Group,
+    Strategy3Group,
+    Strategy1Subgroup,
+    Strategy2Subgroup,
+    Strategy3Subgroup,
+)
+
 from poms.transactions.models import (
     ComplexTransaction,
     Transaction,
@@ -160,18 +177,23 @@ def change_created_time(instance: models.Model, new_time: datetime):
 
 
 def print_all_users(title: str):
-
     print(f"=================={title}=======================")
 
     print("user - default")
     for user in User.objects.using(settings.DB_DEFAULT).all():
-        print(user.id, user.username,)
+        print(
+            user.id,
+            user.username,
+        )
     print("+")
     print("user - replica")
     for user in User.objects.using(settings.DB_REPLICA).all():
-        print(user.id, user.username, )
+        print(
+            user.id,
+            user.username,
+        )
 
-    print("-"*40)
+    print("-" * 40)
 
     print("member - default")
     for member in Member.objects.using(settings.DB_DEFAULT).all():
@@ -181,7 +203,7 @@ def print_all_users(title: str):
     for member in Member.objects.using(settings.DB_REPLICA).all():
         print(member.id, member.username)
 
-    print("-"*40)
+    print("-" * 40)
 
     print("master - default")
     for master in MasterUser.objects.using(settings.DB_DEFAULT).all():
@@ -459,21 +481,22 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             short_name=self.random_string(3),
             transaction_details_expr=self.random_string(),
         )
-        account_type.attributes.set([self.create_attribute()])
-        account_type.save()
-        return account_type
+        return self._add_attributes(account_type)
 
     def create_account(self) -> Account:
-        account = Account.objects.using(settings.DB_DEFAULT).create(
+        self.account = Account.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             type=self.create_account_type(),
             user_code=self.random_string(),
             short_name=self.random_string(3),
         )
-        account.attributes.set([self.create_attribute()])
-        account.save()
-        return account
+        return self._add_attributes(self.account)
+
+    def _add_attributes(self, model):
+        model.attributes.set([self.create_attribute()])
+        model.save()
+        return model
 
     def create_instruments_types(self):
         for type_ in INSTRUMENTS_TYPES:
@@ -502,7 +525,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             )
 
     def get_or_create_default_instrument(self):
-        instrument_type, _ = InstrumentType.objects.using(
+        self.instrument_type, _ = InstrumentType.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
@@ -522,7 +545,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             user_code="-",
             defaults=dict(
                 owner=self.member,
-                instrument_type=instrument_type,
+                instrument_type=self.instrument_type,
                 name="-",
                 short_name="-",
                 public_name="-",
@@ -533,6 +556,16 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return instrument
 
+    def create_pricing_policy(self) -> GenericAttributeType:
+        name = "pricing_policy"
+        return PricingPolicy.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=name,
+            name=name,
+
+        )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ecosystem = None
@@ -540,7 +573,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user = None
         self.member = None
         self.usd = None
+        self.eur = None
         self.user = None
+        self.account_type = None
+        self.account = None
+        self.instrument_type = None
         self.db_data = None
 
     def init_test_case(self):
@@ -574,7 +611,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
-
+        self.eur = Currency.objects.using(settings.DB_DEFAULT).get(user_code=EUR)
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
         self.ecosystem, _ = EcosystemDefault.objects.using(
@@ -584,7 +621,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             currency=self.usd,
             instrument=self.default_instrument,
         )
-
+        self.account_type = self.create_account_type()
+        self.account = self.create_account()
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
@@ -611,6 +649,9 @@ class DbInitializer:
         self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
         self.instruments = self.get_or_create_instruments()
+        self.strategies = self.create_strategies()
+        self.strategy_groups = self.create_strategy_groups()
+        self.strategy_subgroups = self.create_strategy_subgroups()
 
         print(
             f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
@@ -753,7 +794,38 @@ class DbInitializer:
             )
         return classes
 
-    def get_or_create_strategies(self):
+    def create_strategy_groups(self):
+        groups = {}
+        for i, model in enumerate([Strategy1Group, Strategy2Group, Strategy3Group]):
+            group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
+                master_user=self.master_user,
+                owner=self.member,
+                defaults={
+                    "name": f"strategy_group_{i+1}",
+                },
+            )
+            groups[i + 1] = group
+
+        return groups
+
+    def create_strategy_subgroups(self):
+        sub_groups = {}
+        for i, model in enumerate(
+            [Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup],
+            start=1
+        ):
+            sub_group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
+                master_user=self.master_user,
+                owner=self.member,
+                defaults={
+                    "name": f"sub_strategy_group_{i}",
+                },
+            )
+            sub_groups[i] = sub_group
+
+        return sub_groups
+
+    def create_strategies(self):
         strategies = {}
         for i, model in enumerate([Strategy1, Strategy2, Strategy3]):
             if not (strategy := model.objects.using(settings.DB_DEFAULT).first()):
@@ -794,12 +866,26 @@ class DbInitializer:
         )
         return company
 
+    def create_responsible_group(self) -> ResponsibleGroup:
+        name = "test_responsible_group"
+        group, _ = ResponsibleGroup.objects.using(settings.DB_DEFAULT).get_or_create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=name,
+            defaults=dict(
+                name=name,
+                short_name=name,
+            ),
+        )
+        return group
+
     def create_responsible(self) -> Responsible:
         name = "test_responsible"
         responsible, _ = Responsible.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             owner=self.member,
             user_code=name,
+            group=self.create_responsible_group(),
             defaults=dict(
                 name=name,
                 short_name=name,
@@ -812,7 +898,6 @@ class DbInitializer:
     ) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
-        strategies = self.get_or_create_strategies()
         complex_transaction = ComplexTransaction.objects.using(
             settings.DB_DEFAULT
         ).create(
@@ -850,12 +935,12 @@ class DbInitializer:
             allocation_balance=self.default_instrument,
             counterparty=self.counter_party,
             responsible=responsible,
-            strategy1_cash=strategies[1],
-            strategy1_position=strategies[1],
-            strategy2_cash=strategies[2],
-            strategy2_position=strategies[2],
-            strategy3_cash=strategies[3],
-            strategy3_position=strategies[3],
+            strategy1_cash=self.strategies[1],
+            strategy1_position=self.strategies[1],
+            strategy2_cash=self.strategies[2],
+            strategy2_position=self.strategies[2],
+            strategy3_cash=self.strategies[3],
+            strategy3_position=self.strategies[3],
             notes=notes,
         )
         return complex_transaction, transaction

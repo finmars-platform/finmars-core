@@ -1,14 +1,16 @@
 import binascii
 import json
+import logging
 import os
 import uuid
 
-import pytz
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
+
+import pytz
 
 from poms.common.models import FakeDeletableModel
 from poms.common.utils import get_content_type_by_name
@@ -30,9 +32,7 @@ TIMEZONE_MAX_LENGTH = 20
 TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
 
-import logging
-
-_l = logging.getLogger('poms.users')
+_l = logging.getLogger("poms.users")
 
 
 class ResetPasswordToken(models.Model):
@@ -210,7 +210,7 @@ class MasterUser(models.Model):
         return self.name
 
     def create_user_fields(self):
-        from poms.ui.models import InstrumentUserField, ComplexTransactionUserField
+        from poms.ui.models import ComplexTransactionUserField, InstrumentUserField
 
         finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -492,7 +492,7 @@ class MasterUser(models.Model):
                 )
 
                 palette.name = user_code
-                palette.is_default = (i == 0)
+                palette.is_default = i == 0
                 palette.save()
 
             for x in range(16):
@@ -561,18 +561,19 @@ class MasterUser(models.Model):
             from django.contrib.auth.models import User
 
             try:
-
-                user = User.objects.get(username='finmars_bot')
+                user = User.objects.get(username="finmars_bot")
 
             except Exception as e:
+                user = User.objects.create(username="finmars_bot")
 
-                user = User.objects.create(username='finmars_bot')
-
-            finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self,
-                                                is_admin=True)
+            finmars_bot = Member.objects.create(
+                user=user, username="finmars_bot", master_user=self, is_admin=True
+            )
 
         ccys = {}
-        ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
+        ccy = Currency.objects.create(
+            master_user=self, name="-", user_code="-", owner=finmars_bot
+        )
         ccy_usd = None
         dc_reference_for_pricing = ""
 
@@ -601,11 +602,16 @@ class MasterUser(models.Model):
                     )
                 ccys[c.user_code] = c
 
-        account_type = AccountType.objects.create(master_user=self, name="-", owner=finmars_bot)
-        account = Account.objects.create(master_user=self, type=account_type, name="-", owner=finmars_bot)
+        account_type = AccountType.objects.create(
+            master_user=self, name="-", owner=finmars_bot
+        )
+        account = Account.objects.create(
+            master_user=self, type=account_type, name="-", owner=finmars_bot
+        )
 
         counterparty_group = CounterpartyGroup.objects.create(
-            master_user=self, name="-",
+            master_user=self,
+            name="-",
             owner=finmars_bot,
         )
         counterparty = Counterparty.objects.create(
@@ -670,7 +676,9 @@ class MasterUser(models.Model):
             owner=finmars_bot,
         )
         strategy2_subgroup = Strategy2Subgroup.objects.create(
-            master_user=self, group=strategy2_group, name="-",
+            master_user=self,
+            group=strategy2_group,
+            name="-",
             owner=finmars_bot,
         )
         strategy2 = Strategy2.objects.create(
@@ -707,7 +715,9 @@ class MasterUser(models.Model):
             owner=finmars_bot,
         )
         pricing_policy = PricingPolicy.objects.create(
-            master_user=self, name="-", expr="(ask+bid)/2",
+            master_user=self,
+            name="-",
+            expr="(ask+bid)/2",
             owner=finmars_bot,
         )
         # pricing_policy_dft = PricingPolicy.objects.create(
@@ -796,7 +806,9 @@ class MasterUser(models.Model):
             pk=InstrumentClass.DEFAULT
         )
         ecosystem_defaults.accrual_calculation_model = (
-            AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DAY_COUNT_SIMPLE)
+            AccrualCalculationModel.objects.get(
+                pk=AccrualCalculationModel.DAY_COUNT_SIMPLE
+            )
         )
         ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(
             pk=PaymentSizeDetail.DEFAULT
@@ -818,7 +830,7 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
     def patch_currencies(
-            self, overwrite_name=False, overwrite_reference_for_pricing=False
+        self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
 
@@ -1141,11 +1153,11 @@ class Member(FakeDeletableModel):
         (SHOW_ONLY, gettext_lazy("Show notifications")),
     )
 
-    STATUS_ACTIVE = 'active'
-    STATUS_BLOCKED = 'blocked'
-    STATUS_DELETED = 'deleted'
-    STATUS_INVITED = 'invited'
-    STATUS_INVITE_DECLINED = 'invite_declined'
+    STATUS_ACTIVE = "active"
+    STATUS_BLOCKED = "blocked"
+    STATUS_DELETED = "deleted"
+    STATUS_INVITED = "invited"
+    STATUS_INVITE_DECLINED = "invite_declined"
 
     MEMBER_STATUS_CHOICES = (
         (STATUS_ACTIVE, gettext_lazy("Active")),
@@ -1224,8 +1236,11 @@ class Member(FakeDeletableModel):
         blank=True,
         verbose_name=gettext_lazy("json data"),
     )
-
-    status = models.CharField(max_length=255, choices=MEMBER_STATUS_CHOICES, default='active')
+    status = models.CharField(
+        max_length=255,
+        choices=MEMBER_STATUS_CHOICES,
+        default="active",
+    )
 
     @property
     def data(self):
@@ -1268,7 +1283,7 @@ class Member(FakeDeletableModel):
                 },
             )
         except Exception as e:
-            _l.info("Could not create member layout %s" % e)
+            _l.info(f"Could not create member layout {e}")
 
         return instance
 
@@ -1415,6 +1430,7 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
+
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):
