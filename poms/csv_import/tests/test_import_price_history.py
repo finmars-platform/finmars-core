@@ -34,9 +34,14 @@ class ImportPriceHistoryTest(BaseTestCase):
         schema_data = SCHEMA_20
         schema_data.update(
             {
-                "content_type": content_type.id,
+                "content_type_id": content_type.id,
                 "master_user_id": self.master_user.id,
                 "owner_id": self.member.id,
             }
         )
+        print(schema_data)
         self.scheme_20 = CsvImportScheme.objects.create(**schema_data)
+
+
+    def test(self):
+        pass
