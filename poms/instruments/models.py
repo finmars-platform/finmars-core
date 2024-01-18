@@ -2129,8 +2129,8 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         return accruals
 
-    def find_accrual(self, d):
-        if d >= self.maturity_date:
+    def find_accrual(self, d: date):
+        if self.maturity_date and (d >= self.maturity_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
@@ -2202,7 +2202,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def get_accrual_factor(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
-        if not self.maturity_date or (price_date >= self.maturity_date):
+        if self.maturity_date and (price_date >= self.maturity_date):
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -2219,7 +2219,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def get_accrued_price(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
-        if price_date >= self.maturity_date:
+        if self.maturity_date and (price_date >= self.maturity_date):
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -2899,57 +2899,14 @@ class PriceHistory(DataTimeStampedModel):
     def calculate_ytm(self, date):
         _l.debug(f"Calculating ytm for {self.instrument.name} for {date}")
 
-        ytm = self.instrument.calculate_quantlib_ytm(
+        return self.instrument.calculate_quantlib_ytm(
             date=date, price=self.principal_price
         )
 
-        # if (
-        #     self.instrument.maturity_date is None
-        #     or self.instrument.maturity_date == date.max
-        #     or str(self.instrument.maturity_date) == "2999-01-01"
-        #     or str(self.instrument.maturity_date) == "2099-01-01"
-        # ):
-        #     try:
-        #         accrual_size = self.instrument.get_accrual_size(dt)
-        #         ytm = (
-        #             (accrual_size * self.instrument.accrued_multiplier)
-        #             * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-        #             / (self.principal_price * self.instrument.price_multiplier)
-        #         )
-        #
-        #     except Exception as e:
-        #         _l.error(f"calculate_ytm error {repr(e)}")
-        #         ytm = 0
-        #     return ytm
-        #
-        # x0 = self.get_instr_ytm_x0(dt)
-        # _l.debug("get_instr_ytm: x0=%s", x0)
-        #
-        # data = self.get_instr_ytm_data(dt)
-        # _l.debug("get_instr_ytm: data=%s", data)
-        #
-        # ytm = f_xirr(data, x0=x0) if data else 0.0
-        return ytm
-
     def calculate_duration(self, date, ytm):
-        duration = self.instrument.calculate_quantlib_modified_duration(
+        return self.instrument.calculate_quantlib_modified_duration(
             date=date, ytm=ytm
         )
-
-        # if (
-        #         self.instrument.maturity_date is None
-        #         or self.instrument.maturity_date == date.max
-        # ):
-        #     try:
-        #         duration = 1 / self.ytm
-        #     except ArithmeticError:
-        #         duration = 0
-        #
-        #     return duration
-        # data = self.get_instr_ytm_data(dt)
-        # return f_duration(data, ytm=self.ytm) if data else 0
-
-        return duration
 
     def save(self, *args, **kwargs):
         # TODO make readable exception if currency history is missing
@@ -3004,13 +2961,11 @@ class PriceHistory(DataTimeStampedModel):
                     f" {traceback.format_exc()}"
                 )
 
-        if not self.accrued_price:
+        if self.accrued_price is None:
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
-                # _l.error('PriceHistory.error get_accrued_price e %s' % e)
-                # _l.error('PriceHistory.error get_accrued_price traceback %s' % traceback.format_exc())
-                _l.error('PriceHistory cound not get_accrued_price')
+                _l.error(f"PriceHistory could not get accrued_price, due to {repr(e)}")
                 self.accrued_price = 0
 
         super().save(*args, **kwargs)

@@ -208,9 +208,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.assertEqual(
             response_json["principal_price"], pricing_history.principal_price
         )
-        self.assertEqual(
-            response_json["accrued_price"], pricing_history.accrued_price
-        )
+        self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")
@@ -325,3 +323,31 @@ class PriceHistoryViewSetTest(BaseTestCase):
 
         response = self.client.get(path=f"{self.url}{price_history_id}/")
         self.assertEqual(response.status_code, 404, response.content)
+
+    def test__create_with_null_accrued_price(self):
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = None
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+        self.assertIsNotNone(response_json["accrued_price"])
+
+    def test__create_with_0_accrued_price(self):
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = 0
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["accrued_price"], 0)
+
+    def test__create_without_date_error(self):
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = None
+        create_data["date"] = None
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 400, response.content)
