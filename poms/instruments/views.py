@@ -22,7 +22,6 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 import requests
-from poms_app import settings
 
 from poms.common.authentication import get_access_token
 from poms.common.filters import (
@@ -46,9 +45,9 @@ from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentSelectSpecialQueryFilter,
+    InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
-    InstrumentsUserCodeFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -116,6 +115,7 @@ from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import EcosystemDefault, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly
+from poms_app import settings
 
 _l = logging.getLogger("poms.instruments")
 
@@ -1029,11 +1029,7 @@ class InstrumentViewSet(AbstractModelViewSet):
             date_from + datetime.timedelta(days=i)
             for i in range((date_to - date_from).days + 1)
         ]
-
         tasks_ids = []
-
-        print(f"dates {dates}")
-
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
                 kwargs={
@@ -1428,9 +1424,9 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")
-        #     # Here we just return the errors as part of the response.
-        #     # You may want to log them or handle them differently depending on your needs.
-        #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+            # Here we just return the errors as part of the response.
+            # You may want to log them or handle them differently
+            # return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_201_CREATED)
 
