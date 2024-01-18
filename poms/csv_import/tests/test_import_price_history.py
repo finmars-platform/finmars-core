@@ -27,6 +27,9 @@ class ImportPriceHistoryTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = API_URL
+        self.scheme_20 = self.create_schema_20()
+
+    def create_schema_20(self):
         content_type = ContentType.objects.get(
             app_label="instruments",
             model="pricehistory",
@@ -39,9 +42,7 @@ class ImportPriceHistoryTest(BaseTestCase):
                 "owner_id": self.member.id,
             }
         )
-        print(schema_data)
-        self.scheme_20 = CsvImportScheme.objects.create(**schema_data)
-
+        return CsvImportScheme.objects.create(**schema_data)
 
     def test(self):
         pass
