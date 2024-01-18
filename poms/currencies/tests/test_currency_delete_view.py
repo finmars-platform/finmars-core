@@ -10,12 +10,13 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/currencies/currency"
 
-    def test_detail_delete(self):
+    def test_detail_delete_main_currencies(self):
+        for currency in Currency.objects.filter(user_code__in=MAIN_CURRENCIES):
+            response = self.client.delete(path=f"{self.url}/{currency.id}/")
+            self.assertEqual(response.status_code, 409)
+            
+    def test_detail_delete_custom_currencies(self):
         currency = Currency.objects.last()
-        self.assertIn(currency.user_code, MAIN_CURRENCIES)
-
-        response = self.client.delete(path=f"{self.url}/{currency.id}/")
-        self.assertEqual(response.status_code, 409)
         currency = Currency.objects.create(
             user_code="test",
             name="test",
@@ -38,3 +39,10 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         response_data = response.json()
         self.assertIsInstance(response_data["task_id"], int)
+        
+    def test_invalid_ids(self):
+        response = self.client.delete(path=f"{self.url}/33454353453/")
+        self.assertEqual(response.status_code, 404)
+        
+        response = self.client.delete(path=f"{self.url}/EUR/")
+        self.assertEqual(response.status_code, 404)
