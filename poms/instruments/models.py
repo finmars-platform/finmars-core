@@ -2956,10 +2956,8 @@ class PriceHistory(DataTimeStampedModel):
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
-                _l.debug(
-                    f"PriceHistory factor save ytm error {repr(e)}"
-                    f" {traceback.format_exc()}"
-                )
+                _l.debug(f"PriceHistory could not get factor, due to {repr(e)}")
+                self.factor = 1
 
         if self.accrued_price is None:
             try:
