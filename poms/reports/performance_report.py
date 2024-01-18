@@ -1091,6 +1091,8 @@ class PerformanceReportBuilder:
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
 
+        self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
+
 
 def add_data_items_instruments(self, ids):
     self.instance.item_instruments = Instrument.objects.prefetch_related(
