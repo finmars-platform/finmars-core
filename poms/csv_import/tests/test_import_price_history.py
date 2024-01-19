@@ -8,7 +8,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
-from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import PRICE_HISTORY, SCHEMA_20
 
@@ -87,7 +86,6 @@ class ImportPriceHistoryTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
     def test_simple_import_task(self, mock_import_process):
-
         task = self.create_task()
         simple_import(task_id=task.id)
 
