@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
+from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import PRICE_HISTORY, SCHEMA_20
@@ -95,3 +96,9 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
 
         self.assertEqual(task.progress_object["description"], "Preprocess items")
+
+    def test_simple_import_process(self):
+        task = self.create_task()
+        process = SimpleImportProcess(task_id=task.id)
+
+        print("process:", process)
