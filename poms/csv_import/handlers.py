@@ -712,7 +712,6 @@ class SimpleImportProcess:
 
         import_system_message_performed_by = self.member.username
         import_system_message_title = "Simple import (start)"
-
         if (
             self.execution_context
             and self.execution_context["started_by"] == "procedure"

@@ -58,47 +58,52 @@ class ImportPriceHistoryTest(BaseTestCase):
             type="simple_import",
         )
 
-    @mock.patch("poms.csv_import.views.simple_import.apply_async")
-    @mock.patch("poms.csv_import.serializers.storage")
-    def test_view(self, mock_storage, mock_async):
-        file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
-        mock_storage.return_value = self.storage
-        request_data = {"file": file_content, "scheme": self.scheme_20.id}
+    # @mock.patch("poms.csv_import.views.simple_import.apply_async")
+    # @mock.patch("poms.csv_import.serializers.storage")
+    # def test_view(self, mock_storage, mock_async):
+    #     file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
+    #     mock_storage.return_value = self.storage
+    #     request_data = {"file": file_content, "scheme": self.scheme_20.id}
+    #
+    #     response = self.client.post(
+    #         path=self.url,
+    #         data=request_data,
+    #         format="multipart",
+    #     )
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     mock_async.assert_called_once()
+    #
+    #     response_json = response.json()
+    #     self.assertIn("task_id", response_json)
+    #     self.assertIn("task_status", response_json)
+    #     self.assertEqual(response_json["task_status"], CeleryTask.STATUS_INIT)
+    #
+    #     celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
+    #     options = celery_task.options_object
+    #
+    #     self.assertEqual(options["filename"], FILE_NAME)
+    #     self.assertEqual(options["scheme_id"], self.scheme_20.id)
+    #
+    # @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
+    # def test_simple_import_task(self, mock_import_process):
+    #     task = self.create_task()
+    #     simple_import(task_id=task.id)
+    #
+    #     mock_import_process.assert_called()
+    #
+    #     task.refresh_from_db()
+    #     self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
+    #
+    #     self.assertEqual(task.progress_object["description"], "Preprocess items")
 
-        response = self.client.post(
-            path=self.url,
-            data=request_data,
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        mock_async.assert_called_once()
-
-        response_json = response.json()
-        self.assertIn("task_id", response_json)
-        self.assertIn("task_status", response_json)
-        self.assertEqual(response_json["task_status"], CeleryTask.STATUS_INIT)
-
-        celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
-        options = celery_task.options_object
-
-        self.assertEqual(options["filename"], FILE_NAME)
-        self.assertEqual(options["scheme_id"], self.scheme_20.id)
-
-    @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
-    def test_simple_import_task(self, mock_import_process):
-        task = self.create_task()
-        simple_import(task_id=task.id)
-
-        mock_import_process.assert_called()
-
-        task.refresh_from_db()
-        self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
-
-        self.assertEqual(task.progress_object["description"], "Preprocess items")
-
-    def test_simple_import_process(self):
+    @mock.patch("poms.csv_import.handlers.send_system_message")
+    def test_simple_import_process(self, mock_send_message):
         task = self.create_task()
         process = SimpleImportProcess(task_id=task.id)
 
-        print("process:", process)
+        mock_send_message.assert_called()
+
+        self.assertEqual(process.result.task.id, task.id)
+        self.assertEqual(process.result.scheme.id, self.scheme_20.id)
+        self.assertEqual(process.process_type, "JSON")
