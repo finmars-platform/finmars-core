@@ -87,7 +87,6 @@ class ImportPriceHistoryTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
     def test_simple_import_task(self, mock_import_process):
-        mock_instance = mock_import_process.return_value
 
         task = self.create_task()
         simple_import(task_id=task.id)
@@ -97,4 +96,4 @@ class ImportPriceHistoryTest(BaseTestCase):
         task.refresh_from_db()
         self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
 
-        print(f"task.progress_object={task.progress}")
+        self.assertEqual(task.progress_object["description"], "Preprocess items")

@@ -5,14 +5,14 @@ import os
 import re
 import traceback
 from functools import reduce
-from operator import or_
 from logging import getLogger
+from operator import or_
 from tempfile import NamedTemporaryFile
 
 from django.contrib.contenttypes.models import ContentType
-from django.utils.timezone import now
-from django.utils.dateparse import parse_date
 from django.db.models import Q
+from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
@@ -33,6 +33,7 @@ from poms.csv_import.models import (
     SimpleImportResult,
 )
 from poms.csv_import.serializers import SimpleImportResultSerializer
+from poms.csv_import.tasks import simple_import_bulk_insert_final_updates_procedure
 from poms.currencies.models import Currency
 from poms.expressions_engine import formula
 from poms.file_reports.models import FileReport
@@ -56,8 +57,6 @@ from poms.strategies.models import (
 )
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
-
-from poms.csv_import.tasks import simple_import_bulk_insert_final_updates_procedure
 
 storage = get_storage()
 
@@ -108,6 +107,7 @@ RELATION_FIELDS_MAP = {
     "counter_directional_exposure_currency": Currency,
     "daily_pricing_model": DailyPricingModel,
 }
+
 
 ## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(
@@ -354,22 +354,17 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
         maturity = data_object["maturity_date"]
 
     if maturity:
-        if instrument_type in {
-            "bonds",
-            "convertible_bonds",
-            "index_linked_bonds",
-            "short_term_notes",
-        } and len(instrument_object["event_schedules"]):
-            # FIXME coupon_event is not used !
-            # coupon_event = instrument_object["event_schedules"][0]
-            #
-            # if "first_coupon_date" in data_object:
-            #     coupon_event["effective_date"] = data_object["first_coupon_date"]
-            #
-            # coupon_event["final_date"] = maturity
-
-            if len(instrument_object["event_schedules"]) == 2:
-                undate_events_for_instrument(instrument_object, 1, maturity)
+        if (
+            instrument_type
+            in {
+                "bonds",
+                "convertible_bonds",
+                "index_linked_bonds",
+                "short_term_notes",
+            }
+            and len(instrument_object["event_schedules"]) == 2
+        ):
+            undate_events_for_instrument(instrument_object, 1, maturity)
 
         if instrument_type in {
             "bond_futures",
@@ -1199,7 +1194,6 @@ class SimpleImportProcess:
         )
 
     def fill_result_item_with_attributes(self, item, all_entity_fields_models=None):
-
         if not all_entity_fields_models:
             all_entity_fields_models = self.scheme.entity_fields.all()
 
@@ -1267,8 +1261,9 @@ class SimpleImportProcess:
 
         return result
 
-    def overwrite_item_attributes(self, result_item, item, all_entity_fields_models=None):
-
+    def overwrite_item_attributes(
+        self, result_item, item, all_entity_fields_models=None
+    ):
         if not all_entity_fields_models:
             all_entity_fields_models = self.scheme.entity_fields.all()
 
@@ -1335,10 +1330,10 @@ class SimpleImportProcess:
                                 entity_field.attribute_user_code
                             ]
 
-
-    def __get_key_for_matching_model(self, key_model_user_code="-", pricing_policy__user_code="-", date="-"):
-        return "%s-%s-%s" % (key_model_user_code, pricing_policy__user_code, date)
-
+    def __get_key_for_matching_model(
+        self, key_model_user_code="-", pricing_policy__user_code="-", date="-"
+    ):
+        return f"{key_model_user_code}-{pricing_policy__user_code}-{date}"
 
     def __relation_fields_map_for_content_type(self):
         relation_fields_map = RELATION_FIELDS_MAP
@@ -1360,8 +1355,9 @@ class SimpleImportProcess:
 
         return relation_fields_map
 
-
-    def __get_relation_to_convert(self, item, relation_models_user_codes, all_entity_fields_models):
+    def __get_relation_to_convert(
+        self, item, relation_models_user_codes, all_entity_fields_models
+    ):
         relation_fields_map = self.__relation_fields_map_for_content_type()
 
         for entity_field in all_entity_fields_models:
@@ -1376,9 +1372,9 @@ class SimpleImportProcess:
 
         return relation_models_user_codes
 
-
-    def __get_relation_to_ids(self, relation_models_user_codes, all_entity_fields_models):
-
+    def __get_relation_to_ids(
+        self, relation_models_user_codes, all_entity_fields_models
+    ):
         relation_fields_map = self.__relation_fields_map_for_content_type()
 
         relation_models_to_ids = {}
@@ -1401,15 +1397,20 @@ class SimpleImportProcess:
 
         return relation_models_to_ids
 
-
-    def replace_item_relations_by_ids(self, item, result_item, relation_models_to_ids, all_entity_fields_models):
+    def replace_item_relations_by_ids(
+        self, item, result_item, relation_models_to_ids, all_entity_fields_models
+    ):
         relation_fields_map = self.__relation_fields_map_for_content_type()
 
         for entity_field in all_entity_fields_models:
             key = entity_field.system_property_key
 
-            if key in relation_fields_map and key in relation_models_to_ids and \
-            key in result_item and isinstance(result_item[key], str):
+            if (
+                key in relation_fields_map
+                and key in relation_models_to_ids
+                and key in result_item
+                and isinstance(result_item[key], str)
+            ):
                 if result_item[key] in relation_models_to_ids[key]:
                     result_item[key] = relation_models_to_ids[key][result_item[key]]
                 else:
@@ -1417,9 +1418,7 @@ class SimpleImportProcess:
 
         return result_item
 
-
     def convert_relation_to_ids(self, item, result_item, all_entity_fields_models=None):
-
         if not all_entity_fields_models:
             all_entity_fields_models = self.scheme.entity_fields.all()
 
@@ -1461,7 +1460,6 @@ class SimpleImportProcess:
             all_entity_fields_models = self.scheme.entity_fields.all()
 
         for entity_field in all_entity_fields_models:
-
             if entity_field.expression:
                 try:
                     value = formula.safe_eval(
@@ -1653,42 +1651,44 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
-
-    def import_items_by_batche_indexes(self, batche_indexes, filter_for_async_functions_eval):
+    def import_items_by_batche_indexes(
+        self, batche_indexes, filter_for_async_functions_eval
+    ):
         batche_rows_count = 0
         model = self.scheme.content_type.model_class()
 
         all_entity_fields_models = self.scheme.entity_fields.all()
 
         models_q_filter_list = []
-        relation_models_user_codes={}
+        relation_models_user_codes = {}
 
         for item_index in batche_indexes:
-            self.items[item_index].final_inputs = self.get_final_inputs(self.items[item_index], all_entity_fields_models)
+            self.items[item_index].final_inputs = self.get_final_inputs(
+                self.items[item_index], all_entity_fields_models
+            )
             # dict for getting relation models at next step
             relation_models_user_codes = self.__get_relation_to_convert(
-                self.items[item_index].final_inputs, #self.items[item_index],
+                self.items[item_index].final_inputs,  # self.items[item_index],
                 relation_models_user_codes,
-                all_entity_fields_models
+                all_entity_fields_models,
             )
 
         # getting relation models
         relation_models_to_ids = self.__get_relation_to_ids(
-            relation_models_user_codes,
-            all_entity_fields_models
+            relation_models_user_codes, all_entity_fields_models
         )
 
         for item_index in batche_indexes:
-            result_item = {}
-            for key, value in self.items[item_index].final_inputs.items():
-                if self.items[item_index].final_inputs[key] is not None:
-                    result_item[key] = self.items[item_index].final_inputs[key]
-
+            result_item = {
+                key: self.items[item_index].final_inputs[key]
+                for key, value in self.items[item_index].final_inputs.items()
+                if self.items[item_index].final_inputs[key] is not None
+            }
             result_item = self.replace_item_relations_by_ids(
                 self.items[item_index],
                 result_item,
                 relation_models_to_ids,
-                all_entity_fields_models
+                all_entity_fields_models,
             )
             result_item = self.remove_nullable_attributes(result_item)
 
@@ -1699,22 +1699,38 @@ class SimpleImportProcess:
                 if self.scheme.content_type.model == "pricehistory":
                     models_q_filter_list.append(
                         Q(
-                            instrument_id=self.items[item_index].final_inputs["instrument"].id,
-                            pricing_policy_id=self.items[item_index].final_inputs["pricing_policy"].id,
-                            date=parse_date(self.items[item_index].final_inputs["date"]),
+                            instrument_id=self.items[item_index]
+                            .final_inputs["instrument"]
+                            .id,
+                            pricing_policy_id=self.items[item_index]
+                            .final_inputs["pricing_policy"]
+                            .id,
+                            date=parse_date(
+                                self.items[item_index].final_inputs["date"]
+                            ),
                         )
                     )
-                else: #"currencyhistory":
+                else:  # "currencyhistory":
                     models_q_filter_list.append(
                         Q(
-                            currency_id=self.items[item_index].final_inputs["currency"].id,
-                            pricing_policy_id=self.items[item_index].final_inputs["pricing_policy"].id,
-                            date=parse_date(self.items[item_index].final_inputs["date"]),
+                            currency_id=self.items[item_index]
+                            .final_inputs["currency"]
+                            .id,
+                            pricing_policy_id=self.items[item_index]
+                            .final_inputs["pricing_policy"]
+                            .id,
+                            date=parse_date(
+                                self.items[item_index].final_inputs["date"]
+                            ),
                         )
                     )
             except Exception as e:
                 self.items[item_index].status = "error"
-                self.items[item_index].error_message = f"{self.items[item_index].error_message} Relation model error {e}"
+                self.items[
+                    item_index
+                ].error_message = (
+                    f"{self.items[item_index].error_message} Relation model error {e}"
+                )
 
         if models_q_filter_list:
             conditions = reduce(or_, models_q_filter_list)
@@ -1728,15 +1744,15 @@ class SimpleImportProcess:
             for model_object in model_objects_for_update:
                 if self.scheme.content_type.model == "pricehistory":
                     model_key_for_matching_model = self.__get_key_for_matching_model(
-                        key_model_user_code = model_object.instrument_id,
-                        pricing_policy__user_code = model_object.pricing_policy_id,
-                        date = model_object.date
+                        key_model_user_code=model_object.instrument_id,
+                        pricing_policy__user_code=model_object.pricing_policy_id,
+                        date=model_object.date,
                     )
-                else:  #"currencyhistory"
+                else:  # "currencyhistory"
                     model_key_for_matching_model = self.__get_key_for_matching_model(
-                        key_model_user_code = model_object.currency_id,
-                        pricing_policy__user_code = model_object.pricing_policy_id,
-                        date = model_object.date
+                        key_model_user_code=model_object.currency_id,
+                        pricing_policy__user_code=model_object.pricing_policy_id,
+                        date=model_object.date,
                     )
                 model_for_update_ids[model_key_for_matching_model] = model_object
 
@@ -1751,84 +1767,117 @@ class SimpleImportProcess:
 
             if self.scheme.content_type.model == "pricehistory":
                 item_key_for_matching_model = self.__get_key_for_matching_model(
-                    key_model_user_code=self.items[item_index].final_inputs["instrument"].id,
-                    pricing_policy__user_code=self.items[item_index].final_inputs[
-                        "pricing_policy"
-                    ].id,
+                    key_model_user_code=self.items[item_index]
+                    .final_inputs["instrument"]
+                    .id,
+                    pricing_policy__user_code=self.items[item_index]
+                    .final_inputs["pricing_policy"]
+                    .id,
                     date=self.items[item_index].final_inputs["date"],
                 )
-            else: #"currencyhistory"
+            else:  # "currencyhistory"
                 item_key_for_matching_model = self.__get_key_for_matching_model(
-                    key_model_user_code=self.items[item_index].final_inputs["currency"].id,
-                    pricing_policy__user_code=self.items[item_index].final_inputs[
-                        "pricing_policy"
-                    ].id,
+                    key_model_user_code=self.items[item_index]
+                    .final_inputs["currency"]
+                    .id,
+                    pricing_policy__user_code=self.items[item_index]
+                    .final_inputs["pricing_policy"]
+                    .id,
                     date=self.items[item_index].final_inputs["date"],
                 )
 
-            if item_key_for_matching_model in model_for_update_ids.keys():
+            if item_key_for_matching_model in model_for_update_ids:
                 # if overwrite allowed
                 if self.scheme.mode == "overwrite":
                     # updating dict from model by data from import file
                     for key, value in self.items[item_index].final_inputs.items():
                         if self.items[item_index].final_inputs[key] is not None:
-                            setattr(model_for_update_ids[item_key_for_matching_model], key, value)
+                            setattr(
+                                model_for_update_ids[item_key_for_matching_model],
+                                key,
+                                value,
+                            )
 
                     try:
-                        #models_for_bulk_update.append(model_for_update_ids[item_key_for_matching_model])
-                        models_for_bulk_update[item_key_for_matching_model] = model_for_update_ids[item_key_for_matching_model]
+                        # models_for_bulk_update.append(model_for_update_ids[item_key_for_matching_model])
+                        models_for_bulk_update[
+                            item_key_for_matching_model
+                        ] = model_for_update_ids[item_key_for_matching_model]
 
                     except Exception as e:
                         self.items[item_index].status = "error"
-                        self.items[item_index].error_message = (
-                            f"{self.items[item_index].error_message}==== Overwrite Exception {e}"
-                        )
+                        self.items[
+                            item_index
+                        ].error_message = f"{self.items[item_index].error_message}==== Overwrite Exception {e}"
 
                 else:
                     self.items[item_index].status = "error"
-                    self.items[item_index].error_message = f"{self.items[item_index].error_message}====  Overwrite disabled"
-            # collecting values for bulk insert
+                    self.items[
+                        item_index
+                    ].error_message = f"{self.items[item_index].error_message}====  Overwrite disabled"
             else:
-                result_item = {}
-                # filtering an temporary array for non-empty values
-                for key, value in self.items[item_index].final_inputs.items():
-                    if self.items[item_index].final_inputs[key] is not None:
-                        result_item[key] = self.items[item_index].final_inputs[key]
-
+                result_item = {
+                    key: self.items[item_index].final_inputs[key]
+                    for key, value in self.items[item_index].final_inputs.items()
+                    if self.items[item_index].final_inputs[key] is not None
+                }
                 result_item = self.replace_item_relations_by_ids(
                     self.items[item_index],
                     result_item,
                     relation_models_to_ids,
-                    all_entity_fields_models
+                    all_entity_fields_models,
                 )
                 result_item = self.remove_nullable_attributes(result_item)
                 try:
-                    #models_for_bulk_insert.append(model(**result_item))
-                    models_for_bulk_insert[item_key_for_matching_model] = model(**result_item)
+                    # models_for_bulk_insert.append(model(**result_item))
+                    models_for_bulk_insert[item_key_for_matching_model] = model(
+                        **result_item
+                    )
 
                     if self.scheme.content_type.model == "pricehistory":
-                        filter_for_async_functions_eval.append({
-                            'instrument_id': self.items[item_index].final_inputs["instrument"].id,
-                            'pricing_policy_id': self.items[item_index].final_inputs["pricing_policy"].id,
-                            'date': self.items[item_index].final_inputs["date"],
-                        })
-                    else: #"currencyhistory"
-                        filter_for_async_functions_eval.append({
-                            'currency_id': self.items[item_index].final_inputs["currency"].id,
-                            'pricing_policy_id': self.items[item_index].final_inputs["pricing_policy"].id,
-                            'date': self.items[item_index].final_inputs["date"],
-                        })
+                        filter_for_async_functions_eval.append(
+                            {
+                                "instrument_id": self.items[item_index]
+                                .final_inputs["instrument"]
+                                .id,
+                                "pricing_policy_id": self.items[item_index]
+                                .final_inputs["pricing_policy"]
+                                .id,
+                                "date": self.items[item_index].final_inputs["date"],
+                            }
+                        )
+                    else:  # "currencyhistory"
+                        filter_for_async_functions_eval.append(
+                            {
+                                "currency_id": self.items[item_index]
+                                .final_inputs["currency"]
+                                .id,
+                                "pricing_policy_id": self.items[item_index]
+                                .final_inputs["pricing_policy"]
+                                .id,
+                                "date": self.items[item_index].final_inputs["date"],
+                            }
+                        )
 
                 except Exception as e:
-                    _l.info(f"{self.items[item_index].error_message}====  Create Exception dcsd{e}")
+                    _l.info(
+                        f"{self.items[item_index].error_message}"
+                        f"==== Create Exception dcsd {e}"
+                    )
                     self.items[item_index].status = "error"
-                    self.items[item_index].error_message = f"{self.items[item_index].error_message}====  Create Exception {e}"
+                    self.items[item_index].error_message = (
+                        f"{self.items[item_index].error_message}"
+                        f"==== Create Exception {e}"
+                    )
 
         # mass inserting models
         if models_for_bulk_insert:
             model.objects.bulk_create(models_for_bulk_insert.values())
             batche_rows_count = batche_rows_count + len(models_for_bulk_insert.values())
-            _l.info(f"SimpleImportProcess.Task bulk_insert count. {len(models_for_bulk_insert.values())} ")
+            _l.info(
+                f"SimpleImportProcess.Task bulk_insert count. "
+                f"{len(models_for_bulk_insert.values())} "
+            )
 
         if models_for_bulk_update:
             for model_obj in models_for_bulk_update.values():
@@ -1836,9 +1885,14 @@ class SimpleImportProcess:
             # todo: by bulk update
             # model.objects.bulk_update(models_for_bulk_update)
             batche_rows_count = batche_rows_count + len(models_for_bulk_update.values())
-            _l.info(f"SimpleImportProcess.Task bulk_update count. {len(models_for_bulk_update.values())} ")
+            _l.info(
+                f"SimpleImportProcess.Task bulk_update count. "
+                f"{len(models_for_bulk_update.values())} "
+            )
 
-        _l.info(f"SimpleImportProcess.Task filter_for_async_functions_eval count. {len(filter_for_async_functions_eval)} ")
+        _l.info(
+            f"SimpleImportProcess.Task filter_for_async_functions_eval count. {len(filter_for_async_functions_eval)} "
+        )
 
         return batche_rows_count
 
@@ -1851,7 +1905,6 @@ class SimpleImportProcess:
         )
 
         item.imported_items.append(trn)
-
 
     def process_items(self):
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items INIT")
@@ -1913,7 +1966,6 @@ class SimpleImportProcess:
 
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items DONE")
 
-
     def process_items_batches(self):
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items_batches INIT")
         # mb not need
@@ -1947,22 +1999,29 @@ class SimpleImportProcess:
                 except Exception as e:
                     success = False
                     self.items[item_index].status = "error"
-                    self.items[item_index].message = f"item.row_number {self.items[item_index].row_number} error {repr(e)}"
+                    self.items[
+                        item_index
+                    ].message = f"item.row_number {self.items[item_index].row_number} error {repr(e)}"
 
                     _l.error(
                         f"SimpleImportProcess.Task {self.task}.  ========= process row "
                         f"{str(self.items[item_index].row_number)} ======== Exception {e} ====== "
                         f"Traceback {traceback.format_exc()}"
-                )
+                    )
 
             if success:
                 batche_indexes.append(item_index)
+
             # increment while index
             item_index = item_index + 1
 
-            if len(batche_indexes) >= items_per_batche or not (item_index < len(self.items)):
-                batche_rows_count = self.import_items_by_batche_indexes(batche_indexes, filter_for_async_functions_eval)
-                self.result.processed_rows = self.result.processed_rows + batche_rows_count
+            if len(batche_indexes) >= items_per_batche or item_index >= len(self.items):
+                batche_rows_count = self.import_items_by_batche_indexes(
+                    batche_indexes, filter_for_async_functions_eval
+                )
+                self.result.processed_rows = (
+                    self.result.processed_rows + batche_rows_count
+                )
                 batche_indexes = []
 
                 self.task.update_progress(
@@ -1987,31 +2046,33 @@ class SimpleImportProcess:
                 member=self.member,
                 notes="Final updates initiated by bulk_insert data procedure instance %s",
                 verbose_name="Simple Import Final updates for bulk insert",
-                type="csv_import.simple_import_bulk_insert_final_updates_procedure" #"simple_import_bulk_insert_final_updates_procedure",
+                type="csv_import.simple_import_bulk_insert_final_updates_procedure",  # "simple_import_bulk_insert_final_updates_procedure",
             )
 
             options_object = {
-                'scheme_id': self.scheme.id,
-                'filter_for_async_functions_eval': filter_for_async_functions_eval
+                "scheme_id": self.scheme.id,
+                "filter_for_async_functions_eval": filter_for_async_functions_eval,
             }
 
             celery_task.options_object = options_object
 
             celery_task.save()
 
-            _l.info(f"SimpleImportProcess.Task {self.task}. Add task for async methods of batches items {len(filter_for_async_functions_eval)}")
+            _l.info(
+                f"SimpleImportProcess.Task {self.task}. Add task for async methods of "
+                f"batches items {len(filter_for_async_functions_eval)}"
+            )
 
             simple_import_bulk_insert_final_updates_procedure.apply_async(
                 kwargs={"task_id": celery_task.pk},
                 queue="backend-background-queue",
             )
 
-
     def process(self):
         error_flag = False
 
         try:
-            if self.scheme.content_type.model in ('pricehistory', 'currencyhistory'):
+            if self.scheme.content_type.model in ("pricehistory", "currencyhistory"):
                 self.process_items_batches()
             else:
                 self.process_items()
@@ -2151,14 +2212,15 @@ class SimpleImportFinalUpdatesProcess(object):
         # получаем сериалайзер под выбранный тип импорта
         self.serializer_class = get_serializer(content_type_key)
 
-        self.filter_for_async_functions_eval = self.task.options_object.get("filter_for_async_functions_eval", [])
+        self.filter_for_async_functions_eval = self.task.options_object.get(
+            "filter_for_async_functions_eval", []
+        )
 
         self.context = {
             "master_user": self.master_user,
             "member": self.member,
             "request": self.proxy_request,
         }
-
 
     def process(self):
         error_flag = False
@@ -2169,7 +2231,9 @@ class SimpleImportFinalUpdatesProcess(object):
         filter_for_async_functions_eval = []
 
         if self.task.options_object.get("filter_for_async_functions_eval", []):
-            filter_for_async_functions_eval = self.task.options_object.get("filter_for_async_functions_eval")
+            filter_for_async_functions_eval = self.task.options_object.get(
+                "filter_for_async_functions_eval"
+            )
             total_models_for_update = len(filter_for_async_functions_eval)
 
             # обновляем пачками
@@ -2178,17 +2242,24 @@ class SimpleImportFinalUpdatesProcess(object):
             item_index = 0
 
             while item_index < total_models_for_update:
-                models_q_filter_list.append(Q(**filter_for_async_functions_eval[item_index]))
+                models_q_filter_list.append(
+                    Q(**filter_for_async_functions_eval[item_index])
+                )
                 item_index = item_index + 1
 
-                if len(models_q_filter_list) >= items_per_batche or not (item_index < total_models_for_update):
+                if (
+                    len(models_q_filter_list) >= items_per_batche
+                    or item_index >= total_models_for_update
+                ):
                     conditions = reduce(or_, models_q_filter_list)
                     model_objects_for_update = self.model.objects.filter(conditions)
 
                     for model_object in model_objects_for_update:
                         try:
                             model_object.save()
-                            success_models_updates_count = success_models_updates_count + 1
+                            success_models_updates_count = (
+                                success_models_updates_count + 1
+                            )
                         except Exception:
                             error_models_updates_count = error_models_updates_count + 1
 
@@ -2197,7 +2268,11 @@ class SimpleImportFinalUpdatesProcess(object):
                             "current": success_models_updates_count,
                             "total": len(filter_for_async_functions_eval),
                             "percent": round(
-                                (success_models_updates_count / len(filter_for_async_functions_eval)) * 100
+                                (
+                                    success_models_updates_count
+                                    / len(filter_for_async_functions_eval)
+                                )
+                                * 100
                             ),
                             "description": f"Row finalization {success_models_updates_count} processed",
                         }
@@ -2205,10 +2280,11 @@ class SimpleImportFinalUpdatesProcess(object):
                     models_q_filter_list = []
 
         self.task.result_object = {
-            'total_models_for_update': total_models_for_update,
-            'success_models_updates_count': success_models_updates_count,
-            'error_models_updates_count': error_models_updates_count,
-            'not_found_models': total_models_for_update - (success_models_updates_count + error_models_updates_count)
+            "total_models_for_update": total_models_for_update,
+            "success_models_updates_count": success_models_updates_count,
+            "error_models_updates_count": error_models_updates_count,
+            "not_found_models": total_models_for_update
+            - (success_models_updates_count + error_models_updates_count),
         }
 
         self.task.status = (
@@ -2223,5 +2299,8 @@ class SimpleImportFinalUpdatesProcess(object):
             section="import",
             type="error" if error_flag else "success",
             title="Simple Import Final Updates Process (finished)",
-            description=f"Final items count {success_models_updates_count}/{len(filter_for_async_functions_eval)}",
+            description=(
+                f"Final items count {success_models_updates_count}"
+                f"/{len(filter_for_async_functions_eval)}"
+            ),
         )
