@@ -18,6 +18,7 @@ from poms.common.filters import (
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.currencies.constants import MAIN_CURRENCIES
 from poms.currencies.serializers import (
     CurrencyHistorySerializer,
     CurrencyLightSerializer,
@@ -168,6 +169,16 @@ class CurrencyViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user_code in MAIN_CURRENCIES:
+            return Response({
+                "message": "Cannot delete instance because they are referenced through a protected foreign key",
+            },
+                status=status.HTTP_409_CONFLICT,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class CurrencyHistoryFilterSet(FilterSet):
