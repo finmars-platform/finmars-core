@@ -110,7 +110,7 @@ class ImportPriceHistoryTest(BaseTestCase):
     #     self.assertEqual(task.progress_object["description"], "Preprocess items")
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_create_simple_import_process(self, mock_send_message):
+    def test_create_and_run_simple_import_process(self, mock_send_message):
         task = self.create_task()
         process = SimpleImportProcess(task_id=task.id)
 
@@ -138,4 +138,13 @@ class ImportPriceHistoryTest(BaseTestCase):
         # )
 
         process.preprocess()
-        print(process.items)
+        item = process.items[0]
+        self.assertEqual(item.inputs, PRICE_HISTORY_ITEM)
+        self.assertEqual(item.row_number, 1)
+        # print(
+        #     item.row_number,
+        #     item.file_inputs,
+        #     item.raw_inputs,
+        #     item.conversion_inputs,
+        #     item.inputs,
+        # )
