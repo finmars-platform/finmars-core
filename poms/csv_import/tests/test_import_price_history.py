@@ -112,22 +112,22 @@ class ImportPriceHistoryTest(BaseTestCase):
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
         task = self.create_task()
-        process = SimpleImportProcess(task_id=task.id)
+        import_process = SimpleImportProcess(task_id=task.id)
 
         mock_send_message.assert_called()
 
-        self.assertEqual(process.result.task.id, task.id)
-        self.assertEqual(process.result.scheme.id, self.scheme_20.id)
-        self.assertEqual(process.process_type, "JSON")
+        self.assertEqual(import_process.result.task.id, task.id)
+        self.assertEqual(import_process.result.scheme.id, self.scheme_20.id)
+        self.assertEqual(import_process.process_type, "JSON")
 
-        process.fill_with_file_items()
-        self.assertEqual(process.file_items, PRICE_HISTORY)
+        import_process.fill_with_file_items()
+        self.assertEqual(import_process.file_items, PRICE_HISTORY)
 
-        process.fill_with_raw_items()
-        self.assertEqual(process.raw_items, [PRICE_HISTORY_ITEM])
+        import_process.fill_with_raw_items()
+        self.assertEqual(import_process.raw_items, [PRICE_HISTORY_ITEM])
 
-        process.apply_conversion_to_raw_items()
-        conversion_item = process.conversion_items[0]
+        import_process.apply_conversion_to_raw_items()
+        conversion_item = import_process.conversion_items[0]
         self.assertEqual(conversion_item.conversion_inputs, PRICE_HISTORY_ITEM)
         self.assertEqual(conversion_item.row_number, 1)
         # print(
@@ -137,8 +137,8 @@ class ImportPriceHistoryTest(BaseTestCase):
         #     conversion_item.row_number,
         # )
 
-        process.preprocess()
-        item = process.items[0]
+        import_process.preprocess()
+        item = import_process.items[0]
         self.assertEqual(item.inputs, PRICE_HISTORY_ITEM)
         self.assertEqual(item.row_number, 1)
         # print(
@@ -148,3 +148,6 @@ class ImportPriceHistoryTest(BaseTestCase):
         #     item.conversion_inputs,
         #     item.inputs,
         # )
+
+        import_process.process()
+        print(import_process.task.result_object)
