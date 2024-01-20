@@ -76,6 +76,14 @@ PRICE_HISTORY = [
     }
 ]
 
+PRICE_HISTORY_ITEM = {
+    "date": "2024-01-05",
+    "instrument": "USP37341AA50",
+    "principal_price": 109.72,
+    "accrued_price": None,
+    "factor": None,
+}
+
 
 INSTRUMENT = {
     "instrument_type": 17,

@@ -80,7 +80,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
         celery_task.update_progress(
             {
                 "current": 0,
-                "total": len(import_process.raw_items),
+                "total": len(import_process.conversion_items),
                 "percent": 0,
                 "description": "Apply Conversion",
             }

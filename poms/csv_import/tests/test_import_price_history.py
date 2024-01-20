@@ -13,6 +13,7 @@ from poms.csv_import.models import CsvField, CsvImportScheme
 from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import (
     PRICE_HISTORY,
+    PRICE_HISTORY_ITEM,
     SCHEME_20,
     SCHEME_20_FIELDS,
 )
@@ -123,4 +124,15 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(process.file_items, PRICE_HISTORY)
 
         process.fill_with_raw_items()
-        print(process.raw_items)
+        self.assertEqual(process.raw_items, [PRICE_HISTORY_ITEM])
+
+        process.apply_conversion_to_raw_items()
+        conversion_item = process.conversion_items[0]
+        self.assertEqual(conversion_item.conversion_inputs, PRICE_HISTORY_ITEM)
+        self.assertEqual(conversion_item.row_number, 1)
+        # print(
+        #     conversion_item.file_inputs,
+        #     conversion_item.raw_inputs,
+        #     conversion_item.conversion_inputs,
+        #     conversion_item.row_number,
+        # )
