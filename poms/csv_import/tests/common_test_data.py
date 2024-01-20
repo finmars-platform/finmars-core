@@ -1,13 +1,3 @@
-PRICE_HISTORY = [
-    {
-        "Date": "2024-01-05",
-        "Instrument": "USP37341AA50",
-        "Principal Price": 109.72,
-        "Accrued Price": None,
-        "Factor": None,
-    }
-]
-
 SCHEME_20 = {
     # "id": 20,
     # "master_user_id": 1,
@@ -75,6 +65,17 @@ SCHEME_20_FIELDS = [
         "scheme": None,
     },
 ]
+
+PRICE_HISTORY = [
+    {
+        "Date": "2024-01-05",
+        "Instrument": "USP37341AA50",
+        "Principal Price": 109.72,
+        "Accrued Price": None,
+        "Factor": None,
+    }
+]
+
 
 INSTRUMENT = {
     "instrument_type": 17,
