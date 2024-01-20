@@ -8,7 +8,7 @@ PRICE_HISTORY = [
     }
 ]
 
-SCHEMA_20 = {
+SCHEME_20 = {
     # "id": 20,
     # "master_user_id": 1,
     # "owner_id": 1,
@@ -38,6 +38,43 @@ SCHEMA_20 = {
     "is_deleted": False,
 }
 
+SCHEME_20_FIELDS = [
+    {
+        "column": 1,
+        "name": "date",
+        "column_name": "Date",
+        "name_expr": "universal_parse_date(str(date), yearfirst=True, dayfirst=False)",
+        "scheme": None,
+    },
+    {
+        "column": 2,
+        "name": "instrument",
+        "column_name": "Instrument",
+        "name_expr": "str(instrument)",
+        "scheme": None,
+    },
+    {
+        "column": 3,
+        "name": "principal_price",
+        "column_name": "Principal Price",
+        "name_expr": "float(principal_price)",
+        "scheme": None,
+    },
+    {
+        "column": 4,
+        "name": "accrued_price",
+        "column_name": "Accrued Price",
+        "name_expr": "float(accrued_price)",
+        "scheme": None,
+    },
+    {
+        "column": 5,
+        "name": "factor",
+        "column_name": "Factor",
+        "name_expr": "float(factor)",
+        "scheme": None,
+    },
+]
 
 INSTRUMENT = {
     "instrument_type": 17,

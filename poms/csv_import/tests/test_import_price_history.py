@@ -1,6 +1,6 @@
+import copy
 import json
 from unittest import mock
-import copy
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -9,9 +9,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
-from poms.csv_import.models import CsvImportScheme
+from poms.csv_import.models import CsvField, CsvImportScheme
 from poms.csv_import.tasks import simple_import
-from poms.csv_import.tests.common_test_data import PRICE_HISTORY, SCHEMA_20
+from poms.csv_import.tests.common_test_data import (
+    PRICE_HISTORY,
+    SCHEME_20,
+    SCHEME_20_FIELDS,
+)
 
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
@@ -25,24 +29,29 @@ class ImportPriceHistoryTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = API_URL
-        self.scheme_20 = self.create_schema_20()
+        self.scheme_20 = self.create_scheme_20()
         self.storage = mock.Mock()
         self.storage.save.return_value = None
 
-    def create_schema_20(self):
+    def create_scheme_20(self):
         content_type = ContentType.objects.get(
             app_label="instruments",
             model="pricehistory",
         )
-        schema_data = SCHEMA_20.copy()
-        schema_data.update(
+        scheme_data = SCHEME_20.copy()
+        scheme_data.update(
             {
                 "content_type_id": content_type.id,
                 "master_user_id": self.master_user.id,
                 "owner_id": self.member.id,
             }
         )
-        return CsvImportScheme.objects.create(**schema_data)
+        scheme = CsvImportScheme.objects.create(**scheme_data)
+        for field_data in SCHEME_20_FIELDS:
+            field_data["scheme"] = scheme
+            CsvField.objects.create(**field_data)
+
+        return scheme
 
     def create_task(self):
         options_object = {
@@ -111,5 +120,7 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(process.process_type, "JSON")
 
         process.fill_with_file_items()
-
         self.assertEqual(process.file_items, PRICE_HISTORY)
+
+        process.fill_with_raw_items()
+        print(process.raw_items)
