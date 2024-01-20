@@ -1,5 +1,6 @@
 import json
 from unittest import mock
+import copy
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -49,6 +50,7 @@ class ImportPriceHistoryTest(BaseTestCase):
             "filename": FILE_NAME,
             "scheme_id": self.scheme_20.id,
             "execution_context": None,
+            "items": copy.deepcopy(PRICE_HISTORY),
         }
         return CeleryTask.objects.create(
             master_user=self.master_user,
@@ -98,7 +100,7 @@ class ImportPriceHistoryTest(BaseTestCase):
     #     self.assertEqual(task.progress_object["description"], "Preprocess items")
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_simple_import_process(self, mock_send_message):
+    def test_create_simple_import_process(self, mock_send_message):
         task = self.create_task()
         process = SimpleImportProcess(task_id=task.id)
 
@@ -107,3 +109,7 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(process.result.task.id, task.id)
         self.assertEqual(process.result.scheme.id, self.scheme_20.id)
         self.assertEqual(process.process_type, "JSON")
+
+        process.fill_with_file_items()
+
+        self.assertEqual(process.file_items, PRICE_HISTORY)

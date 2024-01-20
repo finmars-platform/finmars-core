@@ -924,7 +924,7 @@ class SimpleImportProcess:
                     with storage.open(self.file_path, "rb") as f:
                         self.file_items = json.loads(f.read())
 
-            if self.process_type == ProcessType.CSV:
+            elif self.process_type == ProcessType.CSV:
                 _l.info(f"ProcessType.CSV self.file_path {self.file_path}")
 
                 with storage.open(self.file_path, "rb") as f:
@@ -950,10 +950,14 @@ class SimpleImportProcess:
                             )
 
                             self.append_and_count_file_items(reader)
-            if self.process_type == ProcessType.EXCEL:
+            elif self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
                         self.read_from_excel_file(f, tmpf)
+
+            else:
+                raise ValueError(f"invalid {self.process_type} process type")
+
             _l.info(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
                 f"{self.process_type} DONE items {len(self.raw_items)}"
