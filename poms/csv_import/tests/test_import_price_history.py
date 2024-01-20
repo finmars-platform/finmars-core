@@ -136,3 +136,6 @@ class ImportPriceHistoryTest(BaseTestCase):
         #     conversion_item.conversion_inputs,
         #     conversion_item.row_number,
         # )
+
+        process.preprocess()
+        print(process.items)
