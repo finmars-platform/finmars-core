@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BaseTestCase, INSTRUMENTS_TYPES
 from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvField, CsvImportScheme
 from poms.csv_import.tasks import simple_import
@@ -17,6 +17,7 @@ from poms.csv_import.tests.common_test_data import (
     SCHEME_20,
     SCHEME_20_FIELDS,
 )
+from poms.instruments.models import Instrument
 
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
@@ -33,6 +34,9 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.scheme_20 = self.create_scheme_20()
         self.storage = mock.Mock()
         self.storage.save.return_value = None
+        self.instrument = self.create_instrument_for_price_history(
+            isin=PRICE_HISTORY[0]["Instrument"]
+        )
 
     def create_scheme_20(self):
         content_type = ContentType.objects.get(
@@ -69,6 +73,13 @@ class ImportPriceHistoryTest(BaseTestCase):
             verbose_name="Simple Import",
             type="simple_import",
         )
+
+    def create_instrument_for_price_history(self, isin: str) -> Instrument:
+        instrument = self.create_instrument()
+        instrument.user_code = isin
+        instrument.short_name = isin
+        instrument.save()
+        return instrument
 
     # @mock.patch("poms.csv_import.views.simple_import.apply_async")
     # @mock.patch("poms.csv_import.serializers.storage")
