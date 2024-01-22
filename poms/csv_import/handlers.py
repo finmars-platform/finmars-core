@@ -1475,7 +1475,7 @@ class SimpleImportProcess:
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error(f"get_final_inputs.error {e}")
+                    _l.error(f"get_final_inputs.error {repr(e)}")
 
                     if not item.error_message:
                         item.error_message = ""
