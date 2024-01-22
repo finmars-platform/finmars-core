@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from poms.instruments.models import PricingPolicy
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
@@ -38,9 +39,18 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.instrument = self.create_instrument_for_price_history(
             isin=PRICE_HISTORY[0]["Instrument"]
         )
+        self.pricing_policy = PricingPolicy.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code="com.finmars.standard-pricing:standard",
+            configuration_code="com.finmars.standard-pricing",
+            name="Standard",
+            short_name="Standard",
+            is_enabled=True,
+        )
 
     def create_scheme_20(self):
-        content_type = ContentType.objects.get(
+        content_type = ContentType.objects.using(settings.DB_DEFAULT).get(
             app_label="instruments",
             model="pricehistory",
         )
@@ -52,7 +62,7 @@ class ImportPriceHistoryTest(BaseTestCase):
                 "owner_id": self.member.id,
             }
         )
-        scheme = CsvImportScheme.objects.create(**scheme_data)
+        scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(**scheme_data)
 
         for field_data in SCHEME_20_FIELDS:
             field_data["scheme"] = scheme
@@ -60,7 +70,7 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         for entity_data in SCHEME_20_ENTITIES:
             entity_data["scheme"] = scheme
-            EntityField.objects.create(**entity_data)
+            EntityField.objects.using(settings.DB_DEFAULT).create(**entity_data)
 
         return scheme
 
@@ -72,7 +82,7 @@ class ImportPriceHistoryTest(BaseTestCase):
             "execution_context": None,
             "items": copy.deepcopy(PRICE_HISTORY),
         }
-        return CeleryTask.objects.create(
+        return CeleryTask.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             member=self.member,
             options_object=options_object,
