@@ -9,12 +9,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
-from poms.csv_import.models import CsvField, CsvImportScheme
+from poms.csv_import.models import CsvField, CsvImportScheme, EntityField
 from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import (
     PRICE_HISTORY,
     PRICE_HISTORY_ITEM,
     SCHEME_20,
+    SCHEME_20_ENTITIES,
     SCHEME_20_FIELDS,
 )
 from poms.instruments.models import Instrument
@@ -52,9 +53,14 @@ class ImportPriceHistoryTest(BaseTestCase):
             }
         )
         scheme = CsvImportScheme.objects.create(**scheme_data)
+
         for field_data in SCHEME_20_FIELDS:
             field_data["scheme"] = scheme
             CsvField.objects.create(**field_data)
+
+        for entity_data in SCHEME_20_ENTITIES:
+            entity_data["scheme"] = scheme
+            EntityField.objects.create(**entity_data)
 
         return scheme
 
@@ -152,14 +158,14 @@ class ImportPriceHistoryTest(BaseTestCase):
         item = import_process.items[0]
         self.assertEqual(item.inputs, PRICE_HISTORY_ITEM)
         self.assertEqual(item.row_number, 1)
-        print(
-            item.row_number,
-            item.file_inputs,
-            item.raw_inputs,
-            item.conversion_inputs,
-            item.inputs,
-            item.final_inputs,
-        )
+        # print(
+        #     item.row_number,
+        #     item.file_inputs,
+        #     item.raw_inputs,
+        #     item.conversion_inputs,
+        #     item.inputs,
+        #     item.final_inputs,
+        # )
 
         import_process.process()
         result = import_process.task.result_object["items"][0]

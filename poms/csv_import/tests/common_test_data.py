@@ -66,6 +66,46 @@ SCHEME_20_FIELDS = [
     },
 ]
 
+SCHEME_20_ENTITIES = [
+    {
+        "name": "instrument",
+        "expression": "instrument",
+        "system_property_key": "instrument",
+        "scheme": None,
+    },
+    {
+        "name": "pricing policy",
+        "expression": "'com.finmars.standard-pricing:standard'",
+        "system_property_key": "pricing_policy",
+        "scheme": None,
+    },
+    {
+        "name": "date",
+        "expression": "date",
+        "system_property_key": "date",
+        "scheme": None,
+    },
+    {
+        "name": "principal price",
+        "expression": "principal_price",
+        "system_property_key": "principal_price",
+        "scheme": None,
+    },
+    {
+        "name": "accrued price",
+        "expression": "accrued_price",
+        "system_property_key": "accrued_price",
+        "scheme": None,
+    },
+    {
+        "name": "factor",
+        "expression": "factor",
+        "system_property_key": "factor",
+        "scheme": None,
+    },
+]
+
+
 PRICE_HISTORY = [
     {
         "Date": "2024-01-05",
