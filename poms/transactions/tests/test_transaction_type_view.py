@@ -23,6 +23,8 @@ DATE_FORMAT = settings.API_DATE_FORMAT
 
 
 class TransactionTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -36,7 +38,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         transaction_type_group = self.get_transaction_type_group()
         self.transaction_type = TransactionType.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             configuration_code=self.random_string(),
             user_code=self.random_string(7),
             name=self.random_string(),
@@ -162,7 +164,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 7)
+        self.assertEqual(len(response_json["results"]), 6)
 
     def test__ev_item(self):
         self.create_transaction_type()
@@ -171,7 +173,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 7)
+        self.assertEqual(len(response_json["results"]), 6)
 
     def test__light_with_inputs(self):
         transaction_type = self.create_transaction_type()

@@ -209,6 +209,8 @@ EXPECTED_COMPLEX_TRANSACTION = {
 
 
 class ComplexTransactionViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -226,7 +228,7 @@ class ComplexTransactionViewSetTest(BaseTestCase):
     def create_transaction_type_group(self) -> TransactionTypeGroup:
         return TransactionTypeGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(7),
             name=self.random_string(),
         )
@@ -235,7 +237,7 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         transaction_type_group = self.create_transaction_type_group()
         self.transaction_type = TransactionType.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(7),
             name=self.random_string(),
             short_name=self.random_string(3),

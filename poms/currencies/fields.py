@@ -22,9 +22,9 @@ class SystemCurrencyDefault:
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
-        self.set_context(serializer_field)
-
         from poms.users.models import EcosystemDefault
+
+        self.set_context(serializer_field)
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
 

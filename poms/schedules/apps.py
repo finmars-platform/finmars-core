@@ -1,6 +1,11 @@
+import logging
+import sys
+
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
+
+_l = logging.getLogger("provision")
 
 
 class SchedulesConfig(AppConfig):
@@ -12,33 +17,47 @@ class SchedulesConfig(AppConfig):
 
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(
-            self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            _l.info("update_periodic_tasks ignored - TEST MODE")
+            return
+
+        _l.info(f"update_periodic_tasks start, using {using} database")
+
         crontabs = {}
-        crontabs["every_30_min"], _ = CrontabSchedule.objects.get_or_create(
+        crontabs["every_30_min"], _ = CrontabSchedule.objects.using(
+            using
+        ).get_or_create(
             minute="*/30",
             hour="*",
             day_of_week="*",
             day_of_month="*",
             month_of_year="*",
         )
-        crontabs["every_5_min"], _ = CrontabSchedule.objects.get_or_create(
+        crontabs["every_5_min"], _ = CrontabSchedule.objects.using(
+            using,
+        ).get_or_create(
             minute="*/5",
             hour="*",
             day_of_week="*",
             day_of_month="*",
             month_of_year="*",
         )
-        crontabs["daily_morning"], _ = CrontabSchedule.objects.get_or_create(
+        crontabs["daily_morning"], _ = CrontabSchedule.objects.using(
+            using,
+        ).get_or_create(
             minute="0",
             hour="6",
             day_of_week="*",
             day_of_month="*",
             month_of_year="*",
         )
-        crontabs["daily_noon"], _ = CrontabSchedule.objects.get_or_create(
+        crontabs["daily_noon"], _ = CrontabSchedule.objects.using(
+            using,
+        ).get_or_create(
             minute="0",
             hour="12",
             day_of_week="*",
@@ -90,22 +109,36 @@ class SchedulesConfig(AppConfig):
             },
         ]
 
-        periodic_tasks_exists = PeriodicTask.objects.values_list("pk", flat=True)
+        periodic_tasks_exists = PeriodicTask.objects.using(
+            using,
+        ).values_list(
+            "pk",
+            flat=True,
+        )
 
         for task in periodic_tasks:
             if task["id"] in periodic_tasks_exists:
-                item = PeriodicTask.objects.get(id=task["id"])
+                item = PeriodicTask.objects.using(
+                    using,
+                ).get(id=task["id"])
                 item.name = task["name"]
                 item.task = task["task"]
                 item.crontab = task["crontab"]
                 item.save()
 
             else:
-                PeriodicTask.objects.create(**task)
+                _l.info(f"create PeriodicTask data={task}")
+                PeriodicTask.objects.using(using).create(**task)
 
     def sync_user_schedules_with_celery_beat(
-            self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
     ):
         from poms.schedules.utils import sync_schedules
 
-        sync_schedules()
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            _l.info("sync_user_schedules_with_celery_beat ignored - TEST MODE")
+            return
+
+        _l.info(f"sync_user_schedules_with_celery_beat start, using {using} database")
+
+        sync_schedules(using=using)

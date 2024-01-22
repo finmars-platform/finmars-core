@@ -415,11 +415,11 @@ class PortfolioRegisterSerializer(
         process = InstrumentTypeProcess(instrument_type=instrument_type)
 
         instrument_object = process.instrument
-
         instrument_object["name"] = new_linked_instrument["name"]
         instrument_object["short_name"] = new_linked_instrument["short_name"]
         instrument_object["user_code"] = new_linked_instrument["user_code"]
         instrument_object["public_name"] = new_linked_instrument["public_name"]
+        instrument_object["has_linked_with_portfolio"] = True
 
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
@@ -431,14 +431,11 @@ class PortfolioRegisterSerializer(
             context=self.context,
         )
 
-        is_valid = serializer.is_valid(raise_exception=True)
+        serializer.is_valid(raise_exception=True)
 
-        if is_valid:
-            serializer.save()
+        serializer.save()
 
-        new_instrument = serializer.instance
-
-        instance.linked_instrument_id = new_instrument.id
+        instance.linked_instrument = serializer.instance
 
         instance.save()
 

@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework.serializers import ListSerializer
 
 from mptt.utils import get_cached_trees
-from poms_app import settings
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeField
 from poms.common.filters import ClassifierRootFilter
@@ -11,6 +10,7 @@ from poms.iam.serializers import IamProtectedSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.utils import get_master_user_from_context, get_member_from_context
+from poms_app import settings
 
 
 class PomsClassSerializer(serializers.ModelSerializer):
@@ -25,12 +25,9 @@ class PomsClassSerializer(serializers.ModelSerializer):
 
 class ModelOwnerSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
-
-        # print('ModelOwnerSerializer %s' % instance)
+        from poms.users.serializers import MemberViewSerializer
 
         representation = super().to_representation(instance)
-
-        from poms.users.serializers import MemberViewSerializer
 
         serializer = MemberViewSerializer(instance=instance.owner)
 
@@ -39,11 +36,12 @@ class ModelOwnerSerializer(serializers.ModelSerializer):
         return representation
 
     def create(self, validated_data):
-        # You should have 'request' in the serializer context
-        request = self.context.get('request', None)
+        # You should have 'request' in the serializer context !!!
+        request = self.context.get("request", None)
         if request and hasattr(request, "user"):
-            validated_data['owner'] = request.user.member
-        return super(ModelOwnerSerializer, self).create(validated_data)
+            validated_data["owner"] = request.user.member
+
+        return super().create(validated_data)
 
 
 class ModelMetaSerializer(serializers.ModelSerializer):
@@ -77,7 +75,9 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
         return data
 
 
-class ModelWithUserCodeSerializer(ModelMetaSerializer, ModelOwnerSerializer, IamProtectedSerializer):
+class ModelWithUserCodeSerializer(
+    ModelMetaSerializer, ModelOwnerSerializer, IamProtectedSerializer
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["user_code"] = UserCodeField()

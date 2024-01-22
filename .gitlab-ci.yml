@@ -61,6 +61,12 @@ Test:
     DB_PASSWORD: test_finmars_password
     DB_PORT: 5432
 
+    REPLICA_DB_HOST: postgres
+    REPLICA_DB_NAME: test_finmars
+    REPLICA_DB_USER: test_finmars_user
+    REPLICA_DB_PASSWORD: test_finmars_password
+    REPLICA_DB_PORT: 5432
+
     RABBITMQ_HOST: rabbitmq
     RABBITMQ_USER: test_finmars_user
     RABBITMQ_PASSWORD: test_finmars_password
@@ -78,11 +84,13 @@ Test:
       && rm -rf /var/lib/apt/lists/*
     - python -m pip install --upgrade pip
     - pip install uwsgi
+    - pip install tblib
     - pip install -r requirements.txt
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - coverage run manage.py test --parallel=6
+#    - coverage run manage.py test --parallel=6
+    - coverage run manage.py test
     - coverage combine && coverage report && coverage html
   artifacts:
     paths:
