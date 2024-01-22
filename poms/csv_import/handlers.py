@@ -1656,14 +1656,8 @@ class SimpleImportProcess:
     def import_items_by_batch_indexes(
         self, batche_indexes, filter_for_async_functions_eval
     ):
-        batche_rows_count = 0
-        model = self.scheme.content_type.model_class()
-
         all_entity_fields_models = self.scheme.entity_fields.all()
-
-        models_q_filter_list = []
         relation_models_user_codes = {}
-
         for item_index in batche_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(
                 self.items[item_index], all_entity_fields_models
@@ -1696,6 +1690,7 @@ class SimpleImportProcess:
 
             self.items[item_index].final_inputs = result_item
 
+        models_q_filter_list = []
         for item_index in batche_indexes:
             try:
                 if self.scheme.content_type.model == "pricehistory":
@@ -1733,6 +1728,7 @@ class SimpleImportProcess:
                     f"Relation model error: {repr(e)}"
                 )
 
+        model = self.scheme.content_type.model_class()
         if models_q_filter_list:
             conditions = reduce(or_, models_q_filter_list)
             model_objects_for_update = model.objects.filter(conditions)
@@ -1760,7 +1756,6 @@ class SimpleImportProcess:
         # dict for filtering models by key
         models_for_bulk_insert = {}
         models_for_bulk_update = {}
-
         for item_index in batche_indexes:
             # skip error status items
             if self.items[item_index].status == "error":
@@ -1872,9 +1867,10 @@ class SimpleImportProcess:
                     )
 
         # mass inserting models
+        batch_rows_count = 0
         if models_for_bulk_insert:
             model.objects.bulk_create(models_for_bulk_insert.values())
-            batche_rows_count = batche_rows_count + len(models_for_bulk_insert.values())
+            batch_rows_count = batch_rows_count + len(models_for_bulk_insert.values())
             _l.info(
                 f"SimpleImportProcess.Task bulk_insert count. "
                 f"{len(models_for_bulk_insert.values())} "
@@ -1885,17 +1881,18 @@ class SimpleImportProcess:
                 model_obj.save()
             # todo: by bulk update
             # model.objects.bulk_update(models_for_bulk_update)
-            batche_rows_count = batche_rows_count + len(models_for_bulk_update.values())
+            batch_rows_count = batch_rows_count + len(models_for_bulk_update.values())
             _l.info(
                 f"SimpleImportProcess.Task bulk_update count. "
                 f"{len(models_for_bulk_update.values())} "
             )
 
         _l.info(
-            f"SimpleImportProcess.Task filter_for_async_functions_eval count. {len(filter_for_async_functions_eval)} "
+            f"SimpleImportProcess.Task filter_for_async_functions_eval count."
+            f" {len(filter_for_async_functions_eval)} "
         )
 
-        return batche_rows_count
+        return batch_rows_count
 
     def handle_successful_item_import(self, item, serializer):
         item.status = "success"
