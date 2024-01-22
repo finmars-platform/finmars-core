@@ -1653,7 +1653,7 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
-    def import_items_by_batche_indexes(
+    def import_items_by_batch_indexes(
         self, batche_indexes, filter_for_async_functions_eval
     ):
         batche_rows_count = 0
@@ -1731,7 +1731,8 @@ class SimpleImportProcess:
                 self.items[
                     item_index
                 ].error_message = (
-                    f"{self.items[item_index].error_message} Relation model error {e}"
+                    f"{self.items[item_index].error_message} "
+                    f"Relation model error: {repr(e)}"
                 )
 
         if models_q_filter_list:
@@ -2018,7 +2019,7 @@ class SimpleImportProcess:
             item_index = item_index + 1
 
             if len(batche_indexes) >= items_per_batche or item_index >= len(self.items):
-                batche_rows_count = self.import_items_by_batche_indexes(
+                batche_rows_count = self.import_items_by_batch_indexes(
                     batche_indexes, filter_for_async_functions_eval
                 )
                 self.result.processed_rows = (

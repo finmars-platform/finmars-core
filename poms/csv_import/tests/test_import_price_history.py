@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.common_base_test import BaseTestCase, INSTRUMENTS_TYPES
+from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvField, CsvImportScheme
 from poms.csv_import.tasks import simple_import
@@ -161,4 +161,6 @@ class ImportPriceHistoryTest(BaseTestCase):
         # )
 
         import_process.process()
-        print(import_process.task.result_object)
+        result = import_process.task.result_object["items"][0]
+
+        self.assertNotEqual(result["status"], "error", result["error_message"])

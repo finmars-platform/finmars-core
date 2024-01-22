@@ -97,7 +97,7 @@ EXPECTED_RESULT = {
                 "instrument": "USP37341AA50",
                 "principal_price": 109.72,
             },
-            "error_message": " Relation model error 'instrument'",
+            "error_message": " Relation model error: KeyError('instrument')",
             "file_inputs": {
                 "Accrued Price": None,
                 "Date": "2024-01-05",
