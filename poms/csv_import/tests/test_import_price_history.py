@@ -152,13 +152,14 @@ class ImportPriceHistoryTest(BaseTestCase):
         item = import_process.items[0]
         self.assertEqual(item.inputs, PRICE_HISTORY_ITEM)
         self.assertEqual(item.row_number, 1)
-        # print(
-        #     item.row_number,
-        #     item.file_inputs,
-        #     item.raw_inputs,
-        #     item.conversion_inputs,
-        #     item.inputs,
-        # )
+        print(
+            item.row_number,
+            item.file_inputs,
+            item.raw_inputs,
+            item.conversion_inputs,
+            item.inputs,
+            item.final_inputs,
+        )
 
         import_process.process()
         result = import_process.task.result_object["items"][0]

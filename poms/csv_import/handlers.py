@@ -1728,9 +1728,7 @@ class SimpleImportProcess:
                     )
             except Exception as e:
                 self.items[item_index].status = "error"
-                self.items[
-                    item_index
-                ].error_message = (
+                self.items[item_index].error_message = (
                     f"{self.items[item_index].error_message} "
                     f"Relation model error: {repr(e)}"
                 )
@@ -1971,10 +1969,10 @@ class SimpleImportProcess:
 
     def process_items_batches(self):
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items_batches INIT")
-        # mb not need
+        # mb aren't needed
         self.result.processed_rows = 0
-        items_per_batche = 100
-        batche_indexes = []
+        items_per_batch = 100
+        batch_indexes = []
         item_index = 0
 
         filter_for_async_functions_eval = []
@@ -2002,30 +2000,30 @@ class SimpleImportProcess:
                 except Exception as e:
                     success = False
                     self.items[item_index].status = "error"
-                    self.items[
-                        item_index
-                    ].message = f"item.row_number {self.items[item_index].row_number} error {repr(e)}"
-
+                    self.items[item_index].message = (
+                        f"item.row_number {self.items[item_index].row_number} "
+                        f"error {repr(e)}"
+                    )
                     _l.error(
                         f"SimpleImportProcess.Task {self.task}.  ========= process row "
-                        f"{str(self.items[item_index].row_number)} ======== Exception {e} ====== "
-                        f"Traceback {traceback.format_exc()}"
+                        f"{str(self.items[item_index].row_number)} ======== Exception "
+                        f"{repr(e)} ====== Trace {traceback.format_exc()}"
                     )
 
             if success:
-                batche_indexes.append(item_index)
+                batch_indexes.append(item_index)
 
             # increment while index
             item_index = item_index + 1
 
-            if len(batche_indexes) >= items_per_batche or item_index >= len(self.items):
+            if len(batch_indexes) >= items_per_batch or item_index >= len(self.items):
                 batche_rows_count = self.import_items_by_batch_indexes(
-                    batche_indexes, filter_for_async_functions_eval
+                    batch_indexes, filter_for_async_functions_eval
                 )
                 self.result.processed_rows = (
                     self.result.processed_rows + batche_rows_count
                 )
-                batche_indexes = []
+                batch_indexes = []
 
                 self.task.update_progress(
                     {
@@ -2042,34 +2040,33 @@ class SimpleImportProcess:
 
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items_batches DONE")
 
-        # make task for celery
         if filter_for_async_functions_eval:
-            celery_task = CeleryTask.objects.create(
-                master_user=self.master_user,
-                member=self.member,
-                notes="Final updates initiated by bulk_insert data procedure instance %s",
-                verbose_name="Simple Import Final updates for bulk insert",
-                type="csv_import.simple_import_bulk_insert_final_updates_procedure",  # "simple_import_bulk_insert_final_updates_procedure",
-            )
+            self._create_celery_task(filter_for_async_functions_eval)
 
-            options_object = {
-                "scheme_id": self.scheme.id,
-                "filter_for_async_functions_eval": filter_for_async_functions_eval,
-            }
+    def _create_celery_task(self, filter_for_async_functions_eval):
+        celery_task = CeleryTask.objects.create(
+            master_user=self.master_user,
+            member=self.member,
+            notes="Final updates initiated by bulk_insert data procedure instance %s",
+            verbose_name="Simple Import Final updates for bulk insert",
+            type="csv_import.simple_import_bulk_insert_final_updates_procedure",
+        )
+        options_object = {
+            "scheme_id": self.scheme.id,
+            "filter_for_async_functions_eval": filter_for_async_functions_eval,
+        }
+        celery_task.options_object = options_object
+        celery_task.save()
 
-            celery_task.options_object = options_object
+        _l.info(
+            f"SimpleImportProcess.Task {self.task}. Add task for async methods of "
+            f"batches items {len(filter_for_async_functions_eval)}"
+        )
 
-            celery_task.save()
-
-            _l.info(
-                f"SimpleImportProcess.Task {self.task}. Add task for async methods of "
-                f"batches items {len(filter_for_async_functions_eval)}"
-            )
-
-            simple_import_bulk_insert_final_updates_procedure.apply_async(
-                kwargs={"task_id": celery_task.pk},
-                queue="backend-background-queue",
-            )
+        simple_import_bulk_insert_final_updates_procedure.apply_async(
+            kwargs={"task_id": celery_task.pk},
+            queue="backend-background-queue",
+        )
 
     def process(self):
         error_flag = False
