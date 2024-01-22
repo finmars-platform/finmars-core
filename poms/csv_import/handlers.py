@@ -1653,6 +1653,16 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
+    def _calculate_null_fields(self, model: str, final_inputs: dict) -> dict:
+        if model != "pricehistory":
+            return final_inputs
+
+        for key, value in final_inputs.items():
+            if key in ("accrued_price", "factor") and value is None:
+                final_inputs[key] = 1111.11  # FIXME JUST TO TEST
+
+        return final_inputs
+
     def import_items_by_batch_indexes(
         self, batche_indexes, filter_for_async_functions_eval
     ):
@@ -1675,6 +1685,11 @@ class SimpleImportProcess:
         )
 
         for item_index in batche_indexes:
+            self._calculate_null_fields(
+                model=self.scheme.content_type.model,
+                final_inputs=self.items[item_index].final_inputs,
+            )
+
             result_item = {
                 key: self.items[item_index].final_inputs[key]
                 for key, value in self.items[item_index].final_inputs.items()
@@ -1735,8 +1750,8 @@ class SimpleImportProcess:
         else:
             model_objects_for_update = []
 
-        model_for_update_ids = {}
         # collecting keys of models for select models for update
+        model_for_update_ids = {}
         if model_objects_for_update:
             for model_object in model_objects_for_update:
                 if self.scheme.content_type.model == "pricehistory":
@@ -1802,15 +1817,17 @@ class SimpleImportProcess:
 
                     except Exception as e:
                         self.items[item_index].status = "error"
-                        self.items[
-                            item_index
-                        ].error_message = f"{self.items[item_index].error_message}==== Overwrite Exception {e}"
+                        self.items[item_index].error_message = (
+                            f"{self.items[item_index].error_message}==== "
+                            f"Overwrite Exception {e}"
+                        )
 
                 else:
                     self.items[item_index].status = "error"
-                    self.items[
-                        item_index
-                    ].error_message = f"{self.items[item_index].error_message}====  Overwrite disabled"
+                    self.items[item_index].error_message = (
+                        f"{self.items[item_index].error_message}"
+                        f"====  Overwrite disabled"
+                    )
             else:
                 result_item = {
                     key: self.items[item_index].final_inputs[key]
