@@ -142,3 +142,18 @@ class MemberViewSetTest(BaseTestCase):
 
         invite_member.assert_called_once()
         self.assertEqual(Member.objects.all().count(), 1)  # member was not created
+
+    def test__retrieve_0(self):
+        response = self.client.get(path=f"{self.url}0/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertTrue(response_json["is_owner"])
+        self.assertTrue(response_json["is_admin"])
+        self.assertTrue(response_json["is_superuser"])
+        self.assertFalse(response_json["is_deleted"])
+
+        user_data = response_json["user"]
+        self.assertEqual(user_data["username"], "test_user")
+        self.assertEqual(user_data["id"], self.user.id)
