@@ -21,6 +21,8 @@ from poms.csv_import.tests.common_test_data import (
 )
 from poms.instruments.models import Instrument
 
+from pprint import pprint
+
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
 FILE_NAME = "price_history.json"
@@ -181,3 +183,5 @@ class ImportPriceHistoryTest(BaseTestCase):
         result = import_process.task.result_object["items"][0]
 
         self.assertNotEqual(result["status"], "error", result["error_message"])
+
+        pprint(result)

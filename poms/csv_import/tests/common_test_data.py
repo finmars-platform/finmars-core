@@ -126,59 +126,47 @@ PRICE_HISTORY_ITEM = {
 
 
 EXPECTED_RESULT = {
-    "error_message": None,
-    "file_name": None,
-    "items": [
-        {
-            "conversion_inputs": {
-                "accrued_price": None,
-                "date": "2024-01-05",
-                "factor": None,
-                "instrument": "USP37341AA50",
-                "principal_price": 109.72,
-            },
-            "error_message": " Relation model error: KeyError('instrument')",
-            "file_inputs": {
-                "Accrued Price": None,
-                "Date": "2024-01-05",
-                "Factor": None,
-                "Instrument": "USP37341AA50",
-                "Principal Price": 109.72,
-            },
-            "final_inputs": {},
-            "imported_items": None,
-            "inputs": {
-                "accrued_price": "None",
-                "date": "2024-01-05",
-                "factor": "None",
-                "instrument": "USP37341AA50",
-                "principal_price": "109.72",
-            },
-            "message": "",
-            "raw_inputs": {
-                "accrued_price": None,
-                "date": "2024-01-05",
-                "factor": None,
-                "instrument": "USP37341AA50",
-                "principal_price": 109.72,
-            },
-            "row_number": 1,
-            "status": "error",
-        }
-    ],
-    "processed_rows": 0,
-    "reports": None,
-    "scheme": {
-        "delimiter": ",",
-        "error_handler": "continue",
-        "id": 1,
-        "missing_data_handler": "throw_error",
-        "name": "STD - Prices (from File)",
-        "user_code": "com.finmars.standard-import-from-file:instruments.pricehistory:price_from_file",
+    "conversion_inputs": {
+        "accrued_price": None,
+        "date": "2024-01-05",
+        "factor": None,
+        "instrument": "USP37341AA50",
+        "principal_price": 109.72,
     },
-    "task": {"id": 1, "status": "P", "type": "simple_import"},
-    "total_rows": 1,
+    "error_message": "",
+    "file_inputs": {
+        "Accrued Price": None,
+        "Date": "2024-01-05",
+        "Factor": None,
+        "Instrument": "USP37341AA50",
+        "Principal Price": 109.72,
+    },
+    "final_inputs": {
+        "date": "2024-01-05",
+        "instrument": "USP37341AA50",
+        "pricing_policy": "com.finmars.standard-pricing:standard",
+        "principal_price": 109.72,
+    },
+    "imported_items": None,
+    "inputs": {
+        "accrued_price": "None",
+        "date": "2024-01-05",
+        "factor": "None",
+        "instrument": "USP37341AA50",
+        "principal_price": "109.72",
+    },
+    "message": "",
+    "raw_inputs": {
+        "accrued_price": None,
+        "date": "2024-01-05",
+        "factor": None,
+        "instrument": "USP37341AA50",
+        "principal_price": 109.72,
+    },
+    "row_number": 1,
+    "status": "init",
 }
+
 
 INSTRUMENT = {
     "instrument_type": 17,
