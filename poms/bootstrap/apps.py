@@ -54,9 +54,7 @@ class BootstrapConfig(AppConfig):
         :return:
         """
         # Do not disable bootstrap code, its important to be executed on every startup
-        if (
-            "test" not in sys.argv
-        ):
+        if ("test" not in sys.argv):
             self.create_local_configuration()
             self.add_view_and_manage_permissions()
             self.load_master_user_data()
@@ -127,158 +125,158 @@ class BootstrapConfig(AppConfig):
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
-        if ("test" not in sys.argv):
+        # if ("test" not in sys.argv):
 
-            if not settings.AUTHORIZER_URL:
-                _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
+        if not settings.AUTHORIZER_URL:
+            _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
             return
 
-            _l.info("load_master_user_data started ...")
+        _l.info("load_master_user_data started ...")
+
+        try:
+            data = {"base_api_url": settings.BASE_API_URL}
+            url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+
+            _l.info(f"load_master_user_data url {url}")
+
+            response = requests.post(
+                url=url,
+                data=json.dumps(data),
+                headers=HEADERS,
+                verify=settings.VERIFY_SSL,
+            )
+
+            _l.info(f"status_code={response.status_code} text={response.text}")
+
+            response.raise_for_status()
+
+            response_data = response.json()
+            username = response_data["owner"]["username"]
 
             try:
-                data = {"base_api_url": settings.BASE_API_URL}
-                url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+                user = User.objects.using(settings.DB_DEFAULT).get(username=username)
 
-                _l.info(f"load_master_user_data url {url}")
+                _l.info(f"Owner {username} exists")
 
-                response = requests.post(
-                    url=url,
-                    data=json.dumps(data),
-                    headers=HEADERS,
-                    verify=settings.VERIFY_SSL,
-                )
-
-                _l.info(f"status_code={response.status_code} text={response.text}")
-
-                response.raise_for_status()
-
-                response_data = response.json()
-                username = response_data["owner"]["username"]
-
+            except User.DoesNotExist:
                 try:
-                    user = User.objects.using(settings.DB_DEFAULT).get(username=username)
+                    password = generate_random_string(10)
+                    user = User.objects.using(settings.DB_DEFAULT).create(
+                        email=response_data["owner"]["email"],
+                        username=username,
+                        password=password,
+                    )
+                    user.save()
 
-                    _l.info(f"Owner {username} exists")
-
-                except User.DoesNotExist:
-                    try:
-                        password = generate_random_string(10)
-                        user = User.objects.using(settings.DB_DEFAULT).create(
-                            email=response_data["owner"]["email"],
-                            username=username,
-                            password=password,
-                        )
-                        user.save()
-
-                        _l.info(f'Create owner {response_data["owner"]["username"]}')
-
-                    except Exception as e:
-                        _l.info(f"Create user error {e} trace {traceback.format_exc()}")
-                        raise e
-
-                user_profile, created = UserProfile.objects.using(
-                    settings.DB_DEFAULT
-                ).get_or_create(user_id=user.pk)
-
-                _l.info(f"Owner User Profile {'created' if created else 'exist'}")
-
-                name = response_data["name"]
-                try:
-                    if (
-                        "old_backup_name" in response_data
-                        and response_data["old_backup_name"]
-                    ):
-                        # If From backup
-                        master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
-                            name=response_data["old_backup_name"]
-                        )
-                        master_user.name = name
-                        master_user.base_api_url = response_data["base_api_url"]
-                        master_user.save()
-
-                        _l.info(
-                            f"Master User From Backup Renamed to Name {master_user.name}"
-                            f"and Base API URL {master_user.base_api_url}"
-                        )
+                    _l.info(f'Create owner {response_data["owner"]["username"]}')
 
                 except Exception as e:
-                    _l.error(f"Old backup name error {e}")
+                    _l.info(f"Create user error {e} trace {traceback.format_exc()}")
+                    raise e
 
-                old_members = Member.objects.all()
-                old_members.update(is_deleted=True)
-                _l.info(f"{old_members.count()} old members were marked as deleted")
+            user_profile, created = UserProfile.objects.using(
+                settings.DB_DEFAULT
+            ).get_or_create(user_id=user.pk)
 
-                if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
-                    _l.info("Empty database, create new master user")
+            _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
-                    master_user = MasterUser.objects.create_master_user(
-                        user=user,
-                        language="en",
-                        name=name,
+            name = response_data["name"]
+            try:
+                if (
+                    "old_backup_name" in response_data
+                    and response_data["old_backup_name"]
+                ):
+                    # If From backup
+                    master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
+                        name=response_data["old_backup_name"]
                     )
-
+                    master_user.name = name
                     master_user.base_api_url = response_data["base_api_url"]
-
                     master_user.save()
 
                     _l.info(
-                        f"Master user with name {master_user.name} and "
-                        f"base_api_url {master_user.base_api_url} created"
-                    )
-
-                    member = Member.objects.using(settings.DB_DEFAULT).create(
-                        user=user,
-                        username=username,
-                        master_user=master_user,
-                        is_owner=True,
-                        is_admin=True,
-                    )
-                    member.save()
-
-                    _l.info("Owner Member & Admin Group created")
-
-                try:
-                    # TODO, carefull if someday return to multi master user inside one db
-                    master_user = (
-                        MasterUser.objects.using(settings.DB_DEFAULT).all().first()
-                    )
-                    master_user.base_api_url = settings.BASE_API_URL
-                    master_user.save()
-
-                    _l.info("Master User base_api_url synced")
-
-                except Exception as e:
-                    _l.error(f"Could not sync base_api_url {e}")
-                    raise e
-
-                try:
-                    current_owner_member = Member.objects.using(settings.DB_DEFAULT).get(
-                        username=username,
-                        master_user=master_user,
-                    )
-                    if (
-                        not current_owner_member.is_owner
-                        or not current_owner_member.is_admin
-                    ):
-                        current_owner_member.is_owner = True
-                        current_owner_member.is_admin = True
-                        current_owner_member.save()
-
-                except Exception as e:
-                    _l.error(f"Could not find current owner member {e} ")
-
-                    Member.objects.using(settings.DB_DEFAULT).create(
-                        username=username,
-                        user=user,
-                        master_user=master_user,
-                        is_owner=True,
-                        is_admin=True,
+                        f"Master User From Backup Renamed to Name {master_user.name}"
+                        f"and Base API URL {master_user.base_api_url}"
                     )
 
             except Exception as e:
-                _l.error(
-                    f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+                _l.error(f"Old backup name error {e}")
+
+            old_members = Member.objects.all()
+            old_members.update(is_deleted=True)
+            _l.info(f"{old_members.count()} old members were marked as deleted")
+
+            if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
+                _l.info("Empty database, create new master user")
+
+                master_user = MasterUser.objects.create_master_user(
+                    user=user,
+                    language="en",
+                    name=name,
                 )
+
+                master_user.base_api_url = response_data["base_api_url"]
+
+                master_user.save()
+
+                _l.info(
+                    f"Master user with name {master_user.name} and "
+                    f"base_api_url {master_user.base_api_url} created"
+                )
+
+                member = Member.objects.using(settings.DB_DEFAULT).create(
+                    user=user,
+                    username=username,
+                    master_user=master_user,
+                    is_owner=True,
+                    is_admin=True,
+                )
+                member.save()
+
+                _l.info("Owner Member & Admin Group created")
+
+            try:
+                # TODO, carefull if someday return to multi master user inside one db
+                master_user = (
+                    MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+                )
+                master_user.base_api_url = settings.BASE_API_URL
+                master_user.save()
+
+                _l.info("Master User base_api_url synced")
+
+            except Exception as e:
+                _l.error(f"Could not sync base_api_url {e}")
+                raise e
+
+            try:
+                current_owner_member = Member.objects.using(settings.DB_DEFAULT).get(
+                    username=username,
+                    master_user=master_user,
+                )
+                if (
+                    not current_owner_member.is_owner
+                    or not current_owner_member.is_admin
+                ):
+                    current_owner_member.is_owner = True
+                    current_owner_member.is_admin = True
+                    current_owner_member.save()
+
+            except Exception as e:
+                _l.error(f"Could not find current owner member {e} ")
+
+                Member.objects.using(settings.DB_DEFAULT).create(
+                    username=username,
+                    user=user,
+                    master_user=master_user,
+                    is_owner=True,
+                    is_admin=True,
+                )
+
+        except Exception as e:
+            _l.error(
+                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+            )
 
         # Looks like tests itself create master user and other things
         # else:
