@@ -213,9 +213,7 @@ class BootstrapConfig(AppConfig):
                 if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                     _l.info("Empty database, create new master user")
 
-                    master_user = MasterUser.objects.using(
-                        settings.DB_DEFAULT
-                    ).create_master_user(
+                    master_user = MasterUser.objects.create_master_user(
                         user=user,
                         language="en",
                         name=name,
@@ -287,9 +285,7 @@ class BootstrapConfig(AppConfig):
         else:
             _l.info("load_master_user_data in test mode, creating temp master_user")
 
-            master_user = MasterUser.objects.using(
-                settings.DB_DEFAULT
-            ).create_master_user(
+            master_user = MasterUser.objects.create_master_user(
                 language="en",
                 name='Test Database',
             )
