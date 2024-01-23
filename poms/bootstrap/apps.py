@@ -54,20 +54,18 @@ class BootstrapConfig(AppConfig):
         :return:
         """
         # Do not disable bootstrap code, its important to be executed on every startup
-        # if (
-        #     "test" not in sys.argv
-        #     and "makemigrations" not in sys.argv
-        #     and "migrate" not in sys.argv
-        # ):
-        self.create_local_configuration()
-        self.add_view_and_manage_permissions()
-        self.load_master_user_data()
-        self.create_finmars_bot()
-        self.create_member_layouts()
-        self.create_base_folders()
-        self.register_at_authorizer_service()
-        self.sync_celery_workers()
-        self.create_iam_access_policies_templates()
+        if (
+            "test" not in sys.argv
+        ):
+            self.create_local_configuration()
+            self.add_view_and_manage_permissions()
+            self.load_master_user_data()
+            self.create_finmars_bot()
+            self.create_member_layouts()
+            self.create_base_folders()
+            self.register_at_authorizer_service()
+            self.sync_celery_workers()
+            self.create_iam_access_policies_templates()
 
     @staticmethod
     def create_finmars_bot():
@@ -282,19 +280,20 @@ class BootstrapConfig(AppConfig):
                     f"load_master_user_data error {e} traceback {traceback.format_exc()}"
                 )
 
-        else:
-            _l.info("load_master_user_data in test mode, creating temp master_user")
-
-            master_user = MasterUser.objects.create_master_user(
-                language="en",
-                name='Test Database',
-            )
-
-            master_user.base_api_url = settings.BASE_API_URL;
-
-            master_user.save()
-
-            _l.info('load_master_user_data test mode: master_user %s created' % master_user)
+        # Looks like tests itself create master user and other things
+        # else:
+        #     _l.info("load_master_user_data in test mode, creating temp master_user")
+        #
+        #     master_user = MasterUser.objects.create_master_user(
+        #         language="en",
+        #         name='Test Database',
+        #     )
+        #
+        #     master_user.base_api_url = settings.BASE_API_URL;
+        #
+        #     master_user.save()
+        #
+        #     _l.info('load_master_user_data test mode: master_user %s created' % master_user)
 
     @staticmethod
     def register_at_authorizer_service():
