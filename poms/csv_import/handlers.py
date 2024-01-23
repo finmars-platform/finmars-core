@@ -1653,8 +1653,19 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
-    def _calculate_null_fields(self, model: str, final_inputs: dict) -> dict:
-        if model != "pricehistory":
+    def _calculate_null_fields(
+        self, model: str, final_inputs: dict, instrument: dict,
+    ) -> dict:
+        if model != "pricehistory" or not instrument:
+            return final_inputs
+
+        # instrument = {'USP37341AA50': <Instrument: USP37341AA50>}
+        instrument_obj = list(instrument.values())[0]
+        if not instrument_obj:
+            _l.warning(
+                "calculate_null_fields: no instrument object "
+                "to auto-calculate null fields"
+            )
             return final_inputs
 
         for key, value in final_inputs.items():
@@ -1664,15 +1675,15 @@ class SimpleImportProcess:
         return final_inputs
 
     def import_items_by_batch_indexes(
-        self, batche_indexes, filter_for_async_functions_eval
+        self, batch_indexes, filter_for_async_functions_eval
     ):
         all_entity_fields_models = self.scheme.entity_fields.all()
         relation_models_user_codes = {}
-        for item_index in batche_indexes:
+        for item_index in batch_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(
                 self.items[item_index], all_entity_fields_models
             )
-            # dict for getting relation models at next step
+            # dict for getting relation models at the next step
             relation_models_user_codes = self.__get_relation_to_convert(
                 self.items[item_index].final_inputs,  # self.items[item_index],
                 relation_models_user_codes,
@@ -1684,10 +1695,11 @@ class SimpleImportProcess:
             relation_models_user_codes, all_entity_fields_models
         )
 
-        for item_index in batche_indexes:
+        for item_index in batch_indexes:
             self._calculate_null_fields(
                 model=self.scheme.content_type.model,
                 final_inputs=self.items[item_index].final_inputs,
+                instrument=relation_models_to_ids.get("instrument"),
             )
 
             result_item = {
@@ -1706,7 +1718,7 @@ class SimpleImportProcess:
             self.items[item_index].final_inputs = result_item
 
         models_q_filter_list = []
-        for item_index in batche_indexes:
+        for item_index in batch_indexes:
             try:
                 if self.scheme.content_type.model == "pricehistory":
                     models_q_filter_list.append(
@@ -1771,7 +1783,7 @@ class SimpleImportProcess:
         # dict for filtering models by key
         models_for_bulk_insert = {}
         models_for_bulk_update = {}
-        for item_index in batche_indexes:
+        for item_index in batch_indexes:
             # skip error status items
             if self.items[item_index].status == "error":
                 continue
