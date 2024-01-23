@@ -64,7 +64,9 @@ class ImportPriceHistoryTest(BaseTestCase):
                 "owner_id": self.member.id,
             }
         )
-        scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(**scheme_data)
+        scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(
+            **scheme_data
+        )
 
         for field_data in SCHEME_20_FIELDS:
             field_data["scheme"] = scheme
@@ -184,5 +186,14 @@ class ImportPriceHistoryTest(BaseTestCase):
         result = import_process.task.result_object["items"][0]
 
         self.assertNotEqual(result["status"], "error", result["error_message"])
-
-        pprint(result)
+        # {
+        #     "accrued_price": 0.0,
+        #     "date": "2024-01-05",
+        #     "factor": 1.0,
+        #     "instrument": "USP37341AA50",
+        #     "pricing_policy": "com.finmars.standard-pricing:standard",
+        #     "principal_price": 109.72,
+        # }
+        self.assertIn("final_inputs", result)
+        self.assertEqual(result["final_inputs"]["accrued_price"], 0.0)
+        self.assertEqual(result["final_inputs"]["factor"], 1.0)

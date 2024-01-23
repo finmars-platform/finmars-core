@@ -1654,7 +1654,8 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
-    def _calculate_null_fields(self, model: str, final_inputs: dict):
+    @staticmethod
+    def calculate_pricehistory_null_fields(model: str, final_inputs: dict):
         """
         Calculates accrued_price & factor for PriceHistory if in the file
         their values are null, and update final_inputs dict
@@ -1662,26 +1663,32 @@ class SimpleImportProcess:
         if model != "pricehistory" or not final_inputs:
             return
 
+        date_str = final_inputs.get("date")
         try:
-            date_str = final_inputs.get("date")
             effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except Exception:
+            _l.error(f"calculate_null_fields: invalid date_str {date_str}")
+            return
+
+        user_code = final_inputs.get("instrument")
+        try:
+            instrument = Instrument.objects.get(user_code=user_code)
+        except Exception:
+            _l.error(f"calculate_null_fields: invalid instrument user_code {user_code}")
             return
 
         try:
-            user_code = final_inputs.get("instrument")
-            instrument = Instrument.objects.get(user_code=user_code)
-        except Exception:
+            for key, value in final_inputs.items():
+                if value is None:
+                    if key == "accrued_price":
+                        final_inputs[key] = instrument.get_accrued_price(
+                            price_date=effective_date
+                        )
+                    elif key == "factor":
+                        final_inputs[key] = instrument.get_factor(fdate=effective_date)
+        except Exception as e:
+            _l.error(f"calculate_null_fields: aborted due to {repr(e)}")
             return
-
-        for key, value in final_inputs.items():
-            if value is None:
-                if key == "accrued_price":
-                    final_inputs[key] = instrument.get_accrued_price(
-                        price_date=effective_date
-                    )
-                elif key == "factor":
-                    final_inputs[key] = instrument.get_factor(fdate=effective_date)
 
     def import_items_by_batch_indexes(
         self, batch_indexes, filter_for_async_functions_eval
@@ -1705,10 +1712,11 @@ class SimpleImportProcess:
         )
 
         for item_index in batch_indexes:
-            self._calculate_null_fields(
-                model=self.scheme.content_type.model,
-                final_inputs=self.items[item_index].final_inputs,
-            )
+            if self.scheme.content_type.model == "pricehistory":
+                self.calculate_pricehistory_null_fields(
+                    model=self.scheme.content_type.model,
+                    final_inputs=self.items[item_index].final_inputs,
+                )
             result_item = {
                 key: self.items[item_index].final_inputs[key]
                 for key, value in self.items[item_index].final_inputs.items()
