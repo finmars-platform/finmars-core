@@ -4,6 +4,7 @@ import json
 import os
 import re
 import traceback
+from datetime import datetime
 from functools import reduce
 from logging import getLogger
 from operator import or_
@@ -1653,24 +1654,34 @@ class SimpleImportProcess:
                 item.status = "error"
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
-    def _calculate_null_fields(
-        self, model: str, final_inputs: dict, instrument: dict,
-    ) -> dict:
-        if model != "pricehistory" or not instrument:
-            return final_inputs
+    def _calculate_null_fields(self, model: str, final_inputs: dict):
+        """
+        Calculates accrued_price & factor for PriceHistory if in the file
+        their values are null, and update final_inputs dict
+        """
+        if model != "pricehistory" or not final_inputs:
+            return
 
-        # instrument = {'USP37341AA50': <Instrument: USP37341AA50>}
-        instrument_obj = list(instrument.values())[0]
-        if not instrument_obj:
-            _l.warning(
-                "calculate_null_fields: no instrument object "
-                "to auto-calculate null fields"
-            )
-            return final_inputs
+        try:
+            date_str = final_inputs.get("date")
+            effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except Exception:
+            return
+
+        try:
+            user_code = final_inputs.get("instrument")
+            instrument = Instrument.objects.get(user_code=user_code)
+        except Exception:
+            return
 
         for key, value in final_inputs.items():
-            if key in ("accrued_price", "factor") and value is None:
-                final_inputs[key] = 1111.11  # FIXME JUST TO TEST
+            if value is None:
+                if key == "accrued_price":
+                    final_inputs[key] = instrument.get_accrued_price(
+                        price_date=effective_date
+                    )
+                elif key == "factor":
+                    final_inputs[key] = instrument.get_factor(fdate=effective_date)
 
         return final_inputs
 
@@ -1699,9 +1710,7 @@ class SimpleImportProcess:
             self._calculate_null_fields(
                 model=self.scheme.content_type.model,
                 final_inputs=self.items[item_index].final_inputs,
-                instrument=relation_models_to_ids.get("instrument"),
             )
-
             result_item = {
                 key: self.items[item_index].final_inputs[key]
                 for key, value in self.items[item_index].final_inputs.items()

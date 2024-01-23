@@ -2216,7 +2216,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             dt3=accrual.first_payment_date,
         )
 
-    def get_accrued_price(self, price_date):
+    def get_accrued_price(self, price_date: date) -> float:
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if self.maturity_date and (price_date >= self.maturity_date):
@@ -2379,7 +2379,10 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         factors.sort(key=lambda x: x.effective_date)
         return factors
 
-    def get_factor(self, fdate):
+    def get_factor(self, fdate: date) -> float:
+        if not fdate:
+            return 1.0
+
         res = None
         factors = self.get_factors()
         for f in factors:
