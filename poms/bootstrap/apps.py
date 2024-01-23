@@ -53,20 +53,21 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
-        if (
-            "test" not in sys.argv
-            and "makemigrations" not in sys.argv
-            and "migrate" not in sys.argv
-        ):
-            self.create_local_configuration()
-            self.add_view_and_manage_permissions()
-            self.load_master_user_data()
-            self.create_finmars_bot()
-            self.create_member_layouts()
-            self.create_base_folders()
-            self.register_at_authorizer_service()
-            self.sync_celery_workers()
-            self.create_iam_access_policies_templates()
+        # Do not disable bootstrap code, its important to be executed on every startup
+        # if (
+        #     "test" not in sys.argv
+        #     and "makemigrations" not in sys.argv
+        #     and "migrate" not in sys.argv
+        # ):
+        self.create_local_configuration()
+        self.add_view_and_manage_permissions()
+        self.load_master_user_data()
+        self.create_finmars_bot()
+        self.create_member_layouts()
+        self.create_base_folders()
+        self.register_at_authorizer_service()
+        self.sync_celery_workers()
+        self.create_iam_access_policies_templates()
 
     @staticmethod
     def create_finmars_bot():
