@@ -129,12 +129,11 @@ class BootstrapConfig(AppConfig):
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
-        if not settings.AUTHORIZER_URL:
-            _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
-            return
-
-
         if ("test" not in sys.argv):
+
+            if not settings.AUTHORIZER_URL:
+                _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
+            return
 
             _l.info("load_master_user_data started ...")
 
