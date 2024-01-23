@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from poms.instruments.models import PricingPolicy
+from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
@@ -20,8 +20,6 @@ from poms.csv_import.tests.common_test_data import (
     SCHEME_20_FIELDS,
 )
 from poms.instruments.models import Instrument
-
-from pprint import pprint
 
 API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
@@ -102,47 +100,52 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.create_accrual(instrument)
         return instrument
 
-    # @mock.patch("poms.csv_import.views.simple_import.apply_async")
-    # @mock.patch("poms.csv_import.serializers.storage")
-    # def test_view(self, mock_storage, mock_async):
-    #     file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
-    #     mock_storage.return_value = self.storage
-    #     request_data = {"file": file_content, "scheme": self.scheme_20.id}
-    #
-    #     response = self.client.post(
-    #         path=self.url,
-    #         data=request_data,
-    #         format="multipart",
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     mock_async.assert_called_once()
-    #
-    #     response_json = response.json()
-    #     self.assertIn("task_id", response_json)
-    #     self.assertIn("task_status", response_json)
-    #     self.assertEqual(response_json["task_status"], CeleryTask.STATUS_INIT)
-    #
-    #     celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
-    #     options = celery_task.options_object
-    #
-    #     self.assertEqual(options["filename"], FILE_NAME)
-    #     self.assertEqual(options["scheme_id"], self.scheme_20.id)
-    #
-    # @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
-    # def test_simple_import_task(self, mock_import_process):
-    #     task = self.create_task()
-    #     simple_import(task_id=task.id)
-    #
-    #     mock_import_process.assert_called()
-    #
-    #     task.refresh_from_db()
-    #     self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
-    #
-    #     self.assertEqual(task.progress_object["description"], "Preprocess items")
+    @mock.patch("poms.csv_import.views.simple_import.apply_async")
+    @mock.patch("poms.csv_import.serializers.storage")
+    def test_view(self, mock_storage, mock_async):
+        file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
+        mock_storage.return_value = self.storage
+        request_data = {"file": file_content, "scheme": self.scheme_20.id}
+
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        mock_async.assert_called_once()
+
+        response_json = response.json()
+        self.assertIn("task_id", response_json)
+        self.assertIn("task_status", response_json)
+        self.assertEqual(response_json["task_status"], CeleryTask.STATUS_INIT)
+
+        celery_task = CeleryTask.objects.get(pk=response_json["task_id"])
+        options = celery_task.options_object
+
+        self.assertEqual(options["filename"], FILE_NAME)
+        self.assertEqual(options["scheme_id"], self.scheme_20.id)
+
+    @mock.patch("poms.csv_import.handlers.SimpleImportProcess")
+    def test_simple_import_task(self, mock_import_process):
+        task = self.create_task()
+        simple_import(task_id=task.id)
+
+        mock_import_process.assert_called()
+
+        task.refresh_from_db()
+        self.assertEqual(task.status, CeleryTask.STATUS_PENDING)
+
+        self.assertEqual(task.progress_object["description"], "Preprocess items")
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
+        """
+        Imitate all steps to handle file with price history datta
+        """
+        self.assertFalse(bool(PriceHistory.objects.all()))
+
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -197,3 +200,8 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertIn("final_inputs", result)
         self.assertEqual(result["final_inputs"]["accrued_price"], 0.0)
         self.assertEqual(result["final_inputs"]["factor"], 1.0)
+
+        ph: PriceHistory = list(PriceHistory.objects.all())[0]
+        self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
+        self.assertEqual(ph.accrued_price, 0.0)
+        self.assertEqual(ph.factor, 1.0)
