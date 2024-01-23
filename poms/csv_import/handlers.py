@@ -1683,8 +1683,6 @@ class SimpleImportProcess:
                 elif key == "factor":
                     final_inputs[key] = instrument.get_factor(fdate=effective_date)
 
-        return final_inputs
-
     def import_items_by_batch_indexes(
         self, batch_indexes, filter_for_async_functions_eval
     ):

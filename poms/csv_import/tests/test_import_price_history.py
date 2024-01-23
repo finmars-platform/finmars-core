@@ -97,6 +97,7 @@ class ImportPriceHistoryTest(BaseTestCase):
         instrument.user_code = isin
         instrument.short_name = isin
         instrument.save()
+        self.create_accrual(instrument)
         return instrument
 
     # @mock.patch("poms.csv_import.views.simple_import.apply_async")
