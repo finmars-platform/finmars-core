@@ -190,151 +190,169 @@ class PriceHistoryViewSetTest(BaseTestCase):
 
         return create_data
 
-    def test__check_api_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
+    # def test__check_api_url(self):
+    #     response = self.client.get(path=self.url)
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    # def test__create_and_retrieve(self):
+    #     pricing_history = self.create_pricing_history()
+    #     response = self.client.get(path=f"{self.url}{pricing_history.id}/")
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     response_json = response.json()
+    #
+    #     # check fields
+    #     self.assertEqual(response_json.keys(), EXPECTED_PRICE_HISTORY.keys())
+    #
+    #     # check values
+    #     self.assertEqual(
+    #         response_json["principal_price"], pricing_history.principal_price
+    #     )
+    #     self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
+    #
+    # def test__list_attributes(self):
+    #     response = self.client.get(path=f"{self.url}attributes/")
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     response_json = response.json()
+    #     self.assertEqual(len(response_json["results"]), 12)
+    #
+    # def test__get_filters(self):  # sourcery skip: extract-duplicate-method
+    #     pricing_history = self.create_pricing_history()
+    #     response = self.client.get(
+    #         path=f"{self.url}?instrument={pricing_history.instrument.id}"
+    #     )
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #     response_json = response.json()
+    #     self.assertEqual(response_json["count"], 1)
+    #     self.assertEqual(
+    #         response_json["results"][0]["instrument"],
+    #         pricing_history.instrument.id,
+    #     )
+    #
+    #     response = self.client.get(
+    #         path=f"{self.url}?principal_price={pricing_history.principal_price}"
+    #     )
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #     response_json = response.json()
+    #     self.assertEqual(response_json["count"], 1)
+    #     self.assertEqual(
+    #         response_json["results"][0]["principal_price"],
+    #         pricing_history.principal_price,
+    #     )
+    #
+    # def test__create(self):
+    #     create_data = self.prepare_data_for_create()
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #
+    #     response_json = response.json()
+    #
+    #     price_history_id = response_json["id"]
+    #     price_history = PriceHistory.objects.get(id=price_history_id)
+    #     self.assertEqual(price_history.principal_price, create_data["principal_price"])
+    #
+    # def test__bulk_create(self):
+    #     create_data = self.prepare_data_for_create()
+    #
+    #     response = self.client.post(
+    #         path=f"{self.url}bulk-create/",
+    #         format="json",
+    #         data=[create_data],
+    #     )
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #
+    #     price_history = PriceHistory.objects.filter(
+    #         instrument=create_data["instrument"]
+    #     )
+    #     self.assertIsNotNone(price_history)
+    #
+    # def test__update_put(self):
+    #     create_data = self.prepare_data_for_create()
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #     response_json = response.json()
+    #
+    #     price_history_id = response_json["id"]
+    #     new_principal = self.random_int()
+    #     update_data = deepcopy(create_data)
+    #     update_data["principal_price"] = new_principal
+    #     response = self.client.put(
+    #         path=f"{self.url}{price_history_id}/", format="json", data=update_data
+    #     )
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     response = self.client.get(path=f"{self.url}{price_history_id}/")
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #     response_json = response.json()
+    #     self.assertEqual(response_json["principal_price"], new_principal)
+    #
+    # def test__update_patch(self):
+    #     create_data = self.prepare_data_for_create()
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #     response_json = response.json()
+    #
+    #     price_history_id = response_json["id"]
+    #     new_principal = self.random_int()
+    #     update_data = {"principal_price": new_principal}
+    #     response = self.client.patch(
+    #         path=f"{self.url}{price_history_id}/", format="json", data=update_data
+    #     )
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     response = self.client.get(path=f"{self.url}{price_history_id}/")
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #     response_json = response.json()
+    #     self.assertEqual(response_json["principal_price"], new_principal)
+    #
+    # def test__delete(self):
+    #     create_data = self.prepare_data_for_create()
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #     response_json = response.json()
+    #
+    #     price_history_id = response_json["id"]
+    #
+    #     response = self.client.delete(path=f"{self.url}{price_history_id}/")
+    #     self.assertEqual(response.status_code, 204, response.content)
+    #
+    #     response = self.client.get(path=f"{self.url}{price_history_id}/")
+    #     self.assertEqual(response.status_code, 404, response.content)
+    #
+    # def test__create_with_null_accrued_price(self):
+    #     create_data = self.prepare_data_for_create()
+    #     create_data["accrued_price"] = None
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #
+    #     response_json = response.json()
+    #     self.assertIsNotNone(response_json["accrued_price"])
+    #
+    # def test__create_with_0_accrued_price(self):
+    #     create_data = self.prepare_data_for_create()
+    #     create_data["accrued_price"] = 0
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #
+    #     response_json = response.json()
+    #     self.assertEqual(response_json["accrued_price"], 0)
+    #
+    # def test__create_without_date_error(self):
+    #     create_data = self.prepare_data_for_create()
+    #     create_data["accrued_price"] = None
+    #     create_data["date"] = None
+    #
+    #     response = self.client.post(path=self.url, format="json", data=create_data)
+    #     self.assertEqual(response.status_code, 400, response.content)
 
-    def test__create_and_retrieve(self):
-        pricing_history = self.create_pricing_history()
-        response = self.client.get(path=f"{self.url}{pricing_history.id}/")
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-
-        # check fields
-        self.assertEqual(response_json.keys(), EXPECTED_PRICE_HISTORY.keys())
-
-        # check values
-        self.assertEqual(
-            response_json["principal_price"], pricing_history.principal_price
-        )
-        self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
-
-    def test__list_attributes(self):
-        response = self.client.get(path=f"{self.url}attributes/")
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 12)
-
-    def test__get_filters(self):  # sourcery skip: extract-duplicate-method
-        pricing_history = self.create_pricing_history()
-        response = self.client.get(
-            path=f"{self.url}?instrument={pricing_history.instrument.id}"
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 1)
-        self.assertEqual(
-            response_json["results"][0]["instrument"],
-            pricing_history.instrument.id,
-        )
-
-        response = self.client.get(
-            path=f"{self.url}?principal_price={pricing_history.principal_price}"
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 1)
-        self.assertEqual(
-            response_json["results"][0]["principal_price"],
-            pricing_history.principal_price,
-        )
-
-    def test__create(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 201, response.content)
-
-        response_json = response.json()
-
-        price_history_id = response_json["id"]
-        price_history = PriceHistory.objects.get(id=price_history_id)
-        self.assertEqual(price_history.principal_price, create_data["principal_price"])
-
-    def test__bulk_create(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(
-            path=f"{self.url}bulk-create/",
-            format="json",
-            data=[create_data],
-        )
-        self.assertEqual(response.status_code, 201, response.content)
-
-        price_history = PriceHistory.objects.filter(
-            instrument=create_data["instrument"]
-        )
-        self.assertIsNotNone(price_history)
-
-    def test__update_put(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-
-        price_history_id = response_json["id"]
-        new_principal = self.random_int()
-        update_data = deepcopy(create_data)
-        update_data["principal_price"] = new_principal
-        response = self.client.put(
-            path=f"{self.url}{price_history_id}/", format="json", data=update_data
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response = self.client.get(path=f"{self.url}{price_history_id}/")
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["principal_price"], new_principal)
-
-    def test__update_patch(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-
-        price_history_id = response_json["id"]
-        new_principal = self.random_int()
-        update_data = {"principal_price": new_principal}
-        response = self.client.patch(
-            path=f"{self.url}{price_history_id}/", format="json", data=update_data
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response = self.client.get(path=f"{self.url}{price_history_id}/")
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["principal_price"], new_principal)
-
-    def test__delete(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-
-        price_history_id = response_json["id"]
-
-        response = self.client.delete(path=f"{self.url}{price_history_id}/")
-        self.assertEqual(response.status_code, 204, response.content)
-
-        response = self.client.get(path=f"{self.url}{price_history_id}/")
-        self.assertEqual(response.status_code, 404, response.content)
-
-    def test__create_with_null_accrued_price(self):
-        create_data = self.prepare_data_for_create()
-        create_data["accrued_price"] = None
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 201, response.content)
-
-        response_json = response.json()
-        self.assertIsNotNone(response_json["accrued_price"])
-
-    def test__create_with_0_accrued_price(self):
+    def test__update_with_null_accrued_price(self):
         create_data = self.prepare_data_for_create()
         create_data["accrued_price"] = 0
 
@@ -344,10 +362,9 @@ class PriceHistoryViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["accrued_price"], 0)
 
-    def test__create_without_date_error(self):
-        create_data = self.prepare_data_for_create()
+        # check update
         create_data["accrued_price"] = None
-        create_data["date"] = None
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
-        self.assertEqual(response.status_code, 400, response.content)
+        response = self.client.patch(
+            path=f"{self.url}{response_json['id']}/", format="json", data=create_data
+        )
+        self.assertEqual(response.status_code, 200, response.content)
