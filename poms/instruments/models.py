@@ -2909,6 +2909,7 @@ class PriceHistory(DataTimeStampedModel):
         )
 
     def save(self, *args, **kwargs):
+        from poms.instruments.fields import AUTO_CALCULATE
         # TODO make readable exception if currency history is missing
 
         # cache.clear() # what do have in cache?
@@ -2961,7 +2962,7 @@ class PriceHistory(DataTimeStampedModel):
                     f" {traceback.format_exc()}"
                 )
 
-        if self.accrued_price is None:
+        if self.accrued_price in {None, AUTO_CALCULATE}:
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
