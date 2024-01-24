@@ -351,3 +351,28 @@ class PriceHistoryViewSetTest(BaseTestCase):
 
         response = self.client.post(path=self.url, format="json", data=create_data)
         self.assertEqual(response.status_code, 400, response.content)
+
+    def test__update_with_null_accrued_price(self):
+        from pprint import pprint
+
+        create_data = self.prepare_data_for_create()
+        create_data["accrued_price"] = 0
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["accrued_price"], 0)
+
+        # check update
+        create_data["accrued_price"] = None
+        response = self.client.patch(
+            path=f"{self.url}{response_json['id']}/", format="json", data=create_data
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["accrued_price"], 0.0)
+
+        price_history = PriceHistory.objects.get(pk=response_json['id'])
+        self.assertEqual(price_history.accrued_price, 0.0)
