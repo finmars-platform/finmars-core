@@ -92,14 +92,12 @@ class AccountTypeViewSetTest(BaseTestCase):
         pass
 
     def test__list_and_default(self):
-        self.create_account_type()
-
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
 
-        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(response_json["count"], 2)
         default_account = response_json["results"][0]
         self.assertEqual(default_account.keys(), EXPECTED_ACCOUNT_TYPE.keys())
 

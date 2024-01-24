@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import time
@@ -613,9 +614,9 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
     :type filter_kw: dict
     :param include_deleted:
     """
-    filter_kw[key + "__isnull"] = False
+    filter_kw[f"{key}__isnull"] = False
 
-    if value_type not in [10, 20, 40, 'field']:
+    if value_type not in {10, 20, 40, "field"}:
         return Response(
             {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -624,14 +625,11 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             }
         )
 
-    try:
-        if model._meta.get_field("is_deleted"):
-            if not include_deleted:
-                filter_kw["is_deleted"] = False
-    except FieldDoesNotExist:
-        pass
+    with contextlib.suppress(FieldDoesNotExist):
+        if model._meta.get_field("is_deleted") and not include_deleted:
+            filter_kw["is_deleted"] = False
 
-    if value_type in [10, 20, 40]:
+    if value_type in {10, 20, 40}:
         return (
             model.objects.filter(**filter_kw)
             .order_by(key)
@@ -746,8 +744,6 @@ def _get_values_from_report(content_type, report_instance_id, key):
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
-        results = []
-
         content_type_name = request.query_params.get("content_type", None)
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
@@ -755,6 +751,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         report_instance_id = request.query_params.get("report_instance_id", None)
 
         master_user = request.user.master_user
+        results = []
 
         # keys of attributes that are not relations (e.g. not: instrument.name, currency.user_code etc.)
         report_system_attrs_keys_list = []
@@ -863,51 +860,43 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
             results = _get_values_from_report(content_type_name, report_instance_id, key)
 
+        elif content_type_name == "instruments.pricehistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"instrument__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name == "currencies.currencyhistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"currency__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name in [
+            "transactions.transactionclass",
+            "instruments.country",
+        ]:
+            results = (
+                model.objects.all()
+                .order_by(key)
+                .values_list(key, flat=True)
+                .distinct(key)
+            )
+
         else:
-
-            if content_type_name == "instruments.pricehistory":
-
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"instrument__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "currencies.currencyhistory":
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"currency__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "transactions.transactionclass":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            elif content_type_name == "instruments.country":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            else:
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"master_user": master_user},
-                    include_deleted
-                )
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"master_user": master_user},
+                include_deleted,
+            )
 
         _l.debug(f"model {model}")
 
@@ -938,17 +927,16 @@ class DebugLogViewSet(AbstractViewSet):
         except Exception as e:
             raise Http404("Cannot access file") from e
 
-        context = {}
-
         if seek_to == 0:
             seek_to = file_length - 1000
 
-            if seek_to < 0:
-                seek_to = 0
+        elif seek_to < 0:
+            seek_to = 0
 
-        if seek_to > file_length:
+        elif seek_to > file_length:
             seek_to = file_length
 
+        context = {}
         try:
             context["log"] = open(log_file, "r")
             context["log"].seek(seek_to)

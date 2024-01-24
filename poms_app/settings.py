@@ -83,7 +83,6 @@ INSTALLED_APPS = [
     "healthcheck",
     "poms.history",  # order is important because it registers models to listen to
     "poms.system",
-    # 'poms.cache_machine',
     "poms.users",
     "poms.iam",
     "poms.notifications",
@@ -124,12 +123,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_swagger",
     "corsheaders",
-    # 'django_otp',
-    # 'django_otp.plugins.otp_hotp',
-    # 'django_otp.plugins.otp_totp',
-    # 'django_otp.plugins.otp_email',
-    # 'django_otp.plugins.otp_static',
-    # 'two_factor',
     "django_celery_results",
     "django_celery_beat",
     "finmars_standardized_errors",
@@ -232,6 +225,7 @@ DATABASES = {
     },
 }
 if USE_DB_REPLICA:
+    print("Warning. DB Replica RO mode activated!")
     DATABASES[DB_REPLICA] = {
         "ENGINE": DB_ENGINE,
         "NAME": ENV_STR("REPLICA_DB_NAME", "finmars_dev"),
@@ -503,40 +497,23 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "poms.common.pagination.PageNumberPaginationExt",
     "PAGE_SIZE": 40,
-    # 'EXCEPTION_HANDLER': 'poms.common.utils.finmars_exception_handler',
     "EXCEPTION_HANDLER": "finmars_standardized_errors.handler.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        # 'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework.authentication.BasicAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "poms.common.authentication.KeycloakAuthentication",
-        # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_RENDERER_CLASSES": (
-        # 'rest_framework.renderers.JSONRenderer',
-        "poms.common.renderers.CustomJSONRenderer",
-    ),
+    "DEFAULT_RENDERER_CLASSES": ("poms.common.renderers.CustomJSONRenderer",),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    # 'DEFAULT_PARSER_CLASSES': (
-    #     'rest_framework.parsers.JSONParser',
-    #     'rest_framework.parsers.FormParser',
-    #     'rest_framework.parsers.MultiPartParser',
-    # ),
     # "DEFAULT_THROTTLE_CLASSES": (
     #     "poms.api.throttling.AnonRateThrottleExt",
     #     "poms.api.throttling.UserRateThrottleExt",
     # ),
     "DEFAULT_THROTTLE_RATES": {
-        # 'anon': '5/second',
-        # 'user': '50/second',
         "anon": "20/min",
         "user": "500/min",
-    }
-    # 'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S %Z',
-    # 'DATETIME_INPUT_FORMATS': (ISO_8601, '%c', '%Y-%m-%d %H:%M:%S %Z'),
+    },
 }
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] += (
@@ -612,19 +589,26 @@ CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1)
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 
-CELERY_WORKER_CONCURRENCY = ENV_INT(
-    "CELERY_WORKER_CONCURRENCY", 2
-)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
+# Max number of child processes which are processing the queue.
+# The default is the number of CPUs available on your system.
+CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2)
 
-# CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
-# This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
-# However, keep in mind that this could lead to tasks being executed multiple times if the worker crashes during execution, so ensure that your tasks are idempotent.
+
+# CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after
+# the task has been executed, not just before, which is the default behavior.
+# This means the tasks can be recovered when a worker crashes, as the tasks
+# won't be removed from the queue until they are completed.
+# However, keep in mind that this could lead to tasks being executed multiple times
+# if the worker crashes during execution, so ensure that your tasks are idempotent.
 CELERY_ACKS_LATE = True
 
-# CELERY_TASK_REJECT_ON_WORKER_LOST: If this is True, when the worker of a task is lost (e.g., crashes), the task will be returned back to the queue,
+# CELERY_TASK_REJECT_ON_WORKER_LOST: If this is True, when the worker of a task
+# is lost (e.g., crashes), the task will be returned back to the queue,
 # so it can be picked up by another worker.
-# This increases the resiliency of the system as the tasks are not lost, they are retried.
-# But, it can also increase the load on the system as tasks could potentially be executed multiple times in the event of frequent worker failures.
+# This increases the resiliency of the system as the tasks are not lost,
+# they are retried.
+# But it can also increase the load on the system as tasks
+# could potentially be executed multiple times in the event of frequent worker failures.
 # Make sure your tasks are safe to be retried in such cases (idempotent).
 CELERY_TASK_REJECT_ON_WORKER_LOST = False  # Make tasks rejected
 
@@ -682,7 +666,6 @@ BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
 BLOOMBERG_SANDBOX_WAIT_FAIL = False
 
-# PRICING SECTION
 
 MEDIATOR_URL = ENV_STR("MEDIATOR_URL", "")
 DATA_FILE_SERVICE_URL = ENV_STR("DATA_FILE_SERVICE_URL", "")
@@ -766,21 +749,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
-# OLD ONE
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
-#     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-#     'ROTATE_REFRESH_TOKENS': False,
-#     'ALGORITHM': 'HS256',
-#     'SIGNING_KEY': SECRET_KEY,
-#     'VERIFYING_KEY': None,
-#     'AUTH_HEADER_TYPES': ('Bearer',),
-#     'USER_ID_FIELD': 'id',
-#     'USER_ID_CLAIM': 'user_id',
-#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-#     'TOKEN_TYPE_CLAIM': 'token_type',
-# }
-
 REDOC_SETTINGS = {
     "LAZY_RENDERING": True,
     "NATIVE_SCROLLBARS": True,
@@ -789,7 +757,6 @@ REDOC_SETTINGS = {
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
 # SENTRY
-
 sentry_sdk.init(
     dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
     integrations=[DjangoIntegration()],

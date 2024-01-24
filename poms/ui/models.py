@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import gettext_lazy
+
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -205,7 +206,12 @@ class PortalInterfaceAccessModel(AbstractClassModel):
             "report_activity_log",
             gettext_lazy("Reporting layer: Activity Log"),
         ),
-        (1013, REPORT_FORUM, "report_forum", gettext_lazy("Reporting layer: Forum")),
+        (
+            1013,
+            REPORT_FORUM,
+            "report_forum",
+            gettext_lazy("Reporting layer: Forum"),
+        ),
         (
             2001,
             CONFIGURATION_ACCOUNT_TYPE,
@@ -393,20 +399,32 @@ class PortalInterfaceAccessModel(AbstractClassModel):
 
 class EntityTooltip(models.Model):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
     content_type = models.ForeignKey(
-        ContentType, verbose_name=gettext_lazy("content type"), on_delete=models.CASCADE
+        ContentType,
+        verbose_name=gettext_lazy("content type"),
+        on_delete=models.CASCADE,
     )
-
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
     key = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("key")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("key"),
     )
-    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy("text"))
+    text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("text"),
+    )
 
     class Meta:
         unique_together = [
@@ -426,32 +444,33 @@ class CrossEntityAttributeExtension(models.Model):
     )
 
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
     context_content_type = models.ForeignKey(
         ContentType,
         verbose_name=gettext_lazy("context content type"),
         on_delete=models.CASCADE,
         related_name="cross_entity_attribute_extensions_by_context",
     )
-
     content_type_from = models.ForeignKey(
         ContentType,
         verbose_name=gettext_lazy("content type from"),
         on_delete=models.CASCADE,
         related_name="cross_entity_attribute_extensions_by_from",
     )
-
     content_type_to = models.ForeignKey(
         ContentType,
         verbose_name=gettext_lazy("content type to"),
         on_delete=models.CASCADE,
         related_name="cross_entity_attribute_extensions_by_to",
     )
-
     key_from = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("key from")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("key from"),
     )
     key_to = models.CharField(
         null=True,
@@ -467,7 +486,6 @@ class CrossEntityAttributeExtension(models.Model):
         blank=True,
         verbose_name=gettext_lazy("value to"),
     )
-
     extension_type = models.CharField(
         null=True,
         max_length=255,
@@ -485,13 +503,19 @@ class CrossEntityAttributeExtension(models.Model):
 
 class ColorPalette(NamedModel, ConfigurationModel):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
 
     def save(self, *args, **kwargs):
@@ -512,17 +536,26 @@ class ColorPaletteColor(models.Model):
         verbose_name=gettext_lazy("color palette"),
         on_delete=models.CASCADE,
     )
-
-    order = models.IntegerField(default=0, verbose_name=gettext_lazy("order"))
-
+    order = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("order"),
+    )
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
     value = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("value")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("value"),
     )
     tooltip = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("tooltip")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("tooltip"),
     )
 
     class Meta:
@@ -534,44 +567,65 @@ class ColorPaletteColor(models.Model):
 
 class ComplexTransactionUserField(ConfigurationModel):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
-    key = models.CharField(max_length=255, verbose_name=gettext_lazy("key"))
+    key = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("key"),
+    )
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
-
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
 
 class TransactionUserField(ConfigurationModel, TimeStampedModel):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
-    key = models.CharField(max_length=255, verbose_name=gettext_lazy("key"))
+    key = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("key"),
+    )
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
-
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
 
 class InstrumentUserField(ConfigurationModel, TimeStampedModel):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
     key = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("key")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("key"),
     )
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
 
 
@@ -582,14 +636,18 @@ class ColumnSortData(models.Model):
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
     )
-
     name = models.CharField(
-        max_length=255, default="", blank=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        default="",
+        blank=True,
+        verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
-
     column_key = models.CharField(
         max_length=255,
         null=True,
@@ -597,13 +655,14 @@ class ColumnSortData(models.Model):
         blank=True,
         verbose_name=gettext_lazy("column key"),
     )
-
     is_common = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is common")
+        default=False,
+        verbose_name=gettext_lazy("is common"),
     )
-
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     class Meta:
@@ -634,7 +693,9 @@ class ColumnSortData(models.Model):
 
 class BaseUIModel(ConfigurationModel):
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     # DEPRECATED
@@ -699,10 +760,14 @@ class TemplateLayout(BaseUIModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
 
     class Meta(BaseUIModel.Meta):
@@ -740,7 +805,10 @@ class ContextMenuLayout(BaseUIModel, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     type = models.CharField(
         max_length=255,
@@ -787,20 +855,26 @@ class ListLayout(BaseLayout, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
     is_systemic = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is systemic")
+        default=False,
+        verbose_name=gettext_lazy("is systemic"),
     )
-
     is_fixed = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is fixeds")
+        default=False,
+        verbose_name=gettext_lazy("is fixeds"),
     )
 
     class Meta(BaseLayout.Meta):
@@ -855,13 +929,18 @@ class DashboardLayout(BaseUIModel, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
     class Meta(BaseLayout.Meta):
@@ -910,13 +989,18 @@ class MobileLayout(BaseUIModel, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
     class Meta(BaseLayout.Meta):
@@ -965,13 +1049,18 @@ class MemberLayout(BaseUIModel, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
     class Meta(BaseLayout.Meta):
@@ -1020,7 +1109,8 @@ class ConfigurationExportLayout(BaseUIModel, TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
 
     class Meta(BaseUIModel.Meta):
@@ -1050,19 +1140,22 @@ class EditLayout(BaseLayout, TimeStampedModel):
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
     )
-
     name = models.CharField(
-        max_length=255, db_index=True, verbose_name=gettext_lazy("name")
+        max_length=255,
+        db_index=True,
+        verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        verbose_name=gettext_lazy("user code"),
     )
-
     is_default = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is default")
+        default=False,
+        verbose_name=gettext_lazy("is default"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
     class Meta(BaseLayout.Meta):
@@ -1112,9 +1205,15 @@ class Bookmark(BaseUIModel, MPTTModel):
         verbose_name=gettext_lazy("parent"),
         on_delete=models.CASCADE,
     )
-    name = models.CharField(max_length=100, verbose_name=gettext_lazy("name"))
+    name = models.CharField(
+        max_length=100,
+        verbose_name=gettext_lazy("name"),
+    )
     uri = models.CharField(
-        max_length=256, null=True, blank=True, verbose_name=gettext_lazy("uri")
+        max_length=256,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("uri"),
     )
     list_layout = models.ForeignKey(
         ListLayout,
@@ -1150,21 +1249,6 @@ class Dashboard(models.Model):
         verbose_name_plural = gettext_lazy("dashboard")
 
 
-# Deprecated
-# class Configuration(BaseUIModel):
-#     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
-#                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-#     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-#     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
-#
-#     class Meta(BaseLayout.Meta):
-#         unique_together = [
-#             ['master_user', 'name'],
-#         ]
-#
-#     ordering = ['name']
-
-
 class Draft(TimeStampedModel):
     member = models.ForeignKey(
         Member,
@@ -1180,11 +1264,16 @@ class Draft(TimeStampedModel):
         verbose_name=gettext_lazy("name"),
     )
     user_code = models.CharField(
-        max_length=1024, null=True, blank=True, verbose_name=gettext_lazy("user code")
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
     )
 
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     class Meta(BaseLayout.Meta):
