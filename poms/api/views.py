@@ -18,6 +18,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import translation, timezone
 from django.views.static import serve
+from django.core.cache import cache
+import requests
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.decorators import action
@@ -25,6 +27,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
+from poms.vault.serializers import VaultStatusSerializer
 from poms.common.storage import get_storage
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
     get_list_of_dates_between_two_dates, last_day_of_month, get_serializer, get_content_type_by_name
@@ -32,6 +35,7 @@ from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
+from poms.vault.vault import FinmarsVault
 from poms.workflows_handler import get_workflows_list
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
@@ -674,17 +678,41 @@ class SystemInfoViewSet(AbstractViewSet):
         return self.pip_freeze_data
 
 
+    def __db_version(self, ):
+
+        db_version = 'unknown'
+
+        db_vendor_to_query_version = {
+            'postgresql': 'SELECT version();',
+            'sqlite': 'SELECT sqlite_version();',
+            'mysql': 'SELECT VERSION();',
+            'oracle': 'SELECT * FROM v$version;'
+        }
+
+        if connection.vendor in db_vendor_to_query_version.keys():
+            with connection.cursor() as cursor:
+                cursor.execute(db_vendor_to_query_version[connection.vendor])
+                db_row = cursor.fetchone()
+                if db_row:
+                    db_version = db_row
+        
+        return db_version
+
+
     def __db_adapter_info(self, ):
         try:
             db_adapter_info = {
                 'settings_engine': settings.DATABASES['default']['ENGINE'],
                 'adapter_vendor': connection.vendor,
                 'adapter': connection.Database.__name__,
-                'adapter_version': connection.Database.__version__
+                'adapter_version': connection.Database.__version__,
+                'db_version': self.__db_version()
             }
         except Exception as e:
             _l.error("Could not get db_adapter_info %s" % e)
-            db_adapter_info = {}
+            db_adapter_info = {
+                'adapter_status': 'unknown' 
+            }
         
         return db_adapter_info
 
@@ -698,7 +726,9 @@ class SystemInfoViewSet(AbstractViewSet):
             }
         except Exception as e:
             _l.error("Could not get storage_adapter_info %s" % e)
-            storage_adapter_info = {}
+            storage_adapter_info = {
+                'adapter_name': 'unknown'                
+            }
 
         return storage_adapter_info
 
@@ -722,7 +752,9 @@ class SystemInfoViewSet(AbstractViewSet):
             }
         except Exception as e:
             _l.error("Could not get celery_info %s" % e)
-            celery_info = {}
+            celery_info = {
+                'status': 'unhealth'
+            }
 
         return celery_info        
 
@@ -748,9 +780,57 @@ class SystemInfoViewSet(AbstractViewSet):
             mq_conn.close()
         except Exception as e:
             _l.error("Could not get rabbitmq info %s" % e)
-            rabbitmq_status = {}
+            rabbitmq_status = {
+                'status': 'unhealth'
+            }
 
         return rabbitmq_status        
+
+    def __workflow_status(self):
+        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' 
+        workflow_status = 'unhealty'
+
+        try:
+            req = requests.get(workflow_url)
+            if req.status_code == 200:
+                workflow_status = 'healty'
+        except:
+            workflow_status = 'unhealty'
+
+        return {
+            'workflow_url': workflow_url,
+            'workflow_status': workflow_status
+        }
+
+    def __redis_status(self):
+        status = 'unhealty'
+
+        try:
+            cache.set('check_healty_status', 1, 10)
+
+            if cache.get('check_healty_status', 0) == 1:
+                status = 'healty'
+
+        except:
+            status = 'unhealty'
+
+        return {
+            'status': status,
+        }
+
+
+    def __vault_status(self, ):
+        try:
+            finmars_vault = FinmarsVault()
+            # it seems that this function, in case something is wrong with the Vault, always gives an exeption
+            finmars_vault.get_health()
+            status = 'health'
+        except:
+            status = 'unhealth'
+
+        return {
+            'status': status
+        }
 
 
     def list(self, request, *args, **kwargs):
@@ -763,11 +843,11 @@ class SystemInfoViewSet(AbstractViewSet):
             'pip_freeze': self.__pip_freeze_info()['all'],
             'db_adapter': self.__db_adapter_info(),
             'storage_adapter': self.__storage_adapter_info(),
-            # 'vault_status': #Vault Status (inited ,healhy, unhealthy)
-            'celery_status': self.__celery_info(),#Celery Status (healthy, unhealthy) - Actually right now we show workers health'
-            # 'workflow_status':
-            'rabbitmq_status': self.__rabbitmq_status()
-            # 'redis_status': 
+            'vault_status': self.__vault_status(),
+            'celery_status': self.__celery_info(),
+            'workflow_status': self.__workflow_status(),
+            'rabbitmq_status': self.__rabbitmq_status(),
+            'redis_status': self.__redis_status()
         }
 
         return Response(result)
