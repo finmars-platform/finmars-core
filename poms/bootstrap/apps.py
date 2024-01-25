@@ -54,7 +54,7 @@ class BootstrapConfig(AppConfig):
         :return:
         """
         # Do not disable bootstrap code, its important to be executed on every startup
-        if ("test" not in sys.argv):
+        if "test" not in sys.argv:
             self.create_local_configuration()
             self.add_view_and_manage_permissions()
             self.load_master_user_data()
@@ -119,13 +119,19 @@ class BootstrapConfig(AppConfig):
         add_view_and_manage_permissions()
 
     @staticmethod
+    def remove_old_members():
+        from poms.users.models import Member
+
+        old_members = Member.objects.filter(is_owner=False)
+        old_members.update(is_deleted=True)
+        _l.info(f"{old_members.count()} old members were marked as deleted")
+
+    @staticmethod
     def load_master_user_data():
         from django.contrib.auth.models import User
 
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
-
-        # if ("test" not in sys.argv):
 
         if not settings.AUTHORIZER_URL:
             _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
@@ -181,12 +187,15 @@ class BootstrapConfig(AppConfig):
             _l.info(f"Owner User Profile {'created' if created else 'exist'}")
 
             name = response_data["name"]
-            try:
-                if (
-                    "old_backup_name" in response_data
-                    and response_data["old_backup_name"]
-                ):
-                    # If From backup
+
+            # check if the status is initial (just created)
+            if response_data["status"] == 0:
+                BootstrapConfig.remove_old_members()
+
+            if (  # check if restored from backup
+                "old_backup_name" in response_data and response_data["old_backup_name"]
+            ):
+                try:
                     master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
                         name=response_data["old_backup_name"]
                     )
@@ -194,19 +203,15 @@ class BootstrapConfig(AppConfig):
                     master_user.base_api_url = response_data["base_api_url"]
                     master_user.save()
 
-                    old_members = Member.objects.filter(is_owner=False)
-                    old_members.update(is_deleted=True)
-                    _l.info(f"{old_members.count()} old members were marked as deleted")
+                    BootstrapConfig.remove_old_members()
 
                     _l.info(
                         f"Master User From Backup Renamed to Name {master_user.name}"
                         f"and Base API URL {master_user.base_api_url}"
                     )
 
-            except Exception as e:
-                _l.error(f"Old backup name error {e}")
-
-
+                except Exception as e:
+                    _l.error(f"Old backup name error {repr(e)}")
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                 _l.info("Empty database, create new master user")
