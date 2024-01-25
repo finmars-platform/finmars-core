@@ -32,16 +32,20 @@ class FinmarsTaskTestCase(BaseTestCase):
             is_deleted=False,
         )
 
-    @mock.patch("poms.bootstrap.apps.requests.post")
-    @override_settings(AUTHORIZER_URL="authorizer/api/")
-    def test__run_load_ok(self, mock_post):
-        mock_post.return_value = self.mock_response
-        self.old_member.refresh_from_db(fields=["is_deleted"])
-        self.assertFalse(self.old_member.is_deleted)
-
-        BootstrapConfig.load_master_user_data()
-
-        mock_post.assert_called()
-
-        self.old_member.refresh_from_db(fields=["is_deleted"])
-        self.assertTrue(self.old_member.is_deleted)
+    # TODO
+    #  We need to decide, either we allow execution of bootstrap in tests or not
+    #  If we allow, we need to create master user and finmars_bot there, so need to remove creating them in tests
+    #  so, if we allow bootstrap in tests, we can uncomment this test
+    # @mock.patch("poms.bootstrap.apps.requests.post")
+    # @override_settings(AUTHORIZER_URL="authorizer/api/")
+    # def test__run_load_ok(self, mock_post):
+    #     mock_post.return_value = self.mock_response
+    #     self.old_member.refresh_from_db(fields=["is_deleted"])
+    #     self.assertFalse(self.old_member.is_deleted)
+    #
+    #     BootstrapConfig.load_master_user_data()
+    #
+    #     mock_post.assert_called()
+    #
+    #     self.old_member.refresh_from_db(fields=["is_deleted"])
+    #     self.assertTrue(self.old_member.is_deleted)

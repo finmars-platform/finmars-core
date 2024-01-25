@@ -53,11 +53,8 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
-        if (
-            "test" not in sys.argv
-            and "makemigrations" not in sys.argv
-            and "migrate" not in sys.argv
-        ):
+        # Do not disable bootstrap code, its important to be executed on every startup
+        if ("test" not in sys.argv):
             self.create_local_configuration()
             self.add_view_and_manage_permissions()
             self.load_master_user_data()
@@ -128,6 +125,8 @@ class BootstrapConfig(AppConfig):
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
+        # if ("test" not in sys.argv):
+
         if not settings.AUTHORIZER_URL:
             _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
             return
@@ -195,6 +194,10 @@ class BootstrapConfig(AppConfig):
                     master_user.base_api_url = response_data["base_api_url"]
                     master_user.save()
 
+                    old_members = Member.objects.filter(is_owner=False)
+                    old_members.update(is_deleted=True)
+                    _l.info(f"{old_members.count()} old members were marked as deleted")
+
                     _l.info(
                         f"Master User From Backup Renamed to Name {master_user.name}"
                         f"and Base API URL {master_user.base_api_url}"
@@ -203,16 +206,12 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
 
-            old_members = Member.objects.all()
-            old_members.update(is_deleted=True)
-            _l.info(f"{old_members.count()} old members were marked as deleted")
+
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                 _l.info("Empty database, create new master user")
 
-                master_user = MasterUser.objects.using(
-                    settings.DB_DEFAULT
-                ).create_master_user(
+                master_user = MasterUser.objects.create_master_user(
                     user=user,
                     language="en",
                     name=name,
@@ -280,6 +279,21 @@ class BootstrapConfig(AppConfig):
             _l.error(
                 f"load_master_user_data error {e} traceback {traceback.format_exc()}"
             )
+
+        # Looks like tests itself create master user and other things
+        # else:
+        #     _l.info("load_master_user_data in test mode, creating temp master_user")
+        #
+        #     master_user = MasterUser.objects.create_master_user(
+        #         language="en",
+        #         name='Test Database',
+        #     )
+        #
+        #     master_user.base_api_url = settings.BASE_API_URL;
+        #
+        #     master_user.save()
+        #
+        #     _l.info('load_master_user_data test mode: master_user %s created' % master_user)
 
     @staticmethod
     def register_at_authorizer_service():
