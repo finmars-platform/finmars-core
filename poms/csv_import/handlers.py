@@ -1913,6 +1913,7 @@ class SimpleImportProcess:
         # mass inserting models
         batch_rows_count = 0
         if models_for_bulk_insert:
+            # Attention! bulk_create doesn't use save() method of the model
             model.objects.bulk_create(models_for_bulk_insert.values())
             batch_rows_count = batch_rows_count + len(models_for_bulk_insert.values())
             _l.info(

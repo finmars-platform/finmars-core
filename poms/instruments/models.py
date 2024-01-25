@@ -2956,7 +2956,7 @@ class PriceHistory(DataTimeStampedModel):
         except Exception as e:
             _l.info(f"PriceHistory save ytm error {repr(e)} {traceback.format_exc()}")
 
-        if not self.factor:
+        if self.factor in {None, AUTO_CALCULATE}:
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
