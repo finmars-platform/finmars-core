@@ -194,6 +194,10 @@ class BootstrapConfig(AppConfig):
                     master_user.base_api_url = response_data["base_api_url"]
                     master_user.save()
 
+                    old_members = Member.objects.filter(is_owner=False)
+                    old_members.update(is_deleted=True)
+                    _l.info(f"{old_members.count()} old members were marked as deleted")
+
                     _l.info(
                         f"Master User From Backup Renamed to Name {master_user.name}"
                         f"and Base API URL {master_user.base_api_url}"
@@ -202,9 +206,7 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(f"Old backup name error {e}")
 
-            old_members = Member.objects.all()
-            old_members.update(is_deleted=True)
-            _l.info(f"{old_members.count()} old members were marked as deleted")
+
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
                 _l.info("Empty database, create new master user")
