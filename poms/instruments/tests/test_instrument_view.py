@@ -53,11 +53,13 @@ class InstrumentViewSetTest(BaseTestCase):
         ("stock", "stock"),
     )
     def test__retrieve(self, instrument_type):
+        from pprint import pprint
         instrument = self.create_instrument(instrument_type)
         response = self.client.get(path=f"{self.url}{instrument.id}/")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
+        pprint(f"-------------{instrument_type}-------------", response_json)
 
         # check fields
         self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT.keys())
