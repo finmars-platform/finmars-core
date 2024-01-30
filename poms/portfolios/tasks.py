@@ -169,7 +169,8 @@ def calculate_portfolio_register_record(self, task_id):
 
         else:
             portfolio_registers = PortfolioRegister.objects.filter(
-                master_user_id=master_user
+                master_user_id=master_user,
+                is_deleted=False
             )
 
         ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
