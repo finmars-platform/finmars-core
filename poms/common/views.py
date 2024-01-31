@@ -22,7 +22,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
 from celery.result import AsyncResult
 
-from poms.common.filtering_handlers import handle_filters, handle_global_table_search
+from poms.common.filtering_handlers import handle_filters, handle_entity_filters, handle_global_table_search
 from poms.common.filters import (
     ByIdFilterBackend,
     ByIsDeletedFilterBackend,
@@ -277,6 +277,12 @@ class AbstractEvGroupViewSet(
 
         return Response(filtered_qs)
 
+def _testing_log_qs(qs, counter):
+    for item in qs:
+        _l.info(
+            f"TESTING.POMS.COMMON.VIEWS list_ev_item {counter}: "
+            f"{item}"
+        )
 
 class AbstractModelViewSet(
     AbstractApiView,
@@ -343,8 +349,10 @@ class AbstractModelViewSet(
         )
         master_user = request.user.master_user
 
-        queryset = self.filter_queryset(self.get_queryset())
+        ev_options = request.data.get("ev_options", "")
 
+        queryset = self.filter_queryset(self.get_queryset())
+        _testing_log_qs(queryset, 1)
         if content_type.model not in [
             "currencyhistory",
             "pricehistory",
@@ -357,11 +365,16 @@ class AbstractModelViewSet(
 
             if is_enabled == "true":
                 queryset = queryset.filter(is_enabled=True)
+                _testing_log_qs(queryset, 1.1)
+
 
         if content_type.model in ["complextransaction"]:
             queryset = queryset.filter(is_deleted=False)
-
+            _testing_log_qs(queryset, 1.2)
+        queryset = handle_entity_filters(queryset, ev_options, content_type.model)
+        _testing_log_qs(queryset, 2)
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
+        _testing_log_qs(queryset, 3)
 
         ordering = request.data.get("ordering", None)
 
@@ -371,6 +384,7 @@ class AbstractModelViewSet(
             queryset = sort_by_dynamic_attrs(
                 queryset, ordering, master_user, content_type
             )
+            _testing_log_qs(queryset, 4)
 
         if global_table_search:
             queryset = handle_global_table_search(
@@ -379,6 +393,7 @@ class AbstractModelViewSet(
                 self.serializer_class.Meta.model,
                 content_type,
             )
+            _testing_log_qs(queryset, 5)
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 

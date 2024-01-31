@@ -52,19 +52,28 @@ class DestroyModelMixinExt(DestroyModelMixin):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+def _testing_log_qs(qs, counter):
+    for item in qs:
+        _l.info(
+            f"TESTING.POMS.COMMON.MIXINS.DestroyModelFakeMixin {counter}: "
+            f"{item}"
+        )
 
 # noinspection PyUnresolvedReferences
 class DestroyModelFakeMixin(DestroyModelMixinExt):
     def get_queryset(self):
         qs = super().get_queryset()
+        _testing_log_qs(qs, 1)
         try:
             qs.model._meta.get_field("is_deleted")
         except FieldDoesNotExist:
             return qs
         else:
             is_deleted = self.request.query_params.get("is_deleted", None)
+            _l.info(f"TESTING.POMS.COMMON.MIXINS.DestroyModelFakeMixin is_deleted {is_deleted}")
             if is_deleted is None and getattr(self, "action", "") == "list":
                 qs = qs.filter(is_deleted=False)
+                _testing_log_qs(qs, 2)
             return qs
 
     def perform_destroy(self, instance):

@@ -1040,6 +1040,54 @@ def handle_filters(qs, filter_settings, master_user, content_type):
 
     return qs
 
+def handle_entity_filters(qs, ev_options, content_type_name):
+
+    options = {}
+    _l.info(
+        f"TESTING.POMS.COMMON.FILTERING_HANDLERS.handle_entity_filters "
+        f"{ev_options}"
+    )
+    _l.info(
+        f"TESTING.POMS.COMMON.FILTERING_HANDLERS.handle_entity_filters ev_options"
+        f"{ev_options} "
+        f"{content_type_name}"
+    )
+    if content_type_name not in ['portfolioregisterrecord', 'portfoliohistory']:
+
+        if ev_options and ev_options["entity_filters"]:
+
+            if content_type_name not in ['objecthistory4entry', 'generatedevent']:
+
+                if 'deleted' not in ev_options["entity_filters"]:
+                    options['is_deleted'] = False
+
+            if content_type_name == 'instrument':
+                if 'active' in ev_options["entity_filters"] and 'inactive' not in ev_options["entity_filters"]:
+                    options['is_active'] = True
+
+                if 'inactive' in ev_options["entity_filters"] and 'active' not in ev_options["entity_filters"]:
+                    options['is_active'] = False
+
+            if content_type_name == 'complextransaction':
+                if 'disabled' not in ev_options["entity_filters"]:
+                    options['is_enabled'] = True
+
+            _l.info(
+                f"TESTING.POMS.COMMON.FILTERING_HANDLERS.handle_entity_filters options"
+                f"{options} "
+            )
+
+            if options:
+                _l.info(f"TESTING.POMS.COMMON.FILTERING_HANDLERS.handle_entity_filters apply filters {Q(**options)}")
+                qs = qs.filter(Q(**options))
+
+                for item in qs:
+                    _l.info(
+                        f"TESTING.POMS.COMMON.FILTERING_HANDLERS.handle_entity_filters filtered qs"
+                        f"{item} "
+                    )
+
+    return qs
 
 def handle_global_table_search(qs, global_table_search, model, content_type):
     start_time = time.time()

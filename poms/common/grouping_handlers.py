@@ -5,7 +5,7 @@ from django.apps import apps
 from django.db.models import F
 from django.db.models import Q
 
-from poms.common.filtering_handlers import handle_filters, handle_global_table_search
+from poms.common.filtering_handlers import handle_filters, handle_entity_filters, handle_global_table_search
 from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger('poms.common')
@@ -524,24 +524,24 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         else:
             options['master_user_id'] = master_user.pk
 
-            if content_type.model not in ['portfolioregisterrecord', 'portfoliohistory']:
-                if ev_options['entity_filters']:
-
-                    if content_type.model not in ['objecthistory4entry', 'generatedevent']:
-
-                        if 'deleted' not in ev_options['entity_filters']:
-                            options['is_deleted'] = False
-
-                    if content_type.model in ['instrument']:
-                        if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
-                            options['is_active'] = True
-
-                        if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
-                            options['is_active'] = False
-
-                    if content_type.model not in ['complextransaction']:
-                        if 'disabled' not in ev_options['entity_filters']:
-                            options['is_enabled'] = True
+            # if content_type.model not in ['portfolioregisterrecord', 'portfoliohistory']:
+            #     if ev_options['entity_filters']:
+            #
+            #         if content_type.model not in ['objecthistory4entry', 'generatedevent']:
+            #
+            #             if 'deleted' not in ev_options['entity_filters']:
+            #                 options['is_deleted'] = False
+            #
+            #         if content_type.model in ['instrument']:
+            #             if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
+            #                 options['is_active'] = True
+            #
+            #             if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
+            #                 options['is_active'] = False
+            #
+            #         if content_type.model not in ['complextransaction']:
+            #             if 'disabled' not in ev_options['entity_filters']:
+            #                 options['is_enabled'] = True
 
         if content_type.model in ['complextransaction']:
             options['is_deleted'] = False
@@ -551,9 +551,13 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         # item['items_count'] = Model.objects.filter(Q(**options)).count()
         count_cs = Model.objects.filter(Q(**options))
         item['items_count_raw'] = count_cs.count()
+
+        count_cs = handle_entity_filters(count_cs, ev_options, content_type.model)
         count_cs = handle_filters(count_cs, filter_settings, master_user, content_type)
+
         if global_table_search:
             count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
+
         item['items_count'] = count_cs.count()
 
     _l.debug("count_groups %s seconds " % str((time.time() - start_time)))
