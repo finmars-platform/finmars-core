@@ -123,24 +123,17 @@ class ByIdFilterBackend(AbstractRelatedFilterBackend):
 
 class ByIsDeletedFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        _l.info("POMS.COMMON.filters.ByIsDeletedFilterBackend filter_queryset called")
+
         if (
             getattr(view, "has_feature_is_deleted", False)
             and getattr(view, "action", "") == "list"
         ):
             value = request.query_params.get("is_deleted", None)
-            _l.info(
-                f"POMS.COMMON.filters.ByIsDeletedFilterBackend filter_queryset value"
-                f"{value}"
-            )
+
             if value is None:
                 is_deleted = value in (True, "True", "true", "1")
                 queryset = queryset.filter(is_deleted=is_deleted)
-                _l.info(
-                    f"POMS.COMMON.filters.ByIsDeletedFilterBackend filter_queryset "
-                    f"queryset filtered. is_deleted="
-                    f"{is_deleted}"
-                )
+
         return queryset
 
 
@@ -170,24 +163,17 @@ class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
 
 class ByIsEnabledFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        _l.info("POMS.COMMON.filters.ByIsEnabledFilterBackend filter_queryset called")
+
         if (
             getattr(view, "has_feature_is_enabled", False)
             and getattr(view, "action", "") == "list"
         ):
             value = request.query_params.get("is_enabled", None)
-            _l.info(
-                f"POMS.COMMON.filters.ByIsEnabledFilterBackend filter_queryset value"
-                f"{value}"
-            )
+
             if value is None:
                 is_enabled = value in (True, "True", "true", "1")
                 queryset = queryset.filter(is_enabled=is_enabled)
-                _l.info(
-                    f"POMS.COMMON.filters.ByIsEnabledFilterBackend "
-                    f"filter_queryset filtered qs. is_enabled="
-                    f"{is_enabled}"
-                )
+
         return queryset
 
 
@@ -608,7 +594,7 @@ class OrderingPostFilter(BaseFilterBackend):
 class EntitySpecificFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if not view.detail:
-            is_disabled = False
+            is_enabled = None
             is_deleted = False
             is_inactive = False
             is_active = False
@@ -617,8 +603,15 @@ class EntitySpecificFilter(BaseFilterBackend):
                 "ev_options" in request.data
                 and "entity_filters" in request.data["ev_options"]
             ):
-                if "disabled" in request.data["ev_options"]["entity_filters"]:
-                    is_disabled = True
+                is_disabled = "disabled" in request.data["ev_options"]["entity_filters"]
+                is_enabled = "enabled" in request.data["ev_options"]["entity_filters"]
+
+                if is_disabled and is_enabled:
+                    # do not filter
+                    is_enabled = None
+                elif not is_disabled and not is_enabled:
+                    is_enabled = True
+
 
                 if "deleted" in request.data["ev_options"]["entity_filters"]:
                     is_deleted = True
@@ -630,13 +623,15 @@ class EntitySpecificFilter(BaseFilterBackend):
                     is_active = True
 
             # Show Disabled
-            if not is_disabled:
-                queryset = queryset.filter(is_enabled=True)
+            if is_enabled is not None:
+                queryset = queryset.filter(is_enabled=is_enabled)
 
             # Show Deleted
             if not is_deleted:
                 queryset = queryset.filter(is_deleted=False)
 
+            # `is_active` and `is_inactive` filter right now
+            # works only for the instruments.instrument
             if is_inactive == False and is_active == True:
                 try:
                     field = queryset.model._meta.get_field("is_active")
