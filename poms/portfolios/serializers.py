@@ -107,6 +107,9 @@ class PortfolioSerializer(
 
     first_transaction = serializers.SerializerMethodField(read_only=True)
 
+    first_transaction_date = serializers.ReadOnlyField()
+    first_cash_flow_date = serializers.ReadOnlyField()
+
     class Meta:
         model = Portfolio
         fields = [
@@ -121,14 +124,17 @@ class PortfolioSerializer(
             "is_deleted",
             "is_enabled",
             "registers",
-            "first_transaction"
+            "first_transaction", # possible deprecated, do not delete yet
+
+            "first_transaction_date",
+            "first_cash_flow_date"
         ]
 
     def get_first_transaction(self, instance):
 
         date_field = "accounting_date"
 
-        first_date = instance.first_transaction_date(date_field)
+        first_date = instance.get_first_transaction_date(date_field)
         return {
             "date_field": date_field,
             "date": first_date,
@@ -269,7 +275,7 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
     def get_first_transaction(self, instance):
         date_field = "accounting_date"
 
-        first_date = instance.first_transaction_date(date_field)
+        first_date = instance.get_first_transaction_date(date_field)
         return {
             "date_field": date_field,
             "date": first_date,
