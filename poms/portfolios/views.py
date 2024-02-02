@@ -470,7 +470,7 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
         date_field: str = request_serializer.validated_data["date_field"]
         response_data = []
         for portfolio in portfolios:
-            first_date = portfolio.first_transaction_date(date_field)
+            first_date = portfolio.get_first_transaction_date(date_field)
             response_data.append(
                 {
                     "portfolio": portfolio,

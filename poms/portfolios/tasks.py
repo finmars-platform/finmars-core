@@ -796,7 +796,7 @@ def calculate_portfolio_history(self, task_id: int):
     if period_type == 'ytd':
         date_from = str(get_last_business_day_of_previous_year(date))
     if period_type == 'inception':
-        date_from = str(portfolio.first_transaction_date())
+        date_from = str(portfolio.get_first_transaction_date())
 
     _l.info('calculate_portfolio_history: date_from %s' % date_from)
 

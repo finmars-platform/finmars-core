@@ -1,3 +1,4 @@
+import traceback
 from datetime import date
 from logging import getLogger
 
@@ -54,6 +55,16 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     )
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
+    )
+
+    first_transaction_date = models.DateField(
+        null=True,
+        verbose_name=gettext_lazy("first transaction date"),
+    )
+
+    first_cash_flow_date = models.DateField(
+        null=True,
+        verbose_name=gettext_lazy("first cash flow date"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -140,7 +151,37 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.master_user.portfolio_id == self.id if self.master_user_id else False
         )
 
-    def first_transaction_date(self, date_field: str = 'accounting_date') -> date:
+    def save(self, *args, **kwargs):
+
+        _l.info("Here???")
+        self.calculate_first_transactions_dates()
+
+        super().save(*args, **kwargs)
+
+    def calculate_first_transactions_dates(self):
+
+        try:
+
+            from poms.transactions.models import Transaction, TransactionClass
+
+            first_transaction = Transaction.objects.filter(portfolio=self).order_by("accounting_date").first()
+
+            if first_transaction:
+                self.first_transaction_date = first_transaction.accounting_date
+
+            first_cash_flow_transaction = Transaction.objects.filter(portfolio=self, transaction_class_id__in=[TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]).order_by("accounting_date").first()
+
+            if first_cash_flow_transaction:
+                self.first_cash_flow_date = first_cash_flow_transaction.accounting_date
+
+            _l.info("calculate_first_transactions_dates success")
+
+        except Exception as e:
+            _l.error("calculate_first_transactions_dates.error %s" % e)
+            _l.error("calculate_first_transactions_dates.traceback %s" % traceback.print_exc())
+
+
+    def get_first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
         Try to return the 1st transaction date for the portfolio
         """
@@ -603,7 +644,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
     def get_annualized_return(self):
 
-        _delta = self.date - str_to_date(self.portfolio.first_transaction_date('accounting_date'))
+        _delta = self.date - str_to_date(self.portfolio.get_first_transaction_date('accounting_date'))
         days_from_first_transaction = _delta.days
 
         if days_from_first_transaction == 0:

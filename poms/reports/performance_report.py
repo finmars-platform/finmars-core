@@ -998,10 +998,10 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                if date_from == portfolio.first_transaction_date() or date_from < portfolio.first_transaction_date():
+                if date_from == portfolio.get_first_transaction_date() or date_from < portfolio.get_first_transaction_date():
 
                     # performance report could not be less then first transaction date
-                    date_from = portfolio.first_transaction_date()
+                    date_from = portfolio.get_first_transaction_date()
 
                     portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
                                                                                transaction_date__gte=date_from,
