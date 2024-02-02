@@ -2789,6 +2789,10 @@ class PriceHistory(DataTimeStampedModel):
         default=False,
         verbose_name=gettext_lazy("is temporary price"),
     )
+    error_message = models.TextField(
+        default="",
+        verbose_name=gettext_lazy("error message(s)"),
+    )
 
     class Meta:
         verbose_name = gettext_lazy("price history")
