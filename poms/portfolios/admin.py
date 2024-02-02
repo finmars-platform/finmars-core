@@ -1,13 +1,36 @@
 from django.contrib import admin
 
-from poms.common.admin import AbstractModelAdmin
+from poms.common.admin import AbstractModelAdmin, ClassModelAdmin
 from poms.obj_attrs.admin import GenericAttributeInline
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioHistory,
+    PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass,
 )
+
+admin.site.register(PortfolioClass, ClassModelAdmin)
+
+class PortfolioTypeAdmin(AbstractModelAdmin):
+    model = PortfolioType
+    master_user_path = "master_user"
+    list_display = [
+        "id",
+        "master_user",
+        "user_code",
+        "name",
+        "is_deleted",
+    ]
+    list_select_related = ["master_user"]
+    list_filter = [
+        "is_deleted",
+    ]
+    search_fields = ["id", "user_code", "name"]
+    raw_id_fields = ["master_user"]
+    inlines = []
+
+
+admin.site.register(PortfolioType, PortfolioTypeAdmin)
 
 
 class PortfolioAdmin(AbstractModelAdmin):

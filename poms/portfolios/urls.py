@@ -5,6 +5,20 @@ import poms.portfolios.views as portfolios
 router = routers.DefaultRouter()
 
 router.register(
+    "portfolio-class",
+    portfolios.PortfolioClassViewSet,
+)
+
+router.register(
+    "portfolio-type",
+    portfolios.PortfolioTypeViewSet,
+)
+router.register(
+    "portfolio-type-attribute-type",
+    portfolios.PortfolioTypeAttributeTypeViewSet,
+)
+
+router.register(
     r"portfolio-attribute-type",
     portfolios.PortfolioAttributeTypeViewSet,
     "portfolioattributetype",

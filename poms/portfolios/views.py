@@ -18,7 +18,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
-from poms.common.views import AbstractModelViewSet
+from poms.common.views import AbstractModelViewSet, AbstractClassModelViewSet
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -28,7 +28,7 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord,
+    PortfolioRegisterRecord, PortfolioType, PortfolioClass,
 )
 from poms.portfolios.serializers import (
     CalculatePortfolioHistorySerializer,
@@ -41,7 +41,7 @@ from poms.portfolios.serializers import (
     PortfolioRegisterSerializer,
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer,
+    PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer, PortfolioTypeLightSerializer
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
@@ -51,6 +51,109 @@ from poms.portfolios.tasks import (
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger("poms.portfolios")
+
+class PortfolioClassViewSet(AbstractClassModelViewSet):
+    queryset = PortfolioClass.objects
+    serializer_class = PortfolioClassSerializer
+
+
+class PortfolioTypeFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    show_transaction_details = django_filters.BooleanFilter()
+
+    class Meta:
+        model = PortfolioType
+        fields = []
+
+
+class PortfolioTypeViewSet(AbstractModelViewSet):
+    queryset = PortfolioType.objects.select_related("master_user").prefetch_related(
+        get_attributes_prefetch(),
+    )
+    serializer_class = PortfolioTypeSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter,
+    ]
+    filter_class = PortfolioTypeFilterSet
+    ordering_fields = [
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+    ]
+
+    @action(detail=False, methods=["get"], url_path="attributes")
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
+            {
+                "key": "show_transaction_details",
+                "name": "Show transaction details",
+                "value_type": 50,
+            },
+            {
+                "key": "transaction_details_expr",
+                "name": "Transaction details expr",
+                "value_type": 10,
+            },
+        ]
+
+        items += get_list_of_entity_attributes("accounts.accounttype")
+
+        result = {"count": len(items), "next": None, "previous": None, "results": items}
+
+        return Response(result)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=PortfolioTypeLightSerializer,
+    )
+    def list_light(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
+
+class PortfolioTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = PortfolioType
+    target_model_serializer = PortfolioTypeSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):

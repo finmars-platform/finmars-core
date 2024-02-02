@@ -9,7 +9,7 @@ from typing import Type
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
-    ModelWithUserCodeSerializer,
+    ModelWithUserCodeSerializer, ModelMetaSerializer, PomsClassSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault, CostMethodField
@@ -26,13 +26,67 @@ from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioHistory,
+    PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass,
 )
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 
 _l = getLogger("poms.portfolios")
+
+class PortfolioClassSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = PortfolioClass
+
+
+class PortfolioTypeSerializer(
+    ModelWithUserCodeSerializer,
+    ModelWithAttributesSerializer,
+    ModelWithTimeStampSerializer,
+    ModelMetaSerializer,
+):
+    master_user = MasterUserField()
+
+    portfolio_class_object = PortfolioClassSerializer(
+        source="portfolio_class", read_only=True
+    )
+
+    class Meta:
+        model = PortfolioType
+        fields = [
+            "id",
+            "master_user",
+            "user_code",
+            "configuration_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "is_deleted",
+            "is_enabled",
+
+            "portfolio_class",
+            "portfolio_class_object",
+        ]
+
+
+class PortfolioTypeLightSerializer(ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioType
+        fields = [
+            "id",
+            "master_user",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_deleted",
+            "is_enabled",
+        ]
+
+
 
 
 class PortfolioPortfolioRegisterSerializer(
@@ -110,6 +164,8 @@ class PortfolioSerializer(
     first_transaction_date = serializers.ReadOnlyField()
     first_cash_flow_date = serializers.ReadOnlyField()
 
+    portfolio_type_object = PortfolioTypeSerializer(source="portfolio_type", read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
@@ -127,7 +183,10 @@ class PortfolioSerializer(
             "first_transaction", # possible deprecated, do not delete yet
 
             "first_transaction_date",
-            "first_cash_flow_date"
+            "first_cash_flow_date",
+
+            "portfolio_type",
+            "portfolio_type_object"
         ]
 
     def get_first_transaction(self, instance):

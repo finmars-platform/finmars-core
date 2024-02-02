@@ -6,8 +6,9 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
+from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, AbstractClassModel
 from poms.common.utils import date_now, str_to_date
+from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
@@ -15,6 +16,113 @@ from poms.users.models import MasterUser
 from poms_app import settings
 
 _l = getLogger("poms.portfolios")
+
+
+class PortfolioClass(AbstractClassModel):
+    GENERAL = 1
+    POSITION = 2
+    MANUAL = 3
+
+    CLASSES = (
+        (
+            GENERAL,
+            "general",
+            gettext_lazy("General Portfolio"),
+        ),
+        (
+            POSITION,
+            "position",
+            gettext_lazy("Position Only Portfolio"),
+        ),
+        (
+            MANUAL,
+            "manual",
+            gettext_lazy("Manual Managed Portfolio"),
+        ),
+
+    )
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = gettext_lazy("portfolio class")
+        verbose_name_plural = gettext_lazy("portfolio classes")
+
+
+class PortfolioType(
+    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+):
+    """
+    Meta Entity, part of Finmars Configuration
+    Mostly used for extra fragmentation of Reports
+    Maybe in future would have extra logic
+    """
+
+    master_user = models.ForeignKey(
+        MasterUser,
+        related_name="portfolio_types",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+
+    attributes = GenericRelation(
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
+    )
+
+    portfolio_class = models.ForeignKey(
+        PortfolioClass,
+        related_name="portfolio_types",
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("portfolio class"),
+    )
+
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = gettext_lazy("portfolio type")
+        verbose_name_plural = gettext_lazy("portfolio types")
+        permissions = [
+            ("manage_portfoliotype", "Can manage portfolio type"),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True,
+            }
+        ]
 
 
 # noinspection PyUnresolvedReferences
@@ -55,6 +163,14 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     )
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
+    )
+
+    portfolio_type = models.ForeignKey(
+        PortfolioType,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("portfolio type"),
     )
 
     first_transaction_date = models.DateField(
