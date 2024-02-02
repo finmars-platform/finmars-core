@@ -2692,7 +2692,11 @@ class AccrualCalculationSchedule(models.Model):
     eom = models.BooleanField(
         default=False,
         verbose_name=gettext_lazy("EOM"),
-        help_text="If the start date of a bond is at the end of a month (e.g., January 30 or 31), the date is adjusted to the end of February for a semi-annual or full annual coupon. "
+        help_text=(
+            "If the start date of a bond is at the end of a month "
+            "(e.g., January 30 or 31), the date is adjusted to the end of February "
+            "for a semi-annual or full annual coupon."
+        ),
     )
 
     def save(self, *args, **kwargs):
