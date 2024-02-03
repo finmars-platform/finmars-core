@@ -644,10 +644,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-            _l.info(f"going calculate {portfolio_register}")
-            # _l.info(f'going calculate date_from {item["date_from"]}')
-            # _l.info(f'going calculate date_to {item["date_to"]}')
-            _l.info(f'going calculate dates len {len(item["dates"])}')
+            _l.info(f'calculate {portfolio_register} len(dates)={len(item["dates"])}')
 
             for day in item["dates"]:
                 registry_record = (
@@ -667,7 +664,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         )
 
                         nav = 0
-
                         for it in balance_report.items:
                             if it["market_value"]:
                                 nav = nav + it["market_value"]
@@ -682,7 +678,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         principal_price = (
                             nav / registry_record.rolling_shares_of_the_day
                         )
-
                         for pricing_policy in pricing_policies:
                             price_history, _ = PriceHistory.objects.get_or_create(
                                 instrument=portfolio_register.linked_instrument,
