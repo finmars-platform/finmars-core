@@ -28,7 +28,7 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
+    PortfolioRegisterRecord, PortfolioType, PortfolioClass, PortfolioReconcileGroup, PortfolioReconcileHistory,
 )
 from poms.portfolios.serializers import (
     CalculatePortfolioHistorySerializer,
@@ -42,12 +42,13 @@ from poms.portfolios.serializers import (
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
     PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer,
-    PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer
+    PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer, PortfolioReconcileHistorySerializer,
+    CalculatePortfolioReconcileHistorySerializer
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
     calculate_portfolio_register_price_history,
-    calculate_portfolio_register_record,
+    calculate_portfolio_register_record, calculate_portfolio_reconcile_history,
 )
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -679,3 +680,71 @@ class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
     filter_class = PortfolioReconcileGroupFilterSet
     ordering_fields = []
 
+
+
+
+class PortfolioReconcileHistoryFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    user_code = CharFilter()
+    status = CharFilter()
+
+    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
+
+    date = django_filters.DateFromToRangeFilter()
+
+    class Meta:
+        model = PortfolioReconcileHistory
+        fields = []
+
+
+class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
+    queryset = PortfolioReconcileHistory.objects.select_related(
+        "master_user", "portfolio_reconcile_group",
+    )
+    serializer_class = PortfolioReconcileHistorySerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    filter_class = PortfolioReconcileHistoryFilterSet
+    ordering_fields = []
+
+    # TODO Refactor
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate",
+        serializer_class=CalculatePortfolioReconcileHistorySerializer,
+    )
+    def calculate(self, request):
+        _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
+        serializer = CalculatePortfolioReconcileHistorySerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Reconcile History",
+            type="calculate_portfolio_reconcile_history",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
+
+        calculate_portfolio_reconcile_history.apply_async(
+            kwargs={"task_id": task.id},
+        )
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )

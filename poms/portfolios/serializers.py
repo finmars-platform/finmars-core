@@ -21,12 +21,13 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField
+from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
     PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
+    PortfolioReconcileHistory,
 )
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField, HiddenMemberField
@@ -833,3 +834,45 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             "is_deleted",
             "is_enabled",
         ]
+
+
+class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioReconcileHistory
+        fields = [
+            "id",
+
+            "user_code",
+
+            "master_user",
+            "portfolio_reconcile_group",
+
+            "date",
+
+
+            "verbose_result",
+            "error_message",
+            "status"
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        from poms.currencies.serializers import CurrencyViewSerializer
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
+            source="portfolio_reconcile_group", read_only=True
+        )
+
+
+class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+
+    portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
+
+    date_from = serializers.DateField(required=True)
+    date_to = serializers.DateField(required=True)

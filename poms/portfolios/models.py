@@ -848,14 +848,13 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
 
 class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedModel):
-
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_reconcile_groups",
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-    
+
     portfolios = models.ManyToManyField(
         Portfolio,
         verbose_name=gettext_lazy("portfolios"),
@@ -867,3 +866,63 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedMod
         verbose_name = gettext_lazy("portfolio reconcile group")
         verbose_name_plural = gettext_lazy("portfolio reconcile groups")
         index_together = [["master_user", "user_code"]]
+
+
+class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
+    STATUS_OK = 'ok'
+    STATUS_ERROR = 'error'
+
+    STATUS_CHOICES = (
+        (STATUS_OK, "Ok"),
+        (STATUS_ERROR, "error"),
+    )
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    user_code = models.CharField(
+        max_length=1024,
+        unique=True,
+        verbose_name=gettext_lazy("user code"),
+        help_text=gettext_lazy(
+            "Unique Code for this object. Used in Configuration and Permissions Logic"
+        )
+    )
+
+    date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
+
+    portfolio_reconcile_group = models.ForeignKey(PortfolioReconcileGroup, on_delete=models.CASCADE,
+                                                  verbose_name=gettext_lazy('portfolio reconcile group'))
+
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("error_message"),
+        help_text="Error message if any",
+    )
+
+    verbose_result = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("verbose result"),
+    )
+
+    status = models.CharField(
+        max_length=255,
+        default=STATUS_OK,
+        choices=STATUS_CHOICES,
+        verbose_name="status",
+    )
+
+    linked_task = models.ForeignKey(
+        "celery_tasks.CeleryTask",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("linked task"),
+    )
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'user_code'],
+        ]

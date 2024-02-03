@@ -7,6 +7,7 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioRegister,
     PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
+    PortfolioReconcileHistory,
 )
 
 admin.site.register(PortfolioClass, ClassModelAdmin)
@@ -143,3 +144,13 @@ class PortfolioReconcileGroupAdmin(AbstractModelAdmin):
 
 
 admin.site.register(PortfolioReconcileGroup, PortfolioReconcileGroupAdmin)
+
+
+class PortfolioReconcileHistoryAdmin(AbstractModelAdmin):
+    model = PortfolioReconcileHistory
+    master_user_path = "master_user"
+    list_display = ["id", "master_user", "user_code", "portfolio_reconcile_group", "date"]
+    raw_id_fields = ["master_user"]
+
+
+admin.site.register(PortfolioReconcileHistory, PortfolioReconcileHistoryAdmin)

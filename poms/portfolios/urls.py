@@ -70,3 +70,9 @@ router.register(
     portfolios.PortfolioReconcileGroupViewSet,
     "portfolioreconcilegroup",
 )
+
+router.register(
+    r"portfolio-reconcile-history",
+    portfolios.PortfolioReconcileHistoryViewSet,
+    "portfolioreconcilehistory",
+)
