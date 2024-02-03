@@ -514,7 +514,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
     This purpose of this task is to get PriceHistory.principal_price of Portfolio
     Later on it would be used in Performance Report
     Also, it calculates NAV and Cash Flows and saves it in Price History
-
     """
     from poms.celery_tasks.models import CeleryTask
     from poms.instruments.models import PriceHistory
@@ -697,7 +696,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                                     date=day,
                                     pricing_policy=pricing_policy,
                                 )
-                            except Exception:
+                            except PriceHistory.DoesNotExist:
                                 price_history = PriceHistory(
                                     instrument=portfolio_register.linked_instrument,
                                     date=day,
@@ -707,7 +706,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                             price_history.nav = nav
                             price_history.cash_flow = cash_flow
                             price_history.principal_price = principal_price
-
                             price_history.save()
 
                         count += 1
@@ -723,10 +721,9 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
                 except Exception as e:
                     _l.error(
-                        f"calculate_portfolio_register_price_history.error "
-                        f"{repr(e)} {traceback.format_exc()}"
+                        f"task calculate_portfolio_register_price_history at day {day}"
+                        f" resulted in error {repr(e)} trace {traceback.format_exc()}"
                     )
-                    _l.error(f"date {day}")
 
         # Finish calculation
 

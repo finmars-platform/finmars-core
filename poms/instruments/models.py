@@ -2816,7 +2816,7 @@ class PriceHistory(DataTimeStampedModel):
             f"{self.accrued_price} @{self.date}"
         )
 
-    def _handle_err(self, err_msg: str):
+    def handle_err(self, err_msg: str):
         _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
         self.error_message = f"{self.error_message}; {err_msg}"
 
@@ -2852,7 +2852,7 @@ class PriceHistory(DataTimeStampedModel):
         try:
             d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
         except ArithmeticError as e:
-            self._handle_err(f"get_instr_ytm_data error {repr(e)}")
+            self.handle_err(f"get_instr_ytm_data error {repr(e)}")
             return None
 
         data = [(d0, v0)]
@@ -2909,7 +2909,7 @@ class PriceHistory(DataTimeStampedModel):
                     / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
-            self._handle_err(f"get_instr_ytm_x0 {repr(e)}")
+            self.handle_err(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
     def calculate_ytm(self, date):
@@ -2964,19 +2964,20 @@ class PriceHistory(DataTimeStampedModel):
             self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
-            self._handle_err(f"calculate_ytm error {repr(e)}")
+            self.handle_err(f"calculate_ytm error {repr(e)}")
 
-        if not self.factor:
+        if self.factor in {None, AUTO_CALCULATE}:
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
-                self._handle_err(f"get_factor error {repr(e)}")
+                self.handle_err(f"get_factor error {repr(e)}")
+                self.factor = 1
 
         if self.accrued_price in {None, AUTO_CALCULATE}:
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
-                self._handle_err(f"get_accrued_price error {repr(e)}")
+                self.handle_err(f"get_accrued_price error {repr(e)}")
                 self.accrued_price = 0
 
         super().save(*args, **kwargs)
