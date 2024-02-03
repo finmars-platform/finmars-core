@@ -768,7 +768,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 def calculate_portfolio_history(self, task_id: int):
     """
     Right now trigger only by manual request
-
     """
     from poms.celery_tasks.models import CeleryTask
 
@@ -845,13 +844,11 @@ def calculate_portfolio_history(self, task_id: int):
         dates = get_last_bdays_of_months_between_two_dates(
             calculation_period_date_from, date
         )
-
-    if segmentation_type == "business_days":
+    elif segmentation_type == "business_days":
         dates = get_list_of_business_days_between_two_dates(
             calculation_period_date_from, date
         )
-
-    if segmentation_type == "days":
+    elif segmentation_type == "days":
         dates = get_list_of_dates_between_two_dates(calculation_period_date_from, date)
 
     task.update_progress(
