@@ -195,6 +195,9 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
+    created = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+
     class Meta:
         model = Role
         fields = [
@@ -270,6 +273,9 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
+    created = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+
     class Meta:
         model = Group
         fields = [
@@ -332,6 +338,10 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
 
 class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
+
+    created = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+
     class Meta:
         model = AccessPolicy
         fields = [

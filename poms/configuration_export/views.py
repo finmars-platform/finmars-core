@@ -32,7 +32,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, PricingConditionMapping
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
-from poms.portfolios.models import Portfolio
+from poms.portfolios.models import Portfolio, PortfolioType
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
@@ -131,6 +131,7 @@ def get_codename_set(model_cls):
         'model_name': model_cls._meta.model_name
     }
     return {perm % kwargs for perm in codename_set}
+
 
 def get_access_table(member):
     result = {
@@ -243,6 +244,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_type_st = time.perf_counter()
 
         instrument_types = self.get_instrument_types()
+        portfolio_types = self.get_portfolio_types()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got instrument types done: %s',
                  "{:3.3f}".format(time.perf_counter() - instrument_type_st))
@@ -308,6 +310,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         attributes_st = time.perf_counter()
 
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
+        portfolio_type_attribute_types = self.get_entity_attribute_types('portfolios', 'portfoliotype')
+
         currency_attribute_types = self.get_entity_attribute_types('currencies', 'currency')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
         account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
@@ -391,6 +395,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(currencies)
             configuration["body"].append(pricing_policies)
             configuration["body"].append(instrument_types)
+            configuration["body"].append(portfolio_types)
 
             if self.access_table['reference_tables.referencetable']:
                 configuration["body"].append(reference_tables)
@@ -398,6 +403,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if self.access_table['obj_attrs.attributetype']:
                 if portfolio_attribute_types['count']:
                     configuration["body"].append(portfolio_attribute_types)
+
+                if portfolio_type_attribute_types['count']:
+                    configuration["body"].append(portfolio_type_attribute_types)
 
                 if currency_attribute_types['count']:
                     configuration["body"].append(currency_attribute_types)
@@ -1076,6 +1084,36 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "instruments.instrumenttype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_portfolio_types(self):
+
+        qs = PortfolioType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
+
+        portfolio_types = to_json_objects(qs)
+        results = []
+
+        for portfolio_type in portfolio_types:
+            result_item = portfolio_type["fields"]
+
+            result_item["pk"] = portfolio_type["pk"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+            clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "portfolios.portfoliotype",
             "count": len(results),
             "content": results
         }

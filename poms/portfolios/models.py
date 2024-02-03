@@ -1,3 +1,4 @@
+import traceback
 from datetime import date
 from logging import getLogger
 
@@ -5,8 +6,9 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
+from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, AbstractClassModel
 from poms.common.utils import date_now, str_to_date
+from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
@@ -14,6 +16,113 @@ from poms.users.models import MasterUser
 from poms_app import settings
 
 _l = getLogger("poms.portfolios")
+
+
+class PortfolioClass(AbstractClassModel):
+    GENERAL = 1
+    POSITION = 2
+    MANUAL = 3
+
+    CLASSES = (
+        (
+            GENERAL,
+            "general",
+            gettext_lazy("General Portfolio"),
+        ),
+        (
+            POSITION,
+            "position",
+            gettext_lazy("Position Only Portfolio"),
+        ),
+        (
+            MANUAL,
+            "manual",
+            gettext_lazy("Manual Managed Portfolio"),
+        ),
+
+    )
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = gettext_lazy("portfolio class")
+        verbose_name_plural = gettext_lazy("portfolio classes")
+
+
+class PortfolioType(
+    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+):
+    """
+    Meta Entity, part of Finmars Configuration
+    Mostly used for extra fragmentation of Reports
+    Maybe in future would have extra logic
+    """
+
+    master_user = models.ForeignKey(
+        MasterUser,
+        related_name="portfolio_types",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+
+    attributes = GenericRelation(
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
+    )
+
+    portfolio_class = models.ForeignKey(
+        PortfolioClass,
+        related_name="portfolio_types",
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("portfolio class"),
+    )
+
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = gettext_lazy("portfolio type")
+        verbose_name_plural = gettext_lazy("portfolio types")
+        permissions = [
+            ("manage_portfoliotype", "Can manage portfolio type"),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True,
+            }
+        ]
 
 
 # noinspection PyUnresolvedReferences
@@ -54,6 +163,24 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     )
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
+    )
+
+    portfolio_type = models.ForeignKey(
+        PortfolioType,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("portfolio type"),
+    )
+
+    first_transaction_date = models.DateField(
+        null=True,
+        verbose_name=gettext_lazy("first transaction date"),
+    )
+
+    first_cash_flow_date = models.DateField(
+        null=True,
+        verbose_name=gettext_lazy("first cash flow date"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -140,7 +267,37 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.master_user.portfolio_id == self.id if self.master_user_id else False
         )
 
-    def first_transaction_date(self, date_field: str = 'accounting_date') -> date:
+    def save(self, *args, **kwargs):
+
+        _l.info("Here???")
+        self.calculate_first_transactions_dates()
+
+        super().save(*args, **kwargs)
+
+    def calculate_first_transactions_dates(self):
+
+        try:
+
+            from poms.transactions.models import Transaction, TransactionClass
+
+            first_transaction = Transaction.objects.filter(portfolio=self).order_by("accounting_date").first()
+
+            if first_transaction:
+                self.first_transaction_date = first_transaction.accounting_date
+
+            first_cash_flow_transaction = Transaction.objects.filter(portfolio=self, transaction_class_id__in=[
+                TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]).order_by("accounting_date").first()
+
+            if first_cash_flow_transaction:
+                self.first_cash_flow_date = first_cash_flow_transaction.accounting_date
+
+            _l.info("calculate_first_transactions_dates success")
+
+        except Exception as e:
+            _l.error("calculate_first_transactions_dates.error %s" % e)
+            _l.error("calculate_first_transactions_dates.traceback %s" % traceback.print_exc())
+
+    def get_first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
         Try to return the 1st transaction date for the portfolio
         """
@@ -212,13 +369,13 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.save()
 
         bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                user_code=self.user_code,
-                defaults=dict(
-                    owner=self.owner,
-                    name=self.user_code,
-                )
+            master_user=self.master_user,
+            user_code=self.user_code,
+            defaults=dict(
+                owner=self.owner,
+                name=self.user_code,
             )
+        )
         if created:
             _l.info(
                 f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
@@ -603,7 +760,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
     def get_annualized_return(self):
 
-        _delta = self.date - str_to_date(self.portfolio.first_transaction_date('accounting_date'))
+        _delta = self.date - str_to_date(self.portfolio.get_first_transaction_date('accounting_date'))
         days_from_first_transaction = _delta.days
 
         if days_from_first_transaction == 0:
@@ -688,3 +845,84 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             self.status = self.STATUS_OK
 
         self.save()
+
+
+class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+    master_user = models.ForeignKey(
+        MasterUser,
+        related_name="portfolio_reconcile_groups",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+
+    portfolios = models.ManyToManyField(
+        Portfolio,
+        verbose_name=gettext_lazy("portfolios"),
+        blank=True,
+        related_name="portfolio_reconcile_groups",
+    )
+
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = gettext_lazy("portfolio reconcile group")
+        verbose_name_plural = gettext_lazy("portfolio reconcile groups")
+        index_together = [["master_user", "user_code"]]
+
+
+class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
+    STATUS_OK = 'ok'
+    STATUS_ERROR = 'error'
+
+    STATUS_CHOICES = (
+        (STATUS_OK, "Ok"),
+        (STATUS_ERROR, "error"),
+    )
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    user_code = models.CharField(
+        max_length=1024,
+        unique=True,
+        verbose_name=gettext_lazy("user code"),
+        help_text=gettext_lazy(
+            "Unique Code for this object. Used in Configuration and Permissions Logic"
+        )
+    )
+
+    date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
+
+    portfolio_reconcile_group = models.ForeignKey(PortfolioReconcileGroup, on_delete=models.CASCADE,
+                                                  verbose_name=gettext_lazy('portfolio reconcile group'))
+
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("error_message"),
+        help_text="Error message if any",
+    )
+
+    verbose_result = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("verbose result"),
+    )
+
+    status = models.CharField(
+        max_length=255,
+        default=STATUS_OK,
+        choices=STATUS_CHOICES,
+        verbose_name="status",
+    )
+
+    linked_task = models.ForeignKey(
+        "celery_tasks.CeleryTask",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("linked task"),
+    )
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'user_code'],
+        ]
