@@ -702,8 +702,8 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
                     except Exception as e:
                         err_msg = (
-                            f"task calculate_portfolio_register_price_history at day {day}"
-                            f" resulted in error {repr(e)}"
+                            f"task calculate_portfolio_register_price_history "
+                            f"at day {day} resulted in error {repr(e)}"
                         )
 
                         # create fake price record (if it doesn't exist) to store error
@@ -898,7 +898,6 @@ def calculate_portfolio_history(self, task_id: int):
         count = count + 1
 
 
-
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
 def calculate_portfolio_reconcile_history(self, task_id: int):
     """
@@ -935,6 +934,5 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
     task.save()
 
     _l.info(
-        f"calculate_portfolio_reconcile_history: "
-        f"task_options={task.options_object}"
+        f"calculate_portfolio_reconcile_history: task_options={task.options_object}"
     )
