@@ -3580,6 +3580,9 @@ class Transaction(models.Model):
         if not self.cash_date:
             self.cash_date = date_now()
 
+        if self.portfolio:
+            self.portfolio.calculate_first_transactions_dates()
+
         self.transaction_date = min(self.accounting_date, self.cash_date)
         if self.transaction_code is None or self.transaction_code == 0:
             if self.complex_transaction is None:

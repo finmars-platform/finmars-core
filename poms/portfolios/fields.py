@@ -1,5 +1,5 @@
 from poms.common.fields import UserCodeOrPrimaryKeyRelatedField
-from poms.portfolios.models import Portfolio
+from poms.portfolios.models import Portfolio, PortfolioReconcileGroup
 
 
 class PortfolioDefault:
@@ -21,3 +21,6 @@ class PortfolioField(UserCodeOrPrimaryKeyRelatedField):
     # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
     #     OwnerByMasterUserFilter,
     # ]
+
+class PortfolioReconcileGroupField(UserCodeOrPrimaryKeyRelatedField):
+    queryset = PortfolioReconcileGroup.objects
