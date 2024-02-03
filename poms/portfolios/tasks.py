@@ -553,6 +553,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
     date_to = task.options_object.get("date_to")
     date_from = task.options_object.get("date_from")
     portfolios_user_codes = task.options_object.get("portfolios")
+    master_user = task.master_user
 
     # convert date's string to a date object
     if not date_to:
@@ -566,25 +567,21 @@ def calculate_portfolio_register_price_history(self, task_id: int):
     # convert portfolios user_code, to portfolio_register objects
     if portfolios_user_codes:
         portfolio_registers = PortfolioRegister.objects.filter(
-            master_user=task.master_user,
+            master_user=master_user,
             portfolio__user_code__in=portfolios_user_codes,
         )
     else:
-        portfolio_registers = PortfolioRegister.objects.filter(
-            master_user=task.master_user
-        )
+        portfolio_registers = PortfolioRegister.objects.filter(master_user=master_user)
 
     try:
         send_system_message(
-            master_user=task.master_user,
+            master_user=master_user,
             performed_by="system",
             section="schedules",
             type="info",
             title="Start portfolio price recalculation",
             description=f"Starting from date {date_from}",
         )
-
-        pricing_policies = PricingPolicy.objects.filter(master_user=task.master_user)
 
         count = 0
         portfolio_register_map = {}
@@ -639,6 +636,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
         total = sum(len(item["dates"]) for item in result.values())
 
         # Init calculation
+        pricing_policies = list(PricingPolicy.objects.filter(master_user=master_user))
         for item in result.values():
             portfolio_register = portfolio_register_map[
                 item["portfolio_register_object"]["user_code"]
@@ -679,7 +677,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                                 nav = nav + it["market_value"]
 
                         cash_flow = calculate_cash_flow(
-                            task.master_user,
+                            master_user,
                             day,
                             true_pricing_policy,
                             portfolio_register,
@@ -720,15 +718,34 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         )
 
                 except Exception as e:
-                    _l.error(
+                    err_msg = (
                         f"task calculate_portfolio_register_price_history at day {day}"
-                        f" resulted in error {repr(e)} trace {traceback.format_exc()}"
+                        f" resulted in error {repr(e)}"
                     )
 
-        # Finish calculation
+                    # create fake price record (if it doesn't exist) to store error
+                    price_history = PriceHistory.objects.filter(
+                        instrument=portfolio_register.linked_instrument,
+                        date=day,
+                        pricing_policy__in=pricing_policies,
+                    ).first()
+                    if not price_history:
+                        if pricing_policies:
+                            pricing_policy = pricing_policies[0]
+                        else:
+                            pricing_policy = None
+                        PriceHistory.objects.create(
+                            instrument=portfolio_register.linked_instrument,
+                            date=day,
+                            pricing_policy=pricing_policy,
+                            is_temporary_price=True,
+                        )
+                    price_history.handle_err(err_msg)
+                    price_history.save()
 
+        # Finish calculation
         send_system_message(
-            master_user=task.master_user,
+            master_user=master_user,
             performed_by="system",
             section="schedules",
             type="success",
@@ -743,7 +760,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
     except Exception as e:
         send_system_message(
-            master_user=task.master_user,
+            master_user=master_user,
             action_status="required",
             type="error",
             title="Task Failed. Name: calculate_portfolio_register_price_history",

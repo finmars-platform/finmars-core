@@ -2818,7 +2818,10 @@ class PriceHistory(DataTimeStampedModel):
 
     def handle_err(self, err_msg: str):
         _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
-        self.error_message = f"{self.error_message}; {err_msg}"
+        if self.error_message:
+            self.error_message = f"{self.error_message}; {err_msg}"
+        else:
+            self.error_message = err_msg
 
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
