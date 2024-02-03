@@ -285,7 +285,8 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             if first_transaction:
                 self.first_transaction_date = first_transaction.accounting_date
 
-            first_cash_flow_transaction = Transaction.objects.filter(portfolio=self, transaction_class_id__in=[TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]).order_by("accounting_date").first()
+            first_cash_flow_transaction = Transaction.objects.filter(portfolio=self, transaction_class_id__in=[
+                TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]).order_by("accounting_date").first()
 
             if first_cash_flow_transaction:
                 self.first_cash_flow_date = first_cash_flow_transaction.accounting_date
@@ -295,7 +296,6 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         except Exception as e:
             _l.error("calculate_first_transactions_dates.error %s" % e)
             _l.error("calculate_first_transactions_dates.traceback %s" % traceback.print_exc())
-
 
     def get_first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
@@ -369,13 +369,13 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.save()
 
         bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                user_code=self.user_code,
-                defaults=dict(
-                    owner=self.owner,
-                    name=self.user_code,
-                )
+            master_user=self.master_user,
+            user_code=self.user_code,
+            defaults=dict(
+                owner=self.owner,
+                name=self.user_code,
             )
+        )
         if created:
             _l.info(
                 f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
@@ -845,3 +845,25 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             self.status = self.STATUS_OK
 
         self.save()
+
+
+class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+
+    master_user = models.ForeignKey(
+        MasterUser,
+        related_name="portfolio_reconcile_groups",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    
+    portfolios = models.ManyToManyField(
+        Portfolio,
+        verbose_name=gettext_lazy("portfolios"),
+        blank=True,
+        related_name="portfolio_reconcile_groups",
+    )
+
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = gettext_lazy("portfolio reconcile group")
+        verbose_name_plural = gettext_lazy("portfolio reconcile groups")
+        index_together = [["master_user", "user_code"]]

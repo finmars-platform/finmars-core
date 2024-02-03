@@ -28,7 +28,7 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioType, PortfolioClass,
+    PortfolioRegisterRecord, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
 )
 from poms.portfolios.serializers import (
     CalculatePortfolioHistorySerializer,
@@ -41,7 +41,8 @@ from poms.portfolios.serializers import (
     PortfolioRegisterSerializer,
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer, PortfolioTypeLightSerializer
+    PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer,
+    PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
@@ -661,3 +662,20 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class PortfolioReconcileGroupFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = []
+
+
+class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
+    queryset = PortfolioReconcileGroup.objects.select_related("master_user")
+    serializer_class = PortfolioReconcileGroupSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
+    filter_class = PortfolioReconcileGroupFilterSet
+    ordering_fields = []
+

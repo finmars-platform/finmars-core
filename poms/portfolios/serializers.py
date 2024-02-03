@@ -26,7 +26,7 @@ from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass,
+    PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
 )
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField, HiddenMemberField
@@ -813,3 +813,23 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
                                                  default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
                                                  choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
+
+
+
+class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = [
+            "id",
+            "master_user",
+            "name",
+            "short_name",
+            "user_code",
+            "public_name",
+            "notes",
+            "portfolios",
+            "is_deleted",
+            "is_enabled",
+        ]
