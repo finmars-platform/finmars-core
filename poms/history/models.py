@@ -36,6 +36,7 @@ excluded_to_track_history_models = [
     "csv_import.csvfield",
     "csv_import.entityfield",
     "portfolios.portfoliohistory",
+    "portfolios.portfolioreconcilehistory",
     "pricing.instrumentpricingschemetype",
     "pricing.currencypricingschemetype",
     "pricing.instrumentpricingpolicy",

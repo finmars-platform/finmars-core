@@ -18,7 +18,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
-from poms.common.views import AbstractModelViewSet
+from poms.common.views import AbstractModelViewSet, AbstractClassModelViewSet
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -28,7 +28,7 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord,
+    PortfolioRegisterRecord, PortfolioType, PortfolioClass, PortfolioReconcileGroup, PortfolioReconcileHistory,
 )
 from poms.portfolios.serializers import (
     CalculatePortfolioHistorySerializer,
@@ -41,16 +41,121 @@ from poms.portfolios.serializers import (
     PortfolioRegisterSerializer,
     PortfolioSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer,
+    PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer,
+    PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer, PortfolioReconcileHistorySerializer,
+    CalculatePortfolioReconcileHistorySerializer
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
     calculate_portfolio_register_price_history,
-    calculate_portfolio_register_record,
+    calculate_portfolio_register_record, calculate_portfolio_reconcile_history,
 )
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger("poms.portfolios")
+
+class PortfolioClassViewSet(AbstractClassModelViewSet):
+    queryset = PortfolioClass.objects
+    serializer_class = PortfolioClassSerializer
+
+
+class PortfolioTypeFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    show_transaction_details = django_filters.BooleanFilter()
+
+    class Meta:
+        model = PortfolioType
+        fields = []
+
+
+class PortfolioTypeViewSet(AbstractModelViewSet):
+    queryset = PortfolioType.objects.select_related("master_user").prefetch_related(
+        get_attributes_prefetch(),
+    )
+    serializer_class = PortfolioTypeSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter,
+    ]
+    filter_class = PortfolioTypeFilterSet
+    ordering_fields = [
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+    ]
+
+    @action(detail=False, methods=["get"], url_path="attributes")
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
+            {
+                "key": "show_transaction_details",
+                "name": "Show transaction details",
+                "value_type": 50,
+            },
+            {
+                "key": "transaction_details_expr",
+                "name": "Transaction details expr",
+                "value_type": 10,
+            },
+        ]
+
+        items += get_list_of_entity_attributes("accounts.accounttype")
+
+        result = {"count": len(items), "next": None, "previous": None, "results": items}
+
+        return Response(result)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=PortfolioTypeLightSerializer,
+    )
+    def list_light(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
+
+class PortfolioTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = PortfolioType
+    target_model_serializer = PortfolioTypeSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -470,7 +575,7 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
         date_field: str = request_serializer.validated_data["date_field"]
         response_data = []
         for portfolio in portfolios:
-            first_date = portfolio.first_transaction_date(date_field)
+            first_date = portfolio.get_first_transaction_date(date_field)
             response_data.append(
                 {
                     "portfolio": portfolio,
@@ -546,6 +651,91 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_history.apply_async(
+            kwargs={"task_id": task.id},
+        )
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PortfolioReconcileGroupFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = []
+
+
+class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
+    queryset = PortfolioReconcileGroup.objects.select_related("master_user")
+    serializer_class = PortfolioReconcileGroupSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
+    filter_class = PortfolioReconcileGroupFilterSet
+    ordering_fields = []
+
+
+
+
+class PortfolioReconcileHistoryFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    user_code = CharFilter()
+    status = CharFilter()
+
+    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
+
+    date = django_filters.DateFromToRangeFilter()
+
+    class Meta:
+        model = PortfolioReconcileHistory
+        fields = []
+
+
+class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
+    queryset = PortfolioReconcileHistory.objects.select_related(
+        "master_user", "portfolio_reconcile_group",
+    )
+    serializer_class = PortfolioReconcileHistorySerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    filter_class = PortfolioReconcileHistoryFilterSet
+    ordering_fields = []
+
+    # TODO Refactor
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate",
+        serializer_class=CalculatePortfolioReconcileHistorySerializer,
+    )
+    def calculate(self, request):
+        _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
+        serializer = CalculatePortfolioReconcileHistorySerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate Portfolio Reconcile History",
+            type="calculate_portfolio_reconcile_history",
+            status=CeleryTask.STATUS_PENDING,
+        )
+        task.options_object = serializer.validated_data
+        task.save()
+
+        calculate_portfolio_reconcile_history.apply_async(
             kwargs={"task_id": task.id},
         )
 

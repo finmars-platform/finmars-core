@@ -26,7 +26,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     configuration_code_as_path = "/".join(configuration.configuration_code.split("."))
 
     workflows_dir = (
-        settings.BASE_API_URL + "/workflows/" + configuration_code_as_path + "/"
+            settings.BASE_API_URL + "/workflows/" + configuration_code_as_path + "/"
     )
 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
@@ -46,7 +46,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
 
 
 def export_configuration_to_directory(
-    source_directory, configuration, master_user, member
+        source_directory, configuration, master_user, member
 ):
     try:
         proxy_user = ProxyUser(member, master_user)
@@ -91,6 +91,15 @@ def export_configuration_to_directory(
             "accounts.accounttype",
             configuration.configuration_code,
             source_directory + "/account-types",
+            context,
+        )
+
+        _l.info("Going to export: portfolios.portfoliotype")
+
+        save_serialized_entity(
+            "portfolios.portfoliotype",
+            configuration.configuration_code,
+            source_directory + "/portfolio-types",
             context,
         )
 

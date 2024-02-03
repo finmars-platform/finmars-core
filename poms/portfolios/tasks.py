@@ -796,7 +796,7 @@ def calculate_portfolio_history(self, task_id: int):
     if period_type == 'ytd':
         date_from = str(get_last_business_day_of_previous_year(date))
     if period_type == 'inception':
-        date_from = str(portfolio.first_transaction_date())
+        date_from = str(portfolio.get_first_transaction_date())
 
     _l.info('calculate_portfolio_history: date_from %s' % date_from)
 
@@ -857,3 +857,45 @@ def calculate_portfolio_history(self, task_id: int):
         portfolio_history.calculate()
 
         count = count + 1
+
+
+
+@finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
+def calculate_portfolio_reconcile_history(self, task_id: int):
+    """
+    Right now trigger only by manual request
+
+    """
+    from poms.celery_tasks.models import CeleryTask
+
+    task = CeleryTask.objects.filter(id=task_id).first()
+    if not task:
+        raise RuntimeError(
+            f"calculate_portfolio_reconcile_history, no such task={task_id}"
+        )
+
+    if not task.options_object:
+        err_msg = "No task options supplied"
+        send_system_message(
+            master_user=task.master_user,
+            action_status="required",
+            type="error",
+            title="Task Failed. Name: calculate_portfolio_reconcile_history",
+            description=err_msg,
+        )
+        task.error_message = err_msg
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        return
+
+    task.celery_tasks_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    if not task.notes:
+        task.notes = ""
+
+    task.save()
+
+    _l.info(
+        f"calculate_portfolio_reconcile_history: "
+        f"task_options={task.options_object}"
+    )
