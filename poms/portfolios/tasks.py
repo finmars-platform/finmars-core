@@ -23,10 +23,10 @@ from poms.instruments.models import CostMethod, PricingPolicy
 from poms.portfolios.models import (
     Portfolio,
     PortfolioHistory,
-    PortfolioRegister,
-    PortfolioRegisterRecord,
     PortfolioReconcileGroup,
     PortfolioReconcileHistory,
+    PortfolioRegister,
+    PortfolioRegisterRecord,
 )
 from poms.portfolios.utils import get_price_calculation_type
 from poms.reports.common import Report
@@ -941,7 +941,9 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
         f"calculate_portfolio_reconcile_history: task_options={task.options_object}"
     )
 
-    portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(user_code=task.options_object.get("portfolio_reconcile_group"))
+    portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
+        user_code=task.options_object.get("portfolio_reconcile_group")
+    )
     date_from = task.options_object.get("date_from")
     date_to = task.options_object.get("date_to")
 
@@ -950,9 +952,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
     count = 0
 
     for date in dates:
-
         try:
-
             task.update_progress(
                 {
                     "current": count,
@@ -962,7 +962,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
                 }
             )
 
-            user_code = f'portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{date}'
+            user_code = f"portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{date}"
 
             try:
                 portfolio_reconcile_history = PortfolioReconcileHistory.objects.get(
@@ -987,9 +987,10 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
             count = count + 1
 
         except Exception as e:
-
-            _l.error('calculate_portfolio_reconcile_history.e %s' % e)
-            _l.error('calculate_portfolio_reconcile_history.e %s' % traceback.format_exc())
+            _l.error("calculate_portfolio_reconcile_history.e %s" % e)
+            _l.error(
+                "calculate_portfolio_reconcile_history.e %s" % traceback.format_exc()
+            )
 
             task.status = CeleryTask.STATUS_ERROR
             task.error_message = e
