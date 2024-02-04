@@ -1,17 +1,18 @@
 from datetime import timedelta
 from logging import getLogger
+from typing import Type
 
 from django.db import models, transaction
 from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from typing import Type
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer, ModelMetaSerializer, PomsClassSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
+from poms.file_reports.serializers import FileReportSerializer
 from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault, CostMethodField
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
@@ -34,6 +35,7 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 
 _l = getLogger("poms.portfolios")
+
 
 class PortfolioClassSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
@@ -86,8 +88,6 @@ class PortfolioTypeLightSerializer(ModelWithUserCodeSerializer):
             "is_deleted",
             "is_enabled",
         ]
-
-
 
 
 class PortfolioPortfolioRegisterSerializer(
@@ -181,7 +181,7 @@ class PortfolioSerializer(
             "is_deleted",
             "is_enabled",
             "registers",
-            "first_transaction", # possible deprecated, do not delete yet
+            "first_transaction",  # possible deprecated, do not delete yet
 
             "first_transaction_date",
             "first_cash_flow_date",
@@ -816,7 +816,6 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
 
 
-
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
@@ -851,20 +850,25 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
 
             "date",
 
-
             "verbose_result",
             "error_message",
-            "status"
+            "status",
+            "file_report",
+            # "file_report_object",
+
+            "is_enabled"
 
         ]
 
     def __init__(self, *args, **kwargs):
-        from poms.currencies.serializers import CurrencyViewSerializer
-
         super().__init__(*args, **kwargs)
 
         self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
             source="portfolio_reconcile_group", read_only=True
+        )
+
+        self.fields["file_report_object"] = FileReportSerializer(
+            source="file_report", read_only=True
         )
 
 
