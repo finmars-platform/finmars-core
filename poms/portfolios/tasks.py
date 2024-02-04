@@ -13,7 +13,8 @@ from poms.common.utils import get_list_of_dates_between_two_dates, get_last_busi
     get_last_business_day, get_list_of_business_days_between_two_dates
 from poms.currencies.models import CurrencyHistory, Currency
 from poms.instruments.models import PricingPolicy, CostMethod
-from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord, Portfolio, PortfolioHistory
+from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord, Portfolio, PortfolioHistory, \
+    PortfolioReconcileHistory, PortfolioReconcileGroup
 from poms.portfolios.utils import get_price_calculation_type
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -899,3 +900,58 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
         f"calculate_portfolio_reconcile_history: "
         f"task_options={task.options_object}"
     )
+
+    portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(user_code=task.options_object.get("portfolio_reconcile_group"))
+    date_from = task.options_object.get("date_from")
+    date_to = task.options_object.get("date_to")
+
+    dates = get_list_of_dates_between_two_dates(date_from, date_to)
+
+    count = 0
+
+    for date in dates:
+
+        try:
+
+            task.update_progress(
+                {
+                    "current": count,
+                    "percent": round(count / (len(dates) / 100)),
+                    "total": len(dates),
+                    "description": f"Reconciling {portfolio_reconcile_group} at {date}",
+                }
+            )
+
+            user_code = f'portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{date}'
+
+            try:
+                portfolio_reconcile_history = PortfolioReconcileHistory.objects.get(
+                    master_user=task.master_user,
+                    user_code=user_code,
+                    portfolio_reconcile_group=portfolio_reconcile_group,
+                    date=date,
+                )
+            except Exception as e:
+                portfolio_reconcile_history = PortfolioReconcileHistory.objects.create(
+                    master_user=task.master_user,
+                    user_code=user_code,
+                    owner=task.member,
+                    portfolio_reconcile_group=portfolio_reconcile_group,
+                    date=date,
+                )
+
+            portfolio_reconcile_history.calculate()
+            portfolio_reconcile_history.linked_task = task
+            portfolio_reconcile_history.save()
+
+            count = count + 1
+
+        except Exception as e:
+
+            _l.error('calculate_portfolio_reconcile_history.e %s' % e)
+            _l.error('calculate_portfolio_reconcile_history.e %s' % traceback.format_exc())
+
+            task.status = CeleryTask.STATUS_ERROR
+            task.error_message = e
+            task.save()
+
