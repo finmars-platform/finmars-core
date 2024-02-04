@@ -723,6 +723,8 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                                 pricing_policy=pricing_policy,
                                 is_temporary_price=True,
                             )
+                        if price_history.error_message:  # reset error messages
+                            price_history.error_message = ""
                         price_history.handle_err(err_msg)
                         price_history.save()
 

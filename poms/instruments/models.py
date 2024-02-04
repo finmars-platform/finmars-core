@@ -2970,6 +2970,8 @@ class PriceHistory(DataTimeStampedModel):
             self.handle_err(f"calculate_ytm error {repr(e)}")
 
         if self.factor in {None, AUTO_CALCULATE}:
+            if self.error_message:  # reset error messages
+                self.error_message = ""
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
@@ -2977,6 +2979,8 @@ class PriceHistory(DataTimeStampedModel):
                 self.factor = 1
 
         if self.accrued_price in {None, AUTO_CALCULATE}:
+            if self.error_message:  # reset error messages
+                self.error_message = ""
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
