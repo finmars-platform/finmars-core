@@ -4,15 +4,17 @@ from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, AbstractClassModel
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
+from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, PricingPolicy, CostMethod
 from poms.obj_attrs.models import GenericAttribute
-from poms.users.models import MasterUser
+from poms.users.models import MasterUser, EcosystemDefault
 from poms_app import settings
 
 _l = getLogger("poms.portfolios")
@@ -922,7 +924,173 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("linked task"),
     )
 
+    file_report = models.ForeignKey(
+        FileReport,
+        null=True,
+        verbose_name=gettext_lazy("file report"),
+        on_delete=models.SET_NULL,
+    )
+
     class Meta:
         unique_together = [
             ['master_user', 'user_code'],
         ]
+
+    def compare_portfolios(self, reference_portfolio, portfolios):
+        report = []
+        reference_items = reference_portfolio['items']
+
+        has_reconcile_error = False
+
+        for portfolio_id, portfolio in portfolios.items():
+
+            if portfolio_id != reference_portfolio['portfolio']:
+
+                for user_code, position_size in portfolio['items'].items():
+                    # Initialize with reference position size; default to 0 if not found
+                    reference_size = reference_items.get(user_code, 0)
+
+                    # Prepare report entry
+                    report_entry = {
+                        "user_code": user_code,
+                        # "Position Portfolio": reference_size,
+                        # "General Portfolio": position_size,
+                        "status": "ok",
+                        "message": "ok",
+                        "diff": 0
+                    }
+
+                    report_entry[reference_portfolio['portfolio_object']['user_code']] = reference_size
+                    report_entry[portfolio['portfolio_object']['user_code']] = position_size
+
+                    # Check for discrepancies
+                    if position_size != reference_size:
+                        discrepancy = abs(reference_size - position_size)
+                        report_entry["status"] = "error"
+                        report_entry[
+                            "message"] = f"{portfolio['portfolio_object']['user_code']} is {'missing' if position_size < reference_size else 'over by'} {discrepancy} units"
+                        report_entry['diff'] = discrepancy
+
+                        has_reconcile_error = True
+
+                    report.append(report_entry)
+
+        return report, has_reconcile_error
+
+    def calculate(self):
+
+        from poms.reports.common import Report
+
+        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
+
+        default_currency = ecosystem_defaults.currency
+        default_pricing_policy = ecosystem_defaults.pricing_policy
+
+        instance = Report(master_user=self.master_user)
+        instance.master_user = self.master_user
+        instance.member = self.owner
+        instance.report_date = self.date
+        instance.pricing_policy = default_pricing_policy
+        instance.portfolios = self.portfolio_reconcile_group.portfolios.all()
+        instance.report_currency = default_currency
+
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance_sync()
+
+        reconcile_result = {}
+
+        _l.info('instance.items[0] %s' % instance.items[0])
+
+        portfolio_map = {}
+
+        position_portfolio_id = None
+
+        for portfolio in self.portfolio_reconcile_group.portfolios.all():
+            portfolio_map[portfolio.id] = portfolio
+
+            if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
+                position_portfolio_id = portfolio.id
+
+        if not position_portfolio_id:
+            raise Exception("Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group")
+
+        for item in instance.items:
+
+            if 'portfolio_id' in item:
+
+                if item['portfolio_id'] not in reconcile_result:
+                    reconcile_result[item['portfolio_id']] = {
+                        'portfolio': item['portfolio_id'],
+                        'portfolio_object': {
+                            "name": portfolio_map[item['portfolio_id']].name,
+                            "user_code": portfolio_map[item['portfolio_id']].user_code,
+                            "portfolio_type": portfolio_map[item['portfolio_id']].portfolio_type_id,
+                            "portfolio_type_object": {
+                                "name": portfolio_map[item['portfolio_id']].portfolio_type.name,
+                                "user_code": portfolio_map[item['portfolio_id']].portfolio_type.user_code,
+                                "portfolio_class": portfolio_map[
+                                    item['portfolio_id']].portfolio_type.portfolio_class_id,
+                                "portfolio_class_object": {
+                                    "id": portfolio_map[item['portfolio_id']].portfolio_type.portfolio_class.id,
+                                    "name": portfolio_map[item['portfolio_id']].portfolio_type.portfolio_class.name,
+                                    "user_code": portfolio_map[
+                                        item['portfolio_id']].portfolio_type.portfolio_class.user_code,
+                                }
+                            }
+                        },
+                        'position_size': 0,
+                        'items': {}
+                    }
+
+                reconcile_result[item['portfolio_id']]['items'][item['user_code']] = item['position_size']
+                reconcile_result[item['portfolio_id']]['position_size'] = reconcile_result[item['portfolio_id']][
+                                                                              'position_size'] + item['position_size']
+
+            else:
+                _l.info('missing portfolio_id item %s' % item)
+
+        _l.info('reconcile_result %s' % reconcile_result)
+
+        reference_portfolio = reconcile_result[position_portfolio_id]
+
+        report, has_reconcile_error = self.compare_portfolios(reference_portfolio, reconcile_result)
+
+        if has_reconcile_error:
+            self.status = self.STATUS_ERROR
+            self.error_message = 'Reconciliation Error. Please check the report for details'
+
+        self.file_report = self.generate_json_report(report)
+        self.save()
+
+        _l.info('report %s' % report)
+
+    def generate_json_report(self, content):
+        # _l.debug('self.result %s' % self.result.__dict__)
+
+        # _l.debug('generate_json_report.result %s' % result)
+
+        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task.id}.json"
+
+        file_report = FileReport()
+
+        file_report.upload_json_as_local_file(
+            file_name=file_name,
+            dict_to_json=content,
+            master_user=self.master_user,
+        )
+        file_report.master_user = self.master_user
+        file_report.name = (
+            f"Reconciliation {current_date_time} (Task {self.linked_task.id}).json"
+        )
+        file_report.file_name = file_name
+        file_report.type = "simple_import.import"
+        file_report.notes = "System File"
+        file_report.content_type = "application/json"
+
+        file_report.save()
+
+        _l.info(f"SimpleImportProcess.json_report {file_report} {file_report.file_url}")
+
+        return file_report
