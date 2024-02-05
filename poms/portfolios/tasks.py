@@ -797,7 +797,7 @@ def calculate_portfolio_history(self, task_id: int):
 
     task.save()
 
-    _l.info(f"calculate_portfolio_history: " f"task_options={task.options_object}")
+    _l.info(f"calculate_portfolio_history: task_options={task.options_object}")
 
     date = task.options_object.get("date")
 
