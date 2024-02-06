@@ -4,7 +4,9 @@ import time
 from django.apps import apps
 from django.db.models import F
 from django.db.models import Q
+from django.core.exceptions import FieldDoesNotExist
 
+from poms.common.filters import filter_items_for_group
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.obj_attrs.models import GenericAttributeType
 
@@ -270,88 +272,89 @@ def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     return qs
 
 
-def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key):
+def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, model):
     start_time = time.time()
-
-    i = 0
+    _l.info(
+        f"TESTING.POMS.COMMON.grouping_handlers get_queryset_filters"
+        f"model {model}"
+    )
+    # i = 0
 
     # print('get_queryset_filters len %s' % len(qs    ))
 
     # force_qs_evaluation(qs)
 
-    groups_values_count = len(groups_values)
+    # groups_values_count = len(groups_values)
 
-    for attr in groups_types:
-
-        if attr.isdigit():
-
-            if groups_values_count > i:
-
-                attribute_type = GenericAttributeType.objects.get(id__exact=attr)
-
-                if attribute_type.value_type == 20:
-
-                    if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_float__isnull=True,
-                                       attributes__attribute_type=attribute_type)
-                    else:
-                        qs = qs.filter(attributes__value_float=groups_values[i],
-                                       attributes__attribute_type=attribute_type)
-
-                if attribute_type.value_type == 10:
-
-                    if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_string__isnull=True,
-                                       attributes__attribute_type=attribute_type)
-                    else:
-                        qs = qs.filter(attributes__value_string=groups_values[i],
-                                       attributes__attribute_type=attribute_type)
-
-                if attribute_type.value_type == 30:
-
-                    if groups_values[i] == '-':
-                        qs = qs.filter(attributes__classifier__isnull=True,
-                                       attributes__attribute_type=attribute_type)
-                    else:
-                        qs = qs.filter(attributes__classifier=groups_values[i],
-                                       attributes__attribute_type=attribute_type)
-
-                if attribute_type.value_type == 40:
-
-                    if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_date__isnull=True,
-                                       attributes__attribute_type=attribute_type)
-                    else:
-                        qs = qs.filter(attributes__value_date=groups_values[i],
-                                       attributes__attribute_type=attribute_type)
-
-        else:
-
-            if groups_values_count > i:
-
-                params = {}
-
-                if groups_values[i] == '-':
-
-                    res_attr = attr
-
-                    if is_relation(res_attr, content_type_key):
-                        res_attr = res_attr + '__user_code'
-
-                    qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
-
-                else:
-                    if is_relation(attr, content_type_key):
-                        params[attr + '__user_code'] = groups_values[i]
-                    else:
-                        params[attr] = groups_values[i]
-
-                    qs = qs.filter(**params)
-
-        # force_qs_evaluation(qs)
-
-        i = i + 1
-
+    # for attr in groups_types:
+    #
+    #     if attr.isdigit():
+    #
+    #         if groups_values_count > i:
+    #
+    #             attribute_type = GenericAttributeType.objects.get(id__exact=attr)
+    #
+    #             if attribute_type.value_type == 20:
+    #
+    #                 if groups_values[i] == '-':
+    #                     qs = qs.filter(attributes__value_float__isnull=True,
+    #                                    attributes__attribute_type=attribute_type)
+    #                 else:
+    #                     qs = qs.filter(attributes__value_float=groups_values[i],
+    #                                    attributes__attribute_type=attribute_type)
+    #
+    #             if attribute_type.value_type == 10:
+    #
+    #                 if groups_values[i] == '-':
+    #                     qs = qs.filter(attributes__value_string__isnull=True,
+    #                                    attributes__attribute_type=attribute_type)
+    #                 else:
+    #                     qs = qs.filter(attributes__value_string=groups_values[i],
+    #                                    attributes__attribute_type=attribute_type)
+    #
+    #             if attribute_type.value_type == 30:
+    #
+    #                 if groups_values[i] == '-':
+    #                     qs = qs.filter(attributes__classifier__isnull=True,
+    #                                    attributes__attribute_type=attribute_type)
+    #                 else:
+    #                     qs = qs.filter(attributes__classifier=groups_values[i],
+    #                                    attributes__attribute_type=attribute_type)
+    #
+    #             if attribute_type.value_type == 40:
+    #
+    #                 if groups_values[i] == '-':
+    #                     qs = qs.filter(attributes__value_date__isnull=True,
+    #                                    attributes__attribute_type=attribute_type)
+    #                 else:
+    #                     qs = qs.filter(attributes__value_date=groups_values[i],
+    #                                    attributes__attribute_type=attribute_type)
+    #
+    #     else:
+    #
+    #         if groups_values_count > i:
+    #
+    #             params = {}
+    #
+    #             if groups_values[i] == '-':
+    #
+    #                 res_attr = attr
+    #
+    #                 if is_relation(res_attr, content_type_key):
+    #                     res_attr = res_attr + '__user_code'
+    #
+    #                 qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
+    #
+    #             else:
+    #                 if is_relation(attr, content_type_key):
+    #                     params[attr + '__user_code'] = groups_values[i]
+    #                 else:
+    #                     params[attr] = groups_values[i]
+    #
+    #                 qs = qs.filter(**params)
+    #
+    #     i = i + 1
+    qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, model)
     _l.debug("get_queryset_filters %s seconds " % (time.time() - start_time))
 
     # original_qs = original_qs.filter(id__in=qs)
@@ -402,7 +405,9 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     else:
 
-        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key)
+        Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
+
+        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, Model)
 
         # print('handle groups after filters qs len %s' % len(qs))
         # print('handle groups after filters qs len %s' % qs)
@@ -421,6 +426,49 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     return qs
 
+def _apply_filters_for_group_dash(options, model, attribute_key, group_value):
+    """
+    Process a group with a name '-' when counting items inside a group
+
+    :param options:
+    :param group_value:
+    :param model:
+    :param attribute_key: Key of an attribute (not GenericAttribute) that is used as a group
+    :type attribute_key: str
+    :return dict: options with filters for items for group '-'
+    """
+
+    '''
+    TODO: move rest of models from front end to backend
+    use them to determine whether attribute 
+    contains number or date
+    '''
+    try:
+        field = model._meta.get_field(attribute_key)
+    except (FieldDoesNotExist, AttributeError) as e:
+        raise e
+
+    field_type = field.get_internal_type()
+    value_type = None
+
+    if 'Date' in field_type:
+        value_type = 40
+    else:
+        for type_part in ['Float', 'Integer']:
+            if type_part in field_type:
+                value_type = 20
+                break
+
+    if value_type == 20:
+        options[attribute_key] = 0
+
+    if value_type in (20, 40):
+        options[attribute_key + '__isnull'] = True
+    else:
+        # value_type is 10 or 30
+        options[attribute_key] = group_value
+
+    return options
 
 def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings, ev_options,
                  global_table_search):
@@ -464,13 +512,19 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                 }
 
                 # _l.info('attribute value %s' % value)
+                result = []
 
                 # add previous options
                 for key, val in options.items():
                     attribute_options[key] = val
 
                 if attribute_type.value_type == 20:
-                    attribute_options["attributes__value_float"] = value
+                    if value == "-":
+                        attribute_options["attributes__value_float__isnull"] = True
+                        # TODO: remove line bellow after separating 0 and "-"
+                        attribute_options["attributes__value_float"] = 0
+                    else:
+                        attribute_options["attributes__value_float"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
@@ -492,7 +546,10 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     # _l.info('attributes__classifier__name result %s ' % result)
 
                 if attribute_type.value_type == 40:
-                    attribute_options["attributes__value_date"] = value
+                    if value == "-":
+                        attribute_options["attributes__value_date__isnull"] = True
+                    else:
+                        attribute_options["attributes__value_date"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
@@ -511,7 +568,19 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     key = key + '__user_code'
 
                 if len(group_values) and index < len(group_values):
-                    options[key] = group_values[index]
+
+                    if group_values[index] == "-":
+
+                        options = _apply_filters_for_group_dash(
+                            options,
+                            Model,
+                            key,
+                            group_values[index],
+                        )
+
+                    else:
+                        options[key] = group_values[index]
+
                 else:
                     options[key] = item['group_identifier']
 

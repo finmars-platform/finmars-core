@@ -188,6 +188,273 @@ class CharExactFilter(django_filters.CharFilter):
         kwargs["lookup_expr"] = "exact"
         super(CharExactFilter, self).__init__(*args, **kwargs)
 
+def _is_date_or_number(field_type):
+    for type_part in ['Date', 'Float', 'Integer']:
+        if type_part in field_type:
+            return True
+
+    return False
+
+
+def filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model=None):
+    """
+    :param queryset:
+    :type queryset: object
+    :param groups_types: List of attribute types that are used for grouping
+    :type groups_types: list
+    :param groups_values: List of group names
+    :type groups_values: list
+    :param model:
+    :type model: object|None
+    :param content_type_key:
+    :type content_type_key: str
+    :return object: filtered queryset
+    """
+    if len(groups_types) and len(groups_values):
+        for i, attr in enumerate(groups_types):
+            if len(groups_values) > i:
+                if attr.isdigit():
+                    attribute_type = GenericAttributeType.objects.get(
+                        id__exact=attr
+                    )
+
+                    attribute_type = GenericAttributeType.objects.get(id__exact=attr)
+
+                    if attribute_type.value_type == 20:
+
+                        if groups_values[i] == '-':
+                            queryset = queryset.filter(
+                                attributes__value_float__isnull=True,
+                                attributes__attribute_type=attribute_type
+                            )
+                        else:
+                            queryset = queryset.filter(
+                                attributes__value_float=groups_values[i],
+                                attributes__attribute_type=attribute_type
+                            )
+
+                    elif attribute_type.value_type == 10:
+
+                        if groups_values[i] == '-':
+                            queryset = queryset.filter(
+                                attributes__value_string__isnull=True,
+                                attributes__attribute_type=attribute_type
+                            )
+                        else:
+                            queryset = queryset.filter(
+                                attributes__value_string=groups_values[i],
+                                attributes__attribute_type=attribute_type
+                            )
+
+                    elif attribute_type.value_type == 30:
+
+                        if groups_values[i] == '-':
+                            queryset = queryset.filter(attributes__classifier__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            queryset = queryset.filter(attributes__classifier=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                    elif attribute_type.value_type == 40:
+
+                        if groups_values[i] == '-':
+                            queryset = queryset.filter(attributes__value_date__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            queryset = queryset.filter(attributes__value_date=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                elif groups_values[i] == "-":
+
+                    res_attr = attr
+
+                    if is_relation(res_attr, content_type_key):
+                        res_attr = f"{res_attr}__user_code"
+
+                    # queryset = queryset.filter(
+                    #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
+                    # )
+
+                    q = Q(**{f"{res_attr}__isnull": True})
+
+                    '''
+                    TODO: move rest of models from front end to backend
+                    use them to determine whether attribute 
+                    contains number or date
+                    '''
+                    try:
+                        field = model._meta.get_field(attr)
+                    except (FieldDoesNotExist, AttributeError) as e:
+                        raise e
+
+                    field_type = field.get_internal_type()
+                    is_num = False
+
+                    for type_part in ['Float', 'Integer']:
+                        if type_part in field_type:
+                            is_num = True
+                            break
+
+                    if is_num:
+                        q = q | Q(**{res_attr: 0})
+
+                    elif 'Date' not in field_type:
+                        q = q | Q(**{res_attr: "-"})
+
+                    queryset = queryset.filter(q)
+                    # if not _is_date_or_number(field_type):
+                    #     queryset = queryset | queryset.filter(Q(**{res_attr: "-"}))
+
+                else:
+                    params = {}
+
+                    if is_relation(attr, content_type_key):
+                        params[f"{attr}__user_code"] = groups_values[i]
+                    else:
+                        params[attr] = groups_values[i]
+
+                    queryset = queryset.filter(**params)
+
+    return queryset
+
+def _filter_queryset_for_attribute(self_obj, request, queryset, view):
+    groups_types = request.data.get("groups_types", [])
+    groups_values = request.data.get("groups_values", [])
+
+    master_user = request.user.master_user
+
+    if hasattr(view.serializer_class, "Meta"):
+        model = view.serializer_class.Meta.model
+    else:
+        return queryset
+
+    content_type = ContentType.objects.get_for_model(
+        model, for_concrete_model=False
+    )
+
+    content_type_key = f"{content_type.app_label}.{content_type.model}"
+
+    groups_types = list(
+        map(
+            lambda x: self_obj.format_groups(x, master_user, content_type), groups_types
+        )
+    )
+
+    # if len(groups_types) and len(groups_values):
+    #     for i, attr in enumerate(groups_types):
+    #         if len(groups_values) > i:
+    #             if attr.isdigit():
+    #                 attribute_type = GenericAttributeType.objects.get(
+    #                     id__exact=attr
+    #                 )
+    #
+    #                 if attribute_type.value_type == 20:
+    #                     queryset = (
+    #                         queryset.filter(
+    #                             attributes__value_float__isnull=True,
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                         if groups_values[i] == "-"
+    #                         else queryset.filter(
+    #                             attributes__value_float=groups_values[i],
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                     )
+    #                 if attribute_type.value_type == 10:
+    #                     queryset = (
+    #                         queryset.filter(
+    #                             attributes__value_string__isnull=True,
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                         if groups_values[i] == "-"
+    #                         else queryset.filter(
+    #                             attributes__value_string=groups_values[i],
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                     )
+    #                 if attribute_type.value_type == 30:
+    #                     if groups_values[i] == "-":
+    #                         queryset = queryset.filter(
+    #                             attributes__classifier__isnull=True,
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                     else:
+    #                         queryset = queryset.filter(
+    #                             attributes__classifier=groups_values[i],
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #
+    #                 if attribute_type.value_type == 40:
+    #                     if groups_values[i] == "-":
+    #                         queryset = queryset.filter(
+    #                             attributes__value_date__isnull=True,
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #                     else:
+    #                         queryset = queryset.filter(
+    #                             attributes__value_date=groups_values[i],
+    #                             attributes__attribute_type=attribute_type,
+    #                         )
+    #
+    #             elif groups_values[i] == "-":
+    #                 res_attr = attr
+    #
+    #                 if is_relation(res_attr, content_type_key):
+    #                     res_attr = f"{res_attr}__user_code"
+    #
+    #                 # queryset = queryset.filter(
+    #                 #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
+    #                 # )
+    #
+    #                 q = Q(**{f"{res_attr}__isnull": True})
+    #
+    #                 '''
+    #                 TODO: move rest of models from front end to backend
+    #                 use them to determine whether attribute
+    #                 contains number or date
+    #                 '''
+    #                 try:
+    #                     field = model._meta.get_field(attr)
+    #                 except (FieldDoesNotExist, AttributeError) as e:
+    #                     raise e
+    #
+    #                 field_type = field.get_internal_type()
+    #                 is_num = False
+    #
+    #                 for type_part in ['Float', 'Integer']:
+    #                     if type_part in field_type:
+    #                         is_num = True
+    #                         break
+    #
+    #                 if is_num:
+    #                     q = q | Q(**{res_attr: 0})
+    #
+    #                 elif 'Date' not in field_type:
+    #                     q = q | Q(**{res_attr: "-"})
+    #
+    #                 queryset = queryset.filter(q)
+    #                 # if not _is_date_or_number(field_type):
+    #                 #     queryset = queryset | queryset.filter(Q(**{res_attr: "-"}))
+    #
+    #             else:
+    #                 params = {}
+    #
+    #                 if is_relation(attr, content_type_key):
+    #                     params[f"{attr}__user_code"] = groups_values[i]
+    #                 else:
+    #                     params[attr] = groups_values[i]
+    #
+    #                 queryset = queryset.filter(**params)
+    #
+    #                 # force_qs_evaluation(queryset)
+
+    return filter_items_for_group(
+        queryset,
+        groups_types,
+        groups_values,
+        content_type_key,
+        model
+    )
 
 class GroupsAttributeFilter(BaseFilterBackend):
     def format_groups(self, group_type, master_user, content_type):
@@ -203,108 +470,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
         return group_type
 
     def filter_queryset(self, request, queryset, view):
-        groups_types = request.data.get("groups_types", [])
-        groups_values = request.data.get("groups_values", [])
-
-        master_user = request.user.master_user
-
-        if hasattr(view.serializer_class, "Meta"):
-            model = view.serializer_class.Meta.model
-        else:
-            return queryset
-
-        content_type = ContentType.objects.get_for_model(
-            model, for_concrete_model=False
-        )
-
-        content_type_key = f"{content_type.app_label}.{content_type.model}"
-
-        groups_types = list(
-            map(
-                lambda x: self.format_groups(x, master_user, content_type), groups_types
-            )
-        )
-
-        if len(groups_types) and len(groups_values):
-            for i, attr in enumerate(groups_types):
-                if len(groups_values) > i:
-                    if attr.isdigit():
-                        attribute_type = GenericAttributeType.objects.get(
-                            id__exact=attr
-                        )
-
-                        if attribute_type.value_type == 20:
-                            queryset = (
-                                queryset.filter(
-                                    attributes__value_float__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                                if groups_values[i] == "-"
-                                else queryset.filter(
-                                    attributes__value_float=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            )
-                        if attribute_type.value_type == 10:
-                            queryset = (
-                                queryset.filter(
-                                    attributes__value_string__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                                if groups_values[i] == "-"
-                                else queryset.filter(
-                                    attributes__value_string=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            )
-                        if attribute_type.value_type == 30:
-                            if groups_values[i] == "-":
-                                queryset = queryset.filter(
-                                    attributes__classifier__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            else:
-                                queryset = queryset.filter(
-                                    attributes__classifier=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-
-                        if attribute_type.value_type == 40:
-                            if groups_values[i] == "-":
-                                queryset = queryset.filter(
-                                    attributes__value_date__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            else:
-                                queryset = queryset.filter(
-                                    attributes__value_date=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-
-                    elif groups_values[i] == "-":
-                        res_attr = attr
-
-                        if is_relation(res_attr, content_type_key):
-                            res_attr = f"{res_attr}__user_code"
-
-                        queryset = queryset.filter(
-                            (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
-                        )
-
-                    else:
-                        params = {}
-
-                        if is_relation(attr, content_type_key):
-                            params[f"{attr}__user_code"] = groups_values[i]
-                        else:
-                            params[attr] = groups_values[i]
-
-                        queryset = queryset.filter(**params)
-
-                        # force_qs_evaluation(queryset)
-
-        return queryset
-
+        return _filter_queryset_for_attribute(self, request, queryset, view)
 
 class AttributeFilter(BaseFilterBackend):
     def format_groups(self, group_type, master_user, content_type):
@@ -320,107 +486,7 @@ class AttributeFilter(BaseFilterBackend):
         return group_type
 
     def filter_queryset(self, request, queryset, view):
-        groups_types = request.data.get("groups_types", [])
-        groups_values = request.data.get("groups_values", [])
-
-        master_user = request.user.master_user
-
-        if hasattr(view.serializer_class, "Meta"):
-            model = view.serializer_class.Meta.model
-        else:
-            return queryset
-
-        content_type = ContentType.objects.get_for_model(
-            model, for_concrete_model=False
-        )
-
-        content_type_key = f"{content_type.app_label}.{content_type.model}"
-
-        groups_types = list(
-            map(
-                lambda x: self.format_groups(x, master_user, content_type), groups_types
-            )
-        )
-
-        if len(groups_types) and len(groups_values):
-            for i, attr in enumerate(groups_types):
-                if len(groups_values) > i:
-                    if attr.isdigit():
-                        attribute_type = GenericAttributeType.objects.get(
-                            id__exact=attr
-                        )
-
-                        if attribute_type.value_type == 20:
-                            queryset = (
-                                queryset.filter(
-                                    attributes__value_float__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                                if groups_values[i] == "-"
-                                else queryset.filter(
-                                    attributes__value_float=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            )
-                        if attribute_type.value_type == 10:
-                            queryset = (
-                                queryset.filter(
-                                    attributes__value_string__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                                if groups_values[i] == "-"
-                                else queryset.filter(
-                                    attributes__value_string=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            )
-                        if attribute_type.value_type == 30:
-                            if groups_values[i] == "-":
-                                queryset = queryset.filter(
-                                    attributes__classifier__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            else:
-                                queryset = queryset.filter(
-                                    attributes__classifier=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-
-                        if attribute_type.value_type == 40:
-                            if groups_values[i] == "-":
-                                queryset = queryset.filter(
-                                    attributes__value_date__isnull=True,
-                                    attributes__attribute_type=attribute_type,
-                                )
-                            else:
-                                queryset = queryset.filter(
-                                    attributes__value_date=groups_values[i],
-                                    attributes__attribute_type=attribute_type,
-                                )
-
-                    elif groups_values[i] == "-":
-                        res_attr = attr
-
-                        if is_relation(res_attr, content_type_key):
-                            res_attr = f"{res_attr}__user_code"
-
-                        queryset = queryset.filter(
-                            (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
-                        )
-
-                    else:
-                        params = {}
-
-                        if is_relation(attr, content_type_key):
-                            params[f"{attr}__user_code"] = groups_values[i]
-                        else:
-                            params[attr] = groups_values[i]
-
-                        queryset = queryset.filter(**params)
-
-                        # force_qs_evaluation(queryset)
-
-        return queryset
+        return _filter_queryset_for_attribute(self, request, queryset, view)
 
 
 class ClassifierFilter(BaseFilterBackend):

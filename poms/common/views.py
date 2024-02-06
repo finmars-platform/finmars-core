@@ -1,6 +1,7 @@
 import contextlib
 import json
 import logging
+import hunter
 import time
 from os.path import getsize
 
@@ -343,6 +344,9 @@ class AbstractModelViewSet(
         )
         master_user = request.user.master_user
 
+        # tracer.runfunc(self.filter_queryset, self.get_queryset())
+        # tracer.results().write_results(coverdir="./trace_result")
+        # hunter.trace(module_startswith=["rest_framework", "poms"], action=hunter.CallPrinter(stream=open("./hunter_trace.txt", "w")))
         queryset = self.filter_queryset(self.get_queryset())
 
         if content_type.model not in [
@@ -400,9 +404,18 @@ class AbstractModelViewSet(
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
         ev_options = request.data.get("ev_options", "")
-
+        # tracer.runfunc(self.get_queryset)
+        # tracer.results().write_results(coverdir="./trace_result")
         qs = self.get_queryset()
-
+        # TESTING
+        # for item in qs:
+        #     ap_list = []
+        #
+        #     ap_list.append(getattr(item, "accrued_price"))
+        #     _l.info(
+        #         f"TESTING.{self.__module__}.{self.__class__.__name__}.list_ev_group ap_list "
+        #         f"{ap_list}"
+        #     )
         qs = self.filter_queryset(qs)
 
         filtered_qs = self.get_queryset()
