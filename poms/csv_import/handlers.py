@@ -1387,12 +1387,12 @@ class SimpleImportProcess(object):
             key = entity_field.system_property_key
 
             relation_models_to_ids[key] = {}
-        
+
             if key in relation_models_user_codes:
                 relation_filter_result = relation_fields_map[key].objects.filter(
                     user_code__in=relation_models_user_codes[key]
                 )
-                
+
                 if relation_filter_result:
                     for result_row in relation_filter_result:
                         relation_id = result_row.id
@@ -1407,7 +1407,7 @@ class SimpleImportProcess(object):
 
         for entity_field in all_entity_fields_models:
             key = entity_field.system_property_key
-            
+
             if key in relation_fields_map and key in relation_models_to_ids and \
             key in result_item and isinstance(result_item[key], str):
                 if result_item[key] in relation_models_to_ids[key]:
@@ -1424,7 +1424,7 @@ class SimpleImportProcess(object):
             all_entity_fields_models = self.scheme.entity_fields.all()
 
         relation_fields_map = self.__relation_fields_map_for_content_type()
-        
+
         for entity_field in all_entity_fields_models:
             key = entity_field.system_property_key
 
@@ -1657,24 +1657,24 @@ class SimpleImportProcess(object):
     def import_items_by_batche_indexes(self, batche_indexes, filter_for_async_functions_eval):
         batche_rows_count = 0
         model = self.scheme.content_type.model_class()
-        
+
         all_entity_fields_models = self.scheme.entity_fields.all()
 
         models_q_filter_list = []
         relation_models_user_codes={}
-    
+
         for item_index in batche_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(self.items[item_index], all_entity_fields_models)
             # dict for getting relation models at next step
             relation_models_user_codes = self.__get_relation_to_convert(
-                self.items[item_index].final_inputs, #self.items[item_index], 
-                relation_models_user_codes, 
+                self.items[item_index].final_inputs, #self.items[item_index],
+                relation_models_user_codes,
                 all_entity_fields_models
             )
 
         # getting relation models
         relation_models_to_ids = self.__get_relation_to_ids(
-            relation_models_user_codes, 
+            relation_models_user_codes,
             all_entity_fields_models
         )
 
@@ -1685,15 +1685,15 @@ class SimpleImportProcess(object):
                     result_item[key] = self.items[item_index].final_inputs[key]
 
             result_item = self.replace_item_relations_by_ids(
-                self.items[item_index], 
-                result_item, 
-                relation_models_to_ids, 
+                self.items[item_index],
+                result_item,
+                relation_models_to_ids,
                 all_entity_fields_models
             )
             result_item = self.remove_nullable_attributes(result_item)
 
             self.items[item_index].final_inputs = result_item
-        
+
         for item_index in batche_indexes:
             try:
                 if self.scheme.content_type.model == "pricehistory":
@@ -1715,7 +1715,7 @@ class SimpleImportProcess(object):
             except Exception as e:
                 self.items[item_index].status = "error"
                 self.items[item_index].error_message = f"{self.items[item_index].error_message} Relation model error {e}"
-        
+
         if models_q_filter_list:
             conditions = reduce(or_, models_q_filter_list)
             model_objects_for_update = model.objects.filter(conditions)
@@ -1728,22 +1728,22 @@ class SimpleImportProcess(object):
             for model_object in model_objects_for_update:
                 if self.scheme.content_type.model == "pricehistory":
                     model_key_for_matching_model = self.__get_key_for_matching_model(
-                        key_model_user_code = model_object.instrument_id, 
-                        pricing_policy__user_code = model_object.pricing_policy_id, 
+                        key_model_user_code = model_object.instrument_id,
+                        pricing_policy__user_code = model_object.pricing_policy_id,
                         date = model_object.date
                     )
                 else:  #"currencyhistory"
                     model_key_for_matching_model = self.__get_key_for_matching_model(
-                        key_model_user_code = model_object.currency_id, 
-                        pricing_policy__user_code = model_object.pricing_policy_id, 
+                        key_model_user_code = model_object.currency_id,
+                        pricing_policy__user_code = model_object.pricing_policy_id,
                         date = model_object.date
-                    )                    
+                    )
                 model_for_update_ids[model_key_for_matching_model] = model_object
 
         # dict for filtering models by key
         models_for_bulk_insert = {}
         models_for_bulk_update = {}
-        
+
         for item_index in batche_indexes:
             # skip error status items
             if self.items[item_index].status == "error":
@@ -1757,7 +1757,7 @@ class SimpleImportProcess(object):
                     ].id,
                     date=self.items[item_index].final_inputs["date"],
                 )
-            else: #"currencyhistory"
+            else:  # "currencyhistory"
                 item_key_for_matching_model = self.__get_key_for_matching_model(
                     key_model_user_code=self.items[item_index].final_inputs["currency"].id,
                     pricing_policy__user_code=self.items[item_index].final_inputs[
@@ -1796,9 +1796,9 @@ class SimpleImportProcess(object):
                         result_item[key] = self.items[item_index].final_inputs[key]
 
                 result_item = self.replace_item_relations_by_ids(
-                    self.items[item_index], 
-                    result_item, 
-                    relation_models_to_ids, 
+                    self.items[item_index],
+                    result_item,
+                    relation_models_to_ids,
                     all_entity_fields_models
                 )
                 result_item = self.remove_nullable_attributes(result_item)
@@ -1839,7 +1839,7 @@ class SimpleImportProcess(object):
             _l.info(f"SimpleImportProcess.Task bulk_update count. {len(models_for_bulk_update.values())} ")
 
         _l.info(f"SimpleImportProcess.Task filter_for_async_functions_eval count. {len(filter_for_async_functions_eval)} ")
-        
+
         return batche_rows_count
 
     def handle_successful_item_import(self, item, serializer):
@@ -1962,8 +1962,8 @@ class SimpleImportProcess(object):
 
             if len(batche_indexes) >= items_per_batche or not (item_index < len(self.items)):
                 batche_rows_count = self.import_items_by_batche_indexes(batche_indexes, filter_for_async_functions_eval)
-                self.result.processed_rows = self.result.processed_rows + batche_rows_count 
-                batche_indexes = []                
+                self.result.processed_rows = self.result.processed_rows + batche_rows_count
+                batche_indexes = []
 
                 self.task.update_progress(
                     {
@@ -2202,7 +2202,7 @@ class SimpleImportFinalUpdatesProcess(object):
                             "description": f"Row finalization {success_models_updates_count} processed",
                         }
                     )
-                    models_q_filter_list = []  
+                    models_q_filter_list = []
 
         self.task.result_object = {
             'total_models_for_update': total_models_for_update,
