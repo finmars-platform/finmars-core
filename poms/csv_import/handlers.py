@@ -1935,7 +1935,7 @@ class SimpleImportProcess:
         _l.info(
             f"SimpleImportProcess.Task filter_for_async_functions_eval count."
             f" {len(filter_for_async_functions_eval)} "
-        )
+)
 
         return batch_rows_count
 
