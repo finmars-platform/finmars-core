@@ -1852,7 +1852,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
         # _l.info('calculate_quantlib_ytm price %s ' % price)
 
-        if bond and isinstance(bond, ql.FixedRateBond):
+        if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
             try:
@@ -1877,8 +1877,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         modified_duration = 0
 
         bond = self.get_quantlib_bond()
-
-        if bond and isinstance(bond, ql.FixedRateBond):
+        if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
             try:

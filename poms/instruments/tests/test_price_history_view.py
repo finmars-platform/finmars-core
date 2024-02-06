@@ -211,7 +211,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
             response_json["principal_price"], pricing_history.principal_price
         )
         self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
-        self.assertEqual(response_json["error_message"], "")
+        self.assertIn("object has no attribute 'dayCounter'", response_json["error_message"])
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")

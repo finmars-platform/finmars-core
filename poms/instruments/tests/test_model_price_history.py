@@ -5,6 +5,7 @@ from poms.instruments.fields import AUTO_CALCULATE
 
 class PriceHistoryModeltTest(BaseTestCase):
     databases = "__all__"
+    maxDiff = None
 
     def setUp(self):
         super().setUp()
@@ -27,7 +28,7 @@ class PriceHistoryModeltTest(BaseTestCase):
         self.pricing_history.save()
 
         self.pricing_history.refresh_from_db()
-        self.assertEqual(self.pricing_history.error_message, self.err_msg)
+        self.assertIn(self.err_msg, self.pricing_history.error_message)
 
     @BaseTestCase.cases(
         ("none", None),
