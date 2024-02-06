@@ -81,12 +81,14 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
             
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.user_code == DASH:
-            return Response({
-                "message": "Cannot delete instance because they are referenced through a protected foreign key",
-            },
-                status=status.HTTP_409_CONFLICT,
-            )
+
+        if hasattr(instance, 'user_code'):
+            if instance.user_code == DASH:
+                return Response({
+                    "message": "Cannot delete instance because they are referenced through a protected foreign key",
+                },
+                    status=status.HTTP_409_CONFLICT,
+                )
         return super().destroy(request, *args, **kwargs)
 
 
