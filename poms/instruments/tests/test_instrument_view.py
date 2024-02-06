@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, AccrualCalculationSchedule
 from poms.instruments.tests.common_test_data import (
     EXPECTED_INSTRUMENT,
     INSTRUMENT_CREATE_DATA,
@@ -198,3 +198,23 @@ class InstrumentViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__retrieve_bond_with_accrual_schedule(self):
+        instrument = self.create_instrument("bond")
+        start_date = "2021-01-10"
+        payment_date = "2022-01-31"
+        AccrualCalculationSchedule.objects.create(
+            instrument=instrument,
+            accrual_calculation_model_id=1,
+            accrual_start_date=start_date,
+            first_payment_date=payment_date,
+        )
+
+        response = self.client.get(path=f"{self.url}{instrument.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        accrual_data = response_json['accrual_calculation_schedules'][0]
+        self.assertEqual(accrual_data["accrual_start_date"], start_date)
+        self.assertEqual(accrual_data["first_payment_date"], payment_date)
