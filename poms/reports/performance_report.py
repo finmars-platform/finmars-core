@@ -6,6 +6,7 @@ import traceback
 from datetime import timedelta
 
 from django.forms import model_to_dict
+from django.db.utils import DataError
 
 from poms.accounts.models import Account, AccountType
 from poms.common.models import ProxyUser, ProxyRequest
@@ -220,7 +221,10 @@ class PerformanceReportBuilder:
                 self.instance.items.append(item)
 
         if self.instance.calculation_type == 'modified_dietz':
-            self.build_modified_dietz(begin_date, self.end_date)
+            try:
+                self.build_modified_dietz(begin_date, self.end_date)
+            except DataError:
+                pass
 
         # _l.info('items total %s' % len(self.instance.items))
 
