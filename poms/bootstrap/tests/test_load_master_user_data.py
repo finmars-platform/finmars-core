@@ -6,25 +6,27 @@ from poms.bootstrap.apps import BootstrapConfig
 from poms.common.common_base_test import BaseTestCase
 from poms.users.models import Member
 
+MOCK_RESPONSE = {
+    "name": "master_from_backup",
+    "description": "description",
+    "is_from_backup": True,
+    "old_backup_name": None,
+    "version": "6.6.6",
+    "base_api_url": "space11111",
+    "owner": {"username": "new_owner", "email": "test@mail.ru"},
+    "status": 0,  # INITIAL
+}
+
 
 class FinmarsTaskTestCase(BaseTestCase):
+    """
+    Test doesn't run whole BootstrapConfig class,
+    it checks only one method: load_master_user_data
+    """
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.mock_response_data = {
-            "name": "master_from_backup",
-            "description": "description",
-            "is_from_backup": True,
-            "old_backup_name": None,
-            "version": "6.6.6",
-            "base_api_url": "space11111",
-            "owner": {"username": "new_owner", "email": "test@mail.ru"},
-            "status": 0,  # INITIAL
-        }
-        self.mock_response = mock.Mock()
-        self.mock_response.status_code = 200
-        self.mock_response.text = "nice mocked text"
-        self.mock_response.json.return_value = self.mock_response_data
         self.old_member = Member.objects.create(
             master_user=self.master_user,
             is_admin=True,
@@ -32,20 +34,43 @@ class FinmarsTaskTestCase(BaseTestCase):
             is_deleted=False,
         )
 
-    # TODO
-    #  We need to decide, either we allow execution of bootstrap in tests or not
-    #  If we allow, we need to create master user and finmars_bot there, so need to remove creating them in tests
-    #  so, if we allow bootstrap in tests, we can uncomment this test
-    # @mock.patch("poms.bootstrap.apps.requests.post")
-    # @override_settings(AUTHORIZER_URL="authorizer/api/")
-    # def test__run_load_ok(self, mock_post):
-    #     mock_post.return_value = self.mock_response
-    #     self.old_member.refresh_from_db(fields=["is_deleted"])
-    #     self.assertFalse(self.old_member.is_deleted)
-    #
-    #     BootstrapConfig.load_master_user_data()
-    #
-    #     mock_post.assert_called()
-    #
-    #     self.old_member.refresh_from_db(fields=["is_deleted"])
-    #     self.assertTrue(self.old_member.is_deleted)
+    @mock.patch("poms.bootstrap.apps.requests.post")
+    @override_settings(AUTHORIZER_URL="authorizer/api/")
+    def test__load_master_user_data_status_initial(self, mock_post):
+        mock_response_data = MOCK_RESPONSE.copy()
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.text = "initial status"
+        mock_response.json.return_value = mock_response_data
+
+        mock_post.return_value = mock_response
+        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.assertFalse(self.old_member.is_deleted)
+
+        BootstrapConfig.load_master_user_data()
+
+        mock_post.assert_called()
+
+        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.assertTrue(self.old_member.is_deleted)
+
+    @mock.patch("poms.bootstrap.apps.requests.post")
+    @override_settings(AUTHORIZER_URL="authorizer/api/")
+    def test__load_master_user_data_status_operational(self, mock_post):
+        mock_response_data = MOCK_RESPONSE.copy()
+        mock_response_data["status"] = 1  # OPERATIONAL
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.text = "operational status"
+        mock_response.json.return_value = mock_response_data
+
+        mock_post.return_value = mock_response
+        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.assertFalse(self.old_member.is_deleted)
+
+        BootstrapConfig.load_master_user_data()
+
+        mock_post.assert_called()
+
+        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.assertFalse(self.old_member.is_deleted)

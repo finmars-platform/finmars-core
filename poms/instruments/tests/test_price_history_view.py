@@ -353,8 +353,6 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     def test__update_with_null_accrued_price(self):
-        from pprint import pprint
-
         create_data = self.prepare_data_for_create()
         create_data["accrued_price"] = 0
 
