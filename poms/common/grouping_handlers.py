@@ -6,9 +6,10 @@ from django.db.models import F
 from django.db.models import Q
 from django.core.exceptions import FieldDoesNotExist
 
-from poms.common.filters import filter_items_for_group
+from poms.common.filters import filter_items_for_group, get_q_obj_for_group_dash
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.obj_attrs.models import GenericAttributeType
+from poms.common.utils import attr_is_relation
 
 _l = logging.getLogger('poms.common')
 
@@ -96,50 +97,12 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     return qs
 
 
-def is_relation(item, content_type_key):
-
-    if content_type_key == 'transactions.transactiontype':
-        if item == 'group':
-            return False # because configuration
-
-
-    return item in ['type', 'currency', 'instrument',
-                    'instrument_type', 'group',
-                    'pricing_policy', 'portfolio',
-                    'transaction_type', 'transaction_currency',
-                    'cash_currency', 'valuation_currency',
-                    'portfolio_register',
-                    'settlement_currency', 'account_cash',
-                    'account_interim', 'account_position',
-                    'accrued_currency', 'pricing_currency',
-                    'one_off_event', 'regular_event', 'factor_same',
-                    'factor_up', 'factor_down',
-
-                    'strategy1_position', 'strategy1_cash',
-                    'strategy2_position', 'strategy2_cash',
-                    'strategy3_position', 'strategy3_cash',
-
-                    'counterparty', 'responsible',
-
-                    'allocation_balance', 'allocation_pl',
-                    'linked_instrument',
-
-                    'subgroup',
-
-                    'instrument_class',
-                    'transaction_class',
-                    'daily_pricing_model',
-                    'payment_size_detail'
-
-                    ]
-
-
 def is_attribute(item):
     return 'attributes.' in item
 
 
 def get_root_system_attr_group(qs, root_group, groups_order, content_type_key):
-    if is_relation(root_group, content_type_key):
+    if attr_is_relation(content_type_key, root_group):
 
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
@@ -250,7 +213,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     print('last_group %s ' % last_group)
 
-    if is_relation(last_group, content_type_key):
+    if attr_is_relation(content_type_key, last_group):
         qs = qs.values(last_group) \
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
@@ -274,10 +237,7 @@ def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
 
 def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, model):
     start_time = time.time()
-    _l.info(
-        f"TESTING.POMS.COMMON.grouping_handlers get_queryset_filters"
-        f"model {model}"
-    )
+
     # i = 0
 
     # print('get_queryset_filters len %s' % len(qs    ))
@@ -340,13 +300,13 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_t
     #
     #                 res_attr = attr
     #
-    #                 if is_relation(res_attr, content_type_key):
+    #                 if attr_is_relation(content_type_key, res_attr):
     #                     res_attr = res_attr + '__user_code'
     #
     #                 qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
     #
     #             else:
-    #                 if is_relation(attr, content_type_key):
+    #                 if attr_is_relation(content_type_key, attr):
     #                     params[attr + '__user_code'] = groups_values[i]
     #                 else:
     #                     params[attr] = groups_values[i]
@@ -426,50 +386,6 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     return qs
 
-def _apply_filters_for_group_dash(options, model, attribute_key, group_value):
-    """
-    Process a group with a name '-' when counting items inside a group
-
-    :param options:
-    :param group_value:
-    :param model:
-    :param attribute_key: Key of an attribute (not GenericAttribute) that is used as a group
-    :type attribute_key: str
-    :return dict: options with filters for items for group '-'
-    """
-
-    '''
-    TODO: move rest of models from front end to backend
-    use them to determine whether attribute 
-    contains number or date
-    '''
-    try:
-        field = model._meta.get_field(attribute_key)
-    except (FieldDoesNotExist, AttributeError) as e:
-        raise e
-
-    field_type = field.get_internal_type()
-    value_type = None
-
-    if 'Date' in field_type:
-        value_type = 40
-    else:
-        for type_part in ['Float', 'Integer']:
-            if type_part in field_type:
-                value_type = 20
-                break
-
-    if value_type == 20:
-        options[attribute_key] = 0
-
-    if value_type in (20, 40):
-        options[attribute_key + '__isnull'] = True
-    else:
-        # value_type is 10 or 30
-        options[attribute_key] = group_value
-
-    return options
-
 def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings, ev_options,
                  global_table_search):
     Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
@@ -485,7 +401,8 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
     for item in qs:
 
-        options = {}
+        # options = {}
+        q = Q()
 
         index = 0
 
@@ -515,8 +432,8 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                 result = []
 
                 # add previous options
-                for key, val in options.items():
-                    attribute_options[key] = val
+                # for key, val in options.items():
+                #     attribute_options[key] = val
 
                 if attribute_type.value_type == 20:
                     if value == "-":
@@ -564,34 +481,31 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 key = groups_type
 
-                if is_relation(groups_type, content_type_key):
+                if attr_is_relation(content_type_key, groups_type):
                     key = key + '__user_code'
 
                 if len(group_values) and index < len(group_values):
 
-                    if group_values[index] == "-":
-
-                        options = _apply_filters_for_group_dash(
-                            options,
-                            Model,
-                            key,
-                            group_values[index],
-                        )
+                    if group_values[index] == '-':
+                        q = q & get_q_obj_for_group_dash(content_type_key, Model, groups_type)
 
                     else:
-                        options[key] = group_values[index]
+                        q = q & Q(**{f"{key}": group_values[index]})
 
                 else:
-                    options[key] = item['group_identifier']
+                    q = q & Q(**{f"{key}": item['group_identifier']})
 
             index = index + 1
 
         if content_type.model in ['currencyhistory', 'currencyhistoryerror']:
-            options['currency__master_user_id'] = master_user.pk
+            # options['currency__master_user_id'] = master_user.pk
+            q = q & Q(**{f"{key}": item['group_identifier']})
         elif content_type.model in ['pricehistory', 'pricehistoryerror']:
-            options['instrument__master_user_id'] = master_user.pk
+            # options['instrument__master_user_id'] = master_user.pk
+            q = q & Q(instrument__master_user_id=master_user.pk)
         else:
-            options['master_user_id'] = master_user.pk
+            # options['master_user_id'] = master_user.pk
+            q = q & Q(master_user_id=master_user.pk)
 
             if content_type.model not in ['portfolioregisterrecord', 'portfoliohistory', 'portfolioreconcilehistory']:
                 if ev_options['entity_filters']:
@@ -599,26 +513,33 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     if content_type.model not in ['objecthistory4entry', 'generatedevent']:
 
                         if 'deleted' not in ev_options['entity_filters']:
-                            options['is_deleted'] = False
+                            # options['is_deleted'] = False
+                            q = q & Q(is_deleted=False)
+
 
                     if content_type.model in ['instrument']:
                         if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
-                            options['is_active'] = True
+                            # options['is_active'] = True
+                            q = q & Q(is_active=True)
 
                         if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
-                            options['is_active'] = False
+                            # options['is_active'] = False
+                            q = q & Q(is_active=False)
 
                     if content_type.model not in ['complextransaction']:
                         if 'disabled' not in ev_options['entity_filters']:
-                            options['is_enabled'] = True
+                            # options['is_enabled'] = True
+                            q = q & Q(is_enabled=True)
 
         if content_type.model in ['complextransaction']:
-            options['is_deleted'] = False
-
+            # options['is_deleted'] = False
+            q = q & Q(is_deleted=False)
         # _l.info('options %s' % options)
 
         # item['items_count'] = Model.objects.filter(Q(**options)).count()
-        count_cs = Model.objects.filter(Q(**options))
+        # count_cs = Model.objects.filter(Q(**options))
+        count_cs = Model.objects.filter(q)
+
         item['items_count_raw'] = count_cs.count()
         count_cs = handle_filters(count_cs, filter_settings, master_user, content_type)
         if global_table_search:

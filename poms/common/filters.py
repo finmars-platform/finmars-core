@@ -14,54 +14,9 @@ from six import string_types
 
 from poms.common.middleware import get_request
 from poms.obj_attrs.models import GenericAttributeType
+from poms.common.utils import attr_is_relation
 
 _l = logging.getLogger("poms.common")
-
-
-def is_relation(item, content_type_key):
-    if content_type_key == "transactions.transactiontype" and item == "group":
-        return False  # because configuration
-
-    return item in [
-        "type",
-        "currency",
-        "instrument",
-        "instrument_type",
-        "group",
-        "pricing_policy",
-        "portfolio",
-        "transaction_type",
-        "transaction_currency",
-        "settlement_currency",
-        "account_cash",
-        "account_interim",
-        "account_position",
-        "accrued_currency",
-        "pricing_currency",
-        "one_off_event",
-        "regular_event",
-        "factor_same",
-        "factor_up",
-        "factor_down",
-        "instrument_class",
-        "transaction_class",
-        "strategy1_position",
-        "strategy1_cash",
-        "strategy2_position",
-        "strategy2_cash",
-        "strategy3_position",
-        "strategy3_cash",
-        "counterparty",
-        "responsible",
-        "allocation_balance",
-        "allocation_pl",
-        "linked_instrument",
-        "subgroup",
-        # Portfolio Register
-        "cash_currency",
-        "portfolio_register",
-        "valuation_currency",
-    ]
 
 
 def is_system_relation(item):
@@ -195,6 +150,45 @@ def _is_date_or_number(field_type):
 
     return False
 
+def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
+
+    res_attr = attribute_key
+
+    if attr_is_relation(content_type_key, res_attr):
+        res_attr = f"{res_attr}__user_code"
+
+    q = Q(**{f"{res_attr}__isnull": True})
+
+    '''
+    TODO: move rest of models from front end to backend
+    use them to determine whether attribute
+    contains number or date
+    '''
+    try:
+        field = model._meta.get_field(attribute_key)
+    except (FieldDoesNotExist, AttributeError) as e:
+        raise e
+
+    field_type = field.get_internal_type()
+    value_type = None
+
+    if 'Date' in field_type:
+        value_type = 40
+    else:
+        for type_part in ['Float', 'Integer']:
+            if type_part in field_type:
+                value_type = 20
+                break
+
+    # TODO: remove block bellow after separating 0 and '-'
+    if value_type == 20:
+        q = (q | Q(**{res_attr: 0}))
+
+    elif value_type != 40:
+        # value_type is 10 or 30
+        q = (q | Q(**{res_attr: '-'}))
+
+    return q
 
 def filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model=None):
     """
@@ -266,49 +260,53 @@ def filter_items_for_group(queryset, groups_types, groups_values, content_type_k
 
                 elif groups_values[i] == "-":
 
-                    res_attr = attr
+                    # res_attr = attr
+                    #
+                    # if is_relation(res_attr, content_type_key):
+                    #     res_attr = f"{res_attr}__user_code"
+                    #
+                    # # queryset = queryset.filter(
+                    # #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
+                    # # )
+                    #
+                    # q = Q(**{f"{res_attr}__isnull": True})
+                    #
+                    # '''
+                    # TODO: move rest of models from front end to backend
+                    # use them to determine whether attribute
+                    # contains number or date
+                    # '''
+                    # try:
+                    #     field = model._meta.get_field(attr)
+                    # except (FieldDoesNotExist, AttributeError) as e:
+                    #     raise e
+                    #
+                    # field_type = field.get_internal_type()
+                    # is_num = False
+                    #
+                    # for type_part in ['Float', 'Integer']:
+                    #     if type_part in field_type:
+                    #         is_num = True
+                    #         break
+                    #
+                    # if is_num:
+                    #     q = q | Q(**{res_attr: 0})
+                    #
+                    # elif 'Date' not in field_type:
+                    #     q = q | Q(**{res_attr: "-"})
 
-                    if is_relation(res_attr, content_type_key):
-                        res_attr = f"{res_attr}__user_code"
-
-                    # queryset = queryset.filter(
-                    #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
-                    # )
-
-                    q = Q(**{f"{res_attr}__isnull": True})
-
-                    '''
-                    TODO: move rest of models from front end to backend
-                    use them to determine whether attribute 
-                    contains number or date
-                    '''
-                    try:
-                        field = model._meta.get_field(attr)
-                    except (FieldDoesNotExist, AttributeError) as e:
-                        raise e
-
-                    field_type = field.get_internal_type()
-                    is_num = False
-
-                    for type_part in ['Float', 'Integer']:
-                        if type_part in field_type:
-                            is_num = True
-                            break
-
-                    if is_num:
-                        q = q | Q(**{res_attr: 0})
-
-                    elif 'Date' not in field_type:
-                        q = q | Q(**{res_attr: "-"})
+                    q = get_q_obj_for_group_dash(
+                        content_type_key,
+                        model,
+                        attr
+                    )
 
                     queryset = queryset.filter(q)
-                    # if not _is_date_or_number(field_type):
-                    #     queryset = queryset | queryset.filter(Q(**{res_attr: "-"}))
 
                 else:
                     params = {}
 
-                    if is_relation(attr, content_type_key):
+                    if attr_is_relation(content_type_key, attr):
                         params[f"{attr}__user_code"] = groups_values[i]
                     else:
                         params[attr] = groups_values[i]

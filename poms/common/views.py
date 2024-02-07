@@ -1,7 +1,6 @@
 import contextlib
 import json
 import logging
-import hunter
 import time
 from os.path import getsize
 
@@ -344,9 +343,6 @@ class AbstractModelViewSet(
         )
         master_user = request.user.master_user
 
-        # tracer.runfunc(self.filter_queryset, self.get_queryset())
-        # tracer.results().write_results(coverdir="./trace_result")
-        # hunter.trace(module_startswith=["rest_framework", "poms"], action=hunter.CallPrinter(stream=open("./hunter_trace.txt", "w")))
         queryset = self.filter_queryset(self.get_queryset())
 
         if content_type.model not in [
