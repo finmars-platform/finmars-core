@@ -150,8 +150,15 @@ def _is_date_or_number(field_type):
 
     return False
 
-def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
 
+def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
+    """
+
+    :param content_type_key:
+    :param model:
+    :param attribute_key:
+    :return: Q object with filtering conditions for '-' group
+    """
     res_attr = attribute_key
 
     if attr_is_relation(content_type_key, res_attr):
@@ -182,11 +189,62 @@ def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
 
     # TODO: remove block bellow after separating 0 and '-'
     if value_type == 20:
-        q = (q | Q(**{res_attr: 0}))
+        q = Q(q | Q(**{res_attr: 0}))
 
     elif value_type != 40:
         # value_type is 10 or 30
-        q = (q | Q(**{res_attr: '-'}))
+        q = Q(q | Q(**{res_attr: '-'}))
+
+    return q
+
+
+def get_q_obj_for_attribute_type(attribute_type, group_value):
+    """
+
+    :param attribute_type:
+    :param group_value:
+    :return: Q object with filtering conditions for grouping by GenericAttribute
+    """
+    q = Q()
+
+    if attribute_type.value_type in {10, 20, 30, 40}:
+        q = Q(attributes__attribute_type=attribute_type)
+    else:
+        _l.error(f"Attribute with invalid value_type passed: {attribute_type.value_type}")
+        return q
+
+    if attribute_type.value_type == 20:
+
+        if group_value == "-":
+            # TODO: remove Q(attributes__value_float=0) after separating 0 and '-'
+            q = q & Q(Q(attributes__value_float__isnull=True) | Q(attributes__value_float=0))
+
+        else:
+            q = q & Q(attributes__value_float=group_value)
+
+    elif attribute_type.value_type == 10:
+
+        if group_value == '-':
+            q = q & Q(Q(attributes__value_string__isnull=True) | Q(attributes__value_string='-'))
+
+        else:
+            q = q & Q(Q(attributes__value_string=group_value))
+
+    elif attribute_type.value_type == 30:
+
+        if group_value == '-':
+            q = q & Q(Q(attributes__classifier__isnull=True) | Q(attributes__classifier__name='-'))
+
+        else:
+            q = q & Q(Q(attributes__classifier=group_value))
+
+
+    elif attribute_type.value_type == 40:
+
+        if group_value == '-':
+            q = q & Q(attributes__value_date__isnull=True)
+        else:
+            q = q & Q(attributes__value_date=group_value)
 
     return q
 
@@ -208,92 +266,15 @@ def filter_items_for_group(queryset, groups_types, groups_values, content_type_k
         for i, attr in enumerate(groups_types):
             if len(groups_values) > i:
                 if attr.isdigit():
-                    attribute_type = GenericAttributeType.objects.get(
-                        id__exact=attr
-                    )
 
                     attribute_type = GenericAttributeType.objects.get(id__exact=attr)
 
-                    if attribute_type.value_type == 20:
+                    q = get_q_obj_for_attribute_type(attribute_type, groups_values[i])
 
-                        if groups_values[i] == '-':
-                            queryset = queryset.filter(
-                                attributes__value_float__isnull=True,
-                                attributes__attribute_type=attribute_type
-                            )
-                        else:
-                            queryset = queryset.filter(
-                                attributes__value_float=groups_values[i],
-                                attributes__attribute_type=attribute_type
-                            )
-
-                    elif attribute_type.value_type == 10:
-
-                        if groups_values[i] == '-':
-                            queryset = queryset.filter(
-                                attributes__value_string__isnull=True,
-                                attributes__attribute_type=attribute_type
-                            )
-                        else:
-                            queryset = queryset.filter(
-                                attributes__value_string=groups_values[i],
-                                attributes__attribute_type=attribute_type
-                            )
-
-                    elif attribute_type.value_type == 30:
-
-                        if groups_values[i] == '-':
-                            queryset = queryset.filter(attributes__classifier__isnull=True,
-                                           attributes__attribute_type=attribute_type)
-                        else:
-                            queryset = queryset.filter(attributes__classifier=groups_values[i],
-                                           attributes__attribute_type=attribute_type)
-
-                    elif attribute_type.value_type == 40:
-
-                        if groups_values[i] == '-':
-                            queryset = queryset.filter(attributes__value_date__isnull=True,
-                                           attributes__attribute_type=attribute_type)
-                        else:
-                            queryset = queryset.filter(attributes__value_date=groups_values[i],
-                                           attributes__attribute_type=attribute_type)
+                    if q != Q():
+                        queryset = queryset.filter(q)
 
                 elif groups_values[i] == "-":
-
-                    # res_attr = attr
-                    #
-                    # if is_relation(res_attr, content_type_key):
-                    #     res_attr = f"{res_attr}__user_code"
-                    #
-                    # # queryset = queryset.filter(
-                    # #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
-                    # # )
-                    #
-                    # q = Q(**{f"{res_attr}__isnull": True})
-                    #
-                    # '''
-                    # TODO: move rest of models from front end to backend
-                    # use them to determine whether attribute
-                    # contains number or date
-                    # '''
-                    # try:
-                    #     field = model._meta.get_field(attr)
-                    # except (FieldDoesNotExist, AttributeError) as e:
-                    #     raise e
-                    #
-                    # field_type = field.get_internal_type()
-                    # is_num = False
-                    #
-                    # for type_part in ['Float', 'Integer']:
-                    #     if type_part in field_type:
-                    #         is_num = True
-                    #         break
-                    #
-                    # if is_num:
-                    #     q = q | Q(**{res_attr: 0})
-                    #
-                    # elif 'Date' not in field_type:
-                    #     q = q | Q(**{res_attr: "-"})
 
                     q = get_q_obj_for_group_dash(
                         content_type_key,
@@ -337,114 +318,6 @@ def _filter_queryset_for_attribute(self_obj, request, queryset, view):
             lambda x: self_obj.format_groups(x, master_user, content_type), groups_types
         )
     )
-
-    # if len(groups_types) and len(groups_values):
-    #     for i, attr in enumerate(groups_types):
-    #         if len(groups_values) > i:
-    #             if attr.isdigit():
-    #                 attribute_type = GenericAttributeType.objects.get(
-    #                     id__exact=attr
-    #                 )
-    #
-    #                 if attribute_type.value_type == 20:
-    #                     queryset = (
-    #                         queryset.filter(
-    #                             attributes__value_float__isnull=True,
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                         if groups_values[i] == "-"
-    #                         else queryset.filter(
-    #                             attributes__value_float=groups_values[i],
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                     )
-    #                 if attribute_type.value_type == 10:
-    #                     queryset = (
-    #                         queryset.filter(
-    #                             attributes__value_string__isnull=True,
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                         if groups_values[i] == "-"
-    #                         else queryset.filter(
-    #                             attributes__value_string=groups_values[i],
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                     )
-    #                 if attribute_type.value_type == 30:
-    #                     if groups_values[i] == "-":
-    #                         queryset = queryset.filter(
-    #                             attributes__classifier__isnull=True,
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                     else:
-    #                         queryset = queryset.filter(
-    #                             attributes__classifier=groups_values[i],
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #
-    #                 if attribute_type.value_type == 40:
-    #                     if groups_values[i] == "-":
-    #                         queryset = queryset.filter(
-    #                             attributes__value_date__isnull=True,
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #                     else:
-    #                         queryset = queryset.filter(
-    #                             attributes__value_date=groups_values[i],
-    #                             attributes__attribute_type=attribute_type,
-    #                         )
-    #
-    #             elif groups_values[i] == "-":
-    #                 res_attr = attr
-    #
-    #                 if is_relation(res_attr, content_type_key):
-    #                     res_attr = f"{res_attr}__user_code"
-    #
-    #                 # queryset = queryset.filter(
-    #                 #     (Q(**{f"{res_attr}__isnull": True}) | Q(**{res_attr: "-"}))
-    #                 # )
-    #
-    #                 q = Q(**{f"{res_attr}__isnull": True})
-    #
-    #                 '''
-    #                 TODO: move rest of models from front end to backend
-    #                 use them to determine whether attribute
-    #                 contains number or date
-    #                 '''
-    #                 try:
-    #                     field = model._meta.get_field(attr)
-    #                 except (FieldDoesNotExist, AttributeError) as e:
-    #                     raise e
-    #
-    #                 field_type = field.get_internal_type()
-    #                 is_num = False
-    #
-    #                 for type_part in ['Float', 'Integer']:
-    #                     if type_part in field_type:
-    #                         is_num = True
-    #                         break
-    #
-    #                 if is_num:
-    #                     q = q | Q(**{res_attr: 0})
-    #
-    #                 elif 'Date' not in field_type:
-    #                     q = q | Q(**{res_attr: "-"})
-    #
-    #                 queryset = queryset.filter(q)
-    #                 # if not _is_date_or_number(field_type):
-    #                 #     queryset = queryset | queryset.filter(Q(**{res_attr: "-"}))
-    #
-    #             else:
-    #                 params = {}
-    #
-    #                 if is_relation(attr, content_type_key):
-    #                     params[f"{attr}__user_code"] = groups_values[i]
-    #                 else:
-    #                     params[attr] = groups_values[i]
-    #
-    #                 queryset = queryset.filter(**params)
-    #
-    #                 # force_qs_evaluation(queryset)
 
     return filter_items_for_group(
         queryset,

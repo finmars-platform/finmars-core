@@ -6,7 +6,7 @@ from django.db.models import F
 from django.db.models import Q
 from django.core.exceptions import FieldDoesNotExist
 
-from poms.common.filters import filter_items_for_group, get_q_obj_for_group_dash
+from poms.common.filters import filter_items_for_group, get_q_obj_for_group_dash, get_q_obj_for_attribute_type
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.obj_attrs.models import GenericAttributeType
 from poms.common.utils import attr_is_relation
@@ -235,91 +235,15 @@ def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     return qs
 
 
-def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, model):
-    start_time = time.time()
-
-    # i = 0
-
-    # print('get_queryset_filters len %s' % len(qs    ))
-
-    # force_qs_evaluation(qs)
-
-    # groups_values_count = len(groups_values)
-
-    # for attr in groups_types:
-    #
-    #     if attr.isdigit():
-    #
-    #         if groups_values_count > i:
-    #
-    #             attribute_type = GenericAttributeType.objects.get(id__exact=attr)
-    #
-    #             if attribute_type.value_type == 20:
-    #
-    #                 if groups_values[i] == '-':
-    #                     qs = qs.filter(attributes__value_float__isnull=True,
-    #                                    attributes__attribute_type=attribute_type)
-    #                 else:
-    #                     qs = qs.filter(attributes__value_float=groups_values[i],
-    #                                    attributes__attribute_type=attribute_type)
-    #
-    #             if attribute_type.value_type == 10:
-    #
-    #                 if groups_values[i] == '-':
-    #                     qs = qs.filter(attributes__value_string__isnull=True,
-    #                                    attributes__attribute_type=attribute_type)
-    #                 else:
-    #                     qs = qs.filter(attributes__value_string=groups_values[i],
-    #                                    attributes__attribute_type=attribute_type)
-    #
-    #             if attribute_type.value_type == 30:
-    #
-    #                 if groups_values[i] == '-':
-    #                     qs = qs.filter(attributes__classifier__isnull=True,
-    #                                    attributes__attribute_type=attribute_type)
-    #                 else:
-    #                     qs = qs.filter(attributes__classifier=groups_values[i],
-    #                                    attributes__attribute_type=attribute_type)
-    #
-    #             if attribute_type.value_type == 40:
-    #
-    #                 if groups_values[i] == '-':
-    #                     qs = qs.filter(attributes__value_date__isnull=True,
-    #                                    attributes__attribute_type=attribute_type)
-    #                 else:
-    #                     qs = qs.filter(attributes__value_date=groups_values[i],
-    #                                    attributes__attribute_type=attribute_type)
-    #
-    #     else:
-    #
-    #         if groups_values_count > i:
-    #
-    #             params = {}
-    #
-    #             if groups_values[i] == '-':
-    #
-    #                 res_attr = attr
-    #
-    #                 if attr_is_relation(content_type_key, res_attr):
-    #                     res_attr = res_attr + '__user_code'
-    #
-    #                 qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
-    #
-    #             else:
-    #                 if attr_is_relation(content_type_key, attr):
-    #                     params[attr + '__user_code'] = groups_values[i]
-    #                 else:
-    #                     params[attr] = groups_values[i]
-    #
-    #                 qs = qs.filter(**params)
-    #
-    #     i = i + 1
-    qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, model)
-    _l.debug("get_queryset_filters %s seconds " % (time.time() - start_time))
-
-    # original_qs = original_qs.filter(id__in=qs)
-
-    return qs
+# ME: 2024-02-08 TODO: delete later if everything works fine
+# def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, model):
+#     start_time = time.time()
+#
+#     # print('get_queryset_filters len %s' % len(qs    ))
+#     qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, model)
+#     _l.debug("get_queryset_filters %s seconds " % (time.time() - start_time))
+#
+#     return qs
 
 
 def is_dynamic_attribute(item):
@@ -367,7 +291,8 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
         Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
 
-        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, Model)
+        # qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, Model)
+        qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, Model)
 
         # print('handle groups after filters qs len %s' % len(qs))
         # print('handle groups after filters qs len %s' % qs)
@@ -424,58 +349,20 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                 else:
                     value = item['group_identifier']
 
-                attribute_options = {
-                    "attributes__attribute_type": attribute_type
-                }
-
-                # _l.info('attribute value %s' % value)
                 result = []
 
-                # add previous options
-                # for key, val in options.items():
-                #     attribute_options[key] = val
+                attr_type_q = get_q_obj_for_attribute_type(attribute_type, value)
 
-                if attribute_type.value_type == 20:
-                    if value == "-":
-                        attribute_options["attributes__value_float__isnull"] = True
-                        # TODO: remove line bellow after separating 0 and "-"
-                        attribute_options["attributes__value_float"] = 0
-                    else:
-                        attribute_options["attributes__value_float"] = value
-
-                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
-
-                if attribute_type.value_type == 10:
-                    attribute_options["attributes__value_string"] = value
-
-                    # _l.info('attribute_options %s' % attribute_options)
-
-                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
-
-                if attribute_type.value_type == 30:
-                    attribute_options["attributes__classifier"] = value
-
-                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
-
-                    # _l.info('attributes__classifier__name group_values %s ' % group_values)
-                    # _l.info('attributes__classifier__name index %s ' % index)
-                    # _l.info('attributes__classifier__name value %s ' % value)
-                    # _l.info('attributes__classifier__name result %s ' % result)
-
-                if attribute_type.value_type == 40:
-                    if value == "-":
-                        attribute_options["attributes__value_date__isnull"] = True
-                    else:
-                        attribute_options["attributes__value_date"] = value
-
-                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+                if attr_type_q != Q():
+                    result = Model.objects.filter(q & attr_type_q).values_list('id', flat=True)
 
                 # _l.info('result %s' % result)
 
                 key = 'id__in'
 
                 if len(result):
-                    options[key] = result
+                    # options[key] = result
+                    q = q & Q(**{f"{key}": result})
 
             else:
 
@@ -499,7 +386,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
         if content_type.model in ['currencyhistory', 'currencyhistoryerror']:
             # options['currency__master_user_id'] = master_user.pk
-            q = q & Q(**{f"{key}": item['group_identifier']})
+            q = q & Q(currency__master_user_id=master_user.pk)
         elif content_type.model in ['pricehistory', 'pricehistoryerror']:
             # options['instrument__master_user_id'] = master_user.pk
             q = q & Q(instrument__master_user_id=master_user.pk)
