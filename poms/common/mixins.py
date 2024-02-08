@@ -15,6 +15,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from poms.currencies.constants import DASH
 
 _l = logging.getLogger("poms.common.mixins")
 
@@ -77,6 +78,18 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
             instance.fake_delete()
         else:
             super().perform_destroy(instance)
+            
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        if hasattr(instance, 'user_code'):
+            if instance.user_code == DASH:
+                return Response({
+                    "message": "Cannot delete instance because they are referenced through a protected foreign key",
+                },
+                    status=status.HTTP_409_CONFLICT,
+                )
+        return super().destroy(request, *args, **kwargs)
 
 
 # noinspection PyUnresolvedReferences
