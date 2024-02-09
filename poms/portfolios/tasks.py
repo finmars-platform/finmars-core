@@ -643,7 +643,9 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-            _l.info(f'calculate {portfolio_register} len(dates)={len(item["dates"])}')
+            _l.info(
+                f'{log} calculate {portfolio_register} for {len(item["dates"])} days'
+            )
 
             for day in item["dates"]:
                 pr_record = (
@@ -678,6 +680,11 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                             nav = nav + it["market_value"]
 
                 except Exception as e:
+                    err_msg = (
+                        f"{log} {portfolio_register} day {day} calculate_simple_"
+                        f"balance_report func ended in error {repr(e)}"
+                    )
+                    _l.error(f"{err_msg} trace {traceback.format_exc()}")
                     continue
 
                 try:
@@ -691,10 +698,10 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
                 except Exception as e:
                     err_msg = (
-                        f"task calculate_portfolio_register_price_history "
-                        f"at day {day} resulted in error {repr(e)}"
+                        f"{log} {portfolio_register} day {day} calculate_cash_flow"
+                        f"func ended in error {repr(e)}"
                     )
-
+                    _l.error(f"{err_msg} trace {traceback.format_exc()}")
                     continue
 
                 for price_history in price_histories:
