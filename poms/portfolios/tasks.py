@@ -649,7 +649,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
             _l.info(f'calculate {portfolio_register} len(dates)={len(item["dates"])}')
 
             for day in item["dates"]:
-                registry_record = (
+                pr_record = (
                     PortfolioRegisterRecord.objects.filter(
                         instrument=portfolio_register.linked_instrument,
                         transaction_date__lte=day,
@@ -657,84 +657,89 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                     .order_by("-transaction_date", "-transaction_code")
                     .first()
                 )
-                if registry_record and registry_record.rolling_shares_of_the_day:
-                    try:
-                        balance_report = calculate_simple_balance_report(
-                            day,
-                            portfolio_register,
-                            task.member,
-                        )
-                        nav = 0
-                        for it in balance_report.items:
-                            if it["market_value"]:
-                                nav = nav + it["market_value"]
-                    except Exception as e:
-                        pass
+                if not pr_record or not pr_record.valuation_pricing_policy:
+                    continue
 
-                    try:
-                        cash_flow = calculate_cash_flow(
-                            master_user,
-                            day,
-                            true_pricing_policy,
-                            portfolio_register,
-                        )
+                try:
+                    balance_report = calculate_simple_balance_report(
+                        day,
+                        portfolio_register,
+                        task.member,
+                    )
+                    nav = 0
+                    for it in balance_report.items:
+                        if it["market_value"]:
+                            nav = nav + it["market_value"]
 
-                        principal_price = (
-                            nav / registry_record.rolling_shares_of_the_day
-                        )
-                    except Exception as e:
-                        pass
+                except Exception as e:
+                    continue
 
-                    try:
-                        for pricing_policy in pricing_policies:
-                            price_history, _ = PriceHistory.objects.get_or_create(
-                                instrument=portfolio_register.linked_instrument,
-                                date=day,
-                                pricing_policy=pricing_policy,
-                            )
-                            price_history.nav = nav
-                            price_history.cash_flow = cash_flow
-                            price_history.principal_price = principal_price
-                            price_history.save()
+                try:
+                    cash_flow = calculate_cash_flow(
+                        master_user,
+                        day,
+                        true_pricing_policy,
+                        portfolio_register,
+                    )
+                    principal_price = nav / pr_record.rolling_shares_of_the_day
 
-                        count += 1
+                except Exception as e:
+                    err_msg = (
+                        f"task calculate_portfolio_register_price_history "
+                        f"at day {day} resulted in error {repr(e)}"
+                    )
 
-                        task.update_progress(
-                            {
-                                "current": count,
-                                "percent": round(count / (total / 100)),
-                                "total": total,
-                                "description": f"Calculating {portfolio_register} at {day}",
-                            }
-                        )
+                    continue
 
-                    except Exception as e:
-                        err_msg = (
-                            f"task calculate_portfolio_register_price_history "
-                            f"at day {day} resulted in error {repr(e)}"
-                        )
+                for pricing_policy in pricing_policies:
+                    price_history, _ = PriceHistory.objects.get_or_create(
+                        instrument=portfolio_register.linked_instrument,
+                        date=day,
+                        pricing_policy=pricing_policy,
+                    )
+                    price_history.nav = nav
+                    price_history.cash_flow = cash_flow
+                    price_history.principal_price = principal_price
+                    price_history.save()
 
-                        # create fake price record (if it doesn't exist) to store error
-                        price_history = PriceHistory.objects.filter(
-                            instrument=portfolio_register.linked_instrument,
-                            date=day,
-                            pricing_policy__in=pricing_policies,
-                        ).first()
-                        if not price_history:
-                            if pricing_policies:
-                                pricing_policy = pricing_policies[0]
-                            else:
-                                pricing_policy = None
-                            PriceHistory.objects.create(
-                                instrument=portfolio_register.linked_instrument,
-                                date=day,
-                                pricing_policy=pricing_policy,
-                                is_temporary_price=True,
-                            )
-                        if price_history.error_message:  # reset error messages
-                            price_history.error_message = ""
-                        price_history.handle_err(err_msg)
-                        price_history.save()
+                count = count + 1
+
+                task.update_progress(
+                    {
+                        "current": count,
+                        "percent": round(count / (total / 100)),
+                        "total": total,
+                        "description": f"Calculating {portfolio_register} at {day}",
+                    }
+                )
+
+                # except Exception as e:
+                #     err_msg = (
+                #         f"task calculate_portfolio_register_price_history "
+                #         f"at day {day} resulted in error {repr(e)}"
+                #     )
+                #
+                #     # create fake price record (if it doesn't exist) to store error
+                #     price_history = PriceHistory.objects.filter(
+                #         instrument=portfolio_register.linked_instrument,
+                #         date=day,
+                #         pricing_policy__in=pricing_policies,
+                #     ).first()
+                #     if not price_history:
+                #         if pricing_policies:
+                #             pricing_policy = pricing_policies[0]
+                #         else:
+                #             pricing_policy = None
+                #         PriceHistory.objects.create(
+                #             instrument=portfolio_register.linked_instrument,
+                #             date=day,
+                #             pricing_policy=pricing_policy,
+                #             is_temporary_price=True,
+                #         )
+                #     if price_history.error_message:  # reset error messages
+                #         price_history.error_message = ""
+                #     price_history.handle_err(err_msg)
+                #     price_history.save()
 
         # Finish calculation
         send_system_message(
