@@ -91,8 +91,6 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
         ],
     ).order_by("accounting_date")
 
-    error = False
-
     for transaction in transactions:
         if (
             transaction.transaction_currency
@@ -115,19 +113,17 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
                 fx_rate = trn_currency_fx_rate / instr_pricing_currency_fx_rate
 
-            except Exception:
-                error = True
-                fx_rate = 0
+            except Exception as e:
+                err_msg = (
+                    f"fx_rate calculation for transaction {transaction.id} "
+                    f"portfolio_registry {portfolio_register.id} and linked_instrument "
+                    f"{portfolio_register.linked_instrument.id} resulted "
+                    f"in error {repr(e)}"
+                )
+                raise ValueError(err_msg) from e
 
         cash_flow = cash_flow + (
             transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
-        )
-
-    if error:
-        cash_flow = 0
-        _l.error(
-            f"Could not calculate cash flow for {date} "
-            f"{portfolio_register.linked_instrument} {pricing_policy}"
         )
 
     _l.info(
