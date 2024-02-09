@@ -1826,6 +1826,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "is_temporary_price",
             "ytm",
             "modified_duration",
+            "error_message",
         ]
 
     def validate(self, attrs: dict) -> dict:
