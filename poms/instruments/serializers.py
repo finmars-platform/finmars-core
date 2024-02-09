@@ -21,7 +21,9 @@ from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
+    AUTO_CALCULATE,
     AccrualCalculationModelField,
+    AccrualPriceEvalField,
     CountryField,
     DailyPricingModelField,
     InstrumentField,
@@ -1096,9 +1098,9 @@ class InstrumentSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from poms.currencies.serializers import CurrencyViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["pricing_currency_object"] = CurrencyViewSerializer(
             source="pricing_currency", read_only=True
@@ -1502,7 +1504,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "user_text_2",
             "user_text_3",
             "reference_for_pricing",
-            "country"
+            "country",
         ]
 
         read_only_fields = fields
@@ -1615,7 +1617,6 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
 
 
 class AccrualCalculationScheduleStandaloneSerializer(serializers.ModelSerializer):
-
     instrument = InstrumentField()
 
     accrual_calculation_model = AccrualCalculationModelField()
@@ -1656,8 +1657,8 @@ class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
 
 
 class InstrumentFactorScheduleStandaloneSerializer(serializers.ModelSerializer):
-
     instrument = InstrumentField()
+
     class Meta:
         model = InstrumentFactorSchedule
         fields = ["id", "instrument", "effective_date", "factor_value"]
@@ -1769,22 +1770,6 @@ class EventScheduleSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         return attrs
 
-    # def get_display_name(self, obj):
-    #     r = self.root
-    #     if isinstance(r, ListSerializer):
-    #         r = r.child
-    #     if isinstance(r, GeneratedEventSerializer):
-    #         return r.generate_text(obj.name)
-    #     return None
-    #
-    # def get_display_description(self, obj):
-    #     r = self.root
-    #     if isinstance(r, ListSerializer):
-    #         r = r.child
-    #     if isinstance(r, GeneratedEventSerializer):
-    #         return r.generate_text(obj.description)
-    #     return None
-
 
 class InstrumentCalculatePricesAccruedPriceSerializer(serializers.Serializer):
     begin_date = serializers.DateField(required=False, allow_null=True)
@@ -1806,7 +1791,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
         source="pricing_policy", read_only=True
     )
     principal_price = FloatEvalField()
-    accrued_price = FloatEvalField()
+    accrued_price = AccrualPriceEvalField()
     procedure_modified_datetime = ReadOnlyField()
     ytm = ReadOnlyField()
 
@@ -1829,8 +1814,20 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "short_delta",
             "is_temporary_price",
             "ytm",
-            "modified_duration"
+            "modified_duration",
         ]
+
+    def validate(self, attrs: dict) -> dict:
+        if self.context["view"].action in {"create", "bulk_create"}:
+            if "date" not in attrs or not attrs["date"]:
+                raise ValidationError(
+                    "To calculate 'accrued_price', valid 'date' must be provided"
+                )
+
+            if attrs["accrued_price"] == AUTO_CALCULATE:
+                attrs["accrued_price"] = None
+
+        return attrs
 
     @staticmethod
     def create_price_history_error(instance):
@@ -1874,11 +1871,10 @@ class PriceHistorySerializer(ModelMetaSerializer):
             section="prices",
             type="success",
             title="New Price (manual)",
-            description=instance.instrument.user_code
-            + " "
-            + str(instance.date)
-            + " "
-            + str(instance.principal_price),
+            description=(
+                f"{instance.instrument.user_code} {str(instance.date)} "
+                f"{str(instance.principal_price)}"
+            ),
         )
 
         return instance
@@ -1942,6 +1938,16 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def __init__(self, *args, **kwargs):
+        from poms.accounts.serializers import AccountViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
+        from poms.transactions.serializers import TransactionTypeViewSerializer
+        from poms.users.serializers import MemberViewSerializer
+
         super(GeneratedEventSerializer, self).__init__(*args, **kwargs)
         self._current_instance = None
 
@@ -1952,22 +1958,12 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
             source="instrument", read_only=True
         )
 
-        from poms.portfolios.serializers import PortfolioViewSerializer
-
         self.fields["portfolio_object"] = PortfolioViewSerializer(
             source="portfolio", read_only=True
         )
 
-        from poms.accounts.serializers import AccountViewSerializer
-
         self.fields["account_object"] = AccountViewSerializer(
             source="account", read_only=True
-        )
-
-        from poms.strategies.serializers import (
-            Strategy1ViewSerializer,
-            Strategy2ViewSerializer,
-            Strategy3ViewSerializer,
         )
 
         self.fields["strategy1_object"] = Strategy1ViewSerializer(
@@ -1984,13 +1980,9 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
             source="action", read_only=True
         )
 
-        from poms.transactions.serializers import TransactionTypeViewSerializer
-
         self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
             source="transaction_type", read_only=True
         )
-
-        from poms.users.serializers import MemberViewSerializer
 
         self.fields["member_object"] = MemberViewSerializer(
             source="member", read_only=True

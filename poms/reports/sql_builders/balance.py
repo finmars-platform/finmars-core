@@ -15,11 +15,12 @@ from poms.common.utils import get_last_business_day
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import (
+    Country,
     ExposureCalculationModel,
     Instrument,
     InstrumentType,
     LongUnderlyingExposure,
-    ShortUnderlyingExposure, Country,
+    ShortUnderlyingExposure,
 )
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
@@ -91,16 +92,18 @@ class BalanceReportBuilderSql:
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
-        _l.debug('items total %s' % len(self.instance.items))
+        _l.debug(f"items total {len(self.instance.items)}")
 
         relation_prefetch_st = time.perf_counter()
 
         if not self.instance.only_numbers:
             self.add_data_items()
 
-        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+        self.instance.relation_prefetch_time = float(
+            "{:3.3f}".format(time.perf_counter() - relation_prefetch_st)
+        )
 
-        _l.debug('build_st done: %s' % self.instance.execution_time)
+        _l.debug(f"build_st done: {self.instance.execution_time}")
 
         return self.instance
 
@@ -128,69 +131,90 @@ class BalanceReportBuilderSql:
 
         return self.instance
 
-
-
     def build_sync(self, task_id):
-
         celery_task = CeleryTask.objects.filter(id=task_id).first()
         if not celery_task:
             _l.error(f"Invalid celery task_id={task_id}")
             return
 
         try:
-
             report_settings = celery_task.options_object
 
-            instance = ReportInstanceModel(**report_settings, master_user=celery_task.master_user)
+            instance = ReportInstanceModel(
+                **report_settings, master_user=celery_task.master_user
+            )
 
             # _l.info('report_settings %s' % report_settings)
 
             with connection.cursor() as cursor:
-
                 st = time.perf_counter()
 
-                ecosystem_defaults = EcosystemDefault.objects.get(master_user=celery_task.master_user)
+                ecosystem_defaults = EcosystemDefault.objects.get(
+                    master_user=celery_task.master_user
+                )
 
-                pl_query = PLReportBuilderSql.get_source_query(cost_method=instance.cost_method.id)
+                pl_query = PLReportBuilderSql.get_source_query(
+                    cost_method=instance.cost_method.id
+                )
 
-                transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
-                transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
-                    instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
+                transaction_filter_sql_string = get_transaction_filter_sql_string(
+                    instance
+                )
+                transaction_date_filter_for_initial_position_sql_string = (
+                    get_transaction_date_filter_for_initial_position_sql_string(
+                        instance.report_date,
+                        has_where=bool(len(transaction_filter_sql_string)),
+                    )
+                )
                 report_fx_rate = get_report_fx_rate(instance, instance.report_date)
                 # fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 #     report_settings)
-                transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
-                    instance,
-                    prefix="tt_w_m.", prefix_second="t_o.")
+                transactions_all_with_multipliers_where_expression = (
+                    get_where_expression_for_position_consolidation(
+                        instance, prefix="tt_w_m.", prefix_second="t_o."
+                    )
+                )
                 consolidation_columns = get_position_consolidation_for_select(instance)
-                tt_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt.")
-                tt_in1_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt_in1.")
-                balance_q_consolidated_select_columns = get_position_consolidation_for_select(instance,
-                                                                                              prefix="balance_q.")
+                tt_consolidation_columns = get_position_consolidation_for_select(
+                    instance, prefix="tt."
+                )
+                tt_in1_consolidation_columns = get_position_consolidation_for_select(
+                    instance, prefix="tt_in1."
+                )
+                balance_q_consolidated_select_columns = (
+                    get_position_consolidation_for_select(instance, prefix="balance_q.")
+                )
                 pl_left_join_consolidation = get_pl_left_join_consolidation(instance)
-                fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-                    instance)
+                fx_trades_and_fx_variations_filter_sql_string = (
+                    get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+                        instance
+                    )
+                )
 
-                self.bday_yesterday_of_report_date = get_last_business_day(instance.report_date - timedelta(days=1),
-                                                                           to_string=True)
+                self.bday_yesterday_of_report_date = get_last_business_day(
+                    instance.report_date - timedelta(days=1), to_string=True
+                )
 
-                pl_query = pl_query.format(report_date=instance.report_date,
-                                           master_user_id=celery_task.master_user.id,
-                                           default_currency_id=ecosystem_defaults.currency_id,
-                                           report_currency_id=instance.report_currency.id,
-                                           pricing_policy_id=instance.pricing_policy.id,
-                                           report_fx_rate=report_fx_rate,
-                                           transaction_filter_sql_string=transaction_filter_sql_string,
-                                           transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
-                                           fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                                           consolidation_columns=consolidation_columns,
-                                           balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
-                                           tt_consolidation_columns=tt_consolidation_columns,
-                                           tt_in1_consolidation_columns=tt_in1_consolidation_columns,
-                                           transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                                           filter_query_for_balance_in_multipliers_table='',
-                                           bday_yesterday_of_report_date=self.bday_yesterday_of_report_date)
-                # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+                pl_query = pl_query.format(
+                    report_date=instance.report_date,
+                    master_user_id=celery_task.master_user.id,
+                    default_currency_id=ecosystem_defaults.currency_id,
+                    report_currency_id=instance.report_currency.id,
+                    pricing_policy_id=instance.pricing_policy.id,
+                    report_fx_rate=report_fx_rate,
+                    transaction_filter_sql_string=transaction_filter_sql_string,
+                    transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
+                    fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                    consolidation_columns=consolidation_columns,
+                    balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
+                    tt_consolidation_columns=tt_consolidation_columns,
+                    tt_in1_consolidation_columns=tt_in1_consolidation_columns,
+                    transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
+                    filter_query_for_balance_in_multipliers_table="",
+                    bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
+                )
+                # filter_query_for_balance_in_multipliers_table=' where multiplier = 1')
+                # TODO ask for right where expression
 
                 ######################################
 
@@ -1255,10 +1279,10 @@ class BalanceReportBuilderSql:
                             {consolidated_position_columns}
                             
                             position_size,
-                            case when coalesce(factor,0) = 0
-                                    then 0
+                            case when coalesce(factor,1) = 0
+                                    then position_size
                                     else
-                                        position_size / factor
+                                        position_size / coalesce(factor,1)
                             end as nominal_position_size,
     
                             (1) as item_type,
@@ -1683,47 +1707,61 @@ class BalanceReportBuilderSql:
                 """
 
                 consolidated_cash_columns = get_cash_consolidation_for_select(instance)
-                consolidated_position_columns = get_position_consolidation_for_select(instance)
-                consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
+                consolidated_position_columns = get_position_consolidation_for_select(
+                    instance
+                )
+                consolidated_cash_as_position_columns = (
+                    get_cash_as_position_consolidation_for_select(instance)
+                )
 
-                _l.debug('consolidated_cash_columns %s' % consolidated_cash_columns)
-                _l.debug('consolidated_position_columns %s' % consolidated_position_columns)
-                _l.debug('consolidated_cash_as_position_columns %s' % consolidated_cash_as_position_columns)
+                _l.debug("consolidated_cash_columns %s" % consolidated_cash_columns)
+                _l.debug(
+                    "consolidated_position_columns %s" % consolidated_position_columns
+                )
+                _l.debug(
+                    "consolidated_cash_as_position_columns %s"
+                    % consolidated_cash_as_position_columns
+                )
 
-                query = query.format(report_date=instance.report_date,
-                                     master_user_id=celery_task.master_user.id,
-                                     default_currency_id=ecosystem_defaults.currency_id,
-                                     report_currency_id=instance.report_currency.id,
-                                     pricing_policy_id=instance.pricing_policy.id,
-
-                                     consolidated_cash_columns=consolidated_cash_columns,
-                                     consolidated_position_columns=consolidated_position_columns,
-                                     consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
-
-                                     balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
-                                     transaction_filter_sql_string=transaction_filter_sql_string,
-                                     transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
-
-                                     pl_query=pl_query,
-                                     pl_left_join_consolidation=pl_left_join_consolidation,
-                                     fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                                     bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
-                                     )
+                query = query.format(
+                    report_date=instance.report_date,
+                    master_user_id=celery_task.master_user.id,
+                    default_currency_id=ecosystem_defaults.currency_id,
+                    report_currency_id=instance.report_currency.id,
+                    pricing_policy_id=instance.pricing_policy.id,
+                    consolidated_cash_columns=consolidated_cash_columns,
+                    consolidated_position_columns=consolidated_position_columns,
+                    consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
+                    balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
+                    transaction_filter_sql_string=transaction_filter_sql_string,
+                    transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
+                    pl_query=pl_query,
+                    pl_left_join_consolidation=pl_left_join_consolidation,
+                    fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                    bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
+                )
 
                 if settings.DEBUG:
-                    with open(os.path.join(settings.BASE_DIR, 'balance_query_result_before_execution.txt'),
-                              'w') as the_file:
-                        the_file. \
-                            write(query)
+                    with open(
+                        os.path.join(
+                            settings.BASE_DIR,
+                            "balance_query_result_before_execution.txt",
+                        ),
+                        "w",
+                    ) as the_file:
+                        the_file.write(query)
 
                 cursor.execute(query)
 
-                _l.debug('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                _l.debug(
+                    "Balance report query execute done: %s",
+                    "{:3.3f}".format(time.perf_counter() - st),
+                )
 
-                query_str = str(cursor.query, 'utf-8')
+                query_str = str(cursor.query, "utf-8")
 
-                if settings.SERVER_TYPE == 'local':
-                    with open('/tmp/query_result.txt', 'w') as the_file:
+                if settings.SERVER_TYPE == "local":
+                    with open("/tmp/query_result.txt", "w") as the_file:
                         the_file.write(query_str)
 
                 result = dictfetchall(cursor)
@@ -1738,81 +1776,110 @@ class BalanceReportBuilderSql:
                 updated_result = []
 
                 for item in result:
-
                     result_item = {}
 
                     # item["currency_id"] = item["settlement_currency_id"]
 
-                    result_item['name'] = item['name']
-                    result_item['short_name'] = item['short_name']
-                    result_item['user_code'] = item['user_code']
-                    result_item['item_type'] = item['item_type']
-                    result_item['item_type_name'] = item['item_type_name']
+                    result_item["name"] = item["name"]
+                    result_item["short_name"] = item["short_name"]
+                    result_item["user_code"] = item["user_code"]
+                    result_item["item_type"] = item["item_type"]
+                    result_item["item_type_name"] = item["item_type_name"]
 
-                    result_item['market_value'] = item['market_value']
-                    result_item['exposure'] = item['exposure']
+                    result_item["market_value"] = item["market_value"]
+                    result_item["exposure"] = item["exposure"]
 
-                    result_item['market_value_loc'] = item['market_value_loc']
-                    result_item['exposure_loc'] = item['exposure_loc']
+                    result_item["market_value_loc"] = item["market_value_loc"]
+                    result_item["exposure_loc"] = item["exposure_loc"]
 
                     if "portfolio_id" not in item:
                         result_item["portfolio_id"] = ecosystem_defaults.portfolio_id
                     else:
-                        result_item["portfolio_id"] = item['portfolio_id']
+                        result_item["portfolio_id"] = item["portfolio_id"]
 
                     if "account_cash_id" not in item:
                         result_item["account_cash_id"] = ecosystem_defaults.account_id
                     else:
-                        result_item["account_cash_id"] = item['account_cash_id']
+                        result_item["account_cash_id"] = item["account_cash_id"]
 
                     if "strategy1_cash_id" not in item:
-                        result_item["strategy1_cash_id"] = ecosystem_defaults.strategy1_id
+                        result_item[
+                            "strategy1_cash_id"
+                        ] = ecosystem_defaults.strategy1_id
                     else:
-                        result_item["strategy1_cash_id"] = item['strategy1_cash_id']
+                        result_item["strategy1_cash_id"] = item["strategy1_cash_id"]
 
                     if "strategy2_cash_id" not in item:
-                        result_item["strategy2_cash_id"] = ecosystem_defaults.strategy2_id
+                        result_item[
+                            "strategy2_cash_id"
+                        ] = ecosystem_defaults.strategy2_id
                     else:
-                        result_item["strategy2_cash_id"] = item['strategy2_cash_id']
+                        result_item["strategy2_cash_id"] = item["strategy2_cash_id"]
 
                     if "strategy3_cash_id" not in item:
-                        result_item["strategy3_cash_id"] = ecosystem_defaults.strategy3_id
+                        result_item[
+                            "strategy3_cash_id"
+                        ] = ecosystem_defaults.strategy3_id
                     else:
-                        result_item["strategy3_cash_id"] = item['strategy3_cash_id']
+                        result_item["strategy3_cash_id"] = item["strategy3_cash_id"]
 
                     if "account_position_id" not in item:
-                        result_item["account_position_id"] = ecosystem_defaults.account_id
+                        result_item[
+                            "account_position_id"
+                        ] = ecosystem_defaults.account_id
                     else:
-                        result_item["account_position_id"] = item['account_position_id']
+                        result_item["account_position_id"] = item["account_position_id"]
 
                     if "strategy1_position_id" not in item:
-                        result_item["strategy1_position_id"] = ecosystem_defaults.strategy1_id
+                        result_item[
+                            "strategy1_position_id"
+                        ] = ecosystem_defaults.strategy1_id
                     else:
-                        result_item["strategy1_position_id"] = item['strategy1_position_id']
+                        result_item["strategy1_position_id"] = item[
+                            "strategy1_position_id"
+                        ]
 
                     if "strategy2_position_id" not in item:
-                        result_item["strategy2_position_id"] = ecosystem_defaults.strategy2_id
+                        result_item[
+                            "strategy2_position_id"
+                        ] = ecosystem_defaults.strategy2_id
                     else:
-                        result_item["strategy2_position_id"] = item['strategy2_position_id']
+                        result_item["strategy2_position_id"] = item[
+                            "strategy2_position_id"
+                        ]
 
                     if "strategy3_position_id" not in item:
-                        result_item["strategy3_position_id"] = ecosystem_defaults.strategy3_id
+                        result_item[
+                            "strategy3_position_id"
+                        ] = ecosystem_defaults.strategy3_id
                     else:
-                        result_item["strategy3_position_id"] = item['strategy3_position_id']
+                        result_item["strategy3_position_id"] = item[
+                            "strategy3_position_id"
+                        ]
 
                     if "allocation_pl_id" not in item:
                         result_item["allocation_pl_id"] = None
                     else:
-                        result_item["allocation_pl_id"] = item['allocation_pl_id']
+                        result_item["allocation_pl_id"] = item["allocation_pl_id"]
 
-                    result_item["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
-                    result_item['instrument_id'] = item['instrument_id']
-                    result_item['currency_id'] = item["currency_id"]
+                    result_item["exposure_currency_id"] = item[
+                        "co_directional_exposure_currency_id"
+                    ]
+                    result_item["instrument_id"] = item["instrument_id"]
+                    result_item["currency_id"] = item["currency_id"]
                     result_item["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                    result_item["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
-                    result_item["instrument_principal_price"] = item["instrument_principal_price"]
-                    result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
+                    result_item["instrument_pricing_currency_fx_rate"] = item[
+                        "instrument_pricing_currency_fx_rate"
+                    ]
+                    result_item["instrument_accrued_currency_fx_rate"] = item[
+                        "instrument_accrued_currency_fx_rate"
+                    ]
+                    result_item["instrument_principal_price"] = item[
+                        "instrument_principal_price"
+                    ]
+                    result_item["instrument_accrued_price"] = item[
+                        "instrument_accrued_price"
+                    ]
                     result_item["instrument_factor"] = item["instrument_factor"]
                     result_item["instrument_ytm"] = item["instrument_ytm"]
                     result_item["daily_price_change"] = item["daily_price_change"]
@@ -1820,8 +1887,16 @@ class BalanceReportBuilderSql:
                     result_item["fx_rate"] = item["fx_rate"]
 
                     # _l.info('item %s' % item)
-                    result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-                    result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
+                    result_item["position_size"] = round(
+                        item["position_size"], settings.ROUND_NDIGITS
+                    )
+                    # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                    if item["nominal_position_size"] is not None:
+                        result_item["nominal_position_size"] = round(
+                            item["nominal_position_size"], settings.ROUND_NDIGITS
+                        )
+                    else:
+                        result_item["nominal_position_size"] = None
 
                     result_item["ytm"] = item["ytm"]
                     result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -1832,13 +1907,20 @@ class BalanceReportBuilderSql:
                     result_item["position_return"] = item["position_return"]
                     result_item["position_return_loc"] = item["position_return_loc"]
                     result_item["net_position_return"] = item["net_position_return"]
-                    result_item["net_position_return_loc"] = item["net_position_return_loc"]
+                    result_item["net_position_return_loc"] = item[
+                        "net_position_return_loc"
+                    ]
 
                     result_item["position_return_fixed"] = item["position_return_fixed"]
-                    result_item["position_return_fixed_loc"] = item["position_return_fixed_loc"]
-                    result_item["net_position_return_fixed"] = item["net_position_return_fixed"]
-                    result_item["net_position_return_fixed_loc"] = item["net_position_return_fixed_loc"]
-
+                    result_item["position_return_fixed_loc"] = item[
+                        "position_return_fixed_loc"
+                    ]
+                    result_item["net_position_return_fixed"] = item[
+                        "net_position_return_fixed"
+                    ]
+                    result_item["net_position_return_fixed_loc"] = item[
+                        "net_position_return_fixed_loc"
+                    ]
 
                     result_item["net_cost_price"] = item["net_cost_price"]
                     result_item["net_cost_price_loc"] = item["net_cost_price_loc"]
@@ -1846,16 +1928,24 @@ class BalanceReportBuilderSql:
                     result_item["gross_cost_price_loc"] = item["gross_cost_price_loc"]
 
                     result_item["principal_invested"] = item["principal_invested"]
-                    result_item["principal_invested_loc"] = item["principal_invested_loc"]
+                    result_item["principal_invested_loc"] = item[
+                        "principal_invested_loc"
+                    ]
 
                     result_item["amount_invested"] = item["amount_invested"]
                     result_item["amount_invested_loc"] = item["amount_invested_loc"]
 
-                    result_item["principal_invested_fixed"] = item["principal_invested_fixed"]
-                    result_item["principal_invested_fixed_loc"] = item["principal_invested_fixed_loc"]
+                    result_item["principal_invested_fixed"] = item[
+                        "principal_invested_fixed"
+                    ]
+                    result_item["principal_invested_fixed_loc"] = item[
+                        "principal_invested_fixed_loc"
+                    ]
 
                     result_item["amount_invested_fixed"] = item["amount_invested_fixed"]
-                    result_item["amount_invested_fixed_loc"] = item["amount_invested_fixed_loc"]
+                    result_item["amount_invested_fixed_loc"] = item[
+                        "amount_invested_fixed_loc"
+                    ]
 
                     result_item["time_invested"] = item["time_invested"]
                     result_item["return_annually"] = item["return_annually"]
@@ -1890,9 +1980,13 @@ class BalanceReportBuilderSql:
                     result_item["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
                     result_item["total_fx_loc"] = item["total_fx_opened_loc"]
 
-                    result_item["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
+                    result_item["principal_fixed_loc"] = item[
+                        "principal_fixed_opened_loc"
+                    ]
                     result_item["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
-                    result_item["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
+                    result_item["overheads_fixed_loc"] = item[
+                        "overheads_fixed_opened_loc"
+                    ]
                     result_item["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                     # Position * ( Long Underlying Exposure - Short Underlying Exposure)
@@ -1903,39 +1997,65 @@ class BalanceReportBuilderSql:
                     long = 0
                     short = 0
 
-                    if item["long_underlying_exposure_id"] == LongUnderlyingExposure.ZERO:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.ZERO
+                    ):
                         long = item["exposure_long_underlying_zero"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    ):
                         long = item["exposure_short_underlying_price"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    ):
                         long = item["exposure_long_underlying_price_delta"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    ):
                         long = item["exposure_long_underlying_fx_rate"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    ):
                         long = item["exposure_long_underlying_fx_rate_delta"]
 
-                    if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.ZERO:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.ZERO
+                    ):
                         short = item["exposure_short_underlying_zero"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_price"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    ):
                         short = item["exposure_short_underlying_price_delta"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_fx_rate"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_fx_rate_delta"]
 
-                    if item[
-                        "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET:
-                        result_item["exposure"] = result_item["position_size"] * (long - short)
+                    if (
+                        item["exposure_calculation_model_id"]
+                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET
+                    ):
+                        result_item["exposure"] = result_item["position_size"] * (
+                            long - short
+                        )
 
                     # (i )   Position * Long Underlying Exposure
                     # (ii)  -Position * Short Underlying Exposure
@@ -1943,137 +2063,139 @@ class BalanceReportBuilderSql:
                     if long is None:
                         long = 0
 
-                    if item[
-                        "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                    if (
+                        item["exposure_calculation_model_id"]
+                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
+                    ):
                         result_item["exposure"] = result_item["position_size"] * long
 
-                    if round(item['position_size'], settings.ROUND_NDIGITS):
-
+                    if round(item["position_size"], settings.ROUND_NDIGITS):
                         updated_result.append(result_item)
 
-                        if ITEM_TYPE_INSTRUMENT == 1:
+                        if ITEM_TYPE_INSTRUMENT == 1 and (
+                            item["has_second_exposure_currency"]
+                            and instance.show_balance_exposure_details
+                        ):
+                            new_exposure_item = {
+                                "name": item["name"],
+                                "user_code": item["user_code"],
+                                "short_name": item["short_name"],
+                                "pricing_currency_id": item["pricing_currency_id"],
+                                "currency_id": item["currency_id"],
+                                "instrument_id": item["instrument_id"],
+                                "portfolio_id": item["portfolio_id"],
+                                "account_cash_id": item["account_cash_id"],
+                                "strategy1_cash_id": item["strategy1_cash_id"],
+                                "strategy2_cash_id": item["strategy2_cash_id"],
+                                "strategy3_cash_id": item["strategy3_cash_id"],
+                                "account_position_id": item["account_position_id"],
+                                "strategy1_position_id": item["strategy1_position_id"],
+                                "strategy2_position_id": item["strategy2_position_id"],
+                                "strategy3_position_id": item["strategy3_position_id"],
+                                "instrument_pricing_currency_fx_rate": None,
+                                "instrument_accrued_currency_fx_rate": None,
+                                "instrument_principal_price": None,
+                                "instrument_accrued_price": None,
+                                "instrument_factor": None,
+                                "instrument_ytm": None,
+                                "daily_price_change": None,
+                                "market_value": None,
+                                "market_value_loc": None,
+                                "item_type": 7,
+                                "item_type_name": "Exposure",
+                                "exposure": item["exposure_2"],
+                                "exposure_loc": item["exposure_2_loc"],
+                                "exposure_currency_id": item[
+                                    "counter_directional_exposure_currency_id"
+                                ],
+                            }
 
-                            if item['has_second_exposure_currency'] and instance.show_balance_exposure_details:
+                            if (
+                                item["exposure_calculation_model_id"]
+                                == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
+                            ):
+                                new_exposure_item["exposure"] = (
+                                    -item["position_size"] * short
+                                )
 
-                                new_exposure_item = {
-                                    "name": item["name"],
-                                    "user_code": item["user_code"],
-                                    "short_name": item["short_name"],
-                                    "pricing_currency_id": item["pricing_currency_id"],
-                                    "currency_id": item["currency_id"],
-                                    "instrument_id": item["instrument_id"],
-                                    "portfolio_id": item["portfolio_id"],
+                            new_exposure_item["position_size"] = None
+                            new_exposure_item["nominal_position_size"] = None
+                            new_exposure_item["ytm"] = None
+                            new_exposure_item["ytm_at_cost"] = None
+                            new_exposure_item["modified_duration"] = None
+                            new_exposure_item["return_annually"] = None
+                            new_exposure_item["return_annually_fixed"] = None
 
-                                    "account_cash_id": item["account_cash_id"],
-                                    "strategy1_cash_id": item["strategy1_cash_id"],
-                                    "strategy2_cash_id": item["strategy2_cash_id"],
-                                    "strategy3_cash_id": item["strategy3_cash_id"],
+                            new_exposure_item["position_return"] = None
+                            new_exposure_item["position_return_loc"] = None
+                            new_exposure_item["net_position_return"] = None
+                            new_exposure_item["net_position_return_loc"] = None
 
-                                    "account_position_id": item["account_position_id"],
-                                    "strategy1_position_id": item["strategy1_position_id"],
-                                    "strategy2_position_id": item["strategy2_position_id"],
-                                    "strategy3_position_id": item["strategy3_position_id"],
+                            new_exposure_item["position_return_fixed"] = None
+                            new_exposure_item["position_return_fixed_loc"] = None
+                            new_exposure_item["net_position_return_fixed"] = None
+                            new_exposure_item["net_position_return_fixed_loc"] = None
 
-                                    "instrument_pricing_currency_fx_rate": None,
-                                    "instrument_accrued_currency_fx_rate": None,
-                                    "instrument_principal_price": None,
-                                    "instrument_accrued_price": None,
-                                    "instrument_factor": None,
-                                    "instrument_ytm": None,
-                                    "daily_price_change": None,
+                            new_exposure_item["net_cost_price"] = None
+                            new_exposure_item["net_cost_price_loc"] = None
+                            new_exposure_item["gross_cost_price"] = None
+                            new_exposure_item["gross_cost_price_loc"] = None
 
-                                    "market_value": None,
-                                    "market_value_loc": None,
+                            new_exposure_item["principal_invested"] = None
+                            new_exposure_item["principal_invested_loc"] = None
 
-                                    "item_type": 7,
-                                    "item_type_name": "Exposure",
-                                    "exposure": item["exposure_2"],
-                                    "exposure_loc": item["exposure_2_loc"],
-                                    "exposure_currency_id": item["counter_directional_exposure_currency_id"]
-                                }
+                            new_exposure_item["amount_invested"] = None
+                            new_exposure_item["amount_invested_loc"] = None
 
-                                if item[
-                                    "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
-                                    new_exposure_item["exposure"] = -item["position_size"] * short
+                            new_exposure_item["principal_invested_fixed"] = None
+                            new_exposure_item["principal_invested_fixed_loc"] = None
 
-                                new_exposure_item["position_size"] = None
-                                new_exposure_item["nominal_position_size"] = None
-                                new_exposure_item["ytm"] = None
-                                new_exposure_item["ytm_at_cost"] = None
-                                new_exposure_item["modified_duration"] = None
-                                new_exposure_item["return_annually"] = None
-                                new_exposure_item["return_annually_fixed"] = None
+                            new_exposure_item["amount_invested_fixed"] = None
+                            new_exposure_item["amount_invested_fixed_loc"] = None
 
-                                new_exposure_item["position_return"] = None
-                                new_exposure_item["position_return_loc"] = None
-                                new_exposure_item["net_position_return"] = None
-                                new_exposure_item["net_position_return_loc"] = None
+                            new_exposure_item["time_invested"] = None
+                            new_exposure_item["return_annually"] = None
+                            new_exposure_item["return_annually_fixed"] = None
 
-                                new_exposure_item["position_return_fixed"] = None
-                                new_exposure_item["position_return_fixed_loc"] = None
-                                new_exposure_item["net_position_return_fixed"] = None
-                                new_exposure_item["net_position_return_fixed_loc"] = None
+                            # performance
 
-                                new_exposure_item["net_cost_price"] = None
-                                new_exposure_item["net_cost_price_loc"] = None
-                                new_exposure_item["gross_cost_price"] = None
-                                new_exposure_item["gross_cost_price_loc"] = None
+                            new_exposure_item["principal"] = None
+                            new_exposure_item["carry"] = None
+                            new_exposure_item["overheads"] = None
+                            new_exposure_item["total"] = None
 
-                                new_exposure_item["principal_invested"] = None
-                                new_exposure_item["principal_invested_loc"] = None
+                            new_exposure_item["principal_fx"] = None
+                            new_exposure_item["carry_fx"] = None
+                            new_exposure_item["overheads_fx"] = None
+                            new_exposure_item["total_fx"] = None
 
-                                new_exposure_item["amount_invested"] = None
-                                new_exposure_item["amount_invested_loc"] = None
+                            new_exposure_item["principal_fixed"] = None
+                            new_exposure_item["carry_fixed"] = None
+                            new_exposure_item["overheads_fixed"] = None
+                            new_exposure_item["total_fixed"] = None
 
-                                new_exposure_item["principal_invested_fixed"] = None
-                                new_exposure_item["principal_invested_fixed_loc"] = None
+                            # loc started
 
-                                new_exposure_item["amount_invested_fixed"] = None
-                                new_exposure_item["amount_invested_fixed_loc"] = None
+                            new_exposure_item["principal_loc"] = None
+                            new_exposure_item["carry_loc"] = None
+                            new_exposure_item["overheads_loc"] = None
+                            new_exposure_item["total_loc"] = None
 
-                                new_exposure_item["time_invested"] = None
-                                new_exposure_item["return_annually"] = None
-                                new_exposure_item["return_annually_fixed"] = None
+                            new_exposure_item["principal_fx_loc"] = None
+                            new_exposure_item["carry_fx_loc"] = None
+                            new_exposure_item["overheads_fx_loc"] = None
+                            new_exposure_item["total_fx_loc"] = None
 
-                                # performance
+                            new_exposure_item["principal_fixed_loc"] = None
+                            new_exposure_item["carry_fixed_loc"] = None
+                            new_exposure_item["overheads_fixed_loc"] = None
+                            new_exposure_item["total_fixed_loc"] = None
 
-                                new_exposure_item["principal"] = None
-                                new_exposure_item["carry"] = None
-                                new_exposure_item["overheads"] = None
-                                new_exposure_item["total"] = None
+                            updated_result.append(new_exposure_item)
 
-                                new_exposure_item["principal_fx"] = None
-                                new_exposure_item["carry_fx"] = None
-                                new_exposure_item["overheads_fx"] = None
-                                new_exposure_item["total_fx"] = None
+                _l.debug("build balance result %s " % len(result))
 
-                                new_exposure_item["principal_fixed"] = None
-                                new_exposure_item["carry_fixed"] = None
-                                new_exposure_item["overheads_fixed"] = None
-                                new_exposure_item["total_fixed"] = None
-
-                                # loc started
-
-                                new_exposure_item["principal_loc"] = None
-                                new_exposure_item["carry_loc"] = None
-                                new_exposure_item["overheads_loc"] = None
-                                new_exposure_item["total_loc"] = None
-
-                                new_exposure_item["principal_fx_loc"] = None
-                                new_exposure_item["carry_fx_loc"] = None
-                                new_exposure_item["overheads_fx_loc"] = None
-                                new_exposure_item["total_fx_loc"] = None
-
-                                new_exposure_item["principal_fixed_loc"] = None
-                                new_exposure_item["carry_fixed_loc"] = None
-                                new_exposure_item["overheads_fixed_loc"] = None
-                                new_exposure_item["total_fixed_loc"] = None
-
-                                updated_result.append(new_exposure_item)
-
-                _l.debug('build balance result %s ' % len(result))
-
-                _l.info('single build done: %s' % (time.perf_counter() - st))
+                _l.info("single build done: %s" % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
@@ -2182,13 +2304,11 @@ class BalanceReportBuilderSql:
             # You can get the result of the task with its .result property.
             all_dicts.extend(result.result)
 
-
         for task in tasks:
             # refresh the task instance to get the latest status from the database
             task.refresh_from_db()
 
             task.delete()
-
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
@@ -2196,7 +2316,6 @@ class BalanceReportBuilderSql:
         _l.info("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
     def serial_build(self):
-
         st = time.perf_counter()
 
         task = CeleryTask.objects.create(
@@ -2206,11 +2325,19 @@ class BalanceReportBuilderSql:
             type="calculate_balance_report",
             options_object={
                 "report_date": self.instance.report_date,
-                "portfolios_ids": [instance.id for instance in self.instance.portfolios],
+                "portfolios_ids": [
+                    instance.id for instance in self.instance.portfolios
+                ],
                 "accounts_ids": [instance.id for instance in self.instance.accounts],
-                "strategies1_ids": [instance.id for instance in self.instance.strategies1],
-                "strategies2_ids": [instance.id for instance in self.instance.strategies2],
-                "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                "strategies1_ids": [
+                    instance.id for instance in self.instance.strategies1
+                ],
+                "strategies2_ids": [
+                    instance.id for instance in self.instance.strategies2
+                ],
+                "strategies3_ids": [
+                    instance.id for instance in self.instance.strategies3
+                ],
                 "report_currency_id": self.instance.report_currency.id,
                 "pricing_policy_id": self.instance.pricing_policy.id,
                 "cost_method_id": self.instance.cost_method.id,
@@ -2220,18 +2347,16 @@ class BalanceReportBuilderSql:
                 "strategy1_mode": self.instance.strategy1_mode,
                 "strategy2_mode": self.instance.strategy2_mode,
                 "strategy3_mode": self.instance.strategy3_mode,
-                "allocation_mode": self.instance.allocation_mode
-            }
+                "allocation_mode": self.instance.allocation_mode,
+            },
         )
-
 
         result = self.build_sync(task.id)
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = result
 
-        _l.info('parallel_build done: %s',
-                "{:3.3f}".format(time.perf_counter() - st))
+        _l.info("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
     def add_data_items_instruments(self, ids):
         self.instance.item_instruments = (
@@ -2241,7 +2366,7 @@ class BalanceReportBuilderSql:
                 "pricing_currency",
                 "accrued_currency",
                 "country",
-                "owner"
+                "owner",
             )
             .prefetch_related(
                 "attributes",
@@ -2259,7 +2384,8 @@ class BalanceReportBuilderSql:
             ids.append(instrument.instrument_type_id)
 
         self.instance.item_instrument_types = (
-            InstrumentType.objects.select_related("owner").prefetch_related(
+            InstrumentType.objects.select_related("owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2274,14 +2400,12 @@ class BalanceReportBuilderSql:
         for instrument in instruments:
             ids.append(instrument.country_id)
 
-        self.instance.item_countries = (
-            Country.objects
-            .all()
-        )
+        self.instance.item_countries = Country.objects.all()
 
     def add_data_items_portfolios(self, ids):
         self.instance.item_portfolios = (
-            Portfolio.objects.select_related("owner").prefetch_related("attributes")
+            Portfolio.objects.select_related("owner")
+            .prefetch_related("attributes")
             .defer("responsibles", "counterparties", "transaction_types", "accounts")
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
@@ -2303,7 +2427,8 @@ class BalanceReportBuilderSql:
         ids = [account.type_id for account in accounts]
 
         self.instance.item_account_types = (
-            AccountType.objects.select_related("owner").prefetch_related(
+            AccountType.objects.select_related("owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2314,7 +2439,8 @@ class BalanceReportBuilderSql:
 
     def add_data_items_currencies(self, ids):
         self.instance.item_currencies = (
-            Currency.objects.select_related("country", "owner").prefetch_related(
+            Currency.objects.select_related("country", "owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2325,7 +2451,8 @@ class BalanceReportBuilderSql:
 
     def add_data_items_strategies1(self, ids):
         self.instance.item_strategies1 = (
-            Strategy1.objects.select_related("owner").prefetch_related(
+            Strategy1.objects.select_related("owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2336,7 +2463,8 @@ class BalanceReportBuilderSql:
 
     def add_data_items_strategies2(self, ids):
         self.instance.item_strategies2 = (
-            Strategy2.objects.select_related("owner").prefetch_related(
+            Strategy2.objects.select_related("owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2347,7 +2475,8 @@ class BalanceReportBuilderSql:
 
     def add_data_items_strategies3(self, ids):
         self.instance.item_strategies3 = (
-            Strategy3.objects.select_related("owner").prefetch_related(
+            Strategy3.objects.select_related("owner")
+            .prefetch_related(
                 "attributes",
                 "attributes__attribute_type",
                 "attributes__classifier",
@@ -2496,9 +2625,7 @@ def build(self, task_id):
                 cost_method=instance.cost_method.id
             )
 
-            transaction_filter_sql_string = get_transaction_filter_sql_string(
-                instance
-            )
+            transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
             transaction_date_filter_for_initial_position_sql_string = (
                 get_transaction_date_filter_for_initial_position_sql_string(
                     instance.report_date,
@@ -2525,9 +2652,7 @@ def build(self, task_id):
             )
             pl_left_join_consolidation = get_pl_left_join_consolidation(instance)
             fx_trades_and_fx_variations_filter_sql_string = (
-                get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-                    instance
-                )
+                get_fx_trades_and_fx_variations_transaction_filter_sql_string(instance)
             )
 
             self.bday_yesterday_of_report_date = get_last_business_day(
@@ -2552,7 +2677,8 @@ def build(self, task_id):
                 filter_query_for_balance_in_multipliers_table="",
                 bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
             )
-            # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+            # filter_query_for_balance_in_multipliers_table=' where multiplier = 1')
+            # TODO ask for right where expression
 
             ######################################
 
@@ -3617,10 +3743,10 @@ def build(self, task_id):
                             {consolidated_position_columns}
                             
                             position_size,
-                            case when coalesce(factor,0) = 0
-                                    then 0
-                                    else
-                                        position_size / factor
+                            case when coalesce(factor,1) = 0
+                                then position_size
+                                else
+                                    position_size / coalesce(factor,1)
                             end as nominal_position_size,
     
                             (1) as item_type,
@@ -4053,9 +4179,7 @@ def build(self, task_id):
             )
 
             _l.debug("consolidated_cash_columns %s" % consolidated_cash_columns)
-            _l.debug(
-                "consolidated_position_columns %s" % consolidated_position_columns
-            )
+            _l.debug("consolidated_position_columns %s" % consolidated_position_columns)
             _l.debug(
                 "consolidated_cash_as_position_columns %s"
                 % consolidated_cash_as_position_columns
@@ -4081,11 +4205,11 @@ def build(self, task_id):
 
             if settings.DEBUG:
                 with open(
-                        os.path.join(
-                            settings.BASE_DIR,
-                            "balance_query_result_before_execution.txt",
-                        ),
-                        "w",
+                    os.path.join(
+                        settings.BASE_DIR,
+                        "balance_query_result_before_execution.txt",
+                    ),
+                    "w",
                 ) as the_file:
                     the_file.write(query)
 
@@ -4141,30 +4265,22 @@ def build(self, task_id):
                     result_item["account_cash_id"] = item["account_cash_id"]
 
                 if "strategy1_cash_id" not in item:
-                    result_item[
-                        "strategy1_cash_id"
-                    ] = ecosystem_defaults.strategy1_id
+                    result_item["strategy1_cash_id"] = ecosystem_defaults.strategy1_id
                 else:
                     result_item["strategy1_cash_id"] = item["strategy1_cash_id"]
 
                 if "strategy2_cash_id" not in item:
-                    result_item[
-                        "strategy2_cash_id"
-                    ] = ecosystem_defaults.strategy2_id
+                    result_item["strategy2_cash_id"] = ecosystem_defaults.strategy2_id
                 else:
                     result_item["strategy2_cash_id"] = item["strategy2_cash_id"]
 
                 if "strategy3_cash_id" not in item:
-                    result_item[
-                        "strategy3_cash_id"
-                    ] = ecosystem_defaults.strategy3_id
+                    result_item["strategy3_cash_id"] = ecosystem_defaults.strategy3_id
                 else:
                     result_item["strategy3_cash_id"] = item["strategy3_cash_id"]
 
                 if "account_position_id" not in item:
-                    result_item[
-                        "account_position_id"
-                    ] = ecosystem_defaults.account_id
+                    result_item["account_position_id"] = ecosystem_defaults.account_id
                 else:
                     result_item["account_position_id"] = item["account_position_id"]
 
@@ -4173,27 +4289,21 @@ def build(self, task_id):
                         "strategy1_position_id"
                     ] = ecosystem_defaults.strategy1_id
                 else:
-                    result_item["strategy1_position_id"] = item[
-                        "strategy1_position_id"
-                    ]
+                    result_item["strategy1_position_id"] = item["strategy1_position_id"]
 
                 if "strategy2_position_id" not in item:
                     result_item[
                         "strategy2_position_id"
                     ] = ecosystem_defaults.strategy2_id
                 else:
-                    result_item["strategy2_position_id"] = item[
-                        "strategy2_position_id"
-                    ]
+                    result_item["strategy2_position_id"] = item["strategy2_position_id"]
 
                 if "strategy3_position_id" not in item:
                     result_item[
                         "strategy3_position_id"
                     ] = ecosystem_defaults.strategy3_id
                 else:
-                    result_item["strategy3_position_id"] = item[
-                        "strategy3_position_id"
-                    ]
+                    result_item["strategy3_position_id"] = item["strategy3_position_id"]
 
                 if "allocation_pl_id" not in item:
                     result_item["allocation_pl_id"] = None
@@ -4228,9 +4338,13 @@ def build(self, task_id):
                 result_item["position_size"] = round(
                     item["position_size"], settings.ROUND_NDIGITS
                 )
-                result_item["nominal_position_size"] = round(
-                    item["nominal_position_size"], settings.ROUND_NDIGITS
-                )
+                # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                if item["nominal_position_size"] is not None:
+                    result_item["nominal_position_size"] = round(
+                        item["nominal_position_size"], settings.ROUND_NDIGITS
+                    )
+                else:
+                    result_item["nominal_position_size"] = None
 
                 result_item["ytm"] = item["ytm"]
                 result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -4241,9 +4355,7 @@ def build(self, task_id):
                 result_item["position_return"] = item["position_return"]
                 result_item["position_return_loc"] = item["position_return_loc"]
                 result_item["net_position_return"] = item["net_position_return"]
-                result_item["net_position_return_loc"] = item[
-                    "net_position_return_loc"
-                ]
+                result_item["net_position_return_loc"] = item["net_position_return_loc"]
 
                 result_item["position_return_fixed"] = item["position_return_fixed"]
                 result_item["position_return_fixed_loc"] = item[
@@ -4262,9 +4374,7 @@ def build(self, task_id):
                 result_item["gross_cost_price_loc"] = item["gross_cost_price_loc"]
 
                 result_item["principal_invested"] = item["principal_invested"]
-                result_item["principal_invested_loc"] = item[
-                    "principal_invested_loc"
-                ]
+                result_item["principal_invested_loc"] = item["principal_invested_loc"]
 
                 result_item["amount_invested"] = item["amount_invested"]
                 result_item["amount_invested_loc"] = item["amount_invested_loc"]
@@ -4314,13 +4424,9 @@ def build(self, task_id):
                 result_item["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
                 result_item["total_fx_loc"] = item["total_fx_opened_loc"]
 
-                result_item["principal_fixed_loc"] = item[
-                    "principal_fixed_opened_loc"
-                ]
+                result_item["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
                 result_item["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
-                result_item["overheads_fixed_loc"] = item[
-                    "overheads_fixed_opened_loc"
-                ]
+                result_item["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                 result_item["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                 # Position * ( Long Underlying Exposure - Short Underlying Exposure)
@@ -4331,64 +4437,58 @@ def build(self, task_id):
                 long = 0
                 short = 0
 
-                if (
-                        item["long_underlying_exposure_id"]
-                        == LongUnderlyingExposure.ZERO
-                ):
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.ZERO:
                     long = item["exposure_long_underlying_zero"]
                 if (
-                        item["long_underlying_exposure_id"]
-                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    item["long_underlying_exposure_id"]
+                    == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
                 ):
                     long = item["exposure_short_underlying_price"]
                 if (
-                        item["long_underlying_exposure_id"]
-                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    item["long_underlying_exposure_id"]
+                    == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA
                 ):
                     long = item["exposure_long_underlying_price_delta"]
                 if (
-                        item["long_underlying_exposure_id"]
-                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    item["long_underlying_exposure_id"]
+                    == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
                 ):
                     long = item["exposure_long_underlying_fx_rate"]
                 if (
-                        item["long_underlying_exposure_id"]
-                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    item["long_underlying_exposure_id"]
+                    == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
                 ):
                     long = item["exposure_long_underlying_fx_rate_delta"]
 
-                if (
-                        item["short_underlying_exposure_id"]
-                        == ShortUnderlyingExposure.ZERO
-                ):
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.ZERO:
                     short = item["exposure_short_underlying_zero"]
                 if (
-                        item["short_underlying_exposure_id"]
-                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    item["short_underlying_exposure_id"]
+                    == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
                 ):
                     short = item["exposure_short_underlying_price"]
                 if (
-                        item["short_underlying_exposure_id"]
-                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    item["short_underlying_exposure_id"]
+                    == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA
                 ):
                     short = item["exposure_short_underlying_price_delta"]
                 if (
-                        item["short_underlying_exposure_id"]
-                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    item["short_underlying_exposure_id"]
+                    == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
                 ):
                     short = item["exposure_short_underlying_fx_rate"]
                 if (
-                        item["short_underlying_exposure_id"]
-                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    item["short_underlying_exposure_id"]
+                    == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
                 ):
                     short = item["exposure_short_underlying_fx_rate_delta"]
 
                 if (
-                        item["exposure_calculation_model_id"]
-                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET
+                    item["exposure_calculation_model_id"]
+                    == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET
                 ):
                     result_item["exposure"] = result_item["position_size"] * (
-                            long - short
+                        long - short
                     )
 
                 # (i )   Position * Long Underlying Exposure
@@ -4398,143 +4498,134 @@ def build(self, task_id):
                     long = 0
 
                 if (
-                        item["exposure_calculation_model_id"]
-                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
+                    item["exposure_calculation_model_id"]
+                    == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
                 ):
                     result_item["exposure"] = result_item["position_size"] * long
 
                 if round(item["position_size"], settings.ROUND_NDIGITS):
                     updated_result.append(result_item)
 
-                    if ITEM_TYPE_INSTRUMENT == 1:
+                    if ITEM_TYPE_INSTRUMENT == 1 and (
+                        item["has_second_exposure_currency"]
+                        and instance.show_balance_exposure_details
+                    ):
+                        new_exposure_item = {
+                            "name": item["name"],
+                            "user_code": item["user_code"],
+                            "short_name": item["short_name"],
+                            "pricing_currency_id": item["pricing_currency_id"],
+                            "currency_id": item["currency_id"],
+                            "instrument_id": item["instrument_id"],
+                            "portfolio_id": item["portfolio_id"],
+                            "account_cash_id": item["account_cash_id"],
+                            "strategy1_cash_id": item["strategy1_cash_id"],
+                            "strategy2_cash_id": item["strategy2_cash_id"],
+                            "strategy3_cash_id": item["strategy3_cash_id"],
+                            "account_position_id": item["account_position_id"],
+                            "strategy1_position_id": item["strategy1_position_id"],
+                            "strategy2_position_id": item["strategy2_position_id"],
+                            "strategy3_position_id": item["strategy3_position_id"],
+                            "instrument_pricing_currency_fx_rate": None,
+                            "instrument_accrued_currency_fx_rate": None,
+                            "instrument_principal_price": None,
+                            "instrument_accrued_price": None,
+                            "instrument_factor": None,
+                            "instrument_ytm": None,
+                            "daily_price_change": None,
+                            "market_value": None,
+                            "market_value_loc": None,
+                            "item_type": 7,
+                            "item_type_name": "Exposure",
+                            "exposure": item["exposure_2"],
+                            "exposure_loc": item["exposure_2_loc"],
+                            "exposure_currency_id": item[
+                                "counter_directional_exposure_currency_id"
+                            ],
+                        }
+
                         if (
-                                item["has_second_exposure_currency"]
-                                and instance.show_balance_exposure_details
+                            item["exposure_calculation_model_id"]
+                            == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
                         ):
-                            new_exposure_item = {
-                                "name": item["name"],
-                                "user_code": item["user_code"],
-                                "short_name": item["short_name"],
-                                "pricing_currency_id": item["pricing_currency_id"],
-                                "currency_id": item["currency_id"],
-                                "instrument_id": item["instrument_id"],
-                                "portfolio_id": item["portfolio_id"],
-                                "account_cash_id": item["account_cash_id"],
-                                "strategy1_cash_id": item["strategy1_cash_id"],
-                                "strategy2_cash_id": item["strategy2_cash_id"],
-                                "strategy3_cash_id": item["strategy3_cash_id"],
-                                "account_position_id": item["account_position_id"],
-                                "strategy1_position_id": item[
-                                    "strategy1_position_id"
-                                ],
-                                "strategy2_position_id": item[
-                                    "strategy2_position_id"
-                                ],
-                                "strategy3_position_id": item[
-                                    "strategy3_position_id"
-                                ],
-                                "instrument_pricing_currency_fx_rate": None,
-                                "instrument_accrued_currency_fx_rate": None,
-                                "instrument_principal_price": None,
-                                "instrument_accrued_price": None,
-                                "instrument_factor": None,
-                                "instrument_ytm": None,
-                                "daily_price_change": None,
-                                "market_value": None,
-                                "market_value_loc": None,
-                                "item_type": 7,
-                                "item_type_name": "Exposure",
-                                "exposure": item["exposure_2"],
-                                "exposure_loc": item["exposure_2_loc"],
-                                "exposure_currency_id": item[
-                                    "counter_directional_exposure_currency_id"
-                                ],
-                            }
+                            new_exposure_item["exposure"] = (
+                                -item["position_size"] * short
+                            )
 
-                            if (
-                                    item["exposure_calculation_model_id"]
-                                    == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
-                            ):
-                                new_exposure_item["exposure"] = (
-                                        -item["position_size"] * short
-                                )
+                        new_exposure_item["position_size"] = None
+                        new_exposure_item["nominal_position_size"] = None
+                        new_exposure_item["ytm"] = None
+                        new_exposure_item["ytm_at_cost"] = None
+                        new_exposure_item["modified_duration"] = None
+                        new_exposure_item["return_annually"] = None
+                        new_exposure_item["return_annually_fixed"] = None
 
-                            new_exposure_item["position_size"] = None
-                            new_exposure_item["nominal_position_size"] = None
-                            new_exposure_item["ytm"] = None
-                            new_exposure_item["ytm_at_cost"] = None
-                            new_exposure_item["modified_duration"] = None
-                            new_exposure_item["return_annually"] = None
-                            new_exposure_item["return_annually_fixed"] = None
+                        new_exposure_item["position_return"] = None
+                        new_exposure_item["position_return_loc"] = None
+                        new_exposure_item["net_position_return"] = None
+                        new_exposure_item["net_position_return_loc"] = None
 
-                            new_exposure_item["position_return"] = None
-                            new_exposure_item["position_return_loc"] = None
-                            new_exposure_item["net_position_return"] = None
-                            new_exposure_item["net_position_return_loc"] = None
+                        new_exposure_item["position_return_fixed"] = None
+                        new_exposure_item["position_return_fixed_loc"] = None
+                        new_exposure_item["net_position_return_fixed"] = None
+                        new_exposure_item["net_position_return_fixed_loc"] = None
 
-                            new_exposure_item["position_return_fixed"] = None
-                            new_exposure_item["position_return_fixed_loc"] = None
-                            new_exposure_item["net_position_return_fixed"] = None
-                            new_exposure_item[
-                                "net_position_return_fixed_loc"
-                            ] = None
+                        new_exposure_item["net_cost_price"] = None
+                        new_exposure_item["net_cost_price_loc"] = None
+                        new_exposure_item["gross_cost_price"] = None
+                        new_exposure_item["gross_cost_price_loc"] = None
 
-                            new_exposure_item["net_cost_price"] = None
-                            new_exposure_item["net_cost_price_loc"] = None
-                            new_exposure_item["gross_cost_price"] = None
-                            new_exposure_item["gross_cost_price_loc"] = None
+                        new_exposure_item["principal_invested"] = None
+                        new_exposure_item["principal_invested_loc"] = None
 
-                            new_exposure_item["principal_invested"] = None
-                            new_exposure_item["principal_invested_loc"] = None
+                        new_exposure_item["amount_invested"] = None
+                        new_exposure_item["amount_invested_loc"] = None
 
-                            new_exposure_item["amount_invested"] = None
-                            new_exposure_item["amount_invested_loc"] = None
+                        new_exposure_item["principal_invested_fixed"] = None
+                        new_exposure_item["principal_invested_fixed_loc"] = None
 
-                            new_exposure_item["principal_invested_fixed"] = None
-                            new_exposure_item["principal_invested_fixed_loc"] = None
+                        new_exposure_item["amount_invested_fixed"] = None
+                        new_exposure_item["amount_invested_fixed_loc"] = None
 
-                            new_exposure_item["amount_invested_fixed"] = None
-                            new_exposure_item["amount_invested_fixed_loc"] = None
+                        new_exposure_item["time_invested"] = None
+                        new_exposure_item["return_annually"] = None
+                        new_exposure_item["return_annually_fixed"] = None
 
-                            new_exposure_item["time_invested"] = None
-                            new_exposure_item["return_annually"] = None
-                            new_exposure_item["return_annually_fixed"] = None
+                        # performance
 
-                            # performance
+                        new_exposure_item["principal"] = None
+                        new_exposure_item["carry"] = None
+                        new_exposure_item["overheads"] = None
+                        new_exposure_item["total"] = None
 
-                            new_exposure_item["principal"] = None
-                            new_exposure_item["carry"] = None
-                            new_exposure_item["overheads"] = None
-                            new_exposure_item["total"] = None
+                        new_exposure_item["principal_fx"] = None
+                        new_exposure_item["carry_fx"] = None
+                        new_exposure_item["overheads_fx"] = None
+                        new_exposure_item["total_fx"] = None
 
-                            new_exposure_item["principal_fx"] = None
-                            new_exposure_item["carry_fx"] = None
-                            new_exposure_item["overheads_fx"] = None
-                            new_exposure_item["total_fx"] = None
+                        new_exposure_item["principal_fixed"] = None
+                        new_exposure_item["carry_fixed"] = None
+                        new_exposure_item["overheads_fixed"] = None
+                        new_exposure_item["total_fixed"] = None
 
-                            new_exposure_item["principal_fixed"] = None
-                            new_exposure_item["carry_fixed"] = None
-                            new_exposure_item["overheads_fixed"] = None
-                            new_exposure_item["total_fixed"] = None
+                        # loc started
 
-                            # loc started
+                        new_exposure_item["principal_loc"] = None
+                        new_exposure_item["carry_loc"] = None
+                        new_exposure_item["overheads_loc"] = None
+                        new_exposure_item["total_loc"] = None
 
-                            new_exposure_item["principal_loc"] = None
-                            new_exposure_item["carry_loc"] = None
-                            new_exposure_item["overheads_loc"] = None
-                            new_exposure_item["total_loc"] = None
+                        new_exposure_item["principal_fx_loc"] = None
+                        new_exposure_item["carry_fx_loc"] = None
+                        new_exposure_item["overheads_fx_loc"] = None
+                        new_exposure_item["total_fx_loc"] = None
 
-                            new_exposure_item["principal_fx_loc"] = None
-                            new_exposure_item["carry_fx_loc"] = None
-                            new_exposure_item["overheads_fx_loc"] = None
-                            new_exposure_item["total_fx_loc"] = None
+                        new_exposure_item["principal_fixed_loc"] = None
+                        new_exposure_item["carry_fixed_loc"] = None
+                        new_exposure_item["overheads_fixed_loc"] = None
+                        new_exposure_item["total_fixed_loc"] = None
 
-                            new_exposure_item["principal_fixed_loc"] = None
-                            new_exposure_item["carry_fixed_loc"] = None
-                            new_exposure_item["overheads_fixed_loc"] = None
-                            new_exposure_item["total_fixed_loc"] = None
-
-                            updated_result.append(new_exposure_item)
+                        updated_result.append(new_exposure_item)
 
             _l.debug("build balance result %s " % len(result))
 

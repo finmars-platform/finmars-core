@@ -38,6 +38,8 @@ class DummyStorage:
 
 
 class ComplexTransactionCsvFileImportViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -45,7 +47,7 @@ class ComplexTransactionCsvFileImportViewSetTest(BaseTestCase):
         self.scheme = ComplexTransactionImportScheme.objects.create(
             user_code=self.random_string(length=5),
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
         )
 
     def create_task(self, name: str, func: str):

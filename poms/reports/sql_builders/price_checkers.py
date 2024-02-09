@@ -818,11 +818,14 @@ class PriceHistoryCheckerSql:
         instrument_ids = []
         currencies_ids = []
 
-        dash_currency = Currency.objects.get(user_code='-', master_user=self.instance.master_user)
+        try:
+            dash_currency_id = Currency.objects.get(user_code='-', master_user=self.instance.master_user).id
+        except Exception as e:
+            dash_currency_id = None
 
         items_without_dash_currency = []
 
-        print('dash_currency %s' % dash_currency.id)
+        # print('dash_currency %s' % dash_currency.id)
 
         for item in self.instance.items:
 
@@ -834,25 +837,25 @@ class PriceHistoryCheckerSql:
             if item['type'] == 'missing_instrument_currency_fx_rate':
                 currencies_ids.append(item['id'])
 
-                if item['id'] == dash_currency.id:
+                if item['id'] == dash_currency_id:
                     is_not_dash = False
 
             if item['type'] == 'fixed_calc':
                 currencies_ids.append(item['transaction_currency_id'])
 
-                if item['transaction_currency_id'] == dash_currency.id:
+                if item['transaction_currency_id'] == dash_currency_id:
                     is_not_dash = False
 
             if item['type'] == 'stl_cur_fx':
                 currencies_ids.append(item['transaction_currency_id'])
 
-                if item['transaction_currency_id'] == dash_currency.id:
+                if item['transaction_currency_id'] == dash_currency_id:
                     is_not_dash = False
 
             if item['type'] == 'rep_fx_var':
                 currencies_ids.append(item['transaction_currency_id'])
 
-                if item['transaction_currency_id'] == dash_currency.id:
+                if item['transaction_currency_id'] == dash_currency_id:
                     is_not_dash = False
 
             if is_not_dash:

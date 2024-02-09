@@ -95,7 +95,6 @@ class MasterUserCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         name = validated_data.get("name")
-        description = validated_data.get("description")
 
         if MasterUser.objects.filter(name=name).exists():
             error = {"name": [gettext_lazy("Name already in use.")]}
@@ -202,17 +201,29 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["language", "timezone", "two_factor_verification"]
+        fields = [
+            "language",
+            "timezone",
+            "two_factor_verification",
+        ]
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='user-detail')
     profile = UserProfileSerializer()
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "profile"]
-        read_only_fields = ["username"]
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "profile",
+        ]
+        read_only_fields = [
+            "username",
+        ]
 
     def create(self, validated_data):
         return None
@@ -290,10 +301,10 @@ class UserUnsubscribeSerializer(serializers.Serializer):
         user = get_user_from_context(self.context)
         if attrs["email"] != user.email:
             raise serializers.ValidationError({"email": "Invalid email"})
+
         return attrs
 
     def create(self, validated_data):
-        email = validated_data["email"]
         return validated_data
 
     def update(self, instance, validated_data):
@@ -301,7 +312,6 @@ class UserUnsubscribeSerializer(serializers.Serializer):
 
 
 class MasterUserSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(
         choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
@@ -314,7 +324,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "user_code_counters",
-            # 'is_current', 'is_admin', 'is_owner',
             "language",
             "status",
             "timezone",
@@ -328,7 +337,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
 
 
 class MasterUserLightSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(
         choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
@@ -391,7 +399,11 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 class OtpTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtpToken
-        fields = ["id", "name", "is_active"]
+        fields = [
+            "id",
+            "name",
+            "is_active",
+        ]
 
 
 class EcosystemDefaultSerializer(serializers.ModelSerializer):
@@ -418,13 +430,13 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
     mismatch_account = AccountField()
     pricing_policy = PricingPolicyField()
     transaction_type = TransactionTypeField()
-
     periodicity = PeriodicityField()
 
     class Meta:
         model = EcosystemDefault
         fields = [
             "id",
+            "master_user",
             "currency",
             "account_type",
             "account",
@@ -458,8 +470,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(EcosystemDefaultSerializer, self).__init__(*args, **kwargs)
-
         from poms.accounts.serializers import (
             AccountTypeViewSerializer,
             AccountViewSerializer,
@@ -498,6 +508,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             Strategy3ViewSerializer,
         )
         from poms.transactions.serializers import TransactionTypeViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields[
             "accrual_calculation_model_object"
@@ -764,4 +776,9 @@ class UsercodePrefixSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsercodePrefix
-        fields = ["id", "master_user", "value", "notes"]
+        fields = [
+            "id",
+            "master_user",
+            "value",
+            "notes",
+        ]

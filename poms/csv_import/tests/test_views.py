@@ -21,6 +21,8 @@ class DummyStorage:
 
 
 class CsvDataImportViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -28,7 +30,7 @@ class CsvDataImportViewSetTest(BaseTestCase):
         self.scheme = CsvImportScheme.objects.create(
             content_type=ContentType.objects.first(),
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(length=5),
         )
 

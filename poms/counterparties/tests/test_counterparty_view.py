@@ -78,6 +78,8 @@ CREATE_DATA = {
 
 
 class CounterpartyViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -87,7 +89,7 @@ class CounterpartyViewSetTest(BaseTestCase):
     def create_counterparty_group(self) -> CREATE_DATA:
         return CounterpartyGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -96,7 +98,7 @@ class CounterpartyViewSetTest(BaseTestCase):
     def create_counterparty(self) -> Counterparty:
         self.counterparty = Counterparty.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_counterparty_group(),
             user_code=self.random_string(),
             name=self.random_string(),
@@ -141,7 +143,7 @@ class CounterpartyViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json["results"]), 7)
 
     def test__list_light(self):
-        counterparty = self.create_counterparty()
+        self.create_counterparty()
         response = self.client.get(path=f"{self.url}light/")
         self.assertEqual(response.status_code, 200, response.content)
 

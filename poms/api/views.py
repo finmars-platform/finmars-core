@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 from datetime import date, datetime, timedelta
 from functools import lru_cache
+from pprint import pprint
+import sys
 
 import croniter
 import pexpect
@@ -16,6 +18,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import translation, timezone
 from django.views.static import serve
+from django.core.cache import cache
+import requests
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.decorators import action
@@ -23,12 +27,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
+from poms.vault.serializers import VaultStatusSerializer
+from poms.common.storage import get_storage
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
     get_list_of_dates_between_two_dates, last_day_of_month, get_serializer, get_content_type_by_name
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
+from poms.vault.vault import FinmarsVault
 from poms.workflows_handler import get_workflows_list
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
@@ -516,8 +523,7 @@ class StatsViewSet(AbstractViewSet):
 
 class SystemInfoViewSet(AbstractViewSet):
 
-    def list(self, request, *args, **kwargs):
-        result = {}
+    def __vm_info(self, ):
 
         items = []
 
@@ -637,7 +643,212 @@ class SystemInfoViewSet(AbstractViewSet):
 
         _l.info('pexpect_result read %s' % pexpect_result)
 
-        result['results'] = items
+        return items
+
+
+    def __python_version(self, ):
+        return sys.version
+
+
+    def __pip_freeze_info(self):
+        if not getattr(self, 'pip_freeze_data', None):
+            self.pip_freeze_data = {
+                'all': {},
+                'django': '-'
+            }
+
+            c = pexpect.spawn(
+                '/bin/bash', 
+                [
+                    '-c', 
+                    'pip3 freeze'
+                ]
+            )
+
+            for freeze_item in c.readlines():
+                if freeze_item:
+                    lib_item = freeze_item.decode().strip()
+                    lib_item_splited = lib_item.split('==')
+                    if len(lib_item_splited) > 1:
+                        self.pip_freeze_data['all'][lib_item_splited[0]] = lib_item_splited[1]
+
+                        if lib_item_splited[0] == 'Django':
+                            self.pip_freeze_data['django'] = lib_item_splited[1]
+
+        return self.pip_freeze_data
+
+
+    def __db_version(self, ):
+
+        db_version = 'unknown'
+
+        db_vendor_to_query_version = {
+            'postgresql': 'SELECT version();',
+            'sqlite': 'SELECT sqlite_version();',
+            'mysql': 'SELECT VERSION();',
+            'oracle': 'SELECT * FROM v$version;'
+        }
+
+        if connection.vendor in db_vendor_to_query_version.keys():
+            with connection.cursor() as cursor:
+                cursor.execute(db_vendor_to_query_version[connection.vendor])
+                db_row = cursor.fetchone()
+                if db_row:
+                    db_version = db_row
+        
+        return db_version
+
+
+    def __db_adapter_info(self, ):
+        try:
+            db_adapter_info = {
+                'settings_engine': settings.DATABASES['default']['ENGINE'],
+                'adapter_vendor': connection.vendor,
+                'adapter': connection.Database.__name__,
+                'adapter_version': connection.Database.__version__,
+                'db_version': self.__db_version()
+            }
+        except Exception as e:
+            _l.error("Could not get db_adapter_info %s" % e)
+            db_adapter_info = {
+                'adapter_status': 'unknown' 
+            }
+        
+        return db_adapter_info
+
+
+    def __storage_adapter_info(self, ):
+        try:
+            storage = get_storage()
+            storage_adapter_info = {
+                'adapter_name': storage.__class__.__name__,
+                #'adapter_version': storage.__class__.__version__
+            }
+        except Exception as e:
+            _l.error("Could not get storage_adapter_info %s" % e)
+            storage_adapter_info = {
+                'adapter_name': 'unknown'                
+            }
+
+        return storage_adapter_info
+
+
+    def __celery_info(self, ):
+        from celery import current_app
+        #pprint(current_app.conf['task_routes'])
+        try:
+            i = current_app.control.inspect()
+            celery_info = {
+                # Получить информацию о зарегистрированных задачах
+                'registered_tasks': i.registered_tasks(),
+                # Получить информацию о запущенных задачах
+                'active_tasks': i.active(),
+                # Получить информацию о запланированных задачах
+                'scheduled_tasks': i.scheduled(),
+                # Получить информацию о зарезервированных задачах
+                'reserved_tasks': i.reserved(),
+                # Получить информацию о работающих воркерах
+                'stats': i.stats()
+            }
+        except Exception as e:
+            _l.error("Could not get celery_info %s" % e)
+            celery_info = {
+                'status': 'unhealth'
+            }
+
+        return celery_info        
+
+
+    def __rabbitmq_status(self, ):
+        from celery import current_app
+        #pprint(current_app.conf['task_routes'])
+        try:
+            conn = current_app.connection()
+            transport = conn.transport
+            mq_conn = transport.establish_connection()
+            #pprint(dir(mq_conn))
+
+            rabbitmq_status = {
+                'default_connection_params': transport.default_connection_params,
+                'driver_name': transport.driver_name,
+                'driver_version': transport.driver_version(),
+                #'connection': transport.establish_connection(),
+                'server_properties': mq_conn.server_properties
+                #'heartbeat_check': transport.heartbeat_check(conn),
+                #'verify_connection': transport.verify_connection(conn)
+            }
+            mq_conn.close()
+        except Exception as e:
+            _l.error("Could not get rabbitmq info %s" % e)
+            rabbitmq_status = {
+                'status': 'unhealth'
+            }
+
+        return rabbitmq_status        
+
+    def __workflow_status(self):
+        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' 
+        workflow_status = 'unhealty'
+
+        try:
+            req = requests.get(workflow_url)
+            if req.status_code == 200:
+                workflow_status = 'healty'
+        except:
+            workflow_status = 'unhealty'
+
+        return {
+            'workflow_url': workflow_url,
+            'workflow_status': workflow_status
+        }
+
+    def __redis_status(self):
+        status = 'unhealty'
+
+        try:
+            cache.set('check_healty_status', 1, 10)
+
+            if cache.get('check_healty_status', 0) == 1:
+                status = 'healty'
+
+        except:
+            status = 'unhealty'
+
+        return {
+            'status': status,
+        }
+
+
+    def __vault_status(self, ):
+        try:
+            finmars_vault = FinmarsVault()
+            # it seems that this function, in case something is wrong with the Vault, always gives an exeption
+            finmars_vault.get_health()
+            status = 'health'
+        except:
+            status = 'unhealth'
+
+        return {
+            'status': status
+        }
+
+
+    def list(self, request, *args, **kwargs):
+        result = {}
+
+        result['results'] = {
+            'vm': self.__vm_info(),
+            'python_version': self.__python_version(), 
+            'django_version': self.__pip_freeze_info()['django'],
+            'pip_freeze': self.__pip_freeze_info()['all'],
+            'db_adapter': self.__db_adapter_info(),
+            'storage_adapter': self.__storage_adapter_info(),
+            'vault_status': self.__vault_status(),
+            'celery_status': self.__celery_info(),
+            'workflow_status': self.__workflow_status(),
+            'rabbitmq_status': self.__rabbitmq_status(),
+            'redis_status': self.__redis_status()
+        }
 
         return Response(result)
 

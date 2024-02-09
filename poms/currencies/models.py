@@ -11,9 +11,9 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now
-from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
+from poms.currencies.constants import MAIN_CURRENCIES
 
 
 # Probably Deprecated
@@ -30,7 +30,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     """
     Entity for Currency itself, e.g. USD, EUR, CHF
     Used in Transactions, in Reports, in Pricing,
@@ -132,6 +132,9 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             },
         ]
 
+    def fake_delete(self):
+        if not self.user_code in MAIN_CURRENCIES:
+            return super().fake_delete()
 
 class CurrencyHistory(DataTimeStampedModel):
     """

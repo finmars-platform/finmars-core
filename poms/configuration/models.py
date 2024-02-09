@@ -6,9 +6,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import OwnerModel
-from poms_app import settings
-
 from poms.configuration.utils import replace_special_chars_and_spaces
+from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
 
@@ -33,26 +32,22 @@ class ConfigurationModel(OwnerModel):
     class Meta:
         abstract = True
 
-    """
-    That is because we still need unique value e.g.
-        
-        - com.finmars.hnwi:buy_sell
-        - com.finmars.asset_manager:buy_sell
-        
-        frn:finmars:backend:::transactions.transactiontype:local.poms.space0000:*
-        frn:finmars:backend:::transactions.transactiontype:com.finmars.hnwi:*
-        
-        in that case con.finmars.hnwi already a user_code
-        and :* is user_code qualifier
-        
-    """
+    # That is because we still need unique value e.g.
+    #     - com.finmars.hnwi:buy_sell
+    #     - com.finmars.asset_manager:buy_sell
+    #
+    #     frn:finmars:backend:::transactions.transactiontype:local.poms.space0000:*
+    #     frn:finmars:backend:::transactions.transactiontype:com.finmars.hnwi:*
+    #
+    #     in that case con.finmars.hnwi already a user_code
+    #     and :* is user_code qualifier
 
     def save(self, *args, **kwargs):
         # _l.info('self.configuration_code %s' % self.configuration_code)
         # _l.info('self.user_code %s' % self.user_code)
 
         if not self.configuration_code:
-            """Now new prefix is local.poms.[space_code] e.g. local.poms.space00000""" ""
+            # Now new prefix is local.poms.[space_code] e.g. local.poms.space00000
             self.configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
         if not self.user_code:
@@ -61,29 +56,6 @@ class ConfigurationModel(OwnerModel):
         if self.configuration_code not in self.user_code:
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
             self.user_code = f"{str(self.configuration_code)}:{str(self.user_code)}"
-
-        # Content types are not needed anymore FN-2046
-        # # TODO  ADD configuration_code to POST data
-        # if self.user_code and self.configuration_code not in self.user_code:
-        #     self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
-        #
-        #     if (
-        #         hasattr(self, "content_type") and self.content_type
-        #     ):  # In case if it Attribute Type or Layout
-        #         content_type_key = (
-        #             f"{self.content_type.app_label}.{self.content_type.model}"
-        #         )
-        #
-        #         self.user_code = (
-        #             str(self.configuration_code)
-        #             + ":"
-        #             + content_type_key
-        #             + ":"
-        #             + str(self.user_code)
-        #         )
-        #
-        #     else:
-        #         self.user_code = f"{str(self.configuration_code)}:{str(self.user_code)}"
 
         super().save(*args, **kwargs)
 
@@ -152,7 +124,6 @@ class Configuration(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-
         if self.is_primary:
             qs = Configuration.objects.filter(is_primary=True)
             if self.pk:
@@ -160,7 +131,6 @@ class Configuration(models.Model):
             qs.update(is_primary=False)
 
         super().save(*args, **kwargs)
-
 
     @property
     def manifest(self):
@@ -214,9 +184,7 @@ class NewMemberSetupConfiguration(ConfigurationModel):
         help_text="Notes, any useful information about the object",
     )
 
-    """
-    Either provide configuration_code with version or upload zip
-    """
+    # Either provide configuration_code with version or upload zip
     target_configuration_code = models.CharField(
         max_length=255,
         null=True,

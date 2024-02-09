@@ -553,6 +553,7 @@ def get_serializer(content_type_key):
 
     from poms.instruments.serializers import InstrumentFactorScheduleStandaloneSerializer
     from poms.instruments.serializers import AccrualCalculationScheduleStandaloneSerializer
+    from poms.portfolios.serializers import PortfolioTypeSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -565,6 +566,7 @@ def get_serializer(content_type_key):
         "accounts.account": AccountSerializer,
         "accounts.accounttype": AccountTypeSerializer,
         "portfolios.portfolio": PortfolioSerializer,
+        "portfolios.portfoliotype": PortfolioTypeSerializer,
         "portfolios.portfolioregister": PortfolioRegisterSerializer,
         "portfolios.portfolioregisterrecord": PortfolioRegisterRecordSerializer,
         "instruments.pricehistory": PriceHistorySerializer,

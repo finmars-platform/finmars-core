@@ -6,6 +6,7 @@ import traceback
 from datetime import timedelta
 
 from django.forms import model_to_dict
+from django.db.utils import DataError
 
 from poms.accounts.models import Account, AccountType
 from poms.common.models import ProxyUser, ProxyRequest
@@ -220,7 +221,10 @@ class PerformanceReportBuilder:
                 self.instance.items.append(item)
 
         if self.instance.calculation_type == 'modified_dietz':
-            self.build_modified_dietz(begin_date, self.end_date)
+            try:
+                self.build_modified_dietz(begin_date, self.end_date)
+            except DataError:
+                pass
 
         # _l.info('items total %s' % len(self.instance.items))
 
@@ -998,10 +1002,10 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                if date_from == portfolio.first_transaction_date() or date_from < portfolio.first_transaction_date():
+                if date_from == portfolio.get_first_transaction_date() or date_from < portfolio.get_first_transaction_date():
 
                     # performance report could not be less then first transaction date
-                    date_from = portfolio.first_transaction_date()
+                    date_from = portfolio.get_first_transaction_date()
 
                     portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
                                                                                transaction_date__gte=date_from,
@@ -1090,6 +1094,8 @@ class PerformanceReportBuilder:
         self.instance.grand_nav = end_nav
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
+
+        self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
 
 
 def add_data_items_instruments(self, ids):
