@@ -664,12 +664,14 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                             portfolio_register,
                             task.member,
                         )
-
                         nav = 0
                         for it in balance_report.items:
                             if it["market_value"]:
                                 nav = nav + it["market_value"]
+                    except Exception as e:
+                        pass
 
+                    try:
                         cash_flow = calculate_cash_flow(
                             master_user,
                             day,
@@ -680,6 +682,10 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         principal_price = (
                             nav / registry_record.rolling_shares_of_the_day
                         )
+                    except Exception as e:
+                        pass
+
+                    try:
                         for pricing_policy in pricing_policies:
                             price_history, _ = PriceHistory.objects.get_or_create(
                                 instrument=portfolio_register.linked_instrument,
