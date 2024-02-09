@@ -1776,7 +1776,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                 def active_factor(date, factors, factor_dates):
                     tmp_list = {idate for idate in factor_dates if idate <= date}
                     factor = 1
-                    if len(tmp_list) > 0:
+                    if tmp_list:
                         active_date = max(tmp_list)
                         index = factor_dates.index(active_date)
                         factor = factors[index]
@@ -1835,7 +1835,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                         faceAmount=face_value,
                         maturityDate=maturity,
                     )
-                    _l.info("ZeroCouponBond %s" % bond)
+                    _l.info(f"ZeroCouponBond {bond}")
 
         return bond
 
@@ -1858,13 +1858,14 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             try:
                 frequency = bond.frequency()
             except Exception as e:
-                _l.error("Could not take frequency from bond %s" % e)
+                _l.error(f"Could not take frequency from bond {e}")
                 frequency = 1
             # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
             # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
-            _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
-            _l.info('calculate_quantlib_ytm frequency %s ' % frequency)
+            _l.info(
+                f'calculate_quantlib_ytm frequency {frequency} of type {type(frequency)}'
+            )
 
             ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
 
@@ -1876,14 +1877,13 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         modified_duration = 0
 
         bond = self.get_quantlib_bond()
-
         if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
             try:
                 frequency = bond.frequency()
             except Exception as e:
-                _l.error("Could not take frequency from bond %s" % e)
+                _l.error(f"Could not take frequency from bond {e}")
                 frequency = 1
             # first_cashflow = bond.cashflows()[0]
             # day_count_convention = first_cashflow.dayCounter()
@@ -2691,7 +2691,11 @@ class AccrualCalculationSchedule(models.Model):
     eom = models.BooleanField(
         default=False,
         verbose_name=gettext_lazy("EOM"),
-        help_text="If the start date of a bond is at the end of a month (e.g., January 30 or 31), the date is adjusted to the end of February for a semi-annual or full annual coupon. "
+        help_text=(
+            "If the start date of a bond is at the end of a month "
+            "(e.g., January 30 or 31), the date is adjusted to the end of February "
+            "for a semi-annual or full annual coupon."
+        ),
     )
 
     def save(self, *args, **kwargs):
@@ -2789,6 +2793,10 @@ class PriceHistory(DataTimeStampedModel):
         default=False,
         verbose_name=gettext_lazy("is temporary price"),
     )
+    error_message = models.TextField(
+        default="",
+        verbose_name=gettext_lazy("error message(s)"),
+    )
 
     class Meta:
         verbose_name = gettext_lazy("price history")
@@ -2807,6 +2815,13 @@ class PriceHistory(DataTimeStampedModel):
             f"{self.accrued_price} @{self.date}"
         )
 
+    def handle_err(self, err_msg: str):
+        _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
+        if self.error_message:
+            self.error_message = f"{self.error_message}; {err_msg}"
+        else:
+            self.error_message = err_msg
+
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
                 self.principal_price
@@ -2820,6 +2835,7 @@ class PriceHistory(DataTimeStampedModel):
 
         return dt, v0
 
+    # DEPRECATED ?
     def get_instr_ytm_data(self, dt):
         if hasattr(self, "_instr_ytm_data"):
             return self._instr_ytm_data
@@ -2837,7 +2853,8 @@ class PriceHistory(DataTimeStampedModel):
 
         try:
             d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
-        except ArithmeticError:
+        except ArithmeticError as e:
+            self.handle_err(f"get_instr_ytm_data error {repr(e)}")
             return None
 
         data = [(d0, v0)]
@@ -2883,6 +2900,7 @@ class PriceHistory(DataTimeStampedModel):
 
         return data
 
+    # DEPRECATED ?
     def get_instr_ytm_x0(self, dt):
         try:
             accrual_size = self.instrument.get_accrual_size(dt)
@@ -2893,7 +2911,7 @@ class PriceHistory(DataTimeStampedModel):
                     / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
-            _l.error(f"get_instr_ytm_x0 {repr(e)}")
+            self.handle_err(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
     def calculate_ytm(self, date):
@@ -2910,9 +2928,6 @@ class PriceHistory(DataTimeStampedModel):
 
     def save(self, *args, **kwargs):
         from poms.instruments.fields import AUTO_CALCULATE
-        # TODO make readable exception if currency history is missing
-
-        # cache.clear() # what do have in cache?
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
@@ -2951,22 +2966,24 @@ class PriceHistory(DataTimeStampedModel):
             self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
-            _l.info(f"PriceHistory save ytm error {repr(e)} {traceback.format_exc()}")
+            self.handle_err(f"calculate_ytm error {repr(e)}")
 
-        if not self.factor:
+        if self.factor in {None, AUTO_CALCULATE}:
+            if self.error_message:  # reset error messages
+                self.error_message = ""
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
-                _l.debug(
-                    f"PriceHistory factor save ytm error {repr(e)}"
-                    f" {traceback.format_exc()}"
-                )
+                self.handle_err(f"get_factor error {repr(e)}")
+                self.factor = 1
 
         if self.accrued_price in {None, AUTO_CALCULATE}:
+            if self.error_message:  # reset error messages
+                self.error_message = ""
             try:
                 self.accrued_price = self.instrument.get_accrued_price(self.date)
             except Exception as e:
-                _l.error(f"PriceHistory could not get accrued_price, due to {repr(e)}")
+                self.handle_err(f"get_accrued_price error {repr(e)}")
                 self.accrued_price = 0
 
         super().save(*args, **kwargs)
