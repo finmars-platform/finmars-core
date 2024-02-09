@@ -1,3 +1,6 @@
+from typing import List
+
+from poms.instruments.models import PriceHistory
 from poms.portfolios.models import PortfolioRegisterRecord
 
 
@@ -18,3 +21,15 @@ def get_price_calculation_type(transaction_class, transaction) -> str:
         )
         else PortfolioRegisterRecord.AUTOMATIC
     )
+
+
+def update_price_histories_with_error(err_msg: str, prices: List[PriceHistory]):
+    """
+    Stores error message in all corresponding PriceHistory objects
+    """
+    for price in prices:
+        price.nav = 0
+        price.cash_flow = 0
+        price.principal_price = 0
+        price.error_message = err_msg
+        price.save()

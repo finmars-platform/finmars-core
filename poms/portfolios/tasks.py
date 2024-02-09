@@ -28,7 +28,10 @@ from poms.portfolios.models import (
     PortfolioRegister,
     PortfolioRegisterRecord,
 )
-from poms.portfolios.utils import get_price_calculation_type
+from poms.portfolios.utils import (
+    get_price_calculation_type,
+    update_price_histories_with_error,
+)
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -685,6 +688,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         f"balance_report func ended in error {repr(e)}"
                     )
                     _l.error(f"{err_msg} trace {traceback.format_exc()}")
+                    update_price_histories_with_error(err_msg, price_histories)
                     continue
 
                 try:
@@ -702,6 +706,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         f"func ended in error {repr(e)}"
                     )
                     _l.error(f"{err_msg} trace {traceback.format_exc()}")
+                    update_price_histories_with_error(err_msg, price_histories)
                     continue
 
                 for price_history in price_histories:
