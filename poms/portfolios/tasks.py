@@ -520,11 +520,11 @@ def calculate_portfolio_register_price_history(self, task_id: int):
     from poms.celery_tasks.models import CeleryTask
     from poms.instruments.models import PriceHistory
 
+    log = "calculate_portfolio_register_price_history"
+
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise RuntimeError(
-            f"calculate_portfolio_register_price_history, no such task={task_id}"
-        )
+        raise RuntimeError(f"{log} no such task={task_id}")
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -532,7 +532,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
             master_user=task.master_user,
             action_status="required",
             type="error",
-            title="Task Failed. Name: calculate_portfolio_register_price_history",
+            title=f"Task Failed. Name: {log}",
             description=err_msg,
         )
         task.error_message = err_msg
@@ -547,10 +547,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
     task.save()
 
-    _l.info(
-        f"calculate_portfolio_register_price_history: "
-        f"task_options={task.options_object}"
-    )
+    _l.info(f"{log} task_id={task_id} task_options={task.options_object}")
 
     date_to = task.options_object.get("date_to")
     date_from = task.options_object.get("date_from")
@@ -660,6 +657,15 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                 if not pr_record or not pr_record.valuation_pricing_policy:
                     continue
 
+                price_histories = []  # price history records to be updated
+                for pricing_policy in pricing_policies:
+                    price_history, _ = PriceHistory.objects.get_or_create(
+                        instrument=portfolio_register.linked_instrument,
+                        date=day,
+                        pricing_policy=pricing_policy,
+                    )
+                    price_histories.append(price_history)
+
                 try:
                     balance_report = calculate_simple_balance_report(
                         day,
@@ -691,19 +697,13 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
                     continue
 
-                for pricing_policy in pricing_policies:
-                    price_history, _ = PriceHistory.objects.get_or_create(
-                        instrument=portfolio_register.linked_instrument,
-                        date=day,
-                        pricing_policy=pricing_policy,
-                    )
+                for price_history in price_histories:
                     price_history.nav = nav
                     price_history.cash_flow = cash_flow
                     price_history.principal_price = principal_price
                     price_history.save()
 
                 count = count + 1
-
                 task.update_progress(
                     {
                         "current": count,
@@ -712,34 +712,6 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                         "description": f"Calculating {portfolio_register} at {day}",
                     }
                 )
-
-                # except Exception as e:
-                #     err_msg = (
-                #         f"task calculate_portfolio_register_price_history "
-                #         f"at day {day} resulted in error {repr(e)}"
-                #     )
-                #
-                #     # create fake price record (if it doesn't exist) to store error
-                #     price_history = PriceHistory.objects.filter(
-                #         instrument=portfolio_register.linked_instrument,
-                #         date=day,
-                #         pricing_policy__in=pricing_policies,
-                #     ).first()
-                #     if not price_history:
-                #         if pricing_policies:
-                #             pricing_policy = pricing_policies[0]
-                #         else:
-                #             pricing_policy = None
-                #         PriceHistory.objects.create(
-                #             instrument=portfolio_register.linked_instrument,
-                #             date=day,
-                #             pricing_policy=pricing_policy,
-                #             is_temporary_price=True,
-                #         )
-                #     if price_history.error_message:  # reset error messages
-                #         price_history.error_message = ""
-                #     price_history.handle_err(err_msg)
-                #     price_history.save()
 
         # Finish calculation
         send_system_message(
