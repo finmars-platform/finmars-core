@@ -324,8 +324,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return cls.today() - timedelta(days=1)
 
     @classmethod
-    def random_future_date(cls, interval=365) -> date:
-        days = cls.random_int(1, interval)
+    def random_future_date(cls, interval: int = 365*10) -> date:
+        days = cls.random_int(_max=interval)
         return cls.today() + timedelta(days=days)
 
     @classmethod

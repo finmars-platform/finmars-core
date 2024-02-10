@@ -23,13 +23,8 @@ def get_price_calculation_type(transaction_class, transaction) -> str:
     )
 
 
-def update_price_histories_with_error(err_msg: str, prices: List[PriceHistory]):
+def update_price_histories(prices: List[PriceHistory], **kwargs):
     """
-    Stores error message in all corresponding PriceHistory objects
+    Update PriceHistory objects with given data
     """
-    for price in prices:
-        price.nav = 0
-        price.cash_flow = 0
-        price.principal_price = 0
-        price.error_message = err_msg
-        price.save()
+    PriceHistory.objects.filter(id__in=[price.id for price in prices]).update(**kwargs)
