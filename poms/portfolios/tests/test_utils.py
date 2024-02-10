@@ -38,7 +38,7 @@ class UpdatePriceHistoriesTest(BaseTestCase):
         ["7", 7],
         ["21", 21],
     )
-    def test__error_message_updated(self, amount):
+    def test__fields_updated_error_reset(self, amount):
         self.create_price_history(amount)
         prices = PriceHistory.objects.all()
 
@@ -49,16 +49,6 @@ class UpdatePriceHistoriesTest(BaseTestCase):
         ).count()
         self.assertEqual(count, amount)
 
-    @BaseTestCase.cases(
-        ["0", 0],
-        ["4", 1],
-        ["7", 7],
-        ["21", 21],
-    )
-    def test__float_fields_updated(self, amount):
-        self.create_price_history(amount)
-        prices = PriceHistory.objects.all()
-
         value = self.random_int()
         utils.update_price_histories(
             prices,
@@ -67,7 +57,11 @@ class UpdatePriceHistoriesTest(BaseTestCase):
             cash_flow=value,
             principal_price=value,
         )
+
         count = PriceHistory.objects.filter(
-            nav=value, cash_flow=value, principal_price=value,
+            error_message="",
+            nav=value,
+            cash_flow=value,
+            principal_price=value,
         ).count()
         self.assertEqual(count, amount)
