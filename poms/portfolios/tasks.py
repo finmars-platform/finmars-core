@@ -49,33 +49,43 @@ def calculate_simple_balance_report(
     Probably is a duplicated method. Here we're just getting Balance Report instance
     on specific date, portfolio and pricing policy
     """
+    log = "calculate_simple_balance_report"
     _l.info(
-        f"calculate_simple_balance_report report_date={report_date} "
-        f"portfolio_register={portfolio_register} member={member}"
+        f"{log} report_date={report_date} portfolio_register={portfolio_register} "
+        f"member={member}"
     )
 
     if not portfolio_register.linked_instrument:
-        raise RuntimeError(
-            f"calculate_simple_balance_report: invalid portfolio_register "
-            f"{portfolio_register} - no linked_instrument"
+        raise ValueError(
+            f"{log} portfolio_register {portfolio_register} has no linked_instrument"
         )
 
-    instance = Report(master_user=portfolio_register.master_user)
-    instance.master_user = portfolio_register.master_user
-    instance.member = member
-    instance.report_date = report_date
-    instance.pricing_policy = portfolio_register.valuation_pricing_policy
-    instance.portfolios = [portfolio_register.portfolio]
-    instance.report_currency = portfolio_register.linked_instrument.pricing_currency
+    try:
+        report = Report(master_user=portfolio_register.master_user)
+        report.master_user = portfolio_register.master_user
+        report.member = member
+        report.report_date = report_date
+        report.pricing_policy = portfolio_register.valuation_pricing_policy
+        report.portfolios = [portfolio_register.portfolio]
+        report.report_currency = portfolio_register.linked_instrument.pricing_currency
 
-    builder = BalanceReportBuilderSql(instance=instance)
-    instance = builder.build_balance_sync()
+        builder = BalanceReportBuilderSql(report)
+        report = builder.build_balance_sync()
 
-    return instance
+    except Exception as e:
+        err_msg = f"{log} report build resulted in error {repr(e)}"
+        _l.error(f"{err_msg} trace {traceback.format_exc()}")
+        raise ValueError(err_msg) from e
+
+    return report
 
 
 def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
-    _l.info(f"calculate_cash_flow.date {date} pricing_policy {pricing_policy}")
+    log = "calculate_cash_flow"
+    _l.info(
+        f"{log} date {date} pricing_policy {pricing_policy} "
+        f"portfolio_register {portfolio_register}"
+    )
 
     cash_flow = 0
 
@@ -115,7 +125,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
             except Exception as e:
                 err_msg = (
-                    f"fx_rate calculation for transaction {transaction.id} "
+                    f"{log} fx_rate calculation for transaction {transaction.id} "
                     f"portfolio_registry {portfolio_register.id} and linked_instrument "
                     f"{portfolio_register.linked_instrument.id} resulted "
                     f"in error {repr(e)}"
@@ -127,8 +137,8 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
         )
 
     _l.info(
-        f"calculate_cash_flow.date {date} pricing_policy {pricing_policy} "
-        f"RESULT {cash_flow}"
+        f"{log} date {date} pricing_policy {pricing_policy} "
+        f"RESULT CASH_FLOW {cash_flow}"
     )
 
     return cash_flow
