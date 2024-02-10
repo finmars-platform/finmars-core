@@ -658,7 +658,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                 if not pr_record or not pr_record.valuation_pricing_policy:
                     continue
 
-                price_histories = []  # price history records to be updated
+                price_histories = []  # price history objects to be updated
                 for pricing_policy in pricing_policies:
                     price_history, _ = PriceHistory.objects.get_or_create(
                         instrument=portfolio_register.linked_instrument,
