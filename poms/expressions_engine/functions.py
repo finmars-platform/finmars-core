@@ -3206,6 +3206,8 @@ def _get_net_cost_price_on_date(
         if total_position != 0:
             result = total_principal / total_position
 
+            result = result * -1 # get price with the right sign
+
         return result
 
     except Exception as e:
