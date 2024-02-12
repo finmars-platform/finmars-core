@@ -216,6 +216,70 @@ def bulk_delete(self, task_id):
         celery_task.save()
 
 
+@finmars_task(name="celery_tasks.bulk_restore", bind=True)
+def bulk_restore(self, task_id):
+    celery_task = CeleryTask.objects.get(id=task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    options_object = celery_task.options_object
+
+    _l.info(
+        f"bulk_restore: task_id {task_id} content_type {options_object['content_type']}"
+        f" options_object {options_object}"
+    )
+
+    content_type_pieces = options_object["content_type"].split(".")
+
+    content_type = ContentType.objects.get(
+        app_label=content_type_pieces[0],
+        model=content_type_pieces[1],
+    )
+
+    _l.info(f'bulk_restore {options_object["ids"]}')
+
+    celery_task.update_progress(
+        {
+            "current": 0,
+            "total": len(options_object["ids"]),
+            "percent": 0,
+            "description": "Bulk restore initialized",
+        }
+    )
+
+    queryset = content_type.model_class().objects.filter(
+        id__in=options_object["ids"]
+    )
+
+    try:
+        if content_type.model_class()._meta.get_field("is_deleted"):
+            for count, instance in enumerate(queryset, start=1):
+                instance.restore()
+                celery_task.update_progress(
+                    {
+                        "current": count,
+                        "total": len(options_object["ids"]),
+                        "percent": round(count / (len(options_object["ids"]) / 100)),
+                        "description": f"Instance {instance.id} was restored",
+                    }
+                )
+
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.mark_task_as_finished()
+
+    except Exception as e:
+        err_msg = f"bulk_restore exception {repr(e)} {traceback.format_exc()}"
+        _l.info(err_msg)  # sentry detects it as error, but it maybe not
+        _l.info('options_object["content_type"] %s' % options_object["content_type"])
+
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.error_message = err_msg
+
+    finally:
+        celery_task.save()
+
+
 def import_item(item, context):
     from poms.common.utils import get_content_type_by_name, get_serializer
     from poms.transactions.handlers import TransactionTypeProcess
