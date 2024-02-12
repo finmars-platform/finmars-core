@@ -1098,9 +1098,9 @@ class InstrumentSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from poms.currencies.serializers import CurrencyViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["pricing_currency_object"] = CurrencyViewSerializer(
             source="pricing_currency", read_only=True
@@ -1815,6 +1815,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "is_temporary_price",
             "ytm",
             "modified_duration",
+            "error_message",
         ]
 
     def validate(self, attrs: dict) -> dict:

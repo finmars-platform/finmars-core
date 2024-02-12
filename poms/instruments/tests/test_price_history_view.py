@@ -123,6 +123,7 @@ EXPECTED_PRICE_HISTORY = {
     "is_temporary_price": False,
     "ytm": 3.0,
     "modified_duration": 3.0,
+    "error_message": "",
     "meta": {
         "content_type": "instruments.pricehistory",
         "app_label": "instruments",
@@ -148,6 +149,7 @@ CREATE_DATA = {
 
 class PriceHistoryViewSetTest(BaseTestCase):
     databases = "__all__"
+
 
     def setUp(self):
         super().setUp()
@@ -209,6 +211,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
             response_json["principal_price"], pricing_history.principal_price
         )
         self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
+        self.assertIn("object has no attribute 'dayCounter'", response_json["error_message"])
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")
@@ -353,8 +356,6 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     def test__update_with_null_accrued_price(self):
-        from pprint import pprint
-
         create_data = self.prepare_data_for_create()
         create_data["accrued_price"] = 0
 
