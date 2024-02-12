@@ -4691,6 +4691,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("calculate_accrued_price", _calculate_accrued_price),
     SimpleEval2Def("get_position_size_on_date", _get_position_size_on_date),
     SimpleEval2Def("get_principal_on_date", _get_principal_on_date),
+    SimpleEval2Def("get_net_cost_price_on_date", _get_net_cost_price_on_date),
     SimpleEval2Def("get_instrument_report_data", _get_instrument_report_data),
     SimpleEval2Def("get_instrument_factor", _get_instrument_factor),
     SimpleEval2Def("get_instrument_coupon_factor", _get_instrument_coupon_factor),
