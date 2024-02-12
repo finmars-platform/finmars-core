@@ -239,6 +239,52 @@ class FakeDeletableModel(models.Model):
 
         self.save(update_fields=fields_to_update)
 
+    def restore(self):
+        from poms.system_messages.handlers import send_system_message
+        from poms.celery_tasks.models import CeleryTask
+        from poms.common.celery import get_active_celery_task_id
+
+        self.is_deleted = False
+
+        fields_to_update = ["is_deleted", "modified"]
+        try:
+            member = get_request().user.member
+        except Exception:
+            celery_task_id = get_active_celery_task_id()
+
+            celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
+            member = celery_task.member
+
+        if hasattr(self, "user_code"):
+            self.name = self.name.replace("(del) ", "")
+            self.short_name = self.name.replace("(del) ", "")
+            self.user_code = self.deleted_user_code
+            self.deleted_user_code = None
+            fields_to_update.extend(
+                ["deleted_user_code", "name", "short_name", "user_code"]
+            )
+
+        if hasattr(self, "is_enabled"):
+            self.is_enabled = True
+            fields_to_update.append("is_enabled")
+
+        if hasattr(self, "is_active"):  # instrument prop
+            self.is_active = True
+            fields_to_update.append("is_active")
+
+        entity_name = self._meta.model_name
+
+        send_system_message(
+            master_user=self.master_user,
+            performed_by=member.username,
+            section="data",
+            type="warning",
+            title=f"Restore {entity_name} (manual)",
+            description=f"{entity_name} was restored (manual) - {self.name}",
+        )
+
+        self.save(update_fields=fields_to_update)
+
 
 # These models need to create custom context, that could be passed to serializers
 class ProxyUser(object):
