@@ -1,5 +1,3 @@
-from datetime import date
-
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
 from poms.instruments.models import PricingPolicy
