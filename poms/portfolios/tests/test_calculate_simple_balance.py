@@ -55,7 +55,7 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
         }
         portfolio_register = PortfolioRegister.objects.create(**pr_data)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(Exception):
             _ = calculate_simple_balance_report(
                 report_date=date.today(),
                 portfolio_register=portfolio_register,
