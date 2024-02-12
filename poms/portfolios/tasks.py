@@ -56,7 +56,7 @@ def calculate_simple_balance_report(
     )
 
     if not portfolio_register.linked_instrument:
-        raise ValueError(
+        raise RuntimeError(
             f"{log} portfolio_register {portfolio_register} has no linked_instrument"
         )
 
@@ -73,9 +73,9 @@ def calculate_simple_balance_report(
         report = builder.build_balance_sync()
 
     except Exception as e:
-        err_msg = f"{log} report build resulted in error {repr(e)}"
+        err_msg = f"{log} resulted in error {repr(e)}"
         _l.error(f"{err_msg} trace {traceback.format_exc()}")
-        raise ValueError(err_msg) from e
+        raise RuntimeError(err_msg) from e
 
     return report
 
@@ -130,7 +130,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
                     f"{portfolio_register.linked_instrument.id} resulted "
                     f"in error {repr(e)}"
                 )
-                raise ValueError(err_msg) from e
+                raise RuntimeError(err_msg) from e
 
         cash_flow = cash_flow + (
             transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
