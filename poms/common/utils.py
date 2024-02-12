@@ -235,113 +235,6 @@ def get_content_type_by_name(name):
 
     return ContentType.objects.get(app_label=app_label_title, model=model_title)
 
-
-def is_business_day(date):
-    return bool(len(pd.bdate_range(date, date)))
-
-
-def get_last_business_day(date, to_string=False):
-    """
-    Returns the previous business day of the given date.
-    :param date:
-    :param to_string:
-    :return:
-    """
-
-    if not isinstance(date, datetime.date):
-        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
-
-    weekday = datetime.date.weekday(date)
-    if weekday > 4:  # if it's Saturday or Sunday
-        date = date - datetime.timedelta(days=weekday - 4)
-
-    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
-
-
-def last_day_of_month(any_day):
-    # Day 28 exists in every month. 4 days later, it's always next month
-    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
-    # subtracting the number of the current day brings us back one month
-    return next_month - datetime.timedelta(days=next_month.day)
-
-
-def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-        if to_string:
-            result.append(str(day))
-        else:
-            result.append(day)
-
-    return result
-
-
-def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-
-        if is_business_day(day):
-            if to_string:
-                result.append(str(day))
-            else:
-                result.append(day)
-
-    return result
-
-
-def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
-
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    if date_from.day != 1:
-        if to_string:
-            result.append(str(date_from))
-        else:
-            result.append(date_from)
-
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-
-        if day.day == 1:
-            if to_string:
-                result.append(str(day))
-            else:
-                result.append(day)
-
-    return result
-
-
 def convert_name_to_key(name: str) -> str:
     return name.strip().lower().replace(" ", "_")
 
@@ -369,60 +262,6 @@ def get_first_transaction(portfolio_instance) -> object:
         "accounting_date"
     )[0]
 
-
-def get_last_business_day_in_month(year: int, month: int, to_string=False):
-    """
-    Get last business day of month
-    :param year:
-    :param month:
-    :param to_string:
-    :return: date or string
-    """
-    day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
-
-    d = datetime.datetime(year, month, day).date()
-
-    return d.strftime(settings.API_DATE_FORMAT) if to_string else d
-
-
-def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
-    """
-    Get last business day of each month between two dates
-    :param date_from:
-    :param date_to:
-    :param to_string:
-    :return: list of dates or strings
-    """
-    months = get_list_of_months_between_two_dates(date_from, date_to)
-    end_of_months = []
-
-    if not isinstance(date_to, datetime.date):
-        d_date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-    else:
-        d_date_to = date_to
-
-    for month in months:
-        # _l.info(month)
-        # _l.info(d_date_to)
-
-        last_business_day = get_last_business_day_in_month(month.year, month.month)
-
-        if month.year == d_date_to.year and month.month == d_date_to.month:
-
-            if to_string:
-                end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
-            else:
-                end_of_months.append(d_date_to)
-
-        else:
-            if to_string:
-                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
-            else:
-                end_of_months.append(last_business_day)
-
-    return end_of_months
-
-
 def str_to_date(d):
     """
     Convert string to date
@@ -433,16 +272,6 @@ def str_to_date(d):
         d = datetime.datetime.strptime(d, settings.API_DATE_FORMAT).date()
 
     return d
-
-
-def get_closest_bday_of_yesterday(to_string=False):
-    """
-    Get the closest business day of yesterday
-    :param to_string:
-    :return: date or string
-    """
-    yesterday = datetime.date.today() - timedelta(days=1)
-    return get_last_business_day(yesterday, to_string=to_string)
 
 
 def finmars_exception_handler(exc, context):
@@ -657,6 +486,176 @@ def is_newer_version(version1, version2):
     return compare_versions(version1, version2) > 0
 
 
+# region Dates
+def is_business_day(date):
+    return bool(len(pd.bdate_range(date, date)))
+
+
+def get_last_business_day(date, to_string=False):
+    """
+    Returns the previous business day of the given date.
+    :param date:
+    :param to_string:
+    :return:
+    """
+
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    weekday = datetime.date.weekday(date)
+    if weekday > 4:  # if it's Saturday or Sunday
+        date = date - datetime.timedelta(days=weekday - 4)
+
+    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
+
+
+def last_day_of_month(any_day):
+    # Day 28 exists in every month. 4 days later, it's always next month
+    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+    # subtracting the number of the current day brings us back one month
+    return next_month - datetime.timedelta(days=next_month.day)
+
+
+def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+
+    diff = date_to - date_from
+
+    result = []
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+        if to_string:
+            result.append(str(day))
+        else:
+            result.append(day)
+
+    return result
+
+
+def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+
+    diff = date_to - date_from
+
+    result = []
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if is_business_day(day):
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
+
+    return result
+
+
+def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
+
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+
+    diff = date_to - date_from
+
+    result = []
+    if date_from.day != 1:
+        if to_string:
+            result.append(str(date_from))
+        else:
+            result.append(date_from)
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if day.day == 1:
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
+
+    return result
+
+
+def get_last_business_day_in_month(year: int, month: int, to_string=False):
+    """
+    Get last business day of month
+    :param year:
+    :param month:
+    :param to_string:
+    :return: date or string
+    """
+    day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
+
+    d = datetime.datetime(year, month, day).date()
+
+    return d.strftime(settings.API_DATE_FORMAT) if to_string else d
+
+
+def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
+    """
+    Get last business day of each month between two dates
+    :param date_from:
+    :param date_to:
+    :param to_string:
+    :return: list of dates or strings
+    """
+    months = get_list_of_months_between_two_dates(date_from, date_to)
+    end_of_months = []
+
+    if not isinstance(date_to, datetime.date):
+        d_date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+    else:
+        d_date_to = date_to
+
+    for month in months:
+        # _l.info(month)
+        # _l.info(d_date_to)
+
+        last_business_day = get_last_business_day_in_month(month.year, month.month)
+
+        if month.year == d_date_to.year and month.month == d_date_to.month:
+
+            if to_string:
+                end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
+            else:
+                end_of_months.append(d_date_to)
+
+        else:
+            if to_string:
+                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
+            else:
+                end_of_months.append(last_business_day)
+
+    return end_of_months
+
+
+def get_closest_bday_of_yesterday(to_string=False):
+    """
+    Get the closest business day of yesterday
+    :param to_string:
+    :return: date or string
+    """
+    yesterday = datetime.date.today() - timedelta(days=1)
+    return get_last_business_day(yesterday, to_string=to_string)
+
+
 def get_last_business_day_of_previous_year(date):
     """
     Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous year.
@@ -717,3 +716,58 @@ def get_last_business_day_in_previous_quarter(date):
         start_date -= timedelta(days=1)
 
     return start_date
+# endregion Dates
+
+def attr_is_relation(content_type_key, attribute_key):
+    """
+
+    :param attribute_key:
+    :type attribute_key: str
+    :return bool: True if attribute is a relation attribute
+    """
+    if content_type_key == 'transactions.transactiontype' and attribute_key == 'group':
+        # because configuration
+        return False
+
+    return attribute_key in [
+        'type',
+        'currency',
+        'instrument',
+        'instrument_type',
+        'group',
+        'pricing_policy',
+        'portfolio',
+        'transaction_type',
+        'transaction_currency',
+        'settlement_currency',
+        'account_cash',
+        'account_interim',
+        'account_position',
+        'accrued_currency',
+        'pricing_currency',
+        'one_off_event',
+        'regular_event',
+        'factor_same',
+        'factor_up',
+        'factor_down',
+        'strategy1_position',
+        'strategy1_cash',
+        'strategy2_position',
+        'strategy2_cash',
+        'strategy3_position',
+        'strategy3_cash',
+        'counterparty',
+        'responsible',
+        'allocation_balance',
+        'allocation_pl',
+        'linked_instrument',
+        'subgroup',
+        'instrument_class',
+        'transaction_class',
+        'daily_pricing_model',
+        'payment_size_detail',
+        # Portfolio register
+        'cash_currency',
+        'portfolio_register',
+        'valuation_currency',
+    ]
