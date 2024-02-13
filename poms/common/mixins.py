@@ -132,7 +132,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
             kwargs={"task_id": celery_task.id},
             queue="backend-background-queue",
         )
-
+        return Response({"task_id": celery_task.id})
 
 class BulkRestoreModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-restore")
