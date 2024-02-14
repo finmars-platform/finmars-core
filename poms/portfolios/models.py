@@ -1,3 +1,4 @@
+import json
 import traceback
 from datetime import date
 from logging import getLogger
@@ -1081,9 +1082,9 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
 
         file_report = FileReport()
 
-        file_report.upload_json_as_local_file(
+        file_report.upload_file(
             file_name=file_name,
-            dict_to_json=content,
+            text=json.dumps(content, indent=4, default=str),
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
