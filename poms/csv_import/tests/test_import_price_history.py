@@ -76,13 +76,19 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         return scheme
 
-    def create_task(self):
+    def create_task(self, remove_accrued_and_factor=False):
+        items = copy.deepcopy(PRICE_HISTORY)
+        if remove_accrued_and_factor:
+            for item in items:
+                item.pop("Accrued Price", None)
+                item.pop("Factor", None)
+
         options_object = {
             "file_path": FILE_NAME,
             "filename": FILE_NAME,
             "scheme_id": self.scheme_20.id,
             "execution_context": None,
-            "items": copy.deepcopy(PRICE_HISTORY),
+            "items": items,
         }
         return CeleryTask.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
@@ -160,6 +166,72 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         import_process.fill_with_raw_items()
         self.assertEqual(import_process.raw_items, [PRICE_HISTORY_ITEM])
+
+        import_process.apply_conversion_to_raw_items()
+        conversion_item = import_process.conversion_items[0]
+        self.assertEqual(conversion_item.conversion_inputs, PRICE_HISTORY_ITEM)
+        self.assertEqual(conversion_item.row_number, 1)
+        # print(
+        #     conversion_item.file_inputs,
+        #     conversion_item.raw_inputs,
+        #     conversion_item.conversion_inputs,
+        #     conversion_item.row_number,
+        # )
+
+        import_process.preprocess()
+        item = import_process.items[0]
+        self.assertEqual(item.inputs, PRICE_HISTORY_ITEM)
+        self.assertEqual(item.row_number, 1)
+        # print(
+        #     item.row_number,
+        #     item.file_inputs,
+        #     item.raw_inputs,
+        #     item.conversion_inputs,
+        #     item.inputs,
+        #     item.final_inputs,
+        # )
+
+        import_process.process()
+        result = import_process.task.result_object["items"][0]
+
+        self.assertNotEqual(result["status"], "error", result["error_message"])
+        # {
+        #     "accrued_price": 0.0,
+        #     "date": "2024-01-05",
+        #     "factor": 1.0,
+        #     "instrument": "USP37341AA50",
+        #     "pricing_policy": "com.finmars.standard-pricing:standard",
+        #     "principal_price": 109.72,
+        # }
+        self.assertIn("final_inputs", result)
+        self.assertEqual(result["final_inputs"]["accrued_price"], 0.0)
+        self.assertEqual(result["final_inputs"]["factor"], 1.0)
+
+        ph: PriceHistory = list(PriceHistory.objects.all())[0]
+        self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
+        self.assertEqual(ph.accrued_price, 0.0)
+        self.assertEqual(ph.factor, 1.0)
+
+    @mock.patch("poms.csv_import.handlers.send_system_message")
+    def test_run_simple_import_process_missing_fields(self, mock_send_message):
+        """
+        Imitate all steps to handle file with price history datta
+        """
+        self.assertFalse(bool(PriceHistory.objects.all()))
+
+        task = self.create_task(remove_accrued_and_factor=True)
+
+        import_process = SimpleImportProcess(task_id=task.id)
+
+        mock_send_message.assert_called()
+
+        self.assertEqual(import_process.result.task.id, task.id)
+        self.assertEqual(import_process.result.scheme.id, self.scheme_20.id)
+        self.assertEqual(import_process.process_type, "JSON")
+
+        import_process.fill_with_file_items()
+
+        import_process.fill_with_raw_items()
 
         import_process.apply_conversion_to_raw_items()
         conversion_item = import_process.conversion_items[0]
