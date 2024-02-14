@@ -1077,7 +1077,7 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task.id}.json"
+        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
 
@@ -1088,7 +1088,7 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
         )
         file_report.master_user = self.master_user
         file_report.name = (
-            f"Reconciliation {current_date_time} (Task {self.linked_task.id}).json"
+            f"Reconciliation {current_date_time} (Task {self.linked_task_id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"

@@ -980,8 +980,12 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
                     date=date,
                 )
 
-            portfolio_reconcile_history.calculate()
             portfolio_reconcile_history.linked_task = task
+            portfolio_reconcile_history.save()
+            # need to save task before calculate
+
+            portfolio_reconcile_history.calculate()
+            # portfolio_reconcile_history.linked_task = task
             portfolio_reconcile_history.save()
 
             count = count + 1
