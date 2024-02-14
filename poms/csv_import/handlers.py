@@ -848,7 +848,7 @@ class SimpleImportProcess(object):
         file_report.upload_file(
             file_name=file_name,
             # dict_to_json=self.task.result_object,
-            dict_to_json=json.dumps(self.task.result_object, indent=4, default=str),
+            text=json.dumps(self.task.result_object, indent=4, default=str),
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
