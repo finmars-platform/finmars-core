@@ -1,3 +1,4 @@
+import json
 import traceback
 from datetime import date
 from logging import getLogger
@@ -1077,18 +1078,18 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task.id}.json"
+        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
 
-        file_report.upload_json_as_local_file(
+        file_report.upload_file(
             file_name=file_name,
-            dict_to_json=content,
+            text=json.dumps(content, indent=4, default=str),
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
         file_report.name = (
-            f"Reconciliation {current_date_time} (Task {self.linked_task.id}).json"
+            f"Reconciliation {current_date_time} (Task {self.linked_task_id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
