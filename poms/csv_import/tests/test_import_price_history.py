@@ -232,6 +232,7 @@ class ImportPriceHistoryTest(BaseTestCase):
         import_process.fill_with_file_items()
 
         import_process.fill_with_raw_items()
+        self.assertEqual(import_process.raw_items, [PRICE_HISTORY_ITEM])
 
         import_process.apply_conversion_to_raw_items()
         conversion_item = import_process.conversion_items[0]
