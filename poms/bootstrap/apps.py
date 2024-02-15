@@ -270,7 +270,10 @@ class BootstrapConfig(AppConfig):
                     current_owner_member.save()
 
             except Exception as e:
-                _l.error(f"Could not find current owner member {e} ")
+                _l.error(
+                    f"Could not find current owner member for username={username} "
+                    f"master_user={master_user.base_api_url} error {repr(e)}"
+                )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
                     username=username,

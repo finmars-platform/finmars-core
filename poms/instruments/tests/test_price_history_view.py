@@ -143,7 +143,7 @@ CREATE_DATA = {
     "long_delta": 1558.0,
     "short_delta": 2968.0,
     "is_temporary_price": False,
-    # "ytm": 0 - calculated value
+    "error_message": None,
 }
 
 
@@ -196,7 +196,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    def test__create_and_retrieve(self):
+    def test__retrieve(self):
         pricing_history = self.create_pricing_history()
         response = self.client.get(path=f"{self.url}{pricing_history.id}/")
         self.assertEqual(response.status_code, 200, response.content)
