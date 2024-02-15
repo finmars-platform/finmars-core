@@ -1268,7 +1268,8 @@ class Member(FakeDeletableModel):
         from poms.configuration.utils import get_default_configuration_code
         from poms.ui.models import MemberLayout
 
-        instance = super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+
         configuration_code = get_default_configuration_code()
 
         try:
@@ -1284,8 +1285,6 @@ class Member(FakeDeletableModel):
             )
         except Exception as e:
             _l.info(f"Could not create member layout {e}")
-
-        return instance
 
     def __str__(self):
         return self.username
