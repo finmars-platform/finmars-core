@@ -253,7 +253,7 @@ class BootstrapConfig(AppConfig):
                 _l.info("Master User base_api_url synced")
 
             except Exception as e:
-                _l.error(f"Could not sync base_api_url {e}")
+                _l.error(f"Could not sync base_api_url due to {repr(e)}")
                 raise e
 
             try:
@@ -272,7 +272,7 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(
                     f"Couldn't get/update current_owner_member username={username}"
-                    f"master_user={master_user.base_api_url} error {repr(e)}"
+                    f"master_user={master_user.base_api_url} due to {repr(e)}"
                 )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
@@ -285,7 +285,7 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.error(
-                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+                f"load_master_user_data failed {repr(e)} trace {traceback.format_exc()}"
             )
 
         # Looks like tests itself create master user and other things
