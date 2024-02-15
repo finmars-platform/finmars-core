@@ -2797,6 +2797,8 @@ class PriceHistory(DataTimeStampedModel):
         verbose_name=gettext_lazy("is temporary price"),
     )
     error_message = models.TextField(
+        null=True,
+        blank=True,
         default="",
         verbose_name=gettext_lazy("error message(s)"),
     )
@@ -2820,7 +2822,7 @@ class PriceHistory(DataTimeStampedModel):
 
     def handle_err(self, err_msg: str):
         _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
-        if self.error_message:
+        if self.error_message is not None:
             self.error_message = f"{self.error_message}; {err_msg}"
         else:
             self.error_message = err_msg
