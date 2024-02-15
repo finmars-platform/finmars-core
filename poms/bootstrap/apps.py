@@ -271,7 +271,7 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(
-                    f"Could not find current owner member for username={username} "
+                    f"Couldn't get/update current_owner_member username={username}"
                     f"master_user={master_user.base_api_url} error {repr(e)}"
                 )
 
