@@ -36,3 +36,4 @@ class CeleryTaskDateRangeFilter(BaseFilterBackend):
             queryset = queryset.filter(created__lte=date_to)
 
         return queryset
+# class 

@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet, MultipleChoiceFilter, BaseInFilter, CharFilter
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -22,17 +22,25 @@ from .serializers import (
 
 _l = getLogger("poms.celery_tasks")
 
-
 class CeleryTaskFilterSet(FilterSet):
     id = CharFilter()
     celery_task_id = CharFilter()
     status = CharFilter()
+    status__in = CharFilter(field_name='status', method='filter_status__in')
     type = CharFilter()
+    type__in = CharFilter(field_name='type', method='filter_type__in')
     created = CharFilter()
 
     class Meta:
         model = CeleryTask
-        fields = []
+        fields = ["status", "type",]
+
+    @staticmethod
+    def filter_status__in(queryset, _, value):
+        return queryset.filter(status__in=value.split(','))
+    @staticmethod
+    def filter_type__in(queryset, _, value):
+        return queryset.filter(type__in=value.split(','))
 
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
