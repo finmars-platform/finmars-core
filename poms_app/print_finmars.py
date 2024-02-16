@@ -11,4 +11,3 @@ def print_finmars():
 
     print(text)
 
-print_finmars()

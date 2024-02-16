@@ -77,7 +77,7 @@ chmod 777 /var/log/finmars/backend/django.log
 # Default value is "backend"
 : "${INSTANCE_TYPE:=backend}"
 
-
+export GUNICORN_START_TIME=$(date +%s)
 
 if [ "$INSTANCE_TYPE" = "backend" ]; then
 
@@ -117,7 +117,7 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   python /var/app/poms_app/print_finmars.py
 
-  gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
+  gunicorn --config /var/app/poms_app/gunicorn_prod.py poms_app.wsgi
 
 elif [ "$INSTANCE_TYPE" = "worker" ]; then
 
