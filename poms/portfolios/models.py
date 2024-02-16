@@ -753,7 +753,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
                 end_date=str_to_date(self.date),
                 calculation_type=self.performance_method,
                 segmentation_type='months',
-                registers=portfolio_register,
+                registers=[portfolio_register],
             )
 
             from poms.reports.performance_report import PerformanceReportBuilder
