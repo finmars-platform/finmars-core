@@ -117,7 +117,7 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   python /var/app/poms_app/print_finmars.py
 
-  gunicorn --config /var/app/poms_app/gunicorn_prod.py poms_app.wsgi
+  gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
 
 elif [ "$INSTANCE_TYPE" = "worker" ]; then
 
