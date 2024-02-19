@@ -890,7 +890,7 @@ def calculate_portfolio_history(self, task_id: int):
                 currency=currency,
                 pricing_policy=pricing_policy,
                 date=d,
-                date_from=date_from,
+                date_from=calculation_period_date_from,
                 period_type=period_type,
                 cost_method=cost_method,
                 performance_method=performance_method,
