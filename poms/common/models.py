@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.middleware import get_request
 from poms.expressions_engine import formula
+from poms.currencies.constants import DASH
 
 EXPRESSION_FIELD_LENGTH = 4096
 
@@ -206,6 +207,9 @@ class FakeDeletableModel(models.Model):
             member = celery_task.member
 
         if hasattr(self, "user_code"):
+            if self.user_code == DASH:
+                return
+            
             self.deleted_user_code = self.user_code
             self.name = f"(del) {self.name}"
             self.short_name = f"(del) {self.short_name}"
