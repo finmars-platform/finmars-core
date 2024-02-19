@@ -75,13 +75,6 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             simple_import = SimpleImportProcess(
                 task_id=instance.id,
             )
-
-            # simple_import.fill_with_file_items()
-
-            # simple_import.fill_with_raw_items()
-
-            # simple_import.apply_conversion_to_raw_items()
-
             simple_import.preprocess()
 
             simple_import.process()
@@ -108,10 +101,10 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
                     }
         except Exception as e:
             return {
-                "total_count": -1,
-                "error_count": -1,
-                "success_count": -1,
-                "skip_count": -1,
+                "total_count": simple_import.result.total_rows,
+                "error_count": 0,
+                "success_count": 0,
+                "skip_count": 0,
             }
 
     def __init__(self, *args, **kwargs):
