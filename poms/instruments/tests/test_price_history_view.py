@@ -123,6 +123,7 @@ EXPECTED_PRICE_HISTORY = {
     "is_temporary_price": False,
     "ytm": 3.0,
     "modified_duration": 3.0,
+    "error_message": "",
     "meta": {
         "content_type": "instruments.pricehistory",
         "app_label": "instruments",
@@ -142,12 +143,13 @@ CREATE_DATA = {
     "long_delta": 1558.0,
     "short_delta": 2968.0,
     "is_temporary_price": False,
-    # "ytm": 0 - calculated value
+    "error_message": None,
 }
 
 
 class PriceHistoryViewSetTest(BaseTestCase):
     databases = "__all__"
+
 
     def setUp(self):
         super().setUp()
@@ -194,7 +196,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    def test__create_and_retrieve(self):
+    def test__retrieve(self):
         pricing_history = self.create_pricing_history()
         response = self.client.get(path=f"{self.url}{pricing_history.id}/")
         self.assertEqual(response.status_code, 200, response.content)
@@ -209,6 +211,7 @@ class PriceHistoryViewSetTest(BaseTestCase):
             response_json["principal_price"], pricing_history.principal_price
         )
         self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
+        self.assertIn("object has no attribute 'dayCounter'", response_json["error_message"])
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")

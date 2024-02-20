@@ -3064,7 +3064,7 @@ _calculate_accrued_price.evaluator = True
 
 
 def _get_position_size_on_date(
-    evaluator, instrument, date, accounts=None, portfolios=None
+        evaluator, instrument, date, accounts=None, portfolios=None
 ):
     from poms.transactions.models import Transaction
     from poms.users.utils import get_master_user_from_context
@@ -3079,8 +3079,13 @@ def _get_position_size_on_date(
         instrument = _safe_get_instrument(evaluator, instrument)
         date = _parse_date(date)
 
+        from poms.transactions.models import TransactionClass
+
+        # Transfer is deprecated, but for now still in use
+        # szhitenev 2024-02-12
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument
+            master_user=master_user, accounting_date__lte=date, instrument=instrument,
+            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
         )
 
         if accounts:
@@ -3105,6 +3110,114 @@ def _get_position_size_on_date(
 
 
 _get_position_size_on_date.evaluator = True
+
+
+def _get_principal_on_date(
+        evaluator, instrument, date, accounts=None, portfolios=None
+):
+    from poms.transactions.models import Transaction
+    from poms.transactions.models import TransactionClass
+    from poms.users.utils import get_master_user_from_context
+
+    try:
+        result = 0
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        date = _parse_date(date)
+
+        # Transfer is deprecated, but for now still in use
+        # szhitenev 2024-02-12
+
+        transactions = Transaction.objects.filter(
+            master_user=master_user, accounting_date__lte=date, instrument=instrument,
+            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+        )
+
+        if accounts:
+            transactions = transactions.filter(account_position__in=accounts)
+
+        # _l.info('portfolios %s' % type(portfolios))
+
+        if portfolios:
+            transactions = transactions.filter(portfolio__in=portfolios)
+
+        # _l.info('transactions %s ' % transactions)
+
+        for trn in transactions:
+            result = result + trn.principal_with_sign
+
+        return result
+
+    except Exception as e:
+        _l.error("_get_principal_on_date exception occurred %s" % e)
+        _l.error(traceback.format_exc())
+        return 0
+
+
+_get_principal_on_date.evaluator = True
+
+
+def _get_net_cost_price_on_date(
+        evaluator, instrument, date, accounts=None, portfolios=None
+):
+    from poms.transactions.models import Transaction
+    from poms.users.utils import get_master_user_from_context
+    from poms.transactions.models import TransactionClass
+
+    try:
+        result = 0
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        date = _parse_date(date)
+
+        # Transfer is deprecated, but for now still in use
+        # szhitenev 2024-02-12
+
+        transactions = Transaction.objects.filter(
+            master_user=master_user, accounting_date__lte=date, instrument=instrument,
+            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+        )
+
+        if accounts:
+            transactions = transactions.filter(account_position__in=accounts)
+
+        # _l.info('portfolios %s' % type(portfolios))
+
+        if portfolios:
+            transactions = transactions.filter(portfolio__in=portfolios)
+
+        # _l.info('transactions %s ' % transactions)
+
+        total_principal = 0
+        total_position = 0
+
+        for trn in transactions:
+            total_principal = total_principal + trn.principal_with_sign
+            total_position = total_position + trn.position_size_with_sign
+
+        if total_position != 0:
+            result = total_principal / total_position
+
+            result = result * -1 # get price with the right sign
+
+        return result
+
+    except Exception as e:
+        _l.error("_get_net_cost_price_on_date exception occurred %s" % e)
+        _l.error(traceback.format_exc())
+        return 0
+
+
+_get_net_cost_price_on_date.evaluator = True
+
 
 
 def _get_instrument_report_data(
@@ -4579,6 +4692,8 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_instrument_accrual_factor", _get_instrument_accrual_factor),
     SimpleEval2Def("calculate_accrued_price", _calculate_accrued_price),
     SimpleEval2Def("get_position_size_on_date", _get_position_size_on_date),
+    SimpleEval2Def("get_principal_on_date", _get_principal_on_date),
+    SimpleEval2Def("get_net_cost_price_on_date", _get_net_cost_price_on_date),
     SimpleEval2Def("get_instrument_report_data", _get_instrument_report_data),
     SimpleEval2Def("get_instrument_factor", _get_instrument_factor),
     SimpleEval2Def("get_instrument_coupon_factor", _get_instrument_coupon_factor),

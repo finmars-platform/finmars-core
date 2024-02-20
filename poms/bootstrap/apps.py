@@ -1,7 +1,10 @@
 import json
 import logging
+import os
 import sys
+import time
 import traceback
+import psutil
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -24,7 +27,21 @@ class BootstrapConfig(AppConfig):
     name = "poms.bootstrap"
     verbose_name = gettext_lazy("Bootstrap")
 
+    def get_gunicorn_memory_usage(self):
+        total_memory = 0
+        for proc in psutil.process_iter(['cmdline', 'memory_info']):
+            try:
+                # Check if this is a Gunicorn worker process
+                name = ' '.join(proc.cmdline())
+                # if 'gunicorn' in name or 'runserver' in name:
+                if 'gunicorn' in name:
+                    total_memory += proc.info['memory_info'].rss
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass  # Process terminated or access denied
+        _l.info(f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024**2:.2f} MB")
+
     def ready(self):
+
         _l.info("Bootstrapping Finmars Application")
 
         if settings.PROFILER:
@@ -41,6 +58,18 @@ class BootstrapConfig(AppConfig):
         post_migrate.connect(self.bootstrap, sender=self)
 
         _l.info("Finmars Application is running 💚")
+
+        self.get_gunicorn_memory_usage()
+
+        gunicorn_start_time = os.environ.get('GUNICORN_START_TIME')
+        if gunicorn_start_time:
+            gunicorn_start_time = float(gunicorn_start_time)
+            ready_time = time.time()
+            startup_duration = ready_time - gunicorn_start_time
+            _l.info(
+                "Finmars bootstrap time: %s"
+                % "{:3.3f}".format(startup_duration)
+            )
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         """
@@ -270,7 +299,10 @@ class BootstrapConfig(AppConfig):
                     current_owner_member.save()
 
             except Exception as e:
-                _l.error(f"Could not find current owner member {e} ")
+                _l.error(
+                    f"Could not find current owner member for username={username} "
+                    f"master_user={master_user.base_api_url} error {repr(e)}"
+                )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
                     username=username,

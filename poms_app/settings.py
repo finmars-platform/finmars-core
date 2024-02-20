@@ -12,6 +12,7 @@ import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
+
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
 
 
@@ -40,6 +41,7 @@ HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")
 DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
+USE_ADMIN_PANEL = ENV_BOOL("USE_ADMIN_PANEL", False)
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
 
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
@@ -70,11 +72,11 @@ XS_SHARING_ALLOWED_METHODS = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
 # Application definition
 
 INSTALLED_APPS = [
+
     "modeltranslation",
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
+
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "drf_yasg",
@@ -117,8 +119,7 @@ INSTALLED_APPS = [
     "poms.configuration",
     "poms.auth_tokens",
     "poms.widgets",
-    "django.contrib.admin",
-    "django.contrib.admindocs",
+
     "crispy_forms",
     "rest_framework",
     "rest_framework_swagger",
@@ -140,6 +141,17 @@ if USE_DEBUGGER:
         ]
     )
 
+if USE_ADMIN_PANEL:
+
+    INSTALLED_APPS.extend(
+        [
+            "django.contrib.admin",
+            "django.contrib.admindocs",
+            "django.contrib.sessions",
+            "django.contrib.messages",
+        ]
+    )
+
 
 # CRAZY, this settings MUST be before MIDDLEWARE prop
 CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
@@ -151,11 +163,11 @@ CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    # "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
+    # "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
@@ -168,6 +180,11 @@ MIDDLEWARE = [
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
     # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
+
+if USE_ADMIN_PANEL:
+    MIDDLEWARE.append("django.contrib.sessions.middleware.SessionMiddleware")
+    MIDDLEWARE.append("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.append("django.contrib.messages.middleware.MessageMiddleware")
 
 PROFILER = ENV_BOOL("PROFILER", False)
 
@@ -220,7 +237,7 @@ DATABASES = {
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
-        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 300),
 
     },
 }

@@ -1,3 +1,4 @@
+import json
 import traceback
 from datetime import date
 from logging import getLogger
@@ -741,22 +742,25 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
         from poms.reports.common import PerformanceReport
 
-        portfolio_register = PortfolioRegister.objects.get(portfolio=self.portfolio)
+        try:
+            portfolio_register = PortfolioRegister.objects.filter(portfolio=self.portfolio)[0]
 
-        instance = PerformanceReport(
-            master_user=self.master_user,
-            member=self.owner,
-            report_currency=self.currency,
-            begin_date=str_to_date(self.date_from),
-            end_date=str_to_date(self.date),
-            calculation_type=self.performance_method,
-            segmentation_type='months',
-            registers=[portfolio_register]
-        )
+            instance = PerformanceReport(
+                master_user=self.master_user,
+                member=self.owner,
+                report_currency=self.currency,
+                begin_date=str_to_date(self.date_from),
+                end_date=str_to_date(self.date),
+                calculation_type=self.performance_method,
+                segmentation_type='months',
+                registers=[portfolio_register],
+            )
 
-        from poms.reports.performance_report import PerformanceReportBuilder
-        builder = PerformanceReportBuilder(instance=instance)
-        instance = builder.build_report()
+            from poms.reports.performance_report import PerformanceReportBuilder
+            builder = PerformanceReportBuilder(instance=instance)
+            instance = builder.build_report()            
+        except Exception as e:
+            instance = None
 
         return instance
 
@@ -819,25 +823,28 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
         self.total = total
 
         # Performance Part
+        performance_report = self.get_performance_report()
+        if performance_report:
+            try:
+                self.performance_report = performance_report
 
-        try:
-            self.performance_report = self.get_performance_report()
+                self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
+                self.cash_flow = self.performance_report.grand_cash_flow
+                self.cash_inflow = self.performance_report.grand_cash_inflow
+                self.cash_outflow = self.performance_report.grand_cash_outflow
+                self.annualized_return = self.get_annualized_return()
 
-            self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
-            self.cash_flow = self.performance_report.grand_cash_flow
-            self.cash_inflow = self.performance_report.grand_cash_inflow
-            self.cash_outflow = self.performance_report.grand_cash_outflow
-            self.annualized_return = self.get_annualized_return()
+                # TODO implement portoflio_volatility
+                # TODO implement annualized_portoflio_volatility
+                # TODO implement max_annualized_drawdown
+                # TODO implement betta
+                # TODO implement alpha
+                # TODO implement correltaion
 
-            # TODO implement portoflio_volatility
-            # TODO implement annualized_portoflio_volatility
-            # TODO implement max_annualized_drawdown
-            # TODO implement betta
-            # TODO implement alpha
-            # TODO implement correltaion
-
-        except Exception as e:
-            self.error_message = self.error_message + str(e) + '\n'
+            except Exception as e:
+                self.error_message = self.error_message + str(e) + '\n'
+        else:
+            self.error_message = self.error_message + 'Calculate error. Portfolio has not Portfolio Register' + '\n'
 
         _l.info('error_message %s' % self.error_message)
 
@@ -1071,18 +1078,18 @@ class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task.id}.json"
+        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
 
-        file_report.upload_json_as_local_file(
+        file_report.upload_file(
             file_name=file_name,
-            dict_to_json=content,
+            text=json.dumps(content, indent=4, default=str),
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
         file_report.name = (
-            f"Reconciliation {current_date_time} (Task {self.linked_task.id}).json"
+            f"Reconciliation {current_date_time} (Task {self.linked_task_id}).json"
         )
         file_report.file_name = file_name
         file_report.type = "simple_import.import"

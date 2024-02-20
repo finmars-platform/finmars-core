@@ -4,6 +4,9 @@ import os
 
 from poms_app.utils import ENV_INT
 
+import time
+gunicorn_start_time = time.time()
+
 # The granularity of Error log outputs
 chdir = "/var/app/"
 loglevel = "info"

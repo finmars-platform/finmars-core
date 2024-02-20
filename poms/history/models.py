@@ -2,6 +2,7 @@ import contextlib
 import json
 import logging
 import sys
+import time
 import traceback
 
 from deepdiff import DeepDiff
@@ -616,13 +617,21 @@ def add_history_listeners(sender, **kwargs):
 
 
 def record_history():
+
     _l = logging.getLogger("provision")
+
+    to_representation_st = time.perf_counter()
 
     if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
         models.signals.class_prepared.connect(add_history_listeners, weak=False)
+
+    _l.info(
+        "Record History init time: %s"
+        % "{:3.3f}".format(time.perf_counter() - to_representation_st)
+    )
 
 
 record_history()
