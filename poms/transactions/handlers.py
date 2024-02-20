@@ -3292,7 +3292,7 @@ class TransactionTypeProcess:
 
         _l.debug(f"self.recalculate_inputs {self.recalculate_inputs}")
 
-        iteration_count = 2
+        iteration_count = 5
 
         # szhitenev
         # need to handle case when we trying calculate inputs that required on other inputs beign calculated
@@ -3300,8 +3300,12 @@ class TransactionTypeProcess:
             for name in self.recalculate_inputs:
                 inp = inputs[name]
                 if inp.can_recalculate:
-                    
+
                     if inp.expression_iterations_count > i:
+
+                        _l.info('inp.expression_iterations_count %s' % inp.expression_iterations_count)
+                        _l.info('inp.i %s' % i)
+                        _l.info('inp %s' % name)
 
                         errors = {}
 
