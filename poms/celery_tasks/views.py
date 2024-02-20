@@ -38,6 +38,7 @@ class CeleryTaskFilterSet(FilterSet):
     @staticmethod
     def filter_status__in(queryset, _, value):
         return queryset.filter(status__in=value.split(','))
+
     @staticmethod
     def filter_type__in(queryset, _, value):
         return queryset.filter(type__in=value.split(','))
@@ -67,10 +68,36 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         serializer_class=CeleryTaskLightSerializer,
     )
     def list_light(self, request, *args, **kwargs):
+        from poms.csv_import.handlers import SimpleImportProcess
         queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginator.post_paginate_queryset(queryset, request)
-        serializer = self.get_serializer(page, many=True)
+        result__in = self.request.query_params.get('result__in')
+        page_size = int(request.query_params.get("page_size", self.paginator.page_size))
 
+        page = []
+        i = 0
+
+        while len(page) != page_size:
+            full_page = self.paginator.post_paginate_queryset(queryset[i*page_size:], request)
+            i += 1
+            for task in full_page:
+                try:
+                    simple_import = SimpleImportProcess(task)
+                    result_stats = simple_import.get_result_stats()
+                except Exception as e:
+                    result_stats = {
+                        'total': 0,
+                        "error": 0,
+                        "success": 0,
+                        "skip": 0
+                    }
+
+                if result__in:
+                    if ("success" in result__in and result_stats["success"] > 0) \
+                        or ("error" in result__in and result_stats["error"] > 0) \
+                        or ("skip" in result__in and result_stats["skip"] > 0):
+                        page.append(task)
+
+        serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="status")

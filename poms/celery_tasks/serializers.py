@@ -67,7 +67,6 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             'ttl',
             'expiry_at',
             'result_stats',
-
         )
 
     def get_result_stats(self, instance):
@@ -75,33 +74,16 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             simple_import = SimpleImportProcess(
                 task_id=instance.id,
             )
-            simple_import.preprocess()
-
-            simple_import.process()
-            
-            success_rows_count = 0
-            error_rows_count = 0
-            skip_rows_count = 0
-
-            for result_item in simple_import.result.items:            
-                if result_item.status == "init":
-                    error_rows_count += 1
-
-                elif result_item.status == "success":
-                    success_rows_count += 1
-
-                if "skip" in result_item.status:
-                    skip_rows_count += 1
-
+            result_stats = simple_import.get_result_stats()
             return {
-                    "total_count": simple_import.result.total_rows,
-                    "error_count": error_rows_count,
-                    "success_count": success_rows_count,
-                    "skip_count": skip_rows_count,
+                    "total_count": result_stats["total"],
+                    "error_count": result_stats["error"],
+                    "success_count": result_stats["success"],
+                    "skip_count": result_stats["skip"],
                     }
         except Exception as e:
             return {
-                "total_count": simple_import.result.total_rows,
+                "total_count": 0,
                 "error_count": 0,
                 "success_count": 0,
                 "skip_count": 0,
@@ -148,48 +130,25 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
             "file_report",
             'result_stats',
         )
+
     def get_result_stats(self, instance):
         try:
             simple_import = SimpleImportProcess(
                 task_id=instance.id,
             )
-
-            # simple_import.fill_with_file_items()
-
-            # simple_import.fill_with_raw_items()
-
-            # simple_import.apply_conversion_to_raw_items()
-
-            simple_import.preprocess()
-
-            simple_import.process()
-            
-            success_rows_count = 0
-            error_rows_count = 0
-            skip_rows_count = 0
-
-            for result_item in simple_import.result.items:            
-                if result_item.status == "init":
-                    error_rows_count += 1
-
-                elif result_item.status == "success":
-                    success_rows_count += 1
-
-                if "skip" in result_item.status:
-                    skip_rows_count += 1
-
+            result_stats = simple_import.get_result_stats()
             return {
-                    "total_count": simple_import.result.total_rows,
-                    "error_count": error_rows_count,
-                    "success_count": success_rows_count,
-                    "skip_count": skip_rows_count,
+                    "total_count": result_stats["total"],
+                    "error_count": result_stats["error"],
+                    "success_count": result_stats["success"],
+                    "skip_count": result_stats["skip"],
                     }
         except Exception as e:
             return {
-                "total_count": -1,
-                "error_count": -1,
-                "success_count": -1,
-                "skip_count": -1,
+                "total_count": 0,
+                "error_count": 0,
+                "success_count": 0,
+                "skip_count": 0,
             }
 
     def __init__(self, *args, **kwargs):
