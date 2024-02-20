@@ -3300,85 +3300,88 @@ class TransactionTypeProcess:
             for name in self.recalculate_inputs:
                 inp = inputs[name]
                 if inp.can_recalculate:
-                    errors = {}
+                    
+                    if inp.expression_iterations_count > i:
 
-                    if inp.value_type in [TransactionTypeInput.RELATION]:
-                        try:
-                            res = formula.safe_eval(
-                                inp.value_expr,
-                                names=self.values,
-                                now=self._now,
-                                context=self._context,
-                            )
+                        errors = {}
 
-                            Model = apps.get_model(
-                                app_label=inp.content_type.app_label,
-                                model_name=inp.content_type.model,
-                            )
-
+                        if inp.value_type in [TransactionTypeInput.RELATION]:
                             try:
-                                self.values[name] = Model.objects.get(
-                                    master_user=self.transaction_type.master_user,
-                                    user_code=res,
+                                res = formula.safe_eval(
+                                    inp.value_expr,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
                                 )
 
-                            except Model.DoesNotExist as e:
-                                raise formula.InvalidExpression from e
+                                Model = apps.get_model(
+                                    app_label=inp.content_type.app_label,
+                                    model_name=inp.content_type.model,
+                                )
 
-                        except formula.InvalidExpression as e:
-                            ecosystem_default = EcosystemDefault.objects.get(
-                                master_user=self.transaction_type.master_user
-                            )
+                                try:
+                                    self.values[name] = Model.objects.get(
+                                        master_user=self.transaction_type.master_user,
+                                        user_code=res,
+                                    )
 
-                            _l.debug(f"error {repr(e)}")
-                            _l.debug(inp.content_type)
+                                except Model.DoesNotExist as e:
+                                    raise formula.InvalidExpression from e
 
-                            entity_map = {
-                                "instrument": "instrument",
-                                "instrumenttype": "instrument_type",
-                                "account": "account",
-                                "currency": "currency",
-                                "counterparty": "counterparty",
-                                "responsible": "responsible",
-                                "portfolio": "portfolio",
-                                "strategy1": "strategy1",
-                                "strategy2": "strategy2",
-                                "strategy3": "strategy3",
-                                "dailypricingmodel": "daily_pricing_model",
-                                "paymentsizedetail": "payment_size_detail",
-                                "pricingpolicy": "pricing_policy",
-                                "periodicity": "periodicity",
-                                "accrualcalculationmodel": "accrual_calculation_model",
-                                "eventclass": "event_class",
-                                "notificationclass": "notification_class",
-                            }
+                            except formula.InvalidExpression as e:
+                                ecosystem_default = EcosystemDefault.objects.get(
+                                    master_user=self.transaction_type.master_user
+                                )
 
-                            key = entity_map[inp.content_type.model]
+                                _l.debug(f"error {repr(e)}")
+                                _l.debug(inp.content_type)
 
-                            if hasattr(ecosystem_default, key):
-                                res = getattr(ecosystem_default, key)
+                                entity_map = {
+                                    "instrument": "instrument",
+                                    "instrumenttype": "instrument_type",
+                                    "account": "account",
+                                    "currency": "currency",
+                                    "counterparty": "counterparty",
+                                    "responsible": "responsible",
+                                    "portfolio": "portfolio",
+                                    "strategy1": "strategy1",
+                                    "strategy2": "strategy2",
+                                    "strategy3": "strategy3",
+                                    "dailypricingmodel": "daily_pricing_model",
+                                    "paymentsizedetail": "payment_size_detail",
+                                    "pricingpolicy": "pricing_policy",
+                                    "periodicity": "periodicity",
+                                    "accrualcalculationmodel": "accrual_calculation_model",
+                                    "eventclass": "event_class",
+                                    "notificationclass": "notification_class",
+                                }
+
+                                key = entity_map[inp.content_type.model]
+
+                                if hasattr(ecosystem_default, key):
+                                    res = getattr(ecosystem_default, key)
+                                    self.values[name] = res
+                                else:
+                                    self._set_eval_error(errors, inp.name, inp.value_expr, e)
+                                    self.value_errors.append(errors)
+
+                        else:
+                            _l.debug(f"inp {inp}")
+                            _l.debug(f"inp {inp.value_expr}")
+
+                            try:
+                                res = formula.safe_eval(
+                                    inp.value_expr,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
+                                )
                                 self.values[name] = res
-                            else:
-                                self._set_eval_error(errors, inp.name, inp.value_expr, e)
-                                self.value_errors.append(errors)
 
-                    else:
-                        _l.debug(f"inp {inp}")
-                        _l.debug(f"inp {inp.value_expr}")
+                                _l.debug(f"process_recalculate self.values {self.values}")
 
-                        try:
-                            res = formula.safe_eval(
-                                inp.value_expr,
-                                names=self.values,
-                                now=self._now,
-                                context=self._context,
-                            )
-                            self.values[name] = res
-
-                            _l.debug(f"process_recalculate self.values {self.values}")
-
-                        except formula.InvalidExpression as e:
-                            self._handle_errors(e, inp, name, errors)
+                            except formula.InvalidExpression as e:
+                                self._handle_errors(e, inp, name, errors)
             _l.debug(
                 "TransactionTypeProcess: process_recalculate done: %s",
                 "{:3.3f}".format(time.perf_counter() - process_recalculate_st),

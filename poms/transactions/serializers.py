@@ -277,6 +277,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             "value",
             "settings",
             "button_data",
+            "expression_iterations_count"
         ]
         read_only_fields = ["order"]
 
@@ -3008,7 +3009,7 @@ class TransactionTypeSerializer(
         return new_context_parameters
 
     def save_actions_instrument(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3052,7 +3053,7 @@ class TransactionTypeSerializer(
                 actions[order] = action_instrument
 
     def save_actions_transaction(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3127,7 +3128,7 @@ class TransactionTypeSerializer(
                 actions[order] = action_transaction
 
     def save_actions_instrument_factor_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3179,7 +3180,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_execute_command(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3216,7 +3217,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_manual_pricing_formula(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3270,7 +3271,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_accrual_calculation_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3326,7 +3327,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_event_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3378,7 +3379,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_event_schedule_action(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3484,6 +3485,7 @@ class TransactionTypeSerializer(
 
 class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
     group = TransactionTypeGroupField(required=False, allow_null=False)
+
     # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
     class Meta:
@@ -4170,7 +4172,7 @@ class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
         fields = ["id", "is_locked", "is_canceled", "status", "is_deleted"]
 
     def update_base_transactions_permissions(
-        self, instance, complex_transaction_permissions
+            self, instance, complex_transaction_permissions
     ):
         view_permissions = []
 
@@ -4499,8 +4501,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             field_object = None
 
             if i.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
+                    TransactionTypeInput.STRING,
+                    TransactionTypeInput.SELECTOR,
             ):
                 field = serializers.CharField(
                     required=False,
@@ -4981,8 +4983,8 @@ class ComplexTransactionViewOnly(object):
             i = ci.transaction_type_input
             value = None
             if i.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
+                    TransactionTypeInput.STRING,
+                    TransactionTypeInput.SELECTOR,
             ):
                 value = ci.value_string
             elif i.value_type == TransactionTypeInput.NUMBER:
@@ -5002,7 +5004,7 @@ class ComplexTransactionViewOnly(object):
         _l.debug(f"ComplexTransactionViewOnly.init {result_time}")
 
     def _get_val_by_model_cls_for_complex_transaction_input(
-        self, master_user, obj, model_class
+            self, master_user, obj, model_class
     ):
         try:
             if issubclass(model_class, Account):
@@ -5368,17 +5370,17 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 class RecalculateUserFields:
     def __init__(
-        self,
-        task_id=None,
-        task_status=None,
-        master_user=None,
-        member=None,
-        transaction_type_id=None,
-        key=None,
-        total_rows=None,
-        processed_rows=None,
-        stats_file_report=None,
-        stats=None,
+            self,
+            task_id=None,
+            task_status=None,
+            master_user=None,
+            member=None,
+            transaction_type_id=None,
+            key=None,
+            total_rows=None,
+            processed_rows=None,
+            stats_file_report=None,
+            stats=None,
     ):
         self.task_id = task_id
         self.task_status = task_status
