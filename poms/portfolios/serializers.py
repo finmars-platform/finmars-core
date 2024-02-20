@@ -584,7 +584,6 @@ class CalculateRecordsSerializer(serializers.Serializer):
 
 class PortfolioBundleSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    registers = PortfolioRegisterViewSerializer(many=True, read_only=True)
 
     class Meta:
         model = PortfolioBundle
