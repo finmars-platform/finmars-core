@@ -247,10 +247,10 @@ class BootstrapConfig(AppConfig):
                     )
 
                 except Exception as e:
-                    _l.error(f"Old backup name error {repr(e)}")
+                    _l.error(f"{log} old backup name error {repr(e)}")
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
-                _l.info("Empty database, create new master user")
+                _l.info(f"{log} empty database, create new master user")
 
                 master_user = MasterUser.objects.create_master_user(
                     user=user,
@@ -263,7 +263,7 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info(
-                    f"Master user with name {master_user.name} and "
+                    f"{log} master user with name {master_user.name} and "
                     f"base_api_url {master_user.base_api_url} created"
                 )
 
@@ -276,7 +276,7 @@ class BootstrapConfig(AppConfig):
                 )
                 member.save()
 
-                _l.info("Owner Member & Admin Group created")
+                _l.info(f"{log} Owner Member & Admin Group created")
 
             try:
                 # TODO, carefull if someday return to multi master user inside one db
@@ -286,10 +286,10 @@ class BootstrapConfig(AppConfig):
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
 
-                _l.info("Master User base_api_url synced")
+                _l.info(f"{log} Master User base_api_url synced")
 
             except Exception as e:
-                _l.error(f"Could not sync base_api_url {e}")
+                _l.error(f"{log} Could not sync base_api_url {e}")
                 raise e
 
             try:
@@ -307,8 +307,8 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(
-                    f"Could not find current owner member for username={username} "
-                    f"master_user={master_user.base_api_url} error {repr(e)}"
+                    f"{log} Could not find current_owner_member username={username}"
+                    f" master_user={master_user.base_api_url} error {repr(e)}"
                 )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
@@ -321,7 +321,7 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.error(
-                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+                f"{log} resulted in {repr(e)} trace {traceback.format_exc()}"
             )
 
         # Looks like tests itself create master user and other things
@@ -359,7 +359,7 @@ class BootstrapConfig(AppConfig):
                 verify=settings.VERIFY_SSL,
             )
             _l.info(
-                f"register_at_authorizer_service backend-is-ready response: "
+                f"register_at_authorizer_service backend-is-ready api response: "
                 f"status_code={response.status_code} text={response.text}"
             )
 
