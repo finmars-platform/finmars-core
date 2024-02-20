@@ -3303,9 +3303,9 @@ class TransactionTypeProcess:
 
                     if inp.expression_iterations_count > i:
 
-                        _l.info('inp.expression_iterations_count %s' % inp.expression_iterations_count)
-                        _l.info('inp.i %s' % i)
-                        _l.info('inp %s' % name)
+                        # _l.info('inp.expression_iterations_count %s' % inp.expression_iterations_count)
+                        # _l.info('inp.i %s' % i)
+                        # _l.info('inp %s' % name)
 
                         errors = {}
 
