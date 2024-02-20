@@ -337,14 +337,12 @@ class BootstrapConfig(AppConfig):
         if not settings.AUTHORIZER_URL:
             return
 
-        _l.info("register_at_authorizer_service processing")
-
         data = {
             "base_api_url": settings.BASE_API_URL,
         }
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
-        _l.info(f"register_at_authorizer_service url {url}")
+        _l.info(f"register_at_authorizer_service url={url} data={data}")
 
         try:
             response = requests.post(
@@ -354,18 +352,14 @@ class BootstrapConfig(AppConfig):
                 verify=settings.VERIFY_SSL,
             )
             _l.info(
-                f"register_at_authorizer_service backend-is-ready "
-                f"response.status_code {response.status_code}"
-                f"response.text {response.text}"
+                f"register_at_authorizer_service backend-is-ready response: "
+                f"status_code={response.status_code} text={response.text}"
             )
 
             response.raise_for_status()
 
         except Exception as e:
-            _l.info(
-                f"register_at_authorizer_service error {repr(e)} "
-                f"traceback {traceback.format_exc()}"
-            )
+            _l.info(f"register_at_authorizer_service resulted in {repr(e)}")
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     @staticmethod
