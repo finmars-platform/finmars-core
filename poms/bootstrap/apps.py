@@ -153,7 +153,9 @@ class BootstrapConfig(AppConfig):
 
         old_members = Member.objects.filter(is_owner=False)
         old_members.update(is_deleted=True)
-        _l.info(f"{old_members.count()} old members were marked as deleted")
+        _l.info(
+            f"remove_old_members {old_members.count()} members were marked as deleted"
+        )
 
     @staticmethod
     def load_master_user_data():
@@ -162,18 +164,17 @@ class BootstrapConfig(AppConfig):
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
+        log = "load_master_user_data"
+
         if not settings.AUTHORIZER_URL:
-            _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
+            _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
             return
 
-        _l.info("load_master_user_data started ...")
+        _l.info(f"{log} started, calling 'backend-master-user-data'")
 
         try:
             data = {"base_api_url": settings.BASE_API_URL}
             url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
-
-            _l.info(f"load_master_user_data url {url}")
-
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
@@ -181,7 +182,10 @@ class BootstrapConfig(AppConfig):
                 verify=settings.VERIFY_SSL,
             )
 
-            _l.info(f"status_code={response.status_code} text={response.text}")
+            _l.info(
+                f"{log} 'backend-master-user-data' response from url={url} "
+                f"status_code={response.status_code}"
+            )
 
             response.raise_for_status()
 
@@ -191,7 +195,7 @@ class BootstrapConfig(AppConfig):
             try:
                 user = User.objects.using(settings.DB_DEFAULT).get(username=username)
 
-                _l.info(f"Owner {username} exists")
+                _l.info(f"{log} owner {username} exists")
 
             except User.DoesNotExist:
                 try:
@@ -203,22 +207,25 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info(f'Create owner {response_data["owner"]["username"]}')
+                    _l.info(f'{log} create owner {response_data["owner"]["username"]}')
 
                 except Exception as e:
-                    _l.info(f"Create user error {e} trace {traceback.format_exc()}")
+                    _l.info(
+                        f"{log} create user resulted in {repr(e)} "
+                        f"trace {traceback.format_exc()}"
+                    )
                     raise e
 
             user_profile, created = UserProfile.objects.using(
                 settings.DB_DEFAULT
             ).get_or_create(user_id=user.pk)
 
-            _l.info(f"Owner User Profile {'created' if created else 'exist'}")
+            _l.info(f"{log} Owner User Profile {'created' if created else 'exist'}")
 
             name = response_data["name"]
 
-            # check if the status is initial (just created)
-            if response_data["status"] == 0:
+            # check if the status is initial (0) or maintenance (2)
+            if response_data["status"] in {0, 2}:
                 BootstrapConfig.remove_old_members()
 
             if (  # check if restored from backup
@@ -235,7 +242,7 @@ class BootstrapConfig(AppConfig):
                     BootstrapConfig.remove_old_members()
 
                     _l.info(
-                        f"Master User From Backup Renamed to Name {master_user.name}"
+                        f"{log} Master User From Backup Renamed to Name {master_user.name}"
                         f"and Base API URL {master_user.base_api_url}"
                     )
 
