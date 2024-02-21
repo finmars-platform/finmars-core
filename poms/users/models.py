@@ -1291,7 +1291,7 @@ class Member(FakeDeletableModel):
         return self.username
 
     def fake_delete(self):
-        # self.user = None # WTF, why we need this?, user should be keeped with member (since 2023-01-01)
+        # user should be kept with member (since 2023-01-01)
         self.is_deleted = True
         self.save()
 
