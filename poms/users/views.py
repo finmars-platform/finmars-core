@@ -961,17 +961,19 @@ class MemberViewSet(AbstractModelViewSet):
             raise ValidationError("Could not remove owner rights from yourself")
 
     def destroy(self, request, *args, **kwargs):
-        if self.get_object().username == "finmars_bot":
+        member = self.get_object()
+
+        if member.username == "finmars_bot":
             raise PermissionDenied()
 
         if (
-            request.user.member.id != self.get_object().id
+            request.user.member.id != member.id
             and not request.user.member.is_admin
         ):
             raise PermissionDenied()
 
-        instance = self.get_object()
-        self.perform_destroy(instance, request)
+        self.perform_destroy(member, request)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, instance, request):
