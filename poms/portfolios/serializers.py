@@ -599,6 +599,24 @@ class PortfolioBundleSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
         ]
 
 
+class PortfolioBundleDetailSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    registers = PortfolioRegisterViewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PortfolioBundle
+        fields = [
+            "id",
+            "master_user",
+            "name",
+            "short_name",
+            "user_code",
+            "public_name",
+            "notes",
+            "registers",
+        ]
+
+
 class PortfolioEvalSerializer(
     ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 ):
