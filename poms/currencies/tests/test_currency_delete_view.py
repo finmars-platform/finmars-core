@@ -1,7 +1,11 @@
 from django.conf import settings
+from django.test import override_settings
+from poms.celery_tasks.models import CeleryTask
+from poms.celery_tasks.tasks import bulk_delete
 from poms.currencies.constants import MAIN_CURRENCIES
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
+from poms.currencies.constants import DASH
 
 
 class CurrencyDeleteViewSetTest(BaseTestCase):
@@ -46,3 +50,10 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
         
         response = self.client.delete(path=f"{self.url}/EUR/")
         self.assertEqual(response.status_code, 404)
+
+    def test_bulk_delete_with_dash(self):
+        currency = Currency.objects.first()
+        currency.user_code = DASH
+        currency.save()
+        currency.fake_delete()
+        self.assertEqual(currency.is_deleted, False)
