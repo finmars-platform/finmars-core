@@ -972,22 +972,21 @@ class MemberViewSet(AbstractModelViewSet):
         ):
             raise PermissionDenied()
 
-        self.perform_destroy(member, request)
+        if member.is_owner:
+            raise PermissionDenied()
+
+        self.perform_destroy(member)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_destroy(self, instance, request):
-        if instance.is_owner:
-            raise PermissionDenied()
-
+    def perform_destroy(self, member):
         authorizer = AuthorizerService()
 
-        authorizer.kick_member(instance)
+        authorizer.kick_member(member)
 
-        instance.status = Member.STATUS_DELETED
-        instance.save()
+        member.status = Member.STATUS_DELETED
 
-        return super().perform_destroy(instance)
+        return super().perform_destroy(member)
 
     @action(detail=True, methods=["put"], url_path="send-invite")
     def send_invite(self, request, pk=None):
