@@ -13,6 +13,7 @@ DEBUG=True \
 SEND_LOGS_TO_FINMARS=True \
 LOCAL=True \
 PROFILER=False \
+USE_ADMIN_PANEL=True \
 USE_DEBUGGER=True \
 ENABLE_DEV_DOCUMENTATION=False \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
@@ -38,6 +39,7 @@ BASE_API_URL=space00000 \
 AUTHORIZER_URL=http://127.0.0.1:8083/authorizer \
 BACKEND_ROLES="ALL" \
 CSRF_COOKIE_DOMAIN=0.0.0.0 \
-python manage.py runserver
+GUNICORN_START_TIME=$(date +%s) \
+gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi
 
-#gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi
+#python manage.py runserver

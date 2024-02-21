@@ -77,7 +77,7 @@ chmod 777 /var/log/finmars/backend/django.log
 # Default value is "backend"
 : "${INSTANCE_TYPE:=backend}"
 
-
+export GUNICORN_START_TIME=$(date +%s)
 
 if [ "$INSTANCE_TYPE" = "backend" ]; then
 

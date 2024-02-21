@@ -1,7 +1,10 @@
 import json
 import logging
+import os
 import sys
+import time
 import traceback
+import psutil
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -24,7 +27,21 @@ class BootstrapConfig(AppConfig):
     name = "poms.bootstrap"
     verbose_name = gettext_lazy("Bootstrap")
 
+    def get_gunicorn_memory_usage(self):
+        total_memory = 0
+        for proc in psutil.process_iter(['cmdline', 'memory_info']):
+            try:
+                # Check if this is a Gunicorn worker process
+                name = ' '.join(proc.cmdline())
+                # if 'gunicorn' in name or 'runserver' in name:
+                if 'gunicorn' in name:
+                    total_memory += proc.info['memory_info'].rss
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass  # Process terminated or access denied
+        _l.info(f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024**2:.2f} MB")
+
     def ready(self):
+
         _l.info("Bootstrapping Finmars Application")
 
         if settings.PROFILER:
@@ -41,6 +58,18 @@ class BootstrapConfig(AppConfig):
         post_migrate.connect(self.bootstrap, sender=self)
 
         _l.info("Finmars Application is running 💚")
+
+        self.get_gunicorn_memory_usage()
+
+        gunicorn_start_time = os.environ.get('GUNICORN_START_TIME')
+        if gunicorn_start_time:
+            gunicorn_start_time = float(gunicorn_start_time)
+            ready_time = time.time()
+            startup_duration = ready_time - gunicorn_start_time
+            _l.info(
+                "Finmars bootstrap time: %s"
+                % "{:3.3f}".format(startup_duration)
+            )
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         """
@@ -124,7 +153,9 @@ class BootstrapConfig(AppConfig):
 
         old_members = Member.objects.filter(is_owner=False)
         old_members.update(is_deleted=True)
-        _l.info(f"{old_members.count()} old members were marked as deleted")
+        _l.info(
+            f"remove_old_members {old_members.count()} members were marked as deleted"
+        )
 
     @staticmethod
     def load_master_user_data():
@@ -133,18 +164,17 @@ class BootstrapConfig(AppConfig):
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
+        log = "load_master_user_data"
+
         if not settings.AUTHORIZER_URL:
-            _l.info("load_master_user_data exited, AUTHORIZER_URL is not defined")
+            _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
             return
 
-        _l.info("load_master_user_data started ...")
+        _l.info(f"{log} started, calling 'backend-master-user-data'")
 
         try:
             data = {"base_api_url": settings.BASE_API_URL}
             url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
-
-            _l.info(f"load_master_user_data url {url}")
-
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
@@ -152,7 +182,10 @@ class BootstrapConfig(AppConfig):
                 verify=settings.VERIFY_SSL,
             )
 
-            _l.info(f"status_code={response.status_code} text={response.text}")
+            _l.info(
+                f"{log} 'backend-master-user-data' response from url={url} "
+                f"status_code={response.status_code}"
+            )
 
             response.raise_for_status()
 
@@ -162,7 +195,7 @@ class BootstrapConfig(AppConfig):
             try:
                 user = User.objects.using(settings.DB_DEFAULT).get(username=username)
 
-                _l.info(f"Owner {username} exists")
+                _l.info(f"{log} owner {username} exists")
 
             except User.DoesNotExist:
                 try:
@@ -174,21 +207,24 @@ class BootstrapConfig(AppConfig):
                     )
                     user.save()
 
-                    _l.info(f'Create owner {response_data["owner"]["username"]}')
+                    _l.info(f'{log} create owner {response_data["owner"]["username"]}')
 
                 except Exception as e:
-                    _l.info(f"Create user error {e} trace {traceback.format_exc()}")
+                    _l.info(
+                        f"{log} create user resulted in {repr(e)} "
+                        f"trace {traceback.format_exc()}"
+                    )
                     raise e
 
             user_profile, created = UserProfile.objects.using(
                 settings.DB_DEFAULT
             ).get_or_create(user_id=user.pk)
 
-            _l.info(f"Owner User Profile {'created' if created else 'exist'}")
+            _l.info(f"{log} Owner User Profile {'created' if created else 'exist'}")
 
             name = response_data["name"]
 
-            # check if the status is initial (just created)
+            # if the status is initial (0), remove old members from workspace
             if response_data["status"] == 0:
                 BootstrapConfig.remove_old_members()
 
@@ -206,15 +242,15 @@ class BootstrapConfig(AppConfig):
                     BootstrapConfig.remove_old_members()
 
                     _l.info(
-                        f"Master User From Backup Renamed to Name {master_user.name}"
+                        f"{log} Master User From Backup Renamed to Name {master_user.name}"
                         f"and Base API URL {master_user.base_api_url}"
                     )
 
                 except Exception as e:
-                    _l.error(f"Old backup name error {repr(e)}")
+                    _l.error(f"{log} old backup name error {repr(e)}")
 
             if MasterUser.objects.using(settings.DB_DEFAULT).all().count() == 0:
-                _l.info("Empty database, create new master user")
+                _l.info(f"{log} empty database, create new master user")
 
                 master_user = MasterUser.objects.create_master_user(
                     user=user,
@@ -227,7 +263,7 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info(
-                    f"Master user with name {master_user.name} and "
+                    f"{log} master user with name {master_user.name} and "
                     f"base_api_url {master_user.base_api_url} created"
                 )
 
@@ -240,7 +276,7 @@ class BootstrapConfig(AppConfig):
                 )
                 member.save()
 
-                _l.info("Owner Member & Admin Group created")
+                _l.info(f"{log} Owner Member & Admin Group created")
 
             try:
                 # TODO, carefull if someday return to multi master user inside one db
@@ -250,10 +286,10 @@ class BootstrapConfig(AppConfig):
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
 
-                _l.info("Master User base_api_url synced")
+                _l.info(f"{log} Master User base_api_url synced")
 
             except Exception as e:
-                _l.error(f"Could not sync base_api_url {e}")
+                _l.error(f"{log} Could not sync base_api_url {e}")
                 raise e
 
             try:
@@ -271,8 +307,8 @@ class BootstrapConfig(AppConfig):
 
             except Exception as e:
                 _l.error(
-                    f"Could not find current owner member for username={username} "
-                    f"master_user={master_user.base_api_url} error {repr(e)}"
+                    f"{log} Could not find current_owner_member username={username}"
+                    f" master_user={master_user.base_api_url} error {repr(e)}"
                 )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
@@ -285,7 +321,7 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.error(
-                f"load_master_user_data error {e} traceback {traceback.format_exc()}"
+                f"{log} resulted in {repr(e)} trace {traceback.format_exc()}"
             )
 
         # Looks like tests itself create master user and other things
@@ -308,14 +344,12 @@ class BootstrapConfig(AppConfig):
         if not settings.AUTHORIZER_URL:
             return
 
-        _l.info("register_at_authorizer_service processing")
-
         data = {
             "base_api_url": settings.BASE_API_URL,
         }
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
-        _l.info(f"register_at_authorizer_service url {url}")
+        _l.info(f"register_at_authorizer_service url={url} data={data}")
 
         try:
             response = requests.post(
@@ -325,18 +359,14 @@ class BootstrapConfig(AppConfig):
                 verify=settings.VERIFY_SSL,
             )
             _l.info(
-                f"register_at_authorizer_service backend-is-ready "
-                f"response.status_code {response.status_code}"
-                f"response.text {response.text}"
+                f"register_at_authorizer_service backend-is-ready api response: "
+                f"status_code={response.status_code} text={response.text}"
             )
 
             response.raise_for_status()
 
         except Exception as e:
-            _l.info(
-                f"register_at_authorizer_service error {repr(e)} "
-                f"traceback {traceback.format_exc()}"
-            )
+            _l.info(f"register_at_authorizer_service resulted in {repr(e)}")
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     @staticmethod
