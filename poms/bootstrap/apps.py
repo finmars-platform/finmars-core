@@ -224,8 +224,8 @@ class BootstrapConfig(AppConfig):
 
             name = response_data["name"]
 
-            # check if the status is initial (0) or maintenance (2)
-            if response_data["status"] in {0, 2}:
+            # if the status is initial (0), remove old members from workspace
+            if response_data["status"] == 0:
                 BootstrapConfig.remove_old_members()
 
             if (  # check if restored from backup
