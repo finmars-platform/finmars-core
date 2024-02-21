@@ -986,7 +986,7 @@ class MemberViewSet(AbstractModelViewSet):
 
         member.status = Member.STATUS_DELETED
 
-        return super().perform_destroy(member)
+        super().perform_destroy(member)
 
     @action(detail=True, methods=["put"], url_path="send-invite")
     def send_invite(self, request, pk=None):
