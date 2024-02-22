@@ -499,7 +499,6 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 40,
     "EXCEPTION_HANDLER": "finmars_standardized_errors.handler.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.BasicAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "poms.common.authentication.KeycloakAuthentication",
     ),
