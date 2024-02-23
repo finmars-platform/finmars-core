@@ -416,7 +416,7 @@ class BootstrapConfig(AppConfig):
                     configuration_code=configuration_code,
                     user_code=f"{configuration_code}:default_member_layout",
                 )
-            except Exception:
+            except MemberLayout.DoesNotExist:
                 try:
                     # configuration code will be added automatically
                     MemberLayout.objects.using(settings.DB_DEFAULT).create(
@@ -427,11 +427,12 @@ class BootstrapConfig(AppConfig):
                         name="default",
                         user_code="default_member_layout",
                     )
-                    _l.info(f"Created member layout for {member.username}")
 
                 except Exception as e:
                     _l.info(f"Could not create member layout {member.username}")
                     raise e
+
+            _l.info(f"Created member layout for {member.username}")
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
