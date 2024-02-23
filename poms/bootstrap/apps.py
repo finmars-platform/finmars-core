@@ -156,13 +156,13 @@ class BootstrapConfig(AppConfig):
         try:
             old_members = Member.objects.filter(is_owner=False)
             old_members.update(is_deleted=True)
-            updated = old_members.count()
+            marked_count = old_members.count()
 
         except Exception as e:
             _l.error(f"remove_old_members resulted in {repr(e)}")
 
         else:
-            _l.info(f"remove_old_members {updated} members marked as deleted")
+            _l.info(f"remove_old_members {marked_count} members marked as deleted")
 
     @staticmethod
     def load_master_user_data():
