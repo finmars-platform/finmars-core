@@ -737,6 +737,24 @@ class SimpleImportProcess(object):
             ),
         )
 
+    def get_result_stats(self):
+        result_stats = {
+            "total": self.result.total_rows,
+            "error": 0,
+            "success": 0,
+            "skip": 0
+        }
+        self.preprocess()
+        self.process()
+        for result_item in self.result.items:
+            if result_item.status == "error":
+                result_stats["error"] += 1
+            elif result_item.status == "success":
+                result_stats["success"] += 1
+            elif "skip" in result_item.status:
+                result_stats["skip"] += 1
+        return result_stats
+
     def generate_file_report(self):
         _l.info(
             f"SimpleImportProcess.generate_file_report "
