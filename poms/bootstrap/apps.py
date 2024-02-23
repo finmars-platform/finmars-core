@@ -177,12 +177,15 @@ class BootstrapConfig(AppConfig):
             _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
             return
 
-        _l.info(f"{log} started, calling 'backend-master-user-data'")
+        data = {"base_api_url": settings.BASE_API_URL}
+        url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+
+        _l.info(
+            f"{log} started, calling api 'backend-master-user-data' "
+            f"with url={url} data={data}"
+        )
 
         try:
-            data = {"base_api_url": settings.BASE_API_URL}
-            url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
-
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
@@ -191,8 +194,8 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info(
-                f"{log} api 'backend-master-user-data' for url={url} data={data}"
-                f"responded with code={response.status_code} text={response.text}"
+                f"{log} api 'backend-master-user-data' responded with "
+                f"status_code={response.status_code} text={response.text}"
             )
 
             response.raise_for_status()
@@ -211,7 +214,7 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error(f"{log} no valid answer from authorizer due to {repr(e)}")
+            _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
             raise RuntimeError(e) from e
 
         try:
@@ -295,12 +298,10 @@ class BootstrapConfig(AppConfig):
         if not settings.AUTHORIZER_URL:
             return
 
-        data = {
-            "base_api_url": settings.BASE_API_URL,
-        }
+        data = {"base_api_url": settings.BASE_API_URL}
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
-        _l.info(f"register_at_authorizer_service url={url} data={data}")
+        _l.info(f"register_at_authorizer_service with url={url} data={data}")
 
         try:
             response = requests.post(
