@@ -311,7 +311,7 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error(
                     f"{log} Could not find current_owner_member username={username}"
-                    f" master_user={master_user.base_api_url} due to {repr(e)}"
+                    f" master_user={master_user.base_api_url} due to error {repr(e)}"
                 )
 
                 Member.objects.using(settings.DB_DEFAULT).create(
