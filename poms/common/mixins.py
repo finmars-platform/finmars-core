@@ -16,6 +16,8 @@ from rest_framework.mixins import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
+from poms.common.serializers import BulkSerializer
+
 _l = logging.getLogger("poms.common.mixins")
 
 
@@ -106,10 +108,13 @@ class DestroySystemicModelMixin(DestroyModelMixinExt):
 class BulkDestroyModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-delete")
     def bulk_delete(self, request):
-        data = request.data
-
         from poms.celery_tasks.models import CeleryTask
+        from poms_app import celery_app
+        
+        serializer = BulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
+        data = serializer.validated_data
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(queryset.model)
@@ -125,8 +130,6 @@ class BulkDestroyModelMixin(DestroyModelMixin):
             type="bulk_delete",
         )
 
-        from poms_app import celery_app
-
         celery_app.send_task(
             "celery_tasks.bulk_delete",
             kwargs={"task_id": celery_task.id},
@@ -140,7 +143,10 @@ class BulkRestoreModelMixin(DestroyModelMixin):
         from poms.celery_tasks.models import CeleryTask
         from poms_app import celery_app
 
-        data = request.data
+        serializer = BulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(queryset.model)

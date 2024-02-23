@@ -13,6 +13,9 @@ from poms.users.utils import get_master_user_from_context, get_member_from_conte
 from poms_app import settings
 
 
+class BulkSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField())
+
 class PomsClassSerializer(serializers.ModelSerializer):
     class Meta:
         fields = [
