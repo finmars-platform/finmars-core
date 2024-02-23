@@ -257,9 +257,7 @@ class BootstrapConfig(AppConfig):
             if not master_user:
                 _l.info(f"{log} create new master_user")
 
-                master_user = MasterUser.objects.using(
-                    settings.DB_DEFAULT,
-                ).create_master_user(
+                master_user = MasterUser.objects.create_master_user(
                     name=name,
                     base_api_url=base_api_url,
                 )
