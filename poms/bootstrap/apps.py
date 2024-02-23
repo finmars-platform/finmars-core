@@ -290,21 +290,6 @@ class BootstrapConfig(AppConfig):
         else:
             _l.info(f"{log} successfully finished")
 
-        # Looks like tests itself create master user and other things
-        # else:
-        #     _l.info("load_master_user_data in test mode, creating temp master_user")
-        #
-        #     master_user = MasterUser.objects.create_master_user(
-        #         language="en",
-        #         name='Test Database',
-        #     )
-        #
-        #     master_user.base_api_url = settings.BASE_API_URL;
-        #
-        #     master_user.save()
-        #
-        #     _l.info('load_master_user_data test mode: master_user %s created' % master_user)
-
     @staticmethod
     def register_at_authorizer_service():
         if not settings.AUTHORIZER_URL:
