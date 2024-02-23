@@ -107,7 +107,7 @@ class BootstrapConfig(AppConfig):
             Member.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
             _l.info(f"{FINMARS_BOT} member already exists")
 
-        except Exception:
+        except Member.DoesNotExist:
             _l.info(f"Member {FINMARS_BOT} not found, going to create it")
 
             try:
