@@ -1,8 +1,11 @@
+import json
+
 from logging import getLogger
 
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet, MultipleChoiceFilter, BaseInFilter, CharFilter
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -22,17 +25,26 @@ from .serializers import (
 
 _l = getLogger("poms.celery_tasks")
 
-
 class CeleryTaskFilterSet(FilterSet):
     id = CharFilter()
     celery_task_id = CharFilter()
     status = CharFilter()
+    statuses = CharFilter(field_name='status', method='filter_status__in')
     type = CharFilter()
+    types = CharFilter(field_name='type', method='filter_type__in')
     created = CharFilter()
 
     class Meta:
         model = CeleryTask
-        fields = []
+        fields = ["status", "type",]
+
+    @staticmethod
+    def filter_status__in(queryset, _, value):
+        return queryset.filter(status__in=value.split(','))
+
+    @staticmethod
+    def filter_type__in(queryset, _, value):
+        return queryset.filter(type__in=value.split(','))
 
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
@@ -59,10 +71,50 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         serializer_class=CeleryTaskLightSerializer,
     )
     def list_light(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginator.post_paginate_queryset(queryset, request)
-        serializer = self.get_serializer(page, many=True)
 
+        queryset = self.filter_queryset(self.get_queryset())
+        result = self.request.query_params.get("result")
+
+        if result:
+
+            result = result.split(",")
+
+            for filter_condition in result:
+                if filter_condition not in ["success", "error", "skip"]:
+                    return Response(
+                        {
+                            "status": status.HTTP_404_NOT_FOUND,
+                            "message": f"Invalid condition for a filter by result: {filter_condition}",
+                            "results": [],
+                        }
+                    )
+
+            include_tasks_list = []
+
+            for task in queryset:
+
+                if not task.result:
+                    continue
+
+                result_object = json.loads(task.result)
+
+                items = result_object.get("items")
+
+                if items is not None:
+
+                    for item in items:
+                        if item["status"] in result:
+                            include_tasks_list.append(task.pk)
+                            break
+
+            if include_tasks_list:
+                queryset = queryset.filter(pk__in=include_tasks_list)
+            else:
+                queryset = CeleryTask.objects.none()
+
+        page = self.paginate_queryset(queryset)
+
+        serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="status")
