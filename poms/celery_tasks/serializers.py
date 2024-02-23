@@ -1,10 +1,13 @@
 import json
+from logging import getLogger
 
 from rest_framework import serializers
+from poms.csv_import.handlers import SimpleImportProcess
 
 from poms.users.fields import MasterUserField, MemberField
 from .models import CeleryTask, CeleryTaskAttachment, CeleryWorker
 
+_l = getLogger("poms.celery_tasks")
 
 class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,6 +29,31 @@ class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
             source="file_report", read_only=True
         )
 
+def _get_result_stats(instance):
+
+    if instance.result_object is None:
+        return {
+            "total_count": None,
+            "error_count": None,
+            "success_count": None,
+            "skip_count": None,
+        }
+
+    result_stats = {
+        "total_count": 0,
+        "error_count": 0,
+        "success_count": 0,
+        "skip_count": 0,
+    }
+
+    if instance.result_object.get("items") is not None:
+
+        for item in instance.result_object["items"]:
+            if item["status"] in ["success", "skip", "error"]:
+                key = f"{item['status']}_count"
+                result_stats[key] = result_stats[key] + 1
+
+    return result_stats
 
 class CeleryTaskSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
@@ -34,6 +62,8 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
     result_object = serializers.JSONField(allow_null=False)
     progress_object = serializers.JSONField(allow_null=False)
     attachments = CeleryTaskAttachmentSerializer(many=True)
+    result_stats = serializers.SerializerMethodField()
+
 
     class Meta:
         model = CeleryTask
@@ -63,7 +93,11 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
 
             'ttl',
             'expiry_at',
+            'result_stats',
         )
+
+    def get_result_stats(self, instance):
+        return _get_result_stats(instance)
 
     def __init__(self, *args, **kwargs):
         from poms.users.serializers import MemberViewSerializer
@@ -80,6 +114,7 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
     member = MemberField()
     progress_object = serializers.JSONField(allow_null=False)
     attachments = CeleryTaskAttachmentSerializer(many=True)
+    result_stats = serializers.SerializerMethodField()
 
     class Meta:
         model = CeleryTask
@@ -103,7 +138,11 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
             "error_message",
             "finished_at",
             "file_report",
+            'result_stats',
         )
+
+    def get_result_stats(self, instance):
+        return _get_result_stats(instance)
 
     def __init__(self, *args, **kwargs):
         from poms.users.serializers import MemberViewSerializer
