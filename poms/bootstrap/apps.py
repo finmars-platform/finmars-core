@@ -513,7 +513,7 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.error(
-                f"create_base_folders error {repr(e)} trace{traceback.format_exc()}"
+                f"create_base_folders error {repr(e)} trace {traceback.format_exc()}"
             )
 
     @staticmethod
