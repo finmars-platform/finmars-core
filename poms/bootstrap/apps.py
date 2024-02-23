@@ -97,27 +97,25 @@ class BootstrapConfig(AppConfig):
     @staticmethod
     def create_finmars_bot():
         from django.contrib.auth.models import User
-
         from poms.users.models import MasterUser, Member
 
-        try:
-            user = User.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
-
-        except Exception:
-            user = User.objects.using(settings.DB_DEFAULT).create(username=FINMARS_BOT)
+        user = User.objects.using(settings.DB_DEFAULT).get_or_create(username=FINMARS_BOT)
 
         try:
-            Member.objects.using(settings.DB_DEFAULT).get(user__username=FINMARS_BOT)
-            _l.info(f"{FINMARS_BOT} already exists")
+            Member.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
+            _l.info(f"{FINMARS_BOT} member already exists")
 
         except Exception:
+            _l.info(f"Member {FINMARS_BOT} not found, going to create it")
+
             try:
-                _l.info("Member not found, going to create it")
-
-                master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
+                master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
                     base_api_url=settings.BASE_API_URL
-                )
-
+                ).first()
+                if not master_user:
+                    MasterUser.objects.using(settings.DB_DEFAULT).create_master_user(
+                        user=user
+                    )
                 Member.objects.using(settings.DB_DEFAULT).create(
                     user=user,
                     username=FINMARS_BOT,
@@ -125,10 +123,12 @@ class BootstrapConfig(AppConfig):
                     is_admin=True,
                 )
 
-                _l.info(f"{FINMARS_BOT} created")
-
             except Exception as e:
-                _l.error(f"Warning. Could not create {FINMARS_BOT} {e}")
+                err_msg = f"Could not create {FINMARS_BOT} due to {repr(e)}"
+                _l.error(f"{err_msg}", exc_info=True)
+                raise RuntimeError(err_msg) from e
+
+        _l.info(f"Member {FINMARS_BOT} created")
 
     @staticmethod
     def create_iam_access_policies_templates():
