@@ -395,7 +395,8 @@ class BootstrapConfig(AppConfig):
                 if worker_status["status"] == "not_found":
                     authorizer_service.create_worker(worker)
             except Exception as e:
-                _l.error(f"sync_celery_workers: worker {worker} error {e}")
+                _l.error(f"sync_celery_workers: worker {worker} error {repr(e)}")
+                raise e
 
     @staticmethod
     def create_member_layouts():
