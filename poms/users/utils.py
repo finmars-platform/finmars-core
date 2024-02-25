@@ -9,17 +9,17 @@ _l = logging.getLogger("poms.users")
 
 def get_master_user_and_member(request):
     if not request.user.is_authenticated:
-        raise PermissionDenied()
+        raise PermissionDenied("User is not authenticated")
 
     try:
         member = Member.objects.get(user=request.user)
         master_user = member.master_user
 
         if member.is_deleted:
-            raise PermissionDenied()
+            raise PermissionDenied("Member is marked as deleted")
 
         if member.status != Member.STATUS_ACTIVE:
-            raise PermissionDenied()
+            raise PermissionDenied(f"Member status {member.status} != Active")
 
         return member, master_user
 
