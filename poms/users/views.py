@@ -871,11 +871,13 @@ class MemberViewSet(AbstractModelViewSet):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
         if lookup_value == "0":
-            try:
+            if hasattr(self.request.user, "member") and self.request.user.member:
                 return self.request.user.member
 
-            except AttributeError:
-                return None
+            else:
+                raise ValidationError(
+                    f"user {self.request.user.username} has no member"
+                )
 
         return super().get_object()
 
