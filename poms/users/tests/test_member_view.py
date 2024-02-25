@@ -157,3 +157,7 @@ class MemberViewSetTest(BaseTestCase):
         user_data = response_json["user"]
         self.assertEqual(user_data["username"], "test_user")
         self.assertEqual(user_data["id"], self.user.id)
+
+    def test__cannot_destroy_is_owner(self):
+        response = self.client.delete(path=f"{self.url}{self.member.id}/")
+        self.assertEqual(response.status_code, 403, response.content)

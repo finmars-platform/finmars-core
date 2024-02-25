@@ -966,16 +966,16 @@ class MemberViewSet(AbstractModelViewSet):
         member = self.get_object()
 
         if member.username == "finmars_bot":
-            raise PermissionDenied()
+            raise PermissionDenied("Can't delete 'finmars_bot'")
 
         if (
             request.user.member.id != member.id
             and not request.user.member.is_admin
         ):
-            raise PermissionDenied()
+            raise PermissionDenied("Can't delete member if not is_admin")
 
         if member.is_owner:
-            raise PermissionDenied()
+            raise PermissionDenied("Can't delete member if is_owner")
 
         self.perform_destroy(member)
 
