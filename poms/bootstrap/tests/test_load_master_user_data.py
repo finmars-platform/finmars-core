@@ -12,7 +12,7 @@ MOCK_RESPONSE = {
     "is_from_backup": True,
     "old_backup_name": None,
     "version": "6.6.6",
-    "base_api_url": "space11111",
+    "base_api_url": "space00000",
     "owner": {"username": "new_owner", "email": "test@mail.ru"},
     "status": 0,  # INITIAL
 }
