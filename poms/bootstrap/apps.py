@@ -236,26 +236,29 @@ class BootstrapConfig(AppConfig):
             if backend_status == 0:
                 BootstrapConfig.remove_old_members()
 
-            master_user = None
+            master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
+                name=name,
+                base_api_url=base_api_url,
+            ).first()
 
-            if old_backup_name:  # check if restored from backup
-                master_user = MasterUser.objects.using(
-                    settings.DB_DEFAULT,
-                ).filter(
-                    name=old_backup_name,
-                ).first()
+            if master_user:
+                _l.info(
+                    f"{log} master_user with name {master_user.name} and "
+                    f"base_api_url {master_user.base_api_url} exists"
+                )
 
-                if master_user:
-                    master_user.name = name
-                    master_user.base_api_url = base_api_url
-                    master_user.save()
+            if master_user and master_user.name == old_backup_name:
+                # check if restored from backup
+                master_user.name = name
+                master_user.base_api_url = base_api_url
+                master_user.save()
 
-                    BootstrapConfig.remove_old_members()
+                BootstrapConfig.remove_old_members()
 
-                    _l.info(
-                        f"{log} master_user from backup {old_backup_name} renamed to "
-                        f"{master_user.name} & base_api_url {master_user.base_api_url}"
-                    )
+                _l.info(
+                    f"{log} master_user from backup {old_backup_name} renamed to "
+                    f"{master_user.name} & base_api_url {master_user.base_api_url}"
+                )
 
             if not master_user:
                 _l.info(f"{log} create new master_user")
