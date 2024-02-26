@@ -462,13 +462,24 @@ def update_result_with_celery_task_data(celery_task_id, result):
 
 
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
+    from poms.users.models import MasterUser
+
     try:
         # _l.info('post_save.sender %s' % sender)
         # _l.info('post_save.update_fields %s' % update_fields)
 
-        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.filter(
+            base_api_url=settings.BASE_API_URL,
+            account__isnull=False,
+            account_type__isnull=False,
+            currency__isnull=False,
+        ).first()
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        if not master_user:
+            raise RuntimeError(
+                f"No master_user found with base_api_url={settings.BASE_API_URL} "
+                f"and with non-empty values in account, currency & etc"
+            )
 
         if sender == MasterUser and instance.journal_status == "disabled":
             record_context = get_record_context()
