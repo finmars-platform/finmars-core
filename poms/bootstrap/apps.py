@@ -241,10 +241,11 @@ class BootstrapConfig(AppConfig):
                 base_api_url=base_api_url,
             ).first()
 
-            _l.info(
-                f"{log} master_user with name {master_user.name} and "
-                f"base_api_url {master_user.base_api_url} exists"
-            )
+            if master_user:
+                _l.info(
+                    f"{log} master_user with name {master_user.name} and "
+                    f"base_api_url {master_user.base_api_url} exists"
+                )
 
             if master_user and master_user.name == old_backup_name:
                 # check if restored from backup
