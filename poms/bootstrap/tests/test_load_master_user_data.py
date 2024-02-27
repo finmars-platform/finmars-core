@@ -29,7 +29,7 @@ class FinmarsTaskTestCase(BaseTestCase):
         self.init_test_case()
         self.old_member = Member.objects.create(
             master_user=self.master_user,
-            is_admin=True,
+            is_admin=False,
             is_owner=False,
             is_deleted=False,
         )
