@@ -284,11 +284,12 @@ class BootstrapConfig(AppConfig):
             ).get_or_create(
                 username=username,
                 master_user=master_user,
+                user=user,
+                defaults=dict(
+                    is_owner=True,
+                    is_admin=True,
+                ),
             )
-            current_owner_member.is_owner = True
-            current_owner_member.is_admin = True
-            current_owner_member.language = settings.LANGUAGE_CODE
-            current_owner_member.save()
 
             _l.info(
                 f"{log} current_owner_member with username {username} and master_user"
@@ -481,22 +482,16 @@ class BootstrapConfig(AppConfig):
 
         configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
-        try:
-            Configuration.objects.using(settings.DB_DEFAULT).get(
-                configuration_code=configuration_code
-            )
-            _l.info("Local Configuration is already created")
-
-        except Configuration.DoesNotExist:
-            Configuration.objects.using(settings.DB_DEFAULT).create(
-                configuration_code=configuration_code,
+        _, created = Configuration.objects.using(settings.DB_DEFAULT).get_or_create(
+            configuration_code=configuration_code,
+            defaults=dict(
                 name="Local Configuration",
                 is_primary=True,
                 version="1.0.0",
                 description="Local Configuration",
             )
-
-            _l.info("Local Configuration created")
+        )
+        _l.info(f"Local Configuration is already {'created' if created else 'exists'}")
 
     @staticmethod
     def _save_tmp_to_storage(tmpf, storage, path):
