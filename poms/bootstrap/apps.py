@@ -285,10 +285,9 @@ class BootstrapConfig(AppConfig):
                 username=username,
                 master_user=master_user,
                 user=user,
-                default=dict(
+                defaults=dict(
                     is_owner=True,
                     is_admin=True,
-                    language=settings.LANGUAGE_CODE,
                 ),
             )
 
