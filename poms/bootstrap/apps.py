@@ -9,6 +9,7 @@ import psutil
 from django.apps import AppConfig
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
+from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
@@ -154,7 +155,12 @@ class BootstrapConfig(AppConfig):
         from poms.users.models import Member
 
         try:
-            old_members = Member.objects.filter(is_owner=False)
+            old_members = Member.objects.exclude(
+                Q(is_owner=True) |
+                Q(is_admin=True) |
+                Q(is_deleted=True) |
+                Q(username="finmars_bot")
+            )
             old_members.update(is_deleted=True)
             marked_count = old_members.count()
 
