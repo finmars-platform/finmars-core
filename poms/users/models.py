@@ -1269,8 +1269,8 @@ class Member(FakeDeletableModel):
         from poms.ui.models import MemberLayout
 
         instance = super().save(*args, **kwargs)
-        configuration_code = get_default_configuration_code()
 
+        configuration_code = get_default_configuration_code()
         try:
             layout, _ = MemberLayout.objects.get_or_create(
                 member_id=self.id,
@@ -1283,7 +1283,7 @@ class Member(FakeDeletableModel):
                 },
             )
         except Exception as e:
-            _l.info(f"Could not create member layout {e}")
+            _l.error(f"Could not create member {self.username} layout due to {repr(e)}")
 
         return instance
 
