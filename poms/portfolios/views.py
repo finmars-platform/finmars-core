@@ -43,7 +43,7 @@ from poms.portfolios.serializers import (
     PrCalculatePriceHistoryRequestSerializer,
     PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer,
     PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer, PortfolioReconcileHistorySerializer,
-    CalculatePortfolioReconcileHistorySerializer, PortfolioBundleDetailSerializer
+    CalculatePortfolioReconcileHistorySerializer
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
@@ -556,13 +556,6 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioBundleFilterSet
     ordering_fields = []
-    serializers = {
-        'default': serializer_class,
-        'retrieve': PortfolioBundleDetailSerializer,
-    }
-
-    def get_serializer_class(self):
-        return self.serializers.get(self.action, self.serializers['default'])
 
 
 class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
