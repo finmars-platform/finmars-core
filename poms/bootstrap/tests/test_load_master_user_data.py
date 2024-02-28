@@ -51,8 +51,9 @@ class FinmarsTaskTestCase(BaseTestCase):
 
         mock_post.assert_called()
 
-        self.old_member.refresh_from_db(fields=["is_deleted"])
-        self.assertTrue(self.old_member.is_deleted)
+        self.old_member.refresh_from_db()
+        self.assertFalse(self.old_member.is_deleted)
+        self.assertEqual(self.old_member.status, Member.STATUS_DELETED)
 
     @mock.patch("poms.bootstrap.apps.requests.post")
     @override_settings(AUTHORIZER_URL="authorizer/api/")
@@ -72,5 +73,6 @@ class FinmarsTaskTestCase(BaseTestCase):
 
         mock_post.assert_called()
 
-        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.old_member.refresh_from_db()
         self.assertFalse(self.old_member.is_deleted)
+        self.assertEqual(self.old_member.status, Member.STATUS_ACTIVE)

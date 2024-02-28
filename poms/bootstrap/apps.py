@@ -151,24 +151,33 @@ class BootstrapConfig(AppConfig):
         add_view_and_manage_permissions()
 
     @staticmethod
-    def remove_old_members():
+    def deactivate_old_members():
         from poms.users.models import Member
 
+        log = "deactivate_old_members"
+
         try:
-            old_members = Member.objects.exclude(
-                Q(is_owner=True) |
-                Q(is_admin=True) |
-                Q(is_deleted=True) |
-                Q(username="finmars_bot")
+            old_members = list(
+                Member.objects.exclude(
+                    Q(is_owner=True) |
+                    Q(status=Member.STATUS_DELETED) |
+                    Q(username="finmars_bot")
+                )
             )
-            old_members.update(is_deleted=True)
-            marked_count = old_members.count()
+            total_count = len(old_members)
+
+            _l.info(f"{log} found {total_count} old members")
+
+            count = 0
+            for member in old_members:
+                member.status = Member.STATUS_DELETED
+                member.save()
+                count += 1
+
+            _l.info(f"{log} {count}/{total_count} members deactivated")
 
         except Exception as e:
-            _l.error(f"remove_old_members resulted in {repr(e)}")
-
-        else:
-            _l.info(f"remove_old_members {marked_count} members marked as deleted")
+            _l.error(f"{log} failed due to {repr(e)}")
 
     @staticmethod
     def load_master_user_data():
@@ -238,9 +247,13 @@ class BootstrapConfig(AppConfig):
             ).get_or_create(user_id=user.pk)
             _l.info(f"{log} owner's user_profile {'created' if created else 'exists'}")
 
-            # if the status is initial (0), remove old members from workspace
             if backend_status == 0:
-                BootstrapConfig.remove_old_members()
+                # status is initial (0), remove old members from workspace
+                BootstrapConfig.deactivate_old_members()
+            else:
+                _l.info(
+                    f"{log} backend_status={backend_status} no deactivating old members"
+                )
 
             master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
                 name=name,
@@ -259,7 +272,7 @@ class BootstrapConfig(AppConfig):
                 master_user.base_api_url = base_api_url
                 master_user.save()
 
-                BootstrapConfig.remove_old_members()
+                BootstrapConfig.deactivate_old_members()
 
                 _l.info(
                     f"{log} master_user from backup {old_backup_name} renamed to "
@@ -284,12 +297,15 @@ class BootstrapConfig(AppConfig):
             ).get_or_create(
                 username=username,
                 master_user=master_user,
-                user=user,
                 defaults=dict(
+                    user=user,
                     is_owner=True,
                     is_admin=True,
                 ),
             )
+            if not created:
+                current_owner_member.user = user
+                current_owner_member.save()
 
             _l.info(
                 f"{log} current_owner_member with username {username} and master_user"
