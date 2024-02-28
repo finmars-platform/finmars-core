@@ -238,9 +238,11 @@ class BootstrapConfig(AppConfig):
             ).get_or_create(user_id=user.pk)
             _l.info(f"{log} owner's user_profile {'created' if created else 'exists'}")
 
-            # if the status is initial (0), remove old members from workspace
             if backend_status == 0:
+                # status is initial (0), remove old members from workspace
                 BootstrapConfig.remove_old_members()
+            else:
+                _l.info(f"{log} backend_status={backend_status} no member removal")
 
             master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
                 name=name,
