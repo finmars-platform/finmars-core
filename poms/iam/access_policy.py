@@ -89,7 +89,7 @@ class AccessPolicy(permissions.BasePermission):
 
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
-        if len(statements) == 0:
+        if not statements:
             return False
 
         action = self._get_invoked_action(view)
