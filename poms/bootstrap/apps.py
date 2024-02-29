@@ -230,7 +230,7 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
-            raise RuntimeError(e) from e
+            raise e
 
         try:
             user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
