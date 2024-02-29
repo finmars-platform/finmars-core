@@ -1001,7 +1001,8 @@ class PerformanceReportBuilder:
         if date_to > date_from:
 
             for portfolio in portfolios:
-
+                if not portfolio.get_first_transaction_date():
+                    raise TypeError(f'Portfolio {portfolio.user_code} has no first transaction date')
                 if date_from == portfolio.get_first_transaction_date() or date_from < portfolio.get_first_transaction_date():
 
                     # performance report could not be less then first transaction date
