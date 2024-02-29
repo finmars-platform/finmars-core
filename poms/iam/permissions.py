@@ -9,7 +9,7 @@ _l = logging.getLogger("poms.iam")
 
 
 class FinmarsAccessPolicy(AccessPolicy):
-    def get_policy_statements(self, request, view=None):
+    def get_policy_statements(self, request, view=None) -> list:
         if not request.user.member:
             raise PermissionDenied(f"User {request.user.username} has no member")
 

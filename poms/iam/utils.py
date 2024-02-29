@@ -110,7 +110,7 @@ def get_member_access_policies(member):
     return access_policies
 
 
-def get_statements(member):
+def get_statements(member) -> list:
     # Get all AccessPolicy objects for the user
     access_policies = get_member_access_policies(member)
 
