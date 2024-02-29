@@ -7,26 +7,23 @@ from poms.users.models import Member
 _l = logging.getLogger("poms.users")
 
 
-def get_master_user_and_member(request):
+def get_master_user_and_member(request) -> tuple:
     if not request.user.is_authenticated:
         raise PermissionDenied("User is not authenticated")
 
-    try:
-        member = Member.objects.get(user=request.user)
-        master_user = member.master_user
+    member = Member.objects.filter(user=request.user).first()
+    if not member:
+        raise NotFound(f"Member not found for user {request.user.username}")
 
-        if member.is_deleted:
-            raise PermissionDenied("Member is marked as deleted")
+    master_user = member.master_user
+
+    if member.is_deleted:
+        raise PermissionDenied("Member deleted")
 
         if member.status != Member.STATUS_ACTIVE:
             raise PermissionDenied(f"Member status {member.status} != Active")
 
-        return member, master_user
-
-    except Exception as e:
-        _l.debug("get_master_user_and_member: token not found")
-
-        raise NotFound() from e
+    return member, master_user
 
 
 def get_user_from_context(context):
