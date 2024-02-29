@@ -233,29 +233,30 @@ class BootstrapConfig(AppConfig):
             _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
             raise e
 
-        try:
-            user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
-                username=username,
-                defaults=dict(
-                    email=owner_email,
-                    password=generate_random_string(10),
-                )
+        # create user and it's profile
+        user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
+            username=username,
+            defaults=dict(
+                email=owner_email,
+                password=generate_random_string(10),
             )
-            _l.info(f"{log} owner {username} {'created' if created else 'exists'}")
+        )
+        _l.info(f"{log} user {username} {'created' if created else 'exists'}")
 
-            user_profile, created = UserProfile.objects.using(
-                settings.DB_DEFAULT
-            ).get_or_create(user_id=user.pk)
-            _l.info(f"{log} owner's user_profile {'created' if created else 'exists'}")
+        user_profile, created = UserProfile.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(user_id=user.pk)
+        _l.info(f"{log} owner's user_profile {'created' if created else 'exists'}")
 
-            if backend_status == 0:
-                # status is initial (0), remove old members from workspace
-                BootstrapConfig.deactivate_old_members()
-            else:
-                _l.info(
-                    f"{log} backend_status={backend_status} no deactivating old members"
-                )
+        if backend_status == 0:
+            # status is initial (0), remove old members from workspace
+            BootstrapConfig.deactivate_old_members()
+        else:
+            _l.info(
+                f"{log} backend_status={backend_status} no deactivating old members"
+            )
 
+        try:
             master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
                 name=name,
                 base_api_url=base_api_url,
