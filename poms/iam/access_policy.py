@@ -57,9 +57,6 @@ class Statement:
 
 
 class AccessPolicy(permissions.BasePermission):
-    statements: List[Union[dict, Statement]] = []
-    field_permissions: dict = {}
-    id = None
     group_prefix = "group:"
     id_prefix = "id:"
 
@@ -98,7 +95,7 @@ class AccessPolicy(permissions.BasePermission):
         return allowed
 
     def get_policy_statements(self, request, view) -> List[Union[dict, Statement]]:
-        return self.statements
+        return []
 
     def get_user_group_values(self, user) -> List[str]:
         if user.is_anonymous:
