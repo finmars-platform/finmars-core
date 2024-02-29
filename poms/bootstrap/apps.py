@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import traceback
-import psutil
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -13,7 +12,9 @@ from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
+import psutil
 import requests
+from requests.exceptions import JSONDecodeError, RequestException
 
 _l = logging.getLogger("provision")
 
@@ -197,7 +198,7 @@ class BootstrapConfig(AppConfig):
 
         _l.info(
             f"{log} started, calling api 'backend-master-user-data' "
-            f"with url={url} data={data}"
+            f"url={url} data={data}"
         )
 
         try:
@@ -221,14 +222,14 @@ class BootstrapConfig(AppConfig):
             name = response_data["name"]
             backend_status = response_data["status"]
             old_backup_name = response_data.get("old_backup_name")
-
             base_api_url = response_data["base_api_url"]
+
             if base_api_url != settings.BASE_API_URL:
-                raise ValueError(
+                raise RuntimeError(
                     f"received {base_api_url} != expected {settings.BASE_API_URL}"
                 )
 
-        except Exception as e:
+        except (RequestException, JSONDecodeError) as e:
             _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
             raise e
 
