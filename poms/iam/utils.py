@@ -1,8 +1,14 @@
 import logging
+
+from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
+
+from poms.iam.models import AccessPolicy
+from poms.users.models import Member
 
 _l = logging.getLogger('poms.iam')
-from django.db.models import Q
+
 
 '''
     parse_resource_into_object
@@ -16,9 +22,7 @@ from django.db.models import Q
          ...
          "user_code": "space00000"
         }
-
-    '''
-from poms.iam.models import AccessPolicy
+'''
 
 
 def add_to_list_if_not_exists(string, my_list):
@@ -92,7 +96,7 @@ def parse_resource_attribute(resources):
     return result
 
 
-def get_member_access_policies(member):
+def get_member_access_policies(member: Member):
 
     cache_key = f'member_access_policies_{member.id}'
     access_policies = cache.get(cache_key)
@@ -105,20 +109,16 @@ def get_member_access_policies(member):
         ).distinct()
 
         # Cache the result for a specific duration (e.g., 5 minutes)
-        cache.set(cache_key, access_policies, 300)
+        cache.set(cache_key, access_policies, settings.ACCESS_POLICY_CACHE_TTL)
 
     return access_policies
 
 
-def get_statements(member) -> list:
+def get_statements(member: Member) -> list:
     # Get all AccessPolicy objects for the user
-    access_policies = get_member_access_policies(member)
 
     statements = []
-
-    for item in access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
+    for item in get_member_access_policies(member):
 
         policy = lowercase_keys_and_values(item.policy)
 
