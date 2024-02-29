@@ -9,6 +9,7 @@ import psutil
 from django.apps import AppConfig
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
+from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
@@ -82,7 +83,7 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
-        # Do not disable bootstrap code, its important to be executed on every startup
+        # Do not disable bootstrap code, it's important to be executed on every startup
         if "test" not in sys.argv:
             self.create_local_configuration()
             self.add_view_and_manage_permissions()
@@ -150,14 +151,33 @@ class BootstrapConfig(AppConfig):
         add_view_and_manage_permissions()
 
     @staticmethod
-    def remove_old_members():
+    def deactivate_old_members():
         from poms.users.models import Member
 
-        old_members = Member.objects.filter(is_owner=False)
-        old_members.update(is_deleted=True)
-        _l.info(
-            f"remove_old_members {old_members.count()} members were marked as deleted"
-        )
+        log = "deactivate_old_members"
+
+        try:
+            old_members = list(
+                Member.objects.exclude(
+                    Q(is_owner=True) |
+                    Q(status=Member.STATUS_DELETED) |
+                    Q(username="finmars_bot")
+                )
+            )
+            total_count = len(old_members)
+
+            _l.info(f"{log} found {total_count} old members")
+
+            count = 0
+            for member in old_members:
+                member.status = Member.STATUS_DELETED
+                member.save()
+                count += 1
+
+            _l.info(f"{log} {count}/{total_count} members deactivated")
+
+        except Exception as e:
+            _l.error(f"{log} failed due to {repr(e)}")
 
     @staticmethod
     def load_master_user_data():
@@ -172,11 +192,15 @@ class BootstrapConfig(AppConfig):
             _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
             return
 
-        _l.info(f"{log} started, calling 'backend-master-user-data'")
+        data = {"base_api_url": settings.BASE_API_URL}
+        url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+
+        _l.info(
+            f"{log} started, calling api 'backend-master-user-data' "
+            f"with url={url} data={data}"
+        )
 
         try:
-            data = {"base_api_url": settings.BASE_API_URL}
-            url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
             response = requests.post(
                 url=url,
                 data=json.dumps(data),
@@ -185,175 +209,125 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info(
-                f"{log} 'backend-master-user-data' response from url={url} "
-                f"status_code={response.status_code}"
+                f"{log} api 'backend-master-user-data' responded with "
+                f"status_code={response.status_code} text={response.text}"
             )
 
             response.raise_for_status()
-
             response_data = response.json()
+
             username = response_data["owner"]["username"]
+            owner_email = response_data["owner"]["email"]
+            name = response_data["name"]
+            backend_status = response_data["status"]
+            old_backup_name = response_data.get("old_backup_name")
 
-            try:
-                user = User.objects.using(settings.DB_DEFAULT).get(username=username)
+            base_api_url = response_data["base_api_url"]
+            if base_api_url != settings.BASE_API_URL:
+                raise ValueError(
+                    f"received {base_api_url} != expected {settings.BASE_API_URL}"
+                )
 
-                _l.info(f"{log} owner {username} exists")
+        except Exception as e:
+            _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
+            raise RuntimeError(e) from e
 
-            except User.DoesNotExist:
-                try:
-                    password = generate_random_string(10)
-                    user = User.objects.using(settings.DB_DEFAULT).create(
-                        email=response_data["owner"]["email"],
-                        username=username,
-                        password=password,
-                    )
-                    user.save()
-
-                    _l.info(f'{log} create owner {response_data["owner"]["username"]}')
-
-                except Exception as e:
-                    _l.info(
-                        f"{log} create user resulted in {repr(e)} "
-                        f"trace {traceback.format_exc()}"
-                    )
-                    raise e
+        try:
+            user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
+                username=username,
+                defaults=dict(
+                    email=owner_email,
+                    password=generate_random_string(10),
+                )
+            )
+            _l.info(f"{log} owner {username} {'created' if created else 'exists'}")
 
             user_profile, created = UserProfile.objects.using(
                 settings.DB_DEFAULT
             ).get_or_create(user_id=user.pk)
+            _l.info(f"{log} owner's user_profile {'created' if created else 'exists'}")
 
-            _l.info(f"{log} Owner User Profile {'created' if created else 'exist'}")
-
-            name = response_data["name"]
-
-            # if the status is initial (0), remove old members from workspace
-            if response_data["status"] == 0:
-                BootstrapConfig.remove_old_members()
-
-            # check if restored from backup
-            old_backup_name = response_data.get("old_backup_name")
-            if old_backup_name:
-                try:
-                    master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
-                        name=old_backup_name
-                    )
-                    master_user.name = name
-                    master_user.base_api_url = response_data["base_api_url"]
-                    master_user.save()
-
-                    BootstrapConfig.remove_old_members()
-
-                    _l.info(
-                        f"{log} MasterUser from backup {old_backup_name} renamed to "
-                        f"{master_user.name} & base_api_url {master_user.base_api_url}"
-                    )
-
-                except Exception as e:
-                    _l.error(f"{log} old backup name error {repr(e)}")
-                    raise e
-
-            if not MasterUser.objects.using(settings.DB_DEFAULT).all():
-                _l.info(f"{log} empty database, create new master user")
-
-                master_user = MasterUser.objects.create_master_user(
-                    user=user,
-                    language="en",
-                    name=name,
+            if backend_status == 0:
+                # status is initial (0), remove old members from workspace
+                BootstrapConfig.deactivate_old_members()
+            else:
+                _l.info(
+                    f"{log} backend_status={backend_status} no deactivating old members"
                 )
 
-                master_user.base_api_url = response_data["base_api_url"]
+            master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
+                name=name,
+                base_api_url=base_api_url,
+            ).first()
 
+            if master_user:
+                _l.info(
+                    f"{log} master_user with name {master_user.name} and "
+                    f"base_api_url {master_user.base_api_url} exists"
+                )
+
+            if master_user and master_user.name == old_backup_name:
+                # check if restored from backup
+                master_user.name = name
+                master_user.base_api_url = base_api_url
                 master_user.save()
 
+                BootstrapConfig.deactivate_old_members()
+
                 _l.info(
-                    f"{log} master user with name {master_user.name} and "
+                    f"{log} master_user from backup {old_backup_name} renamed to "
+                    f"{master_user.name} & base_api_url {master_user.base_api_url}"
+                )
+
+            if not master_user:
+                _l.info(f"{log} create new master_user")
+
+                master_user = MasterUser.objects.create_master_user(
+                    name=name,
+                    base_api_url=base_api_url,
+                )
+
+                _l.info(
+                    f"{log} master_user with name {master_user.name} and "
                     f"base_api_url {master_user.base_api_url} created"
                 )
 
-                member = Member.objects.using(settings.DB_DEFAULT).create(
+            current_owner_member, created = Member.objects.using(
+                settings.DB_DEFAULT,
+            ).get_or_create(
+                username=username,
+                master_user=master_user,
+                defaults=dict(
                     user=user,
-                    username=username,
-                    master_user=master_user,
                     is_owner=True,
                     is_admin=True,
-                )
-                member.save()
-
-                _l.info(f"{log} Owner Member & Admin Group created")
-
-            try:
-                # TODO attention! if someday return to multi master user inside one db
-                master_user = (
-                    MasterUser.objects.using(settings.DB_DEFAULT).all().first()
-                )
-                master_user.base_api_url = settings.BASE_API_URL
-                master_user.save()
-
-                _l.info(f"{log} Master User base_api_url synced")
-
-            except Exception as e:
-                _l.error(f"{log} Could not sync base_api_url failed due to {repr(e)}")
-                raise e
-
-            try:
-                current_owner_member = Member.objects.using(settings.DB_DEFAULT).get(
-                    username=username,
-                    master_user=master_user,
-                )
-                if (
-                    not current_owner_member.is_owner
-                    or not current_owner_member.is_admin
-                ):
-                    current_owner_member.is_owner = True
-                    current_owner_member.is_admin = True
-                    current_owner_member.save()
-
-            except Exception as e:
-                _l.error(
-                    f"{log} Could not find current_owner_member username={username}"
-                    f" master_user={master_user.base_api_url} due to error {repr(e)}"
-                )
-
-                Member.objects.using(settings.DB_DEFAULT).create(
-                    username=username,
-                    user=user,
-                    master_user=master_user,
-                    is_owner=True,
-                    is_admin=True,
-                )
-
-        except Exception as e:
-            _l.error(
-                f"{log} resulted in {repr(e)} trace {traceback.format_exc()}"
+                ),
             )
-            raise e
+            if not created:
+                current_owner_member.user = user
+                current_owner_member.save()
 
-        # Looks like tests itself create master user and other things
-        # else:
-        #     _l.info("load_master_user_data in test mode, creating temp master_user")
-        #
-        #     master_user = MasterUser.objects.create_master_user(
-        #         language="en",
-        #         name='Test Database',
-        #     )
-        #
-        #     master_user.base_api_url = settings.BASE_API_URL;
-        #
-        #     master_user.save()
-        #
-        #     _l.info('load_master_user_data test mode: master_user %s created' % master_user)
+            _l.info(
+                f"{log} current_owner_member with username {username} and master_user"
+                f".name {master_user.name} {'created' if created else 'exists'}"
+            )
+        except Exception as e:
+            err_msg = f"{log} resulted in {repr(e)}"
+            _l.error(f"{err_msg} trace {traceback.format_exc()}")
+            raise RuntimeError(err_msg) from e
+
+        else:
+            _l.info(f"{log} successfully finished")
 
     @staticmethod
     def register_at_authorizer_service():
         if not settings.AUTHORIZER_URL:
             return
 
-        data = {
-            "base_api_url": settings.BASE_API_URL,
-        }
+        data = {"base_api_url": settings.BASE_API_URL}
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
-        _l.info(f"register_at_authorizer_service url={url} data={data}")
+        _l.info(f"register_at_authorizer_service with url={url} data={data}")
 
         try:
             response = requests.post(
@@ -524,22 +498,16 @@ class BootstrapConfig(AppConfig):
 
         configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
-        try:
-            Configuration.objects.using(settings.DB_DEFAULT).get(
-                configuration_code=configuration_code
-            )
-            _l.info("Local Configuration is already created")
-
-        except Configuration.DoesNotExist:
-            Configuration.objects.using(settings.DB_DEFAULT).create(
-                configuration_code=configuration_code,
+        _, created = Configuration.objects.using(settings.DB_DEFAULT).get_or_create(
+            configuration_code=configuration_code,
+            defaults=dict(
                 name="Local Configuration",
                 is_primary=True,
                 version="1.0.0",
                 description="Local Configuration",
             )
-
-            _l.info("Local Configuration created")
+        )
+        _l.info(f"Local Configuration is already {'created' if created else 'exists'}")
 
     @staticmethod
     def _save_tmp_to_storage(tmpf, storage, path):

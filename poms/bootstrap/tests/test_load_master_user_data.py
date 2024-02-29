@@ -12,7 +12,7 @@ MOCK_RESPONSE = {
     "is_from_backup": True,
     "old_backup_name": None,
     "version": "6.6.6",
-    "base_api_url": "space11111",
+    "base_api_url": "space00000",
     "owner": {"username": "new_owner", "email": "test@mail.ru"},
     "status": 0,  # INITIAL
 }
@@ -29,7 +29,7 @@ class FinmarsTaskTestCase(BaseTestCase):
         self.init_test_case()
         self.old_member = Member.objects.create(
             master_user=self.master_user,
-            is_admin=True,
+            is_admin=False,
             is_owner=False,
             is_deleted=False,
         )
@@ -51,8 +51,9 @@ class FinmarsTaskTestCase(BaseTestCase):
 
         mock_post.assert_called()
 
-        self.old_member.refresh_from_db(fields=["is_deleted"])
-        self.assertTrue(self.old_member.is_deleted)
+        self.old_member.refresh_from_db()
+        self.assertFalse(self.old_member.is_deleted)
+        self.assertEqual(self.old_member.status, Member.STATUS_DELETED)
 
     @mock.patch("poms.bootstrap.apps.requests.post")
     @override_settings(AUTHORIZER_URL="authorizer/api/")
@@ -72,5 +73,6 @@ class FinmarsTaskTestCase(BaseTestCase):
 
         mock_post.assert_called()
 
-        self.old_member.refresh_from_db(fields=["is_deleted"])
+        self.old_member.refresh_from_db()
         self.assertFalse(self.old_member.is_deleted)
+        self.assertEqual(self.old_member.status, Member.STATUS_ACTIVE)
