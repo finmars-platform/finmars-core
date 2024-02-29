@@ -3257,6 +3257,7 @@ class Transaction(models.Model):
             "FX rate to convert from Settlement ccy to Instrument "
             "Ccy on Accounting Date (trade date)"
         ),
+    #     TODO need more explicit example
     )
     is_locked = models.BooleanField(
         default=False,
