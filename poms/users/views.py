@@ -677,7 +677,9 @@ class MasterUserViewSet(AbstractModelViewSet):
 
 
 class MasterUserLightViewSet(AbstractModelViewSet):
-    queryset = MasterUser.objects.prefetch_related("members")
+    queryset = MasterUser.objects.filter(
+        base_api_url=settings.BASE_API_URL,
+    ).prefetch_related("members")
     serializer_class = MasterUserLightSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
         IsCurrentMasterUser,
