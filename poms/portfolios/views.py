@@ -557,6 +557,13 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
     filter_class = PortfolioBundleFilterSet
     ordering_fields = []
 
+    @action(detail=True, methods=["get"], url_path="portfolio-registers")
+    def get_portfolio_registers(self, request, pk):
+        obj = self.get_object()
+        queryset = obj.registers.all()
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = PortfolioRegisterSerializer(page, many=True, context=self.get_serializer_context())
+        return self.get_paginated_response(serializer.data)
 
 class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects

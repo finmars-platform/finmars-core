@@ -6,33 +6,9 @@ from django.db.models import Value
 from django.db.models.functions import Coalesce
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+from poms.common.utils import attr_is_relation
 
 _l = logging.getLogger('poms.common')
-
-
-def is_relation(item):
-    return item in ['type', 'currency', 'instrument',
-                    'instrument_type', 'group',
-                    'pricing_policy', 'portfolio',
-                    'transaction_type', 'transaction_currency',
-                    'settlement_currency', 'account_cash',
-                    'account_interim', 'account_position',
-                    'accrued_currency', 'pricing_currency',
-                    'one_off_event', 'regular_event', 'factor_same',
-                    'factor_up', 'factor_down',
-
-                    'strategy1_position', 'strategy1_cash',
-                    'strategy2_position', 'strategy2_cash',
-                    'strategy3_position', 'strategy3_cash',
-
-                    'counterparty', 'responsible',
-
-                    'allocation_balance', 'allocation_pl',
-                    'linked_instrument',
-
-                    'subgroup'
-
-                    ]
 
 
 def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
@@ -130,10 +106,12 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
         else:
             field = ordering
 
-        _l.debug('ordering field %s' % field)
-        _l.debug('ordering is relation %s' % is_relation(field))
+        content_type_key = content_type.app_label + '.' + content_type.model
 
-        if is_relation(field):
+        _l.debug('ordering field %s' % field)
+        _l.debug('ordering is relation %s' % attr_is_relation(content_type_key, field))
+
+        if attr_is_relation(content_type_key, field):
 
             queryset = queryset.order_by(ordering + '__name')
 
