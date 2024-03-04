@@ -462,7 +462,7 @@ def generate_init_configuration_install_access_policy():
     return access_policy
 
 
-def generate_speicifc_policies_for_viewsets():
+def generate_specific_policies_for_viewsets():
     generate_balance_report_access_policy()
     generate_pl_report_access_policy()
     generate_transaction_report_access_policy()
@@ -834,7 +834,7 @@ def create_base_iam_access_policies_templates():
             % len(readonly_access_policies)
         )
 
-        generate_speicifc_policies_for_viewsets()
+        generate_specific_policies_for_viewsets()
 
         _l.info(
             "create_base_iam_access_policies_templates.generate_speicifc_policies_for_viewsets done"
