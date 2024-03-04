@@ -171,9 +171,11 @@ READ_ACCESS = {
 }
 
 UNKNOWN = [
+    # api.views
     "clear_bin",
+    "view_log",
+    # vault.views
     "get_metadata",
     "seal",
     "unseal",
-    "view_log",
 ]
