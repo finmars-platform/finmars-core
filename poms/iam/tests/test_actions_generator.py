@@ -31,6 +31,8 @@ class ActionHandlingTest(BaseTestCase):
     def test_actions_handling(self):
         from pprint import pprint
 
+        self.assertEqual(FULL_ACCESS.intersection(READ_ACCESS), set())
+
         all_actions = set()
         for viewset in get_viewsets_from_all_apps():
             for action in viewset.get_extra_actions():
@@ -43,7 +45,7 @@ class ActionHandlingTest(BaseTestCase):
             for action in all_actions
             if action not in FULL_ACCESS and action not in READ_ACCESS
         }
-        pprint(sorted(unknown_actions))
+        self.assertEqual(unknown_actions, set())
 
-        common_actions = FULL_ACCESS.union(READ_ACCESS).difference(all_actions)
-        pprint(sorted(common_actions))
+        unknown_actions = FULL_ACCESS.union(READ_ACCESS).difference(all_actions)
+        pprint(sorted(unknown_actions))
