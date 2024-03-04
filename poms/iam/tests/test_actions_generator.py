@@ -5,7 +5,7 @@ from poms.system_messages.views import SystemMessageViewSet
 class ActionListTest(BaseTestCase):
     databases = "__all__"
 
-    def test_actions_of_syste_message_viewset(self):
+    def test_actions_of_system_message_viewset(self):
         viewset = SystemMessageViewSet()
         expected_list = [
             "bulk_delete",
