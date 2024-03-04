@@ -1,11 +1,9 @@
 from typing import Callable
 from collections import namedtuple
 
-from rest_framework.viewsets import ViewSet
-from rest_framework.views import APIView
-
 from poms.common.common_base_test import BaseTestCase
 from poms.system_messages.views import SystemMessageViewSet
+from poms.iam.policy_generator import get_viewsets_from_all_apps
 
 
 WRITE_ACCESS_ACTIONS = {
@@ -14,9 +12,9 @@ WRITE_ACCESS_ACTIONS = {
     "destroy",
     "delete",
     "bulk_create",
-    "bulk_destroy",
     "bulk_delete",
     "bulk_update",
+    "bulk_restore",
     "mark_all_as_read",
     "mark_as_read",
     "mark_as_solved",
@@ -40,6 +38,9 @@ WRITE_ACCESS_ACTIONS = {
     "unseal",
     "book",
     "update_pricing",
+    "unsubscribe",
+    "update_master_user",
+    "update_properties",
 }
 READ_ACCESS_ACTIONS = {
     "retrieve",
@@ -93,6 +94,22 @@ class ActionListTest(BaseTestCase):
             "stats",
             "unpin",
         ]
+        from pprint import pprint
 
-        for action in viewset.get_extra_actions():
-            print(get_action_name_and_access_mode(action))
+        all_actions = set()
+
+        for viewset in get_viewsets_from_all_apps():
+            for action in viewset.get_extra_actions():
+                all_actions.add(action.__name__)
+
+        pprint(sorted(all_actions))
+
+        unknown_actions = {
+            action
+            for action in all_actions
+            if action not in WRITE_ACCESS_ACTIONS and action not in READ_ACCESS_ACTIONS
+        }
+        pprint(sorted(unknown_actions))
+
+        # for action in viewset.get_extra_actions():
+        #     print(get_action_name_and_access_mode(action))
