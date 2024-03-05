@@ -741,7 +741,7 @@ def generate_configuration_manager_role():
     role.save()
 
 
-def get_viewsets_from_app(app_name):
+def get_viewsets_from_app_with_models(app_name):
     app_config = apps.get_app_config(app_name)
     viewset_classes = []
 
@@ -777,7 +777,7 @@ def get_viewsets_from_all_apps():
         if not app_config.name.startswith("poms"):
             continue  # Skip Django's built-in apps
 
-        app_viewsets = get_viewsets_from_app(app_config.label)
+        app_viewsets = get_viewsets_from_app_with_models(app_config.label)
         all_viewsets.extend(app_viewsets)
 
     return all_viewsets
