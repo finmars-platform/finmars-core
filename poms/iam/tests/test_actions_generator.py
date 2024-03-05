@@ -1,51 +1,56 @@
-from collections import namedtuple
-from typing import Callable
-
 from poms.common.common_base_test import BaseTestCase
-from poms.iam.policy_generator import get_viewsets_from_all_apps
 from poms.iam.all_actions_names import (
     ALL_ACTIONS,
-    READ_ACCESS,
-    FULL_ACCESS,
+    FULL_ACCESS_ACTIONS,
+    READ,
+    READ_ACCESS_ACTIONS,
+    WRITE,
+    ActionMode,
+    get_action_name_and_access_mode,
 )
-
-READ_MODE = "read"
-WRITE_MODE = "write"
-
-ActionMode = namedtuple("ActionMode", ["name", "mode"])
-
-
-def get_action_name_and_access_mode(action: Callable) -> ActionMode:
-    action_name = action.__name__
-    if action_name in FULL_ACCESS:
-        return ActionMode(action_name, WRITE_MODE)
-    elif action_name in READ_ACCESS:
-        return ActionMode(action_name, READ_MODE)
-    else:
-        raise RuntimeError(f"Unknown viewset action {action_name}")
+from poms.iam.policy_generator import get_viewsets_from_all_apps
 
 
 class ActionHandlingTest(BaseTestCase):
     databases = "__all__"
 
-    def test_actions_handling(self):
-        from pprint import pprint
-
-        self.assertEqual(FULL_ACCESS.intersection(READ_ACCESS), set())
-
-        all_actions = set()
-        for viewset in get_viewsets_from_all_apps():
+    def setUp(self):
+        super().setUp()
+        self.all_actions = set()
+        self.all_actions_names = set()
+        self.all_viewsets = get_viewsets_from_all_apps()
+        for viewset in self.all_viewsets:
             for action in viewset.get_extra_actions():
-                all_actions.add(action.__name__)
+                self.all_actions.add(action)
+                self.all_actions_names.add(action.__name__)
 
-        self.assertEqual(all_actions, ALL_ACTIONS)
+    def test__validate_actions_settings(self):
+        self.assertEqual(FULL_ACCESS_ACTIONS.intersection(READ_ACCESS_ACTIONS), set())
+
+        self.assertEqual(self.all_actions_names, ALL_ACTIONS)
 
         unknown_actions = {
             action
-            for action in all_actions
-            if action not in FULL_ACCESS and action not in READ_ACCESS
+            for action in self.all_actions_names
+            if action not in FULL_ACCESS_ACTIONS and action not in READ_ACCESS_ACTIONS
         }
         self.assertEqual(unknown_actions, set())
 
-        unknown_actions = FULL_ACCESS.union(READ_ACCESS).difference(all_actions)
-        pprint(sorted(unknown_actions))
+        unknown_actions = FULL_ACCESS_ACTIONS.union(READ_ACCESS_ACTIONS).difference(
+            self.all_actions_names
+        )
+        self.assertEqual(unknown_actions, set())
+
+    def test__get_actions_function_access_definition(self):
+        for action in self.all_actions:
+            action_name = action.__name__
+            if action_name in READ_ACCESS_ACTIONS:
+                self.assertEqual(
+                    get_action_name_and_access_mode(action),
+                    ActionMode(action_name, READ),
+                )
+            else:
+                self.assertEqual(
+                    get_action_name_and_access_mode(action),
+                    ActionMode(action_name, WRITE),
+                )

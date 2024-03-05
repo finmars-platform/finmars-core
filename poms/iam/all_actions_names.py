@@ -1,3 +1,6 @@
+from collections import namedtuple
+from typing import Callable
+
 ALL_ACTIONS = {
     "abort_transaction_import",
     "book",
@@ -80,7 +83,7 @@ ALL_ACTIONS = {
     "view",
     "view_file",
 }
-FULL_ACCESS = {
+FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
     "book",
     "book_pending",
@@ -94,7 +97,6 @@ FULL_ACCESS = {
     "calculate_prices_accrued_price",
     "calculate_records",
     "cancel",
-    "clear_bin",
     "comment",
     "configure",
     "create_worker",
@@ -132,7 +134,6 @@ FULL_ACCESS = {
     "restart",
     "run_procedure",
     "run_schedule",
-    "seal",
     "send_invite",
     "set_password",
     "solve",
@@ -140,20 +141,18 @@ FULL_ACCESS = {
     "stop",
     "system_generate_and_process",
     "unpin",
-    "unseal",
     "unsubscribe",
     "update_master_user",
     "update_pricing",
     "update_properties",
     "validate_code",
 }
-READ_ACCESS = {
+READ_ACCESS_ACTIONS = {
     "export_configuration",
     "get_content_types",
     "get_data",
     "get_inception_date",
     "get_master_user",
-    "get_metadata",
     "get_portfolio_registers",
     "get_status",
     "list_attributes",
@@ -167,15 +166,18 @@ READ_ACCESS = {
     "status",
     "view",
     "view_file",
-    "view_log",
 }
+READ = "read"
+WRITE = "write"
 
-UNKNOWN = [
-    # api.views
-    "clear_bin",
-    "view_log",
-    # vault.views
-    "get_metadata",
-    "seal",
-    "unseal",
-]
+ActionMode = namedtuple("ActionMode", ["name", "mode"])
+
+
+def get_action_name_and_access_mode(action: Callable) -> ActionMode:
+    action_name = action.__name__
+    if action_name in FULL_ACCESS_ACTIONS:
+        return ActionMode(action_name, WRITE)
+    elif action_name in READ_ACCESS_ACTIONS:
+        return ActionMode(action_name, READ)
+    else:
+        raise RuntimeError(f"Unknown viewset action {action_name}")
