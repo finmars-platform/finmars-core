@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import Callable
 
-ALL_ACTIONS = {
+ALL_EXTRA_ACTIONS = {
     "abort_transaction_import",
     "book",
     "book_pending",

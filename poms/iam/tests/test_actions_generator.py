@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
-    ALL_ACTIONS,
+    ALL_EXTRA_ACTIONS,
     FULL_ACCESS_ACTIONS,
     READ,
     READ_ACCESS_ACTIONS,
@@ -27,7 +27,7 @@ class ActionHandlingTest(BaseTestCase):
     def test__validate_actions_settings(self):
         self.assertEqual(FULL_ACCESS_ACTIONS.intersection(READ_ACCESS_ACTIONS), set())
 
-        self.assertEqual(self.all_actions_names, ALL_ACTIONS)
+        self.assertEqual(self.all_actions_names, ALL_EXTRA_ACTIONS)
 
         unknown_actions = {
             action
