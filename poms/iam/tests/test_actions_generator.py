@@ -1,3 +1,5 @@
+from django.apps import apps
+
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
     ALL_EXTRA_ACTIONS,
@@ -8,7 +10,10 @@ from poms.iam.all_actions_names import (
     ActionMode,
     get_action_name_and_access_mode,
 )
-from poms.iam.policy_generator import get_viewsets_from_all_apps
+from poms.iam.policy_generator import (
+    get_viewsets_from_all_apps,
+    get_viewsets_from_any_app,
+)
 
 
 class ActionHandlingTest(BaseTestCase):
@@ -54,3 +59,21 @@ class ActionHandlingTest(BaseTestCase):
                     get_action_name_and_access_mode(action),
                     ActionMode(action_name, WRITE),
                 )
+
+    def test__get_views_from_all_apps(self):
+        all_viewsets = []
+
+        for app_config in apps.get_app_configs():
+            if not app_config.name.startswith("poms"):
+                continue  # Skip Django's built-in apps
+
+            app_viewsets = get_viewsets_from_any_app(app_config.label)
+            all_viewsets.extend(app_viewsets)
+
+        all_actions_names = set()
+        for viewset in all_viewsets:
+            for action in viewset.get_extra_actions():
+                all_actions_names.add(action.__name__)
+
+        new_actions = all_actions_names.difference(self.all_actions_names)
+        self.assertEqual(len(new_actions), 0)

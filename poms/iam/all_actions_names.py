@@ -1,5 +1,8 @@
+import logging
 from collections import namedtuple
 from typing import Callable
+
+_l = logging.getLogger("poms.iam")
 
 ALL_EXTRA_ACTIONS = {
     "abort_transaction_import",
@@ -82,6 +85,20 @@ ALL_EXTRA_ACTIONS = {
     "validate_code",
     "view",
     "view_file",
+    # from apps w/o models
+    "clear_bin",
+    "create_engine",
+    "create_secret",
+    "delete_engine",
+    "delete_secret",
+    "get_metadata",
+    "get_secret",
+    "health",
+    "init",
+    "seal",
+    "unseal",
+    "update_secret",
+    "view_log",
 }
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
@@ -146,6 +163,16 @@ FULL_ACCESS_ACTIONS = {
     "update_pricing",
     "update_properties",
     "validate_code",
+    # from apps w/o models
+    "clear_bin",
+    "create_engine",
+    "create_secret",
+    "delete_engine",
+    "delete_secret",
+    "init",
+    "seal",
+    "unseal",
+    "update_secret",
 }
 READ_ACCESS_ACTIONS = {
     "export_configuration",
@@ -166,6 +193,11 @@ READ_ACCESS_ACTIONS = {
     "status",
     "view",
     "view_file",
+    # from apps w/o models
+    "view_log",
+    "get_metadata",
+    "get_secret",
+    "health",
 }
 READ = "read"
 WRITE = "write"

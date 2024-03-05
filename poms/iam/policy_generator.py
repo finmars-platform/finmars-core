@@ -20,7 +20,7 @@ from poms_app import settings
 _l = logging.getLogger("poms.iam")
 
 
-def generate_full_access_policies_for_viewsets(viewset_classes):
+def generate_full_access_policies_for_viewsets(viewset_classes: list):
     from poms.users.models import Member
 
     for viewset_class in viewset_classes:
@@ -95,7 +95,7 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
             access_policy.delete()
 
 
-def generate_readonly_access_policies_for_viewsets(viewset_classes):
+def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> list:
     from poms.users.models import Member
 
     access_policies = []
@@ -741,7 +741,26 @@ def generate_configuration_manager_role():
     role.save()
 
 
-def get_viewsets_from_app_with_models(app_name):
+def get_viewsets_from_module(module) -> list:
+    return [
+        obj
+        for name, obj in inspect.getmembers(module)
+        if (
+            inspect.isclass(obj)
+            and issubclass(obj, viewsets.ViewSetMixin)
+            and obj != viewsets.ViewSetMixin
+        )
+        and "abstract" not in name.lower()
+    ]
+
+
+# FOR FUTURE USE ?
+def get_viewsets_from_app_with_models(app_name: str) -> list:
+    """
+    Returns a list of all viewsets in the given app_name, if it has models!
+    Args:
+        app_name:  the name of the app from which to get all viewsets
+    """
     app_config = apps.get_app_config(app_name)
     viewset_classes = []
 
@@ -756,16 +775,27 @@ def get_viewsets_from_app_with_models(app_name):
         except ImportError:
             continue
 
-        viewset_classes.extend(
-            obj
-            for name, obj in inspect.getmembers(viewsets_module)
-            if (
-                inspect.isclass(obj)
-                and issubclass(obj, viewsets.ViewSetMixin)
-                and obj != viewsets.ViewSetMixin
-            )
-            and "abstract" not in name.lower()
-        )
+        viewset_classes.extend(get_viewsets_from_module(viewsets_module))
+
+    return viewset_classes
+
+
+def get_viewsets_from_any_app(app_name: str) -> list:
+    """
+    Returns a list of all viewsets in the given app_name
+    Args:
+        app_name:  the name of the app from which to get all viewsets
+    """
+    app_config = apps.get_app_config(app_name)
+    viewset_classes = []
+
+    try:
+        viewsets_module = app_config.module.views
+    except AttributeError:
+        _l.warning(f"app {app_name} has no views!")
+        return []
+
+    viewset_classes.extend(get_viewsets_from_module(viewsets_module))
 
     return viewset_classes
 
@@ -777,8 +807,7 @@ def get_viewsets_from_all_apps():
         if not app_config.name.startswith("poms"):
             continue  # Skip Django's built-in apps
 
-        app_viewsets = get_viewsets_from_app_with_models(app_config.label)
-        all_viewsets.extend(app_viewsets)
+        all_viewsets.extend(get_viewsets_from_any_app(app_config.label))
 
     return all_viewsets
 
