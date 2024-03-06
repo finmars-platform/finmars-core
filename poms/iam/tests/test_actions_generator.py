@@ -10,6 +10,7 @@ from poms.iam.all_actions_names import (
     ActionMode,
     get_action_name_and_access_mode,
 )
+from poms.iam.models import AccessPolicy
 from poms.iam.policy_generator import (
     get_viewsets_from_all_apps,
     get_viewsets_from_any_app,
@@ -81,4 +82,9 @@ class ActionHandlingTest(BaseTestCase):
         self.assertEqual(len(new_actions), 0)
 
     def test__generate_full_access_policies_for_viewsets(self):
+        all_access_policies = AccessPolicy.objects.all()
+        self.assertEqual(all_access_policies.count(), 0)
+
         generate_full_access_policies_for_viewsets(self.all_viewsets)
+
+        self.assertEqual(all_access_policies.count(), 172)

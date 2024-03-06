@@ -11,7 +11,6 @@ from rest_framework.mixins import (
     UpdateModelMixin,
 )
 
-from poms.common.mixins import ListEvModelMixin, ListLightModelMixin
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Role
 from poms.iam.utils import add_to_list_if_not_exists, capitalize_first_letter
@@ -22,34 +21,14 @@ _l = logging.getLogger("poms.iam")
 
 def generate_full_access_policies_for_viewsets(viewset_classes: list):
     from poms.users.models import Member
+    from poms.iam.all_actions_names import FULL_ACCESS_ACTIONS
 
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
-        actions = []
-
-        # _l.info('viewset_class %s' % viewset_class)
-
         service_name = settings.SERVICE_NAME
-
-        configuration_code = get_default_configuration_code()
-        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
-
-        name = f"{capitalize_first_letter(viewset_name)} Full Access"
-
-        finmars_bot = Member.objects.get(username="finmars_bot")
-
-        access_policy, _ = AccessPolicy.objects.get_or_create(
-            user_code=user_code,
-            defaults=dict(
-                owner=finmars_bot,
-            )
-        )
-
+        actions = []
         if issubclass(viewset_class, CreateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:create")
-
-        if issubclass(viewset_class, RetrieveModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:retrieve")
 
         if issubclass(viewset_class, UpdateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:update")
@@ -57,24 +36,20 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
         if issubclass(viewset_class, DestroyModelMixin):
             actions.append(f"{service_name}:{viewset_name}:destroy")
 
-        # elif issubclass(viewset_class, ListLightModelMixin):
-        #     actions.append(f"{service_name}:{viewset_name}:list_light")
-        #
-        # elif issubclass(viewset_class, ListEvModelMixin):
-        #     actions.extend(
-        #         (
-        #             f"{service_name}:{viewset_name}:list_ev_item",
-        #             f"{service_name}:{viewset_name}:list_ev_group",
-        #         )
-        #     )
-        # must be last, cause ListLightModelMixin & ListEvModelMixin are its subclasses
-
-        if issubclass(viewset_class, ListModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list")
-
         actions.extend(
             f"{service_name}:{viewset_name}:{action.__name__}"
-            for action in viewset_class().get_extra_actions()
+            for action in viewset_class.get_extra_actions()
+            if action.__name__ in FULL_ACCESS_ACTIONS
+        )
+
+        configuration_code = get_default_configuration_code()
+        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
+        finmars_bot = Member.objects.get(username="finmars_bot")
+        access_policy, _ = AccessPolicy.objects.get_or_create(
+            user_code=user_code,
+            defaults=dict(
+                owner=finmars_bot,
+            )
         )
 
         if actions:
@@ -91,7 +66,7 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
             }
 
             access_policy.configuration_code = configuration_code
-            access_policy.name = name
+            access_policy.name = f"{capitalize_first_letter(viewset_name)} Full Access"
             access_policy.policy = access_policy_json
             access_policy.save()
         else:
@@ -137,16 +112,7 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
         if issubclass(viewset_class, RetrieveModelMixin):
             actions.append(f"{service_name}:{viewset_name}:retrieve")
 
-        if issubclass(viewset_class, ListLightModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list_light")
 
-        if issubclass(viewset_class, ListEvModelMixin):
-            actions.extend(
-                (
-                    f"{service_name}:{viewset_name}:list_ev_item",
-                    f"{service_name}:{viewset_name}:list_ev_group",
-                )
-            )
         if actions:
             access_policy_json = {
                 "Version": "2023-01-01",
