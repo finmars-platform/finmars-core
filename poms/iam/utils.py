@@ -93,7 +93,7 @@ def parse_resource_attribute(resources: list) -> list:
 
 def get_member_access_policies(member: Member) -> QuerySet:
     """
-    Get all AccessPolicy objects for the member from cash or db
+    Get all AccessPolicy objects for the member from cache or db
     Args:
         member:
     Returns:
