@@ -15,6 +15,7 @@ from poms.iam.policy_generator import (
     get_viewsets_from_all_apps,
     get_viewsets_from_any_app,
     generate_full_access_policies_for_viewsets,
+    generate_readonly_access_policies_for_viewsets,
 )
 
 
@@ -88,3 +89,12 @@ class ActionHandlingTest(BaseTestCase):
         generate_full_access_policies_for_viewsets(self.all_viewsets)
 
         self.assertEqual(all_access_policies.count(), 172)
+
+    def test__generate_readonly_access_policies_for_viewsets(self):
+        all_access_policies = AccessPolicy.objects.all()
+        self.assertEqual(all_access_policies.count(), 0)
+
+        policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
+
+        self.assertEqual(all_access_policies.count(), 196)
+        self.assertEqual(len(policies), 212)

@@ -23,9 +23,10 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
     from poms.users.models import Member
     from poms.iam.all_actions_names import FULL_ACCESS_ACTIONS
 
+    service_name = settings.SERVICE_NAME
+
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
-        service_name = settings.SERVICE_NAME
         actions = []
         if issubclass(viewset_class, CreateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:create")
@@ -45,16 +46,14 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
         configuration_code = get_default_configuration_code()
         user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
         finmars_bot = Member.objects.get(username="finmars_bot")
-        access_policy, _ = AccessPolicy.objects.get_or_create(
+        access_policy, created = AccessPolicy.objects.get_or_create(
             user_code=user_code,
-            defaults=dict(
-                owner=finmars_bot,
-            )
+            defaults={"owner": finmars_bot},
         )
 
         if actions:
             access_policy_json = {
-                "Version": "2023-01-01",
+                "Version": "2024-01-01",
                 "Statement": [
                     {
                         "Effect": "Allow",
@@ -68,43 +67,22 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
             access_policy.configuration_code = configuration_code
             access_policy.name = f"{capitalize_first_letter(viewset_name)} Full Access"
             access_policy.policy = access_policy_json
+            if not created:
+                access_policy.owner = finmars_bot
             access_policy.save()
+
         else:
             access_policy.delete()
 
 
 def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> list:
     from poms.users.models import Member
+    from poms.iam.all_actions_names import READ_ACCESS_ACTIONS
 
-    access_policies = []
-
+    service_name = settings.SERVICE_NAME
+    readonly_access_policies = []
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
-        # _l.info('viewset_class %s' % viewset_class)
-
-        service_name = settings.SERVICE_NAME
-
-        configuration_code = get_default_configuration_code()
-        user_code = (
-            f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
-        )
-
-        name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
-        service_name = settings.SERVICE_NAME
-
-        finmars_bot = Member.objects.get(username="finmars_bot")
-
-        try:
-            access_policy = AccessPolicy.objects.get(user_code=user_code)
-        except Exception as e:
-            access_policy = AccessPolicy.objects.create(
-                user_code=user_code,
-                owner=finmars_bot,
-                configuration_code=configuration_code,
-            )
-
-        access_policy.name = name
-
         actions = []
         if issubclass(viewset_class, ListModelMixin):
             actions.append(f"{service_name}:{viewset_name}:list")
@@ -112,10 +90,22 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
         if issubclass(viewset_class, RetrieveModelMixin):
             actions.append(f"{service_name}:{viewset_name}:retrieve")
 
+        actions.extend(
+            f"{service_name}:{viewset_name}:{action.__name__}"
+            for action in viewset_class.get_extra_actions()
+            if action.__name__ in READ_ACCESS_ACTIONS
+        )
 
+        configuration_code = get_default_configuration_code()
+        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
+        finmars_bot = Member.objects.get(username="finmars_bot")
+        access_policy, created = AccessPolicy.objects.get_or_create(
+            user_code=user_code,
+            defaults={"owner": finmars_bot},
+        )
         if actions:
             access_policy_json = {
-                "Version": "2023-01-01",
+                "Version": "2024-01-01",
                 "Statement": [
                     {
                         "Effect": "Allow",
@@ -125,26 +115,26 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
                     }
                 ],
             }
-
+            access_policy.configuration_code = configuration_code
+            access_policy.name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
             access_policy.policy = access_policy_json
+            if not created:
+                access_policy.owner = finmars_bot
             access_policy.save()
-            access_policies.append(access_policy)
+            readonly_access_policies.append(access_policy)
+
         else:
             access_policy.delete()
 
-    return access_policies
+    return readonly_access_policies
 
 
 def generate_balance_report_access_policy():
     from poms.users.models import Member
 
     service_name = settings.SERVICE_NAME
-
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-balancereport"
-
-    name = "BalanceReport Access"
-
     finmars_bot = Member.objects.get(username="finmars_bot")
 
     try:
@@ -156,7 +146,7 @@ def generate_balance_report_access_policy():
             configuration_code=configuration_code,
         )
 
-    access_policy.name = name
+    access_policy.name = "BalanceReport Access"
     access_policy_json = {
         "Version": "2023-01-01",
         "Statement": [
