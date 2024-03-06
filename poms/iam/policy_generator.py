@@ -135,8 +135,12 @@ def generate_balance_report_access_policy():
     from poms.users.models import Member
 
     service_name = settings.SERVICE_NAME
+
     configuration_code = get_default_configuration_code()
     user_code = f"{configuration_code}:{service_name}-balancereport"
+
+    name = "BalanceReport Access"
+
     finmars_bot = Member.objects.get(username="finmars_bot")
 
     try:
@@ -148,7 +152,7 @@ def generate_balance_report_access_policy():
             configuration_code=configuration_code,
         )
 
-    access_policy.name = "BalanceReport Access"
+    access_policy.name = name
     access_policy_json = {
         "Version": "2023-01-01",
         "Statement": [
