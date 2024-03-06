@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
@@ -87,16 +87,18 @@ parse_resource_attribute
 '''
 
 
-def parse_resource_attribute(resources):
-    result = []
-
-    for resource in resources:
-        result.append(parse_resource_into_object(resource))
-
-    return result
+def parse_resource_attribute(resources: list) -> list:
+    return [parse_resource_into_object(resource) for resource in resources]
 
 
-def get_member_access_policies(member: Member):
+def get_member_access_policies(member: Member) -> QuerySet:
+    """
+    Get all AccessPolicy objects for the member from cash or db
+    Args:
+        member:
+    Returns:
+        list of AccessPolicy objects
+    """
 
     cache_key = f'member_access_policies_{member.id}'
     access_policies = cache.get(cache_key)
@@ -115,17 +117,23 @@ def get_member_access_policies(member: Member):
 
 
 def get_statements(member: Member) -> list:
-    # Get all AccessPolicy objects for the user
+    """
+    Get all AccessPolicy statements for member/owner
+    Args:
+        member: policies owner
+    Returns:
+        list of AccessPolicy json fields (statements)
+    """
 
     statements = []
     for item in get_member_access_policies(member):
 
         policy = lowercase_keys_and_values(item.policy)
 
-        for statement in policy['statement']:
-            statements.append(lowercase_keys_and_values(statement))
-
-    # _l.debug('get_policy_statements.statements %s' % statements)
+        statements.extend(
+            lowercase_keys_and_values(statement)
+            for statement in policy['statement']
+        )
 
     return statements
 
