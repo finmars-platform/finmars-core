@@ -57,6 +57,9 @@ class Statement:
 
 
 class AccessPolicy(permissions.BasePermission):
+    statements: List[Union[dict, Statement]] = []
+    field_permissions: dict = {}
+    id = None
     group_prefix = "group:"
     id_prefix = "id:"
 
@@ -95,7 +98,7 @@ class AccessPolicy(permissions.BasePermission):
         return allowed
 
     def get_policy_statements(self, request, view) -> List[Union[dict, Statement]]:
-        return []
+        return self.statements
 
     def get_user_group_values(self, user) -> List[str]:
         if user.is_anonymous:
@@ -112,8 +115,7 @@ class AccessPolicy(permissions.BasePermission):
     def scope_fields(cls, request, fields: dict, instance=None) -> dict:
         return fields
 
-    @staticmethod
-    def _get_invoked_action(view) -> str:
+    def _get_invoked_action(self, view) -> str:
         """
         If a CBV, the name of the method. If a regular function view,
         the name of the function.
