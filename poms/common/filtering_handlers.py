@@ -54,15 +54,21 @@ class FilterType:
     SELECTOR = "selector"
     DATE_TREE = "date_tree"
 
-def _get_equal_q(field_key, value, exclude_empty_cells):
+def _get_equal_q(field_key, value_type, value, exclude_empty_cells):
     """
 
     :param field_key:
+    :param value_type: - values: 10, 20, 30, 40
     :param value:
     :param exclude_empty_cells:
     :return: Q object for filter type "equal"
     """
-    q = Q(**{f"{field_key}__iexact": value})
+    lookup = "iexact"
+
+    if value_type in (ValueType.NUMBER, ValueType.DATE):
+        lookup = "exact"
+
+    q = Q(**{f"{field_key}__{lookup}": value})
 
     if not exclude_empty_cells:
         q = q | Q(**{f"{field_key}__isnull": True})
@@ -78,10 +84,13 @@ def _get_has_substring_q(field_key, value, exclude_empty_cells):
     :return: Q object for filter type "contains_has_substring"
     """
     q = Q()
-    substrings = value.split(" ")
-
-    for text in substrings:
-        q = q | Q(**{f"{field_key}__icontains": text})
+    # TODO: Use commented code for CONTAINS filters
+    #
+    # substrings = value.split(" ")
+    #
+    # for text in substrings:
+    #     q = q | Q(**{f"{field_key}__icontains": text})
+    q = q | Q(**{f"{field_key}__icontains": value})
 
     if not exclude_empty_cells:
         q = q | Q(**{f"{field_key}__isnull": True}) | Q(**{f"{field_key}": ""})
@@ -93,9 +102,9 @@ def _get_classifier_include_null_q(exclude_empty_cells):
         return Q()
 
     return (
-        Q(classifier__isnull=True) |
-        Q(value_string__isnull=True) |
-        Q(value_float__isnull=True) |
+        Q(classifier__isnull=True) &
+        Q(value_string__isnull=True) &
+        Q(value_float__isnull=True) &
         Q(value_date__isnull=True)
     )
 
@@ -159,7 +168,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
-            value = int(filter_config["value"][0])
+            value = filter_config["value"][0]
 
         if value:
 
@@ -171,16 +180,13 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 Q(**options) | include_null_q
             )
 
-    elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.STRING:
+    elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-            q = Q()
-            substrings = value.split(" ")
 
-            for text in substrings:
-                q = q | Q(classifier__name__icontains=text)
+            q = Q(classifier__name__icontains=value)
 
             include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
 
@@ -193,7 +199,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__icontains": value}
+            # options = {"classifier__name__icontains": value}
 
             # include_null_options = {}
             # if not exclude_empty_cells:
@@ -201,10 +207,16 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             #     include_null_options["value_string__isnull"] = True
             #     include_null_options["value_float__isnull"] = True
             #     include_null_options["value_date__isnull"] = True
+            q = Q()
+            substrings = value.split(" ")
+
+            for text in substrings:
+                q = q & Q(classifier__name__icontains=text)
+
             include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
 
             attributes_qs = attributes_qs.filter(
-                Q(**options) | include_null_q
+                q | include_null_q
             )
 
     elif (
@@ -354,13 +366,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             for text in substrings:
                 q = q | Q(value_string__icontains=text)
 
-            # TESTING464 TO DELETE
-            #
-            # include_null_options = {}
-            # include_empty_string_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options["value_string__isnull"] = True
-            #     include_empty_string_options["value_string"] = ""
             if not exclude_empty_cells:
                 # include rows with null and empty string
                 q = q | Q(value_string__isnull=True) | Q(value_string="")
@@ -382,21 +387,11 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
-            value = int(filter_config["value"][0])
+            value = filter_config["value"][0]
 
         if value:
-            # TESTING464
-            #
-            # options = {"value_float__exact": value}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options["value_float__isnull"] = True
-            #
-            # attributes_qs = attributes_qs.filter(
-            #     Q(**options) | Q(**include_null_options)
-            # )
-            q = _get_equal_q("value_float", value, exclude_empty_cells)
+
+            q = _get_equal_q("value_float", value_type, value, exclude_empty_cells)
 
             attributes_qs = attributes_qs.filter(q)
 
@@ -495,7 +490,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 Q(**options) | Q(**include_null_options)
             )
 
-    elif filter_type == FilterType.EMPTY and int(value_type) == ValueType.NUMBER:
+    elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {"value_float__isnull": True}
 
         attributes_qs = attributes_qs.filter(Q(**include_null_options))
@@ -509,22 +504,15 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            # TESTING464
-            #
-            # options = {"value_date": datetime.strptime(value, DATE_FORMAT).date()}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options["value_date__isnull"] = True
-            #
-            # attributes_qs = attributes_qs.filter(
-            #     Q(**options) | Q(**include_null_options)
-            # )
+
             q = _get_equal_q(
                 "value_date",
+                value_type,
                 datetime.strptime(value, DATE_FORMAT).date(),
                 exclude_empty_cells
             )
+
+            attributes_qs = attributes_qs.filter(q)
 
     elif filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -620,7 +608,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 Q(**options) | Q(**include_null_options)
             )
 
-    elif filter_type == FilterType.EMPTY and int(value_type) == ValueType.DATE:
+    elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
         include_null_options = {"value_date__isnull": True}
 
         attributes_qs = attributes_qs.filter(Q(**include_null_options))
@@ -658,10 +646,7 @@ def add_filter(qs, filter_config):
     value_type = str(filter_config["value_type"])
     key = filter_config["key"]
     value = None
-    _l.info(
-        f"TESTING.POMS.COMMON.FILTERING_HANDLERS add_filter filter_config: "
-        f"{filter_config}"
-    )
+
     # print('value_type %s' % value_type)
     # print('value_type %s' % type(value_type))
 
@@ -770,7 +755,7 @@ def add_filter(qs, filter_config):
 
         if value:
 
-            q = _get_equal_q(key + "__name", value, exclude_empty_cells)
+            q = _get_equal_q(key + "__name", value_type, value, exclude_empty_cells)
 
             q = q | Q(**{f"{key}__name": ""})
 
@@ -899,16 +884,8 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            # TESTING464
-            #
-            # options = {key + "__iexact": value}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options[key + "__isnull"] = True
-            #
-            # qs = qs.filter(Q(**options) | Q(**include_null_options))
-            q = _get_equal_q(key, value, exclude_empty_cells)
+
+            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
 
             qs = qs.filter(q)
 
@@ -939,16 +916,8 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value or value == 0:
-            # TESTING464
-            #
-            # options = {key + "__exact": value}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options[key + "__isnull"] = True
-            #
-            # qs = qs.filter(Q(**options) | Q(**include_null_options))
-            q = _get_equal_q(key, value, exclude_empty_cells)
+
+            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
 
             qs = qs.filter(q)
 
@@ -1052,17 +1021,10 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            # TESTING464
-            #
-            # options = {key: datetime.strptime(value, DATE_FORMAT).date()}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options[key + "__isnull"] = True
-            #
-            # qs = qs.filter(Q(**options) | Q(**include_null_options))
+
             q = _get_equal_q(
                 key,
+                value_type,
                 datetime.strptime(value, DATE_FORMAT).date(),
                 exclude_empty_cells
             )
@@ -1184,16 +1146,8 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            # TESTING464
-            #
-            # options = {key: value}
-            #
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options[key + "__isnull"] = True
-            #
-            # qs = qs.filter(Q(**options) | Q(**include_null_options))
-            q = _get_equal_q(key, value, exclude_empty_cells)
+
+            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
 
             qs = qs.filter(q)
 
@@ -1210,10 +1164,6 @@ def is_dynamic_attribute_filter(filter_config):
 
 def handle_filters(qs, filter_settings, master_user, content_type):
     # print('Handle filters %s' % filter_settings)
-    _l.info(
-        f"TESTING.POMS.COMMON.FILTERING_HANDLERS handle_filters filter_settings: "
-        f"{filter_settings}"
-    )
     start_time = time.time()
 
     if filter_settings:
