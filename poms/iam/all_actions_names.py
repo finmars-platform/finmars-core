@@ -1,9 +1,3 @@
-import logging
-from collections import namedtuple
-from typing import Callable
-
-_l = logging.getLogger("poms.iam")
-
 ALL_EXTRA_ACTIONS = {
     "abort_transaction_import",
     "book",
@@ -199,17 +193,3 @@ READ_ACCESS_ACTIONS = {
     "get_secret",
     "health",
 }
-READ = "read"
-WRITE = "write"
-
-ActionMode = namedtuple("ActionMode", ["name", "mode"])
-
-
-def get_action_name_and_access_mode(action: Callable) -> ActionMode:
-    action_name = action.__name__
-    if action_name in FULL_ACCESS_ACTIONS:
-        return ActionMode(action_name, WRITE)
-    elif action_name in READ_ACCESS_ACTIONS:
-        return ActionMode(action_name, READ)
-    else:
-        raise RuntimeError(f"Unknown viewset action {action_name}")

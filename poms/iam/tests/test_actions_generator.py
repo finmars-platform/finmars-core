@@ -5,11 +5,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
     ALL_EXTRA_ACTIONS,
     FULL_ACCESS_ACTIONS,
-    READ,
     READ_ACCESS_ACTIONS,
-    WRITE,
-    ActionMode,
-    get_action_name_and_access_mode,
 )
 from poms.iam.models import AccessPolicy
 from poms.iam.policy_generator import (
@@ -50,20 +46,6 @@ class ActionHandlingTest(BaseTestCase):
             self.all_actions_names
         )
         self.assertEqual(unknown_actions, set())
-
-    def test__get_actions_function_access_definition(self):
-        for action in self.all_actions:
-            action_name = action.__name__
-            if action_name in READ_ACCESS_ACTIONS:
-                self.assertEqual(
-                    get_action_name_and_access_mode(action),
-                    ActionMode(action_name, READ),
-                )
-            else:
-                self.assertEqual(
-                    get_action_name_and_access_mode(action),
-                    ActionMode(action_name, WRITE),
-                )
 
     def test__get_views_from_all_apps(self):
         all_viewsets = []
