@@ -13,6 +13,7 @@ from poms.iam.all_actions_names import (
 from poms.iam.policy_generator import (
     get_viewsets_from_all_apps,
     get_viewsets_from_any_app,
+    generate_full_access_policies_for_viewsets,
 )
 
 
@@ -21,6 +22,7 @@ class ActionHandlingTest(BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        self.init_test_case()
         self.all_actions = set()
         self.all_actions_names = set()
         self.all_viewsets = get_viewsets_from_all_apps()
@@ -77,3 +79,6 @@ class ActionHandlingTest(BaseTestCase):
 
         new_actions = all_actions_names.difference(self.all_actions_names)
         self.assertEqual(len(new_actions), 0)
+
+    def test__generate_full_access_policies_for_viewsets(self):
+        generate_full_access_policies_for_viewsets(self.all_viewsets)
