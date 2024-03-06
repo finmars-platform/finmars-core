@@ -24,7 +24,6 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
     from poms.iam.all_actions_names import FULL_ACCESS_ACTIONS
 
     service_name = settings.SERVICE_NAME
-
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
         actions = []
@@ -46,6 +45,7 @@ def generate_full_access_policies_for_viewsets(viewset_classes: list):
         configuration_code = get_default_configuration_code()
         user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
         finmars_bot = Member.objects.get(username="finmars_bot")
+
         access_policy, created = AccessPolicy.objects.get_or_create(
             user_code=user_code,
             defaults={"owner": finmars_bot},
@@ -99,10 +99,12 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
         configuration_code = get_default_configuration_code()
         user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
         finmars_bot = Member.objects.get(username="finmars_bot")
+
         access_policy, created = AccessPolicy.objects.get_or_create(
             user_code=user_code,
             defaults={"owner": finmars_bot},
         )
+
         if actions:
             access_policy_json = {
                 "Version": "2024-01-01",

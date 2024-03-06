@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
@@ -12,10 +13,10 @@ from poms.iam.all_actions_names import (
 )
 from poms.iam.models import AccessPolicy
 from poms.iam.policy_generator import (
-    get_viewsets_from_all_apps,
-    get_viewsets_from_any_app,
     generate_full_access_policies_for_viewsets,
     generate_readonly_access_policies_for_viewsets,
+    get_viewsets_from_all_apps,
+    get_viewsets_from_any_app,
 )
 
 
@@ -90,6 +91,12 @@ class ActionHandlingTest(BaseTestCase):
 
         self.assertEqual(all_access_policies.count(), 172)
 
+        for policy in all_access_policies:
+            self.assertEqual(policy.owner.username, "finmars_bot")
+            self.assertTrue(f"local.poms.{settings.BASE_API_URL}" in policy.user_code)
+            self.assertTrue("-full" in policy.user_code)
+            self.assertTrue("Full Access" in policy.name)
+
     def test__generate_readonly_access_policies_for_viewsets(self):
         all_access_policies = AccessPolicy.objects.all()
         self.assertEqual(all_access_policies.count(), 0)
@@ -98,3 +105,9 @@ class ActionHandlingTest(BaseTestCase):
 
         self.assertEqual(all_access_policies.count(), 196)
         self.assertEqual(len(policies), 212)
+
+        for policy in all_access_policies:
+            self.assertEqual(policy.owner.username, "finmars_bot")
+            self.assertTrue(f"local.poms.{settings.BASE_API_URL}" in policy.user_code)
+            self.assertTrue("-readonly" in policy.user_code)
+            self.assertTrue("Readonly Access" in policy.name)
