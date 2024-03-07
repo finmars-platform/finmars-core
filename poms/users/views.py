@@ -858,6 +858,10 @@ class MemberViewSet(AbstractModelViewSet):
     def list(self, request, *args, **kwargs):
         # Rewriting the parent list, we must show deleted members
 
+        # Just example of how to raise custom exception
+        # from poms.common.exceptions import FinmarsBaseException
+        # raise FinmarsBaseException(error_key="internal_server_error", message="Something went wrong")
+
         queryset = self.filter_queryset(Member.objects.all())
 
         page = self.paginate_queryset(queryset)
