@@ -1,6 +1,7 @@
 from datetime import date
 
 from poms.common.common_base_test import BIG, BaseTestCase
+from poms.common.exceptions import FinmarsBaseException
 from poms.configuration.utils import get_default_configuration_code
 from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister
@@ -55,7 +56,7 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
         }
         portfolio_register = PortfolioRegister.objects.create(**pr_data)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FinmarsBaseException):
             _ = calculate_simple_balance_report(
                 report_date=date.today(),
                 portfolio_register=portfolio_register,
