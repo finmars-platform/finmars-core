@@ -5,6 +5,7 @@ from django.conf import settings
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BIG, BaseTestCase
+from poms.common.exceptions import FinmarsBaseException
 from poms.configuration.utils import get_default_configuration_code
 from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister
@@ -63,7 +64,7 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
 
     # @skip("temporally")
     def test__invalid_celery_task(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FinmarsBaseException):
             calculate_portfolio_register_price_history(task_id=self.random_int())
 
     # @skip("temporally")
