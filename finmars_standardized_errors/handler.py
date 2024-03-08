@@ -90,7 +90,7 @@ class ExceptionHandler:
         has a 500 status code.
         """
 
-        print('convert_unhandled_exceptions %s' % exc.error_key)
+        # print('convert_unhandled_exceptions %s' % exc.error_key)
 
         if getattr(exc, "error_key", None):
             return FinmarsApiException(detail=str(exc), error_key=exc.error_key)
