@@ -46,7 +46,7 @@ class ExceptionHandler:
         lines = traceback.format_exc().splitlines()[-6:]
         traceback_lines = []
 
-        print('here? %s' % exc.error_key)
+        # print('here? %s' % exc.error_key)
 
         for line in lines:
             traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
