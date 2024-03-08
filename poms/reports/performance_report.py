@@ -1023,7 +1023,7 @@ class PerformanceReportBuilder:
                 first_transaction_date = portfolio.get_first_transaction_date()
 
                 if not first_transaction_date:
-                    raise FinmarsBaseException(error_key="first_transaction_date_not_found",
+                    raise FinmarsBaseException(error_key="no_first_transaction_date",
                                                message="First transaction date not found")
 
                 if date_from == first_transaction_date or date_from < first_transaction_date:
