@@ -1,6 +1,7 @@
-from rest_framework import exceptions
 from django.utils.encoding import force_str
+from rest_framework import exceptions
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
+
 
 class FinmarsBaseException(Exception):
     def __init__(self, error_key: str, message: str = ""):
@@ -62,6 +63,7 @@ class ErrorDetail(str):
     def __hash__(self):
         return hash(str(self))
 
+
 def _get_error_details(data, default_code=None, error_key=None):
     """
     Descend into a nested data structure, forcing any
@@ -88,14 +90,18 @@ def _get_error_details(data, default_code=None, error_key=None):
     return ErrorDetail(text, code, error_key)
 
 
-
 class FinmarsApiException(exceptions.APIException):
+    error_key = None
+    default_error_key = 'error'
 
     def __init__(self, detail=None, code=None, error_key=None):
         if detail is None:
             detail = self.default_detail
         if code is None:
             code = self.default_code
+
+        if error_key is None:
+            error_key = self.default_error_key
 
         self.error_key = error_key
 
