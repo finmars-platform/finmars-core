@@ -170,4 +170,4 @@ def flatten_errors(
         return flatten_errors(value, key) + flatten_errors(dict(rest), attr)
 
     else:
-        return [Error(detail.code, str(detail), attr)]
+        return [Error(detail.code,  str(detail), detail.error_key, attr)]

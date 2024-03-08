@@ -1,4 +1,6 @@
+import re
 import sys
+import traceback
 from typing import Optional
 
 import django
@@ -12,13 +14,14 @@ from rest_framework.response import Response
 from rest_framework.status import is_server_error
 from rest_framework.views import set_rollback
 
+from .exceptions import FinmarsApiException
 from .formatter import ExceptionFormatter
 from .settings import package_settings
 from .types import ExceptionHandlerContext
 
 
 def exception_handler(
-    exc: Exception, context: ExceptionHandlerContext
+        exc: Exception, context: ExceptionHandlerContext
 ) -> Optional[Response]:
     exception_handler_class = package_settings.EXCEPTION_HANDLER_CLASS
     msg = "`EXCEPTION_HANDLER_CLASS` should be a subclass of ExceptionHandler."
@@ -39,6 +42,19 @@ class ExceptionHandler:
 
         exc = self.convert_unhandled_exceptions(exc)
         data = self.format_exception(exc)
+
+        lines = traceback.format_exc().splitlines()[-6:]
+        traceback_lines = []
+
+        print('here? %s' % exc.error_key)
+
+        for line in lines:
+            traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
+
+        data['error']['details']['traceback'] = '\n'.join(traceback_lines),
+
+        print('data %s' % data)
+
         self.set_rollback()
         response = self.get_response(exc, data)
         self.report_exception(exc, response)
@@ -63,9 +79,9 @@ class ExceptionHandler:
         traceback.
         """
         return (
-            getattr(settings, "DEBUG", False)
-            and not package_settings.ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS
-            and not isinstance(exc, exceptions.APIException)
+                getattr(settings, "DEBUG", False)
+                and not package_settings.ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS
+                and not isinstance(exc, exceptions.APIException)
         )
 
     def convert_unhandled_exceptions(self, exc: Exception) -> exceptions.APIException:
@@ -73,7 +89,12 @@ class ExceptionHandler:
         Any non-DRF unhandled exception is converted to an APIException which
         has a 500 status code.
         """
-        if not isinstance(exc, exceptions.APIException):
+
+        print('convert_unhandled_exceptions %s' % exc.error_key)
+
+        if getattr(exc, "error_key", None):
+            return FinmarsApiException(detail=str(exc), error_key=exc.error_key)
+        elif not isinstance(exc, exceptions.APIException):
             return exceptions.APIException(detail=str(exc))
         else:
             return exc

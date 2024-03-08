@@ -5,14 +5,16 @@ import time
 import traceback
 from datetime import timedelta
 
-from django.forms import model_to_dict
 from django.db.utils import DataError
+from django.forms import model_to_dict
 
 from poms.accounts.models import Account, AccountType
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
     get_last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday, \
-    get_last_business_day_of_previous_year, get_last_business_day_of_previous_month, get_last_business_day_in_previous_quarter
+    get_last_business_day_of_previous_year, get_last_business_day_of_previous_month, \
+    get_last_business_day_in_previous_quarter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
@@ -54,6 +56,8 @@ class PerformanceReportBuilder:
 
         try:
 
+            portfolio_registers = []
+
             if self.instance.bundle:
                 # self.instance.bunch_portfolios = []
                 # for item in self.instance.bundle.registers.all():
@@ -74,6 +78,10 @@ class PerformanceReportBuilder:
 
             portfolios = []
 
+            if not len(portfolio_registers):
+                raise FinmarsBaseException(error_key="no_portfolio_registers_found",
+                                           message="No portfolios register found")
+
             for portfolio_register in portfolio_registers:
                 portfolios.append(portfolio_register.portfolio_id)
                 portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
@@ -89,9 +97,11 @@ class PerformanceReportBuilder:
 
             return transaction.transaction_date
 
+        except FinmarsBaseException as e:
+            raise e
         except Exception as e:
             _l.error("Could not find first transaction date")
-            return None
+            raise FinmarsBaseException(error_key="no_first_transaction_date", message=str(e))
 
     def build_report(self):
         st = time.perf_counter()
@@ -99,7 +109,6 @@ class PerformanceReportBuilder:
         self.instance.first_transaction_date = self.get_first_transaction()
 
         if not self.instance.first_transaction_date:
-
             self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
             self.instance.items = []
             self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
@@ -118,9 +127,7 @@ class PerformanceReportBuilder:
         if not is_business_day(self.instance.end_date):
             self.instance.end_date = get_last_business_day(self.instance.end_date)
 
-
         begin_date = None
-
 
         if not self.instance.begin_date and self.instance.period_type:
             _l.info("No begin date passed, calculating begin date based on period_type and end_date")
@@ -152,8 +159,6 @@ class PerformanceReportBuilder:
                 # 2023-11-20
                 # szhitenev
                 begin_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
-
-
 
         self.instance.begin_date = begin_date
 
@@ -822,46 +827,59 @@ class PerformanceReportBuilder:
 
     def get_portfolio_registers(self):
 
-        # if self.instance.bundle:
-        #     self.instance.bunch_portfolios = []
-        #     for item in self.instance.bundle.registers.all():
-        #         if item.linked_instrument_id:
-        #             self.instance.bunch_portfolios.append(item.linked_instrument_id)
-        # else:
-        #     self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        try:
 
-        if self.instance.bundle:
-            # self.instance.bunch_portfolios = []
-            # for item in self.instance.bundle.registers.all():
-            #     if item.linked_instrument_id:
-            #         self.instance.bunch_portfolios.append(item.linked_instrument_id)
+            # if self.instance.bundle:
+            #     self.instance.bunch_portfolios = []
+            #     for item in self.instance.bundle.registers.all():
+            #         if item.linked_instrument_id:
+            #             self.instance.bunch_portfolios.append(item.linked_instrument_id)
+            # else:
+            #     self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
-            portfolio_registers = self.instance.bundle.registers.all()
+            if self.instance.bundle:
+                # self.instance.bunch_portfolios = []
+                # for item in self.instance.bundle.registers.all():
+                #     if item.linked_instrument_id:
+                #         self.instance.bunch_portfolios.append(item.linked_instrument_id)
 
-        elif self.instance.registers:
-            portfolio_registers = self.instance.registers
+                portfolio_registers = self.instance.bundle.registers.all()
 
-        # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
-        #                                                        linked_instrument__in=self.instance.bunch_portfolios)
+            elif self.instance.registers:
+                portfolio_registers = self.instance.registers
 
-        portfolio_registers_map = {}
+            # portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
+            #                                                        linked_instrument__in=self.instance.bunch_portfolios)
 
-        portfolios = []
+            portfolio_registers_map = {}
 
-        for portfolio_register in portfolio_registers:
-            portfolios.append(portfolio_register.portfolio_id)
-            portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
+            portfolios = []
 
-        return portfolio_registers
+            for portfolio_register in portfolio_registers:
+                portfolios.append(portfolio_register.portfolio_id)
+                portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
+
+            return portfolio_registers
+
+        except Exception as e:
+            raise FinmarsBaseException(
+                error_key="cannot_get_portfolio_registers",
+                message=str(e)
+            )
 
     def get_portfolios(self, portfolio_registers):
 
-        portfolios = []
+        try:
 
-        for portfolio_register in portfolio_registers:
-            portfolios.append(portfolio_register.portfolio)
+            portfolios = []
 
-        return portfolios
+            for portfolio_register in portfolio_registers:
+                portfolios.append(portfolio_register.portfolio)
+
+            return portfolios
+
+        except Exception as e:
+            raise FinmarsBaseException(error_key="cannot_get_portfolios", message=str(e))
 
     def get_modified_dietz_nav_for_record(self, register_record):
 
@@ -1002,10 +1020,16 @@ class PerformanceReportBuilder:
 
             for portfolio in portfolios:
 
-                if date_from == portfolio.get_first_transaction_date() or date_from < portfolio.get_first_transaction_date():
+                first_transaction_date = portfolio.get_first_transaction_date()
+
+                if not first_transaction_date:
+                    raise FinmarsBaseException(error_key="first_transaction_date_not_found",
+                                               message="First transaction date not found")
+
+                if date_from == first_transaction_date or date_from < first_transaction_date:
 
                     # performance report could not be less then first transaction date
-                    date_from = portfolio.get_first_transaction_date()
+                    date_from = first_transaction_date
 
                     portfolio_records = PortfolioRegisterRecord.objects.filter(portfolio_register__portfolio=portfolio,
                                                                                transaction_date__gte=date_from,
@@ -1032,6 +1056,7 @@ class PerformanceReportBuilder:
                                                                                    TransactionClass.DISTRIBUTION]).order_by(
                         'transaction_date')
 
+                _l.info('portfolio_records count %s ' % len(portfolio_records))
 
                 for record in portfolio_records:
                     date_n = dates_map[str(record.transaction_date)]
