@@ -4371,6 +4371,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    first_transaction_accounting_date = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -4384,6 +4385,7 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
         fields = [
             "id",
             "date",
+            "first_transaction_accounting_date",
             "status",
             "code",
             "text",
@@ -4450,6 +4452,13 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
             "user_date_4",
             "user_date_5",
         ]
+
+    def get_first_transaction_accounting_date(self, instance):
+
+        if instance.transactions.count():
+            return instance.transactions.first().accounting_date
+
+        return None
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
