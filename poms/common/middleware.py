@@ -1,6 +1,8 @@
 import ipaddress
+import json
 import re
 import time
+import uuid
 from threading import local
 
 from django.conf import settings
@@ -316,4 +318,33 @@ class MemoryMiddleware(object):
         #     print(item)
 
 
+        return response
+
+
+class ResponseTimeMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        request.start_time = time.time()
+        request.request_id = str(uuid.uuid4())
+
+    def process_response(self, request, response):
+        if hasattr(request, 'start_time'):
+            execution_time = time.time() - request.start_time
+            rounded_execution_time = round(execution_time, 3)
+            # Append execution time to the response if it's JSON
+            if 'application/json' in response.get('Content-Type', ''):
+                try:
+                    content = json.loads(response.content.decode('utf-8'))
+                    if isinstance(content, dict):
+
+                        if 'meta' not in content:
+                            content['meta'] = {}
+                        content['meta']['execution_time'] = rounded_execution_time
+                        content['meta']['requestId'] = getattr(request, 'request_id', None)
+                        response.content = json.dumps(content)
+
+                        # Update the content length
+                        response['Content-Length'] = len(response.content)
+                except ValueError:
+                    # In case the response content is not JSON
+                    pass
         return response
