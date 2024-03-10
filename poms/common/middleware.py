@@ -328,12 +328,15 @@ class ResponseTimeMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if hasattr(request, 'start_time'):
-            execution_time = time.time() - request.start_time
-            rounded_execution_time = round(execution_time, 3)
+
             # Append execution time to the response if it's JSON
             if 'application/json' in response.get('Content-Type', ''):
                 try:
                     content = json.loads(response.content.decode('utf-8'))
+
+                    execution_time = time.time() - request.start_time
+                    rounded_execution_time = round(execution_time, 3)
+
                     if isinstance(content, dict):
 
                         if 'meta' not in content:
