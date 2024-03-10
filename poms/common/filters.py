@@ -4,17 +4,17 @@ from functools import partial
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import FilterSet
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
-
 from six import string_types
 
 from poms.common.middleware import get_request
-from poms.obj_attrs.models import GenericAttributeType
 from poms.common.utils import attr_is_relation
+from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger("poms.common")
 
@@ -79,8 +79,8 @@ class ByIdFilterBackend(AbstractRelatedFilterBackend):
 class ByIsDeletedFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if (
-            getattr(view, "has_feature_is_deleted", False)
-            and getattr(view, "action", "") == "list"
+                getattr(view, "has_feature_is_deleted", False)
+                and getattr(view, "action", "") == "list"
         ):
             value = request.query_params.get("is_deleted", None)
             if value is None:
@@ -116,8 +116,8 @@ class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
 class ByIsEnabledFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         if (
-            getattr(view, "has_feature_is_enabled", False)
-            and getattr(view, "action", "") == "list"
+                getattr(view, "has_feature_is_enabled", False)
+                and getattr(view, "action", "") == "list"
         ):
             value = request.query_params.get("is_enabled", None)
             if value is None:
@@ -142,6 +142,7 @@ class CharExactFilter(django_filters.CharFilter):
     def __init__(self, *args, **kwargs):
         kwargs["lookup_expr"] = "exact"
         super(CharExactFilter, self).__init__(*args, **kwargs)
+
 
 def _is_date_or_number(field_type):
     for type_part in ['Date', 'Float', 'Integer']:
@@ -248,6 +249,7 @@ def get_q_obj_for_attribute_type(attribute_type, group_value):
 
     return q
 
+
 def filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model=None):
     """
     :param queryset:
@@ -296,6 +298,7 @@ def filter_items_for_group(queryset, groups_types, groups_values, content_type_k
 
     return queryset
 
+
 def _filter_queryset_for_attribute(self_obj, request, queryset, view):
     groups_types = request.data.get("groups_types", [])
     groups_values = request.data.get("groups_values", [])
@@ -327,6 +330,7 @@ def _filter_queryset_for_attribute(self_obj, request, queryset, view):
         model
     )
 
+
 class GroupsAttributeFilter(BaseFilterBackend):
     def format_groups(self, group_type, master_user, content_type):
         if "attributes." in group_type:
@@ -342,6 +346,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         return _filter_queryset_for_attribute(self, request, queryset, view)
+
 
 class AttributeFilter(BaseFilterBackend):
     def format_groups(self, group_type, master_user, content_type):
@@ -531,8 +536,8 @@ class EntitySpecificFilter(BaseFilterBackend):
             is_active = False
 
             if (
-                "ev_options" in request.data
-                and "entity_filters" in request.data["ev_options"]
+                    "ev_options" in request.data
+                    and "entity_filters" in request.data["ev_options"]
             ):
                 if "disabled" in request.data["ev_options"]["entity_filters"]:
                     is_disabled = True
@@ -582,18 +587,18 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
             show_ignored = False
 
             if (
-                "ev_options" in request.data
-                and "complex_transaction_filters" in request.data["ev_options"]
+                    "ev_options" in request.data
+                    and "complex_transaction_filters" in request.data["ev_options"]
             ):
                 if (
-                    "booked"
-                    in request.data["ev_options"]["complex_transaction_filters"]
+                        "booked"
+                        in request.data["ev_options"]["complex_transaction_filters"]
                 ):
                     show_booked = True
 
                 if (
-                    "ignored"
-                    in request.data["ev_options"]["complex_transaction_filters"]
+                        "ignored"
+                        in request.data["ev_options"]["complex_transaction_filters"]
                 ):
                     show_ignored = True
 
@@ -618,3 +623,27 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
         queryset = queryset.filter(is_deleted=False)
 
         return queryset
+
+
+class GlobalTableSearchFilter(django_filters.CharFilter):
+    def filter(self, qs, value):
+        if not value:
+            return qs
+
+        # Create a Q object for each text field you want to search in
+        queries = [Q(**{f"{field_name}__icontains": value}) for field_name in self.get_text_fields(qs.model)]
+
+        # Combine the Q objects using OR operator
+        query = queries.pop()
+
+        for item in queries:
+            query |= item
+
+        # Filter the queryset
+        return qs.filter(query).distinct()
+
+    def get_text_fields(self, model):
+        # This method should return the list of text field names that you want to search in
+        text_fields = [f.name for f in model._meta.fields if
+                       isinstance(f, (models.CharField, models.TextField, models.DateField, models.IntegerField))]
+        return text_fields
