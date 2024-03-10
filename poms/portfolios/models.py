@@ -644,6 +644,8 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'),
                             help_text="Net Asset Value")
+    gav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('gav'),
+                            help_text="Gross Asset Value")
     cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash flow'))
     cash_inflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash inflow'))
     cash_outflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cash outflow'))
@@ -794,9 +796,13 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
         has_total_error = False
 
         nav = 0
+        gav = 0
         for item in self.balance_report.items:
             if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
                 nav = nav + item["market_value"]
+
+                if item["market_value"] > 0:
+                    gav = gav + item["market_value"]
             else:
                 self.error_message = self.error_message + f'{item["name"]} has no market_value\n'
                 has_nav_error = True
