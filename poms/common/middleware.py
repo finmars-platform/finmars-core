@@ -339,7 +339,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
                         if 'meta' not in content:
                             content['meta'] = {}
                         content['meta']['execution_time'] = rounded_execution_time
-                        content['meta']['requestId'] = getattr(request, 'request_id', None)
+                        content['meta']['request_id'] = getattr(request, 'request_id', None)
                         response.content = json.dumps(content)
 
                         # Update the content length
