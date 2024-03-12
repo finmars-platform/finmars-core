@@ -34,8 +34,7 @@ def get_ip(request):
 
     ips = request.META.get("HTTP_X_FORWARDED_FOR", "")
     if ips:
-        ips = [ip.strip() for ip in ips.split(",")]
-        for ip in ips:
+        for ip in [ip.strip() for ip in ips.split(",")]:
             try:
                 ip = ipaddress.ip_address(ip)
             except ValueError:
