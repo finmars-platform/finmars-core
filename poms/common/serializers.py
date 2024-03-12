@@ -25,11 +25,11 @@ class PomsClassSerializer(serializers.ModelSerializer):
 
 class ModelOwnerSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
-        from poms.users.serializers import MemberViewSerializer
+        from poms.users.serializers import MemberLightViewSerializer
 
         representation = super().to_representation(instance)
 
-        serializer = MemberViewSerializer(instance=instance.owner)
+        serializer = MemberLightViewSerializer(instance=instance.owner)
 
         representation["owner"] = serializer.data
 

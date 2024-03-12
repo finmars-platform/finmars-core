@@ -73,7 +73,9 @@ class CurrencyFilterSet(FilterSet):
 class CurrencyViewSet(AbstractModelViewSet):
     queryset = Currency.objects.select_related(
         "master_user",
-        "owner"
+        "owner",
+        "pricing_condition",
+        "country",
     ).prefetch_related(get_attributes_prefetch())
     serializer_class = CurrencySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [

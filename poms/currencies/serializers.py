@@ -165,6 +165,8 @@ class CurrencyLightSerializer(ModelWithUserCodeSerializer):
             "is_enabled",
         ]
 
+        read_only_fields = fields
+
 
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:

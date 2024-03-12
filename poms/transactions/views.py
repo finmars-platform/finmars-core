@@ -24,7 +24,7 @@ from poms.common.filters import (
     CharFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter, ModelExtUserCodeMultipleChoiceFilter,
+    NoOpFilter, ModelExtUserCodeMultipleChoiceFilter, GlobalTableSearchFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import (
@@ -1196,6 +1196,8 @@ class ComplexTransactionFilterSet(FilterSet):
 
     transactions__accounting_date = django_filters.DateFromToRangeFilter()
     transactions__portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
+
+    global_table_search = GlobalTableSearchFilter(label="Global table search")
 
     class Meta:
         model = ComplexTransaction
