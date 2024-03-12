@@ -1,6 +1,5 @@
 import contextlib
 import ipaddress
-import json
 import logging
 import re
 import time
@@ -35,7 +34,7 @@ def get_ip(request):
 
     ips = request.META.get("HTTP_X_FORWARDED_FOR", "")
     if ips:
-        ips = [ip.strip() for ip in ips.split(",")] if "," in ips else [ips.strip()]
+        ips = [ip.strip() for ip in ips.split(",")]
         for ip in ips:
             try:
                 ip = ipaddress.ip_address(ip)
@@ -317,18 +316,15 @@ class MemoryMiddleware(object):
 
 class ResponseTimeMiddleware(MiddlewareMixin):
     @staticmethod
-    def valid_json_response(request, response) -> bool:
-        return bool(
-            getattr(request, "start_time", None)
-            and getattr(request, "request_id", None)
-        )
+    def eligible_request(request) -> bool:
+        return bool(getattr(request, "start_time") and getattr(request, "request_id"))
 
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
-        if self.valid_json_response(request, response):
+        if self.eligible_request(request):
             response["Backend-Request-Id"] = request.request_id
             try:
                 execution_time = int((time.time() - request.start_time) * 1000)
