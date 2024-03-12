@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
 from django.http.response import JsonResponse
 from django.utils.cache import add_never_cache_headers, get_max_age, patch_cache_control
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -21,14 +22,10 @@ from rest_framework.exceptions import (
 )
 
 from geoip2.errors import AddressNotFoundError
+from memory_profiler import profile
+from pympler.muppy import get_objects, summary
 
 from .keycloak import KeycloakConnect
-
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:
-    MiddlewareMixin = object
-
 
 _l = logging.getLogger("poms.common")
 
@@ -121,12 +118,7 @@ def deactivate():
 def get_request():
     # _l.info('get_request._active %s' % _active)
 
-    request = getattr(_active, "request", None)
-    # assert request is not None, "CommonMiddleware is not installed"
-    return request
-    # if hasattr(_active, "request"):
-    #     return _active.request
-    # raise RuntimeError('request not found')
+    return getattr(_active, "request", None)
 
 
 class CommonMiddleware(MiddlewareMixin):
@@ -134,17 +126,10 @@ class CommonMiddleware(MiddlewareMixin):
         request.user_ip = get_ip(request)
         request.user_agent = get_user_agent(request)
         request.user_city = get_city_by_ip(request.user_ip)
-
-        # request.user_ip = SimpleLazyObject(lambda: get_ip(request))
-        # request.user_agent = SimpleLazyObject(lambda: get_user_agent(request))
-        # request.user_city = SimpleLazyObject(lambda: get_city_by_ip(request))
-
         activate(request)
 
     def process_response(self, request, response):
         deactivate()
-        # timezone.deactivate()
-        # translation.deactivate()
         return response
 
 
@@ -298,10 +283,6 @@ class LogRequestsMiddleware:
         return response
 
 
-from memory_profiler import profile
-from pympler.muppy import get_objects, summary
-
-
 class MemoryMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
@@ -335,32 +316,28 @@ class MemoryMiddleware(object):
 
 
 class ResponseTimeMiddleware(MiddlewareMixin):
+    @staticmethod
+    def valid_json_response(request, response) -> bool:
+        return bool(
+            getattr(request, "start_time", None)
+            and getattr(request, "request_id", None)
+        )
+
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
-        if hasattr(request, "start_time") and "application/json" in response.get(
-            "Content-Type", ""
-        ):
+        if self.valid_json_response(request, response):
+            response["Backend-Request-Id"] = request.request_id
             try:
-                content = json.loads(response.content.decode("utf-8"))
-                execution_time = time.time() - request.start_time
-                rounded_execution_time = round(execution_time, 3)
-
-                if isinstance(content, dict):
-                    if "meta" not in content:
-                        content["meta"] = {}
-                    content["meta"]["execution_time"] = rounded_execution_time
-                    content["meta"]["request_id"] = getattr(request, "request_id", None)
-                    response.content = json.dumps(content)
-
-                    # Update the content length
-                    response["Content-Length"] = len(response.content)
+                execution_time = int((time.time() - request.start_time) * 1000)
+                response["Backend-Time"] = f"{execution_time}ms"
             except Exception as e:
                 _l.error(
                     f"ResponseTimeMiddleware error: {repr(e)} "
-                    f"request_id: {getattr(request, 'request_id', '*')}"
+                    f"request_id: {request.request_id}"
                 )
+                response["Backend-Time"] = "unknown"
 
         return response

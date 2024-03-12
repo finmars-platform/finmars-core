@@ -1050,6 +1050,8 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
+        print(response.headers)
+
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
@@ -1063,6 +1065,8 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         ecosystem_default = EcosystemDefault.objects.first()
         response = self.client.get(path=f"{self.url}{ecosystem_default.id}/")
         self.assertEqual(response.status_code, 200, response.content)
+
+        print(response.headers)
 
         response_json = response.json()
         self.assertEqual(len(response_json), len(EXPECTED_RESPONSE_DATA))
@@ -1101,5 +1105,7 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         }
 
         response = self.client.post(path=self.url, format="json", data=data)
+
+        print(response.headers)
 
         self.assertEqual(response.status_code, 201, response.content)
