@@ -770,6 +770,18 @@ class MemberViewSerializer(serializers.ModelSerializer):
         member = get_member_from_context(self.context)
         return obj.id == member.id
 
+class MemberLightViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Member
+        fields = [
+            "id",
+            "username",
+        ]
+        read_only_fields = [
+            "id",
+            "username",
+        ]
+
 
 class UsercodePrefixSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
