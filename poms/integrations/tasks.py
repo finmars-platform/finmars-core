@@ -120,16 +120,20 @@ def health_check():
 @finmars_task(name="integrations.send_mail_async", ignore_result=True)
 def send_mail_async(subject, message, from_email, recipient_list, html_message=None):
     django_send_mail(
-        subject,
-        message,
-        from_email,
-        recipient_list,
-        fail_silently=True,
+        subject=subject,
+        message=message,
+        from_email=from_email,
+        recipient_list=recipient_list,
+        fail_silently=False,
         html_message=html_message,
     )
 
 
-def send_mail(subject, message, from_email, recipient_list, html_message=None):
+def send_mail(subject, message, recipient_list, from_email=None, html_message=None):
+
+    if not from_email:
+        from_email = settings.DEFAULT_FROM_EMAIL
+
     send_mail_async.apply_async(
         kwargs={
             "subject": subject,

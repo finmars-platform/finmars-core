@@ -10,6 +10,15 @@ from poms.common.fields import ExpressionField
 
 _l = logging.getLogger('poms.api')
 
+class EmailSerializer(serializers.Serializer):
+    subject = serializers.CharField(max_length=100)
+    message = serializers.CharField(max_length=1000)
+    # from_email = serializers.EmailField()
+    recipient_list = serializers.ListField(
+        child=serializers.EmailField()
+    )
+    html_message = serializers.CharField(max_length=1000, allow_blank=True, required=False)
+
 
 class Language(object):
     def __init__(self, code='', name=''):

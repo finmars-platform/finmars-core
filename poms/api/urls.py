@@ -4,7 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
 import poms.accounts.urls as account_router
-import poms.users.urls as users_router
 import poms.api.views as api
 import poms.celery_tasks.views as celery_tasks
 import poms.common.views as common
@@ -38,7 +37,7 @@ import poms.system.views as system
 import poms.system_messages.views as system_messages
 import poms.transactions.urls as transaction_router
 import poms.ui.urls as ui_router
-
+import poms.users.urls as users_router
 import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
@@ -119,6 +118,9 @@ router.register(
     api.ExpressionViewSet,
     "expression",
 )
+
+router.register(r'utils/send-email', api.EmailViewSet, basename='email')
+
 router.register(
     r"utils/stats",
     api.StatsViewSet,

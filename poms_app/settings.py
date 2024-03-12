@@ -550,12 +550,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 # =================
 
 DEFAULT_FROM_EMAIL = ENV_STR(
-    "DEFAULT_FROM_EMAIL", '"Finmars Notifications" <no-reply@finmars.com>'
+    "DEFAULT_FROM_EMAIL", '"Finmars Notifications" <noreply@finmars.io>'
 )
-SERVER_EMAIL = ENV_STR("SERVER_EMAIL", '"ADMIN: FinMars" <no-reply@finmars.com>')
-EMAIL_HOST = ENV_STR("EMAIL_HOST", "email-smtp.eu-west-1.amazonaws.com")
+SERVER_EMAIL = ENV_STR("SERVER_EMAIL", '"ADMIN: FinMars" <noreply@finmars.io>')
+EMAIL_HOST = ENV_STR("EMAIL_HOST", "smtppro.zoho.eu")
 EMAIL_PORT = ENV_INT("EMAIL_PORT", 587)
-EMAIL_HOST_USER = ENV_STR("EMAIL_HOST_USER", None)
+EMAIL_HOST_USER = ENV_STR("EMAIL_HOST_USER", "noreply@finmars.io")
+EMAIL_USE_TLS = ENV_BOOL("EMAIL_USE_TLS", True)
 EMAIL_HOST_PASSWORD = ENV_STR("EMAIL_HOST_PASSWORD", None)
 
 GEOIP_PATH = os.path.join(BASE_DIR, "data")
