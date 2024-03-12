@@ -10,6 +10,7 @@ from rest_framework.utils.encoders import JSONEncoder
 
 
 class CustomJSONEncoder(JSONEncoder):
+
     def iterencode(self, o, _one_shot=False):
         """Encode the given object and yield each string
         representation as available.
@@ -22,26 +23,27 @@ class CustomJSONEncoder(JSONEncoder):
         """
         # Hack to enforce
         c_make_encoder = None
-        markers = {} if self.check_circular else None
-        _encoder = encode_basestring_ascii if self.ensure_ascii else encode_basestring
+        if self.check_circular:
+            markers = {}
+        else:
+            markers = None
+        if self.ensure_ascii:
+            _encoder = encode_basestring_ascii
+        else:
+            _encoder = encode_basestring
 
-        def floatstr(
-            o,
-            allow_nan=self.allow_nan,
-            _repr=float.__repr__,
-            _inf=INFINITY,
-            _neginf=-INFINITY,
-        ):
+        def floatstr(o, allow_nan=self.allow_nan,
+                     _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
             # Check for specials.  Note that this type of test is processor
             # and/or platform-specific, so do tests which don't depend on the
             # internals.
 
             if o != o:
-                text = "NaN"
+                text = 'NaN'
             elif o == _inf:
-                text = "null"
+                text = 'null'
             elif o == _neginf:
-                text = "null"
+                text = 'null'
             else:
                 return _repr(o)
 
