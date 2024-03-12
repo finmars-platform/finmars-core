@@ -85,8 +85,3 @@ class CustomJSONEncoder(JSONEncoder):
 
 class CustomJSONRenderer(JSONRenderer):
     encoder_class = CustomJSONEncoder
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        response = super().render(data, accepted_media_type, renderer_context)
-        response["content_type"] = "application/json"
-        return response

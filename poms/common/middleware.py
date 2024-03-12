@@ -340,9 +340,8 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
-        if (
-            hasattr(request, "start_time")
-            and response.content_type == "application/json"
+        if hasattr(request, "start_time") and "application/json" in response.get(
+            "Content-Type", ""
         ):
             try:
                 content = json.loads(response.content.decode("utf-8"))
