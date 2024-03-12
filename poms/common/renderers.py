@@ -1,15 +1,16 @@
-from __future__ import unicode_literals
-
-from json.encoder import encode_basestring_ascii, encode_basestring, INFINITY, _make_iterencode
+from json.encoder import (
+    INFINITY,
+    _make_iterencode,
+    encode_basestring,
+    encode_basestring_ascii,
+)
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.encoders import JSONEncoder
 
 
 class CustomJSONEncoder(JSONEncoder):
-
     def iterencode(self, o, _one_shot=False):
-
         """Encode the given object and yield each string
         representation as available.
 
@@ -21,27 +22,26 @@ class CustomJSONEncoder(JSONEncoder):
         """
         # Hack to enforce
         c_make_encoder = None
-        if self.check_circular:
-            markers = {}
-        else:
-            markers = None
-        if self.ensure_ascii:
-            _encoder = encode_basestring_ascii
-        else:
-            _encoder = encode_basestring
+        markers = {} if self.check_circular else None
+        _encoder = encode_basestring_ascii if self.ensure_ascii else encode_basestring
 
-        def floatstr(o, allow_nan=self.allow_nan,
-                     _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
+        def floatstr(
+            o,
+            allow_nan=self.allow_nan,
+            _repr=float.__repr__,
+            _inf=INFINITY,
+            _neginf=-INFINITY,
+        ):
             # Check for specials.  Note that this type of test is processor
             # and/or platform-specific, so do tests which don't depend on the
             # internals.
 
             if o != o:
-                text = 'NaN'
+                text = "NaN"
             elif o == _inf:
-                text = 'null'
+                text = "null"
             elif o == _neginf:
-                text = 'null'
+                text = "null"
             else:
                 return _repr(o)
 
@@ -55,18 +55,38 @@ class CustomJSONEncoder(JSONEncoder):
 
             return text
 
-        if (_one_shot and c_make_encoder is not None and self.indent is None):
+        if _one_shot and c_make_encoder is not None and self.indent is None:
             _iterencode = c_make_encoder(
-                markers, self.default, _encoder, self.indent,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, self.allow_nan)
+                markers,
+                self.default,
+                _encoder,
+                self.indent,
+                self.key_separator,
+                self.item_separator,
+                self.sort_keys,
+                self.skipkeys,
+                self.allow_nan,
+            )
         else:
             _iterencode = _make_iterencode(
-                markers, self.default, _encoder, self.indent, floatstr,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, _one_shot)
+                markers,
+                self.default,
+                _encoder,
+                self.indent,
+                floatstr,
+                self.key_separator,
+                self.item_separator,
+                self.sort_keys,
+                self.skipkeys,
+                _one_shot,
+            )
         return _iterencode(o, 0)
 
 
 class CustomJSONRenderer(JSONRenderer):
     encoder_class = CustomJSONEncoder
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        response = super().render(data, accepted_media_type, renderer_context)
+        response["content_type"] = "application/json"
+        return response
