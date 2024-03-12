@@ -170,7 +170,10 @@ MIDDLEWARE = [
     # "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
+
+    "poms.common.middleware.ResponseTimeMiddleware", # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
+      # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     # "django.middleware.cache.UpdateCacheMiddleware",

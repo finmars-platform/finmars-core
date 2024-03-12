@@ -735,6 +735,7 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
 
             "benchmark",
             "nav",
+            "gav",
             "cash_flow",
             "cash_inflow",
             "cash_outflow",
