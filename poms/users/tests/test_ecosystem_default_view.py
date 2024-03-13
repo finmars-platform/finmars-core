@@ -1050,8 +1050,6 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-        print(response.headers)
-
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 

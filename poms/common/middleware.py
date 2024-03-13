@@ -306,7 +306,7 @@ class MemoryMiddleware(object):
 
         # print(f'Memory consumption: {after - before} bytes')
         # after.sort(key=lambda x: x[2], reverse=True)  # Sort by size
-        # # print('Memory consumption after request:')
+        # print('Memory consumption after request:')
         # for item in after[:10]:
         #     print(item)
 
@@ -315,18 +315,22 @@ class MemoryMiddleware(object):
 
 class ResponseTimeMiddleware(MiddlewareMixin):
     @staticmethod
-    def eligible_request(request) -> bool:
-        return bool(getattr(request, "start_time") and getattr(request, "request_id"))
+    def eligible_request(request, response) -> bool:
+        return bool(
+            getattr(request, "start_time")
+            and getattr(request, "request_id")
+            and response.accepted_media_type == "application/json"
+        )
 
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
-        if self.eligible_request(request):
-            response["Backend-Request-Id"] = request.request_id
+        if self.eligible_request(request, response):
+            execution_time = int((time.time() - request.start_time) * 1000)
             try:
-                execution_time = int((time.time() - request.start_time) * 1000)
+
                 response["Backend-Time"] = f"{execution_time}ms"
             except Exception as e:
                 _l.error(
