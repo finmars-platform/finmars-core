@@ -316,7 +316,7 @@ class MemoryMiddleware(object):
 
 class ResponseTimeMiddleware(MiddlewareMixin):
     @staticmethod
-    def eligible_request(request, response) -> bool:
+    def response_can_be_updated(request, response) -> bool:
         return bool(
             getattr(request, "start_time")
             and getattr(request, "request_id")
@@ -324,13 +324,13 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         )
 
     @staticmethod
-    def update_response_content(content, request, response):
-        if "meta" not in content:
-            content["meta"] = {}
+    def update_response_content(data_dict: dict, request, response):
         execution_time = int((time.time() - request.start_time) * 1000)
-        content["meta"]["execution_time"] = execution_time
-        content["meta"]["request_id"] = getattr(request, "request_id")
-        response.content = json.dumps(content).encode("utf-8")
+        data_dict["meta"] = {
+            "execution_time": execution_time,
+            "request_id": getattr(request, "request_id")
+        }
+        response.content = json.dumps(data_dict).encode()
 
         # Update the content length
         response["Content-Length"] = len(response.content)
@@ -340,11 +340,11 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
-        if self.eligible_request(request, response):
+        if self.response_can_be_updated(request, response):
             try:
-                content = json.loads(response.content.decode("utf-8"))
-                if isinstance(content, dict):
-                    self.update_response_content(content, request, response)
+                json_data = json.loads(response.content.decode("utf-8"))
+                if isinstance(json_data, dict):
+                    self.update_response_content(json_data, request, response)
 
             except Exception as e:
                 _l.error(

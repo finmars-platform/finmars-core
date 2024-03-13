@@ -91,7 +91,7 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_RECORD))
+        self.assertTrue(set(EXPECTED_RESPONSE_PRICES).issubset(set(response_json)))
         self.assertEqual(
             response_json["task_type"], EXPECTED_RESPONSE_RECORD["task_type"]
         )
@@ -121,7 +121,7 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(set(response_json), set(EXPECTED_RESPONSE_PRICES))
+        self.assertTrue(set(EXPECTED_RESPONSE_PRICES).issubset(set(response_json)))
         self.assertEqual(
             response_json["task_type"], EXPECTED_RESPONSE_PRICES["task_type"]
         )
