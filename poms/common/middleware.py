@@ -1,5 +1,6 @@
 import contextlib
 import ipaddress
+import json
 import logging
 import re
 import time
@@ -322,21 +323,33 @@ class ResponseTimeMiddleware(MiddlewareMixin):
             and response.accepted_media_type == "application/json"
         )
 
+    @staticmethod
+    def update_response_content(content, request, response):
+        if "meta" not in content:
+            content["meta"] = {}
+        execution_time = int((time.time() - request.start_time) * 1000)
+        content["meta"]["execution_time"] = execution_time
+        content["meta"]["request_id"] = getattr(request, "request_id")
+        response.content = json.dumps(content).encode("utf-8")
+
+        # Update the content length
+        response["Content-Length"] = len(response.content)
+
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
     def process_response(self, request, response):
         if self.eligible_request(request, response):
-            execution_time = int((time.time() - request.start_time) * 1000)
             try:
+                content = json.loads(response.content.decode("utf-8"))
+                if isinstance(content, dict):
+                    self.update_response_content(content, request, response)
 
-                response["Backend-Time"] = f"{execution_time}ms"
             except Exception as e:
                 _l.error(
                     f"ResponseTimeMiddleware error: {repr(e)} "
                     f"request_id: {request.request_id}"
                 )
-                response["Backend-Time"] = "unknown"
 
         return response
