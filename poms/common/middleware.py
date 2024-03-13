@@ -328,7 +328,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         execution_time = int((time.time() - request.start_time) * 1000)
         data_dict["meta"] = {
             "execution_time": execution_time,
-            "request_id": getattr(request, "request_id")
+            "request_id": request.request_id,
         }
         response.content = json.dumps(data_dict).encode()
 
