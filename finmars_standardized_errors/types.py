@@ -23,6 +23,7 @@ class ErrorType(str, Enum):
 class Error:
     code: str
     detail: str
+    error_key: str
     attr: Optional[str]
 
 

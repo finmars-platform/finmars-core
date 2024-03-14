@@ -58,14 +58,19 @@ class ExceptionMiddleware(MiddlewareMixin):
         username = str(request.user.username)
         message = http_code_to_message[500]
 
+        details = {
+            'traceback': '\n'.join(traceback_lines),
+            'error_message': repr(exception),
+        }
+
+        if getattr(exception, 'error_key', None):
+            details['error_key'] = exception.error_key
+
         data = {
             'error': {
                 'url': url,
                 'username': username,
-                'details': {
-                    'traceback': '\n'.join(traceback_lines),
-                    'error_message': repr(exception),
-                },
+                'details': details,
                 'message': message,
                 'status_code': 500,
                 'datetime': str(datetime.datetime.strftime(now(), '%Y-%m-%d %H:%M:%S'))

@@ -8,6 +8,7 @@ from django.views.generic.dates import timezone_today
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.utils import (
     get_last_bdays_of_months_between_two_dates,
     get_last_business_day,
@@ -55,8 +56,9 @@ def calculate_simple_balance_report(
     )
 
     if not portfolio_register.linked_instrument:
-        raise RuntimeError(
-            f"{log} portfolio_register {portfolio_register} has no linked_instrument"
+        raise FinmarsBaseException(
+            error_key="invalid_portfolio_register",
+            message=f"{log} portfolio_register {portfolio_register} has no linked_instrument"
         )
 
     try:
@@ -168,7 +170,9 @@ def calculate_portfolio_register_record(self, task_id):
     if task.options_object and "portfolios" in task.options_object:
         portfolio_user_codes = task.options_object["portfolios"]
 
-    master_user = MasterUser.objects.prefetch_related("members").all().first()
+    master_user = MasterUser.objects.prefetch_related("members").filter(
+        base_api_url=settings.BASE_API_URL,
+    ).first()
 
     result = {}
     try:
@@ -532,7 +536,8 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise RuntimeError(f"{log} no such task={task_id}")
+        raise FinmarsBaseException(error_key="task_not_found",
+            message=f"{log} no such task={task_id}")
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -776,7 +781,9 @@ def calculate_portfolio_history(self, task_id: int):
 
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise RuntimeError(f"calculate_portfolio_history, no such task={task_id}")
+        raise FinmarsBaseException(
+            error_key="task_not_found",
+            message=f"calculate_portfolio_history, no such task={task_id}")
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -834,7 +841,9 @@ def calculate_portfolio_history(self, task_id: int):
     elif period_type == "inception":
         date_from = str(portfolio.get_first_transaction_date())
     else:
-        raise RuntimeError(f"invalid period_type={period_type}")
+        raise FinmarsBaseException(
+            error_key="invalid_period_type",
+            message=f"invalid period_type={period_type}")
 
     _l.info("calculate_portfolio_history: date_from %s" % date_from)
 
@@ -896,7 +905,9 @@ def calculate_portfolio_history(self, task_id: int):
             elif period_type == "inception":
                 d_date_from = str(portfolio.get_first_transaction_date())
             else:
-                raise RuntimeError(f"invalid period_type={period_type}")
+                raise FinmarsBaseException(
+                    error_key="invalid_period_type",
+                    message=f"invalid period_type={period_type}")
 
             portfolio_history = PortfolioHistory.objects.create(
                 master_user=task.master_user,
@@ -928,8 +939,9 @@ def calculate_portfolio_reconcile_history(self, task_id: int):
 
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise RuntimeError(
-            f"calculate_portfolio_reconcile_history, no such task={task_id}"
+        raise FinmarsBaseException(
+            error_key="task_not_found",
+            message=f"calculate_portfolio_reconcile_history, no such task={task_id}"
         )
 
     if not task.options_object:
