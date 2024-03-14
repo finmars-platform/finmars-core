@@ -320,6 +320,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         return bool(
             getattr(request, "start_time")
             and getattr(request, "request_id")
+            and hasattr(response, "accepted_media_type")
             and response.accepted_media_type == "application/json"
         )
 
