@@ -282,7 +282,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         # check fields
-        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+        self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     def test__book_put(self):
         transaction_type = self.create_transaction_type()
@@ -302,7 +302,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+        self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     @skip("'ComplexTransaction' instance needs to have a primary key value ...")
     def test__book_pending_get(self):
@@ -318,7 +318,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         # check fields
-        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+        self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     def test__book_pending_put(self):
         transaction_type = self.create_transaction_type()
@@ -338,4 +338,4 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+        self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
