@@ -1,6 +1,9 @@
-from __future__ import unicode_literals
-
-from json.encoder import encode_basestring_ascii, encode_basestring, INFINITY, _make_iterencode
+from json.encoder import (
+    INFINITY,
+    _make_iterencode,
+    encode_basestring,
+    encode_basestring_ascii,
+)
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.encoders import JSONEncoder
@@ -9,7 +12,6 @@ from rest_framework.utils.encoders import JSONEncoder
 class CustomJSONEncoder(JSONEncoder):
 
     def iterencode(self, o, _one_shot=False):
-
         """Encode the given object and yield each string
         representation as available.
 
@@ -55,16 +57,31 @@ class CustomJSONEncoder(JSONEncoder):
 
             return text
 
-        if (_one_shot and c_make_encoder is not None and self.indent is None):
+        if _one_shot and c_make_encoder is not None and self.indent is None:
             _iterencode = c_make_encoder(
-                markers, self.default, _encoder, self.indent,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, self.allow_nan)
+                markers,
+                self.default,
+                _encoder,
+                self.indent,
+                self.key_separator,
+                self.item_separator,
+                self.sort_keys,
+                self.skipkeys,
+                self.allow_nan,
+            )
         else:
             _iterencode = _make_iterencode(
-                markers, self.default, _encoder, self.indent, floatstr,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, _one_shot)
+                markers,
+                self.default,
+                _encoder,
+                self.indent,
+                floatstr,
+                self.key_separator,
+                self.item_separator,
+                self.sort_keys,
+                self.skipkeys,
+                _one_shot,
+            )
         return _iterencode(o, 0)
 
 
