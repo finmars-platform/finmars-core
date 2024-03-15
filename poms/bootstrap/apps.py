@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import traceback
-import psutil
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -13,7 +12,10 @@ from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
+import psutil
 import requests
+
+from poms.common.exceptions import FinmarsBaseException
 
 _l = logging.getLogger("provision")
 
@@ -22,6 +24,10 @@ HEADERS = {
     "Accept": "application/json",
 }
 FINMARS_BOT = "finmars_bot"
+
+
+class BootstrapError(FinmarsBaseException):
+    ...
 
 
 class BootstrapConfig(AppConfig):
@@ -100,38 +106,43 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
         from poms.users.models import MasterUser, Member
 
-        user, _ = User.objects.using(settings.DB_DEFAULT).get_or_create(
+        log = "create_finmars_bot"
+
+        finmars_user, created_user = User.objects.using(
+            settings.DB_DEFAULT,
+        ).get_or_create(
             username=FINMARS_BOT,
         )
 
-        try:
-            Member.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
-            _l.info(f"{FINMARS_BOT} member already exists")
+        master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
+            base_api_url=settings.BASE_API_URL
+        ).first()
+        if not master_user:
+            err_msg = f"{log} no master_user {settings.BASE_API_URL} exits"
+            _l.error(err_msg)
+            raise BootstrapError("fatal", message=err_msg)
 
-        except Member.DoesNotExist:
-            _l.info(f"Member {FINMARS_BOT} not found, going to create it")
+        finmars_bot, created_bot = Member.objects.using(
+            settings.DB_DEFAULT,
+        ).get_or_create(
+            username=FINMARS_BOT,
+            defaults={
+                "user": finmars_user,
+                "master_user": master_user,
+                "is_admin": True,
+            }
+        )
+        if not created_bot:
+            finmars_bot.user = finmars_user
+            finmars_bot.master_user = master_user
+            finmars_bot.is_admin = True
+            finmars_bot.save()
 
-            try:
-                master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
-                    base_api_url=settings.BASE_API_URL
-                ).first()
-                if not master_user:
-                    MasterUser.objects.using(settings.DB_DEFAULT).create_master_user(
-                        user=user
-                    )
-                Member.objects.using(settings.DB_DEFAULT).create(
-                    user=user,
-                    username=FINMARS_BOT,
-                    master_user=master_user,
-                    is_admin=True,
-                )
-
-            except Exception as e:
-                err_msg = f"Could not create {FINMARS_BOT} due to {repr(e)}"
-                _l.error(f"{err_msg}", exc_info=True)
-                raise RuntimeError(err_msg) from e
-
-        _l.info(f"Member {FINMARS_BOT} created")
+        _l.info(
+            f"{log} for master_user {settings.BASE_API_URL} finmars_user "
+            f"'{FINMARS_BOT}' {'created' if created_user else 'exists'} "
+            f"and '{FINMARS_BOT}' member {'created' if created_bot else 'updated'}"
+        )
 
     @staticmethod
     def create_iam_access_policies_templates():
@@ -216,9 +227,9 @@ class BootstrapConfig(AppConfig):
             response.raise_for_status()
             response_data = response.json()
 
-            username = response_data["owner"]["username"]
+            owner_username = response_data["owner"]["username"]
             owner_email = response_data["owner"]["email"]
-            name = response_data["name"]
+            master_user_name = response_data["name"]
             backend_status = response_data["status"]
             old_backup_name = response_data.get("old_backup_name")
 
@@ -229,18 +240,19 @@ class BootstrapConfig(AppConfig):
                 )
 
         except Exception as e:
-            _l.error(f"{log} call to 'backend-master-user-data' resulted in {repr(e)}")
-            raise RuntimeError(e) from e
+            err_msg = f"{log} call to 'backend-master-user-data' resulted in {repr(e)}"
+            _l.error(err_msg)
+            raise BootstrapError("fatal", message=err_msg) from e
 
         try:
             user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
-                username=username,
+                username=owner_username,
                 defaults=dict(
                     email=owner_email,
                     password=generate_random_string(10),
                 )
             )
-            _l.info(f"{log} owner {username} {'created' if created else 'exists'}")
+            _l.info(f"{log} owner {owner_username} {'created' if created else 'exists'}")
 
             user_profile, created = UserProfile.objects.using(
                 settings.DB_DEFAULT
@@ -252,11 +264,11 @@ class BootstrapConfig(AppConfig):
                 BootstrapConfig.deactivate_old_members()
             else:
                 _l.info(
-                    f"{log} backend_status={backend_status} no deactivating old members"
+                    f"{log} backend_status={backend_status} "
+                    f"no need to deactivate old members"
                 )
 
             master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
-                name=name,
                 base_api_url=base_api_url,
             ).first()
 
@@ -266,36 +278,34 @@ class BootstrapConfig(AppConfig):
                     f"base_api_url {master_user.base_api_url} exists"
                 )
 
-            if master_user and master_user.name == old_backup_name:
-                # check if restored from backup
-                master_user.name = name
-                master_user.base_api_url = base_api_url
-                master_user.save()
+                if master_user.name == old_backup_name:
+                    # check if restored from backup
+                    master_user.name = master_user_name
+                    master_user.base_api_url = base_api_url
+                    master_user.save()
 
-                BootstrapConfig.deactivate_old_members()
+                    BootstrapConfig.deactivate_old_members()
 
-                _l.info(
-                    f"{log} master_user from backup {old_backup_name} renamed to "
-                    f"{master_user.name} & base_api_url {master_user.base_api_url}"
-                )
+                    _l.info(
+                        f"{log} master_user from backup {old_backup_name} renamed to "
+                        f"{master_user.name} & base_api_url {master_user.base_api_url}"
+                    )
 
-            if not master_user:
-                _l.info(f"{log} create new master_user")
-
+            else:
                 master_user = MasterUser.objects.create_master_user(
-                    name=name,
+                    name=master_user_name,
                     base_api_url=base_api_url,
                 )
 
                 _l.info(
-                    f"{log} master_user with name {master_user.name} and "
-                    f"base_api_url {master_user.base_api_url} created"
+                    f"{log} created master_user with name {master_user.name} & "
+                    f"base_api_url {master_user.base_api_url}"
                 )
 
             current_owner_member, created = Member.objects.using(
                 settings.DB_DEFAULT,
             ).get_or_create(
-                username=username,
+                username=owner_username,
                 master_user=master_user,
                 defaults=dict(
                     user=user,
@@ -305,16 +315,18 @@ class BootstrapConfig(AppConfig):
             )
             if not created:
                 current_owner_member.user = user
+                current_owner_member.is_owner = True
+                current_owner_member.is_admin = True
                 current_owner_member.save()
 
             _l.info(
-                f"{log} current_owner_member with username {username} and master_user"
-                f".name {master_user.name} {'created' if created else 'exists'}"
+                f"{log} current_owner_member with username {owner_username} and master"
+                f"_user.name {master_user.name} {'created' if created else 'exists'}"
             )
         except Exception as e:
             err_msg = f"{log} resulted in {repr(e)}"
             _l.error(f"{err_msg} trace {traceback.format_exc()}")
-            raise RuntimeError(err_msg) from e
+            raise BootstrapError("fatal", message=err_msg) from e
 
         else:
             _l.info(f"{log} successfully finished")
@@ -344,8 +356,9 @@ class BootstrapConfig(AppConfig):
             response.raise_for_status()
 
         except Exception as e:
-            _l.info(f"register_at_authorizer_service resulted in {repr(e)}")
-            raise e
+            err_msg = f"register_at_authorizer_service resulted in {repr(e)}"
+            _l.error(err_msg)
+            raise BootstrapError("fatal", message=err_msg) from e
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     @staticmethod
@@ -369,8 +382,9 @@ class BootstrapConfig(AppConfig):
                 if worker_status["status"] == "not_found":
                     authorizer_service.create_worker(worker)
             except Exception as e:
-                _l.error(f"sync_celery_workers: worker {worker} error {repr(e)}")
-                raise e
+                err_msg = f"sync_celery_workers: worker {worker} error {repr(e)}"
+                _l.error(err_msg)
+                raise BootstrapError("fatal", message=err_msg) from e
 
     @staticmethod
     def create_member_layouts():
@@ -403,8 +417,9 @@ class BootstrapConfig(AppConfig):
                     )
 
                 except Exception as e:
-                    _l.info(f"Could not create member layout {member.username}")
-                    raise e
+                    err_msg = f"Could not create member layout {member.username}"
+                    _l.error(err_msg)
+                    raise BootstrapError("fatal", message=err_msg) from e
 
             _l.info(f"Created member layout for {member.username}")
 
@@ -488,9 +503,9 @@ class BootstrapConfig(AppConfig):
                         self._save_tmp_to_storage(tmpf, storage, path)
 
         except Exception as e:
-            _l.error(
-                f"create_base_folders error {repr(e)} trace {traceback.format_exc()}"
-            )
+            err_msg = f"create_base_folders error {repr(e)}"
+            _l.error(f"{err_msg} trace {traceback.format_exc()}")
+            raise BootstrapError("fatal", message=err_msg) from e
 
     @staticmethod
     def create_local_configuration():
