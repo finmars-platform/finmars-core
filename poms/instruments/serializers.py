@@ -23,7 +23,7 @@ from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
     AUTO_CALCULATE,
     AccrualCalculationModelField,
-    AccrualPriceEvalField,
+    AutocalculateFloatEvalField,
     CountryField,
     DailyPricingModelField,
     InstrumentField,
@@ -1783,6 +1783,17 @@ class InstrumentCalculatePricesAccruedPriceSerializer(serializers.Serializer):
         return attrs
 
 
+CREATE_ACTIONS = {
+    "create",
+    "bulk_create",
+}
+AUTOCALCULATE_ACTIONS = {
+    *CREATE_ACTIONS,
+    "update",
+    "partial_update",
+}
+
+
 class PriceHistorySerializer(ModelMetaSerializer):
     instrument = InstrumentField()
     instrument_object = InstrumentViewSerializer(source="instrument", read_only=True)
@@ -1791,7 +1802,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
         source="pricing_policy", read_only=True
     )
     principal_price = FloatEvalField()
-    accrued_price = AccrualPriceEvalField()
+    accrued_price = AutocalculateFloatEvalField()
     procedure_modified_datetime = ReadOnlyField()
     ytm = ReadOnlyField()
 
@@ -1819,14 +1830,18 @@ class PriceHistorySerializer(ModelMetaSerializer):
         ]
 
     def validate(self, attrs: dict) -> dict:
-        if self.context["view"].action in {"create", "bulk_create"}:
-            if "date" not in attrs or not attrs["date"]:
+        action = self.context["view"].action
+        if action in AUTOCALCULATE_ACTIONS:
+            if action in CREATE_ACTIONS and ("date" not in attrs or not attrs["date"]):
                 raise ValidationError(
-                    "To calculate 'accrued_price', valid 'date' must be provided"
+                    "To calculate 'accrued_price' valid 'date' must be provided"
                 )
 
-            if attrs["accrued_price"] == AUTO_CALCULATE:
+            if attrs.get("accrued_price") == AUTO_CALCULATE:
                 attrs["accrued_price"] = None
+
+            if attrs.get("factor") == AUTO_CALCULATE:
+                attrs["factor"] = None
 
         return attrs
 

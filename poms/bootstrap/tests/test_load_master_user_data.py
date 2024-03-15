@@ -1,5 +1,6 @@
 from unittest import mock
 
+from django.conf import settings
 from django.test import override_settings
 
 from poms.bootstrap.apps import BootstrapConfig
@@ -18,16 +19,17 @@ MOCK_RESPONSE = {
 }
 
 
-class FinmarsTaskTestCase(BaseTestCase):
+class LoadMasterUserDataTestCase(BaseTestCase):
     """
     Test doesn't run whole BootstrapConfig class,
     it checks only one method: load_master_user_data
     """
+    databases = "__all__"
 
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.old_member = Member.objects.create(
+        self.old_member = Member.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             is_admin=False,
             is_owner=False,

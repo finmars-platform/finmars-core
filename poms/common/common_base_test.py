@@ -393,7 +393,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
         return AccrualCalculationSchedule.objects.using(settings.DB_DEFAULT).create(
             instrument=instrument,
-            accrual_start_date=date.today(),
+            accrual_start_date=date.today().strftime("%Y-%m-%d"),
             accrual_start_date_value_type=SystemValueType.DATE,
             first_payment_date=self.random_future_date(),
             first_payment_date_value_type=SystemValueType.DATE,
