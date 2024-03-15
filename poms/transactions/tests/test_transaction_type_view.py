@@ -2,6 +2,7 @@ from urllib import parse
 from unittest import skip
 
 from django.conf import settings
+from django.test import override_settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.transactions.handlers import TransactionTypeProcess
@@ -241,6 +242,33 @@ class TransactionTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_bulk_restore(self):
+        transaction_types = TransactionType.objects.filter(is_deleted=False)
+        ids_tuples = transaction_types.values_list('id', flat=True)
+        ids_list = list(ids_tuples)
+        self.assertNotEqual(len(ids_list), 0)
+        transaction_types.update(is_deleted=True)
+        data = {"ids": ids_list}
+
+        response = self.client.post(path=f"{self.url}bulk-restore/", data=data)
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertIsInstance(response_data["task_id"], int)
+
+        response = self.client.get(f"/{settings.BASE_API_URL}/api/v1/tasks/task/{response_data['task_id']}/")
+        self.assertEqual(response.status_code, 200)
+        content = response.json()
+        self.assertEqual(content["id"], response_data['task_id'])
+
+        while content["status"] == "D":
+            response = self.client.get(f"/{settings.BASE_API_URL}/api/v1/tasks/task/{response_data['task_id']}/")
+            content = response.json()
+
+        for transaction_type in transaction_types:
+            transaction_type.update_from_db()
+            self.assertFalse(transaction_type.is_deleted)
 
     def test__create(self):
         create_data = self.prepare_create_data()
