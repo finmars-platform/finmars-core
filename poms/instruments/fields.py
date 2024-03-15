@@ -141,6 +141,6 @@ class SystemPricingPolicyDefault:
         return ecosystem_default.pricing_policy
 
 
-class AccrualPriceEvalField(FloatEvalField):
-    def run_validation(self, data):
-        return AUTO_CALCULATE if data is None else super().run_validation(data)
+class AutocalculateFloatEvalField(FloatEvalField):
+    def run_validation(self, value=None):
+        return AUTO_CALCULATE if value is None else super().run_validation(value)

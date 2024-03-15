@@ -2,6 +2,7 @@ from urllib import parse
 from unittest import skip
 
 from django.conf import settings
+from django.test import override_settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.transactions.handlers import TransactionTypeProcess
