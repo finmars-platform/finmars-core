@@ -1,14 +1,13 @@
-import traceback
 import json
+import traceback
 from logging import getLogger
 
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms_app import settings
-
 from poms.common.storage import get_storage
+from poms_app import settings
 
 storage = get_storage()
 
@@ -80,7 +79,7 @@ class FileReport(models.Model):
         file_url = self._get_path(master_user, file_name)
 
         try:
-            with storage.open(f"/{settings.BASE_API_URL}{file_url}", 'w') as fp:
+            with storage.open(f"/{settings.BASE_API_URL}{file_url}", "w") as fp:
                 json.dump(dict_to_json, fp, indent=4, default=str)
 
         except Exception as e:
@@ -91,7 +90,6 @@ class FileReport(models.Model):
         # _l.info(f"FileReport.upload_file.file_url {file_url}")
 
         return file_url
-    
 
     def get_file(self):
         result = None

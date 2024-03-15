@@ -273,7 +273,6 @@ class SimpleEval2(object):
                 val = get_model_data_ext(val, context=self.context)
                 self._table[key] = val
             return val
-            # return val
 
     def eval(self, expr, names=None):
         if not expr:
@@ -527,13 +526,13 @@ class SimpleEval2(object):
         if isinstance(val, (dict, OrderedDict)):
             try:
                 return val[node.attr]
-            except (IndexError, KeyError, TypeError):
+            except (IndexError, KeyError, TypeError) as e:
                 # _l.debug('AttributeDoesNotExist.node %s' % node)
                 # _l.debug('AttributeDoesNotExist.node.attr %s' % node.attr)
                 # _l.debug('AttributeDoesNotExist.node.value %s' % node.value)
                 # _l.debug('AttributeDoesNotExist.val %s' % val)
 
-                raise AttributeDoesNotExist(node.attr)
+                raise AttributeDoesNotExist(node.attr) from e
 
         elif isinstance(val, list):
             # _l.debug("list here? %s" % val)
@@ -541,27 +540,26 @@ class SimpleEval2(object):
             # _l.debug("list here? node.attr %s" % node.attr)
             if node.attr in ["append", "pop", "remove"]:
                 return getattr(val, node.attr)
-        else:
-            if isinstance(val, datetime.date):
-                if node.attr in ["year", "month", "day"]:
-                    return getattr(val, node.attr)
+        elif isinstance(val, datetime.date):
+            if node.attr in ["year", "month", "day"]:
+                return getattr(val, node.attr)
 
-            elif isinstance(val, datetime.timedelta):
-                if node.attr in ["days"]:
-                    return getattr(val, node.attr)
+        elif isinstance(val, datetime.timedelta):
+            if node.attr in ["days"]:
+                return getattr(val, node.attr)
 
-            elif isinstance(val, relativedelta.relativedelta):
-                if node.attr in [
-                    "years",
-                    "months",
-                    "days",
-                    "leapdays",
-                    "year",
-                    "month",
-                    "day",
-                    "weekday",
-                ]:
-                    return getattr(val, node.attr)
+        elif isinstance(val, relativedelta.relativedelta):
+            if node.attr in [
+                "years",
+                "months",
+                "days",
+                "leapdays",
+                "year",
+                "month",
+                "day",
+                "weekday",
+            ]:
+                return getattr(val, node.attr)
 
         # _l.info('AttributeDoesNotExist.val %s' % val)
         # _l.info('AttributeDoesNotExist.node %s' % node.__dict__)
