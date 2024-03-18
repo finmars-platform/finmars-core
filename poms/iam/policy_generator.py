@@ -11,7 +11,6 @@ from rest_framework.mixins import (
     UpdateModelMixin,
 )
 
-from poms.common.mixins import ListEvModelMixin, ListLightModelMixin
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Role
 from poms.iam.utils import add_to_list_if_not_exists, capitalize_first_letter
@@ -20,65 +19,41 @@ from poms_app import settings
 _l = logging.getLogger("poms.iam")
 
 
-def generate_full_access_policies_for_viewsets(viewset_classes):
+def generate_full_access_policies_for_viewsets(viewset_classes: list):
     from poms.users.models import Member
+    from poms.iam.all_actions_names import FULL_ACCESS_ACTIONS
 
+    service_name = settings.SERVICE_NAME
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
         actions = []
-
-        # _l.info('viewset_class %s' % viewset_class)
-
-        service_name = settings.SERVICE_NAME
-
-        configuration_code = get_default_configuration_code()
-        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
-
-        name = f"{capitalize_first_letter(viewset_name)} Full Access"
-
-        finmars_bot = Member.objects.get(username="finmars_bot")
-
-        try:
-            access_policy = AccessPolicy.objects.get(user_code=user_code)
-        except AccessPolicy.DoesNotExist:
-            access_policy = AccessPolicy.objects.create(
-                user_code=user_code,
-                owner=finmars_bot,
-                configuration_code=configuration_code,
-            )
-
-        access_policy.name = name
-
         if issubclass(viewset_class, CreateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:create")
 
-        elif issubclass(viewset_class, RetrieveModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:retrieve")
-
-        elif issubclass(viewset_class, UpdateModelMixin):
+        if issubclass(viewset_class, UpdateModelMixin):
             actions.append(f"{service_name}:{viewset_name}:update")
 
-        elif issubclass(viewset_class, DestroyModelMixin):
+        if issubclass(viewset_class, DestroyModelMixin):
             actions.append(f"{service_name}:{viewset_name}:destroy")
 
-        elif issubclass(viewset_class, ListLightModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list_light")
+        actions.extend(
+            f"{service_name}:{viewset_name}:{action.__name__}"
+            for action in viewset_class.get_extra_actions()
+            if action.__name__ in FULL_ACCESS_ACTIONS
+        )
 
-        elif issubclass(viewset_class, ListEvModelMixin):
-            actions.extend(
-                (
-                    f"{service_name}:{viewset_name}:list_ev_item",
-                    f"{service_name}:{viewset_name}:list_ev_group",
-                )
-            )
+        configuration_code = get_default_configuration_code()
+        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-full"
+        finmars_bot = Member.objects.get(username="finmars_bot")
 
-        # must be last, cause ListLightModelMixin & ListEvModelMixin are its subclasses
-        elif issubclass(viewset_class, ListModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list")
+        access_policy, created = AccessPolicy.objects.get_or_create(
+            user_code=user_code,
+            defaults={"owner": finmars_bot},
+        )
 
-        if len(actions):
+        if actions:
             access_policy_json = {
-                "Version": "2023-01-01",
+                "Version": "2024-01-01",
                 "Statement": [
                     {
                         "Effect": "Allow",
@@ -89,44 +64,25 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
                 ],
             }
 
+            access_policy.configuration_code = configuration_code
+            access_policy.name = f"{capitalize_first_letter(viewset_name)} Full Access"
             access_policy.policy = access_policy_json
+            if not created:
+                access_policy.owner = finmars_bot
             access_policy.save()
+
         else:
             access_policy.delete()
 
 
-def generate_readonly_access_policies_for_viewsets(viewset_classes):
+def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> list:
     from poms.users.models import Member
+    from poms.iam.all_actions_names import READ_ACCESS_ACTIONS
 
-    access_policies = []
-
+    service_name = settings.SERVICE_NAME
+    readonly_access_policies = []
     for viewset_class in viewset_classes:
         viewset_name = viewset_class.__name__.replace("ViewSet", "")
-        # _l.info('viewset_class %s' % viewset_class)
-
-        service_name = settings.SERVICE_NAME
-
-        configuration_code = get_default_configuration_code()
-        user_code = (
-            f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
-        )
-
-        name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
-        service_name = settings.SERVICE_NAME
-
-        finmars_bot = Member.objects.get(username="finmars_bot")
-
-        try:
-            access_policy = AccessPolicy.objects.get(user_code=user_code)
-        except Exception as e:
-            access_policy = AccessPolicy.objects.create(
-                user_code=user_code,
-                owner=finmars_bot,
-                configuration_code=configuration_code,
-            )
-
-        access_policy.name = name
-
         actions = []
         if issubclass(viewset_class, ListModelMixin):
             actions.append(f"{service_name}:{viewset_name}:list")
@@ -134,19 +90,24 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
         if issubclass(viewset_class, RetrieveModelMixin):
             actions.append(f"{service_name}:{viewset_name}:retrieve")
 
-        if issubclass(viewset_class, ListLightModelMixin):
-            actions.append(f"{service_name}:{viewset_name}:list_light")
+        actions.extend(
+            f"{service_name}:{viewset_name}:{action.__name__}"
+            for action in viewset_class.get_extra_actions()
+            if action.__name__ in READ_ACCESS_ACTIONS
+        )
 
-        if issubclass(viewset_class, ListEvModelMixin):
-            actions.extend(
-                (
-                    f"{service_name}:{viewset_name}:list_ev_item",
-                    f"{service_name}:{viewset_name}:list_ev_group",
-                )
-            )
+        configuration_code = get_default_configuration_code()
+        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
+        finmars_bot = Member.objects.get(username="finmars_bot")
+
+        access_policy, created = AccessPolicy.objects.get_or_create(
+            user_code=user_code,
+            defaults={"owner": finmars_bot},
+        )
+
         if actions:
             access_policy_json = {
-                "Version": "2023-01-01",
+                "Version": "2024-01-01",
                 "Statement": [
                     {
                         "Effect": "Allow",
@@ -156,14 +117,18 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
                     }
                 ],
             }
-
+            access_policy.configuration_code = configuration_code
+            access_policy.name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
             access_policy.policy = access_policy_json
+            if not created:
+                access_policy.owner = finmars_bot
             access_policy.save()
-            access_policies.append(access_policy)
+            readonly_access_policies.append(access_policy)
+
         else:
             access_policy.delete()
 
-    return access_policies
+    return readonly_access_policies
 
 
 def generate_balance_report_access_policy():
@@ -462,7 +427,7 @@ def generate_init_configuration_install_access_policy():
     return access_policy
 
 
-def generate_speicifc_policies_for_viewsets():
+def generate_specific_policies_for_viewsets():
     generate_balance_report_access_policy()
     generate_pl_report_access_policy()
     generate_transaction_report_access_policy()
@@ -741,7 +706,26 @@ def generate_configuration_manager_role():
     role.save()
 
 
-def get_viewsets_from_app(app_name):
+def get_viewsets_from_module(module) -> list:
+    return [
+        obj
+        for name, obj in inspect.getmembers(module)
+        if (
+            inspect.isclass(obj)
+            and issubclass(obj, viewsets.ViewSetMixin)
+            and obj != viewsets.ViewSetMixin
+        )
+        and "abstract" not in name.lower()
+    ]
+
+
+# FOR FUTURE USE ?
+def get_viewsets_from_app_with_models(app_name: str) -> list:
+    """
+    Returns a list of all viewsets in the given app_name, if it has models!
+    Args:
+        app_name:  the name of the app from which to get all viewsets
+    """
     app_config = apps.get_app_config(app_name)
     viewset_classes = []
 
@@ -756,16 +740,27 @@ def get_viewsets_from_app(app_name):
         except ImportError:
             continue
 
-        viewset_classes.extend(
-            obj
-            for name, obj in inspect.getmembers(viewsets_module)
-            if (
-                inspect.isclass(obj)
-                and issubclass(obj, viewsets.ViewSetMixin)
-                and obj != viewsets.ViewSetMixin
-            )
-            and "abstract" not in name.lower()
-        )
+        viewset_classes.extend(get_viewsets_from_module(viewsets_module))
+
+    return viewset_classes
+
+
+def get_viewsets_from_any_app(app_name: str) -> list:
+    """
+    Returns a list of all viewsets in the given app_name
+    Args:
+        app_name:  the name of the app from which to get all viewsets
+    """
+    app_config = apps.get_app_config(app_name)
+    viewset_classes = []
+
+    try:
+        viewsets_module = app_config.module.views
+    except AttributeError:
+        _l.warning(f"app {app_name} has no views!")
+        return []
+
+    viewset_classes.extend(get_viewsets_from_module(viewsets_module))
 
     return viewset_classes
 
@@ -777,8 +772,7 @@ def get_viewsets_from_all_apps():
         if not app_config.name.startswith("poms"):
             continue  # Skip Django's built-in apps
 
-        app_viewsets = get_viewsets_from_app(app_config.label)
-        all_viewsets.extend(app_viewsets)
+        all_viewsets.extend(get_viewsets_from_any_app(app_config.label))
 
     return all_viewsets
 
@@ -834,7 +828,7 @@ def create_base_iam_access_policies_templates():
             % len(readonly_access_policies)
         )
 
-        generate_speicifc_policies_for_viewsets()
+        generate_specific_policies_for_viewsets()
 
         _l.info(
             "create_base_iam_access_policies_templates.generate_speicifc_policies_for_viewsets done"

@@ -1,8 +1,14 @@
 import logging
+
+from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q, QuerySet
+
+from poms.iam.models import AccessPolicy
+from poms.users.models import Member
 
 _l = logging.getLogger('poms.iam')
-from django.db.models import Q
+
 
 '''
     parse_resource_into_object
@@ -16,9 +22,7 @@ from django.db.models import Q
          ...
          "user_code": "space00000"
         }
-
-    '''
-from poms.iam.models import AccessPolicy
+'''
 
 
 def add_to_list_if_not_exists(string, my_list):
@@ -83,16 +87,18 @@ parse_resource_attribute
 '''
 
 
-def parse_resource_attribute(resources):
-    result = []
-
-    for resource in resources:
-        result.append(parse_resource_into_object(resource))
-
-    return result
+def parse_resource_attribute(resources: list) -> list:
+    return [parse_resource_into_object(resource) for resource in resources]
 
 
-def get_member_access_policies(member):
+def get_member_access_policies(member: Member) -> QuerySet:
+    """
+    Get all AccessPolicy objects for the member from cache or db
+    Args:
+        member:
+    Returns:
+        list of AccessPolicy objects
+    """
 
     cache_key = f'member_access_policies_{member.id}'
     access_policies = cache.get(cache_key)
@@ -105,27 +111,29 @@ def get_member_access_policies(member):
         ).distinct()
 
         # Cache the result for a specific duration (e.g., 5 minutes)
-        cache.set(cache_key, access_policies, 300)
+        cache.set(cache_key, access_policies, settings.ACCESS_POLICY_CACHE_TTL)
 
     return access_policies
 
 
-def get_statements(member):
-    # Get all AccessPolicy objects for the user
-    access_policies = get_member_access_policies(member)
+def get_statements(member: Member) -> list:
+    """
+    Get all AccessPolicy statements for member/owner
+    Args:
+        member: policies owner
+    Returns:
+        list of AccessPolicy json fields (statements)
+    """
 
     statements = []
-
-    for item in access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
+    for item in get_member_access_policies(member):
 
         policy = lowercase_keys_and_values(item.policy)
 
-        for statement in policy['statement']:
-            statements.append(lowercase_keys_and_values(statement))
-
-    # _l.debug('get_policy_statements.statements %s' % statements)
+        statements.extend(
+            lowercase_keys_and_values(statement)
+            for statement in policy['statement']
+        )
 
     return statements
 

@@ -46,11 +46,9 @@ class CreateFinmarsBotTestCase(BaseTestCase):
             BootstrapConfig.create_finmars_bot()
 
     def test__finmars_bot_member_created(self):
-        self.assertEqual(
-            Member.objects.using(settings.DB_DEFAULT)
-            .filter(username=FINMARS_BOT)
-            .count(),
-            0,
+        # rename member created during test initialization
+        Member.objects.using(settings.DB_DEFAULT).filter(username=FINMARS_BOT).update(
+            username="test_user"
         )
 
         BootstrapConfig.create_finmars_bot()
