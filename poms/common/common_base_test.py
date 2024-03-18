@@ -62,7 +62,7 @@ from poms.users.models import EcosystemDefault, MasterUser, Member
 
 TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
 MASTER_USER = "test_master"
-FINMARS_BOT = "test_bot"
+FINMARS_BOT = "finmars_bot"
 FINMARS_USER = "test_user"
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"

@@ -731,6 +731,9 @@ if USE_DEBUGGER:
         "RESULTS_STORE_SIZE": 100,
     }
 
+
+ACCESS_POLICY_CACHE_TTL = ENV_INT("ACCESS_POLICY_CACHE_TTL", 300)  # 5 mins
+
 # ========================
 # = KEYCLOAK INTEGRATION =
 # ========================
