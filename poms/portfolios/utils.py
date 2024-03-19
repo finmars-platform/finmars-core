@@ -1,3 +1,6 @@
+from typing import List
+
+from poms.instruments.models import PriceHistory
 from poms.portfolios.models import PortfolioRegisterRecord
 
 
@@ -18,3 +21,10 @@ def get_price_calculation_type(transaction_class, transaction) -> str:
         )
         else PortfolioRegisterRecord.AUTOMATIC
     )
+
+
+def update_price_histories(prices: List[PriceHistory], **kwargs):
+    """
+    Update PriceHistory objects with given data
+    """
+    PriceHistory.objects.filter(id__in=[price.id for price in prices]).update(**kwargs)

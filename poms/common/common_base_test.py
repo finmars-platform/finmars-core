@@ -62,7 +62,7 @@ from poms.users.models import EcosystemDefault, MasterUser, Member
 
 TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
 MASTER_USER = "test_master"
-FINMARS_BOT = "test_bot"
+FINMARS_BOT = "finmars_bot"
 FINMARS_USER = "test_user"
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"
@@ -324,8 +324,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return cls.today() - timedelta(days=1)
 
     @classmethod
-    def random_future_date(cls, interval=365) -> date:
-        days = cls.random_int(1, interval)
+    def random_future_date(cls, interval: int = 365*10) -> date:
+        days = cls.random_int(_max=interval)
         return cls.today() + timedelta(days=days)
 
     @classmethod

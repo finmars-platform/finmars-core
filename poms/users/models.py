@@ -143,8 +143,9 @@ class MasterUser(models.Model):
     )
     base_api_url = models.CharField(
         max_length=255,
-        null=True,
-        blank=True,
+        unique=True,
+        # null=True,
+        # blank=True,
         verbose_name=gettext_lazy("base api url"),
     )
     description = models.TextField(

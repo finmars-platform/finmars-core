@@ -28,7 +28,10 @@ from poms.portfolios.models import (
     PortfolioRegister,
     PortfolioRegisterRecord,
 )
-from poms.portfolios.utils import get_price_calculation_type
+from poms.portfolios.utils import (
+    get_price_calculation_type,
+    update_price_histories,
+)
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -46,34 +49,44 @@ def calculate_simple_balance_report(
     Probably is a duplicated method. Here we're just getting Balance Report instance
     on specific date, portfolio and pricing policy
     """
+    log = "calculate_simple_balance_report"
     _l.info(
-        f"calculate_simple_balance_report report_date={report_date} "
-        f"portfolio_register={portfolio_register} member={member}"
+        f"{log} report_date={report_date} portfolio_register={portfolio_register} "
+        f"member={member}"
     )
 
     if not portfolio_register.linked_instrument:
         raise FinmarsBaseException(
             error_key="invalid_portfolio_register",
-            message=f"calculate_simple_balance_report: invalid portfolio_register "
-            f"{portfolio_register} - no linked_instrument"
+            message=f"{log} portfolio_register {portfolio_register} has no linked_instrument"
         )
 
-    instance = Report(master_user=portfolio_register.master_user)
-    instance.master_user = portfolio_register.master_user
-    instance.member = member
-    instance.report_date = report_date
-    instance.pricing_policy = portfolio_register.valuation_pricing_policy
-    instance.portfolios = [portfolio_register.portfolio]
-    instance.report_currency = portfolio_register.linked_instrument.pricing_currency
+    try:
+        report = Report(master_user=portfolio_register.master_user)
+        report.master_user = portfolio_register.master_user
+        report.member = member
+        report.report_date = report_date
+        report.pricing_policy = portfolio_register.valuation_pricing_policy
+        report.portfolios = [portfolio_register.portfolio]
+        report.report_currency = portfolio_register.linked_instrument.pricing_currency
 
-    builder = BalanceReportBuilderSql(instance=instance)
-    instance = builder.build_balance_sync()
+        builder = BalanceReportBuilderSql(report)
+        report = builder.build_balance_sync()
 
-    return instance
+    except Exception as e:
+        err_msg = f"{log} resulted in error {repr(e)}"
+        _l.error(f"{err_msg} trace {traceback.format_exc()}")
+        raise RuntimeError(err_msg) from e
+
+    return report
 
 
 def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
-    _l.info(f"calculate_cash_flow.date {date} pricing_policy {pricing_policy}")
+    log = "calculate_cash_flow"
+    _l.info(
+        f"{log} date {date} pricing_policy {pricing_policy} "
+        f"portfolio_register {portfolio_register}"
+    )
 
     cash_flow = 0
 
@@ -88,8 +101,6 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
             TransactionClass.CASH_OUTFLOW,
         ],
     ).order_by("accounting_date")
-
-    error = False
 
     for transaction in transactions:
         if (
@@ -113,24 +124,22 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
                 fx_rate = trn_currency_fx_rate / instr_pricing_currency_fx_rate
 
-            except Exception:
-                error = True
-                fx_rate = 0
+            except Exception as e:
+                err_msg = (
+                    f"{log} fx_rate calculation for transaction {transaction.id} "
+                    f"portfolio_registry {portfolio_register.id} and linked_instrument "
+                    f"{portfolio_register.linked_instrument.id} resulted "
+                    f"in error {repr(e)}"
+                )
+                raise RuntimeError(err_msg) from e
 
         cash_flow = cash_flow + (
                 transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
         )
 
-    if error:
-        cash_flow = 0
-        _l.error(
-            f"Could not calculate cash flow for {date} "
-            f"{portfolio_register.linked_instrument} {pricing_policy}"
-        )
-
     _l.info(
-        f"calculate_cash_flow.date {date} pricing_policy {pricing_policy} "
-        f"RESULT {cash_flow}"
+        f"{log} date {date} pricing_policy {pricing_policy} "
+        f"RESULT CASH_FLOW {cash_flow}"
     )
 
     return cash_flow
@@ -523,12 +532,12 @@ def calculate_portfolio_register_price_history(self, task_id: int):
     from poms.celery_tasks.models import CeleryTask
     from poms.instruments.models import PriceHistory
 
+    log = "calculate_portfolio_register_price_history"
+
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise FinmarsBaseException(
-            error_key="task_not_found",
-            message=f"calculate_portfolio_register_price_history, no such task={task_id}"
-        )
+        raise FinmarsBaseException(error_key="task_not_found",
+            message=f"{log} no such task={task_id}")
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -536,7 +545,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
             master_user=task.master_user,
             action_status="required",
             type="error",
-            title="Task Failed. Name: calculate_portfolio_register_price_history",
+            title=f"Task Failed. Name: {log}",
             description=err_msg,
         )
         task.error_message = err_msg
@@ -551,10 +560,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
     task.save()
 
-    _l.info(
-        f"calculate_portfolio_register_price_history: "
-        f"task_options={task.options_object}"
-    )
+    _l.info(f"{log} task_id={task_id} task_options={task.options_object}")
 
     date_to = task.options_object.get("date_to")
     date_from = task.options_object.get("date_from")
@@ -650,10 +656,12 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-            _l.info(f'calculate {portfolio_register} len(dates)={len(item["dates"])}')
+            _l.info(
+                f'{log} calculate {portfolio_register} for {len(item["dates"])} days'
+            )
 
             for day in item["dates"]:
-                registry_record = (
+                pr_record = (
                     PortfolioRegisterRecord.objects.filter(
                         instrument=portfolio_register.linked_instrument,
                         transaction_date__lte=day,
@@ -661,78 +669,73 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                     .order_by("-transaction_date", "-transaction_code")
                     .first()
                 )
-                if registry_record and registry_record.rolling_shares_of_the_day:
-                    try:
-                        balance_report = calculate_simple_balance_report(
-                            day,
-                            portfolio_register,
-                            task.member,
-                        )
+                if not pr_record or not pr_record.valuation_pricing_policy:
+                    continue
 
-                        nav = 0
-                        for it in balance_report.items:
-                            if it["market_value"]:
-                                nav = nav + it["market_value"]
+                price_histories = []  # price history objects to be updated
+                for pricing_policy in pricing_policies:
+                    price_history, _ = PriceHistory.objects.get_or_create(
+                        instrument=portfolio_register.linked_instrument,
+                        date=day,
+                        pricing_policy=pricing_policy,
+                    )
+                    price_histories.append(price_history)
 
-                        cash_flow = calculate_cash_flow(
-                            master_user,
-                            day,
-                            true_pricing_policy,
-                            portfolio_register,
-                        )
+                try:
+                    balance_report = calculate_simple_balance_report(
+                        day,
+                        portfolio_register,
+                        task.member,
+                    )
+                    nav = 0
+                    for it in balance_report.items:
+                        if it["market_value"]:
+                            nav = nav + it["market_value"]
 
-                        principal_price = (
-                                nav / registry_record.rolling_shares_of_the_day
-                        )
-                        for pricing_policy in pricing_policies:
-                            price_history, _ = PriceHistory.objects.get_or_create(
-                                instrument=portfolio_register.linked_instrument,
-                                date=day,
-                                pricing_policy=pricing_policy,
-                            )
-                            price_history.nav = nav
-                            price_history.cash_flow = cash_flow
-                            price_history.principal_price = principal_price
-                            price_history.save()
+                except Exception as e:
+                    err_msg = (
+                        f"{log} {portfolio_register} day {day} calculate_simple_"
+                        f"balance_report func ended in error {repr(e)}"
+                    )
+                    _l.error(f"{err_msg} trace {traceback.format_exc()}")
+                    update_price_histories(price_histories, error_message=err_msg)
+                    continue
 
-                        count += 1
+                try:
+                    cash_flow = calculate_cash_flow(
+                        master_user,
+                        day,
+                        true_pricing_policy,
+                        portfolio_register,
+                    )
+                    principal_price = nav / pr_record.rolling_shares_of_the_day
 
-                        task.update_progress(
-                            {
-                                "current": count,
-                                "percent": round(count / (total / 100)),
-                                "total": total,
-                                "description": f"Calculating {portfolio_register} at {day}",
-                            }
-                        )
+                except Exception as e:
+                    err_msg = (
+                        f"{log} {portfolio_register} day {day} calculate_cash_flow"
+                        f"func ended in error {repr(e)}"
+                    )
+                    _l.error(f"{err_msg} trace {traceback.format_exc()}")
+                    update_price_histories(price_histories, error_message=err_msg)
+                    continue
 
-                    except Exception as e:
-                        err_msg = (
-                            f"task calculate_portfolio_register_price_history "
-                            f"at day {day} resulted in error {repr(e)}"
-                        )
+                update_price_histories(
+                    price_histories,
+                    error_message="",
+                    nav=nav,
+                    cash_flow=cash_flow,
+                    principal_price=principal_price,
+                )
 
-                        # create fake price record (if it doesn't exist) to store error
-                        price_history = PriceHistory.objects.filter(
-                            instrument=portfolio_register.linked_instrument,
-                            date=day,
-                            pricing_policy__in=pricing_policies,
-                        ).first()
-                        if not price_history:
-                            if pricing_policies:
-                                pricing_policy = pricing_policies[0]
-                            else:
-                                pricing_policy = None
-                            PriceHistory.objects.create(
-                                instrument=portfolio_register.linked_instrument,
-                                date=day,
-                                pricing_policy=pricing_policy,
-                                is_temporary_price=True,
-                            )
-                        if price_history.error_message:  # reset error messages
-                            price_history.error_message = ""
-                        price_history.handle_err(err_msg)
-                        price_history.save()
+                count = count + 1
+                task.update_progress(
+                    {
+                        "current": count,
+                        "percent": round(count / (total / 100)),
+                        "total": total,
+                        "description": f"Calculating {portfolio_register} at {day}",
+                    }
+                )
 
         # Finish calculation
         send_system_message(

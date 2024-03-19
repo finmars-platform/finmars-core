@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ValidationError, ObjectDoesNotExist, PermissionDenied
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy
 from rest_framework import status
@@ -16,6 +16,8 @@ from rest_framework.mixins import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from poms.currencies.constants import DASH
+
+from poms.common.serializers import BulkSerializer
 
 _l = logging.getLogger("poms.common.mixins")
 
@@ -119,10 +121,13 @@ class DestroySystemicModelMixin(DestroyModelMixinExt):
 class BulkDestroyModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-delete")
     def bulk_delete(self, request):
-        data = request.data
-
         from poms.celery_tasks.models import CeleryTask
+        from poms_app import celery_app
+        
+        serializer = BulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
+        data = serializer.validated_data
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(queryset.model)
@@ -138,10 +143,40 @@ class BulkDestroyModelMixin(DestroyModelMixin):
             type="bulk_delete",
         )
 
-        from poms_app import celery_app
-
         celery_app.send_task(
             "celery_tasks.bulk_delete",
+            kwargs={"task_id": celery_task.id},
+            queue="backend-background-queue",
+        )
+        return Response({"task_id": celery_task.id})
+
+class BulkRestoreModelMixin(DestroyModelMixin):
+    @action(detail=False, methods=["post"], url_path="bulk-restore")
+    def bulk_restore(self, request):
+        from poms.celery_tasks.models import CeleryTask
+        from poms_app import celery_app
+
+        serializer = BulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        queryset = self.filter_queryset(self.get_queryset())
+
+        content_type = ContentType.objects.get_for_model(queryset.model)
+        content_type_key = f"{content_type.app_label}.{content_type.model}"
+
+        options_object = {"content_type": content_type_key, "ids": data["ids"]}
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Bulk Restore",
+            type="bulk_restore",
+        )
+
+        celery_app.send_task(
+            "celery_tasks.bulk_restore",
             kwargs={"task_id": celery_task.id},
             queue="backend-background-queue",
         )
@@ -343,7 +378,7 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
 
 
 # BulkSaveModelMixin have some problem with permissions
-class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin):
+class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin, BulkRestoreModelMixin):
     pass
 
     # Now BulkModelMixin is not used

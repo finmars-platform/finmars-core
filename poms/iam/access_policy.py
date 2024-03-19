@@ -71,16 +71,7 @@ class AccessPolicy(permissions.BasePermission):
         if request.user.member and request.user.member.is_admin:
             return True
 
-        action = self._get_invoked_action(view)
-        statements = self.get_policy_statements(request, view)
-
-        if len(statements) == 0:
-            return False
-
-        allowed = self._evaluate_statements(statements, request, view, action)
-        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
-        return allowed
-
+        return self.has_specific_permission(view, request)
 
     def has_object_permission(self, request, view, obj):
 
@@ -94,12 +85,14 @@ class AccessPolicy(permissions.BasePermission):
         if obj.owner == request.user.member:
             return True
 
-        action = self._get_invoked_action(view)
-        statements = self.get_policy_statements(request, view)
+        return self.has_specific_permission(view, request)
 
-        if len(statements) == 0:
+    def has_specific_permission(self, view, request):
+        statements = self.get_policy_statements(request, view)
+        if not statements:
             return False
 
+        action = self._get_invoked_action(view)
         allowed = self._evaluate_statements(statements, request, view, action)
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
         return allowed
