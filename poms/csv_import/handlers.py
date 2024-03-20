@@ -1678,35 +1678,45 @@ class SimpleImportProcess:
         Calculates accrued_price & factor for PriceHistory if in the file
         their values are null, and update final_inputs dict
         """
-        if model != "pricehistory" or not final_inputs:
+        if model.lower() != "pricehistory" or not final_inputs:
             return
+
+        _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
 
         date_str = final_inputs.get("date")
         try:
             effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except Exception:
-            _l.error(f"calculate_null_fields: invalid date_str {date_str}")
+            _l.error(f"calculate_null_fields: invalid date_str={date_str}")
             return
 
         user_code = final_inputs.get("instrument")
         try:
             instrument = Instrument.objects.get(user_code=user_code)
         except Exception:
-            _l.error(f"calculate_null_fields: invalid instrument user_code {user_code}")
+            _l.error(f"calculate_null_fields: no such instrument user_code={user_code}")
             return
 
-        try:
-            for key, value in final_inputs.items():
-                if value is None:
+        error_messages = []
+        for key, value in final_inputs.items():
+            if value is None:
+                try:
                     if key == "accrued_price":
                         final_inputs[key] = instrument.get_accrued_price(
                             price_date=effective_date
                         )
+
                     elif key == "factor":
                         final_inputs[key] = instrument.get_factor(fdate=effective_date)
-        except Exception as e:
-            _l.error(f"calculate_null_fields: aborted due to {repr(e)}")
-            return
+
+                except Exception as e:
+                    final_inputs[key] = 1 if key == "factor" else 0
+                    err_msg = f"calculate_null_fields: {key} {repr(e)}"
+                    _l.error(err_msg)
+                    error_messages.append(err_msg)
+
+        if error_messages:
+            final_inputs["error_message"] = "; ".join(error_messages)
 
     def import_items_by_batch_indexes(
         self, batch_indexes, filter_for_async_functions_eval
@@ -1716,7 +1726,7 @@ class SimpleImportProcess:
         for item_index in batch_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(
                 self.items[item_index],
-                                                                        all_entity_fields_models
+                all_entity_fields_models
             )
             # dict for getting relation models at the next step
             relation_models_user_codes = self.__get_relation_to_convert(
