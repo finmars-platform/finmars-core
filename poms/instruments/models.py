@@ -2228,12 +2228,8 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         if accrual is None:
             return 0
 
-        accrual_start_date = datetime.date(
-            datetime.strptime(accrual.accrual_start_date, DATE_FORMAT)
-        )
-        first_payment_date = datetime.date(
-            datetime.strptime(accrual.first_payment_date, DATE_FORMAT)
-        )
+        accrual_start_date = datetime.strptime(accrual.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual.first_payment_date, DATE_FORMAT).date()
 
         _l.info(f"coupon_accrual_factor price_date {price_date} ")
 
