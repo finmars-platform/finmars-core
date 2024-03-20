@@ -139,6 +139,9 @@ def get_statements(member: Member) -> list:
 
 
 def filter_queryset_with_access_policies(member, queryset, view):
+    if not member:
+        return queryset.none()
+
     if member.is_admin:
         return queryset
 
@@ -288,6 +291,8 @@ def capitalize_first_letter(string):
 
 
 def get_allowed_queryset(member, queryset):
+    if not member:
+        return queryset.none()
 
     if member.is_admin:
         return queryset
