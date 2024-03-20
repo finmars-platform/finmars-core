@@ -2383,7 +2383,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     def get_factor(self, fdate: date) -> float:
         if not fdate:
-            return 1.0
+            return 1
 
         res = None
         factors = self.get_factors()
@@ -2391,7 +2391,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             if f.effective_date < fdate:
                 res = f
 
-        return res.factor_value if res else 1.0
+        return res.factor_value if res else 1
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
