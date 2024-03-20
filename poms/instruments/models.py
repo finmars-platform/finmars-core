@@ -2822,7 +2822,6 @@ class PriceHistory(DataTimeStampedModel):
             self.error_message = ""
 
         if self.error_message != "":
-            self.error_message = err_msg
             self.error_message = f"{self.error_message}; {err_msg}"
         else:
             self.error_message = err_msg
