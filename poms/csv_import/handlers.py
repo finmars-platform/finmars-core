@@ -1678,7 +1678,7 @@ class SimpleImportProcess:
         Calculates accrued_price & factor for PriceHistory if in the file
         their values are null, and update final_inputs dict
         """
-        if model != "pricehistory" or not final_inputs:
+        if model.lower() != "pricehistory" or not final_inputs:
             return
 
         _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
