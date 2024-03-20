@@ -2136,10 +2136,8 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
-        accrual = None
-
         # _l.debug('find_accrual.accruals %s' % accruals)
-
+        accrual = None
         for a in accruals:
             if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
                 accrual = a
