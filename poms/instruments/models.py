@@ -2107,9 +2107,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         accruals = sorted(
             accruals,
-            key=lambda x: datetime.date(
-                datetime.strptime(x.accrual_start_date, DATE_FORMAT)
-            ),
+            key=lambda x: datetime.strptime(x.accrual_start_date, DATE_FORMAT).date(),
         )
 
         # _l.info('get_accrual_calculation_schedules_all after sort')
@@ -2119,6 +2117,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             if a is not None:
                 a.accrual_end_date = next_a.accrual_start_date
             a = next_a
+
         if a:
             try:
                 a.accrual_end_date = self.maturity_date + timedelta(days=1)
