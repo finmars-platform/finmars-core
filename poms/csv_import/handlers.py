@@ -1681,6 +1681,8 @@ class SimpleImportProcess:
         if model != "pricehistory" or not final_inputs:
             return
 
+        _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
+
         date_str = final_inputs.get("date")
         try:
             effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
