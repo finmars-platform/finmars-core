@@ -2107,9 +2107,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         accruals = sorted(
             accruals,
-            key=lambda x: datetime.date(
-                datetime.strptime(x.accrual_start_date, DATE_FORMAT)
-            ),
+            key=lambda x: datetime.strptime(x.accrual_start_date, DATE_FORMAT).date(),
         )
 
         # _l.info('get_accrual_calculation_schedules_all after sort')
@@ -2119,6 +2117,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             if a is not None:
                 a.accrual_end_date = next_a.accrual_start_date
             a = next_a
+
         if a:
             try:
                 a.accrual_end_date = self.maturity_date + timedelta(days=1)
@@ -2130,16 +2129,17 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         return accruals
 
     def find_accrual(self, d: date):
+        if not isinstance(d, date):
+            raise ValueError(f"find_accrual: d must be a date, not {type(d)}")
+
         if self.maturity_date and (d >= self.maturity_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
-        accrual = None
-
         # _l.debug('find_accrual.accruals %s' % accruals)
-
+        accrual = None
         for a in accruals:
-            if datetime.date(datetime.strptime(a.accrual_start_date, DATE_FORMAT)) <= d:
+            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
                 accrual = a
 
         return accrual
@@ -2161,7 +2161,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     continue
                 accrued_price = self.get_accrued_price(price.date)
                 if accrued_price is None:
-                    accrued_price = 0.0
+                    accrued_price = 0
                 price.accrued_price = accrued_price
                 price.save(update_fields=["accrued_price"])
 
@@ -2184,17 +2184,17 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                             price.save()
                     else:
                         if accrued_price is None:
-                            accrued_price = 0.0
+                            accrued_price = 0
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
 
     def get_accrual_size(self, price_date):
         if not self.maturity_date or (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         # _l.debug('get_accrual_size.accrual %s' % accrual)
-        return 0.0 if accrual is None else float(accrual.accrual_size)
+        return 0 if accrual is None else float(accrual.accrual_size)
 
     def get_future_accrual_payments(self, d0, v0):
         pass
@@ -2203,11 +2203,11 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if self.maturity_date and (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         if accrual is None:
-            return 0.0
+            return 0
 
         return coupon_accrual_factor(
             accrual_calculation_schedule=accrual,
@@ -2220,18 +2220,14 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if self.maturity_date and (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         if accrual is None:
-            return 0.0
+            return 0
 
-        accrual_start_date = datetime.date(
-            datetime.strptime(accrual.accrual_start_date, DATE_FORMAT)
-        )
-        first_payment_date = datetime.date(
-            datetime.strptime(accrual.first_payment_date, DATE_FORMAT)
-        )
+        accrual_start_date = datetime.strptime(accrual.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual.first_payment_date, DATE_FORMAT).date()
 
         _l.info(f"coupon_accrual_factor price_date {price_date} ")
 
@@ -2381,7 +2377,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     def get_factor(self, fdate: date) -> float:
         if not fdate:
-            return 1.0
+            return 1
 
         res = None
         factors = self.get_factors()
@@ -2389,7 +2385,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             if f.effective_date < fdate:
                 res = f
 
-        return res.factor_value if res else 1.0
+        return res.factor_value if res else 1
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
@@ -2822,10 +2818,11 @@ class PriceHistory(DataTimeStampedModel):
 
     def handle_err(self, err_msg: str):
         _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
-        if self.error_message is not None:
-            self.error_message = f"{self.error_message}; {err_msg}"
-        else:
+
+        if not self.error_message:
             self.error_message = err_msg
+        else:
+            self.error_message = f"{self.error_message}; {err_msg}"
 
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
