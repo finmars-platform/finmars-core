@@ -2130,6 +2130,9 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         return accruals
 
     def find_accrual(self, d: date):
+        if not isinstance(d, date):
+            raise ValueError(f"find_accrual: d must be a date, not {type(d)}")
+
         if self.maturity_date and (d >= self.maturity_date):
             return None
 
@@ -2139,7 +2142,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         # _l.debug('find_accrual.accruals %s' % accruals)
 
         for a in accruals:
-            if datetime.date(datetime.strptime(a.accrual_start_date, DATE_FORMAT)) <= d:
+            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
                 accrual = a
 
         return accrual
@@ -2161,7 +2164,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     continue
                 accrued_price = self.get_accrued_price(price.date)
                 if accrued_price is None:
-                    accrued_price = 0.0
+                    accrued_price = 0
                 price.accrued_price = accrued_price
                 price.save(update_fields=["accrued_price"])
 
@@ -2184,17 +2187,17 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                             price.save()
                     else:
                         if accrued_price is None:
-                            accrued_price = 0.0
+                            accrued_price = 0
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
 
     def get_accrual_size(self, price_date):
         if not self.maturity_date or (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         # _l.debug('get_accrual_size.accrual %s' % accrual)
-        return 0.0 if accrual is None else float(accrual.accrual_size)
+        return 0 if accrual is None else float(accrual.accrual_size)
 
     def get_future_accrual_payments(self, d0, v0):
         pass
@@ -2203,11 +2206,11 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if self.maturity_date and (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         if accrual is None:
-            return 0.0
+            return 0
 
         return coupon_accrual_factor(
             accrual_calculation_schedule=accrual,
@@ -2220,11 +2223,11 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if self.maturity_date and (price_date >= self.maturity_date):
-            return 0.0
+            return 0
 
         accrual = self.find_accrual(price_date)
         if accrual is None:
-            return 0.0
+            return 0
 
         accrual_start_date = datetime.date(
             datetime.strptime(accrual.accrual_start_date, DATE_FORMAT)
