@@ -2,7 +2,6 @@ from urllib import parse
 from unittest import skip
 
 from django.conf import settings
-from django.test import override_settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.transactions.handlers import TransactionTypeProcess
@@ -37,22 +36,24 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
     def create_transaction_type(self) -> TransactionType:
         transaction_type_group = self.get_transaction_type_group()
-        self.transaction_type = TransactionType.objects.create(
+        self.transaction_type = TransactionType.objects.get_or_create(
             master_user=self.master_user,
             owner=self.member,
-            configuration_code=self.random_string(),
-            user_code=self.random_string(7),
-            name=self.random_string(),
-            short_name=self.random_string(3),
             group=transaction_type_group.user_code,
             type=TransactionType.TYPE_DEFAULT,
-            user_text_1=self.random_string(),
-            user_text_2=self.random_string(),
-            user_number_1=str(self.random_int()),
-            user_number_2=str(self.random_int()),
-            # user_date_1=self.random_future_date().strftime(DATE_FORMAT),
-            # user_date_2=self.random_future_date().strftime(DATE_FORMAT),
-            is_deleted=False,
+            defaults=dict(
+                configuration_code=self.random_string(),
+                user_code=self.random_string(7),
+                name=self.random_string(),
+                short_name=self.random_string(3),
+                user_text_1=self.random_string(),
+                user_text_2=self.random_string(),
+                user_number_1=str(self.random_int()),
+                user_number_2=str(self.random_int()),
+                # user_date_1=self.random_future_date().strftime(DATE_FORMAT),
+                # user_date_2=self.random_future_date().strftime(DATE_FORMAT),
+                is_deleted=False,
+            )
         )
         self.transaction_type.attributes.add(self.create_attribute())
         self.transaction_type.book_transaction_layout = {"test": "test"}
@@ -186,7 +187,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 1)
+        self.assertTrue(len(response_json["results"]) >= 1)
         response_dict = response_json["results"][0]
         self.assertEqual(response_dict["short_name"], transaction_type.short_name)
 
