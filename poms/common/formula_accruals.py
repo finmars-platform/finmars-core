@@ -210,6 +210,7 @@ def coupon_accrual_factor(
 
     elif (
         accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_ISDA
+        or accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30E_360
     ):  # 21
         # Case 35  'GERMAN-30/360 (EOM)
         #     If IsNull(MaturityDate) Then
