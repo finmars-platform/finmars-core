@@ -2118,7 +2118,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                 a.accrual_end_date = next_a.accrual_start_date
             a = next_a
 
-        if a:
+        if a and self.maturity_date:
             a.accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
