@@ -2,10 +2,15 @@ import calendar
 import logging
 from datetime import date, timedelta
 
+from poms.common.exceptions import FinmarsBaseException
 from dateutil import relativedelta, rrule
 from scipy.optimize import newton
 
 _l = logging.getLogger("poms.common")
+
+
+class FormulaAccrualsError(FinmarsBaseException):
+    pass
 
 
 def coupon_accrual_factor(
@@ -231,9 +236,12 @@ def coupon_accrual_factor(
         ) / 360
 
     else:
-        _l.error(f"unknown accrual_calculation_model.id={accrual_calculation_model.id}")
-
-    return 0
+        err_msg = f"unknown accrual_calculation_model.id={accrual_calculation_model.id}"
+        _l.error(f"coupon_accrual_factor - {err_msg}")
+        raise FormulaAccrualsError(
+            error_key="coupon_accrual_factor",
+            message=err_msg,
+        )
 
 
 def _accrual_factor_30_360(dt1, dt2):
@@ -568,12 +576,16 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
                 return cpn * ((dt2 - dt1).days + 1) / 366
             else:
                 return cpn * ((dt2 - dt1).days + 1) / 365
+
         return 0
 
     else:
-        _l.error(f"unknown accrual_calculation_model.id={accrual_calculation_model.id}")
-
-    return 0
+        err_msg = f"unknown accrual_calculation_model.id={accrual_calculation_model.id}"
+        _l.error(f"get_coupon {err_msg}")
+        raise FormulaAccrualsError(
+            error_key="get_coupon",
+            message=err_msg,
+        )
 
 
 # def weeks_fast(dt1, dt2, byweekday):
