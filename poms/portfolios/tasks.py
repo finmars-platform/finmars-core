@@ -669,7 +669,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
                     .order_by("-transaction_date", "-transaction_code")
                     .first()
                 )
-                if not pr_record or not pr_record.valuation_pricing_policy:
+                if not pr_record:
                     continue
 
                 price_histories = []  # price history objects to be updated
