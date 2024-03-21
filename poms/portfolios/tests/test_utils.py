@@ -22,15 +22,19 @@ class UpdatePriceHistoriesTest(BaseTestCase):
         self.err_msg = self.random_string()
 
     def create_price_history(self, n: int):
-        for _ in range(n):
-            PriceHistory.objects.create(
+        while n > 0:
+            _, created = PriceHistory.objects.get_or_create(
                 instrument=self.instrument,
                 pricing_policy=self.pricing_policy,
                 date=self.random_future_date(),
-                principal_price=self.random_float(),
-                cash_flow=self.random_float(),
-                nav=self.random_float(),
+                defaults=dict(
+                    principal_price=self.random_float(),
+                    cash_flow=self.random_float(),
+                    nav=self.random_float(),
+                ),
             )
+            if created:
+                n -= 1
 
     @BaseTestCase.cases(
         ["0", 0],
