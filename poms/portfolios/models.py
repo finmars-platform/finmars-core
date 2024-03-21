@@ -826,6 +826,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             self.error_message = self.error_message + 'Total is wrong, some positions has no total value\n'
 
         self.nav = nav
+        self.gav = gav
         self.total = total
 
         # Performance Part
