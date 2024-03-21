@@ -425,6 +425,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             pricing_currency=currency,
             accrued_currency=currency,
             name=self.random_string(11),
+            maturity_date=self.random_future_date(),
             # optional fields
             short_name=self.random_string(3),
             user_code=self.random_string(),

@@ -2118,13 +2118,8 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                 a.accrual_end_date = next_a.accrual_start_date
             a = next_a
 
-        if a:
-            try:
-                a.accrual_end_date = self.maturity_date + timedelta(days=1)
-            except Exception:
-                print(f"Overflow Error {self.maturity_date} ")
-
-                a.accrual_end_date = self.maturity_date
+        if a and self.maturity_date:
+            a.accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
 
@@ -2218,9 +2213,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     def get_accrued_price(self, price_date: date) -> float:
         from poms.common.formula_accruals import coupon_accrual_factor
-
-        if self.maturity_date and (price_date >= self.maturity_date):
-            return 0
 
         accrual = self.find_accrual(price_date)
         if accrual is None:
