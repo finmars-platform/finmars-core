@@ -2119,12 +2119,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             a = next_a
 
         if a:
-            try:
-                a.accrual_end_date = self.maturity_date + timedelta(days=1)
-            except Exception:
-                print(f"Overflow Error {self.maturity_date} ")
-
-                a.accrual_end_date = self.maturity_date
+            a.accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
 

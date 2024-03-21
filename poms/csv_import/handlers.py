@@ -1688,15 +1688,17 @@ class SimpleImportProcess:
         try:
             effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except Exception:
-            _l.error(f"calculate_null_fields: invalid date_str={date_str}")
-            return
+            err_msg = f"calculate_null_fields: invalid date_str={date_str}"
+            _l.error(err_msg)
+            return err_msg
 
         user_code = final_inputs.get("instrument")
         try:
             instrument = Instrument.objects.get(user_code=user_code)
         except Exception:
-            _l.error(f"calculate_null_fields: no such instrument user_code={user_code}")
-            return
+            err_msg = f"calculate_null_fields: no such instrument user_code={user_code}"
+            _l.error(err_msg)
+            return err_msg
 
         error_messages = []
         for key, value in final_inputs.items():
