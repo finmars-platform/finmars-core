@@ -34,29 +34,17 @@ class TransactionTypeViewSetTest(BaseTestCase):
     def get_transaction_type_group() -> TransactionTypeGroup:
         return TransactionTypeGroup.objects.get(user_code__contains="unified")
 
-    def create_transaction_type(self) -> TransactionType:
+    def get_transaction_type(self) -> TransactionType:
         transaction_type_group = self.get_transaction_type_group()
-        self.transaction_type = TransactionType.objects.get_or_create(
+        self.transaction_type = TransactionType.objects.filter(
             master_user=self.master_user,
             owner=self.member,
             group=transaction_type_group.user_code,
             type=TransactionType.TYPE_DEFAULT,
-            defaults=dict(
-                configuration_code=self.random_string(),
-                user_code=self.random_string(7),
-                name=self.random_string(),
-                short_name=self.random_string(3),
-                user_text_1=self.random_string(),
-                user_text_2=self.random_string(),
-                user_number_1=str(self.random_int()),
-                user_number_2=str(self.random_int()),
-                # user_date_1=self.random_future_date().strftime(DATE_FORMAT),
-                # user_date_2=self.random_future_date().strftime(DATE_FORMAT),
-                is_deleted=False,
-            )
-        )
+        ).first()
         self.transaction_type.attributes.add(self.create_attribute())
         self.transaction_type.book_transaction_layout = {"test": "test"}
+        self.transaction_type.user_number_2 = str(self.random_int())
         self.transaction_type.save()
         return self.transaction_type
 
@@ -123,7 +111,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
     def test__retrieve(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
 
         response = self.client.get(path=f"{self.url}{transaction_type.id}/")
         self.assertEqual(response.status_code, 200, response.content)
@@ -160,25 +148,25 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json["results"]), 64)
 
     def test__list_light(self):
-        self.create_transaction_type()
+        self.get_transaction_type()
 
         response = self.client.get(path=f"{self.url}light/")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 6)
+        self.assertEqual(len(response_json["results"]), 5)
 
     def test__ev_item(self):
-        self.create_transaction_type()
+        self.get_transaction_type()
 
         response = self.client.post(path=f"{self.url}ev-item/")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 6)
+        self.assertEqual(len(response_json["results"]), 5)
 
     def test__light_with_inputs(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         self.create_transaction_type_input(transaction_type)
 
         response = self.client.get(
@@ -194,7 +182,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response_dict.keys(), TRANSACTION_TYPE_WITH_INPUTS_DICT.keys())
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         response = self.client.get(path=f"{self.url}?name={transaction_type.name}")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
@@ -216,7 +204,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         )
 
     def test__update_patch(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         new_name = self.random_string()
@@ -232,7 +220,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response_json["name"], new_name)
 
     def test__delete(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         response = self.client.delete(path=f"{self.url}{type_id}/")
@@ -275,7 +263,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         }
 
     def test__book_get(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         response = self.client.get(path=f"{self.url}{type_id}/book/", format="json")
@@ -287,7 +275,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     def test__book_put(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         context_data = self.prepare_context_data()
@@ -308,7 +296,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
     @skip("'ComplexTransaction' instance needs to have a primary key value ...")
     def test__book_pending_get(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         response = self.client.get(
@@ -323,7 +311,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     def test__book_pending_put(self):
-        transaction_type = self.create_transaction_type()
+        transaction_type = self.get_transaction_type()
         type_id = transaction_type.id
 
         context_data = self.prepare_context_data()
