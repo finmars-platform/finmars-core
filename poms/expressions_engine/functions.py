@@ -8,7 +8,6 @@ import re
 import traceback
 import uuid
 from typing import Optional
-from django.db.models import Q
 
 from dateutil import relativedelta
 from django.conf import settings
