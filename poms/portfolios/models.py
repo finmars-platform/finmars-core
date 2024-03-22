@@ -300,7 +300,7 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         _l.info(
             f"calculate_first_transactions_dates succeed: "
-            f"first_transaction={self.first_transaction_date} "
+            f"first_transaction_date={self.first_transaction_date} "
             f"first_cash_flow_date={self.first_cash_flow_date}"
         )
 
