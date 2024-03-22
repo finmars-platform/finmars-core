@@ -1,5 +1,4 @@
 import json
-import traceback
 from datetime import date
 from logging import getLogger
 
