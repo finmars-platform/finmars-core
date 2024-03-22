@@ -271,34 +271,38 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         )
 
     def save(self, *args, **kwargs):
+        _l.info(f"Here??? Yes! Save portfolio {self.name}")
 
-        _l.info("Here???")
         self.calculate_first_transactions_dates()
 
         super().save(*args, **kwargs)
 
     def calculate_first_transactions_dates(self):
+        from poms.transactions.models import Transaction, TransactionClass
 
-        try:
+        first_transaction = Transaction.objects.filter(portfolio=self).order_by(
+            "accounting_date",
+        ).first()
+        self.first_transaction_date = (
+            first_transaction.accounting_date if first_transaction else None
+        )
 
-            from poms.transactions.models import Transaction, TransactionClass
+        first_cash_flow_transaction = Transaction.objects.filter(
+            portfolio=self,
+            transaction_class_id__in=[
+                TransactionClass.CASH_INFLOW,
+                TransactionClass.CASH_OUTFLOW,
+            ],
+        ).order_by("accounting_date").first()
+        self.first_cash_flow_date = (
+            first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        )
 
-            first_transaction = Transaction.objects.filter(portfolio=self).order_by("accounting_date").first()
-
-            if first_transaction:
-                self.first_transaction_date = first_transaction.accounting_date
-
-            first_cash_flow_transaction = Transaction.objects.filter(portfolio=self, transaction_class_id__in=[
-                TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]).order_by("accounting_date").first()
-
-            if first_cash_flow_transaction:
-                self.first_cash_flow_date = first_cash_flow_transaction.accounting_date
-
-            _l.info("calculate_first_transactions_dates success")
-
-        except Exception as e:
-            _l.error("calculate_first_transactions_dates.error %s" % e)
-            _l.error("calculate_first_transactions_dates.traceback %s" % traceback.print_exc())
+        _l.info(
+            f"calculate_first_transactions_dates succeed: "
+            f"first_transaction={self.first_transaction_date} "
+            f"first_cash_flow_date={self.first_cash_flow_date}"
+        )
 
     def get_first_transaction_date(self, date_field: str = 'accounting_date') -> date:
         """
@@ -760,7 +764,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
 
             from poms.reports.performance_report import PerformanceReportBuilder
             builder = PerformanceReportBuilder(instance=instance)
-            instance = builder.build_report()            
+            instance = builder.build_report()
         except Exception as e:
             instance = None
 
