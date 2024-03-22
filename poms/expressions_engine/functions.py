@@ -8,6 +8,7 @@ import re
 import traceback
 import uuid
 from typing import Optional
+from django.db.models import Q
 
 from dateutil import relativedelta
 from django.conf import settings
@@ -3364,12 +3365,12 @@ def _get_transactions_amounts_on_date(
         )
 
         if accounts:
-            transactions = transactions.filter(account_position__in=accounts)
+            transactions = transactions.filter(Q(account_position__user_code__in=accounts) | Q(account_cash__user_code__in=accounts))
 
         # _l.info('portfolios %s' % type(portfolios))
 
         if portfolios:
-            transactions = transactions.filter(portfolio__in=portfolios)
+            transactions = transactions.filter(portfolio__user_code__in=portfolios)
 
         # _l.info('transactions %s ' % transactions)
 
