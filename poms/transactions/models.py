@@ -3578,7 +3578,7 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         _l.debug(f"Transaction.save: {self}")
 
-        calc_cash = kwargs.pop("calc_cash", False)
+        kwargs.pop("calc_cash", None)
 
         if not self.accounting_date:
             self.accounting_date = date_now()
@@ -3613,6 +3613,9 @@ class Transaction(models.Model):
         _l.debug(f"Transaction.save: ytm is {self.ytm_at_cost}")
 
         super().save(*args, **kwargs)
+
+        # force recalculation of first dates in the connected portfolio
+        self.portfolio.save()
 
     def is_can_calc_cash_by_formulas(self):
         return (
