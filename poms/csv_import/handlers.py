@@ -9,6 +9,7 @@ from functools import reduce
 from logging import getLogger
 from operator import or_
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
@@ -1673,40 +1674,52 @@ class SimpleImportProcess:
                 item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
     @staticmethod
-    def calculate_pricehistory_null_fields(model: str, final_inputs: dict):
+    def calculate_pricehistory_null_fields(model: str, final_inputs: dict) -> Optional[str]:
         """
         Calculates accrued_price & factor for PriceHistory if in the file
         their values are null, and update final_inputs dict
         """
-        if model != "pricehistory" or not final_inputs:
+        if model.lower() != "pricehistory" or not final_inputs:
             return
+
+        _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
 
         date_str = final_inputs.get("date")
         try:
             effective_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except Exception:
-            _l.error(f"calculate_null_fields: invalid date_str {date_str}")
-            return
+            err_msg = f"calculate_null_fields: invalid date_str={date_str}"
+            _l.error(err_msg)
+            return err_msg
 
         user_code = final_inputs.get("instrument")
         try:
             instrument = Instrument.objects.get(user_code=user_code)
         except Exception:
-            _l.error(f"calculate_null_fields: invalid instrument user_code {user_code}")
-            return
+            err_msg = f"calculate_null_fields: no such instrument user_code={user_code}"
+            _l.error(err_msg)
+            return err_msg
 
-        try:
-            for key, value in final_inputs.items():
-                if value is None:
+        error_messages = []
+        for key, value in final_inputs.items():
+            if value is None:
+                try:
                     if key == "accrued_price":
                         final_inputs[key] = instrument.get_accrued_price(
                             price_date=effective_date
                         )
+
                     elif key == "factor":
                         final_inputs[key] = instrument.get_factor(fdate=effective_date)
-        except Exception as e:
-            _l.error(f"calculate_null_fields: aborted due to {repr(e)}")
-            return
+
+                except Exception as e:
+                    final_inputs[key] = 1 if key == "factor" else 0
+                    err_msg = f"calculate_null_fields: {key} {repr(e)}"
+                    _l.error(err_msg)
+                    error_messages.append(err_msg)
+
+        if error_messages:
+            return "; ".join(error_messages)
 
     def import_items_by_batch_indexes(
         self, batch_indexes, filter_for_async_functions_eval
@@ -1716,7 +1729,7 @@ class SimpleImportProcess:
         for item_index in batch_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(
                 self.items[item_index],
-                                                                        all_entity_fields_models
+                all_entity_fields_models
             )
             # dict for getting relation models at the next step
             relation_models_user_codes = self.__get_relation_to_convert(
@@ -1731,8 +1744,9 @@ class SimpleImportProcess:
         )
 
         for item_index in batch_indexes:
+            errors = None
             if self.scheme.content_type.model == "pricehistory":
-                self.calculate_pricehistory_null_fields(
+                errors = self.calculate_pricehistory_null_fields(
                     model=self.scheme.content_type.model,
                     final_inputs=self.items[item_index].final_inputs,
                 )
@@ -1750,6 +1764,9 @@ class SimpleImportProcess:
             result_item = self.remove_nullable_attributes(result_item)
 
             self.items[item_index].final_inputs = result_item
+            if errors:
+                self.items[item_index].status = "error"
+                self.items[item_index].error_message += f"; {errors}"
 
         models_q_filter_list = []
         for item_index in batch_indexes:

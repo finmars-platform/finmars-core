@@ -62,7 +62,7 @@ from poms.users.models import EcosystemDefault, MasterUser, Member
 
 TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
 MASTER_USER = "test_master"
-FINMARS_BOT = "test_bot"
+FINMARS_BOT = "finmars_bot"
 FINMARS_USER = "test_user"
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"
@@ -425,6 +425,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             pricing_currency=currency,
             accrued_currency=currency,
             name=self.random_string(11),
+            maturity_date=self.random_future_date(),
             # optional fields
             short_name=self.random_string(3),
             user_code=self.random_string(),
