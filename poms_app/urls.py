@@ -35,8 +35,3 @@ if settings.USE_DEBUGGER:
     urlpatterns = urlpatterns + [
         re_path(r"^__debug__/", include(debug_toolbar.urls)),
     ]
-
-# if settings.ENABLE_DEV_DOCUMENTATION:
-#     urlpatterns += [
-#         re_path(r'^' + settings.BASE_API_URL + '/docs/(?P<path>.*)$', serve_docs, name='serve-docs')
-#     ]

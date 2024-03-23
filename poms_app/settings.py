@@ -171,6 +171,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
 
+    "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
       # required for getting request object anywhere

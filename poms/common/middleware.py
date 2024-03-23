@@ -354,3 +354,17 @@ class ResponseTimeMiddleware(MiddlewareMixin):
                 )
 
         return response
+
+
+class RealmAndSpaceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Example URL pattern: /realm0abcd/space0xyzv/
+
+        path_parts = request.path_info.split('/')
+        request.realm_code = path_parts[1]
+        request.space_code = path_parts[2]
+
+        return self.get_response(request)
