@@ -170,9 +170,7 @@ def calculate_portfolio_register_record(self, task_id):
     if task.options_object and "portfolios" in task.options_object:
         portfolio_user_codes = task.options_object["portfolios"]
 
-    master_user = MasterUser.objects.prefetch_related("members").filter(
-        base_api_url=settings.BASE_API_URL,
-    ).first()
+    master_user = task.master_user
 
     result = {}
     try:
