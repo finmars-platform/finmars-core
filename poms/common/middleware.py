@@ -364,7 +364,11 @@ class RealmAndSpaceMiddleware:
         # Example URL pattern: /realm0abcd/space0xyzv/
 
         path_parts = request.path_info.split('/')
-        request.realm_code = path_parts[1]
-        request.space_code = path_parts[2]
+
+        if 'realm' in path_parts[1]:
+            request.realm_code = path_parts[1]
+            request.space_code = path_parts[2]
+        else:
+            request.space_code = path_parts[1]
 
         return self.get_response(request)

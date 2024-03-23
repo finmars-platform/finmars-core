@@ -786,8 +786,16 @@ class SystemInfoViewSet(AbstractViewSet):
 
         return rabbitmq_status        
 
-    def __workflow_status(self):
-        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' 
+    def __workflow_status(self, request):
+
+        base_url = ''
+
+        if request.realm_code:
+            base_url = request.realm_code + '/' + request.space_code
+        else:
+            base_url = request.space_code
+
+        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + base_url + '/workflow/api/workflow/'
         workflow_status = 'unhealty'
 
         try:
@@ -845,7 +853,7 @@ class SystemInfoViewSet(AbstractViewSet):
             'storage_adapter': self.__storage_adapter_info(),
             'vault_status': self.__vault_status(),
             'celery_status': self.__celery_info(),
-            'workflow_status': self.__workflow_status(),
+            'workflow_status': self.__workflow_status(request),
             'rabbitmq_status': self.__rabbitmq_status(),
             'redis_status': self.__redis_status()
         }
