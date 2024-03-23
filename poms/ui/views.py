@@ -1,3 +1,5 @@
+import traceback
+
 import django_filters
 from django_filters.fields import Lookup
 from django_filters.rest_framework import FilterSet
@@ -75,6 +77,8 @@ from poms.ui.serializers import (
 )
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
+import logging
+_l = logging.getLogger("poms.ui")
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -134,7 +138,7 @@ class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=["get"], url_path="primary")
-    def primary(self, request, pk=None):
+    def primary(self, request, pk=None, realm_code=None, space_code=None):
         from poms.configuration.models import Configuration
 
         active_configuration = Configuration.objects.get(is_primary=True)
@@ -170,7 +174,7 @@ class TransactionUserFieldViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=["get"], url_path="primary")
-    def primary(self, request, pk=None):
+    def primary(self, request, pk=None, realm_code=None, space_code=None):
         from poms.configuration.models import Configuration
 
         active_configuration = Configuration.objects.get(is_primary=True)
@@ -281,7 +285,7 @@ class InstrumentUserFieldViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=["get"], url_path="primary")
-    def primary(self, request, pk=None):
+    def primary(self, request, pk=None,  realm_code=None, space_code=None):
         from poms.configuration.models import Configuration
 
         active_configuration = Configuration.objects.get(is_primary=True)
@@ -400,16 +404,20 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroyModelMixinExt):
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
-        layout = self.get_object()
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
+        try:
+            layout = self.get_object()
 
-        return Response(
-            {
-                "id": layout.id,
-                "modified": layout.modified,
-                "is_default": layout.is_default,
-            }
-        )
+            return Response(
+                {
+                    "id": layout.id,
+                    "modified": layout.modified,
+                    "is_default": layout.is_default,
+                }
+            )
+        except Exception as e:
+            _l.error(e)
+            _l.error(traceback.format_exc())
 
 
 # DEPRECATED
