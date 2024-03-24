@@ -218,7 +218,11 @@ class BootstrapConfig(AppConfig):
         if current_space_code == 'public':
             current_space_code = settings.BASE_API_URL
 
-        data = {"base_api_url": current_space_code, "space_code": current_space_code}
+        data = {
+                "base_api_url": current_space_code,
+                "space_code": current_space_code,
+                "realm_code": settings.REALM_CODE
+                }
         url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
 
         _l.info(
@@ -364,7 +368,10 @@ class BootstrapConfig(AppConfig):
         if current_space_code == 'public':
             current_space_code = settings.BASE_API_URL
 
-        data = {"base_api_url": current_space_code, "space_code": current_space_code}
+        data = {"base_api_url": current_space_code,
+                "space_code": current_space_code,
+                "realm_code": settings.REALM_CODE
+                }
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
         _l.info(f"register_at_authorizer_service with url={url} data={data}")
