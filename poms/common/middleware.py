@@ -364,12 +364,20 @@ def schema_exists(schema_name):
         """, [schema_name])
         return cursor.fetchone() is not None
 
+
+# Very Important Middleware
+# It sets the PostgreSQL search path to the tenant's schema
+# Do not modify this code
+# 2024-03-24 szhitenev
 class RealmAndSpaceMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         # Example URL pattern: /realm0abcd/space0xyzv/
+
+        request.realm_code = None
+        request.space_code = None
 
         path_parts = request.path_info.split('/')
 
