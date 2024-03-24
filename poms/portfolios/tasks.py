@@ -146,7 +146,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
 
 @finmars_task(name="portfolios.calculate_portfolio_register_record", bind=True)
-def calculate_portfolio_register_record(self, task_id):
+def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
     """
     Now as it a part of Finmars Backend project its specific task over portfolio
     The idea is to collect all Cash In/Cash Out transactions and create
@@ -520,7 +520,7 @@ def calculate_portfolio_register_record(self, task_id):
 
 
 @finmars_task(name="portfolios.calculate_portfolio_register_price_history", bind=True)
-def calculate_portfolio_register_price_history(self, task_id: int):
+def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwargs):
     """
     It should be triggered after calculate_portfolio_register_record finished
     This purpose of this task is to get PriceHistory.principal_price of Portfolio
@@ -771,7 +771,7 @@ def calculate_portfolio_register_price_history(self, task_id: int):
 
 
 @finmars_task(name="portfolios.calculate_portfolio_history", bind=True)
-def calculate_portfolio_history(self, task_id: int):
+def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
     """
     Right now trigger only by manual request
     """
@@ -928,7 +928,7 @@ def calculate_portfolio_history(self, task_id: int):
 
 
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
-def calculate_portfolio_reconcile_history(self, task_id: int):
+def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     """
     Right now trigger only by manual request
 

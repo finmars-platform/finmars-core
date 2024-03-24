@@ -55,7 +55,7 @@ def get_transaction_access_type(
 
 
 @finmars_task(name="transactions.recalculate_permissions_transaction", bind=True)
-def recalculate_permissions_transaction(self, instance):
+def recalculate_permissions_transaction(self, instance, *args, **kwargs):
     # DEPRECATED, NEED REFACTOR
     pass
 
@@ -162,7 +162,7 @@ def recalculate_permissions_transaction(self, instance):
 
 
 @finmars_task(name="transactions.recalculate_permissions_complex_transaction", bind=True)
-def recalculate_permissions_complex_transaction(self, instance):
+def recalculate_permissions_complex_transaction(self, instance, *args, **kwargs):
     # DEPRECATED, NEED REFACTOR
     pass
     # st = time.perf_counter()
@@ -409,7 +409,7 @@ def execute_user_fields_expressions(complex_transaction, values, context, target
 
 
 @finmars_task(name="transactions.recalculate_user_fields", bind=True)
-def recalculate_user_fields(self, task_id):
+def recalculate_user_fields(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
     task.save()

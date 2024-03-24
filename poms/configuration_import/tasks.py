@@ -3284,7 +3284,7 @@ class ConfigurationImportManager(object):
 
 
 @finmars_task(name='configuration_import.configuration_import_as_json', bind=True)
-def configuration_import_as_json(self, task_id):
+def configuration_import_as_json(self, task_id, *args, **kwargs):
     _l.info("Start configuration_import_as_json task_id %s" % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
@@ -3366,7 +3366,7 @@ def configuration_import_as_json(self, task_id):
 
 
 @finmars_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
-def generate_configuration_entity_archetype(self, instance):
+def generate_configuration_entity_archetype(self, instance, *args, **kwargs):
     _l.info('generate_configuration_entity_archetype init')
 
     handler = ConfigurationEntityArchetypeGenerateHandler()

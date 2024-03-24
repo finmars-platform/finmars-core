@@ -10,7 +10,7 @@ _l = logging.getLogger('poms.file_reports')
 
 
 @finmars_task(name='file_reports.clear_old_file_reports', bind=True)
-def clear_old_file_reports(self, ):
+def clear_old_file_reports(self, *args, **kwargs):
     _l.debug("File Reports: clear_old_file_reports")
 
     today = now()

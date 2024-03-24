@@ -54,7 +54,7 @@ def remove_old_tasks(self, *args, **kwargs):
 
 
 @finmars_task(name="celery_tasks.auto_cancel_task_by_ttl")
-def auto_cancel_task_by_ttl():
+def auto_cancel_task_by_ttl(*args, **kwargs):
     try:
         tasks = CeleryTask.objects.filter(
             status=CeleryTask.STATUS_PENDING, expiry_at__lte=now()
@@ -87,7 +87,7 @@ def auto_cancel_task_by_ttl():
 
 
 @finmars_task(name="celery_tasks.check_for_died_workers")
-def check_for_died_workers():
+def check_for_died_workers(*args, **kwargs):
     # Create an inspect instance
     inspect_instance = app.control.inspect()
 
@@ -130,7 +130,7 @@ def check_for_died_workers():
 
 
 @finmars_task(name="celery_tasks.bulk_delete", bind=True)
-def bulk_delete(self, task_id):
+def bulk_delete(self, task_id, *args, **kwargs):
     # is_fake = bool(request.query_params.get('is_fake'))
 
     celery_task = CeleryTask.objects.get(id=task_id)
@@ -220,7 +220,7 @@ def bulk_delete(self, task_id):
 
 
 @finmars_task(name="celery_tasks.bulk_restore", bind=True)
-def bulk_restore(self, task_id):
+def bulk_restore(self, task_id, *args, **kwargs):
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -344,7 +344,7 @@ def import_item(item, context):
 
 
 @finmars_task(name="celery_tasks.universal_input", bind=True)
-def universal_input(self, task_id):
+def universal_input(self, task_id, *args, **kwargs):
     from poms.common.models import ProxyUser, ProxyRequest
 
     # is_fake = bool(request.query_params.get('is_fake'))

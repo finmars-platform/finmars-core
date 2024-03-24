@@ -56,7 +56,7 @@ def delete_selected_records(records_to_delete: Iterable):
 
 
 @finmars_task(name="history_tasks.clear_old_journal_records")
-def clear_old_journal_records():
+def clear_old_journal_records(*args, **kwargs):
     """
     Remove historical records older than ttl days, and save them into a file
     """
@@ -137,7 +137,7 @@ def daterange(start_date, end_date):
 
 
 @finmars_task(name="history.export_journal_to_storage", bind=True)
-def export_journal_to_storage(self, task_id):
+def export_journal_to_storage(self, task_id, *args, **kwargs):
     """
     Export historical records to storage
     """

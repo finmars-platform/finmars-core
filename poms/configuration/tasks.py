@@ -43,7 +43,7 @@ storage = get_storage()
 
 
 @finmars_task(name="configuration.import_configuration", bind=True)
-def import_configuration(self, task_id):
+def import_configuration(self, task_id, *args, **kwargs):
     _l.info("import_configuration")
     _l.info(f"import_configuration {task_id}")
 
@@ -292,7 +292,7 @@ def import_configuration(self, task_id):
 
 
 @finmars_task(name="configuration.export_configuration", bind=True)
-def export_configuration(self, task_id):
+def export_configuration(self, task_id, *args, **kwargs):
     _l.info("export_configuration")
 
     task = CeleryTask.objects.get(id=task_id)
@@ -361,7 +361,7 @@ def export_configuration(self, task_id):
 
 
 @finmars_task(name="configuration.push_configuration_to_marketplace", bind=True)
-def push_configuration_to_marketplace(self, task_id):
+def push_configuration_to_marketplace(self, task_id, *args, **kwargs):
     _l.info("push_configuration_to_marketplace")
 
     task = CeleryTask.objects.get(id=task_id)
@@ -446,7 +446,7 @@ def push_configuration_to_marketplace(self, task_id):
 
 
 @finmars_task(name="configuration.install_configuration_from_marketplace", bind=True)
-def install_configuration_from_marketplace(self, **kwargs):
+def install_configuration_from_marketplace(self, *args, **kwargs):
     task_id = kwargs.get("task_id")
 
     task = CeleryTask.objects.get(id=task_id)
@@ -615,7 +615,7 @@ def install_configuration_from_marketplace(self, **kwargs):
 
 
 @finmars_task(name="configuration.finish_package_install", bind=True)
-def finish_package_install(self, task_id):
+def finish_package_install(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(id=task_id)
 
     with transaction.atomic():

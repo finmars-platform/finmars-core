@@ -2597,7 +2597,7 @@ class BalanceReportBuilderSql:
 
 
 @finmars_task(name="reports.build_balance_report", bind=True)
-def build(self, task_id):
+def build(self, task_id, *args, **kwargs):
     celery_task = CeleryTask.objects.filter(id=task_id).first()
     if not celery_task:
         _l.error(f"build_balance_report, error: no such celery task.id={task_id}")

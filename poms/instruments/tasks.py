@@ -37,7 +37,7 @@ def calculate_prices_accrued_price(
 @transaction.atomic()
 def calculate_prices_accrued_price_async(
         self,
-        master_user=None, begin_date=None, end_date=None, instruments=None
+        master_user=None, begin_date=None, end_date=None, instruments=None, *args, **kwargs
 ):
     if begin_date:
         begin_date = date.fromordinal(begin_date)
@@ -100,7 +100,7 @@ def fill_parameters_from_instrument(event_schedule, instrument):
 
 
 @finmars_task(name="instruments.only_generate_events_at_date", bind=True)
-def only_generate_events_at_date(self, master_user_id, date):
+def only_generate_events_at_date(self, master_user_id, date, *args, **kwargs):
     try:
         master_user = MasterUser.objects.get(id=master_user_id)
 
@@ -256,7 +256,7 @@ def only_generate_events_at_date(self, master_user_id, date):
     name="instruments.only_generate_events_at_date_for_single_instrument", bind=True
 )
 def only_generate_events_at_date_for_single_instrument(
-        self, master_user_id, date, instrument_id
+        self, master_user_id, date, instrument_id, *args, **kwargs
 ):
     try:
         date = datetime.date(datetime.strptime(date, "%Y-%m-%d"))
@@ -421,7 +421,7 @@ def only_generate_events_at_date_for_single_instrument(
 
 
 @finmars_task(name="instruments.generate_events", bind=True)
-def generate_events(self, task_id):
+def generate_events(self, task_id, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
 
 
@@ -632,7 +632,7 @@ def generate_events(self, task_id):
 
 
 @finmars_task(name="instruments.generate_events_do_not_inform_apply_default", bind=True)
-def generate_events_do_not_inform_apply_default(self):
+def generate_events_do_not_inform_apply_default(self, *args, **kwargs):
     try:
         master_user = MasterUser.objects.all()[0]
 

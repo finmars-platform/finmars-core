@@ -9,7 +9,7 @@ _l = logging.getLogger("poms.transaction_import")
 
 
 @finmars_task(name="transaction_import.transaction_import", bind=True)
-def transaction_import(self, task_id, procedure_instance_id=None):
+def transaction_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
     try:
         instance = TransactionImportProcess(
             task_id=task_id,

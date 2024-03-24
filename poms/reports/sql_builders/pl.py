@@ -3305,7 +3305,7 @@ class PLReportBuilderSql:
         return query
 
     @finmars_task(name='reports.build_pl_report', bind=True)
-    def build(self, task_id):
+    def build(self, task_id, *args, **kwargs):
 
         try:
 
