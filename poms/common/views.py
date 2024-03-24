@@ -568,7 +568,10 @@ class AbstractAsyncViewSet(AbstractViewSet):
 
             instance.task_id = task_id
         else:
-            res = self.celery_task.apply_async(kwargs={"instance": instance})
+            res = self.celery_task.apply_async(kwargs={"instance": instance, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
             instance.task_id = signer.sign(f"{res.id}")
 
             print(f"CREATE CELERY TASK {res.id}")

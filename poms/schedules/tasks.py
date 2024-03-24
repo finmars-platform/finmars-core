@@ -195,7 +195,10 @@ def process(self, schedule_user_code, *args, **kwargs):
                             kwargs={
                                 "procedure_id": procedure.id,
                                 "master_user_id": master_user.id,
-                                "schedule_instance_id": schedule_instance.id,
+                                "schedule_instance_id": schedule_instance.id, 'context': {
+                                    'space_code': master_user.space_code,
+                                    'realm_code': master_user.realm_code
+                                }
                             }
                         )
 

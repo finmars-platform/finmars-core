@@ -214,7 +214,10 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
             instance.target_model_content_type = self.target_model_content_type
             instance.target_model_serializer = self.target_model_serializer
 
-            res = recalculate_attributes.apply_async(kwargs={"instance": instance})
+            res = recalculate_attributes.apply_async(kwargs={"instance": instance, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
 
             instance.task_id = res.id
             instance.task_status = res.status

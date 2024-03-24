@@ -1075,7 +1075,10 @@ class UniversalInputViewSet(AbstractViewSet):
 
         from poms.celery_tasks.tasks import universal_input
 
-        universal_input.apply_async(kwargs={"task_id": celery_task.id})
+        universal_input.apply_async(kwargs={"task_id": celery_task.id, 'context': {
+            'space_code': celery_task.master_user.space_code,
+            'realm_code': celery_task.master_user.realm_code
+        }})
 
         # _l.info('UniversalInputViewSet.data %s' % data)
 

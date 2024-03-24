@@ -47,7 +47,10 @@ class ScheduleViewSet(AbstractModelViewSet):
             schedule = Schedule.objects.get(pk=pk)
 
             from poms.schedules.tasks import process
-            process.apply_async(kwargs={'schedule_user_code': schedule.user_code})
+            process.apply_async(kwargs={'schedule_user_code': schedule.user_code, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
 
             return Response({"status": "ok"})
 

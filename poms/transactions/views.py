@@ -729,7 +729,10 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         recalculate_user_fields.apply_async(
             kwargs={
-                "task_id": celery_task.id,
+                "task_id": celery_task.id, 'context': {
+                    'space_code': celery_task.master_user.space_code,
+                    'realm_code': celery_task.master_user.realm_code
+                }
             }
         )
 

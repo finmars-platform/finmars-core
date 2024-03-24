@@ -129,14 +129,17 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message=N
     )
 
 
-def send_mail(subject, message, from_email, recipient_list, html_message=None):
+def send_mail(subject, message, from_email, recipient_list, html_message=None, space_code=None, realm_code=None):
     send_mail_async.apply_async(
         kwargs={
             "subject": subject,
             "message": message,
             "from_email": from_email,
             "recipient_list": recipient_list,
-            "html_message": html_message,
+            "html_message": html_message, 'context': {
+                'space_code': space_code,
+                'realm_code': realm_code
+            }
         }
     )
 
@@ -325,7 +328,10 @@ def download_instrument(
             task.save()
             transaction.on_commit(
                 lambda: download_instrument_async.apply_async(
-                    kwargs={"task_id": task.id}
+                    kwargs={"task_id": task.id, 'context': {
+                        'space_code': task.master_user.space_code,
+                        'realm_code': task.master_user.realm_code
+                    }}
                 )
             )
     elif task.status == CeleryTask.STATUS_DONE:
@@ -1438,7 +1444,10 @@ def test_certificate(master_user=None, member=None, task=None):
 
                 transaction.on_commit(
                     lambda: test_certificate_async.apply_async(
-                        kwargs={"task_id": task.id}
+                        kwargs={"task_id": task.id, 'context': {
+                            'space_code': task.master_user.space_code,
+                            'realm_code': task.master_user.realm_code
+                        }}
                     )
                 )
 
@@ -4260,7 +4269,10 @@ def complex_transaction_csv_file_import_by_procedure(
 
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
-                            kwargs={"task_id": sub_task.id},
+                            kwargs={"task_id": sub_task.id, 'context': {
+                                'space_code': sub_task.master_user.space_code,
+                                'realm_code': sub_task.master_user.realm_code
+                            }},
                             queue="backend-background-queue",
                         )
                     )
@@ -4368,7 +4380,10 @@ def complex_transaction_csv_file_import_by_procedure_json(
             lambda: transaction_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id,
+                    "procedure_instance_id": procedure_instance_id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }
                 },
                 queue="backend-background-queue",
             )

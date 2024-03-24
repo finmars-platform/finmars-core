@@ -166,7 +166,10 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         )
 
         execute_data_procedure.apply_async(
-            kwargs={"procedure_instance_id": procedure_instance.id}
+            kwargs={"procedure_instance_id": procedure_instance.id, 'context': {
+                'space_code': master_user.space_code,
+                'realm_code': master_user.realm_code
+            }}
         )
 
         return Response(
@@ -201,7 +204,10 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
                 "procedure_instance_id": procedure_instance.id,
                 "date_from": request.data.get("date_from", None),
                 "date_to": request.data.get("date_to", None),
-                "options": request.data.get("options", None),
+                "options": request.data.get("options", None), 'context': {
+                    'space_code': master_user.space_code,
+                    'realm_code': master_user.realm_code
+                }
             }
         )
 

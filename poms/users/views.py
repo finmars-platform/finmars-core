@@ -317,7 +317,10 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 kwargs={
                     "instance": instance,
                     "name": request.data["name"],
-                    "current_user": request.user,
+                    "current_user": request.user, 'context': {
+                        'space_code': request.space_code,
+                        'realm_code': request.realm_code
+                    }
                 }
             )
             instance.task_id = signer.sign(f"{res.id}")

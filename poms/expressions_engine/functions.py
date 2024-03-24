@@ -4171,12 +4171,23 @@ def _run_data_procedure(
             "member_id": member.id,
             "user_code": user_code,
             "user_context": user_context,
+            'context': {
+                'space_code': master_user.space_code,
+                'realm_code': master_user.realm_code
+            }
         }
         procedure_kwargs.update(kwargs)
 
         link = []
 
         if linked_task_kwargs:
+
+            # TODO maybe should append mode here
+            linked_task_kwargs['context'] = {
+                'space_code': master_user.space_code,
+                'realm_code': master_user.realm_code
+            }
+
             link = [
                 run_data_procedure_from_formula.apply_async(kwargs=linked_task_kwargs)
             ]
@@ -4412,7 +4423,10 @@ def _download_instrument_from_finmars_database(
         )
 
         download_instrument_finmars_database_async.apply_async(
-            kwargs={"task_id": task.id}
+            kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }}
         )
 
     except Exception as e:

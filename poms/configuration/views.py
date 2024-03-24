@@ -66,7 +66,10 @@ class ConfigurationViewSet(AbstractModelViewSet):
         task.save()
 
         try:
-            export_configuration.apply_async(kwargs={"task_id": task.id})
+            export_configuration.apply_async(kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }})
 
             return Response({"status": "ok", "task_id": task.id})
 
@@ -111,7 +114,10 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
         instance.task_id = celery_task.id
 
-        import_configuration.apply_async(kwargs={"task_id": celery_task.id})
+        import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
+            'space_code': celery_task.master_user.space_code,
+            'realm_code': celery_task.master_user.realm_code
+        }})
 
         _l.info(f"ConfigurationViewSet.import_configuration celery_task {celery_task.id}")
 
@@ -136,7 +142,10 @@ class ConfigurationViewSet(AbstractModelViewSet):
         )
 
         push_configuration_to_marketplace.apply_async(
-            kwargs={"task_id": celery_task.id}
+            kwargs={"task_id": celery_task.id, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }}
         )
 
         return Response({"task_id": celery_task.id})
@@ -239,11 +248,17 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
 
             if request.data.get("is_package", False):
                 install_package_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id}
+                    kwargs={"task_id": celery_task.id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }}
                 )
             else:
                 install_configuration_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id}
+                    kwargs={"task_id": celery_task.id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }}
                 )
 
         elif new_member_setup_configuration.file_url:
@@ -260,6 +275,9 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
             celery_task.options_object = options_object
             celery_task.save()
 
-            import_configuration.apply_async(kwargs={"task_id": celery_task.id})
+            import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }})
 
         return Response({"task_id": celery_task.id})

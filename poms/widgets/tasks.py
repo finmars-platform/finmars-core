@@ -1,8 +1,6 @@
 import logging
 import traceback
 
-from celery import shared_task
-
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
@@ -32,7 +30,15 @@ def start_new_balance_history_collect(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_balance_report_history.apply_async(kwargs={'task_id': task.id})
+        collect_balance_report_history.apply_async(
+            kwargs={'task_id': task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }
+                    })
+
+
+
 
     else:
 
@@ -225,7 +231,10 @@ def start_new_pl_history_collect(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_pl_report_history.apply_async(kwargs={'task_id': task.id})
+        collect_pl_report_history.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }})
 
     else:
 
@@ -417,7 +426,10 @@ def start_new_collect_stats(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_stats.apply_async(kwargs={'task_id': task.id})
+        collect_stats.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }})
 
     else:
 

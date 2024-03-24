@@ -276,7 +276,10 @@ class ScheduleInstance(DataTimeStampedModel):
                         kwargs={
                             "procedure_id": procedure.id,
                             "master_user_id": self.master_user.id,
-                            "schedule_instance_id": self.id,
+                            "schedule_instance_id": self.id, 'context': {
+                                'space_code': self.master_user.space_code,
+                                'realm_code': self.master_user.realm_code
+                            }
                         }
                     )
 

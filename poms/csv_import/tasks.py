@@ -163,7 +163,10 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             lambda: simple_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id,
+                    "procedure_instance_id": procedure_instance_id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }
                 },
                 queue="backend-background-queue",
             )
