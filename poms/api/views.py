@@ -827,9 +827,9 @@ class SystemInfoViewSet(AbstractViewSet):
         }
 
 
-    def __vault_status(self, ):
+    def __vault_status(self, request):
         try:
-            finmars_vault = FinmarsVault()
+            finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
             # it seems that this function, in case something is wrong with the Vault, always gives an exeption
             finmars_vault.get_health()
             status = 'health'
@@ -851,7 +851,7 @@ class SystemInfoViewSet(AbstractViewSet):
             'pip_freeze': self.__pip_freeze_info()['all'],
             'db_adapter': self.__db_adapter_info(),
             'storage_adapter': self.__storage_adapter_info(),
-            'vault_status': self.__vault_status(),
+            'vault_status': self.__vault_status(request),
             'celery_status': self.__celery_info(),
             'workflow_status': self.__workflow_status(request),
             'rabbitmq_status': self.__rabbitmq_status(),
@@ -886,7 +886,7 @@ class SystemLogsViewSet(AbstractViewSet):
         return Response(result)
 
     @action(detail=False, methods=['get'], url_path='view-log')
-    def view_log(self, request):
+    def view_log(self, request, realm_code=None, space_code=None):
 
         log_file = request.query_params.get('log_file', 'django.log')
 
@@ -935,7 +935,7 @@ class TablesSizeViewSet(AbstractViewSet):
         return Response(result)
 
     @action(detail=False, methods=['get'], url_path='view-log')
-    def view_log(self, request):
+    def view_log(self, request, realm_code=None, space_code=None):
         log_file = request.query_params.get('log_file', 'django.log')
 
         log_file = '/var/log/finmars/backend/' + log_file
@@ -1014,7 +1014,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='clear-bin')
-    def clear_bin(self, request):
+    def clear_bin(self, request, realm_code=None, space_code=None):
 
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
@@ -1359,7 +1359,7 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             try:
 
-                workflows = get_workflows_list(date_from, date_to)
+                workflows = get_workflows_list(date_from, date_to, request.realm_code, request.space_code)
 
                 for workflow in workflows:
                     item = {

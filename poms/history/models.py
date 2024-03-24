@@ -413,9 +413,7 @@ def get_record_context():
 
         else:
             # _l.info(f'get_record_contex: User {request.user}')
-            result["master_user"] = MasterUser.objects.get(
-                base_api_url=settings.BASE_API_URL
-            )
+            result["master_user"] = MasterUser.objects.all().first()
             result["member"] = Member.objects.get(user=request.user)
             result["context_url"] = request.path
 
@@ -431,7 +429,7 @@ def get_record_context():
 
             except Exception:
                 finmars_bot = Member.objects.get(username="finmars_bot")
-                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+                master_user = MasterUser.objects.all().first()
 
                 result["member"] = finmars_bot
                 result["master_user"] = master_user
@@ -468,7 +466,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
         from poms.users.models import MasterUser
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         if sender == MasterUser and instance.journal_status == "disabled":
             record_context = get_record_context()
@@ -568,7 +566,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 def post_delete(sender, instance, using=None, **kwargs):
     from poms.users.models import MasterUser
 
-    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+    master_user = MasterUser.objects.all().first()
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
         try:

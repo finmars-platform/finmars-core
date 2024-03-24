@@ -48,7 +48,11 @@ class ConfigurationModel(OwnerModel):
 
         if not self.configuration_code:
             # Now new prefix is local.poms.[space_code] e.g. local.poms.space00000
-            self.configuration_code = f"local.poms.{settings.BASE_API_URL}"
+            try:
+                # We hope that configuration model is must have master_user
+                self.configuration_code = f"local.poms.{self.master_user.space_code}"
+            except Exception as e:
+                _l.error(f"Error in ConfigurationModel.save {e}")
 
         if not self.user_code:
             raise RuntimeError("user_code is required")

@@ -102,13 +102,16 @@ class IamModelMetaSerializer(IamModelOwnerSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
+        from poms.users.utils import get_space_code_from_context
+        space_code = get_space_code_from_context(self.context)
+
         representation["meta"] = {
             "content_type": self.Meta.model._meta.app_label
             + "."
             + self.Meta.model._meta.model_name,
             "app_label": self.Meta.model._meta.app_label,
             "model_name": self.Meta.model._meta.model_name,
-            "space_code": settings.BASE_API_URL,
+            "space_code": space_code
         }
 
         return representation

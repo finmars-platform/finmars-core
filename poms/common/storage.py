@@ -223,8 +223,12 @@ class FinmarsStorage(EncryptedStorage):
 
         local_filename = temp_dir_path
 
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.all().first()
+        # TODO REFACTOR HERE
+        # get space_code somewhere else
         self.download_directory(
-            settings.BASE_API_URL + path_to_directory, local_filename
+            master_user.space_code + path_to_directory, local_filename
         )
 
         output_zip_filename = os.path.join(
@@ -247,6 +251,11 @@ class FinmarsStorage(EncryptedStorage):
 
         _l.info(f"temp_dir_path {temp_dir_path}  paths {paths}")
 
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.all().first()
+        # TODO REFACTOR HERE
+        # get space_code somewhere else
+
         for path in paths:
             local_filename = temp_dir_path
 
@@ -258,11 +267,11 @@ class FinmarsStorage(EncryptedStorage):
 
                 if path[0] == "/":
                     self.download_directory(
-                        settings.BASE_API_URL + path, local_filename
+                        master_user.space_code + path, local_filename
                     )
                 else:
                     self.download_directory(
-                        settings.BASE_API_URL + "/" + path, local_filename
+                        master_user.space_code + "/" + path, local_filename
                     )
 
             else:
@@ -274,11 +283,11 @@ class FinmarsStorage(EncryptedStorage):
 
                 if path[0] == "/":
                     self.download_file_and_save_locally(
-                        settings.BASE_API_URL + path, local_filename
+                        master_user.space_code + path, local_filename
                     )
                 else:
                     self.download_file_and_save_locally(
-                        settings.BASE_API_URL + "/" + path, local_filename
+                        master_user.space_code + "/" + path, local_filename
                     )
 
         output_zip_filename = os.path.join(

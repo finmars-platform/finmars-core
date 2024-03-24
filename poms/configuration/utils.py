@@ -6,16 +6,14 @@ import re
 import time
 import zipfile
 
+import requests
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.http import FileResponse
 
-import requests
-
 from poms.common.storage import get_storage
 from poms.common.utils import get_content_type_by_name, get_serializer
-from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
 
@@ -153,7 +151,7 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
 
 
 def save_serialized_attribute_type(
-    content_type, configuration_code, content_type_key, source_directory, context
+        content_type, configuration_code, content_type_key, source_directory, context
 ):
     try:
         model = apps.get_model(content_type)
@@ -185,7 +183,7 @@ def save_serialized_attribute_type(
 
 
 def save_serialized_custom_fields(
-    configuration_code, report_content_type, source_directory, context
+        configuration_code, report_content_type, source_directory, context
 ):
     """
 
@@ -267,17 +265,17 @@ def save_serialized_layout(content_type, configuration_code, source_directory, c
         serialized_data.pop("id")
 
         path = (
-            source_directory
-            + "/"
-            + user_code_to_file_name(configuration_code, item.user_code)
-            + ".json"
+                source_directory
+                + "/"
+                + user_code_to_file_name(configuration_code, item.user_code)
+                + ".json"
         )
 
         save_json_to_file(path, serialized_data)
 
 
 def save_serialized_entity_layout(
-    content_type, configuration_code, content_type_key, source_directory, context
+        content_type, configuration_code, content_type_key, source_directory, context
 ):
     try:
         model = apps.get_model(content_type)
@@ -314,10 +312,10 @@ def save_serialized_entity_layout(
             serialized_data["data"]["reportOptions"]["portfolios_object"] = []
 
         path = (
-            source_directory
-            + "/"
-            + user_code_to_file_name(configuration_code, item.user_code)
-            + ".json"
+                source_directory
+                + "/"
+                + user_code_to_file_name(configuration_code, item.user_code)
+                + ".json"
         )
 
         save_json_to_file(path, serialized_data)
@@ -394,7 +392,7 @@ def upload_directory_to_storage(local_directory, storage_directory):
                 storage.save(storage_file_path, ContentFile(content))
 
 
-def run_workflow(user_code, payload=None):
+def run_workflow(user_code, payload=None, realm_code=None, space_code=None):
     from django.contrib.auth import get_user_model
 
     from rest_framework_simplejwt.tokens import RefreshToken
@@ -415,7 +413,10 @@ def run_workflow(user_code, payload=None):
         "Authorization": f"Bearer {refresh.access_token}",
     }
 
-    url = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}/workflow/api/workflow/run-workflow/"
+    if realm_code:
+        url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/run-workflow/"
+    else:
+        url = f"https://{settings.DOMAIN_NAME}/{space_code}/workflow/api/workflow/run-workflow/"
 
     data = {"user_code": user_code, "payload": payload}
 
@@ -424,7 +425,7 @@ def run_workflow(user_code, payload=None):
     return response.json()
 
 
-def get_workflow(workflow_id: int):
+def get_workflow(workflow_id: int, realm_code:str, space_code: str):
     from django.contrib.auth import get_user_model
 
     from rest_framework_simplejwt.tokens import RefreshToken
@@ -445,16 +446,19 @@ def get_workflow(workflow_id: int):
         "Authorization": f"Bearer {refresh.access_token}",
     }
 
-    url = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}/workflow/api/workflow/{workflow_id}/"
+    if realm_code:
+        url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/{workflow_id}/"
+    else:
+        url = f"https://{settings.DOMAIN_NAME}/{space_code}/workflow/api/workflow/{workflow_id}/"
 
     response = requests.get(url, headers=headers)
 
     return response.json()
 
 
-def wait_workflow_until_end(workflow_id: int):
+def wait_workflow_until_end(workflow_id: int, realm_code=None, space_code=None):
     while True:
-        workflow = get_workflow(workflow_id)
+        workflow = get_workflow(workflow_id, realm_code, space_code)
 
         if workflow["status"] not in ("init", "progress"):
             return workflow
@@ -463,4 +467,7 @@ def wait_workflow_until_end(workflow_id: int):
 
 
 def get_default_configuration_code():
-    return f"local.poms.{settings.BASE_API_URL}"
+    from poms.users.models import MasterUser
+    master_user = MasterUser.objects.all().first()
+
+    return f"local.poms.{master_user.space_code}"

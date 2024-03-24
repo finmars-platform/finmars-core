@@ -679,7 +679,7 @@ class CsvDataImportSerializer(serializers.Serializer):
         return CsvDataFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return f"{settings.BASE_API_URL}/public/{file_name}"
+        return f"{master_user.space_code}/public/{file_name}"
 
 
 class SimpleImportImportedItemSerializer(serializers.Serializer):

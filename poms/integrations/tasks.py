@@ -39,7 +39,7 @@ from poms.expressions_engine import formula
 from poms.common.middleware import activate
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
-from poms.integrations.database_client import DatabaseService, BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.expressions_engine.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
@@ -623,7 +623,7 @@ def download_instrument_cbond(
             task.save()
 
         payload_jwt = {
-            "sub": settings.BASE_API_URL,  # "user_id_or_name",
+            "sub": task.master_user.space_code,  # "user_id_or_name",
             "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
         }
 
@@ -634,11 +634,19 @@ def download_instrument_cbond(
             "Authorization": f"Bearer {token}",
         }
         options["request_id"] = task.pk
-        options["base_api_url"] = settings.BASE_API_URL
-        options["callback_url"] = (
-            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-            f"/api/instruments/fdb-create-from-callback/"
-        )
+        options["base_api_url"] = master_user.space_code
+
+        if (master_user.realm_code):
+            options["callback_url"] = (
+                f"https://{settings.DOMAIN_NAME}/{master_user.realm_code}/{master_user.space_code}"
+                f"/api/instruments/fdb-create-from-callback/"
+            )
+        else:
+
+            options["callback_url"] = (
+                f"https://{settings.DOMAIN_NAME}/{master_user.space_code}"
+                f"/api/instruments/fdb-create-from-callback/"
+            )
 
         options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
 
@@ -818,7 +826,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             task.save()
 
             payload_jwt = {
-                "sub": settings.BASE_API_URL,  # "user_id_or_name",
+                "sub": task.master_user.space_code,  # "user_id_or_name",
                 "role": 0,  # 0 - ordinary user, 1 - admin (access to /loadfi & /loadeq)
             }
 
@@ -829,7 +837,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 "Authorization": f"Bearer {token}",
             }
             options["request_id"] = task.pk
-            options["base_api_url"] = settings.BASE_API_URL
+            options["base_api_url"] = master_user.space_code
             options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
 
             options["data"] = {}
@@ -2937,7 +2945,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
             header_line = None
 
             def _get_path(master_user, file_name, ext):
-                return "%s/public/%s.%s" % (settings.BASE_API_URL, file_name, ext)
+                return "%s/public/%s.%s" % (master_user.space_code, file_name, ext)
 
             chunk = None
 
@@ -3937,7 +3945,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         header_line = None
 
         def _get_path(master_user, file_name, ext):
-            return "%s/public/%s.%s" % (settings.BASE_API_URL, file_name, ext)
+            return "%s/public/%s.%s" % (master_user.space_code, file_name, ext)
 
         chunk = None
 
@@ -4130,7 +4138,7 @@ def complex_transaction_csv_file_import_by_procedure(
                             uuid.uuid4().hex,
                         )
                         file_path = "%s/public/%s.csv" % (
-                            settings.BASE_API_URL,
+                            procedure_instance.master_user.space_code,
                             file_name,
                         )
 
@@ -4660,6 +4668,8 @@ def import_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
         return
 
+    BACKEND_CALLBACK_URLS = get_backend_callback_url()
+
     if operation not in BACKEND_CALLBACK_URLS:
         _l.error(f"{func} invalid operation {operation}")
         return
@@ -4667,7 +4677,7 @@ def import_from_database_task(task_id: int, operation: str):
     options = {
         "data": task.options_object,
         "request_id": task.pk,
-        "base_api_url": settings.BASE_API_URL,
+        "base_api_url": task.master_user.space_code,
         "callback_url": BACKEND_CALLBACK_URLS[operation],
     }
     task.options_object = options

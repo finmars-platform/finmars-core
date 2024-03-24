@@ -5,7 +5,7 @@ from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.monad import Monad, MonadStatus
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_url
 from poms.celery_tasks.models import CeleryTask
 from poms.instruments.models import Instrument
 
@@ -16,8 +16,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
         self.url = (
-            f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/instrument/"
+            f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/instrument/"
         )
         self.task = self.create_task(
             name="Test",
@@ -99,6 +101,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
+
+        BACKEND_CALLBACK_URLS = get_backend_callback_url()
+
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
 
     @skip("till fix the instrument type")

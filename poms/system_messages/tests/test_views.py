@@ -3,10 +3,6 @@ from django.conf import settings
 from poms.common.common_base_test import BaseTestCase
 from poms.system_messages.models import SystemMessage, SystemMessageMember
 
-API_URL = (
-    f"/{settings.BASE_API_URL}/api/v1/system-messages/message/?"
-    f"page_size=100&created_after=2023-11-6&action_status=2,3&type=2,3"
-)
 REQUEST_PARAMS = {
     "page_size": 100,
     "created_after": "2023-11-06",
@@ -21,7 +17,12 @@ class MemberViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = API_URL
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/system-messages/message/?"
+            f"page_size=100&created_after=2023-11-6&action_status=2,3&type=2,3"
+        )
 
     def create_system_message(self, title: str) -> SystemMessage:
         system_message = SystemMessage.objects.create(

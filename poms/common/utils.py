@@ -295,9 +295,12 @@ def finmars_exception_handler(exc, context):
                     now(),
                     f"{settings.API_DATE_FORMAT} %H:%M:%S",
                 ),
-                "workspace_id": settings.BASE_API_URL,
+                "realm_code": context["request"].realm_code,
+                "space_code": context["request"].space_code,
             }
         }
+
+
         error = error_payload["error"]
         status_code = response.status_code
 

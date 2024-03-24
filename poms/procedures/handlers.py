@@ -526,7 +526,7 @@ class DataProcedureProcess(object):
                 "https://"
                 + settings.DOMAIN_NAME
                 + "/"
-                + settings.BASE_API_URL
+                + self.master_user.space_code
                 + "/api/internal/data/transactions/callback/"
             )
 
@@ -534,7 +534,7 @@ class DataProcedureProcess(object):
                 "id": self.procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
-                    # "base_api_url": settings.BASE_API_URL,
+                    "base_api_url": self.master_user.space_code,
                     "credentials": {},
                     "params": params,
                 },

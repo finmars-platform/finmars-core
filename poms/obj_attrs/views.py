@@ -175,7 +175,7 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         )
 
     @action(detail=True, methods=["get"], url_path="objects-to-recalculate")
-    def objects_to_recalculate(self, request, pk):
+    def objects_to_recalculate(self, request, pk, realm_code=None, space_code=None):
         master_user = request.user.master_user
 
         attribute_type = GenericAttributeType.objects.get(
@@ -197,7 +197,7 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         url_path="recalculate",
         serializer_class=RecalculateAttributesSerializer,
     )
-    def recalculate_attributes(self, request, pk):
+    def recalculate_attributes(self, request, pk, realm_code=None, space_code=None):
         context = {"request": request}
 
         serializer = RecalculateAttributesSerializer(data=request.data, context=context)

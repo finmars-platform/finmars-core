@@ -36,7 +36,7 @@ class ScheduleViewSet(AbstractModelViewSet):
     permission_classes = []
 
     @action(detail=True, methods=['post'], url_path='run-schedule', serializer_class=ScheduleSerializer)
-    def run_schedule(self, request, pk=None):
+    def run_schedule(self, request, pk=None, realm_code=None, space_code=None):
 
         try:
 

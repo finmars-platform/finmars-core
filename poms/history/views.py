@@ -77,7 +77,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=['post'], url_path='export', serializer_class=ExportJournalSerializer)
-    def export(self, request):
+    def export(self, request, realm_code=None, space_code=None):
 
         serializer = ExportJournalSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
@@ -102,12 +102,12 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
         return Response({"task_id": task.id})
 
     @action(detail=True, methods=['get'], url_path='data')
-    def get_data(self, request, pk):
+    def get_data(self, request, pk, realm_code=None, space_code=None):
         instance = self.get_object()
         return Response(json.loads(instance.data))
 
     @action(detail=False, methods=['get'], url_path='content-types')
-    def get_content_types(self, request):
+    def get_content_types(self, request, realm_code=None, space_code=None):
         result = {
             'results': []
         }

@@ -12,7 +12,9 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/currencies/currency"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency"
 
     def test_detail_delete_main_currencies(self):
         for currency in Currency.objects.filter(user_code__in=MAIN_CURRENCIES):

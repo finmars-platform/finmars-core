@@ -10,7 +10,6 @@ from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.tests.common_test_data import INSTRUMENT
 
-API_URL = f"/{settings.BASE_API_URL}/api/v1/import"
 FILE_CONTENT = json.dumps(INSTRUMENT).encode("utf-8")
 FILE_NAME = "instrument.json"
 
@@ -26,7 +25,11 @@ class CsvDataImportViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{API_URL}/csv/"
+
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme = CsvImportScheme.objects.create(
             content_type=ContentType.objects.first(),
             master_user=self.master_user,

@@ -5,15 +5,14 @@ import sys
 import time
 import traceback
 
+import psutil
+import requests
 from django.apps import AppConfig
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
-
-import psutil
-import requests
 
 from poms.common.exceptions import FinmarsBaseException
 
@@ -45,7 +44,7 @@ class BootstrapConfig(AppConfig):
                     total_memory += proc.info['memory_info'].rss
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass  # Process terminated or access denied
-        _l.info(f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024**2:.2f} MB")
+        _l.info(f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024 ** 2:.2f} MB")
 
     def ready(self):
 
@@ -59,8 +58,6 @@ class BootstrapConfig(AppConfig):
 
         if settings.SEND_LOGS_TO_FINMARS:
             _l.info("Logs will be sending to Finmars")
-
-        _l.info(f"space_code: {settings.BASE_API_URL}")
 
         post_migrate.connect(self.bootstrap, sender=self)
 
@@ -91,10 +88,10 @@ class BootstrapConfig(AppConfig):
         """
         # Do not disable bootstrap code, it's important to be executed on every startup
         if "test" not in sys.argv:
-            self.create_local_configuration()
-            self.add_view_and_manage_permissions()
             self.load_master_user_data()
             self.create_finmars_bot()
+            self.create_local_configuration()
+            self.add_view_and_manage_permissions()
             self.create_member_layouts()
             self.create_base_folders()
             self.register_at_authorizer_service()
@@ -114,11 +111,9 @@ class BootstrapConfig(AppConfig):
             username=FINMARS_BOT,
         )
 
-        master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
-            base_api_url=settings.BASE_API_URL
-        ).first()
+        master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
         if not master_user:
-            err_msg = f"{log} no master_user {settings.BASE_API_URL} exits"
+            err_msg = f"{log} no master_user exists"
             _l.error(err_msg)
             raise BootstrapError("fatal", message=err_msg)
 
@@ -139,7 +134,7 @@ class BootstrapConfig(AppConfig):
             finmars_bot.save()
 
         _l.info(
-            f"{log} for master_user {settings.BASE_API_URL} finmars_user "
+            f"{log} for master_user {master_user.space_code} finmars_user "
             f"'{FINMARS_BOT}' {'created' if created_user else 'exists'} "
             f"and '{FINMARS_BOT}' member {'created' if created_bot else 'updated'}"
         )
@@ -269,37 +264,37 @@ class BootstrapConfig(AppConfig):
                 )
 
             master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
-                base_api_url=base_api_url,
+                space_code=base_api_url,
             ).first()
 
             if master_user:
                 _l.info(
                     f"{log} master_user with name {master_user.name} and "
-                    f"base_api_url {master_user.base_api_url} exists"
+                    f"base_api_url {master_user.space_code} exists"
                 )
 
                 if master_user.name == old_backup_name:
                     # check if restored from backup
                     master_user.name = master_user_name
-                    master_user.base_api_url = base_api_url
+                    master_user.space_code = base_api_url
                     master_user.save()
 
                     BootstrapConfig.deactivate_old_members()
 
                     _l.info(
                         f"{log} master_user from backup {old_backup_name} renamed to "
-                        f"{master_user.name} & base_api_url {master_user.base_api_url}"
+                        f"{master_user.name} & base_api_url {master_user.space_code}"
                     )
 
             else:
                 master_user = MasterUser.objects.create_master_user(
                     name=master_user_name,
-                    base_api_url=base_api_url,
+                    space_code=base_api_url,
                 )
 
                 _l.info(
                     f"{log} created master_user with name {master_user.name} & "
-                    f"base_api_url {master_user.base_api_url}"
+                    f"base_api_url {master_user.space_code}"
                 )
 
             current_owner_member, created = Member.objects.using(
@@ -397,14 +392,17 @@ class BootstrapConfig(AppConfig):
 
         configuration_code = get_default_configuration_code()
 
+        _l.info('create_member_layouts.configuration_code %s' % configuration_code)
+
         for member in members:
-            try:
-                MemberLayout.objects.using(settings.DB_DEFAULT).get(
-                    member=member,
-                    configuration_code=configuration_code,
-                    user_code=f"{configuration_code}:default_member_layout",
-                )
-            except MemberLayout.DoesNotExist:
+
+            layouts = MemberLayout.objects.using(settings.DB_DEFAULT).filter(
+                member=member,
+                configuration_code=configuration_code,
+                user_code=f"{configuration_code}:default_member_layout",
+            )
+
+            if not len(layouts):
                 try:
                     # configuration code will be added automatically
                     MemberLayout.objects.using(settings.DB_DEFAULT).create(
@@ -421,7 +419,7 @@ class BootstrapConfig(AppConfig):
                     _l.error(err_msg)
                     raise BootstrapError("fatal", message=err_msg) from e
 
-            _l.info(f"Created member layout for {member.username}")
+                _l.info(f"create_member_layouts.created_member_layout_for: {member.username}")
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
@@ -430,6 +428,9 @@ class BootstrapConfig(AppConfig):
         from poms.users.models import Member
         from poms_app import settings
 
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+
         try:
             storage = get_storage()
             if not storage:
@@ -437,55 +438,55 @@ class BootstrapConfig(AppConfig):
 
             _l.info("create base folders if not exists")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/.init"):
-                path = f"{settings.BASE_API_URL}/.system/.init"
+            if not storage.exists(f"{master_user.space_code}/.system/.init"):
+                path = f"{master_user.space_code}/.system/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/tmp/.init"):
-                path = f"{settings.BASE_API_URL}/.system/tmp/.init"
+            if not storage.exists(f"{master_user.space_code}/.system/tmp/.init"):
+                path = f"{master_user.space_code}/.system/tmp/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system/tmp folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/.system/log/.init"):
-                path = f"{settings.BASE_API_URL}/.system/log/.init"
+            if not storage.exists(f"{master_user.space_code}/.system/log/.init"):
+                path = f"{master_user.space_code}/.system/log/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system log folder")
 
             if not storage.exists(
-                f"{settings.BASE_API_URL}/.system/new-member-setup-configurations/.init"
+                    f"{master_user.space_code}/.system/new-member-setup-configurations/.init"
             ):
                 path = (
-                    settings.BASE_API_URL
-                    + "/.system/new-member-setup-configurations/.init"
+                        master_user.space_code
+                        + "/.system/new-member-setup-configurations/.init"
                 )
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system new-member-setup-configurations folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/public/.init"):
-                path = f"{settings.BASE_API_URL}/public/.init"
+            if not storage.exists(f"{master_user.space_code}/public/.init"):
+                path = f"{master_user.space_code}/public/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create public folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/configurations/.init"):
-                path = f"{settings.BASE_API_URL}/configurations/.init"
+            if not storage.exists(f"{master_user.space_code}/configurations/.init"):
+                path = f"{master_user.space_code}/configurations/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create configurations folder")
 
-            if not storage.exists(f"{settings.BASE_API_URL}/workflows/.init"):
-                path = f"{settings.BASE_API_URL}/workflows/.init"
+            if not storage.exists(f"{master_user.space_code}/workflows/.init"):
+                path = f"{master_user.space_code}/workflows/.init"
 
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
@@ -495,9 +496,9 @@ class BootstrapConfig(AppConfig):
 
             for member in members:
                 if not storage.exists(
-                    f"{settings.BASE_API_URL}/{member.username}/.init"
+                        f"{master_user.space_code}/{member.username}/.init"
                 ):
-                    path = f"{settings.BASE_API_URL}/{member.username}/.init"
+                    path = f"{master_user.space_code}/{member.username}/.init"
 
                     with NamedTemporaryFile() as tmpf:
                         self._save_tmp_to_storage(tmpf, storage, path)
@@ -511,7 +512,10 @@ class BootstrapConfig(AppConfig):
     def create_local_configuration():
         from poms.configuration.models import Configuration
 
-        configuration_code = f"local.poms.{settings.BASE_API_URL}"
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+
+        configuration_code = f"local.poms.{master_user.space_code}"
 
         _, created = Configuration.objects.using(settings.DB_DEFAULT).get_or_create(
             configuration_code=configuration_code,

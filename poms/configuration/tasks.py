@@ -248,7 +248,7 @@ def import_configuration(self, task_id):
         configuration_code_as_path = "/".join(manifest["configuration_code"].split("."))
 
         dest_workflow_directory = (
-            f"{settings.BASE_API_URL}/workflows/{configuration_code_as_path}"
+            f"{task.master_user.space_code}/workflows/{configuration_code_as_path}"
         )
 
         _l.info(f"dest_workflow_directory {dest_workflow_directory}")
@@ -267,9 +267,9 @@ def import_configuration(self, task_id):
                             f"import_configuration.going to execute workflow {workflow}"
                         )
 
-                        response_data = run_workflow(workflow, {})
+                        response_data = run_workflow(workflow, {}, task.master_user.realm_code, task.master_user.space_code)
 
-                        response_data = wait_workflow_until_end(response_data["id"])
+                        response_data = wait_workflow_until_end(response_data["id"], task.master_user.realm_code, task.master_user.space_code)
 
                         _l.info(
                             f"import_configuration.workflow finished {response_data}"
@@ -346,10 +346,10 @@ def export_configuration(self, task_id):
     save_json_to_file(manifest_filepath, manifest)
 
     storage_directory = (
-        f"{settings.BASE_API_URL}/configurations/{configuration.configuration_code}"
+        f"{task.master_user.space_code}/configurations/{configuration.configuration_code}"
         f"/{configuration.version}/"
         if configuration.is_from_marketplace
-        else f"{settings.BASE_API_URL}/configurations/custom/"
+        else f"{task.master_user.space_code}/configurations/custom/"
         f"{configuration.configuration_code}/{configuration.version}/"
     )
     save_directory_to_storage(source_directory, storage_directory)

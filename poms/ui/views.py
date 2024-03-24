@@ -285,7 +285,7 @@ class InstrumentUserFieldViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=["get"], url_path="primary")
-    def primary(self, request, pk=None,  realm_code=None, space_code=None):
+    def primary(self, request, pk=None, realm_code=None, space_code=None):
         from poms.configuration.models import Configuration
 
         active_configuration = Configuration.objects.get(is_primary=True)
@@ -344,7 +344,7 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
     filter_class = ContextMenuLayoutFilterSet
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(
@@ -452,7 +452,7 @@ class DashboardLayoutViewSet(AbstractModelViewSet):
     ordering_fields = ["name", "is_default"]
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(
@@ -495,7 +495,7 @@ class MobileLayoutViewSet(AbstractModelViewSet):
     ordering_fields = ["name", "is_default"]
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(
@@ -528,7 +528,7 @@ class MemberLayoutViewSet(AbstractModelViewSet):
     ordering_fields = ["name", "is_default"]
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(
@@ -560,7 +560,7 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
     ordering_fields = ["name", "is_default"]
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(
@@ -597,7 +597,7 @@ class EditLayoutViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=True, methods=["get"], url_path="ping")
-    def ping(self, request, pk=None):
+    def ping(self, request, pk=None, realm_code=None, space_code=None):
         layout = self.get_object()
 
         return Response(

@@ -424,7 +424,7 @@ def only_generate_events_at_date_for_single_instrument(
 def generate_events(self, task_id):
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.all()[0]  # TODO get by base_api_url
+
 
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     # finmars_bot = Member.objects.get(username="finmars_bot")
@@ -432,6 +432,8 @@ def generate_events(self, task_id):
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
     celery_task.save()
+
+    master_user = celery_task.master_user
 
     # celery_task = CeleryTask.objects.create(
     #     master_user=master_user,
@@ -796,7 +798,7 @@ def process_events(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
     from poms.instruments.handlers import GeneratedEventProcess
 
-    master_user = MasterUser.objects.all()[0]  # TODO refactor to get by base_api_url
+    master_user = MasterUser.objects.all().first()  # TODO refactor to get by space_code
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     finmars_bot = Member.objects.get(username="finmars_bot")
 

@@ -558,7 +558,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         url_path="book",
         serializer_class=TransactionTypeProcessSerializer,
     )
-    def book(self, request, pk=None):
+    def book(self, request, pk=None, realm_code=None, space_code=None):
         with transaction.atomic():
             # Some Inputs can choose from which context variable it will take value
             # But by default Context Variables overwrites default value
@@ -616,7 +616,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         url_path="book-pending",
         serializer_class=TransactionTypeProcessSerializer,
     )
-    def book_pending(self, request, pk=None):
+    def book_pending(self, request, pk=None, realm_code=None, space_code=None):
         with transaction.atomic():
             complex_transaction_status = ComplexTransaction.PENDING
 
@@ -652,7 +652,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         serializer_class=TransactionTypeRecalculateSerializer,
         permission_classes=[IsAuthenticated],
     )
-    def recalculate(self, request, pk=None):
+    def recalculate(self, request, pk=None, realm_code=None, space_code=None):
         process_mode = request.data.get("process_mode")
         if not process_mode:
             raise ValidationError("mandatory process_mode param is missing!")
@@ -701,7 +701,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         url_path="recalculate-user-fields",
         serializer_class=RecalculateUserFieldsSerializer,
     )
-    def recalculate_user_fields(self, request, pk):
+    def recalculate_user_fields(self, request, pk, realm_code=None, space_code=None):
         print(f"pk={pk} request.data={request.data}")
 
         serializer = RecalculateUserFieldsSerializer(
@@ -1343,7 +1343,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         serializer_class=TransactionTypeProcessSerializer,
         permission_classes=[IsAuthenticated],
     )
-    def rebook(self, request, pk=None):
+    def rebook(self, request, pk=None, realm_code=None, space_code=None):
         complex_transaction = self.get_object()
 
         if request.method == "GET":
@@ -1427,7 +1427,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         serializer_class=TransactionTypeRecalculateSerializer,
         permission_classes=[IsAuthenticated],
     )
-    def recalculate(self, request, pk=None):
+    def recalculate(self, request, pk=None, realm_code=None, space_code=None):
         complex_transaction = self.get_object()
 
         uniqueness_reaction = request.data.get("uniqueness_reaction", None)
@@ -1473,7 +1473,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         serializer_class=TransactionTypeProcessSerializer,
         permission_classes=[IsAuthenticated],
     )
-    def rebook_pending(self, request, pk=None):
+    def rebook_pending(self, request, pk=None, realm_code=None, space_code=None):
         with transaction.atomic():
             complex_transaction = self.get_object()
 
@@ -1508,7 +1508,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         url_path="update-properties",
         serializer_class=ComplexTransactionSimpleSerializer,
     )
-    def update_properties(self, request, pk=None):
+    def update_properties(self, request, pk=None, realm_code=None, space_code=None):
         complex_transaction = self.get_object()
 
         print("detail_route: /update_properties: process update_properties")
@@ -1527,7 +1527,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         url_path="bulk-update-properties",
         serializer_class=ComplexTransactionSimpleSerializer,
     )
-    def bulk_update_properties(self, request):
+    def bulk_update_properties(self, request, realm_code=None, space_code=None):
         data = request.data
         if not isinstance(data, list):
             raise ValidationError(gettext_lazy("Required list"))
@@ -1586,7 +1586,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         serializer_class=ComplexTransactionViewOnlySerializer,
         permission_classes=[IsAuthenticated],
     )
-    def view(self, request, pk=None):
+    def view(self, request, pk=None, realm_code=None, space_code=None):
         _st = time.perf_counter()
 
         complex_transaction = ComplexTransaction.objects.get(id=pk)
@@ -1610,7 +1610,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         return response
 
     @action(detail=False, methods=["get", "post"], url_path="bulk-restore")
-    def bulk_restore(self, request):
+    def bulk_restore(self, request, realm_code=None, space_code=None):
         if request.method.lower() == "get":
             return self.list(request)
 

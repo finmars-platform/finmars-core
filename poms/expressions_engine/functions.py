@@ -4442,12 +4442,12 @@ def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
     # TODO check that file could be placed either in public or member home folder
 
     if not path_to_folder:
-        path_to_folder = settings.BASE_API_URL
+        path_to_folder = master_user.space_code
     else:
         if path_to_folder[0] == "/":
-            path_to_folder = settings.BASE_API_URL + path_to_folder
+            path_to_folder = master_user.space_code + path_to_folder
         else:
-            path_to_folder = settings.BASE_API_URL + "/" + path_to_folder
+            path_to_folder = master_user.space_code + "/" + path_to_folder
 
     print("path_to_folder %s" % path_to_folder)
 
@@ -4484,12 +4484,12 @@ def _delete_file_from_storage(evaluator, path):
     # TODO check that file could be placed either in public or member home folder
 
     if not path:
-        path = settings.BASE_API_URL
+        path = master_user.space_code
     else:
         if path[0] == "/":
-            path = settings.BASE_API_URL + path
+            path = master_user.space_code + path
         else:
-            path = settings.BASE_API_URL + "/" + path
+            path = master_user.space_code + "/" + path
 
     try:
         storage.delete(path)
@@ -4518,14 +4518,14 @@ def _put_file_to_storage(evaluator, path, content):
     # TODO check that file could be placed either in public or member home folder
 
     if not path:
-        path = settings.BASE_API_URL
+        path = master_user.space_code
     else:
         if path[0] == "/":
-            path = settings.BASE_API_URL + path
+            path = master_user.space_code + path
         else:
-            path = settings.BASE_API_URL + "/" + path
+            path = master_user.space_code + "/" + path
 
-    if settings.BASE_API_URL + "/import/" not in path:
+    if master_user.space_code + "/import/" not in path:
         try:
             from django.core.files.base import ContentFile
 
@@ -4547,14 +4547,6 @@ def _run_data_import(evaluator, filepath, scheme):
     try:
         _l.info("_run_data_import %s" % filepath)
 
-        if filepath[0] == "/":
-            filepath = settings.BASE_API_URL + filepath
-        else:
-            filepath = settings.BASE_API_URL + "/" + filepath
-
-        from poms.celery_tasks.models import CeleryTask
-        from poms.csv_import.models import CsvImportScheme
-        from poms.csv_import.tasks import simple_import
         from poms.users.utils import (
             get_master_user_from_context,
             get_member_from_context,
@@ -4564,6 +4556,15 @@ def _run_data_import(evaluator, filepath, scheme):
 
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
+
+        if filepath[0] == "/":
+            filepath = master_user.space_code + filepath
+        else:
+            filepath = master_user.space_code + "/" + filepath
+
+        from poms.celery_tasks.models import CeleryTask
+        from poms.csv_import.models import CsvImportScheme
+        from poms.csv_import.tasks import simple_import
 
         celery_task = CeleryTask.objects.create(
             master_user=master_user,
@@ -4610,14 +4611,15 @@ def _run_transaction_import(evaluator, filepath, scheme):
     try:
         _l.info(f"_run_transaction_import {filepath}")
 
-        if filepath[0] == "/":
-            filepath = settings.BASE_API_URL + filepath
-        else:
-            filepath = settings.BASE_API_URL + "/" + filepath
-
         context = evaluator.context
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
+
+        if filepath[0] == "/":
+            filepath = master_user.space_code + filepath
+        else:
+            filepath = master_user.space_code + "/" + filepath
+
 
         celery_task = CeleryTask.objects.create(
             master_user=master_user,

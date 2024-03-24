@@ -7,7 +7,9 @@ class PortfolioDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio"
 
     def test_detail_delete_main_portfolios(self):
         for portfolio in Portfolio.objects.filter(user_code__in=DASH):

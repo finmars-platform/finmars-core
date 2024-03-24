@@ -288,5 +288,5 @@ class ProcessBankFileForReconcileSerializer(serializers.Serializer):
         storage.save(file_path, file)
         validated_data["file_path"] = file_path
 
-    def _get_path(self, owner, file_name):
-        return f"{settings.BASE_API_URL}/public/{file_name}"
+    def _get_path(self, master_user, file_name):
+        return f"{master_user.space_code}/public/{file_name}"

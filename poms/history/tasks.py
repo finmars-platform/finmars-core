@@ -100,7 +100,7 @@ def clear_old_journal_records():
         try:
             storage = get_storage()
             if storage:
-                remote_path = get_storage_path(filename)
+                remote_path = get_storage_path(filename, master.space_code)
                 save_to_remote_storage(storage, remote_path, buffer)
                 _l.info(f"{log} deleted records saved to remote storage {remote_path}")
             else:
@@ -174,7 +174,7 @@ def export_journal_to_storage(self, task_id):
             # Create a ContentFile to hold the JSON data
             json_file = ContentFile(data.encode("utf-8"))
 
-            path = settings.BASE_API_URL + '/.system/journal'
+            path = task.master_user.space_code + '/.system/journal'
 
             # Define the file name, including the year and month
             file_name = f'{path}/{year}/{month}/{day}.json'

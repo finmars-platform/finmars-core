@@ -16,7 +16,7 @@ class CounterpartyGroupDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         from poms.users.models import EcosystemDefault
@@ -44,7 +44,8 @@ class CounterpartyDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # Only One Space per Scheme
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
@@ -72,7 +73,7 @@ class ResponsibleGroupDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
@@ -100,7 +101,7 @@ class ResponsibleDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         from poms.users.models import EcosystemDefault

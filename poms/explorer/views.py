@@ -38,12 +38,12 @@ class ExplorerViewSet(AbstractViewSet):
         path = request.query_params.get('path')
 
         if not path:
-            path = settings.BASE_API_URL + '/'
+            path = request.space_code + '/'
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         if path[-1] != '/':
             path = path + '/'
@@ -56,7 +56,7 @@ class ExplorerViewSet(AbstractViewSet):
 
         for dir in items[0]:
 
-            if path == settings.BASE_API_URL + '/':
+            if path == request.space_code + '/':
 
                 if dir not in members_usernames:
                     results.append({
@@ -110,9 +110,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
                 raise ValidationError("Path is required")
             else:
                 if path[0] == '/':
-                    path = settings.BASE_API_URL + path
+                    path = request.space_code + path
                 else:
-                    path = settings.BASE_API_URL + '/' + path
+                    path = request.space_code + '/' + path
 
             if settings.AZURE_ACCOUNT_KEY:
                 if path[-1] != '/':
@@ -205,7 +205,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
         if not '.' in filepath.split('/')[-1]:  # if the file does not have an extension
             filepath += '.html'
 
-        path = settings.BASE_API_URL + '/' + filepath
+        path = request.space_code + '/' + filepath
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -286,12 +286,12 @@ class ExplorerUploadViewSet(AbstractViewSet):
         path = request.data['path']
 
         if not path:
-            path = settings.BASE_API_URL
+            path = request.space_code
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -316,11 +316,11 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         _l.info('path %s' % path)
 
-        if path == settings.BASE_API_URL + '/import':
+        if path == request.space_code + '/import':
 
             try:
 
-                settings_path = settings.BASE_API_URL + '/import/.settings.json'
+                settings_path = request.space_code + '/import/.settings.json'
 
                 with storage.open(settings_path) as file:
 
@@ -365,9 +365,9 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         elif path == '/':
             raise ValidationError("Could not remove root folder")
         else:
-            path = settings.BASE_API_URL + '/' + path
+            path = request.space_code + '/' + path
 
-        if path == settings.BASE_API_URL + '/.system/':
+        if path == request.space_code + '/.system/':
             raise PermissionDenied('Could not remove .system folder')
 
         try:
@@ -395,7 +395,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         if not path:
             raise ValidationError("Path is required")
         else:
-            path = settings.BASE_API_URL + '/' + path + '/.init'
+            path = request.space_code + '/' + path + '/.init'
 
         with NamedTemporaryFile() as tmpf:
 
@@ -421,9 +421,9 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
             raise ValidationError("Path is required")
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         _l.info("Delete directory %s" % path)
 
@@ -467,7 +467,7 @@ class DownloadViewSet(AbstractViewSet):
 
         _l.info('path %s' % path)
 
-        path = settings.BASE_API_URL + '/' + path
+        path = request.space_code + '/' + path
 
         # Serve the zip file as a response
         # Serve the file as a response

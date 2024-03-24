@@ -6,6 +6,7 @@ from rest_framework import serializers
 from poms.common.serializers import ModelMetaSerializer, ModelWithUserCodeSerializer
 from poms.common.storage import get_storage
 from poms.configuration.models import Configuration, NewMemberSetupConfiguration
+from poms.users.utils import get_space_code_from_context
 from poms_app import settings
 
 storage = get_storage()
@@ -81,9 +82,11 @@ class NewMemberSetupConfigurationSerializer(
     def create(self, validated_data):
         file = validated_data.pop("file", None)
 
+        space_code = get_space_code_from_context(self.context)
+
         if file:
             file_path = (
-                f"{settings.BASE_API_URL}/.system/new-member-setup-configurations"
+                f"{space_code}/.system/new-member-setup-configurations"
                 f"/{file.name}"
             )
 
@@ -96,9 +99,11 @@ class NewMemberSetupConfigurationSerializer(
     def update(self, instance, validated_data):
         file = validated_data.pop("file", None)
 
+        space_code = get_space_code_from_context(self.context)
+
         if file:
             file_path = (
-                f"{settings.BASE_API_URL}/.system/new-member-setup-configurations"
+                f"{space_code}/.system/new-member-setup-configurations"
                 f"/{file.name}"
             )
 

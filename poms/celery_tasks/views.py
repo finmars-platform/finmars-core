@@ -118,7 +118,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="status")
-    def status(self, request, pk=None):
+    def status(self, request, pk=None, realm_code=None, space_code=None):
         celery_task_id = request.query_params.get("celery_task_id", None)
         async_result = AsyncResult(celery_task_id)
 
@@ -134,7 +134,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         return Response(result)
 
     @action(detail=False, methods=["post"], url_path="execute")
-    def execute(self, request, pk=None):
+    def execute(self, request, pk=None, realm_code=None, space_code=None):
         from poms_app import celery_app
 
         task_name = request.data.get("task_name")
@@ -160,7 +160,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         )
 
     @action(detail=True, methods=["PUT"], url_path="cancel")
-    def cancel(self, request, pk=None):
+    def cancel(self, request, pk=None, realm_code=None, space_code=None):
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
@@ -168,7 +168,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
-    def abort_transaction_import(self, request, pk=None):
+    def abort_transaction_import(self, request, pk=None, realm_code=None, space_code=None):
         from poms_app import celery_app
         from poms.transactions.models import ComplexTransaction
 
@@ -254,45 +254,45 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         raise PermissionDenied()
 
     @action(detail=True, methods=["PUT"], url_path="create-worker")
-    def create_worker(self, request, pk=None):
+    def create_worker(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.create_worker()
+        worker.create_worker(request.realm_code, request.space_code)
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="start")
-    def start(self, request, pk=None):
+    def start(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.start()
+        worker.start(request.realm_code, request.space_code)
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="stop")
-    def stop(self, request, pk=None):
+    def stop(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.stop()
+        worker.stop(request.realm_code, request.space_code)
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="restart")
-    def restart(self, request, pk=None):
+    def restart(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.restart()
+        worker.restart(request.realm_code, request.space_code)
 
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["GET"], url_path="status")
-    def status(self, request, pk=None):
+    def status(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.get_status()
+        worker.get_status(request.realm_code, request.space_code)
 
         return Response({"status": "ok"})
 
     def perform_destroy(self, instance):
-        instance.delete_worker()
+        instance.delete_worker(request.realm_code, request.space_code)
         return super(CeleryWorkerViewSet, self).perform_destroy(instance)

@@ -43,7 +43,9 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/first-transaction-date/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/first-transaction-date/"
         self.portfolio = self.db_data.portfolios[BIG]
 
     def create_3_prr(self):

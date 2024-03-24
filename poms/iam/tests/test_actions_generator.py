@@ -24,6 +24,8 @@ class ActionHandlingTest(BaseTestCase):
         self.init_test_case()
         self.all_actions = set()
         self.all_actions_names = set()
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
         self.all_viewsets = get_viewsets_from_all_apps()
         for viewset in self.all_viewsets:
             for action in viewset.get_extra_actions():
@@ -75,7 +77,7 @@ class ActionHandlingTest(BaseTestCase):
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{settings.BASE_API_URL}" in policy.user_code)
+            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
             self.assertTrue("-full" in policy.user_code)
             self.assertTrue("Full Access" in policy.name)
 
@@ -90,6 +92,6 @@ class ActionHandlingTest(BaseTestCase):
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{settings.BASE_API_URL}" in policy.user_code)
+            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
             self.assertTrue("-readonly" in policy.user_code)
             self.assertTrue("Readonly Access" in policy.name)

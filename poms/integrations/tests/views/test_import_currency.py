@@ -5,7 +5,7 @@ from django.conf import settings
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_url
 from poms.integrations.monad import Monad, MonadStatus
 from poms.currencies.models import Currency
 
@@ -16,7 +16,9 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/currency/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/currency/"
         # self.url = urls.reverse("import_currency_database")
 
     def test__400(self):
@@ -53,6 +55,8 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response_json["remote_task_id"], task_id)
 
         options = celery_task.options_object
+
+        BACKEND_CALLBACK_URLS = get_backend_callback_url()
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["currency"])
         results = celery_task.result_object
         self.assertEqual(results["remote_task_id"], task_id)

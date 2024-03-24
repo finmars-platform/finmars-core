@@ -295,7 +295,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         url_path="book",
         serializer_class=InstrumentTypeProcessSerializer,
     )
-    def book(self, request, pk=None):
+    def book(self, request, pk=None, realm_code=None, space_code=None):
         instrument_type = InstrumentType.objects.get(pk=pk)
 
         instance = InstrumentTypeProcess(
@@ -517,7 +517,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         url_path="update-pricing",
         permission_classes=[IsAuthenticated],
     )
-    def update_pricing(self, request, pk=None):
+    def update_pricing(self, request, pk=None, realm_code=None, space_code=None):
         from poms.pricing.models import InstrumentPricingPolicy
 
         instrument_type = self.get_object()
@@ -559,7 +559,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         )
 
     @action(detail=False, methods=["patch"], url_path="bulk-update")
-    def bulk_update(self, request):
+    def bulk_update(self, request, realm_code=None, space_code=None):
         request_data = request.data
         if not isinstance(request_data, list):
             raise ValidationError("Required list of data")
@@ -899,7 +899,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="rebuild-events",
         serializer_class=serializers.Serializer,
     )
-    def rebuild_all_events(self, request):
+    def rebuild_all_events(self, request, realm_code=None, space_code=None):
         queryset = self.filter_queryset(self.get_queryset())
         processed = 0
         for instance in queryset:
@@ -915,7 +915,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="rebuild-events",
         serializer_class=serializers.Serializer,
     )
-    def rebuild_events(self, request, pk):
+    def rebuild_events(self, request, pk, realm_code=None, space_code=None):
         instance = self.get_object()
         with contextlib.suppress(ValueError):
             instance.rebuild_event_schedules()
@@ -928,7 +928,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events",
         serializer_class=serializers.Serializer,
     )
-    def generate_events(self, request):
+    def generate_events(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
 
         celery_task = CeleryTask.objects.create(
@@ -952,7 +952,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="system-generate-and-process",
         serializer_class=serializers.Serializer,
     )
-    def system_generate_and_process(self, request):
+    def system_generate_and_process(self, request, realm_code=None, space_code=None):
         ret = generate_events_do_not_inform_apply_default.apply_async()
         return Response(
             {
@@ -967,7 +967,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events-range",
         serializer_class=serializers.Serializer,
     )
-    def generate_events_range(self, request):
+    def generate_events_range(self, request, realm_code=None, space_code=None):
         print(f"request.data {request.data} ")
 
         date_from_string = request.data.get("effective_date_0", None)
@@ -1244,7 +1244,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             headers = {"Content-type": "application/json"}
 
             payload_jwt = {
-                "sub": settings.BASE_API_URL,  # "user_id_or_name",
+                "sub": request.space_code,  # "user_id_or_name",
                 "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
             }
 

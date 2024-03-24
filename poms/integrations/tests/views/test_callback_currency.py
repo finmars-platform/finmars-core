@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_url
 
 from poms.currencies.models import Currency
 
@@ -15,6 +15,7 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Currency From Finmars Database",
             func="import_currency_finmars_database",
         )
+        BACKEND_CALLBACK_URLS = get_backend_callback_url()
         self.url = BACKEND_CALLBACK_URLS["currency"]
 
     def test__currency_created(self):

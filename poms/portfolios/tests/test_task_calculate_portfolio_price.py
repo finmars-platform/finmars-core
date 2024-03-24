@@ -11,8 +11,6 @@ from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister
 from poms.portfolios.tasks import calculate_portfolio_register_price_history
 
-PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
-
 
 class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
     databases = "__all__"
@@ -22,7 +20,9 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
         self.init_test_case()
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
-        self.url = f"{PORTFOLIO_API}/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/"
         self.user_code = self.random_string(5)
         self.pricing_policy = PricingPolicy.objects.create(
             master_user=self.master_user,

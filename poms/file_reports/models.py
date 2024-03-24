@@ -62,7 +62,7 @@ class FileReport(models.Model):
             encoded_text = text.encode("utf-8")
 
             storage.save(
-                f"/{settings.BASE_API_URL}{file_url}",
+                f"/{master_user.space_code}{file_url}",
                 ContentFile(encoded_text),
             )
 
@@ -79,7 +79,7 @@ class FileReport(models.Model):
         file_url = self._get_path(master_user, file_name)
 
         try:
-            with storage.open(f"/{settings.BASE_API_URL}{file_url}", "w") as fp:
+            with storage.open(f"/{master_user.space_code}{file_url}", "w") as fp:
                 json.dump(dict_to_json, fp, indent=4, default=str)
 
         except Exception as e:
@@ -99,11 +99,11 @@ class FileReport(models.Model):
         path = self.file_url
 
         if not path:
-            path = settings.BASE_API_URL
+            path = self.master_user.space_code
         elif path[0] == "/":
-            path = settings.BASE_API_URL + path
+            path = self.master_user.space_code + path
         else:
-            path = f"{settings.BASE_API_URL}/{path}"
+            path = f"{self.master_user.space_code}/{path}"
 
         try:
             with storage.open(path, "rb") as f:

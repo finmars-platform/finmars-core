@@ -182,7 +182,7 @@ def remove_old_data_procedures():
         count = tasks.count()
 
         _l.info("Delete %s data procedures" % count)
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
         tasks.delete()
 
         send_system_message(master_user=master_user, type="info",
@@ -191,7 +191,7 @@ def remove_old_data_procedures():
 
     except Exception as e:
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         send_system_message(master_user=master_user, action_status="required", type="warning",
                             title='Could not delete old Data Procedures',

@@ -101,7 +101,7 @@ class MasterUser(models.Model):
     Master User
 
     One of core entities, and its most important.
-    Its a Finmars Installation instance, it uses Space Id (base_api_url) which make
+    Its a Finmars Installation instance, it uses Space Id (space_code) which make
     each Finmars installation unique
     Sometimes master_user called as ecosystem, workspace, space or even ledger
 
@@ -141,13 +141,23 @@ class MasterUser(models.Model):
         blank=True,
         verbose_name=gettext_lazy("name"),
     )
-    base_api_url = models.CharField(
+
+    realm_code = models.CharField(
+        max_length=255,
+        # unique=True, # fix later in 1.9.0, because existing spaces could not have realm_code yet
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("realm_code"),
+    )
+
+    space_code = models.CharField(
         max_length=255,
         unique=True,
         # null=True,
         # blank=True,
-        verbose_name=gettext_lazy("base api url"),
+        verbose_name=gettext_lazy("space_code"),
     )
+
     description = models.TextField(
         null=True,
         blank=True,

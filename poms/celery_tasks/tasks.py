@@ -27,7 +27,8 @@ def remove_old_tasks(self, *args, **kwargs):
         count = tasks.count()
 
         _l.info(f"Delete {count} tasks")
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # Only one Space per Scheme
+        master_user = MasterUser.objects.all().first()
         tasks.delete()
 
         send_system_message(
@@ -38,7 +39,8 @@ def remove_old_tasks(self, *args, **kwargs):
         )
 
     except Exception as e:
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # Only one Space per Scheme
+        master_user = MasterUser.objects.all().first()
 
         send_system_message(
             master_user=master_user,
@@ -68,7 +70,8 @@ def auto_cancel_task_by_ttl():
             task.save()
 
     except Exception as e:
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        master_user = MasterUser.objects.all().first()
 
         send_system_message(
             master_user=master_user,

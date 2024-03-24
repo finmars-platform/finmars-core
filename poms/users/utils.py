@@ -53,7 +53,7 @@ def get_realm_code_from_context(context):
     context = context or {}
     request = context.get("request", None)
     if request:
-        return request.realm_code
+        return request.realm_code if hasattr(request, "realm_code") else None
 
     return context.get("realm_code", None)
 
@@ -61,6 +61,6 @@ def get_space_code_from_context(context):
     context = context or {}
     request = context.get("request", None)
     if request:
-        return request.space_code
+        return request.space_code if hasattr(request, "space_code") else None
 
     return context.get("space_code", None)

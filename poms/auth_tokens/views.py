@@ -184,7 +184,7 @@ class CreateUser(APIView):
 
     def post(self, request, *args, **kwargs):
         member = Member.objects.get(username="finmars_bot")
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         proxy_user = ProxyUser(member, master_user)
         proxy_request = ProxyRequest(proxy_user)
@@ -228,7 +228,7 @@ class CreateUser(APIView):
             user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
             user_profile.save()
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         try:
             member = Member.objects.create(user=user, username=user.username, master_user=master_user)
@@ -285,7 +285,7 @@ class AcceptInvite(APIView):
 
     def post(self, request, *args, **kwargs):
         member = Member.objects.get(username="finmars_bot")
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         proxy_user = ProxyUser(member, master_user)
         proxy_request = ProxyRequest(proxy_user)
@@ -328,7 +328,7 @@ class DeclineInvite(APIView):
 
     def post(self, request, *args, **kwargs):
         member = Member.objects.get(username="finmars_bot")
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         proxy_user = ProxyUser(member, master_user)
         proxy_request = ProxyRequest(proxy_user)
@@ -530,7 +530,7 @@ class CreateMember(APIView):
 
         user, created = User.objects.get_or_create(username=username)
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         try:
             member = Member.objects.create(user=user, username=user.username, master_user=master_user)

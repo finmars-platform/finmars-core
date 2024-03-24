@@ -587,7 +587,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
-            base_api_url=settings.BASE_API_URL,
+            space_code='space00000',
             defaults=dict(
                 name=MASTER_USER,
                 journal_status="disabled",
