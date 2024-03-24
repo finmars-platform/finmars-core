@@ -620,7 +620,9 @@ def record_history():
 
     to_representation_st = time.perf_counter()
 
-    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+    _l.info('record_history %s' % sys.argv)
+
+    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")

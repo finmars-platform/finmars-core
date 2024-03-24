@@ -10,6 +10,7 @@ import requests
 from django.apps import AppConfig
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
+from django.db import connection
 from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
@@ -27,6 +28,13 @@ FINMARS_BOT = "finmars_bot"
 
 class BootstrapError(FinmarsBaseException):
     ...
+
+
+def get_current_search_path():
+    with connection.cursor() as cursor:
+        cursor.execute("SHOW search_path;")
+        search_path = cursor.fetchone()
+        return search_path[0] if search_path else None
 
 
 class BootstrapConfig(AppConfig):
@@ -48,20 +56,20 @@ class BootstrapConfig(AppConfig):
 
     def ready(self):
 
-        _l.info("Bootstrapping Finmars Application")
+        _l.info("bootstrap: Bootstrapping Finmars Application")
 
         if settings.PROFILER:
-            _l.info("Profiler enabled")
+            _l.info("bootstrap:Profiler enabled")
 
         if settings.SERVER_TYPE == "local":
-            _l.info("LOCAL development. CORS disabled")
+            _l.info("bootstrap: LOCAL development. CORS disabled")
 
         if settings.SEND_LOGS_TO_FINMARS:
-            _l.info("Logs will be sending to Finmars")
+            _l.info("bootstrap: Logs will be sending to Finmars")
 
         post_migrate.connect(self.bootstrap, sender=self)
 
-        _l.info("Finmars Application is running 💚")
+        _l.info("bootstrap: Finmars Application is running 💚")
 
         self.get_gunicorn_memory_usage()
 
@@ -86,6 +94,11 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         """
+
+        current_space_code = get_current_search_path()
+
+        _l.info("bootstrap: Current search path: %s" % current_space_code)
+
         # Do not disable bootstrap code, it's important to be executed on every startup
         if "test" not in sys.argv:
             self.load_master_user_data()
@@ -198,7 +211,14 @@ class BootstrapConfig(AppConfig):
             _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
             return
 
-        data = {"base_api_url": settings.BASE_API_URL}
+        current_space_code = get_current_search_path()
+
+        # Probably its a Legacy space
+        # Remove that in 1.9.0
+        if current_space_code == 'public':
+            current_space_code = settings.BASE_API_URL
+
+        data = {"base_api_url": current_space_code, "space_code": current_space_code}
         url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
 
         _l.info(
@@ -229,9 +249,15 @@ class BootstrapConfig(AppConfig):
             old_backup_name = response_data.get("old_backup_name")
 
             base_api_url = response_data["base_api_url"]
-            if base_api_url != settings.BASE_API_URL:
+
+            # Probably its a Legacy space
+            # Remove that in 1.9.0
+            if current_space_code == 'public':
+                current_space_code = settings.BASE_API_URL
+
+            if base_api_url != current_space_code:
                 raise ValueError(
-                    f"received {base_api_url} != expected {settings.BASE_API_URL}"
+                    f"received {base_api_url} != expected {current_space_code}"
                 )
 
         except Exception as e:
@@ -331,7 +357,14 @@ class BootstrapConfig(AppConfig):
         if not settings.AUTHORIZER_URL:
             return
 
-        data = {"base_api_url": settings.BASE_API_URL}
+        current_space_code = get_current_search_path()
+
+        # Probably its a Legacy space
+        # Remove that in 1.9.0
+        if current_space_code == 'public':
+            current_space_code = settings.BASE_API_URL
+
+        data = {"base_api_url": current_space_code, "space_code": current_space_code}
         url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
 
         _l.info(f"register_at_authorizer_service with url={url} data={data}")
@@ -370,16 +403,24 @@ class BootstrapConfig(AppConfig):
 
         workers = CeleryWorker.objects.using(settings.DB_DEFAULT).all()
 
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
+
         for worker in workers:
             try:
-                worker_status = authorizer_service.get_worker_status(worker)
+                worker_status = authorizer_service.get_worker_status(worker,
+                                                                     realm_code=master_user.realm_code,
+                                                                     space_code=master_user.space_code)
 
                 if worker_status["status"] == "not_found":
                     authorizer_service.create_worker(worker)
             except Exception as e:
                 err_msg = f"sync_celery_workers: worker {worker} error {repr(e)}"
                 _l.error(err_msg)
-                raise BootstrapError("fatal", message=err_msg) from e
+                # Starting worker is not fatal error
+                # TODO refactor later?
+                # szhitenev 2024-03-24
+                # raise BootstrapError("fatal", message=err_msg) from e
 
     @staticmethod
     def create_member_layouts():
