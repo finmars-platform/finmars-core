@@ -2,6 +2,7 @@ import logging
 from threading import local
 
 from celery.signals import task_postrun, task_prerun
+from django.db import connection
 
 celery_state = local()
 
@@ -67,9 +68,27 @@ def cancel_existing_procedures(celery_app):
     _l.info(f"Canceled {len(procedures)} procedures ")
 
 
+# EXTREMELY IMPORTANT CODE
+# DO NOT MODIFY IT
+# IT SETS CONTEXT FOR SHARED WORKERS TO WORK WITH DIFFERENT SCHEMAS
+# 2024-03-24 szhitenev
+# ALL TASKS MUST BE PROVIDED WITH CONTEXT WITH space_code
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
-    _l.info(f"task {task}")
+
+    _l.info(f"task_prerun.task {task}")
+
+    context = kwargs.get('context')
+    if context:
+        if context.get('space_code'):
+            space_code = context.get('space_code')
+            with connection.cursor() as cursor:
+                cursor.execute(f"SET search_path TO {space_code};")
+                _l.info(f"task_prerun.context {space_code}")
+        else:
+            raise Exception('No space_code in context')
+    else:
+        raise Exception('No context in kwargs')
 
     celery_state.celery_task_id = task_id
     celery_state.task = task
@@ -81,3 +100,5 @@ def cleanup(task_id, **kwargs):
     celery_state.celery_task_id = None
     celery_state.task = None
     # _l.info('cleaned current_tenant.id')
+    with connection.cursor() as cursor:
+        cursor.execute("SET search_path TO public;")

@@ -49,7 +49,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     @action(detail=True, methods=["get"], url_path="export-configuration")
-    def export_configuration(self, request, pk=None):
+    def export_configuration(self, request, pk=None, realm_code=None, space_code=None):
         task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
@@ -77,7 +77,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
             raise e
 
     @action(detail=True, methods=["get"], url_path="configure")
-    def configure(self, request, pk=None):
+    def configure(self, request, pk=None, realm_code=None, space_code=None):
         configuration = self.get_object()
 
         # RESPONSE WITH HUGE JSON OF CONFIG, AND USER CAN SELECT WHAT TO DO WITH IT
@@ -90,7 +90,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         url_path="import-configuration",
         serializer_class=ConfigurationImportSerializer,
     )
-    def import_configuration(self, request, pk=None):
+    def import_configuration(self, request, pk=None, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -118,7 +118,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         return Response({"task_id": celery_task.id}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["PUT"], url_path="push-configuration-to-marketplace")
-    def push_configuration_to_marketplace(self, request, pk=None):
+    def push_configuration_to_marketplace(self, request, pk=None, realm_code=None, space_code=None):
         configuration = self.get_object()
 
         options_object = {
@@ -146,7 +146,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         methods=["POST"],
         url_path="install-configuration-from-marketplace",
     )
-    def install_configuration_from_marketplace(self, request, pk=None):
+    def install_configuration_from_marketplace(self, request, pk=None, realm_code=None, space_code=None):
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
@@ -168,11 +168,17 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
         if request.data.get("is_package", False):
             install_package_from_marketplace.apply_async(
-                kwargs={"task_id": celery_task.id}
+                kwargs={"task_id": celery_task.id, "context": {
+                    "realm_code": request.realm_code,
+                    "space_code": request.space_code
+                }}
             )
         else:
             install_configuration_from_marketplace.apply_async(
-                kwargs={"task_id": celery_task.id}
+                kwargs={"task_id": celery_task.id, "context": {
+                    "realm_code": request.realm_code,
+                    "space_code": request.space_code
+                }}
             )
 
         _l.info(
@@ -205,7 +211,7 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     @action(detail=True, methods=["PUT"], url_path="install", serializer_class=None)
-    def install(self, request, pk=None):
+    def install(self, request, pk=None, realm_code=None, space_code=None):
         new_member_setup_configuration = self.get_object()
 
         celery_task = None
