@@ -83,7 +83,7 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Migrating..."
-  python /var/app/manage.py migrate
+  python /var/app/manage.py migrate_all_schemes
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Migration Done 💚"
 
