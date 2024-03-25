@@ -67,6 +67,15 @@ def cancel_existing_procedures(celery_app):
 
     _l.info(f"Canceled {len(procedures)} procedures ")
 
+def schema_exists(schema_name):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name = %s;
+        """, [schema_name])
+        return cursor.fetchone() is not None
+
 
 # EXTREMELY IMPORTANT CODE
 # DO NOT MODIFY IT
@@ -81,10 +90,16 @@ def set_task_context(task_id, task, kwargs=None, **unused):
     context = kwargs.get('context')
     if context:
         if context.get('space_code'):
-            space_code = context.get('space_code')
-            with connection.cursor() as cursor:
-                cursor.execute(f"SET search_path TO {space_code};")
-                _l.info(f"task_prerun.context {space_code}")
+
+            if schema_exists(context.get('space_code')):
+
+                space_code = context.get('space_code')
+                with connection.cursor() as cursor:
+                    cursor.execute(f"SET search_path TO {space_code};")
+                    _l.info(f"task_prerun.context {space_code}")
+            else: # REMOVE IN 1.9.0, PROBABLY SECURITY ISSUE
+                with connection.cursor() as cursor:
+                    cursor.execute(f"SET search_path TO public;")
         else:
             raise Exception('No space_code in context')
     else:

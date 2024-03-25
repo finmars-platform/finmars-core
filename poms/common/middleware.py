@@ -395,7 +395,7 @@ class RealmAndSpaceMiddleware:
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO public;")
 
-            else:
+            else: # REMOVE IN 1.9.0, PROBABLY SECURITY ISSUE
 
                 # Setting the PostgreSQL search path to the tenant's schema
                 with connection.cursor() as cursor:
