@@ -1087,8 +1087,8 @@ class PerformanceReportBuilder:
                     raise FinmarsBaseException(
                         error_key="no_first_transaction_date",
                         message=(
-                            "PortfolioRegister has no records, so "
-                            "first_transaction_date couldn't be defined!"
+                            f"Portfolio {portfolio.name} has empty first_transaction"
+                            f"_date field, check if portfolio has transactions"
                         ),
                     )
 

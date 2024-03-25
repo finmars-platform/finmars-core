@@ -322,7 +322,7 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         date_field: str = "accounting_date",
     ) -> date:
         """
-        Try to return the 1st transaction date for the portfolio
+        DEPRECATED: Try to return the 1st accounting date from PortfolioRegisterRecord
         """
         param = f"transaction__{date_field}"
         return self.portfolioregisterrecord_set.aggregate(models.Min(param))[
