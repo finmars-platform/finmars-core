@@ -33,7 +33,7 @@ class ExplorerViewSet(AbstractViewSet):
         new_path = os.path.sep.join(split_path[1:])
         return new_path
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         path = request.query_params.get('path')
 
@@ -100,7 +100,7 @@ class ExplorerViewSet(AbstractViewSet):
 class ExplorerViewFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         try:
 
@@ -197,7 +197,7 @@ def sanitize_html(html):
 class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def retrieve(self, request, filepath=None):
+    def retrieve(self, request, filepath=None, *args, **kwargs):
 
         _l.info('ExplorerServeFileViewSet.filepath %s' % filepath)
         filepath = filepath.rstrip('/')
@@ -279,7 +279,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 class ExplorerUploadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         _l.info('request %s' % request.data)
 
@@ -348,7 +348,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 class ExplorerDeleteViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):  # refactor later, for destroy id is required
+    def create(self, request, *args, **kwargs):  # refactor later, for destroy id is required
 
         path = request.query_params.get('path')
         is_dir = request.query_params.get('is_dir')
@@ -386,7 +386,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 class ExplorerCreateFolderViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         path = request.data.get('path')
 
@@ -411,7 +411,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         path = request.data.get('path')
 
@@ -437,7 +437,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         paths = request.data.get('paths')
 
         # TODO validate path that eiher public/import/system or user home folder
@@ -457,7 +457,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
 class DownloadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         path = request.data.get('path')
 
         # TODO validate path that eiher public/import/system or user home folder
