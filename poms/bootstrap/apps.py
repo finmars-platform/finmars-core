@@ -215,7 +215,7 @@ class BootstrapConfig(AppConfig):
 
         # Probably its a Legacy space
         # Remove that in 1.9.0
-        if current_space_code == 'public':
+        if 'public' in current_space_code:
             current_space_code = settings.BASE_API_URL
 
         data = {
