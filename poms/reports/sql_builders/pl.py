@@ -52,17 +52,19 @@ class PLReportBuilderSql:
             self.instance.period_type = 'ytd'
 
         if not self.instance.pl_first_date and self.instance.period_type:
-            
+
             _l.info("No pl_first_date, calculating by period_type...")
 
             if self.instance.period_type == 'inception':
                 # TODO wtf is first transaction when multi portfolios?
                 # TODO ask oleg what to do with inception
                 # szhitenev 2023-12-04
-                
+
                 first_portfolio = self.instance.portfolios.first()
-                
-                self.instance.pl_first_date = get_last_business_day(first_portfolio.get_first_transaction_date('accounting_date') - timedelta(days=1))
+
+                self.instance.pl_first_date = get_last_business_day(
+                    first_portfolio.first_transaction_date - timedelta(days=1),
+                )
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
@@ -3998,7 +4000,7 @@ class PLReportBuilderSql:
 
             return self.build(task_id)
 
-           
+
         except Exception as e:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.save()
@@ -4164,7 +4166,7 @@ class PLReportBuilderSql:
 
         _l.info('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
-    
+
     def get_cash_consolidation_for_select(self):
 
         result = []

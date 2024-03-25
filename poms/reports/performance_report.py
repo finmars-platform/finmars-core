@@ -1081,7 +1081,7 @@ class PerformanceReportBuilder:
 
         if date_to > date_from:
             for portfolio in portfolios:
-                first_transaction_date = portfolio.get_first_transaction_date()
+                first_transaction_date = portfolio.first_transaction_date
 
                 if not first_transaction_date:
                     raise FinmarsBaseException(
