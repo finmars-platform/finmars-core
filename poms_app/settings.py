@@ -24,6 +24,8 @@ INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, schedule
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+print('BASE_DIR %s' % BASE_DIR)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL("DEBUG", True)
 
@@ -386,7 +388,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-STATIC_URL = f"/{BASE_API_URL}/api/static/"
+STATIC_URL = f"/api/static/"
+
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # creates when collectstatic
 
 STATICFILES_DIR = os.path.join(BASE_DIR, "poms", "api", "static")
