@@ -3617,7 +3617,7 @@ class Transaction(models.Model):
             self.portfolio.save()
 
     def delete(self, *args, **kwargs):
-        _l.debug(f"Transaction.delete: {self.name}")
+        _l.debug(f"Transaction.delete: {self.id}")
 
         super().delete(*args, **kwargs)
 
