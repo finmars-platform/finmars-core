@@ -20,7 +20,7 @@ _l = logging.getLogger("poms.schedules")
 
 
 @finmars_task(name="schedules.process_procedure_async", bind=True)
-def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
+def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id, *args, **kwargs):
     try:
         _l.info(
             f"Schedule: Subprocess process. Master User: {master_user_id}."
@@ -147,7 +147,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
 
 @finmars_task(name="schedules.process", bind=True)
-def process(self, schedule_user_code):
+def process(self, schedule_user_code, *args, **kwargs):
     _l.info(f"schedule_user_code {schedule_user_code}")
 
     s = Schedule.objects.select_related("master_user").get(user_code=schedule_user_code)
@@ -195,7 +195,10 @@ def process(self, schedule_user_code):
                             kwargs={
                                 "procedure_id": procedure.id,
                                 "master_user_id": master_user.id,
-                                "schedule_instance_id": schedule_instance.id,
+                                "schedule_instance_id": schedule_instance.id, 'context': {
+                                    'space_code': master_user.space_code,
+                                    'realm_code': master_user.realm_code
+                                }
                             }
                         )
 

@@ -39,7 +39,7 @@ from poms.expressions_engine import formula
 from poms.common.middleware import activate
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
-from poms.integrations.database_client import DatabaseService, BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.expressions_engine.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
@@ -105,7 +105,7 @@ storage = get_storage()
 
 
 @finmars_task(name="integrations.health_check")
-def health_check_async():
+def health_check_async(*args, **kwargs):
     return True
 
 
@@ -118,7 +118,7 @@ def health_check():
 
 
 @finmars_task(name="integrations.send_mail_async", ignore_result=True)
-def send_mail_async(subject, message, from_email, recipient_list, html_message=None):
+def send_mail_async(subject, message, from_email, recipient_list, html_message=None, *args, **kwargs):
     django_send_mail(
         subject,
         message,
@@ -129,20 +129,23 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message=N
     )
 
 
-def send_mail(subject, message, from_email, recipient_list, html_message=None):
+def send_mail(subject, message, from_email, recipient_list, html_message=None, space_code=None, realm_code=None):
     send_mail_async.apply_async(
         kwargs={
             "subject": subject,
             "message": message,
             "from_email": from_email,
             "recipient_list": recipient_list,
-            "html_message": html_message,
+            "html_message": html_message, 'context': {
+                'space_code': space_code,
+                'realm_code': realm_code
+            }
         }
     )
 
 
 @finmars_task(name="integrations.send_mass_mail", ignore_result=True)
-def send_mass_mail_async(messages):
+def send_mass_mail_async(messages, *args, **kwargs):
     django_send_mass_mail(messages, fail_silently=True)
 
 
@@ -155,7 +158,7 @@ def send_mass_mail(messages):
 
 
 @finmars_task(name="integrations.mail_admins", ignore_result=True)
-def mail_admins_async(subject, message):
+def mail_admins_async(subject, message, *args, **kwargs):
     django_mail_admins(
         subject,
         message,
@@ -173,7 +176,7 @@ def mail_admins(subject, message):
 
 
 @finmars_task(name="integrations.mail_managers", ignore_result=True)
-def mail_managers_async(subject, message):
+def mail_managers_async(subject, message, *args, **kwargs):
     django_mail_managers(
         subject,
         message,
@@ -216,7 +219,7 @@ def task_done_with_instrument_info(instrument: Instrument, task: CeleryTask):
 
 
 @finmars_task(name="integrations.download_instrument", bind=True, ignore_result=False)
-def download_instrument_async(self, task_id=None):
+def download_instrument_async(self, task_id=None, *args, **kwargs):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug(
         "download_instrument_async: master_user_id=%s, task=%s",
@@ -325,7 +328,10 @@ def download_instrument(
             task.save()
             transaction.on_commit(
                 lambda: download_instrument_async.apply_async(
-                    kwargs={"task_id": task.id}
+                    kwargs={"task_id": task.id, 'context': {
+                        'space_code': task.master_user.space_code,
+                        'realm_code': task.master_user.realm_code
+                    }}
                 )
             )
     elif task.status == CeleryTask.STATUS_DONE:
@@ -623,7 +629,7 @@ def download_instrument_cbond(
             task.save()
 
         payload_jwt = {
-            "sub": settings.BASE_API_URL,  # "user_id_or_name",
+            "sub": task.master_user.space_code,  # "user_id_or_name",
             "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
         }
 
@@ -634,11 +640,19 @@ def download_instrument_cbond(
             "Authorization": f"Bearer {token}",
         }
         options["request_id"] = task.pk
-        options["base_api_url"] = settings.BASE_API_URL
-        options["callback_url"] = (
-            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-            f"/api/instruments/fdb-create-from-callback/"
-        )
+        options["base_api_url"] = master_user.space_code
+
+        if (master_user.realm_code):
+            options["callback_url"] = (
+                f"https://{settings.DOMAIN_NAME}/{master_user.realm_code}/{master_user.space_code}"
+                f"/api/instruments/fdb-create-from-callback/"
+            )
+        else:
+
+            options["callback_url"] = (
+                f"https://{settings.DOMAIN_NAME}/{master_user.space_code}"
+                f"/api/instruments/fdb-create-from-callback/"
+            )
 
         options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
 
@@ -818,7 +832,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             task.save()
 
             payload_jwt = {
-                "sub": settings.BASE_API_URL,  # "user_id_or_name",
+                "sub": task.master_user.space_code,  # "user_id_or_name",
                 "role": 0,  # 0 - ordinary user, 1 - admin (access to /loadfi & /loadeq)
             }
 
@@ -829,7 +843,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 "Authorization": f"Bearer {token}",
             }
             options["request_id"] = task.pk
-            options["base_api_url"] = settings.BASE_API_URL
+            options["base_api_url"] = master_user.space_code
             options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
 
             options["data"] = {}
@@ -935,7 +949,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
 @finmars_task(
     name="integrations.download_instrument_cbond_task", bind=True, ignore_result=False
 )
-def download_instrument_cbond_task(self, task_id):
+def download_instrument_cbond_task(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(pk=task_id)
 
     instrument_type_code = None
@@ -1045,7 +1059,7 @@ def download_unified_data(
     bind=True,
     ignore_result=False,
 )
-def download_instrument_pricing_async(self, task_id):
+def download_instrument_pricing_async(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug(
         "download_instrument_pricing_async: master_user_id=%s, task=%s",
@@ -1114,7 +1128,7 @@ def download_instrument_pricing_async(self, task_id):
 @finmars_task(
     name="integrations.test_certificate_async", bind=True, ignore_result=False
 )
-def test_certificate_async(self, task_id):
+def test_certificate_async(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(pk=task_id)
     _l.info(
         "handle_test_certificate_async: master_user_id=%s, task=%s",
@@ -1221,7 +1235,7 @@ def test_certificate_async(self, task_id):
 @finmars_task(
     name="integrations.download_currency_pricing_async", bind=True, ignore_result=False
 )
-def download_currency_pricing_async(self, task_id):
+def download_currency_pricing_async(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug(
         "download_currency_pricing_async: master_user_id=%s, task=%s",
@@ -1430,7 +1444,10 @@ def test_certificate(master_user=None, member=None, task=None):
 
                 transaction.on_commit(
                     lambda: test_certificate_async.apply_async(
-                        kwargs={"task_id": task.id}
+                        kwargs={"task_id": task.id, 'context': {
+                            'space_code': task.master_user.space_code,
+                            'realm_code': task.master_user.realm_code
+                        }}
                     )
                 )
 
@@ -1808,7 +1825,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 @finmars_task(
     name="integrations.complex_transaction_csv_file_import_parallel_finish", bind=True
 )
-def complex_transaction_csv_file_import_parallel_finish(self, task_id):
+def complex_transaction_csv_file_import_parallel_finish(self, task_id, *args, **kwargs):
     try:
         _l.info(
             f"complex_transaction_csv_file_import_parallel_finish task_id {task_id} "
@@ -1895,7 +1912,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
 
 # DEPRECATED
 @finmars_task(name="integrations.complex_transaction_csv_file_import", bind=True)
-def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None):
+def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
     try:
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.transactions.models import TransactionTypeInput
@@ -2889,7 +2906,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
 # DEPRECATED
 # @finmars_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
-def complex_transaction_csv_file_import_parallel(task_id):
+def complex_transaction_csv_file_import_parallel(task_id, *args, **kwargs):
     try:
         _l.info("complex_transaction_csv_file_import_parallel: task_id %s" % task_id)
 
@@ -2937,7 +2954,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
             header_line = None
 
             def _get_path(master_user, file_name, ext):
-                return "%s/public/%s.%s" % (settings.BASE_API_URL, file_name, ext)
+                return "%s/public/%s.%s" % (master_user.space_code, file_name, ext)
 
             chunk = None
 
@@ -3054,7 +3071,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
     name="integrations.complex_transaction_csv_file_import_validate_parallel_finish",
     bind=True,
 )
-def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
+def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id, *args, **kwargs):
     try:
         _l.info(
             "complex_transaction_csv_file_import_validate_parallel_finish task_id %s "
@@ -3138,7 +3155,7 @@ def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
 @finmars_task(
     name="integrations.complex_transaction_csv_file_import_validate", bind=True
 )
-def complex_transaction_csv_file_import_validate(self, task_id):
+def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs):
     try:
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.transactions.models import TransactionTypeInput
@@ -3917,7 +3934,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
 # DEPRECATED
 # @finmars_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
-def complex_transaction_csv_file_import_validate_parallel(task_id):
+def complex_transaction_csv_file_import_validate_parallel(task_id, *args, **kwargs):
     try:
         _l.info(
             "complex_transaction_csv_file_import_validate_parallel: task_id %s"
@@ -3937,7 +3954,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         header_line = None
 
         def _get_path(master_user, file_name, ext):
-            return "%s/public/%s.%s" % (settings.BASE_API_URL, file_name, ext)
+            return "%s/public/%s.%s" % (master_user.space_code, file_name, ext)
 
         chunk = None
 
@@ -4036,7 +4053,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
     name="integrations.complex_transaction_csv_file_import_by_procedure", bind=True
 )
 def complex_transaction_csv_file_import_by_procedure(
-    self, procedure_instance_id, transaction_file_result_id
+    self, procedure_instance_id, transaction_file_result_id, *args, **kwargs
 ):
     with transaction.atomic():
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
@@ -4130,7 +4147,7 @@ def complex_transaction_csv_file_import_by_procedure(
                             uuid.uuid4().hex,
                         )
                         file_path = "%s/public/%s.csv" % (
-                            settings.BASE_API_URL,
+                            procedure_instance.master_user.space_code,
                             file_name,
                         )
 
@@ -4252,7 +4269,10 @@ def complex_transaction_csv_file_import_by_procedure(
 
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
-                            kwargs={"task_id": sub_task.id},
+                            kwargs={"task_id": sub_task.id, 'context': {
+                                'space_code': sub_task.master_user.space_code,
+                                'realm_code': sub_task.master_user.realm_code
+                            }},
                             queue="backend-background-queue",
                         )
                     )
@@ -4304,7 +4324,7 @@ def complex_transaction_csv_file_import_by_procedure(
     name="integrations.complex_transaction_csv_file_import_by_procedure_json", bind=True
 )
 def complex_transaction_csv_file_import_by_procedure_json(
-    self, procedure_instance_id, celery_task_id
+    self, procedure_instance_id, celery_task_id, *args, **kwargs
 ):
     _l.info(
         f"complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id "
@@ -4360,7 +4380,10 @@ def complex_transaction_csv_file_import_by_procedure_json(
             lambda: transaction_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id,
+                    "procedure_instance_id": procedure_instance_id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }
                 },
                 queue="backend-background-queue",
             )
@@ -4660,6 +4683,8 @@ def import_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
         return
 
+    BACKEND_CALLBACK_URLS = get_backend_callback_url()
+
     if operation not in BACKEND_CALLBACK_URLS:
         _l.error(f"{func} invalid operation {operation}")
         return
@@ -4667,7 +4692,7 @@ def import_from_database_task(task_id: int, operation: str):
     options = {
         "data": task.options_object,
         "request_id": task.pk,
-        "base_api_url": settings.BASE_API_URL,
+        "base_api_url": task.master_user.space_code,
         "callback_url": BACKEND_CALLBACK_URLS[operation],
     }
     task.options_object = options
@@ -4720,7 +4745,7 @@ def import_instrument_finmars_database(task_id: int):
 
 
 @finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
-def download_instrument_finmars_database_async(self, task_id):
+def download_instrument_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_instrument_finmars_database_async {task_id}")
     import_instrument_finmars_database(task_id)
 
@@ -4730,7 +4755,7 @@ def import_currency_finmars_database(task_id: int):
 
 
 @finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
-def download_currency_finmars_database_async(self, task_id):
+def download_currency_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_currency_finmars_database_async {task_id}")
     import_currency_finmars_database(task_id)
 
@@ -4740,7 +4765,7 @@ def import_company_finmars_database(task_id: int):
 
 
 @finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
-def download_company_finmars_database_async(self, task_id):
+def download_company_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_company_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
 
@@ -4750,7 +4775,7 @@ def import_price_finmars_database(task_id: int):
 
 
 @finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
-def download_price_finmars_database_async(self, task_id):
+def download_price_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_price_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
 
@@ -4765,7 +4790,7 @@ FINAL_STATUSES = {
 
 
 @finmars_task(name="integrations.ttl_finisher")
-def ttl_finisher(task_id: int):
+def ttl_finisher(task_id: int, *args, **kwargs):
     func = f"ttl_finisher for task.id={task_id}"
     _l.info(f"{func} started")
 

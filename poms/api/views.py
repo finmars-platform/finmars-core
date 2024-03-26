@@ -786,8 +786,16 @@ class SystemInfoViewSet(AbstractViewSet):
 
         return rabbitmq_status        
 
-    def __workflow_status(self):
-        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' 
+    def __workflow_status(self, request):
+
+        base_url = ''
+
+        if request.realm_code:
+            base_url = request.realm_code + '/' + request.space_code
+        else:
+            base_url = request.space_code
+
+        workflow_url = 'https://' + settings.DOMAIN_NAME + '/' + base_url + '/workflow/api/workflow/'
         workflow_status = 'unhealty'
 
         try:
@@ -819,9 +827,9 @@ class SystemInfoViewSet(AbstractViewSet):
         }
 
 
-    def __vault_status(self, ):
+    def __vault_status(self, request):
         try:
-            finmars_vault = FinmarsVault()
+            finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
             # it seems that this function, in case something is wrong with the Vault, always gives an exeption
             finmars_vault.get_health()
             status = 'health'
@@ -843,9 +851,9 @@ class SystemInfoViewSet(AbstractViewSet):
             'pip_freeze': self.__pip_freeze_info()['all'],
             'db_adapter': self.__db_adapter_info(),
             'storage_adapter': self.__storage_adapter_info(),
-            'vault_status': self.__vault_status(),
+            'vault_status': self.__vault_status(request),
             'celery_status': self.__celery_info(),
-            'workflow_status': self.__workflow_status(),
+            'workflow_status': self.__workflow_status(request),
             'rabbitmq_status': self.__rabbitmq_status(),
             'redis_status': self.__redis_status()
         }
@@ -878,7 +886,7 @@ class SystemLogsViewSet(AbstractViewSet):
         return Response(result)
 
     @action(detail=False, methods=['get'], url_path='view-log')
-    def view_log(self, request):
+    def view_log(self, request, realm_code=None, space_code=None):
 
         log_file = request.query_params.get('log_file', 'django.log')
 
@@ -927,7 +935,7 @@ class TablesSizeViewSet(AbstractViewSet):
         return Response(result)
 
     @action(detail=False, methods=['get'], url_path='view-log')
-    def view_log(self, request):
+    def view_log(self, request, realm_code=None, space_code=None):
         log_file = request.query_params.get('log_file', 'django.log')
 
         log_file = '/var/log/finmars/backend/' + log_file
@@ -1006,7 +1014,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='clear-bin')
-    def clear_bin(self, request):
+    def clear_bin(self, request, realm_code=None, space_code=None):
 
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
@@ -1067,7 +1075,10 @@ class UniversalInputViewSet(AbstractViewSet):
 
         from poms.celery_tasks.tasks import universal_input
 
-        universal_input.apply_async(kwargs={"task_id": celery_task.id})
+        universal_input.apply_async(kwargs={"task_id": celery_task.id, 'context': {
+            'space_code': celery_task.master_user.space_code,
+            'realm_code': celery_task.master_user.realm_code
+        }})
 
         # _l.info('UniversalInputViewSet.data %s' % data)
 
@@ -1351,7 +1362,7 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             try:
 
-                workflows = get_workflows_list(date_from, date_to)
+                workflows = get_workflows_list(date_from, date_to, request.realm_code, request.space_code)
 
                 for workflow in workflows:
                     item = {

@@ -7,7 +7,6 @@ from poms.common.common_base_test import BaseTestCase
 from poms.celery_tasks.models import CeleryTask
 from poms.integrations.models import ComplexTransactionImportScheme
 
-BASE_URL = f"/{settings.BASE_API_URL}/api/v1/import"
 
 JSON_DATA = [
     {
@@ -43,7 +42,9 @@ class ComplexTransactionCsvFileImportViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{BASE_URL}/complex-transaction-csv-file-import/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/complex-transaction-csv-file-import/"
         self.scheme = ComplexTransactionImportScheme.objects.create(
             user_code=self.random_string(length=5),
             master_user=self.master_user,

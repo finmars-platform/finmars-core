@@ -146,7 +146,10 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
+            res = self.celery_task.apply_async(kwargs={'instance': instance, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,

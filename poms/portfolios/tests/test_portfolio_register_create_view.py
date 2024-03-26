@@ -5,7 +5,6 @@ from poms.configuration.utils import get_default_configuration_code
 from poms.instruments.models import PricingPolicy, InstrumentType, Instrument
 from poms.portfolios.models import PortfolioRegister
 
-PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
 
 EXPECTED_RESPONSE = {
     "id": 1,
@@ -190,7 +189,9 @@ class PortfolioRegisterCreateTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{PORTFOLIO_API}/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
         self.instrument_type = InstrumentType.objects.first()

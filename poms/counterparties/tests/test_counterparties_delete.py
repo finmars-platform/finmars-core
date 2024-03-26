@@ -7,7 +7,10 @@ class CounterpartyDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/counterparty"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/counterparty"
 
     def test_detail_delete_main_counterparties(self):
         for counterparty in Counterparty.objects.filter(user_code__in=DASH):

@@ -14,9 +14,8 @@ class CurrentMasterUserDefault:
     requires_context = True
 
     def set_context(self, serializer_field):
-        self._master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
-            base_api_url=settings.BASE_API_URL,
-        )
+        # Only one MasterUser per Space (scheme)
+        self._master_user = MasterUser.objects.using(settings.DB_DEFAULT).first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)

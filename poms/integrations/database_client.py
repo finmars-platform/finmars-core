@@ -9,13 +9,27 @@ from poms.integrations.serializers import CallBackDataDictRequestSerializer
 _l = logging.getLogger("default")
 log = "DatabaseClient"
 
-BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-COMMON_PART = "api/v1/import/finmars-database"
-BACKEND_CALLBACK_URLS = {
-    "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
-    "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
-    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
-}
+# TODO REALM_REFACTOR: szhitenev change to realm_code callback
+
+def get_backend_callback_url():
+
+    from poms.users.models import MasterUser
+    master_user = MasterUser.objects.all().first()
+
+    COMMON_PART = "api/v1/import/finmars-database"
+
+    if master_user.realm_code:
+        BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{master_user.realm_code}/{master_user.space_code}"
+    else:
+        BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{master_user.space_code}"
+
+    return {
+        "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
+        "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
+        "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
+    }
+
+
 
 V1_EXPORT = "api/v1/export"
 FINMARS_DATABASE_URLS = {

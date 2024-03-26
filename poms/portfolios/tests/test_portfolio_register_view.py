@@ -5,8 +5,6 @@ from poms.configuration.utils import get_default_configuration_code
 from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister
 
-PORTFOLIO_API = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register"
-
 EXPECTED_RESPONSE_PRICES = {
     "task_id": 1,
     "task_status": "P",
@@ -27,7 +25,9 @@ class PortfolioRegisterViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{PORTFOLIO_API}/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
         self.pricing_policy = PricingPolicy.objects.create(
@@ -83,7 +83,9 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{PORTFOLIO_API}/calculate-records/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/calculate-records/"
 
     def test_check_url(self):
         response = self.client.post(path=self.url, data={})
@@ -113,7 +115,9 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{PORTFOLIO_API}/calculate-price-history/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/calculate-price-history/"
 
     def test_check_url(self):
         response = self.client.post(path=self.url, data={})

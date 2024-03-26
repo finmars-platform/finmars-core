@@ -6,7 +6,6 @@ from django.conf import settings
 from poms.common.common_base_test import BaseTestCase
 from poms.users.models import Member
 
-API_URL = f"/{settings.BASE_API_URL}/api/v1/users/member/"
 REQUEST_DATA = {
     "groups": [],
     "base_api_url": "space00000",
@@ -22,7 +21,9 @@ class MemberViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = API_URL
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/users/member/"
 
     def test__check_api_url(self):
         response = self.client.get(path=self.url)

@@ -21,7 +21,6 @@ from poms.csv_import.tests.common_test_data import (
 )
 from poms.instruments.models import Instrument
 
-API_URL = f"/{settings.BASE_API_URL}/api/v1/import/csv/"
 FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
 FILE_NAME = "price_history.json"
 
@@ -32,7 +31,9 @@ class ImportPriceHistoryTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = API_URL
+        self.realm_code = "realm0000"
+        self.space_code = "space0000"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme_20 = self.create_scheme_20()
         self.storage = mock.Mock()
         self.storage.save.return_value = None

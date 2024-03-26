@@ -7,7 +7,6 @@ from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication, get_authorization_header
 from django.contrib.auth.models import User
 
-from poms.auth_tokens.utils import generate_random_string
 from poms.common.keycloak import KeycloakConnect
 
 _l = logging.getLogger('poms.common')

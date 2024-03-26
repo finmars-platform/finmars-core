@@ -9,7 +9,7 @@ _l = getLogger('poms.users')
 
 
 @finmars_task(name='users.clone_master_user', bind=True)
-def clone_master_user(self, instance, name, current_user):
+def clone_master_user(self, instance, name, current_user, *args, **kwargs):
     from poms.users.cloner import FullDataCloner
 
     reference_master_user = MasterUser.objects.get(id=instance.reference_master_user)

@@ -70,7 +70,10 @@ class Command(BaseCommand):
                 celery_task.options_object = options_object
                 celery_task.save()
 
-                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id, 'context': {
+                    'space_code': celery_task.master_user.space_code,
+                    'realm_code': celery_task.master_user.realm_code
+                }})
 
             except Exception as e:
                 _l.error("Could not init configuration %s" % e)

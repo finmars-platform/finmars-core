@@ -24,6 +24,8 @@ INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, schedule
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+print('BASE_DIR %s' % BASE_DIR)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL("DEBUG", True)
 
@@ -42,7 +44,9 @@ DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
 USE_ADMIN_PANEL = ENV_BOOL("USE_ADMIN_PANEL", False)
-BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
+
+REALM_CODE = ENV_STR("REALM_CODE", "realm00000")
+BASE_API_URL = ENV_STR("BASE_API_URL", "space00000") # DEPRECATED, remove in 1.9.0
 
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
 VERIFY_SSL = ENV_BOOL("VERIFY_SSL", True)
@@ -171,6 +175,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
 
+    "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
       # required for getting request object anywhere
@@ -241,7 +246,6 @@ DATABASES = {
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 300),
-
     },
 }
 if USE_DB_REPLICA:
@@ -383,7 +387,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-STATIC_URL = f"/{BASE_API_URL}/api/static/"
+STATIC_URL = f"/api/static/"
+
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # creates when collectstatic
 
 STATICFILES_DIR = os.path.join(BASE_DIR, "poms", "api", "static")

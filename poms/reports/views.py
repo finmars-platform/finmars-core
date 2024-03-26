@@ -498,7 +498,7 @@ class SummaryViewSet(AbstractViewSet):
         return Response(result)
 
     @action(detail=False, methods=["get"], url_path="portfolios")
-    def list_portfolios(self, request):
+    def list_portfolios(self, request, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.GET)
         serializer.is_valid(raise_exception=True)
 

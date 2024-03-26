@@ -67,7 +67,10 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             instance.task_id = celery_task.id
 
             transaction.on_commit(
-                lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
+                lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id, 'context': {
+                    'space_code': celery_task.master_user.space_code,
+                    'realm_code': celery_task.master_user.realm_code
+                }}))
 
         serializer = self.get_serializer(instance=instance, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -117,7 +120,10 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
+            res = self.celery_task.apply_async(kwargs={'instance': instance, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
             instance.task_id = signer.sign('%s' % res.id)
 
             _l.debug('CREATE CELERY TASK %s' % res.id)

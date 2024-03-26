@@ -1110,7 +1110,10 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.pk, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }}, queue="backend-background-queue"
         )
 
         _l.info(
@@ -1163,7 +1166,10 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.pk, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }}, queue="backend-background-queue"
         )
 
         _l.info(
@@ -1433,7 +1439,10 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk},
+            kwargs={"task_id": celery_task.pk, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }},
             queue="backend-background-queue",
         )
 

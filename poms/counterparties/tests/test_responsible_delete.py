@@ -9,7 +9,9 @@ class ResponsibleDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/responsible"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible"
 
     def test_detail_delete_main_responsibles(self):
         for responsible in Responsible.objects.filter(user_code__in=DASH):

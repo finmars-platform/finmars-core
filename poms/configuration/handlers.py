@@ -26,7 +26,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     configuration_code_as_path = "/".join(configuration.configuration_code.split("."))
 
     workflows_dir = (
-            settings.BASE_API_URL + "/workflows/" + configuration_code_as_path + "/"
+            master_user.space_code + "/workflows/" + configuration_code_as_path + "/"
     )
 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)

@@ -55,7 +55,7 @@ class PricingProcedureViewSet(AbstractModelViewSet):
         url_path="run-procedure",
         serializer_class=RunProcedureSerializer,
     )
-    def run_procedure(self, request, pk=None):
+    def run_procedure(self, request, pk=None, realm_code=None, space_code=None):
         _l.debug(f"Run Procedure {pk} data {request.data}")
 
         procedure = PricingProcedure.objects.get(pk=pk)
@@ -145,7 +145,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
     permission_classes = []
 
     @action(detail=True, methods=["post"], url_path="run-procedure")
-    def run_procedure(self, request, pk=None):
+    def run_procedure(self, request, pk=None, realm_code=None, space_code=None):
         _l.debug(f"Run Procedure {pk} data {request.data}")
 
         procedure = RequestDataFileProcedure.objects.get(pk=pk)
@@ -166,7 +166,10 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         )
 
         execute_data_procedure.apply_async(
-            kwargs={"procedure_instance_id": procedure_instance.id}
+            kwargs={"procedure_instance_id": procedure_instance.id, 'context': {
+                'space_code': master_user.space_code,
+                'realm_code': master_user.realm_code
+            }}
         )
 
         return Response(
@@ -174,7 +177,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         )
 
     @action(detail=False, methods=["post"], url_path="execute")
-    def execute(self, request):
+    def execute(self, request, realm_code=None, space_code=None):
         _l.info(f"RequestDataFileProcedureViewSet.execute.data {request.data}")
 
         user_code = request.data["user_code"]
@@ -201,7 +204,10 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
                 "procedure_instance_id": procedure_instance.id,
                 "date_from": request.data.get("date_from", None),
                 "date_to": request.data.get("date_to", None),
-                "options": request.data.get("options", None),
+                "options": request.data.get("options", None), 'context': {
+                    'space_code': master_user.space_code,
+                    'realm_code': master_user.realm_code
+                }
             }
         )
 
@@ -257,7 +263,7 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
         url_path="run-procedure",
         serializer_class=RunExpressionProcedureSerializer,
     )
-    def run_procedure(self, request, pk=None):
+    def run_procedure(self, request, pk=None, realm_code=None, space_code=None):
         _l.debug(f"Run Procedure {pk} data {request.data}")
 
         procedure = ExpressionProcedure.objects.get(pk=pk)

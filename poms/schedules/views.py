@@ -36,7 +36,7 @@ class ScheduleViewSet(AbstractModelViewSet):
     permission_classes = []
 
     @action(detail=True, methods=['post'], url_path='run-schedule', serializer_class=ScheduleSerializer)
-    def run_schedule(self, request, pk=None):
+    def run_schedule(self, request, pk=None, realm_code=None, space_code=None):
 
         try:
 
@@ -47,7 +47,10 @@ class ScheduleViewSet(AbstractModelViewSet):
             schedule = Schedule.objects.get(pk=pk)
 
             from poms.schedules.tasks import process
-            process.apply_async(kwargs={'schedule_user_code': schedule.user_code})
+            process.apply_async(kwargs={'schedule_user_code': schedule.user_code, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
 
             return Response({"status": "ok"})
 

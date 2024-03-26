@@ -31,7 +31,7 @@ class VaultViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             data = finmars_vault.init()
@@ -47,7 +47,7 @@ class VaultViewSet(AbstractViewSet):
         data['status'] = 'ok'
         data['text'] = 'Vault is responded with health check'
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
         status = finmars_vault.get_health()
 
         data['data'] = status
@@ -65,7 +65,7 @@ class VaultViewSet(AbstractViewSet):
             data['status'] = 'ok'
             data['text'] = 'Vault is operational for storing secrets'
 
-            finmars_vault = FinmarsVault()
+            finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
             status = finmars_vault.get_status()
 
@@ -91,7 +91,7 @@ class VaultViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             data = finmars_vault.seal()
@@ -106,7 +106,7 @@ class VaultViewSet(AbstractViewSet):
 
         key = serializer.validated_data['key']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             data = finmars_vault.unseal(key)
@@ -123,7 +123,7 @@ class VaultEngineViewSet(AbstractViewSet):
     serializer_class = VaultEngineSerializer
 
     def list(self, request):
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         data = finmars_vault.get_list_engines()
 
@@ -143,7 +143,7 @@ class VaultEngineViewSet(AbstractViewSet):
 
         engine_name = serializer.validated_data['engine_name']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             finmars_vault.create_engine(engine_name)
@@ -158,7 +158,7 @@ class VaultEngineViewSet(AbstractViewSet):
 
         engine_name = serializer.validated_data['engine_name']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             finmars_vault.delete_engine(engine_name)
@@ -177,7 +177,7 @@ class VaultSecretViewSet(AbstractViewSet):
         if not engine_name:
             return Response({'error': 'engine_name is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         data = finmars_vault.get_list_secrets(engine_name)
 
@@ -199,7 +199,7 @@ class VaultSecretViewSet(AbstractViewSet):
         path = serializer.validated_data['path']
         data = serializer.validated_data['data']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             finmars_vault.create_secret(engine_name, path, data)
@@ -217,7 +217,7 @@ class VaultSecretViewSet(AbstractViewSet):
         data = serializer.validated_data['data']
         version = serializer.validated_data['version']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             finmars_vault.update_secret(engine_name, path, data, version)
@@ -238,7 +238,7 @@ class VaultSecretViewSet(AbstractViewSet):
         if not engine_name or not path:
             return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
 
@@ -258,7 +258,7 @@ class VaultSecretViewSet(AbstractViewSet):
         if not engine_name or not path:
             return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             result = finmars_vault.get_secret_metadata(engine_name, path)
@@ -274,7 +274,7 @@ class VaultSecretViewSet(AbstractViewSet):
         engine_name = serializer.validated_data['engine_name']
         path = serializer.validated_data['path']
 
-        finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         try:
             finmars_vault.delete_secret(engine_name, path)

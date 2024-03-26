@@ -207,7 +207,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return stats
 
     @action(detail=False, methods=["get"], url_path="stats")
-    def stats(self, request, pk=None):
+    def stats(self, request, pk=None, realm_code=None, space_code=None):
         only_new = request.query_params.get("only_new", False)
         query = request.query_params.get("query", None)
 
@@ -317,7 +317,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response(result)
 
     @action(detail=False, methods=["get"], url_path="mark-all-as-read")
-    def mark_all_as_read(self, request, pk=None):
+    def mark_all_as_read(self, request, pk=None, realm_code=None, space_code=None):
         member = request.user.member
 
         messages = SystemMessage.objects.all()
@@ -336,7 +336,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="mark-as-read",
         serializer_class=SystemMessageActionSerializer,
     )
-    def mark_as_read(self, request, pk=None):
+    def mark_as_read(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data.get("ids")
         sections = request.data.get("sections")
 
@@ -375,7 +375,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="mark-as-solved",
         serializer_class=SystemMessageActionSerializer,
     )
-    def mark_as_solved(self, request, pk=None):
+    def mark_as_solved(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -395,7 +395,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="pin",
         serializer_class=SystemMessageActionSerializer,
     )
-    def pin(self, request, pk=None):
+    def pin(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -416,7 +416,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="unpin",
         serializer_class=SystemMessageActionSerializer,
     )
-    def unpin(self, request, pk=None):
+    def unpin(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -432,7 +432,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["put"], url_path="solve")
-    def solve(self, request, pk=None):
+    def solve(self, request, pk=None, realm_code=None, space_code=None):
         system_message = SystemMessage.objects.get(id=pk)
         context = {"request": request, "master_user": request.user.master_user}
         system_message.action_status = SystemMessage.ACTION_STATUS_SOLVED
@@ -452,7 +452,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["put"], url_path="comment")
-    def comment(self, request, pk=None):
+    def comment(self, request, pk=None, realm_code=None, space_code=None):
         system_message = SystemMessage.objects.get(id=pk)
         context = {"request": request, "master_user": request.user.master_user}
 

@@ -16,7 +16,7 @@ storage = get_storage()
 
 
 @finmars_task(name="csv_import.simple_import", bind=True)
-def simple_import(self, task_id, procedure_instance_id=None):
+def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
     from poms.csv_import.handlers import SimpleImportProcess
 
     try:
@@ -110,7 +110,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
-def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
+def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id, *args, **kwargs):
     from poms.procedures.models import RequestDataFileProcedureInstance
 
     _l.info(
@@ -163,7 +163,10 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             lambda: simple_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id,
+                    "procedure_instance_id": procedure_instance_id, 'context': {
+                        'space_code': celery_task.master_user.space_code,
+                        'realm_code': celery_task.master_user.realm_code
+                    }
                 },
                 queue="backend-background-queue",
             )
@@ -192,7 +195,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
 
 @finmars_task(name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True)
-def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_instance_id=None):
+def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_instance_id=None, *args, **kwargs):
     from poms.csv_import.handlers import SimpleImportFinalUpdatesProcess
 
     try:

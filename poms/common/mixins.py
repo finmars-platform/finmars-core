@@ -120,7 +120,7 @@ class DestroySystemicModelMixin(DestroyModelMixinExt):
 # noinspection PyUnresolvedReferences
 class BulkDestroyModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-delete")
-    def bulk_delete(self, request):
+    def bulk_delete(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
         from poms_app import celery_app
         
@@ -152,7 +152,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
 class BulkRestoreModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-restore")
-    def bulk_restore(self, request):
+    def bulk_restore(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
         from poms_app import celery_app
 

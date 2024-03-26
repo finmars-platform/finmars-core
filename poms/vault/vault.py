@@ -17,8 +17,16 @@ def remove_trailing_slash_from_keys(data):
 
 class FinmarsVault():
 
-    def __init__(self):
-        self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/vault'
+    def __init__(self, realm_code=None, space_code=None):
+
+        self.realm_code = realm_code
+        self.space_code = space_code
+
+        if self.realm_code:
+            self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.realm_code + '/' + self.space_code + '/vault'
+        else:
+            self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.space_code + '/vault'
+
         self.auth_token = settings.VAULT_TOKEN
 
     def get_headers(self):

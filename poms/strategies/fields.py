@@ -35,7 +35,7 @@ class Strategy1GroupDefault(object):
         request = serializer_field.context['request']
         from poms.users.models import MasterUser
         from poms_app import settings
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
@@ -53,7 +53,7 @@ class Strategy1SubgroupDefault(object):
 
         from poms.users.models import MasterUser
         from poms_app import settings
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
@@ -71,7 +71,7 @@ class Strategy1Default(object):
         request = serializer_field.context['request']
         from poms.users.models import MasterUser
         from poms_app import settings
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)

@@ -104,6 +104,7 @@ from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.models import EcosystemDefault
+from poms.users.utils import get_space_code_from_context
 from poms_app import settings
 
 _l = getLogger("poms.integrations")
@@ -152,7 +153,9 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             validated_data
         )
 
-        cert_file_path = settings.BASE_API_URL + "/brokers/bloomberg/%s" % p12cert.name
+        space_code = get_space_code_from_context(self.context)
+
+        cert_file_path = space_code + "/brokers/bloomberg/%s" % p12cert.name
 
         storage.save(cert_file_path, p12cert)
 
@@ -168,7 +171,9 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             instance, validated_data
         )
 
-        cert_file_path = settings.BASE_API_URL + "/brokers/bloomberg/%s" % p12cert.name
+        space_code = get_space_code_from_context(self.context)
+
+        cert_file_path = space_code + "/brokers/bloomberg/%s" % p12cert.name
 
         storage.save(cert_file_path, p12cert)
 
@@ -1543,7 +1548,10 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1588,7 +1596,10 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1633,7 +1644,10 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1688,7 +1702,10 @@ class ImportPriceDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -2672,7 +2689,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
         return ComplexTransactionCsvFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return f"{settings.BASE_API_URL}/public/{file_name}"
+        return f"{master_user.space_code}/public/{file_name}"
 
 
 class TransactionFileResultSerializer(ModelWithTimeStampSerializer):

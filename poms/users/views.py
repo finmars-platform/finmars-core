@@ -317,7 +317,10 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 kwargs={
                     "instance": instance,
                     "name": request.data["name"],
-                    "current_user": request.user,
+                    "current_user": request.user, 'context': {
+                        'space_code': request.space_code,
+                        'realm_code': request.realm_code
+                    }
                 }
             )
             instance.task_id = signer.sign(f"{res.id}")
@@ -540,7 +543,7 @@ class UserViewSet(AbstractModelViewSet):
         url_path="set-password",
         serializer_class=UserSetPasswordSerializer,
     )
-    def set_password(self, request, pk=None):
+    def set_password(self, request, pk=None, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -552,7 +555,7 @@ class UserViewSet(AbstractModelViewSet):
         url_path="unsubscribe",
         serializer_class=UserUnsubscribeSerializer,
     )
-    def unsubscribe(self, request, pk=None):
+    def unsubscribe(self, request, pk=None, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -640,7 +643,7 @@ class MasterUserViewSet(AbstractModelViewSet):
         user = request.user
 
         try:
-            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            master_user = MasterUser.objects.get(space_code=request.space_code)
 
             member_qs = Member.objects.filter(
                 master_user=master_user, user=user, is_admin=True
@@ -661,7 +664,7 @@ class MasterUserViewSet(AbstractModelViewSet):
         except MasterUser.DoesNotExist as e:
             raise PermissionDenied() from e
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.get(space_code=request.space_code)
 
         serializer = MasterUserSerializer(instance=master_user)
 
@@ -669,7 +672,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="get")
     def get_master_user(self, request, *args, **kwargs):
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.get(space_code=request.space_code)
 
         serializer = MasterUserSerializer(instance=master_user)
 
@@ -677,9 +680,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
 
 class MasterUserLightViewSet(AbstractModelViewSet):
-    queryset = MasterUser.objects.filter(
-        base_api_url=settings.BASE_API_URL,
-    ).prefetch_related("members")
+    queryset = MasterUser.objects.all().prefetch_related("members")
     serializer_class = MasterUserLightSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
         IsCurrentMasterUser,
@@ -721,7 +722,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
         url_path="generate-code",
         permission_classes=[IsAuthenticated],
     )
-    def generate_code(self, request, pk=None):
+    def generate_code(self, request, pk=None, realm_code=None, space_code=None):
         secret = pyotp.random_base32()
 
         user = request.user
@@ -747,7 +748,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
         url_path="validate-code",
         permission_classes=[],
     )
-    def validate_code(self, request, pk=None):
+    def validate_code(self, request, pk=None, realm_code=None, space_code=None):
         code = request.data["code"]
         username = request.data["username"]
         result = False
@@ -895,7 +896,7 @@ class MemberViewSet(AbstractModelViewSet):
             member = serializer.instance
 
             try:
-                AuthorizerService().invite_member(member=member, from_user=request.user)
+                AuthorizerService().invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
                 headers = self.get_success_headers(serializer.data)
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -909,7 +910,7 @@ class MemberViewSet(AbstractModelViewSet):
     @staticmethod
     def _handle_authorizer_error(request, member, err):
         params = {
-            "base_api_url": settings.BASE_API_URL,
+            "base_api_url": request.space_code,
             "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": request.user.username,
@@ -986,7 +987,7 @@ class MemberViewSet(AbstractModelViewSet):
 
         authorizer = AuthorizerService()
 
-        authorizer.kick_member(instance)
+        authorizer.kick_member(instance, request.realm_code, request.space_code)
 
         instance.status = Member.STATUS_DELETED
         instance.save()
@@ -994,7 +995,7 @@ class MemberViewSet(AbstractModelViewSet):
         return super().perform_destroy(instance)
 
     @action(detail=True, methods=["put"], url_path="send-invite")
-    def send_invite(self, request, pk=None):
+    def send_invite(self, request, pk=None, realm_code=None, space_code=None):
         member = self.get_object()
 
         if not member.is_deleted and member.status != Member.STATUS_INVITE_DECLINED:
@@ -1005,7 +1006,7 @@ class MemberViewSet(AbstractModelViewSet):
 
         authorizer = AuthorizerService()
 
-        authorizer.invite_member(member=member, from_user=request.user)
+        authorizer.invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
 
         return Response({"status": "ok"})
 

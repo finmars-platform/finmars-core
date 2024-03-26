@@ -30,17 +30,19 @@ class AuthorizerService:
             "Authorization": f"Bearer {refresh.access_token}",
         }
 
-    def invite_member(self, member, from_user):
+    def invite_member(self, member, from_user, realm_code, space_code):
         headers = self.prepare_headers()
         data = {
-            "base_api_url": settings.BASE_API_URL,
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "base_api_url": space_code, # deprecated, delete, but be sure authorizer not using it
             "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": from_user.username,
         }
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/invite-member/"
-            f"?space_code={settings.BASE_API_URL}"
+            f"?space_code={space_code}"
         )
 
         _l.info(f"invite_member url={url} data={data}")
@@ -54,15 +56,17 @@ class AuthorizerService:
                 f"details={response.text}"
             )
 
-    def kick_member(self, member):
+    def kick_member(self, member, realm_code, space_code):
         headers = self.prepare_headers()
         data = {
-            "base_api_url": settings.BASE_API_URL,
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "base_api_url": space_code, # deprecated, but, be sure that authorizer not using it
             "username": member.username,
         }
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/kick-member/"
-            f"?space_code={settings.BASE_API_URL}"
+            f"?space_code={space_code}"
         )
 
         _l.info(f"kick_member url={url} data={data}")
@@ -73,13 +77,14 @@ class AuthorizerService:
         if response.status_code != 200:
             raise RuntimeError(f"Error kicking member {response.text}")
 
-    def prepare_and_post_request(self, worker, url, err_msg):
+    def prepare_and_post_request(self, worker, url, realm_code, space_code, err_msg):
         headers = self.prepare_headers()
         data = {
-            "space_code": settings.BASE_API_URL,
+            "realm_code": realm_code,
+            "space_code": space_code,
             "worker_name": worker.worker_name,
         }
-        url = f"{settings.AUTHORIZER_URL}{url}{settings.BASE_API_URL}"
+        url = f"{settings.AUTHORIZER_URL}{url}{space_code}"
         response = requests.post(
             url=url,
             data=json.dumps(data),
@@ -89,39 +94,47 @@ class AuthorizerService:
         if response.status_code != 200:
             raise RuntimeError(f"{err_msg}{response.text}")
 
-    def start_worker(self, worker):
+    def start_worker(self, worker, realm_code, space_code):
         self.prepare_and_post_request(
             worker,
+            realm_code,
+            space_code,
             "/api/v1/internal/start-worker/?space_code=",
             "Error starting worker ",
         )
 
-    def stop_worker(self, worker):
+    def stop_worker(self, worker, realm_code, space_code):
         self.prepare_and_post_request(
             worker,
+            realm_code,
+            space_code,
             "/api/v1/internal/stop-worker/?space_code=",
             "Error stopping worker ",
         )
 
-    def restart_worker(self, worker):
+    def restart_worker(self, worker, realm_code, space_code):
         self.prepare_and_post_request(
             worker,
+            realm_code,
+            space_code,
             "/api/v1/internal/restart-worker/?space_code=",
             "Error restarting worker ",
         )
 
-    def delete_worker(self, worker):
+    def delete_worker(self, worker, realm_code, space_code):
         self.prepare_and_post_request(
             worker,
+            realm_code,
+            space_code,
             "/api/v1/internal/delete-worker/?space_code=",
             "Error deleting worker ",
         )
 
-    def get_worker_status(self, worker):
+    def get_worker_status(self, worker, realm_code, space_code):
         headers = self.prepare_headers()
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/worker-status/"
-            f"?space_code={settings.BASE_API_URL}&worker_name={worker.worker_name}"
+            f"?space_code={space_code}&worker_name={worker.worker_name}"
         )
 
         response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
@@ -130,10 +143,11 @@ class AuthorizerService:
 
         return response.json()
 
-    def create_worker(self, worker):
+    def create_worker(self, worker, realm_code, space_code):
         headers = self.prepare_headers()
         data = {
-            "space_code": settings.BASE_API_URL,
+            "realm_code": realm_code,
+            "space_code": space_code,
             "worker_name": worker.worker_name,
             "worker_type": worker.worker_type,
             "memory_limit": worker.memory_limit,
@@ -141,7 +155,7 @@ class AuthorizerService:
         }
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/create-worker/"
-            f"?space_code={settings.BASE_API_URL}"
+            f"?space_code={space_code}"
         )
 
         response = requests.post(

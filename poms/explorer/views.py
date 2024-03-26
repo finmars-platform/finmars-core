@@ -33,17 +33,17 @@ class ExplorerViewSet(AbstractViewSet):
         new_path = os.path.sep.join(split_path[1:])
         return new_path
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         path = request.query_params.get('path')
 
         if not path:
-            path = settings.BASE_API_URL + '/'
+            path = request.space_code + '/'
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         if path[-1] != '/':
             path = path + '/'
@@ -56,7 +56,7 @@ class ExplorerViewSet(AbstractViewSet):
 
         for dir in items[0]:
 
-            if path == settings.BASE_API_URL + '/':
+            if path == request.space_code + '/':
 
                 if dir not in members_usernames:
                     results.append({
@@ -100,7 +100,7 @@ class ExplorerViewSet(AbstractViewSet):
 class ExplorerViewFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         try:
 
@@ -110,9 +110,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
                 raise ValidationError("Path is required")
             else:
                 if path[0] == '/':
-                    path = settings.BASE_API_URL + path
+                    path = request.space_code + path
                 else:
-                    path = settings.BASE_API_URL + '/' + path
+                    path = request.space_code + '/' + path
 
             if settings.AZURE_ACCOUNT_KEY:
                 if path[-1] != '/':
@@ -197,7 +197,7 @@ def sanitize_html(html):
 class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def retrieve(self, request, filepath=None):
+    def retrieve(self, request, filepath=None, *args, **kwargs):
 
         _l.info('ExplorerServeFileViewSet.filepath %s' % filepath)
         filepath = filepath.rstrip('/')
@@ -205,7 +205,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
         if not '.' in filepath.split('/')[-1]:  # if the file does not have an extension
             filepath += '.html'
 
-        path = settings.BASE_API_URL + '/' + filepath
+        path = request.space_code + '/' + filepath
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -279,19 +279,19 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 class ExplorerUploadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         _l.info('request %s' % request.data)
 
         path = request.data['path']
 
         if not path:
-            path = settings.BASE_API_URL
+            path = request.space_code
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -316,11 +316,11 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         _l.info('path %s' % path)
 
-        if path == settings.BASE_API_URL + '/import':
+        if path == request.space_code + '/import':
 
             try:
 
-                settings_path = settings.BASE_API_URL + '/import/.settings.json'
+                settings_path = request.space_code + '/import/.settings.json'
 
                 with storage.open(settings_path) as file:
 
@@ -348,7 +348,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 class ExplorerDeleteViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):  # refactor later, for destroy id is required
+    def create(self, request, *args, **kwargs):  # refactor later, for destroy id is required
 
         path = request.query_params.get('path')
         is_dir = request.query_params.get('is_dir')
@@ -365,9 +365,9 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         elif path == '/':
             raise ValidationError("Could not remove root folder")
         else:
-            path = settings.BASE_API_URL + '/' + path
+            path = request.space_code + '/' + path
 
-        if path == settings.BASE_API_URL + '/.system/':
+        if path == request.space_code + '/.system/':
             raise PermissionDenied('Could not remove .system folder')
 
         try:
@@ -386,7 +386,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 class ExplorerCreateFolderViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         path = request.data.get('path')
 
@@ -395,7 +395,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         if not path:
             raise ValidationError("Path is required")
         else:
-            path = settings.BASE_API_URL + '/' + path + '/.init'
+            path = request.space_code + '/' + path + '/.init'
 
         with NamedTemporaryFile() as tmpf:
 
@@ -411,7 +411,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         path = request.data.get('path')
 
@@ -421,9 +421,9 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
             raise ValidationError("Path is required")
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL + path
+                path = request.space_code + path
             else:
-                path = settings.BASE_API_URL + '/' + path
+                path = request.space_code + '/' + path
 
         _l.info("Delete directory %s" % path)
 
@@ -437,7 +437,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         paths = request.data.get('paths')
 
         # TODO validate path that eiher public/import/system or user home folder
@@ -457,7 +457,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
 class DownloadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         path = request.data.get('path')
 
         # TODO validate path that eiher public/import/system or user home folder
@@ -467,7 +467,7 @@ class DownloadViewSet(AbstractViewSet):
 
         _l.info('path %s' % path)
 
-        path = settings.BASE_API_URL + '/' + path
+        path = request.space_code + '/' + path
 
         # Serve the zip file as a response
         # Serve the file as a response

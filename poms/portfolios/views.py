@@ -423,7 +423,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     ]
 
     @action(detail=False, methods=["post"], url_path="calculate-records")
-    def calculate_records(self, request):
+    def calculate_records(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
         serializer = PrCalculateRecordsRequestSerializer(
@@ -442,7 +442,10 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_register_record.apply_async(
-            kwargs={"task_id": task.id},
+            kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }},
         )
 
         return Response(
@@ -456,7 +459,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         )
 
     @action(detail=False, methods=["post"], url_path="calculate-price-history")
-    def calculate_price_history(self, request):
+    def calculate_price_history(self, request, realm_code=None, space_code=None):
         _l.info(
             f"{self.__class__.__name__}.calculate_price_history data={request.data}"
         )
@@ -484,7 +487,10 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_register_price_history.apply_async(
-            kwargs={"task_id": task.id},
+            kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }},
         )
 
         return Response(
@@ -569,7 +575,7 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
     ordering_fields = []
 
     @action(detail=True, methods=["get"], url_path="portfolio-registers")
-    def get_portfolio_registers(self, request, pk):
+    def get_portfolio_registers(self, request, pk, realm_code=None, space_code=None):
         obj = self.get_object()
         queryset = obj.registers.all()
         page = self.paginator.post_paginate_queryset(queryset, request)
@@ -654,7 +660,7 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
         url_path="calculate",
         serializer_class=CalculatePortfolioHistorySerializer,
     )
-    def calculate(self, request):
+    def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
         serializer = CalculatePortfolioHistorySerializer(
             data=request.data, context=self.get_serializer_context()
@@ -672,7 +678,10 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_history.apply_async(
-            kwargs={"task_id": task.id},
+            kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }},
         )
 
         return Response(
@@ -740,7 +749,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         url_path="calculate",
         serializer_class=CalculatePortfolioReconcileHistorySerializer,
     )
-    def calculate(self, request):
+    def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
         serializer = CalculatePortfolioReconcileHistorySerializer(
             data=request.data, context=self.get_serializer_context()
@@ -758,7 +767,10 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_reconcile_history.apply_async(
-            kwargs={"task_id": task.id},
+            kwargs={"task_id": task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }},
         )
 
         return Response(

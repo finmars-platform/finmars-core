@@ -9,7 +9,8 @@ from poms.common.filters import ClassifierRootFilter
 from poms.iam.serializers import IamProtectedSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.utils import get_master_user_from_context, get_member_from_context
+from poms.users.utils import get_master_user_from_context, get_member_from_context, get_space_code_from_context, \
+    get_realm_code_from_context
 from poms_app import settings
 
 
@@ -55,7 +56,8 @@ class ModelMetaSerializer(serializers.ModelSerializer):
             "content_type": f"{self.Meta.model._meta.app_label}.{self.Meta.model._meta.model_name}",
             "app_label": self.Meta.model._meta.app_label,
             "model_name": self.Meta.model._meta.model_name,
-            "space_code": settings.BASE_API_URL,
+            "space_code": get_space_code_from_context(self.context),
+            "realm_code": get_realm_code_from_context(self.context),
         }
 
         return representation
