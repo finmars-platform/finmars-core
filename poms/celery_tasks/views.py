@@ -1,20 +1,17 @@
 import json
-
 from logging import getLogger
 
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet, MultipleChoiceFilter, BaseInFilter, CharFilter
+from celery.result import AsyncResult
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-
-from celery.result import AsyncResult
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
-
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
 from .models import CeleryTask, CeleryWorker
 from .serializers import (
@@ -24,6 +21,7 @@ from .serializers import (
 )
 
 _l = getLogger("poms.celery_tasks")
+
 
 class CeleryTaskFilterSet(FilterSet):
     id = CharFilter()
@@ -36,7 +34,7 @@ class CeleryTaskFilterSet(FilterSet):
 
     class Meta:
         model = CeleryTask
-        fields = ["status", "type",]
+        fields = ["status", "type", ]
 
     @staticmethod
     def filter_status__in(queryset, _, value):
@@ -293,6 +291,14 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
         return Response({"status": "ok"})
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance, request)
+        except Exception as e:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance, request):
         instance.delete_worker(request.realm_code, request.space_code)
         return super(CeleryWorkerViewSet, self).perform_destroy(instance)

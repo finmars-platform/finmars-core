@@ -215,7 +215,6 @@ class MasterUser(models.Model):
     class Meta:
         verbose_name = gettext_lazy("master user")
         verbose_name_plural = gettext_lazy("master users")
-        ordering = ["name"]
 
     def __str__(self):
         return self.name
