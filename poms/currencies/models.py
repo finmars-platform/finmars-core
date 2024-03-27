@@ -11,9 +11,9 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now
+from poms.currencies.constants import MAIN_CURRENCIES
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
-from poms.currencies.constants import MAIN_CURRENCIES
 
 
 # Probably Deprecated
@@ -64,7 +64,6 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         default=1,
         verbose_name=gettext_lazy("default fx rate"),
     )
-
     country = models.ForeignKey(
         "instruments.Country",
         null=True,
@@ -72,7 +71,6 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
     )
-
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("currency")
@@ -135,6 +133,7 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def fake_delete(self):
         if not self.user_code in MAIN_CURRENCIES:
             return super().fake_delete()
+
 
 class CurrencyHistory(DataTimeStampedModel):
     """
