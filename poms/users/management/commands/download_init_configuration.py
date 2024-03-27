@@ -11,9 +11,12 @@ class Command(BaseCommand):
     help = "Install Initial Configuration"
 
     def handle(self, *args, **options):
-        _l.info("Downloading init configuration")
-
+        from poms.celery_tasks.models import CeleryTask
+        from poms.configuration.tasks import install_package_from_marketplace
+        from poms.users.models import MasterUser, Member
         from poms_app.celery import app as celery_app
+
+        _l.info("Downloading init configuration")
 
         # Need to wait to ensure celery workers are available
         i = celery_app.control.inspect()
@@ -33,10 +36,6 @@ class Command(BaseCommand):
             return
 
         _l.info("Celery worker(s) are now available.")
-
-        from poms.celery_tasks.models import CeleryTask
-        from poms.configuration.tasks import install_package_from_marketplace
-        from poms.users.models import MasterUser, Member
 
         if not settings.AUTHORIZER_URL:
             _l.error("Authorizer url is not set!")
@@ -76,4 +75,4 @@ class Command(BaseCommand):
             )
 
         except Exception as e:
-            _l.error("Could not init configuration %s" % e)
+            _l.error(f"load_init_configuration failed due to error {repr(e)}")
