@@ -267,6 +267,7 @@ class BackendReportHelperService:
         original_items = []  # probably we missing user attributes
 
         helper_dicts = {
+            "accrued_currency": self.convert_helper_dict(data["item_currencies"]),
             "pricing_currency": self.convert_helper_dict(data["item_currencies"]),
             "settlement_currency": self.convert_helper_dict(data["item_currencies"]),
             "transaction_currency": self.convert_helper_dict(data["item_currencies"]),
