@@ -297,15 +297,15 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                                 f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
                             )
 
-                            record.fx_rate = (
-                                cash_ccy_fx_rate / valuation_ccy_fx_rate
-                                if valuation_ccy_fx_rate
-                                else 0
-                            )
+                            record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
 
                         except Exception as e:
-                            _l.info(f"{log} fx rate lookup error {e}")
-                            record.fx_rate = 0
+                            err_msg = f"{log} fx rate lookup error {repr(e)}"
+                            _l.error(err_msg)
+                            raise FinmarsBaseException(
+                                error_key="fx_rate",
+                                message=err_msg,
+                            ) from e
 
                     # why use cash amount after, not record.cash_amount_valuation_currency
                     record.cash_amount_valuation_currency = (
