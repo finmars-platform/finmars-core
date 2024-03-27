@@ -10,6 +10,7 @@ from rest_framework.serializers import ListSerializer
 
 from mptt.utils import get_cached_trees
 
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.fields import ContentTypeOrPrimaryKeyRelatedField, ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelMetaSerializer, ModelWithUserCodeSerializer
@@ -47,21 +48,23 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         self.create_attributes_if_not_exists(instance)
 
-        self.save_attributes(instance, attributes, True)
+        self.save_attributes(instance, attributes, created=True)
 
         self.calculate_attributes(instance)
 
         return instance
 
     def update(self, instance, validated_data):
-        attributes = validated_data.pop("attributes", [])
+        old_attributes = instance.attributes.all()
+        new_attributes = validated_data.pop("attributes", [])
 
         instance = super().update(instance, validated_data)
 
         self.create_attributes_if_not_exists(instance)
 
-        if attributes:
-            self.save_attributes(instance, attributes, False)
+        if new_attributes:
+            self.save_attributes(instance, new_attributes, created=False)
+            instance.attributes.add(old_attributes)
 
         self.calculate_attributes(instance)
 
@@ -218,7 +221,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
                 attr.save()
 
-    def save_attributes(self, instance, attributes, created):
+    def save_attributes(self, instance, attributes, created: bool = False):
         # _l.info(f"save_attributes: attributes={attributes}")
 
         if not attributes:
@@ -255,7 +258,12 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 oattr.save()
 
         except Exception as e:
-            _l.error(f"save_attributes: {repr(e)} traceback {traceback.format_exc()} ")
+            err_msg = f"ModelWithAttributesSerializer.save_attributes: error {repr(e)}"
+            _l.error(f"{err_msg} traceback {traceback.format_exc()}")
+            raise FinmarsBaseException(
+                error_key="generic_attributes_save_error",
+                message=err_msg,
+            ) from e
 
 
 class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
