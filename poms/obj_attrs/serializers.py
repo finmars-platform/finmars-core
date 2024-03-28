@@ -48,7 +48,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         self.create_attributes_if_not_exists(instance)
 
-        self.save_attributes(instance, attributes, created=True)
+        self.save_attributes(instance, attributes)
 
         self.calculate_attributes(instance)
 
@@ -63,7 +63,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         self.create_attributes_if_not_exists(instance)
 
         if new_attributes:
-            self.save_attributes(instance, new_attributes, created=False)
+            self.save_attributes(instance, new_attributes)
             instance.attributes.add(old_attributes)
 
         self.calculate_attributes(instance)
@@ -116,13 +116,13 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                         attribute_type.expr, names={"this": eval_data}, context={}
                     )
                 except (ExpressionEvalError, Exception):
-                    executed_expressions[
-                        attribute_type.user_code
-                    ] = "Invalid Expression"
+                    executed_expressions[attribute_type.user_code] = (
+                        "Invalid Expression"
+                    )
 
-                eval_data["attributes"][
-                    attribute_type.user_code
-                ] = executed_expressions[attribute_type.user_code]
+                eval_data["attributes"][attribute_type.user_code] = (
+                    executed_expressions[attribute_type.user_code]
+                )
 
         current_index = current_index + 1
 
@@ -221,17 +221,17 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
                 attr.save()
 
-    def save_attributes(self, instance, attributes, created: bool = False):
+    def save_attributes(self, instance, attributes):
         # _l.info(f"save_attributes: attributes={attributes}")
 
         if not attributes:
             return
 
-        try:
-            ctype = ContentType.objects.get_for_model(instance)
+        ctype = ContentType.objects.get_for_model(instance)
 
-            for attr in attributes:
-                attribute_type = attr["attribute_type"]
+        for attr in attributes:
+            attribute_type = attr["attribute_type"]
+            try:
                 oattr = GenericAttribute.objects.get(
                     content_type=ctype,
                     object_id=instance.id,
@@ -257,13 +257,17 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     )
                 oattr.save()
 
-        except Exception as e:
-            err_msg = f"ModelWithAttributesSerializer.save_attributes: error {repr(e)}"
-            _l.error(f"{err_msg} traceback {traceback.format_exc()}")
-            raise FinmarsBaseException(
-                error_key="generic_attributes_save_error",
-                message=err_msg,
-            ) from e
+            except Exception as e:
+                err_msg = (
+                    f"ModelWithAttributesSerializer.save_attributes: {repr(e)} "
+                    f"content_type='{ctype}' object_id={instance.id} "
+                    f"attribute_type_id={attribute_type.id}"
+                )
+                _l.error(err_msg)
+                raise FinmarsBaseException(
+                    error_key="save_attributes_error",
+                    message=err_msg,
+                ) from e
 
 
 class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
@@ -434,9 +438,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         content_type = instance.content_type
-        representation[
-            "content_type"
-        ] = f"{content_type.app_label}.{content_type.model}"
+        representation["content_type"] = (
+            f"{content_type.app_label}.{content_type.model}"
+        )
         return representation
 
     def validate(self, attrs):

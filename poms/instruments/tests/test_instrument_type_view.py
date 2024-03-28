@@ -1,6 +1,5 @@
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
+from django.contrib.contenttypes.models import ContentType
 from poms.instruments.models import InstrumentType, InstrumentClass
 from poms.instruments.tests.common_test_data import EXPECTED_INSTRUMENT_TYPE
 
@@ -11,9 +10,11 @@ class InstrumentTypeViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument-type/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument-type/"
+        )
 
     @staticmethod
     def get_instrument_class(class_id: int = InstrumentClass.DEFAULT):
@@ -21,7 +22,11 @@ class InstrumentTypeViewSetTest(BaseTestCase):
 
     def prepare_data_for_create(self) -> dict:
         currency_id = self.get_currency().id
-        attribute = self.create_attribute()
+        content_type = ContentType.objects.get_for_model(InstrumentType)
+        attribute_type = self.create_attribute_type(content_type=content_type)
+        attribute = self.create_attribute(
+            content_type=content_type, attribute_type=attribute_type
+        )
         return {
             "user_code": self.random_string(11),
             "name": self.random_string(11),
