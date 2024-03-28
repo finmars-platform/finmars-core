@@ -449,14 +449,14 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
         return instrument
 
-    def create_attribute_type(self, content_type=None) -> GenericAttributeType:
+    def create_attribute_type(self, content_type=None, value_type=GenericAttributeType.NUMBER) -> GenericAttributeType:
         return GenericAttributeType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
-            value_type=GenericAttributeType.NUMBER,
+            value_type=value_type,
             kind=GenericAttributeType.USER,
             tooltip=self.random_string(),
             favorites=self.random_string(),

@@ -59,12 +59,12 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         new_attributes = validated_data.pop("attributes", [])
 
         instance = super().update(instance, validated_data)
+        instance.attributes.add(*old_attributes)
 
         self.create_attributes_if_not_exists(instance)
 
         if new_attributes:
             self.save_attributes(instance, new_attributes)
-            instance.attributes.add(old_attributes)
 
         self.calculate_attributes(instance)
 
