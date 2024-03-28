@@ -272,40 +272,31 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                     if record.cash_currency_id == record.valuation_currency_id:
                         record.fx_rate = 1
                     else:
-                        try:
-                            valuation_ccy_fx_rate = (
-                                1
-                                if record.valuation_currency_id == default_currency_id
-                                else CurrencyHistory.objects.get(
-                                    currency_id=record.valuation_currency_id,
-                                    pricing_policy=portfolio_register.valuation_pricing_policy,
-                                    date=record.transaction_date,
-                                ).fx_rate
+                        valuation_ccy_fx_rate = (
+                            1
+                            if record.valuation_currency_id == default_currency_id
+                            else CurrencyHistory.objects.get_fx_rate(
+                                currency_id=record.valuation_currency_id,
+                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                date=record.transaction_date,
+                            )
+                        )
+
+                        if record.cash_currency_id == default_currency_id:
+                            cash_ccy_fx_rate = 1
+                        else:
+                            cash_ccy_fx_rate = CurrencyHistory.objects.get_fx_rate(
+                                currency_id=record.cash_currency_id,
+                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                date=record.transaction_date,
                             )
 
-                            if record.cash_currency_id == default_currency_id:
-                                cash_ccy_fx_rate = 1
-                            else:
-                                cash_ccy_fx_rate = CurrencyHistory.objects.get(
-                                    currency_id=record.cash_currency_id,
-                                    pricing_policy=portfolio_register.valuation_pricing_policy,
-                                    date=record.transaction_date,
-                                ).fx_rate
+                        _l.info(
+                            f"{log} valuation_ccy_fx_rate={valuation_ccy_fx_rate} "
+                            f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
+                        )
 
-                            _l.info(
-                                f"{log} valuation_ccy_fx_rate={valuation_ccy_fx_rate} "
-                                f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
-                            )
-
-                            record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
-
-                        except Exception as e:
-                            err_msg = f"{log} fx rate lookup error {repr(e)}"
-                            _l.error(err_msg)
-                            raise FinmarsBaseException(
-                                error_key="fx_rate",
-                                message=err_msg,
-                            ) from e
+                        record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
 
                     # why use cash amount after, not record.cash_amount_valuation_currency
                     record.cash_amount_valuation_currency = (
