@@ -454,16 +454,3 @@ urlpatterns = [
 #     urlpatterns += [
 #         re_path(r'^schema/', api.SchemaViewSet.as_view()),
 #     ]
-
-if settings.SERVER_TYPE == "local":
-    import debug_toolbar
-
-    urlpatterns += [
-        re_path("__debug__/", include(debug_toolbar.urls)),
-    ]
-
-    urlpatterns += [
-        re_path(
-            r"^dev/auth/", include("rest_framework.urls", namespace="rest_framework")
-        ),
-    ]
