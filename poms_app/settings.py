@@ -43,7 +43,6 @@ HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")
 DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
-USE_ADMIN_PANEL = ENV_BOOL("USE_ADMIN_PANEL", False)
 
 REALM_CODE = ENV_STR("REALM_CODE", "realm00000")
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000") # DEPRECATED, remove in 1.9.0
@@ -78,11 +77,20 @@ XS_SHARING_ALLOWED_METHODS = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
 INSTALLED_APPS = [
 
     "modeltranslation",
+
+
     "django.contrib.auth",
     "django.contrib.contenttypes",
-
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+
+    # Admin always required (even if urls are not serverd) - because of migrations
+    "django.contrib.admin",
+    "django.contrib.admindocs",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+
+
     "drf_yasg",
     "django_filters",
     "mptt",
@@ -145,18 +153,6 @@ if USE_DEBUGGER:
         ]
     )
 
-if USE_ADMIN_PANEL:
-
-    INSTALLED_APPS.extend(
-        [
-            "django.contrib.admin",
-            "django.contrib.admindocs",
-            "django.contrib.sessions",
-            "django.contrib.messages",
-        ]
-    )
-
-
 # CRAZY, this settings MUST be before MIDDLEWARE prop
 CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
 CORS_ORIGIN_ALLOW_ALL = ENV_BOOL("CORS_ORIGIN_ALLOW_ALL", True)
@@ -166,16 +162,17 @@ CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
+    "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
     "django.middleware.security.SecurityMiddleware",
-    # "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    # "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
 
-    "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
+
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
       # required for getting request object anywhere
@@ -188,11 +185,6 @@ MIDDLEWARE = [
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
     # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
-
-if USE_ADMIN_PANEL:
-    MIDDLEWARE.append("django.contrib.sessions.middleware.SessionMiddleware")
-    MIDDLEWARE.append("django.contrib.auth.middleware.AuthenticationMiddleware")
-    MIDDLEWARE.append("django.contrib.messages.middleware.MessageMiddleware")
 
 PROFILER = ENV_BOOL("PROFILER", False)
 
@@ -387,7 +379,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-STATIC_URL = f"/api/static/"
+STATIC_URL = f"{REALM_CODE}/api/static/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # creates when collectstatic
 
