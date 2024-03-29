@@ -274,10 +274,7 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         )
 
     def save(self, *args, **kwargs):
-        _l.info(f"Here??? Yes! Save portfolio {self.name}")
-
         self.calculate_first_transactions_dates()
-
         super().save(*args, **kwargs)
 
     def calculate_first_transactions_dates(self):

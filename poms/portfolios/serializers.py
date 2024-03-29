@@ -200,13 +200,9 @@ class PortfolioSerializer(
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
-
-        date_field = "first_transaction_date"
-
-        first_date = instance.first_transaction_date
         return {
-            "date_field": date_field,
-            "date": first_date,
+            "date_field": "accounting_date",
+            "date": instance.first_transaction_date,
         }
 
     def __init__(self, *args, **kwargs):
@@ -344,12 +340,9 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
-        date_field = "first_transaction_date"
-
-        first_date = instance.first_transaction_date
         return {
-            "date_field": date_field,
-            "date": first_date,
+            "date_field": "accounting_date",
+            "date": instance.first_transaction_date,
         }
 
 
