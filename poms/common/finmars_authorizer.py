@@ -4,31 +4,47 @@ from logging import getLogger
 from django.contrib.auth import get_user_model
 
 import requests
+import datetime
+
+
+from poms.common import jwt
 from poms_app import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 _l = getLogger("poms.authorizer")
 
 
+
 class AuthorizerService:
     # ?space_code=... needs for JWT Auth purpose !!!
 
-    # @staticmethod
-    # def prepare_refresh_token() -> RefreshToken:
-    #     User = get_user_model()
-    #
-    #     # Probably need to come up with something more smart
-    #     bot = User.objects.get(username="finmars_bot")
-    #
-    #     return RefreshToken.for_user(bot)
+    @staticmethod
+    def create_jwt_token():
+        payload = {
+            'some': 'payload',
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),  # Expires in 1 day
+        }
+        secret_key = settings.SECRET_KEY
+        token = jwt.encode(payload, secret_key, algorithm='HS256')
+        return token
+
+    @staticmethod
+    def prepare_refresh_token() -> RefreshToken:
+        # User = get_user_model()
+        #
+        # # Probably need to come up with something more smart
+        # bot = User.objects.get(username="finmars_bot")
+        #
+        # return RefreshToken.for_user(bot)
+
+        return AuthorizerService.create_jwt_token()
 
     def prepare_headers(self) -> dict:
-        # refresh = self.prepare_refresh_token()
+        refresh = self.prepare_refresh_token()
         return {
             "Content-type": "application/json",
-            "Accept": "application/json"
-            # "Authorization": f"Bearer {refresh.access_token}", # for internal call no auth,
-            # TODO create authorizer - realms auth
+            "Accept": "application/json",
+            "Authorization": f"Bearer {refresh.access_token}",
         }
 
     def invite_member(self, member, from_user, realm_code, space_code):
