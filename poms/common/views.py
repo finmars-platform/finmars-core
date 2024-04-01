@@ -3,6 +3,7 @@ import json
 import logging
 import time
 from os.path import getsize
+from rest_framework import parsers, renderers
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -19,6 +20,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
+from django.db import connection
+from django.core.management import call_command
 
 from celery.result import AsyncResult
 
@@ -37,6 +40,7 @@ from poms.common.mixins import (
     ListLightModelMixin,
     UpdateModelMixinExt,
 )
+from poms.common.serializers import RealmMigrateSchemeSerializer
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -948,3 +952,42 @@ class DebugLogViewSet(AbstractViewSet):
             raise Http404("Cannot access file") from exc
 
         return HttpResponse(self.iter_json(context), content_type="application/json")
+
+
+class RealmMigrateSchemeView(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = RealmMigrateSchemeSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        realm_code = serializer.validated_data.get('realm_code')
+        space_code = serializer.validated_data.get('space_code')
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"SET search_path TO {space_code};")
+
+            # Programmatically call the migrate command
+        call_command('migrate', *args, **kwargs)
+
+        # Optionally, reset the search path to default after migrating
+        with connection.cursor() as cursor:
+            cursor.execute("SET search_path TO public;")
+
+        return Response({'status': 'ok'})
+
