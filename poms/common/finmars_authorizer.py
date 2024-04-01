@@ -39,11 +39,11 @@ class AuthorizerService:
         return AuthorizerService.create_jwt_token()
 
     def prepare_headers(self) -> dict:
-        refresh = self.prepare_refresh_token()
+        token = self.prepare_refresh_token()
         return {
             "Content-type": "application/json",
             "Accept": "application/json",
-            "Authorization": f"Bearer {refresh.access_token}",
+            "Authorization": f"Bearer {token}",
         }
 
     def invite_member(self, member, from_user, realm_code, space_code):
