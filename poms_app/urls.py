@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, re_path
 from healthcheck.views import HealthcheckView
-from poms.common.views import RealmMigrateSchemeView
 from poms_app.openapi import get_redoc_urlpatterns
 
 urlpatterns = []
@@ -26,8 +25,6 @@ urlpatterns = urlpatterns + [
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/api/", include("poms.api.urls")),
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthcheck", HealthcheckView.as_view()),
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
-
-    re_path(r"^(?P<realm_code>[^/]+)/migrate-scheme/", RealmMigrateSchemeView.as_view()),
 
 ]
 
