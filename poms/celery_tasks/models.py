@@ -370,7 +370,7 @@ class CeleryWorker(TimeStampedModel):
 
         self.save()
 
-    def delete_worker(self):
+    def delete_worker(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        authorizer_service.delete_worker(self)
+        authorizer_service.delete_worker(self, realm_code)

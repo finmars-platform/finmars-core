@@ -13,21 +13,22 @@ _l = getLogger("poms.authorizer")
 class AuthorizerService:
     # ?space_code=... needs for JWT Auth purpose !!!
 
-    @staticmethod
-    def prepare_refresh_token() -> RefreshToken:
-        User = get_user_model()
-
-        # Probably need to come up with something more smart
-        bot = User.objects.get(username="finmars_bot")
-
-        return RefreshToken.for_user(bot)
+    # @staticmethod
+    # def prepare_refresh_token() -> RefreshToken:
+    #     User = get_user_model()
+    #
+    #     # Probably need to come up with something more smart
+    #     bot = User.objects.get(username="finmars_bot")
+    #
+    #     return RefreshToken.for_user(bot)
 
     def prepare_headers(self) -> dict:
-        refresh = self.prepare_refresh_token()
+        # refresh = self.prepare_refresh_token()
         return {
             "Content-type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {refresh.access_token}",
+            "Accept": "application/json"
+            # "Authorization": f"Bearer {refresh.access_token}", # for internal call no auth,
+            # TODO create authorizer - realms auth
         }
 
     def invite_member(self, member, from_user, realm_code, space_code):
