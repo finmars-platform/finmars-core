@@ -101,15 +101,19 @@ class BootstrapConfig(AppConfig):
 
         # Do not disable bootstrap code, it's important to be executed on every startup
         if "test" not in sys.argv:
-            self.load_master_user_data()
-            self.create_finmars_bot()
-            self.create_local_configuration()
-            self.add_view_and_manage_permissions()
-            self.create_member_layouts()
-            self.create_base_folders()
-            self.register_at_authorizer_service()
-            self.sync_celery_workers()
-            self.create_iam_access_policies_templates()
+
+            try:
+                self.sync_space_data()
+                self.create_finmars_bot()
+                self.create_local_configuration()
+                self.add_view_and_manage_permissions()
+                self.create_member_layouts()
+                self.create_base_folders()
+                # self.register_at_authorizer_service()
+                self.sync_celery_workers()
+                self.create_iam_access_policies_templates()
+            except Exception as e:
+                _l.error(f"bootstrap: failed for {current_space_code} due to {repr(e)}")
 
     @staticmethod
     def create_finmars_bot():
@@ -199,13 +203,13 @@ class BootstrapConfig(AppConfig):
             _l.error(f"{log} failed due to {repr(e)}")
 
     @staticmethod
-    def load_master_user_data():
+    def sync_space_data():
         from django.contrib.auth.models import User
 
         from poms.auth_tokens.utils import generate_random_string
         from poms.users.models import MasterUser, Member, UserProfile
 
-        log = "load_master_user_data"
+        log = "sync_space_data"
 
         if not settings.AUTHORIZER_URL:
             _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
@@ -223,10 +227,11 @@ class BootstrapConfig(AppConfig):
                 "space_code": current_space_code,
                 "realm_code": settings.REALM_CODE
                 }
-        url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+        # url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+        url = f"{settings.AUTHORIZER_URL}/api/v2/space/sync/"
 
         _l.info(
-            f"{log} started, calling api 'backend-master-user-data' "
+            f"{log} started, calling api '/space/sync/' "
             f"with url={url} data={data}"
         )
 
@@ -239,7 +244,7 @@ class BootstrapConfig(AppConfig):
             )
 
             _l.info(
-                f"{log} api 'backend-master-user-data' responded with "
+                f"{log} api '/space/sync/' responded with "
                 f"status_code={response.status_code} text={response.text}"
             )
 
@@ -356,44 +361,45 @@ class BootstrapConfig(AppConfig):
         else:
             _l.info(f"{log} successfully finished")
 
-    @staticmethod
-    def register_at_authorizer_service():
-        if not settings.AUTHORIZER_URL:
-            return
-
-        current_space_code = get_current_search_path()
-
-        # Probably its a Legacy space
-        # Remove that in 1.9.0
-        if 'public' in current_space_code:
-            current_space_code = settings.BASE_API_URL
-
-        data = {"base_api_url": current_space_code,
-                "space_code": current_space_code,
-                "realm_code": settings.REALM_CODE
-                }
-        url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
-
-        _l.info(f"register_at_authorizer_service with url={url} data={data}")
-
-        try:
-            response = requests.post(
-                url=url,
-                data=json.dumps(data),
-                headers=HEADERS,
-                verify=settings.VERIFY_SSL,
-            )
-            _l.info(
-                f"register_at_authorizer_service backend-is-ready api response: "
-                f"status_code={response.status_code} text={response.text}"
-            )
-
-            response.raise_for_status()
-
-        except Exception as e:
-            err_msg = f"register_at_authorizer_service resulted in {repr(e)}"
-            _l.error(err_msg)
-            raise BootstrapError("fatal", message=err_msg) from e
+    # Deprecated
+    # @staticmethod
+    # def register_at_authorizer_service():
+    #     if not settings.AUTHORIZER_URL:
+    #         return
+    #
+    #     current_space_code = get_current_search_path()
+    #
+    #     # Probably its a Legacy space
+    #     # Remove that in 1.9.0
+    #     if 'public' in current_space_code:
+    #         current_space_code = settings.BASE_API_URL
+    #
+    #     data = {"base_api_url": current_space_code,
+    #             "space_code": current_space_code,
+    #             "realm_code": settings.REALM_CODE
+    #             }
+    #     url = f"{settings.AUTHORIZER_URL}/backend-is-ready/"
+    #
+    #     _l.info(f"register_at_authorizer_service with url={url} data={data}")
+    #
+    #     try:
+    #         response = requests.post(
+    #             url=url,
+    #             data=json.dumps(data),
+    #             headers=HEADERS,
+    #             verify=settings.VERIFY_SSL,
+    #         )
+    #         _l.info(
+    #             f"register_at_authorizer_service backend-is-ready api response: "
+    #             f"status_code={response.status_code} text={response.text}"
+    #         )
+    #
+    #         response.raise_for_status()
+    #
+    #     except Exception as e:
+    #         err_msg = f"register_at_authorizer_service resulted in {repr(e)}"
+    #         _l.error(err_msg)
+    #         raise BootstrapError("fatal", message=err_msg) from e
 
     # Creating worker in case if deployment is missing (e.g. from backup?)
     @staticmethod
