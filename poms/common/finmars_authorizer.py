@@ -5,9 +5,8 @@ from django.contrib.auth import get_user_model
 
 import requests
 import datetime
+import jwt
 
-
-from poms.common import jwt
 from poms_app import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
