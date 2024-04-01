@@ -338,30 +338,30 @@ class CeleryWorker(TimeStampedModel):
         help_text="Comma separated list of queues that worker will listen to",
     )
 
-    def create_worker(self, realm_code, space_code):
+    def create_worker(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        authorizer_service.create_worker(self, realm_code, space_code)
+        authorizer_service.create_worker(self, realm_code)
 
-    def start(self, realm_code, space_code):
+    def start(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        authorizer_service.start_worker(self, realm_code, space_code)
+        authorizer_service.start_worker(self, realm_code)
 
-    def stop(self, realm_code, space_code):
+    def stop(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        authorizer_service.stop_worker(self, realm_code, space_code)
+        authorizer_service.stop_worker(self, realm_code)
 
-    def restart(self, realm_code, space_code):
+    def restart(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        authorizer_service.restart_worker(self, realm_code, space_code)
+        authorizer_service.restart_worker(self, realm_code)
 
-    def get_status(self, realm_code, space_code):
+    def get_status(self, realm_code):
         authorizer_service = AuthorizerService()
 
-        status = authorizer_service.get_worker_status(self, realm_code, space_code)
+        status = authorizer_service.get_worker_status(self, realm_code)
 
         try:
             self.status = json.dumps(status)

@@ -100,7 +100,7 @@ class BootstrapConfig(AppConfig):
         _l.info("bootstrap: Current search path: %s" % current_space_code)
 
         # Do not disable bootstrap code, it's important to be executed on every startup
-        if "test" not in sys.argv:
+        if "test" not in sys.argv and 'public' not in current_space_code:
 
             try:
                 self.sync_space_data()
@@ -426,7 +426,7 @@ class BootstrapConfig(AppConfig):
                                                                      space_code=master_user.space_code)
 
                 if worker_status["status"] == "not_found":
-                    authorizer_service.create_worker(worker)
+                    authorizer_service.create_worker(worker, realm_code=master_user.realm_code)
             except Exception as e:
                 err_msg = f"sync_celery_workers: worker {worker} error {repr(e)}"
                 _l.error(err_msg)
