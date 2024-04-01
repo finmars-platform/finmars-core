@@ -955,8 +955,9 @@ class DebugLogViewSet(AbstractViewSet):
 
 
 class RealmMigrateSchemeView(APIView):
-    throttle_classes = ()
-    permission_classes = ()
+    throttle_classes = []
+    permission_classes = []
+    authentication_classes = [] # no auth neede
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = RealmMigrateSchemeSerializer
