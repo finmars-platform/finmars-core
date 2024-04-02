@@ -255,7 +255,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     def create_worker(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.create_worker(request.realm_code, request.space_code)
+        worker.create_worker(request.realm_code)
 
         return Response({"status": "ok"})
 
@@ -263,7 +263,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     def start(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.start(request.realm_code, request.space_code)
+        worker.start(request.realm_code)
 
         return Response({"status": "ok"})
 
@@ -271,7 +271,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     def stop(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.stop(request.realm_code, request.space_code)
+        worker.stop(request.realm_code)
 
         return Response({"status": "ok"})
 
@@ -279,7 +279,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     def restart(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.restart(request.realm_code, request.space_code)
+        worker.restart(request.realm_code)
 
         return Response({"status": "ok"})
 
@@ -287,7 +287,7 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     def status(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
 
-        worker.get_status(request.realm_code, request.space_code)
+        worker.get_status(request.realm_code)
 
         return Response({"status": "ok"})
 
@@ -300,5 +300,5 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, instance, request):
-        instance.delete_worker(request.realm_code, request.space_code)
+        instance.delete_worker(request.realm_code)
         return super(CeleryWorkerViewSet, self).perform_destroy(instance)

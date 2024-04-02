@@ -17,9 +17,14 @@ class Command(BaseCommand):
         # Need to wait to ensure celery workers are available
         i = celery_app.control.inspect()
 
-        while not i.stats():
+        max_wait = 60
+        interval_wait = 5
+        current_wait = 0
+
+        while not i.stats() and current_wait < max_wait:
             _l.info('Waiting for Celery worker(s)...')
-            time.sleep(5)
+            time.sleep(interval_wait)
+            current_wait = current_wait + interval_wait
 
         _l.info('Celery worker(s) are now available.')
 
