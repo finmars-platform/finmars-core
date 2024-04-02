@@ -168,3 +168,9 @@ class ContentTypeSerializer(serializers.ModelSerializer):
             "name",
         ]
         read_only_fields = fields
+
+
+class RealmMigrateSchemeSerializer(serializers.Serializer):
+
+    realm_code = serializers.CharField(required=True)
+    space_code = serializers.CharField(required=True)
