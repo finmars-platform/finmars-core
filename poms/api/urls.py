@@ -1,10 +1,8 @@
-from django.conf import settings
 from django.urls import include, re_path
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
 import poms.accounts.urls as account_router
-import poms.users.urls as users_router
 import poms.api.views as api
 import poms.celery_tasks.views as celery_tasks
 import poms.common.views as common
@@ -38,7 +36,7 @@ import poms.system.views as system
 import poms.system_messages.views as system_messages
 import poms.transactions.urls as transaction_router
 import poms.ui.urls as ui_router
-
+import poms.users.urls as users_router
 import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
@@ -448,6 +446,11 @@ urlpatterns = [
         ExplorerServeFileViewSet.as_view({"get": "retrieve"}),
         name="storage",
     ),
+
+    re_path(r"^authorizer/migrate/",
+            common.RealmMigrateSchemeView.as_view(),
+            name="migrate")
+
 ]
 
 # if 'rest_framework_swagger' in settings.INSTALLED_APPS:

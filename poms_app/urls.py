@@ -25,6 +25,7 @@ urlpatterns = urlpatterns + [
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/api/", include("poms.api.urls")),
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthcheck", HealthcheckView.as_view()),
     re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
+
 ]
 
 if "drf_yasg" in settings.INSTALLED_APPS:
