@@ -52,6 +52,8 @@ def import_configuration(self, task_id, *args, **kwargs):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
+    _l.info('import_configuration.task master_user %s' % task.master_user)
+
     def generate_json_report(task, stats):
         result = stats
 
