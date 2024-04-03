@@ -18,7 +18,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
-from poms.common.views import AbstractModelViewSet, AbstractClassModelViewSet
+from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -26,33 +26,43 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierV
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
+    PortfolioClass,
     PortfolioHistory,
+    PortfolioReconcileGroup,
+    PortfolioReconcileHistory,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioType, PortfolioClass, PortfolioReconcileGroup, PortfolioReconcileHistory,
+    PortfolioRegisterRecord,
+    PortfolioType,
 )
 from poms.portfolios.serializers import (
     CalculatePortfolioHistorySerializer,
+    CalculatePortfolioReconcileHistorySerializer,
     FirstTransactionDateRequestSerializer,
     FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
+    PortfolioClassSerializer,
     PortfolioHistorySerializer,
     PortfolioLightSerializer,
+    PortfolioReconcileGroupSerializer,
+    PortfolioReconcileHistorySerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
+    PortfolioTypeLightSerializer,
+    PortfolioTypeSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer, PortfolioTypeSerializer, PortfolioClassSerializer,
-    PortfolioTypeLightSerializer, PortfolioReconcileGroupSerializer, PortfolioReconcileHistorySerializer,
-    CalculatePortfolioReconcileHistorySerializer
+    PrCalculateRecordsRequestSerializer,
 )
 from poms.portfolios.tasks import (
     calculate_portfolio_history,
+    calculate_portfolio_reconcile_history,
     calculate_portfolio_register_price_history,
-    calculate_portfolio_register_record, calculate_portfolio_reconcile_history,
+    calculate_portfolio_register_record,
 )
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger("poms.portfolios")
+
 
 class PortfolioClassViewSet(AbstractClassModelViewSet):
     queryset = PortfolioClass.objects
@@ -150,6 +160,7 @@ class PortfolioTypeViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(page, many=True)
 
         return self.get_paginated_response(serializer.data)
+
 
 class PortfolioTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = PortfolioType
@@ -568,8 +579,11 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
         obj = self.get_object()
         queryset = obj.registers.all()
         page = self.paginator.post_paginate_queryset(queryset, request)
-        serializer = PortfolioRegisterSerializer(page, many=True, context=self.get_serializer_context())
+        serializer = PortfolioRegisterSerializer(
+            page, many=True, context=self.get_serializer_context()
+        )
         return self.get_paginated_response(serializer.data)
+
 
 class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects
@@ -588,7 +602,7 @@ class PortfolioFirstTransactionViewSet(AbstractModelViewSet):
         date_field: str = request_serializer.validated_data["date_field"]
         response_data = []
         for portfolio in portfolios:
-            first_date = portfolio.get_first_transaction_date(date_field)
+            first_date = portfolio.first_transaction_date
             response_data.append(
                 {
                     "portfolio": portfolio,
@@ -697,15 +711,15 @@ class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
     ordering_fields = []
 
 
-
-
 class PortfolioReconcileHistoryFilterSet(FilterSet):
     id = NoOpFilter()
 
     user_code = CharFilter()
     status = CharFilter()
 
-    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
+    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(
+        model=PortfolioReconcileGroup
+    )
 
     date = django_filters.DateFromToRangeFilter()
 
@@ -716,7 +730,8 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     queryset = PortfolioReconcileHistory.objects.select_related(
-        "master_user", "portfolio_reconcile_group",
+        "master_user",
+        "portfolio_reconcile_group",
     )
     serializer_class = PortfolioReconcileHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
