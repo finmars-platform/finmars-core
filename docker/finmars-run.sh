@@ -107,10 +107,10 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 #
 #  python manage.py download_init_configuration
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Create admin user"
-
-  python /var/app/manage.py generate_super_user
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Create admin user"
+#
+#  python /var/app/manage.py generate_super_user
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Run Gunicorn Web Server"
