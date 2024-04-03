@@ -442,10 +442,13 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_register_record.apply_async(
-            kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
         )
 
         return Response(
@@ -487,10 +490,13 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_register_price_history.apply_async(
-            kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
         )
 
         return Response(
@@ -678,10 +684,13 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_history.apply_async(
-            kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
         )
 
         return Response(
@@ -767,10 +776,13 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         task.save()
 
         calculate_portfolio_reconcile_history.apply_async(
-            kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
         )
 
         return Response(

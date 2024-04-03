@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 
 from django.conf import settings
@@ -9,11 +10,14 @@ from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy
 
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now
+from poms.currencies.constants import MAIN_CURRENCIES
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
-from poms.currencies.constants import MAIN_CURRENCIES
+
+_l = logging.getLogger("poms.currencies")
 
 
 # Probably Deprecated
@@ -64,7 +68,6 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         default=1,
         verbose_name=gettext_lazy("default fx rate"),
     )
-
     country = models.ForeignKey(
         "instruments.Country",
         null=True,
@@ -72,7 +75,6 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
     )
-
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("currency")
@@ -136,6 +138,32 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         if not self.user_code in MAIN_CURRENCIES:
             return super().fake_delete()
 
+
+class CurrencyHistoryManager(models.Manager):
+    def get_fx_rate(self, currency_id, pricing_policy, transaction_date) -> float:
+        history = (
+            super().get_queryset()
+            .filter(
+                currency_id=currency_id,
+                pricing_policy=pricing_policy,
+                date=transaction_date,
+            )
+            .first()
+        )
+        if not history:
+            err_msg = (
+                f"no fx_rate for currency {currency_id} date {transaction_date} "
+                f"policy {pricing_policy} was found in currency history"
+            )
+            _l.error(err_msg)
+            raise FinmarsBaseException(
+                error_key="currency_fx_rate_lookup_error",
+                message=err_msg,
+            )
+
+        return history.fx_rate
+
+
 class CurrencyHistory(DataTimeStampedModel):
     """
     FX rate of Currencies for specific date
@@ -172,6 +200,8 @@ class CurrencyHistory(DataTimeStampedModel):
         blank=True,
         verbose_name=gettext_lazy("procedure_modified_datetime"),
     )
+
+    objects = CurrencyHistoryManager()
 
     class Meta:
         verbose_name = gettext_lazy("currency history")
