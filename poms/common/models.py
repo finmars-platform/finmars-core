@@ -1,3 +1,4 @@
+import logging
 from django.core.cache import cache
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -8,6 +9,7 @@ from poms.currencies.constants import DASH
 
 EXPRESSION_FIELD_LENGTH = 4096
 
+_l = logging.getLogger("poms.celery_tasks")
 
 class OwnerModel(models.Model):
     owner = models.ForeignKey(
@@ -199,8 +201,10 @@ class FakeDeletableModel(models.Model):
 
         fields_to_update = ["is_deleted", "modified"]
         try:
+            # fake_delete called by REST API
             member = get_request().user.member
         except Exception:
+            # fake_delete called by celery task
             celery_task_id = get_active_celery_task_id()
 
             celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
@@ -248,12 +252,28 @@ class FakeDeletableModel(models.Model):
         from poms.celery_tasks.models import CeleryTask
         from poms.common.celery import get_active_celery_task_id
 
+        # if not isinstance(context, dict):
+        #     raise TypeError(
+        #         f"Invalid value inside argument 'context' for "
+        #         f"FakeDeletableModel.restore(). "
+        #         f"Expected 'dict' got {type(context)}"
+        #     )
+        #
+        # if "member" not in context:
+        #     raise TypeError(
+        #         f"Member was not specified inside argument 'context' for "
+        #         f"FakeDeletableModel.restore() "
+        #     )
+
         self.is_deleted = False
 
         fields_to_update = ["is_deleted", "modified"]
+
         try:
+            # restore called by REST API
             member = get_request().user.member
         except Exception:
+            # restore called by celery task
             celery_task_id = get_active_celery_task_id()
 
             celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)

@@ -152,8 +152,6 @@ def bulk_delete(self, task_id, *args, **kwargs):
         model=content_type_pieces[1],
     )
 
-    _l.info(f'bulk_delete {options_object["ids"]}')
-
     celery_task.update_progress(
         {
             "current": 0,
@@ -169,13 +167,9 @@ def bulk_delete(self, task_id, *args, **kwargs):
 
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
-            # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
 
             for count, instance in enumerate(to_be_deleted_queryset, start=1):
-                # try:
-                #     self.check_object_permissions(request, instance)
-                # except PermissionDenied:
-                #     raise
+
                 instance.fake_delete()
 
                 celery_task.update_progress(
@@ -223,6 +217,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
 def bulk_restore(self, task_id, *args, **kwargs):
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
+
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
@@ -240,8 +235,6 @@ def bulk_restore(self, task_id, *args, **kwargs):
         model=content_type_pieces[1],
     )
 
-    _l.info(f'bulk_restore {options_object["ids"]}')
-
     celery_task.update_progress(
         {
             "current": 0,
@@ -258,26 +251,49 @@ def bulk_restore(self, task_id, *args, **kwargs):
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
             for count, instance in enumerate(queryset, start=1):
-                instance.restore()
-                celery_task.update_progress(
-                    {
-                        "current": count,
-                        "total": len(options_object["ids"]),
-                        "percent": round(count / (len(options_object["ids"]) / 100)),
-                        "description": f"Instance {instance.id} was restored",
-                    }
+                # instance.restore(context={"member": member})
+                try:
+                    instance.restore()
+                except Exception as e:
+                    _l.error(
+                        f"TESTING {self.__module__}.bulk_restore"
+                        f"instance.restore error {repr(e)}"
+                    )
+                    raise e
+
+                _l.info(
+                    f"TESTING {self.__module__}.bulk_restore celery_task "
+                    f"{celery_task}"
                 )
+
+                try:
+                    celery_task.update_progress(
+                        {
+                            "current": count,
+                            "total": len(options_object["ids"]),
+                            "percent": round(count / (len(options_object["ids"]) / 100)),
+                            "description": f"Instance {instance.id} was restored",
+                        }
+                    )
+                except Exception as e:
+                    _l.error(
+                        f"TESTING {self.__module__}.bulk_restore "
+                        f"celery_task.update_progress error {repr(e)}"
+                    )
+                    raise e
+
 
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.mark_task_as_finished()
 
     except Exception as e:
         err_msg = f"bulk_restore exception {repr(e)} {traceback.format_exc()}"
-        _l.info(err_msg)  # sentry detects it as error, but it maybe not
-        _l.info('options_object["content_type"] %s' % options_object["content_type"])
+        _l.error(f"content_type={options_object['content_type']}: {err_msg}")  # check whether sentry registers this error
 
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.error_message = err_msg
+
+        raise e
 
     finally:
         celery_task.save()

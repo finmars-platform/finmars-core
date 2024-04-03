@@ -85,7 +85,15 @@ class BulkDeleteTestCase(BaseTestCase):
         self.assertFalse(self.complex_transaction.is_deleted)
         self.assertIsNotNone(self.transaction)
 
-        bulk_delete(task_id=self.celery_task.id)
+        bulk_delete(
+            task_id=self.celery_task.id,
+            kwargs={
+                "context": {
+                    "realm_code": None,
+                    "space_code": self.master_user.space_code
+                }
+            }
+        )
 
         self.complex_transaction.refresh_from_db()
         self.assertTrue(self.complex_transaction.is_deleted)
@@ -98,13 +106,21 @@ class BulkDeleteTestCase(BaseTestCase):
 
         update_progress.side_effect = [None, RuntimeError]
 
-        bulk_delete(task_id=self.celery_task.id)
+        bulk_delete(
+            task_id=self.celery_task.id,
+            kwargs={
+                "context": {
+                    "realm_code": None,
+                    "space_code": self.master_user.space_code
+                }
+            }
+        )
 
         self.celery_task.refresh_from_db()
 
         self.assertEqual(self.celery_task.status, CeleryTask.STATUS_ERROR)
 
-
+# TODO make separate test for bulk restore for each entity
 class BulkRestoreTestCase(BaseTestCase):
     databases = "__all__"
 
@@ -129,23 +145,41 @@ class BulkRestoreTestCase(BaseTestCase):
             verbose_name="Bulk Restore",
             type="bulk_restore",
         )
+
         self.transaction_type.fake_delete()
 
     def test__complex_transaction_bulk_restore_set_is_deleted_true(self):
         self.assertTrue(self.transaction_type.is_deleted)
 
-        bulk_restore(task_id=self.celery_task.id)
+        bulk_restore(
+            task_id=self.celery_task.id,
+            kwargs={
+                "context": {
+                    "realm_code": None,
+                    "space_code": self.master_user.space_code
+                }
+            }
+        )
 
         self.transaction_type.refresh_from_db()
         self.assertFalse(self.transaction_type.is_deleted)
 
     @mock.patch("poms.celery_tasks.models.CeleryTask.update_progress")
-    def test__complex_transaction_bulk_delete_handle_exception(self, update_progress):
+    def test__complex_transaction_bulk_restore_handle_exception(self, update_progress):
         update_progress.side_effect = [None, RuntimeError]
 
         self.assertEqual(self.celery_task.status, CeleryTask.STATUS_INIT)
 
-        bulk_restore(task_id=self.celery_task.id)
+        bulk_restore(
+            task_id=self.celery_task.id,
+            kwargs={
+                "context": {
+                    "realm_code": None,
+                    "space_code": self.master_user.space_code
+                }
+            }
+        )
+
 
         self.celery_task.refresh_from_db()
 
