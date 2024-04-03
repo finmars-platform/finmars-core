@@ -8,14 +8,19 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, AbstractClassModel
+from poms.common.models import (
+    AbstractClassModel,
+    DataTimeStampedModel,
+    FakeDeletableModel,
+    NamedModel,
+)
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
-from poms.instruments.models import Instrument, PricingPolicy, CostMethod
+from poms.instruments.models import CostMethod, Instrument, PricingPolicy
 from poms.obj_attrs.models import GenericAttribute
-from poms.users.models import MasterUser, EcosystemDefault
+from poms.users.models import EcosystemDefault, MasterUser
 from poms_app import settings
 
 _l = getLogger("poms.portfolios")
