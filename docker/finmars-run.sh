@@ -97,7 +97,7 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Collect static"
 
-  python /var/app/manage.py collectstatic -c --noinput
+#  python /var/app/manage.py collectstatic -c --noinput
 
   export DJANGO_SETTINGS_MODULE=poms_app.settings
   export C_FORCE_ROOT='true'
