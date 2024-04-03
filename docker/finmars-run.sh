@@ -89,13 +89,13 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Clear sessions"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Clear sessions"
 
-  python /var/app/manage.py clearsessions
+#  python /var/app/manage.py clearsessions
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Collect static"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Collect static"
 
 #  python /var/app/manage.py collectstatic -c --noinput
 
@@ -107,10 +107,10 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 #
 #  python manage.py download_init_configuration
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Create admin user"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Create admin user"
 
-  python /var/app/manage.py generate_super_user
+#  python /var/app/manage.py generate_super_user
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Run Gunicorn Web Server"
