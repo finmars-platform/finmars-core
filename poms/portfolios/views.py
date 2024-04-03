@@ -422,7 +422,12 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         "public_name",
     ]
 
-    @action(detail=False, methods=["post"], url_path="calculate-records")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate-records",
+        serializer_class=PrCalculateRecordsRequestSerializer,
+    )
     def calculate_records(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
@@ -461,7 +466,12 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["post"], url_path="calculate-price-history")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate-price-history",
+        serializer_class=PrCalculatePriceHistoryRequestSerializer,
+    )
     def calculate_price_history(self, request, realm_code=None, space_code=None):
         _l.info(
             f"{self.__class__.__name__}.calculate_price_history data={request.data}"
