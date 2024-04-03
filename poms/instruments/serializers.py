@@ -772,11 +772,11 @@ class InstrumentTypeSerializer(
         obj.value_classifier = item["value_classifier"]
         obj.save()
 
-    def save_instrument_attributes(self, instance, events):
+    def save_instrument_attributes(self, instance, attributes):
         ids = set()
 
-        if events:
-            for item in events:
+        if attributes:
+            for item in attributes:
                 try:
                     oid = item.get("id", None)
 
