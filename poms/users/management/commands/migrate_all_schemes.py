@@ -28,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for schema in get_all_tenant_schemas():
 
-            if 'public' in schema:
+            if 'public' not in schema:
                 self.stdout.write(self.style.SUCCESS(f"Applying migrations to {schema}..."))
 
                 # Set the search path to the tenant's schema
