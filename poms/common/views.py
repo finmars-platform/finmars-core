@@ -2,16 +2,20 @@ import contextlib
 import json
 import logging
 import time
+import traceback
 from os.path import getsize
-from rest_framework import parsers, renderers
 
+from celery.result import AsyncResult
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
+from django.core.management import call_command
 from django.core.signing import TimestampSigner
+from django.db import connection
 from django.http import Http404, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.inspectors import SwaggerAutoSchema
+from rest_framework import parsers, renderers
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -20,10 +24,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
-from django.db import connection
-from django.core.management import call_command
-
-from celery.result import AsyncResult
 
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
@@ -749,6 +749,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
 
     return values
 
+
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
     def list(self, request):
         content_type_name = request.query_params.get("content_type", None)
@@ -831,7 +832,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                                           "reports.transactionreport")
 
         if is_report:
-
             report_system_attrs_keys_list = [
                 item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
             ]
@@ -909,6 +909,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         return Response({"results": results})
 
+
 class DebugLogViewSet(AbstractViewSet):
     def iter_json(self, context):
         yield '{"starts": "%d",' '"data": "' % context["starts"]
@@ -957,7 +958,7 @@ class DebugLogViewSet(AbstractViewSet):
 class RealmMigrateSchemeView(APIView):
     throttle_classes = []
     permission_classes = []
-    authentication_classes = [] # no auth neede
+    authentication_classes = []  # no auth neede
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = RealmMigrateSchemeSerializer
@@ -974,21 +975,29 @@ class RealmMigrateSchemeView(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        realm_code = serializer.validated_data.get('realm_code')
-        space_code = serializer.validated_data.get('space_code')
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        with connection.cursor() as cursor:
-            cursor.execute(f"SET search_path TO {space_code};")
+            # realm_code = serializer.validated_data.get('realm_code')
+            space_code = serializer.validated_data.get('space_code')
 
-            # Programmatically call the migrate command
-        call_command('migrate', *args, **kwargs)
+            with connection.cursor() as cursor:
+                cursor.execute(f"SET search_path TO {space_code};")
 
-        # Optionally, reset the search path to default after migrating
-        with connection.cursor() as cursor:
-            cursor.execute("SET search_path TO public;")
+                # Programmatically call the migrate command
+            call_command('migrate', *args, **kwargs)
 
-        return Response({'status': 'ok'})
+            # Optionally, reset the search path to default after migrating
+            with connection.cursor() as cursor:
+                cursor.execute("SET search_path TO public;")
 
+            return Response({'status': 'ok'})
+
+        except Exception as e:
+
+            _l.error(f"RealmMigrateSchemeView.exception: {str(e)}")
+            _l.error(f"RealmMigrateSchemeView.traceback: {traceback.format_exc()}")
+
+            return Response({'status': 'error', 'message': str(e)})
