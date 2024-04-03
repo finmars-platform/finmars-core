@@ -97,7 +97,7 @@ class TransactionTypeInputContentTypeField(SlugRelatedFilteredField):
         try:
             app_label, model = data.split(".")
 
-            return self.get_queryset().get(app_label=app_label, model=model)
+            return ContentType.objects.all().get(app_label=app_label, model=model)
 
         except ObjectDoesNotExist:
             self.fail(

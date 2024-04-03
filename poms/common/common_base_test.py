@@ -449,14 +449,14 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
         return instrument
 
-    def create_attribute_type(self) -> GenericAttributeType:
+    def create_attribute_type(self, content_type=None, value_type=GenericAttributeType.NUMBER) -> GenericAttributeType:
         return GenericAttributeType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            content_type=ContentType.objects.using(settings.DB_DEFAULT).first(),
+            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
-            value_type=GenericAttributeType.NUMBER,
+            value_type=value_type,
             kind=GenericAttributeType.USER,
             tooltip=self.random_string(),
             favorites=self.random_string(),
@@ -464,11 +464,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             expr=self.random_string(),
         )
 
-    def create_attribute(self) -> GenericAttribute:
+    def create_attribute(self, attribute_type=None, object_id=None, content_type=None) -> GenericAttribute:
         return GenericAttribute.objects.using(settings.DB_DEFAULT).create(
-            attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.using(settings.DB_DEFAULT).last(),
-            object_id=self.random_int(),
+            attribute_type= attribute_type or self.create_attribute_type(),
+            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
+            object_id=object_id or self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
             value_date=date.today(),

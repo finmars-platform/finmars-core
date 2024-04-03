@@ -36,14 +36,14 @@ from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction, TransactionClass
-from poms.users.models import EcosystemDefault, MasterUser, Member
+from poms.users.models import EcosystemDefault, Member
 
 _l = logging.getLogger("poms.portfolios")
 celery_logger = get_task_logger(__name__)
 
 
 def calculate_simple_balance_report(
-        report_date: date, portfolio_register: PortfolioRegister, member: Member
+    report_date: date, portfolio_register: PortfolioRegister, member: Member
 ):
     """
     Probably is a duplicated method. Here we're just getting Balance Report instance
@@ -58,7 +58,7 @@ def calculate_simple_balance_report(
     if not portfolio_register.linked_instrument:
         raise FinmarsBaseException(
             error_key="invalid_portfolio_register",
-            message=f"{log} portfolio_register {portfolio_register} has no linked_instrument"
+            message=f"{log} portfolio_register {portfolio_register} has no linked_instrument",
         )
 
     try:
@@ -104,8 +104,8 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
     for transaction in transactions:
         if (
-                transaction.transaction_currency
-                == portfolio_register.linked_instrument.pricing_currency
+            transaction.transaction_currency
+            == portfolio_register.linked_instrument.pricing_currency
         ):
             fx_rate = 1
         else:
@@ -134,7 +134,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
                 raise RuntimeError(err_msg) from e
 
         cash_flow = cash_flow + (
-                transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
+            transaction.cash_consideration * transaction.reference_fx_rate * fx_rate
         )
 
     _l.info(
@@ -152,10 +152,6 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
     The idea is to collect all Cash In/Cash Out transactions and create
     from them RegisterRecord instances
     at this point we also calculate number of shares for each Register Record
-
-    :param self:
-    :param task_id:
-    :return:
     """
     log = "calculate_portfolio_register_record"
     _l.info(f"{log} init, task_id={task_id}")
@@ -165,13 +161,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
-    portfolio_user_codes = []
-
-    if task.options_object and "portfolios" in task.options_object:
-        portfolio_user_codes = task.options_object["portfolios"]
-
     master_user = task.master_user
-
     result = {}
     try:
         send_system_message(
@@ -185,7 +175,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         _l.info(f"{log} master_user={master_user}")
 
-        if len(portfolio_user_codes):
+        portfolio_user_codes = task.options_object.get("portfolios", [])
+        if portfolio_user_codes:
             portfolio_registers = PortfolioRegister.objects.filter(
                 master_user_id=master_user,
                 portfolio__user_code__in=portfolio_user_codes,
@@ -195,8 +186,6 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
             portfolio_registers = PortfolioRegister.objects.filter(
                 master_user_id=master_user, is_deleted=False
             )
-
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
 
         portfolio_ids = []
         portfolio_registers_map = {}
@@ -231,6 +220,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         count = 0
         total = len(transactions)
+        ecosystem = EcosystemDefault.objects.get(master_user=master_user)
+        default_currency_id = ecosystem.currency_id
         transactions_dict = {}
         for item in transactions:
             if item.portfolio_id not in transactions_dict:
@@ -275,56 +266,41 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                             transaction_date__lt=record.transaction_date,
                         ).order_by("-id")[0]
                     except Exception as e:
-                        _l.error(f"Exception {e}")
+                        _l.error(f"calculate_portfolio_register_record error {e}")
                         previous_date_record = None
 
                     if record.cash_currency_id == record.valuation_currency_id:
                         record.fx_rate = 1
                     else:
-                        try:
-                            valuation_ccy_fx_rate = (
-                                1
-                                if (
-                                        record.valuation_currency_id
-                                        == ecosystem_defaults.currency_id
-                                )
-                                else CurrencyHistory.objects.get(
-                                    currency_id=record.valuation_currency_id,
-                                    pricing_policy=portfolio_register.valuation_pricing_policy,
-                                    date=record.transaction_date,
-                                ).fx_rate
+                        valuation_ccy_fx_rate = (
+                            1
+                            if record.valuation_currency_id == default_currency_id
+                            else CurrencyHistory.objects.get_fx_rate(
+                                currency_id=record.valuation_currency_id,
+                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                date=record.transaction_date,
+                            )
+                        )
+
+                        if record.cash_currency_id == default_currency_id:
+                            cash_ccy_fx_rate = 1
+                        else:
+                            cash_ccy_fx_rate = CurrencyHistory.objects.get_fx_rate(
+                                currency_id=record.cash_currency_id,
+                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                date=record.transaction_date,
                             )
 
-                            if (
-                                    record.cash_currency_id
-                                    == ecosystem_defaults.currency_id
-                            ):
-                                cash_ccy_fx_rate = 1
-                            else:
-                                cash_ccy_fx_rate = CurrencyHistory.objects.get(
-                                    currency_id=record.cash_currency_id,
-                                    pricing_policy=portfolio_register.valuation_pricing_policy,
-                                    date=record.transaction_date,
-                                ).fx_rate
+                        _l.info(
+                            f"{log} valuation_ccy_fx_rate={valuation_ccy_fx_rate} "
+                            f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
+                        )
 
-                            _l.info(
-                                f"{log} valuation_ccy_fx_rate={valuation_ccy_fx_rate} "
-                                f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
-                            )
-
-                            record.fx_rate = (
-                                cash_ccy_fx_rate / valuation_ccy_fx_rate
-                                if valuation_ccy_fx_rate
-                                else 0
-                            )
-
-                        except Exception as e:
-                            _l.info(f"{log} fx rate lookup error {e}")
-                            record.fx_rate = 0
+                        record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
 
                     # why use cash amount after, not record.cash_amount_valuation_currency
                     record.cash_amount_valuation_currency = (
-                            record.cash_amount * record.fx_rate * trn.reference_fx_rate
+                        record.cash_amount * record.fx_rate * trn.reference_fx_rate
                     )
 
                     # start block eod NAV
@@ -340,7 +316,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                     for item in balance_report.items:
                         if item["market_value"]:
                             nav_valuation_currency = (
-                                    nav_valuation_currency + item["market_value"]
+                                nav_valuation_currency + item["market_value"]
                             )
 
                     _l.info(
@@ -367,8 +343,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                         for item in balance_report.items:
                             if item["market_value"]:
                                 nav_previous_register_record_day_valuation_currency = (
-                                        nav_previous_register_record_day_valuation_currency
-                                        + item["market_value"]
+                                    nav_previous_register_record_day_valuation_currency
+                                    + item["market_value"]
                                 )
 
                         _l.info(
@@ -400,8 +376,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                     for item in previous_business_day_balance_report.items:
                         if item["market_value"]:
                             nav_previous_business_day_valuation_currency = (
-                                    nav_previous_business_day_valuation_currency
-                                    + item["market_value"]
+                                nav_previous_business_day_valuation_currency
+                                + item["market_value"]
                             )
 
                     _l.info(
@@ -428,8 +404,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                             # let's MOVE block NAV here
                             record.dealing_price_valuation_currency = (
                                 (
-                                        record.nav_previous_business_day_valuation_currency
-                                        / record.n_shares_previous_day
+                                    record.nav_previous_business_day_valuation_currency
+                                    / record.n_shares_previous_day
                                 )
                                 if record.n_shares_previous_day
                                 else portfolio_register.default_price
@@ -448,8 +424,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                     else:
                         # why  use cashamount , not    record.cash_amount_valuation_currency
                         record.n_shares_added = (
-                                record.cash_amount_valuation_currency
-                                / record.dealing_price_valuation_currency
+                            record.cash_amount_valuation_currency
+                            / record.dealing_price_valuation_currency
                         )
 
                     # record.n_shares_end_of_the_day =
@@ -459,8 +435,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
                     if previous_record:
                         record.rolling_shares_of_the_day = (
-                                previous_record.rolling_shares_of_the_day
-                                + record.n_shares_added
+                            previous_record.rolling_shares_of_the_day
+                            + record.n_shares_added
                         )
                     else:
                         record.rolling_shares_of_the_day = record.n_shares_added
@@ -534,8 +510,9 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
 
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
-        raise FinmarsBaseException(error_key="task_not_found",
-            message=f"{log} no such task={task_id}")
+        raise FinmarsBaseException(
+            error_key="task_not_found", message=f"{log} no such task={task_id}"
+        )
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -631,9 +608,9 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
             result[portfolio_register.user_code]["date_from"] = portfolio_date_from
             result[portfolio_register.user_code]["date_to"] = date_to
 
-            result[portfolio_register.user_code][
-                "dates"
-            ] = get_list_of_dates_between_two_dates(portfolio_date_from, date_to)
+            result[portfolio_register.user_code]["dates"] = (
+                get_list_of_dates_between_two_dates(portfolio_date_from, date_to)
+            )
 
             if not portfolio_register.linked_instrument:
                 result[portfolio_register.user_code]["error_message"] = (
@@ -781,7 +758,8 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
     if not task:
         raise FinmarsBaseException(
             error_key="task_not_found",
-            message=f"calculate_portfolio_history, no such task={task_id}")
+            message=f"calculate_portfolio_history, no such task={task_id}",
+        )
 
     if not task.options_object:
         err_msg = "No task options supplied"
@@ -837,11 +815,12 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
     elif period_type == "ytd":
         date_from = str(get_last_business_day_of_previous_year(date))
     elif period_type == "inception":
-        date_from = str(portfolio.get_first_transaction_date())
+        date_from = str(portfolio.first_transaction_date)
     else:
         raise FinmarsBaseException(
             error_key="invalid_period_type",
-            message=f"invalid period_type={period_type}")
+            message=f"invalid period_type={period_type}",
+        )
 
     _l.info("calculate_portfolio_history: date_from %s" % date_from)
 
@@ -901,11 +880,12 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
             elif period_type == "ytd":
                 d_date_from = str(get_last_business_day_of_previous_year(d))
             elif period_type == "inception":
-                d_date_from = str(portfolio.get_first_transaction_date())
+                d_date_from = str(portfolio.first_transaction_date)
             else:
                 raise FinmarsBaseException(
                     error_key="invalid_period_type",
-                    message=f"invalid period_type={period_type}")
+                    message=f"invalid period_type={period_type}",
+                )
 
             portfolio_history = PortfolioHistory.objects.create(
                 master_user=task.master_user,
@@ -939,7 +919,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     if not task:
         raise FinmarsBaseException(
             error_key="task_not_found",
-            message=f"calculate_portfolio_reconcile_history, no such task={task_id}"
+            message=f"calculate_portfolio_reconcile_history, no such task={task_id}",
         )
 
     if not task.options_object:

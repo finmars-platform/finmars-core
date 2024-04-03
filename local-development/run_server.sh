@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 python poms_app/print_finmars.py
-
+export DJANGO_SETTINGS_MODULE=poms_app.settings
 . ../venv/bin/activate
 REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
@@ -13,7 +13,7 @@ DEBUG=True \
 SEND_LOGS_TO_FINMARS=True \
 LOCAL=True \
 PROFILER=False \
-#USE_DEBUGGER=True \
+USE_DEBUGGER=True \
 ENABLE_DEV_DOCUMENTATION=False \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
 AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \

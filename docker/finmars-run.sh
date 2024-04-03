@@ -102,10 +102,10 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
   export DJANGO_SETTINGS_MODULE=poms_app.settings
   export C_FORCE_ROOT='true'
 
-  python manage.py clear_celery
-  python manage.py deploy_default_worker
-
-  python manage.py download_init_configuration
+#  python manage.py clear_celery
+#  python manage.py deploy_default_worker
+#
+#  python manage.py download_init_configuration
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Create admin user"
