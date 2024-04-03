@@ -3578,16 +3578,13 @@ class Transaction(models.Model):
     def save(self, *args, **kwargs):
         _l.debug(f"Transaction.save: {self}")
 
-        calc_cash = kwargs.pop("calc_cash", False)
+        kwargs.pop("calc_cash", None)
 
         if not self.accounting_date:
             self.accounting_date = date_now()
 
         if not self.cash_date:
             self.cash_date = date_now()
-
-        if self.portfolio:
-            self.portfolio.calculate_first_transactions_dates()
 
         self.transaction_date = min(self.accounting_date, self.cash_date)
         if self.transaction_code is None or self.transaction_code == 0:
@@ -3613,6 +3610,22 @@ class Transaction(models.Model):
         _l.debug(f"Transaction.save: ytm is {self.ytm_at_cost}")
 
         super().save(*args, **kwargs)
+
+        if self.portfolio:
+            # force run of calculate_first_transactions_dates and save portfolio
+            _l.debug(f"Transaction.save: force calculate_first_transactions_dates in portfolio")
+            self.portfolio.save()
+
+    def delete(self, *args, **kwargs):
+        _l.debug(f"Transaction.delete: {self.id}")
+
+        super().delete(*args, **kwargs)
+
+        if self.portfolio:
+            # force run of calculate_first_transactions_dates and save portfolio
+            _l.debug(f"Transaction.delete: force calculate_first_transactions_dates in portfolio")
+            self.portfolio.save()
+
 
     def is_can_calc_cash_by_formulas(self):
         return (
