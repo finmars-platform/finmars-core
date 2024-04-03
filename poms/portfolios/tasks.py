@@ -837,7 +837,7 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
     elif period_type == "ytd":
         date_from = str(get_last_business_day_of_previous_year(date))
     elif period_type == "inception":
-        date_from = str(portfolio.get_first_transaction_date())
+        date_from = str(portfolio.first_transaction_date)
     else:
         raise FinmarsBaseException(
             error_key="invalid_period_type",
@@ -901,7 +901,7 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
             elif period_type == "ytd":
                 d_date_from = str(get_last_business_day_of_previous_year(d))
             elif period_type == "inception":
-                d_date_from = str(portfolio.get_first_transaction_date())
+                d_date_from = str(portfolio.first_transaction_date)
             else:
                 raise FinmarsBaseException(
                     error_key="invalid_period_type",

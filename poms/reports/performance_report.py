@@ -1081,14 +1081,14 @@ class PerformanceReportBuilder:
 
         if date_to > date_from:
             for portfolio in portfolios:
-                first_transaction_date = portfolio.get_first_transaction_date()
+                first_transaction_date = portfolio.first_transaction_date
 
                 if not first_transaction_date:
                     raise FinmarsBaseException(
                         error_key="no_first_transaction_date",
                         message=(
-                            "PortfolioRegister has no records, so "
-                            "first_transaction_date couldn't be defined!"
+                            f"Portfolio {portfolio.name} has empty first_transaction"
+                            f"_date field, check if portfolio has transactions"
                         ),
                     )
 
