@@ -622,7 +622,7 @@ def record_history():
 
     _l.info('record_history %s' % sys.argv)
 
-    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv:
+    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv or 'clearsessions' in sys.argv or 'collectstatic' in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
