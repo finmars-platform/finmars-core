@@ -9,11 +9,17 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
-    ModelWithUserCodeSerializer, ModelMetaSerializer, PomsClassSerializer,
+    ModelWithUserCodeSerializer,
+    ModelMetaSerializer,
+    PomsClassSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.file_reports.serializers import FileReportSerializer
-from poms.instruments.fields import PricingPolicyField, SystemPricingPolicyDefault, CostMethodField
+from poms.instruments.fields import (
+    PricingPolicyField,
+    SystemPricingPolicyDefault,
+    CostMethodField,
+)
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
@@ -27,7 +33,11 @@ from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
     PortfolioRegister,
-    PortfolioRegisterRecord, PortfolioHistory, PortfolioType, PortfolioClass, PortfolioReconcileGroup,
+    PortfolioRegisterRecord,
+    PortfolioHistory,
+    PortfolioType,
+    PortfolioClass,
+    PortfolioReconcileGroup,
     PortfolioReconcileHistory,
 )
 from poms.portfolios.utils import get_price_calculation_type
@@ -67,7 +77,6 @@ class PortfolioTypeSerializer(
             "notes",
             "is_deleted",
             "is_enabled",
-
             "portfolio_class",
             "portfolio_class_object",
         ]
@@ -165,7 +174,9 @@ class PortfolioSerializer(
     first_transaction_date = serializers.ReadOnlyField()
     first_cash_flow_date = serializers.ReadOnlyField()
 
-    portfolio_type_object = PortfolioTypeSerializer(source="portfolio_type", read_only=True)
+    portfolio_type_object = PortfolioTypeSerializer(
+        source="portfolio_type", read_only=True
+    )
 
     class Meta:
         model = Portfolio
@@ -182,22 +193,16 @@ class PortfolioSerializer(
             "is_enabled",
             "registers",
             "first_transaction",  # possible deprecated, do not delete yet
-
             "first_transaction_date",
             "first_cash_flow_date",
-
             "portfolio_type",
-            "portfolio_type_object"
+            "portfolio_type_object",
         ]
 
-    def get_first_transaction(self, instance):
-
-        date_field = "accounting_date"
-
-        first_date = instance.get_first_transaction_date(date_field)
+    def get_first_transaction(self, instance: Portfolio) -> dict:
         return {
-            "date_field": date_field,
-            "date": first_date,
+            "date_field": "accounting_date",
+            "date": instance.first_transaction_date,
         }
 
     def __init__(self, *args, **kwargs):
@@ -329,16 +334,15 @@ class PortfolioLightSerializer(ModelWithUserCodeSerializer):
             "is_default",
             "is_deleted",
             "is_enabled",
-            "first_transaction"
+            "first_transaction",
+            "first_transaction_date",
+            "first_cash_flow_date",
         ]
 
-    def get_first_transaction(self, instance):
-        date_field = "accounting_date"
-
-        first_date = instance.get_first_transaction_date(date_field)
+    def get_first_transaction(self, instance: Portfolio) -> dict:
         return {
-            "date_field": date_field,
-            "date": first_date,
+            "date_field": "accounting_date",
+            "date": instance.first_transaction_date,
         }
 
 
@@ -455,10 +459,10 @@ class PortfolioRegisterSerializer(
         return instance
 
     def create_new_instrument(
-            self,
-            master_user,
-            new_linked_instrument: dict,
-            instance: PortfolioRegister,
+        self,
+        master_user,
+        new_linked_instrument: dict,
+        instance: PortfolioRegister,
     ):
         linked_instrument_type = new_linked_instrument["instrument_type"]
         instrument_type = (
@@ -489,8 +493,12 @@ class PortfolioRegisterSerializer(
 
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
-        instrument_object["co_directional_exposure_currency"] = instance.valuation_currency_id
-        instrument_object["counter_directional_exposure_currency"] = instance.valuation_currency_id
+        instrument_object["co_directional_exposure_currency"] = (
+            instance.valuation_currency_id
+        )
+        instrument_object["counter_directional_exposure_currency"] = (
+            instance.valuation_currency_id
+        )
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -582,7 +590,9 @@ class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-class PortfolioBundleSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioBundleSerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
 
     class Meta:
@@ -707,7 +717,9 @@ class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
         return attrs
 
 
-class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioHistorySerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
 
     portfolio = PortfolioField(required=True)
@@ -718,21 +730,16 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
         model = PortfolioHistory
         fields = [
             "id",
-
             "user_code",
-
             "master_user",
             "portfolio",
             "currency",
             "pricing_policy",
-
             "date",
             "date_from",
             "period_type",
-
             "cost_method",
             "performance_method",
-
             "benchmark",
             "nav",
             "gav",
@@ -740,28 +747,21 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
             "cash_inflow",
             "cash_outflow",
             "total",
-
             "cumulative_return",
             "annualized_return",
             "portfolio_volatility",
             "annualized_portfolio_volatility",
-
             "sharpe_ratio",
             "max_annualized_drawdown",
-
             "betta",
             "alpha",
             "correlation",
             "weighted_duration",
-
             "created",
             "modified",
-
             "is_enabled",
-
             "error_message",
-            "status"
-
+            "status",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -805,19 +805,33 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     # Important, date_from for metrics itself is ready only
     # its is calculated from date and period_type
 
-    segmentation_type = serializers.ChoiceField(required=False, initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
-                                                default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
-                                                choices=SEGMENTATION_TYPE_CHOICES)
-    period_type = serializers.ChoiceField(required=False, default=PortfolioHistory.PERIOD_YTD,
-                                          choices=PortfolioHistory.PERIOD_CHOICES)
-    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO)
-    performance_method = serializers.ChoiceField(required=False,
-                                                 default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
-                                                 choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES)
-    benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
+    segmentation_type = serializers.ChoiceField(
+        required=False,
+        initial=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+        default=SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS,
+        choices=SEGMENTATION_TYPE_CHOICES,
+    )
+    period_type = serializers.ChoiceField(
+        required=False,
+        default=PortfolioHistory.PERIOD_YTD,
+        choices=PortfolioHistory.PERIOD_CHOICES,
+    )
+    cost_method = CostMethodField(
+        required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO
+    )
+    performance_method = serializers.ChoiceField(
+        required=False,
+        default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
+        choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES,
+    )
+    benchmark = serializers.CharField(
+        required=False, default="sp_500", initial="sp_500"
+    )
 
 
-class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioReconcileGroupSerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
 
     class Meta:
@@ -836,36 +850,34 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         ]
 
 
-class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioReconcileHistorySerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
 
     class Meta:
         model = PortfolioReconcileHistory
         fields = [
             "id",
-
             "user_code",
-
             "master_user",
             "portfolio_reconcile_group",
-
             "date",
-
             "verbose_result",
             "error_message",
             "status",
             "file_report",
             # "file_report_object",
-
-            "is_enabled"
-
+            "is_enabled",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
-            source="portfolio_reconcile_group", read_only=True
+        self.fields["portfolio_reconcile_group_object"] = (
+            PortfolioReconcileGroupSerializer(
+                source="portfolio_reconcile_group", read_only=True
+            )
         )
 
         self.fields["file_report_object"] = FileReportSerializer(
