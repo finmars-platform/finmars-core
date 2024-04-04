@@ -986,7 +986,7 @@ class RealmMigrateSchemeView(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"SET search_path TO {space_code};")
 
-            _l.info('RealmMigrateSchemeView.space_code %' % space_code)
+            _l.info('RealmMigrateSchemeView.space_code %s' % space_code)
 
             # Programmatically call the migrate command
             call_command('migrate')
