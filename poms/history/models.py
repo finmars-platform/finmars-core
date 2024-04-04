@@ -626,7 +626,10 @@ def record_history():
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
-        models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        try:
+            models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        except Exception as e:
+            _l.error(f"Could not add history listeners {e}")
 
     _l.info(
         "Record History init time: %s"
