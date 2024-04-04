@@ -643,5 +643,6 @@ def record_history():
         % "{:3.3f}".format(time.perf_counter() - to_representation_st)
     )
 
-
-record_history()
+# TODO refactor this code, HISTORY TEMPORARY DISABLED
+# AFTER FULLY MIGRATE TO REALM INFRASTRUCTURE REFACTOR THIS CODE
+# record_history()
