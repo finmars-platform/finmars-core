@@ -183,12 +183,12 @@ def bulk_delete(self, task_id, *args, **kwargs):
 
         _l.info(f'options_object["content_type"] {options_object["content_type"]}')
 
-        if options_object["content_type"] in (
+        if options_object["content_type"] in {
             "instruments.pricehistory",
             "currencies.currencyhistory",
             "portfolios.portfoliohistory",
             "portfolios.portfolioregisterrecord",
-        ):
+        }:
             _l.info("Going to permanent delete")
 
             to_be_deleted_queryset.delete()
