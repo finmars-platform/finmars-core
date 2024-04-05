@@ -135,7 +135,7 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         ]
 
     def fake_delete(self):
-        if not self.user_code in MAIN_CURRENCIES:
+        if self.user_code not in MAIN_CURRENCIES:
             return super().fake_delete()
 
 
