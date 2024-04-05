@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
+from poms.common.exceptions import FinmarsBaseException
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.system_messages.handlers import send_system_message
@@ -152,6 +153,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
         model=content_type_pieces[1],
     )
 
+
     celery_task.update_progress(
         {
             "current": 0,
@@ -251,36 +253,25 @@ def bulk_restore(self, task_id, *args, **kwargs):
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
             for count, instance in enumerate(queryset, start=1):
-                # instance.restore(context={"member": member})
+
                 try:
+
                     instance.restore()
-                except Exception as e:
-                    _l.error(
-                        f"TESTING {self.__module__}.bulk_restore"
-                        f"instance.restore error {repr(e)}"
-                    )
-                    raise e
 
-                _l.info(
-                    f"TESTING {self.__module__}.bulk_restore celery_task "
-                    f"{celery_task}"
+                except Exception as e:
+                    raise FinmarsBaseException(
+                        error_key="entity_restore_error",
+                        message=str(e)
+                    )
+
+                celery_task.update_progress(
+                    {
+                        "current": count,
+                        "total": len(options_object["ids"]),
+                        "percent": round(count / (len(options_object["ids"]) / 100)),
+                        "description": f"Instance {instance.id} was restored",
+                    }
                 )
-
-                try:
-                    celery_task.update_progress(
-                        {
-                            "current": count,
-                            "total": len(options_object["ids"]),
-                            "percent": round(count / (len(options_object["ids"]) / 100)),
-                            "description": f"Instance {instance.id} was restored",
-                        }
-                    )
-                except Exception as e:
-                    _l.error(
-                        f"TESTING {self.__module__}.bulk_restore "
-                        f"celery_task.update_progress error {repr(e)}"
-                    )
-                    raise e
 
 
             celery_task.status = CeleryTask.STATUS_DONE

@@ -31,43 +31,52 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        for schema in get_all_tenant_schemas():
-            self.stdout.write(self.style.SUCCESS(f"Applying migrations to {schema}..."))
+        try:
 
-            # Set the search path to the tenant's schema
-            with connection.cursor() as cursor:
-                cursor.execute(f"SET search_path TO {schema};")
+            for schema in get_all_tenant_schemas():
 
-            import logging
-            _l = logging.getLogger('provision')
+                if 'public' not in schema:
 
-            from django.contrib.auth.models import User
+                    self.stdout.write(self.style.SUCCESS(f"Applying migrations to {schema}..."))
 
-            username = os.environ.get('ADMIN_USERNAME', None)
-            password = os.environ.get('ADMIN_PASSWORD', None)
-            email = os.environ.get('ADMIN_EMAIL', None)
+                    # Set the search path to the tenant's schema
+                    with connection.cursor() as cursor:
+                        cursor.execute(f"SET search_path TO {schema};")
 
-            if username and password:
+                    import logging
+                    _l = logging.getLogger('provision')
 
-                try:
+                    from django.contrib.auth.models import User
 
-                    superuser = User.objects.get(username=username)
+                    username = os.environ.get('ADMIN_USERNAME', None)
+                    password = os.environ.get('ADMIN_PASSWORD', None)
+                    email = os.environ.get('ADMIN_EMAIL', None)
 
-                    _l.info("Skip. Super user '%s' already exists." % superuser.username)
+                    if username and password:
 
-                except User.DoesNotExist:
+                        try:
 
-                    superuser = User.objects.create_superuser(
-                        username=username,
-                        email=email,
-                        password=password)
+                            superuser = User.objects.get(username=username)
 
-                    superuser.save()
-                    _l.info("Super user '%s' created." % superuser.username)
+                            _l.info("Skip. Super user '%s' already exists." % superuser.username)
 
-            else:
-                _l.info("Skip. Super user username and password are not provided.")
+                        except User.DoesNotExist:
 
-            # Optionally, reset the search path to default after migrating
-            with connection.cursor() as cursor:
-                cursor.execute("SET search_path TO public;")
+                            superuser = User.objects.create_superuser(
+                                username=username,
+                                email=email,
+                                password=password)
+
+                            superuser.save()
+                            _l.info("Super user '%s' created." % superuser.username)
+
+                    else:
+                        _l.info("Skip. Super user username and password are not provided.")
+
+                    # Optionally, reset the search path to default after migrating
+                    with connection.cursor() as cursor:
+                        cursor.execute("SET search_path TO public;")
+
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Error creating super user: {e}"))
+            return
