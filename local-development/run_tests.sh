@@ -37,4 +37,4 @@ ADMIN_USERNAME=admin \
 ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
 BACKEND_ROLES="ALL" \
-python manage.py test --keepdb
+python manage.py test poms.celery_tasks.tests.test_finmars_task
