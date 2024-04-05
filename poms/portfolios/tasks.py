@@ -278,7 +278,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                             else CurrencyHistory.objects.get_fx_rate(
                                 currency_id=record.valuation_currency_id,
                                 pricing_policy=portfolio_register.valuation_pricing_policy,
-                                date=record.transaction_date,
+                                transaction_date=record.transaction_date,
                             )
                         )
 
@@ -288,7 +288,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                             cash_ccy_fx_rate = CurrencyHistory.objects.get_fx_rate(
                                 currency_id=record.cash_currency_id,
                                 pricing_policy=portfolio_register.valuation_pricing_policy,
-                                date=record.transaction_date,
+                                transaction_date=record.transaction_date,
                             )
 
                         _l.info(
