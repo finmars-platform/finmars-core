@@ -663,7 +663,7 @@ def serialize_report_item_instrument(item):
         "accrued_currency": item.accrued_currency_id,
         "accrued_multiplier": item.accrued_multiplier,
         "default_accrued": item.default_accrued,
-        "default_price": item.price_multiplier,
+        "default_price": item.default_price,
         "user_text_1": item.user_text_1,
         "user_text_2": item.user_text_2,
         "user_text_3": item.user_text_3,
