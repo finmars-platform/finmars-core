@@ -1,17 +1,14 @@
+import datetime
 import json
 from logging import getLogger
 
-from django.contrib.auth import get_user_model
-
-import requests
-import datetime
 import jwt
-
-from poms_app import settings
+import requests
 from rest_framework_simplejwt.tokens import RefreshToken
 
-_l = getLogger("poms.authorizer")
+from poms_app import settings
 
+_l = getLogger("poms.authorizer")
 
 
 class AuthorizerService:
@@ -51,7 +48,7 @@ class AuthorizerService:
         data = {
             "realm_code": realm_code,
             "space_code": space_code,
-            "base_api_url": space_code, # deprecated, delete, but be sure authorizer not using it
+            "base_api_url": space_code,  # deprecated, delete, but be sure authorizer not using it
             "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": from_user.username,
@@ -77,7 +74,7 @@ class AuthorizerService:
         data = {
             "realm_code": realm_code,
             "space_code": space_code,
-            "base_api_url": space_code, # deprecated, but, be sure that authorizer not using it
+            "base_api_url": space_code,  # deprecated, but, be sure that authorizer not using it
             "username": member.username,
         }
         url = (
