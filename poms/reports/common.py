@@ -343,12 +343,14 @@ class PerformanceReport(BaseReport):
     PERIOD_TYPE_QTD = "qtd"
     PERIOD_TYPE_YTD = "ytd"
     PERIOD_TYPE_INCEPTION = "inception"
+    PERIOD_TYPE_ANNUALIZED = "annualized"
     PERIOD_TYPE_CHOICES = (
         (PERIOD_TYPE_DAILY, "Daily"),
         (PERIOD_TYPE_MTD, "MTD"),
         (PERIOD_TYPE_QTD, "QTD"),
         (PERIOD_TYPE_YTD, "YTD"),
         (PERIOD_TYPE_INCEPTION, "Inception"),
+        (PERIOD_TYPE_ANNUALIZED, "Annualized"),
     )
 
     CALCULATION_TYPE_TIME_WEIGHTED = "time_weighted"
