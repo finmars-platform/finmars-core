@@ -46,7 +46,7 @@ class CurrencyHistoryModelTest(BaseTestCase):
         fx_rate = CurrencyHistory.objects.get_fx_rate(
             currency_id=self.currency.id,
             pricing_policy=policy,
-            transaction_date=date,
+            date=date,
         )
 
         self.assertEqual(currency_history.fx_rate, fx_rate)
@@ -60,5 +60,5 @@ class CurrencyHistoryModelTest(BaseTestCase):
             CurrencyHistory.objects.get_fx_rate(
                 currency_id=self.currency.id,
                 pricing_policy=policy,
-                transaction_date=date - timedelta(days=1),
+                date=date - timedelta(days=1),
             )
