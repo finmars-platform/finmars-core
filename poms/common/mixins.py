@@ -154,7 +154,7 @@ class BulkRestoreModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-restore")
     def bulk_restore(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
-        from poms_app import celery_app
+        from poms.celery_tasks.tasks import bulk_restore
 
         serializer = BulkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -175,12 +175,13 @@ class BulkRestoreModelMixin(DestroyModelMixin):
             type="bulk_restore",
         )
 
-        celery_app.send_task(
-            "celery_tasks.bulk_restore",
-            kwargs={"task_id": celery_task.id},
-            queue="backend-background-queue",
-        )
-
+        bulk_restore.apply_async(kwargs={
+            "task_id": celery_task.id,
+            "context": {
+                "realm_code": request.realm_code,
+                "space_code": self.request.space_code,
+            }
+        })
         # queryset = self.filter_queryset(self.get_queryset())
         # # is_fake = bool(request.query_params.get('is_fake'))
         #
@@ -228,7 +229,7 @@ class BulkRestoreModelMixin(DestroyModelMixin):
         #             raise
         #         self.perform_destroy(instance)
 
-        return Response({"task_id": celery_task.id})
+        return Response({"task": celery_task.id})
 
 
 class BulkCreateModelMixin(CreateModelMixin):
