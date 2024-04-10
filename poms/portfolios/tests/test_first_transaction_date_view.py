@@ -222,5 +222,5 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         response_json = self.get_portfolio_by_id()
         pprint(response_json)
 
-        # first_date = response_json[0]["first_transaction"]["date"]
-        # self.assertEqual(first_date, self.today.strftime("%Y-%m-%d"))
+        first_date = response_json[0]["first_transaction"]["date"]
+        self.assertIsNone(first_date)
