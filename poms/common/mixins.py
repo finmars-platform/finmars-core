@@ -145,7 +145,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
         celery_app.send_task(
             "celery_tasks.bulk_delete",
-            kwargs={"task_id": celery_task.id},
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": request.realm_code, "space_code": request.space_code}},
             queue="backend-background-queue",
         )
         return Response({"task_id": celery_task.id})
@@ -179,7 +179,7 @@ class BulkRestoreModelMixin(DestroyModelMixin):
             "task_id": celery_task.id,
             "context": {
                 "realm_code": request.realm_code,
-                "space_code": self.request.space_code,
+                "space_code": request.space_code,
             }
         })
         # queryset = self.filter_queryset(self.get_queryset())
