@@ -110,7 +110,7 @@ class BootstrapConfig(AppConfig):
                 self.create_member_layouts()
                 self.create_base_folders()
                 # self.register_at_authorizer_service()
-                self.sync_celery_workers()
+                # self.sync_celery_workers() # TODO temporary not needed, think in 1.7.0?
                 self.create_iam_access_policies_templates()
             except Exception as e:
                 _l.error(f"bootstrap: failed for {current_space_code} due to {repr(e)}")
