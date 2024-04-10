@@ -184,3 +184,15 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
             path=f"{self.url}{self.portfolio.id}/?portfolio={self.portfolio.user_code}"
         )
         self.assertEqual(response.status_code, 405, response.content)
+
+    def test__delete_transaction(self):
+        from pprint import pprint
+
+        self.create_3_prr()
+
+        response = self.client.get(path=f"{self.url}?portfolio={self.portfolio.id}")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        pprint(response_json)
