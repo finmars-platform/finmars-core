@@ -1,10 +1,8 @@
 from datetime import date, timedelta
 
-from django.conf import settings
-
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.portfolios.models import PortfolioRegisterRecord
-from poms.transactions.models import TransactionClass
+from poms.transactions.models import Transaction, TransactionClass
 
 EXPECTED_RESPONSE = [
     {
@@ -33,7 +31,6 @@ EXPECTED_RESPONSE = [
         },
         "first_transaction": {"date_field": "transaction_date", "date": "2023-09-05"},
     },
-
 ]
 
 
@@ -43,16 +40,16 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/first-transaction-date/"
         self.portfolio = self.db_data.portfolios[BIG]
 
     def create_3_prr(self):
-        today = date.today()
-        yesterday = today - timedelta(days=1)
-        self.days_ago = today - timedelta(days=10)
-        for day in (today, yesterday, self.days_ago):
+        self.today = date.today()
+        self.yesterday = self.today - timedelta(days=1)
+        self.days_ago = self.today - timedelta(days=10)
+        for day in (self.today, self.yesterday, self.days_ago):
             self.create_prr_data(day)
 
     def create_prr_data(self, transaction_date: date):
@@ -87,6 +84,12 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         }
         return PortfolioRegisterRecord.objects.create(**prr_data)
 
+    def get_portfolio_by_id(self):
+        response = self.client.get(path=f"{self.url}?portfolio={self.portfolio.id}")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        return response.json()
+
     def test__no_portfolio_id(self):
         self.create_3_prr()
 
@@ -100,10 +103,7 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
     def test__with_portfolio_id_as_int(self):
         self.create_3_prr()
 
-        response = self.client.get(path=f"{self.url}?portfolio={self.portfolio.id}")
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
+        response_json = self.get_portfolio_by_id()
 
         self.assertEqual(len(response_json), 1)
 
@@ -190,9 +190,37 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
 
         self.create_3_prr()
 
-        response = self.client.get(path=f"{self.url}?portfolio={self.portfolio.id}")
-        self.assertEqual(response.status_code, 200, response.content)
+        response_json = self.get_portfolio_by_id()
 
-        response_json = response.json()
+        first_date = response_json[0]["first_transaction"]["date"]
+        self.assertEqual(first_date, self.days_ago.strftime("%Y-%m-%d"))
 
+        # delete earliest transaction
+        first_transaction = Transaction.objects.get(transaction_date=self.days_ago)
+        first_transaction.delete()
+
+        response_json = self.get_portfolio_by_id()
+
+        first_date = response_json[0]["first_transaction"]["date"]
+        self.assertEqual(first_date, self.yesterday.strftime("%Y-%m-%d"))
+
+        self.portfolio.refresh_from_db()
+
+        # delete yesterday transaction
+        first_transaction = Transaction.objects.get(transaction_date=self.yesterday)
+        first_transaction.delete()
+
+        response_json = self.get_portfolio_by_id()
+
+        first_date = response_json[0]["first_transaction"]["date"]
+        self.assertEqual(first_date, self.today.strftime("%Y-%m-%d"))
+
+        # delete today transaction
+        first_transaction = Transaction.objects.get(transaction_date=self.today)
+        first_transaction.delete()
+
+        response_json = self.get_portfolio_by_id()
         pprint(response_json)
+
+        # first_date = response_json[0]["first_transaction"]["date"]
+        # self.assertEqual(first_date, self.today.strftime("%Y-%m-%d"))
