@@ -4,6 +4,7 @@ import logging
 import time
 import traceback
 from datetime import timedelta
+import math
 
 from django.db.utils import DataError
 from django.forms import model_to_dict
@@ -261,6 +262,9 @@ class PerformanceReportBuilder:
                 self.build_modified_dietz(begin_date, self.end_date)
             except DataError:
                 pass
+
+        if self.instance.adjustment_type == "annualized":
+            self.calc_annualized_grand_total()
 
         # _l.info('items total %s' % len(self.instance.items))
 
@@ -1206,6 +1210,24 @@ class PerformanceReportBuilder:
         self.instance.end_nav = end_nav
 
         self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
+
+    def calc_annualized_grand_total(self):
+        value = None
+        try:
+            if self.instance.grand_return < -1:
+                raise Exception('Cannot calculate annualize. Inception less than 100%')
+            diff_in_years = (self.instance.end_date - self.instance.begin_date).days / 365
+            if diff_in_years < 1:
+                raise Exception('Cannot calculate annualize. There are less than 365 day in period.')
+            if self.instance.calculation_type == "time_weighted":
+                # formula to calculate annualized return
+                # (return_since_inception+1)^(1/number_of_years_since_inception) - 1`
+                value = math.pow(self.instance.grand_return + 1, 1 / diff_in_years) - 1
+            elif self.instance.calculation_type == "modified_dietz":
+                value = self.instance.grand_return / diff_in_years
+        except Exception as ex:
+            _l.error(str(ex))
+        self.instance.grand_return = value
 
 
 def add_data_items_instruments(self, ids):

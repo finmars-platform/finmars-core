@@ -3,22 +3,21 @@ import logging
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from celery.utils.log import get_task_logger
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
+
+from celery.utils.log import get_task_logger
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
-from poms_app import settings
 from poms_app.celery import app
 
 celery_logger = get_task_logger(__name__)
 _l = logging.getLogger("poms.celery_tasks")
 
 
-# TODO Refactor to task_id
 @finmars_task(name="celery_tasks.remove_old_tasks", bind=True)
 def remove_old_tasks(self, *args, **kwargs):
     try:
@@ -70,7 +69,6 @@ def auto_cancel_task_by_ttl(*args, **kwargs):
             task.save()
 
     except Exception as e:
-
         master_user = MasterUser.objects.all().first()
 
         send_system_message(
@@ -91,21 +89,18 @@ def check_for_died_workers(*args, **kwargs):
     # Create an inspect instance
     inspect_instance = app.control.inspect()
 
-    tasks = CeleryTask.objects.filter(
-        status=CeleryTask.STATUS_PENDING
-    )
+    tasks = CeleryTask.objects.filter(status=CeleryTask.STATUS_PENDING)
 
-    _l.info('check_for_died_workers.pending_tasks %s' % len(tasks))
+    _l.info(f"check_for_died_workers.pending_tasks {len(tasks)}")
 
     # Get the active workers
     active_workers = inspect_instance.active()
     if not active_workers:
-
-        _l.info('check_for_died_workers.no_active_workers')
+        _l.info("check_for_died_workers.no_active_workers")
 
         for task in tasks:
             task.status = CeleryTask.STATUS_CANCELED
-            task.error_message = 'No active workers'
+            task.error_message = "No active workers"
             task.save()
 
     for task in tasks:
@@ -113,7 +108,7 @@ def check_for_died_workers(*args, **kwargs):
 
         # Get stats of the worker processing this task
         worker_stats = inspect_instance.stats().get(worker_name, {})
-        uptime = worker_stats.get('uptime')  # This is in seconds
+        uptime = worker_stats.get("uptime")  # This is in seconds
 
         if not uptime:
             continue
@@ -123,10 +118,10 @@ def check_for_died_workers(*args, **kwargs):
         # Compare worker start time with task's created time
         if task.modified > worker_start_time:
             # The task was created before the worker started (worker restarted after picking the task)
-            task.error_message = 'Worker probably died after picking the task'
+            task.error_message = "Worker probably died after picking the task"
             task.status = CeleryTask.STATUS_CANCELED
             task.save()
-            _l.info('check_for_died_workers. Task %s canceled due worker died' % task.id)
+            _l.info(f"check_for_died_workers. Task {task.id} canceled due worker died")
 
 
 @finmars_task(name="celery_tasks.bulk_delete", bind=True)
@@ -152,8 +147,6 @@ def bulk_delete(self, task_id, *args, **kwargs):
         model=content_type_pieces[1],
     )
 
-    _l.info(f'bulk_delete {options_object["ids"]}')
-
     celery_task.update_progress(
         {
             "current": 0,
@@ -169,13 +162,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
 
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
-            # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
-
             for count, instance in enumerate(to_be_deleted_queryset, start=1):
-                # try:
-                #     self.check_object_permissions(request, instance)
-                # except PermissionDenied:
-                #     raise
                 instance.fake_delete()
 
                 celery_task.update_progress(
@@ -194,26 +181,23 @@ def bulk_delete(self, task_id, *args, **kwargs):
         err_msg = f"bulk_delete exception {repr(e)} {traceback.format_exc()}"
         _l.info(err_msg)  # sentry detects it as error, but it maybe not
 
-        _l.info('options_object["content_type"] %s' % options_object["content_type"])
+        _l.info(f'options_object["content_type"] {options_object["content_type"]}')
 
-        if options_object["content_type"] in (
-                "instruments.pricehistory",
-                "currencies.currencyhistory",
-                "portfolios.portfoliohistory",
-                "portfolios.portfolioregisterrecord",
-        ):
+        if options_object["content_type"] in {
+            "instruments.pricehistory",
+            "currencies.currencyhistory",
+            "portfolios.portfoliohistory",
+            "portfolios.portfolioregisterrecord",
+        }:
             _l.info("Going to permanent delete")
 
             to_be_deleted_queryset.delete()
 
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.mark_task_as_finished()
-            celery_task.save()
-
         else:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.error_message = err_msg
-            celery_task.save()
 
     finally:
         celery_task.save()
@@ -223,6 +207,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
 def bulk_restore(self, task_id, *args, **kwargs):
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
+
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
@@ -233,15 +218,6 @@ def bulk_restore(self, task_id, *args, **kwargs):
         f" options_object {options_object}"
     )
 
-    content_type_pieces = options_object["content_type"].split(".")
-
-    content_type = ContentType.objects.get(
-        app_label=content_type_pieces[0],
-        model=content_type_pieces[1],
-    )
-
-    _l.info(f'bulk_restore {options_object["ids"]}')
-
     celery_task.update_progress(
         {
             "current": 0,
@@ -251,9 +227,14 @@ def bulk_restore(self, task_id, *args, **kwargs):
         }
     )
 
-    queryset = content_type.model_class().objects.filter(
-        id__in=options_object["ids"]
+    content_type_pieces = options_object["content_type"].split(".")
+
+    content_type = ContentType.objects.get(
+        app_label=content_type_pieces[0],
+        model=content_type_pieces[1],
     )
+
+    queryset = content_type.model_class().objects.filter(id__in=options_object["ids"])
 
     try:
         if content_type.model_class()._meta.get_field("is_deleted"):
@@ -273,8 +254,7 @@ def bulk_restore(self, task_id, *args, **kwargs):
 
     except Exception as e:
         err_msg = f"bulk_restore exception {repr(e)} {traceback.format_exc()}"
-        _l.info(err_msg)  # sentry detects it as error, but it maybe not
-        _l.info('options_object["content_type"] %s' % options_object["content_type"])
+        _l.error(f"content_type={options_object['content_type']}: {err_msg}")
 
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.error_message = err_msg
@@ -301,7 +281,7 @@ def import_item(item, context):
         values = {}
 
         for input in item["inputs"]:
-            if input["value_type"] == 10:
+            if input["value_type"] == 10 :
                 values[input["transaction_type_input"]] = input["value_string"]
 
             elif input["value_type"] == 20:
@@ -345,7 +325,7 @@ def import_item(item, context):
 
 @finmars_task(name="celery_tasks.universal_input", bind=True)
 def universal_input(self, task_id, *args, **kwargs):
-    from poms.common.models import ProxyUser, ProxyRequest
+    from poms.common.models import ProxyRequest, ProxyUser
 
     # is_fake = bool(request.query_params.get('is_fake'))
 
