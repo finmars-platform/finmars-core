@@ -3612,8 +3612,10 @@ class Transaction(models.Model):
         super().save(*args, **kwargs)
 
         if self.portfolio:
-            # force run of calculate_first_transactions_dates and save portfolio
-            _l.debug(f"Transaction.save: force calculate_first_transactions_dates in portfolio")
+            # force run of calculate_first_transactions_dates and update portfolio
+            _l.debug(
+                "Transaction.save: recalculate first_transactions_dates in portfolio"
+            )
             self.portfolio.save()
 
     def delete(self, *args, **kwargs):
@@ -3622,10 +3624,11 @@ class Transaction(models.Model):
         super().delete(*args, **kwargs)
 
         if self.portfolio:
-            # force run of calculate_first_transactions_dates and save portfolio
-            _l.debug(f"Transaction.delete: force calculate_first_transactions_dates in portfolio")
+            # force run of calculate_first_transactions_dates and update portfolio
+            _l.debug(
+                "Transaction.delete: recalculate first_transactions_dates in portfolio"
+            )
             self.portfolio.save()
-
 
     def is_can_calc_cash_by_formulas(self):
         return (
