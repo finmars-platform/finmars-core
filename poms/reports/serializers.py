@@ -1108,6 +1108,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     grand_nav = serializers.ReadOnlyField()
 
     grand_absolute_pl = serializers.ReadOnlyField()
+    annualized_return = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
         super(PerformanceReportSerializer, self).__init__(*args, **kwargs)
