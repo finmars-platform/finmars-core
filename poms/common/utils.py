@@ -713,12 +713,13 @@ def get_last_business_day_in_previous_quarter(date):
         start_date = datetime.date(date.year, 7, 1)
     else:
         start_date = datetime.date(date.year, 10, 1)
+    last_day_of_previous_quarter = start_date - timedelta(days=1)
 
     # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
-    while start_date.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
-        start_date -= timedelta(days=1)
+    while last_day_of_previous_quarter.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        last_day_of_previous_quarter -= timedelta(days=1)
 
-    return start_date
+    return last_day_of_previous_quarter
 # endregion Dates
 
 def attr_is_relation(content_type_key, attribute_key):
