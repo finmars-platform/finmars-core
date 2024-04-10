@@ -2290,7 +2290,10 @@ class BalanceReportBuilderSql:
         _l.info("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
-        job = group(build.s(task_id=task.id) for task in tasks)
+        job = group(build.s(task_id=task.id, context={
+            "realm_code": self.instance.master_user.realm_code,
+            "space_code": self.instance.master_user.space_code
+        }) for task in tasks)
 
         group_result = job.apply_async()
         # Wait for all tasks to finish and get their results

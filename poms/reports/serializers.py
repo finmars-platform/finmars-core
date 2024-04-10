@@ -1081,6 +1081,14 @@ class PerformanceReportSerializer(serializers.Serializer):
         allow_blank=True,
         required=False,
     )
+    adjustment_type = serializers.ChoiceField(
+        allow_null=True,
+        initial=PerformanceReport.ADJUSTMENT_TYPE_ORIGINAL,
+        default=PerformanceReport.ADJUSTMENT_TYPE_ORIGINAL,
+        choices=PerformanceReport.ADJUSTMENT_TYPE_CHOICES,
+        allow_blank=True,
+        required=False,
+    )
     registers = RegisterField(
         many=True, required=False, allow_null=True, allow_empty=True
     )

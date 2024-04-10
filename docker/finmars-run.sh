@@ -89,28 +89,28 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Clear sessions"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Clear sessions"
 
-  python /var/app/manage.py clearsessions
+#  python /var/app/manage.py clearsessions
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Collect static"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Collect static"
 
-  python /var/app/manage.py collectstatic -c --noinput
+#  python /var/app/manage.py collectstatic -c --noinput
 
   export DJANGO_SETTINGS_MODULE=poms_app.settings
   export C_FORCE_ROOT='true'
 
-  python manage.py clear_celery
-  python manage.py deploy_default_worker
+#  python manage.py clear_celery
+#  python manage.py deploy_default_worker
+#
+#  python manage.py download_init_configuration
 
-  python manage.py download_init_configuration
-
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Create admin user"
-
-  python /var/app/manage.py generate_super_user
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Create admin user"
+#
+#  python /var/app/manage.py generate_super_user
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Run Gunicorn Web Server"

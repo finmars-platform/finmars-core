@@ -77,6 +77,6 @@ class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
         cvalue = []
         for v in value:
             ctype = v.split(".")
-            ctype = ContentType.objects.get_by_natural_key(*ctype)
+            ctype = ContentType.objects.get(app_label=ctype[0], model=ctype[1])
             cvalue.append(ctype.id)
         return super(SchemeContentTypeFilter, self).filter(qs, cvalue)

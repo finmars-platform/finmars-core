@@ -602,16 +602,23 @@ def post_delete_action(sender, instance):
 
 
 def add_history_listeners(sender, **kwargs):
-    # _l.debug("History listener registered Entity %s" % sender)
 
-    # IMPORTANT TO DO ONLY LOCAL IMPORTS
-    # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
+    try:
+        # _l.debug("History listener registered Entity %s" % sender)
 
-    content_type_key = get_model_content_type_as_text(sender)
+        # IMPORTANT TO DO ONLY LOCAL IMPORTS
+        # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
 
-    if content_type_key not in excluded_to_track_history_models:
-        models.signals.post_save.connect(post_save, sender=sender, weak=False)
-        models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+        content_type_key = get_model_content_type_as_text(sender)
+
+        if content_type_key not in excluded_to_track_history_models:
+            models.signals.post_save.connect(post_save, sender=sender, weak=False)
+            models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+
+    except Exception as e:
+        # TODO figure out what to do when live migrate happens (on space create in realm)
+        _l.error(f"add_history_listeners.exception: {e}")
+        _l.error(f"add_history_listeners.traceback: {traceback.format_exc()}")
 
 
 def record_history():
@@ -622,16 +629,20 @@ def record_history():
 
     _l.info('record_history %s' % sys.argv)
 
-    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv:
+    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv or 'clearsessions' in sys.argv or 'collectstatic' in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
-        models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        try:
+            models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        except Exception as e:
+            _l.error(f"Could not add history listeners {e}")
 
     _l.info(
         "Record History init time: %s"
         % "{:3.3f}".format(time.perf_counter() - to_representation_st)
     )
 
-
-record_history()
+# TODO refactor this code, HISTORY TEMPORARY DISABLED
+# AFTER FULLY MIGRATE TO REALM INFRASTRUCTURE REFACTOR THIS CODE
+# record_history()
