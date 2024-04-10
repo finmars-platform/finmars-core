@@ -365,6 +365,13 @@ class PerformanceReport(BaseReport):
         (SEGMENTATION_TYPE_MONTHS, "Months"),
     )
 
+    ADJUSTMENT_TYPE_ORIGINAL = "original"
+    ADJUSTMENT_TYPE_ANNUALIZED = "annualized"
+    ADJUSTMENT_TYPE_CHOICES = (
+        (ADJUSTMENT_TYPE_ORIGINAL, "Original"),
+        (ADJUSTMENT_TYPE_ANNUALIZED, "Annualized")
+    )
+
     def __init__(
             self,
             id=None,
@@ -375,6 +382,7 @@ class PerformanceReport(BaseReport):
             save_report=False,
             calculation_type=None,
             segmentation_type=None,
+            adjustment_type=None,
             registers=None,
             bundle=None,
             master_user=None,
@@ -422,6 +430,7 @@ class PerformanceReport(BaseReport):
         self.pricing_policy = pricing_policy
         self.calculation_type = calculation_type
         self.segmentation_type = segmentation_type
+        self.adjustment_type = adjustment_type
         self.registers = registers
         self.bundle = bundle
         self.periods = periods

@@ -263,7 +263,7 @@ class PerformanceReportBuilder:
             except DataError:
                 pass
 
-        if self.instance.period_type == "inception":
+        if self.instance.adjustment_type == "annualized":
             self.calc_annualized_grand_total()
 
         # _l.info('items total %s' % len(self.instance.items))
@@ -1227,7 +1227,7 @@ class PerformanceReportBuilder:
                 value = self.instance.grand_return / diff_in_years
         except Exception as ex:
             _l.error(str(ex))
-        self.instance.annualized_return = value
+        self.instance.grand_return = value
 
 
 def add_data_items_instruments(self, ids):
