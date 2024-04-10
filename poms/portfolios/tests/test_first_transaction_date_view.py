@@ -161,7 +161,6 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         ("jqhwgqjhge", "transaction_date_x"),
     )
     def test__different_invalid_date_field_values(self, date_field: str):
-
         response = self.client.get(
             path=f"{self.url}?portfolio={self.portfolio.user_code}&date_field={date_field}"
         )
@@ -172,28 +171,28 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         ("wrong_value", "8278372o9"),
     )
     def test__different_invalid_portfolio_values(self, date_field: str):
-
         response = self.client.get(
             path=f"{self.url}?portfolio={self.portfolio.user_code}&date_field={date_field}"
         )
         self.assertEqual(response.status_code, 400, response.content)
 
     def test__method_not_allowed(self):
-
         response = self.client.get(
             path=f"{self.url}{self.portfolio.id}/?portfolio={self.portfolio.user_code}"
         )
         self.assertEqual(response.status_code, 405, response.content)
 
     def test__delete_transaction(self):
-        from pprint import pprint
-
         self.create_3_prr()
 
         response_json = self.get_portfolio_by_id()
 
         first_date = response_json[0]["first_transaction"]["date"]
         self.assertEqual(first_date, self.days_ago.strftime("%Y-%m-%d"))
+
+        self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.first_transaction_date, self.days_ago)
+        self.assertEqual(self.portfolio.first_cash_flow_date, self.days_ago)
 
         # delete earliest transaction
         first_transaction = Transaction.objects.get(transaction_date=self.days_ago)
@@ -205,6 +204,8 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         self.assertEqual(first_date, self.yesterday.strftime("%Y-%m-%d"))
 
         self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.first_transaction_date, self.yesterday)
+        self.assertEqual(self.portfolio.first_cash_flow_date, self.yesterday)
 
         # delete yesterday transaction
         first_transaction = Transaction.objects.get(transaction_date=self.yesterday)
@@ -215,12 +216,19 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         first_date = response_json[0]["first_transaction"]["date"]
         self.assertEqual(first_date, self.today.strftime("%Y-%m-%d"))
 
+        self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.first_transaction_date, self.today)
+        self.assertEqual(self.portfolio.first_cash_flow_date, self.today)
+
         # delete today transaction
         first_transaction = Transaction.objects.get(transaction_date=self.today)
         first_transaction.delete()
 
         response_json = self.get_portfolio_by_id()
-        pprint(response_json)
 
         first_date = response_json[0]["first_transaction"]["date"]
         self.assertIsNone(first_date)
+
+        self.portfolio.refresh_from_db()
+        self.assertIsNone(self.portfolio.first_transaction_date)
+        self.assertIsNone(self.portfolio.first_cash_flow_date)
