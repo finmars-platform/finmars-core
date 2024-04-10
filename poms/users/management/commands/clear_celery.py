@@ -2,8 +2,29 @@ import logging
 import time
 
 from django.core.management.base import BaseCommand
+from django.db import connection
 
 _l = logging.getLogger('provision')
+
+def get_all_tenant_schemas():
+    # List to hold tenant schemas
+    tenant_schemas = []
+
+    # SQL to fetch all non-system schema names
+    # ('pg_catalog', 'information_schema', 'public') # do later in 1.9.0. where is not public schemes left
+    sql = """
+    SELECT schema_name
+    FROM information_schema.schemata
+    WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+    AND schema_name NOT LIKE 'pg_toast%'
+    AND schema_name NOT LIKE 'pg_temp_%'
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        tenant_schemas = [row[0] for row in cursor.fetchall()]
+
+    return tenant_schemas
 
 
 class Command(BaseCommand):
@@ -34,6 +55,15 @@ class Command(BaseCommand):
         from poms_app import celery_app
 
         from poms.common.celery import cancel_existing_tasks
-        cancel_existing_tasks(celery_app)
         from poms.common.celery import cancel_existing_procedures
-        cancel_existing_procedures(celery_app)
+
+        for schema in get_all_tenant_schemas():
+
+            with connection.cursor() as cursor:
+                cursor.execute(f"SET search_path TO {schema};")
+
+            cancel_existing_tasks(celery_app)
+            cancel_existing_procedures(celery_app)
+
+            with connection.cursor() as cursor:
+                cursor.execute("SET search_path TO public;")
