@@ -940,6 +940,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel):
             )
 
         self.nav = nav
+        self.gav = gav
         self.total = total
 
         # Performance Part

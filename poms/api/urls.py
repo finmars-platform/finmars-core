@@ -47,7 +47,10 @@ from poms.auth_tokens.views import (
     MasterUserChangeOwner,
     ObtainAuthToken,
     RenameMasterUser,
-    SetAuthToken, AcceptInvite, DeclineInvite,
+    SetAuthToken,
+    AcceptInvite,
+    DeclineInvite,
+    PersonalAccessTokenViewSet,
 )
 from poms.explorer.views import ExplorerServeFileViewSet
 
@@ -117,6 +120,9 @@ router.register(
     api.ExpressionViewSet,
     "expression",
 )
+
+router.register(r"utils/send-email", api.EmailViewSet, basename="email")
+
 router.register(
     r"utils/stats",
     api.StatsViewSet,
@@ -333,6 +339,12 @@ router.register(
     r"history/historical-record", history.HistoricalRecordViewSet, "historical-record"
 )
 
+router.register(
+    r"auth-tokens/personal-access-token",
+    PersonalAccessTokenViewSet,
+    "personal_access_token",
+)
+
 urlpatterns = [
     re_path(r"^v1/users/", include(users_router.router.urls)),
     re_path(r"^v1/accounts/", include(account_router.router.urls)),
@@ -355,15 +367,11 @@ urlpatterns = [
         r"instruments/instrument-database-search",
         instruments.InstrumentDatabaseSearchViewSet.as_view(),
     ),
-
     # Authorizer, Workflow, Backend Internal API section
-    re_path(
-        r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"
-    ),
+    re_path(r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"),
     re_path(
         r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
     ),
-
     # external callbacks
     re_path(
         r"internal/brokers/bloomberg/callback",
@@ -417,10 +425,7 @@ urlpatterns = [
     re_path(
         r"^authorizer/set-token-auth/", SetAuthToken.as_view(), name="set-token-auth"
     ),
-
-    re_path(
-        r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"
-    ),
+    re_path(r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"),
     re_path(
         r"^authorizer/create-master-user/",
         CreateMasterUser.as_view(),
