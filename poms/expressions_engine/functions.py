@@ -3366,7 +3366,7 @@ def _get_transactions_amounts_on_date(
         if accounts_position and len(accounts_position):
             transactions = transactions.filter(account_position__user_code__in=accounts_position)
 
-        if accounts_position and len(accounts_cash):
+        if accounts_cash and len(accounts_cash):
             transactions = transactions.filter(account_cash__user_code__in=accounts_cash)
 
         # _l.info('portfolios %s' % type(portfolios))
