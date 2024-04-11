@@ -1059,12 +1059,6 @@ class PerformanceReportBuilder:
         portfolio_registers = self.get_portfolio_registers()
         portfolios = self.get_portfolios(portfolio_registers)
 
-        dates_map = self.get_dict_of_dates_between_two_dates_with_order(
-            date_from, date_to
-        )
-
-        grand_return = 0
-
         # TODO may cause errors if portfolios has different pricing policies
         # Consider to discuss with ogreshnev what to do
         # 2023-11-14 szhitenev
@@ -1075,18 +1069,23 @@ class PerformanceReportBuilder:
 
         self.instance.execution_log = {"items": []}
 
+        total_nav = begin_nav
         grand_cash_flow = 0
         grand_cash_inflow = 0
         grand_cash_outflow = 0
-        # should be begin nav instead of 0
-        grand_cash_flow_weighted = begin_nav
-
+        grand_cash_flow_weighted = 0
         grand_return = 0
+
+        first_transaction_date = self.get_first_transaction()
+        if first_transaction_date:
+            date_from = max(date_from, first_transaction_date)
+        dates_map = self.get_dict_of_dates_between_two_dates_with_order(
+            date_from, date_to
+        )
 
         if date_to > date_from:
             for portfolio in portfolios:
                 first_transaction_date = portfolio.first_transaction_date
-
                 if not first_transaction_date:
                     raise FinmarsBaseException(
                         error_key="no_first_transaction_date",
@@ -1096,63 +1095,22 @@ class PerformanceReportBuilder:
                         ),
                     )
 
-                if (
-                    date_from == first_transaction_date
-                    or date_from < first_transaction_date
-                ):
-                    # performance report could not be less than first transaction date
-                    date_from = first_transaction_date
-
-                    portfolio_records = PortfolioRegisterRecord.objects.filter(
-                        portfolio_register__portfolio=portfolio,
-                        transaction_date__gte=date_from,
-                        transaction_date__lte=date_to,
-                        transaction_class__in=[
-                            TransactionClass.CASH_INFLOW,
-                            TransactionClass.CASH_OUTFLOW,
-                            TransactionClass.INJECTION,
-                            TransactionClass.DISTRIBUTION,
-                        ],
-                    ).order_by("transaction_date")
-
-                else:
-                    # transaction_date__gt !!!
-                    # for case when it is not first transaction date, we need only greater_then
-
-                    portfolio_records = PortfolioRegisterRecord.objects.filter(
-                        portfolio_register__portfolio=portfolio,
-                        transaction_date__gt=date_from,
-                        transaction_date__lte=date_to,
-                        transaction_class__in=[
-                            TransactionClass.CASH_INFLOW,
-                            TransactionClass.CASH_OUTFLOW,
-                            TransactionClass.INJECTION,
-                            TransactionClass.DISTRIBUTION,
-                        ],
-                    ).order_by("transaction_date")
+                portfolio_records = PortfolioRegisterRecord.objects.filter(
+                    portfolio_register__portfolio=portfolio,
+                    transaction_date__gte=max(date_from, first_transaction_date),
+                    transaction_date__lte=date_to,
+                    transaction_class__in=[
+                        TransactionClass.CASH_INFLOW,
+                        TransactionClass.CASH_OUTFLOW,
+                        TransactionClass.INJECTION,
+                        TransactionClass.DISTRIBUTION,
+                    ],
+                ).order_by("transaction_date")
 
                 _l.info("portfolio_records count %s " % len(portfolio_records))
 
                 for record in portfolio_records:
-                    date_n = dates_map[str(record.transaction_date)]
-                    date_to_n = dates_map[str(date_to)]
-                    date_from_n = dates_map[str(date_from)]
-
-                    # 2022-03-31
-                    # 2022-04-01
-
-                    # date_n = 2022-04-01
-                    # date_to_n = 2022-04-29
-                    # date_from_n = 2022-03-31
-
-                    #   (30 - 2) / (30 - 1) = 28 / 29 = 0
-
-                    # 319 - 13 / 319 - 1
-
-                    time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
-
                     fx_rate = self.get_record_fx_rate(record)
-
                     record_cash_flow = record.cash_amount_valuation_currency * fx_rate
 
                     if record.transaction_class_id in [
@@ -1160,17 +1118,31 @@ class PerformanceReportBuilder:
                         TransactionClass.INJECTION,
                     ]:
                         grand_cash_inflow = grand_cash_inflow + record_cash_flow
-
-                    if record.transaction_class_id in [
-                        TransactionClass.CASH_OUTFLOW,
-                        TransactionClass.DISTRIBUTION,
-                    ]:
+                    else:
                         grand_cash_outflow = grand_cash_outflow + record_cash_flow
 
-                    grand_cash_flow = grand_cash_flow + record_cash_flow
-                    grand_cash_flow_weighted = grand_cash_flow_weighted + (
-                        record_cash_flow * time_weight
-                    )
+                    date_n = dates_map[str(record.transaction_date)]
+                    date_to_n = dates_map[str(date_to)]
+                    date_from_n = dates_map[str(date_from)]
+                    # 2022-03-31
+                    # 2022-04-01
+
+                    # date_n = 2022-04-02
+                    # date_to_n = 2022-04-29
+                    # date_from_n = 2022-03-31
+
+                    #   (30 - (3-1)) / (30 - 1) = 28 / 29 = 0
+
+                    # 319 - 13 / 319 - 1
+
+                    if record.transaction_date == date_from:
+                        # transaction at the start of period is not weighed
+                        time_weight = 0
+                        total_nav += record_cash_flow
+                    else:
+                        time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
+                        grand_cash_flow += record_cash_flow
+                        grand_cash_flow_weighted += record_cash_flow * time_weight
 
                     self.instance.execution_log["items"].append(
                         {
@@ -1189,9 +1161,9 @@ class PerformanceReportBuilder:
                     )
 
             try:
-                grand_return = (end_nav - begin_nav - grand_cash_flow) / (
-                    grand_cash_flow_weighted
-                )
+                cf_adjusted_total_nav = total_nav + grand_cash_flow
+                wcf_adjusted_total_nav = total_nav + grand_cash_flow_weighted
+                grand_return = (end_nav - cf_adjusted_total_nav) / wcf_adjusted_total_nav
             except Exception as e:
                 _l.error("Could not calculate modified dietz return error %s" % e)
                 _l.error(
