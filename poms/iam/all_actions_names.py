@@ -111,6 +111,7 @@ FULL_ACCESS_ACTIONS = {
     "cancel",
     "comment",
     "configure",
+    "create_personal_access_token",
     "create_worker",
     "dry_run",
     "error",

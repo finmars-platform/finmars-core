@@ -88,7 +88,7 @@ class ActionHandlingTest(BaseTestCase):
         policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
 
         self.assertEqual(all_access_policies.count(), 197)
-        self.assertEqual(len(policies), 212)
+        self.assertEqual(len(policies), 213)
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
