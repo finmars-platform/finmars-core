@@ -1076,9 +1076,7 @@ class PerformanceReportBuilder:
         grand_cash_flow_weighted = 0
         grand_return = 0
 
-        first_transaction_date = self.get_first_transaction()
-        if first_transaction_date:
-            date_from = max(date_from, first_transaction_date)
+        date_from = max(date_from, self.instance.first_transaction_date)
         dates_map = self.get_dict_of_dates_between_two_dates_with_order(
             date_from, date_to
         )
