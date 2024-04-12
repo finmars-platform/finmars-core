@@ -94,7 +94,6 @@ ALL_EXTRA_ACTIONS = {
     "unseal",
     "update_secret",
     "view_log",
-    "create_personal_access_token",
 }
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
@@ -195,5 +194,4 @@ READ_ACCESS_ACTIONS = {
     "get_metadata",
     "get_secret",
     "health",
-    "create_personal_access_token",
 }
