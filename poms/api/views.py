@@ -26,7 +26,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
+from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer, \
+    EmailSerializer
+from poms.integrations.tasks import send_mail
+
 from poms.vault.serializers import VaultStatusSerializer
 from poms.common.storage import get_storage
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -85,6 +88,25 @@ class TimezoneViewSet(AbstractViewSet):
         timezones = get_timezones()
         serializer = self.get_serializer(instance=timezones, many=True)
         return Response(serializer.data)
+
+
+class EmailViewSet(AbstractViewSet):
+
+    serializer_class = EmailSerializer
+
+    def list(self, request, *args, **kwargs):
+
+        return Response({
+            'message': "not_implemented"
+        }, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            send_mail(**serializer.validated_data)
+            return Response({"message": "Email is being sent."}, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExpressionViewSet(AbstractViewSet):
