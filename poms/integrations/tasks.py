@@ -902,6 +902,7 @@ def task_error(err_msg, task):
     return None
 
 
+# DEPRECATED
 def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     from poms.instruments.handlers import InstrumentTypeProcess
     from poms.instruments.serializers import InstrumentSerializer
@@ -4581,6 +4582,7 @@ def update_task_with_instrument_data(data: dict, task: CeleryTask):
         task_done_with_instrument_info(instrument, task)
 
 
+# DEPRECATED
 def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     result = task.result_object or {}
     result["remote_task_id"] = remote_task_id
@@ -4655,7 +4657,7 @@ def update_task_with_price_data(price_data: dict, task: CeleryTask):
 
     raise NotImplemented
 
-    # try:  # TODO LATER
+    # try:
     #     create_prices_from_callback_data(
     #         price_data, task.master_user, task.member
     #     )
@@ -4720,16 +4722,10 @@ def import_from_database_task(task_id: int, operation: str):
         elif monad.status == MonadStatus.TASK_CREATED:
             _l.info(f"{func} received remote task_id={monad.task_id}")
 
-            if operation == "instrument":
-                update_task_with_simple_instrument(
-                    remote_task_id=monad.task_id,
-                    task=task,
-                )
-            else:
-                result = task.result_object
-                result["remote_task_id"] = monad.task_id
-                task.result_object = result
-                task.save()
+            result = task.result_object
+            result["remote_task_id"] = monad.task_id
+            task.result_object = result
+            task.save()
 
         else:
             err_msg = f"{func} received error={monad.message}"
