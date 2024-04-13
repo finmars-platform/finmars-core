@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, re_path
+from django.urls import include, re_path, path
 from healthcheck.views import HealthcheckView
 from poms_app.openapi import get_redoc_urlpatterns
 
@@ -16,15 +16,9 @@ if "django.contrib.admin" in settings.INSTALLED_APPS:
 
 urlpatterns = urlpatterns + [
 
-    # Old Approach (delete in 1.9.0)
-    re_path(r"^(?P<space_code>[^/]+)/api/", include("poms.api.urls")),
-    re_path(r"^(?P<space_code>[^/]+)/healthcheck", HealthcheckView.as_view()),
-    re_path(r"^(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
-
-    # New Approach
-    re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/api/", include("poms.api.urls")),
-    re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthcheck", HealthcheckView.as_view()),
-    re_path(r"^(?P<realm_code>[^/]+)/(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
+    path("<slug:realm_code>/<slug:space_code>/api/", include("poms.api.urls")),
+    path("<slug:realm_code>/<slug:space_code>/healthcheck/", HealthcheckView.as_view()),
+    path("<slug:realm_code>/<slug:space_code>/healthz/", HealthcheckView.as_view()), # needed for k8s healthcheck
 
 ]
 
