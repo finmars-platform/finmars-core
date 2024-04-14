@@ -379,7 +379,7 @@ class BalanceReportViewSet(AbstractViewSet):
 class SummaryViewSet(AbstractViewSet):
     serializer_class = SummarySerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.GET)
         serializer.is_valid(raise_exception=True)
 

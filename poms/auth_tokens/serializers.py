@@ -153,7 +153,7 @@ class CreatePersonalAccessTokenSerializer(serializers.ModelSerializer):
 
         access_token.set_exp(lifetime=timedelta(days=days_to_live))
 
-        decode_token = jwt.decode(str(access_token), settings.SECRET_KEY, algorithms=["HS256"]);
+        decode_token = jwt.decode(str(access_token), settings.SECRET_KEY, algorithms=["HS256"])
 
         decode_token['username'] = member.user.username
         decode_token['access_level'] = access_level
