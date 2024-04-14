@@ -140,7 +140,7 @@ class AbstractEvGroupViewSet(
     ]
 
     # DEPRECATED
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         if len(request.query_params.getlist("groups_types")) == 0:
             return Response(
                 {
