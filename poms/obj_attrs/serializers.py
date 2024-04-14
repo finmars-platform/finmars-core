@@ -381,9 +381,11 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
 
     def to_representation(self, value):
         member = get_member_from_context(self.context)
-        for o in value.options.all():
-            if o.member_id == member.id:
-                return o.is_hidden
+
+        if hasattr(value, "options"):
+            for o in value.options.all():
+                if o.member_id == member.id:
+                    return o.is_hidden
         return False
 
 

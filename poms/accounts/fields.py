@@ -17,7 +17,11 @@ class AccountDefault:
 
     def set_context(self, serializer_field):
         request = serializer_field.context["request"]
-        self._master_user = request.user.master_user
+
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objescte.get(space_code=request.space_code)
+
+        self._master_user = master_user
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)

@@ -1612,10 +1612,10 @@ class TransactionFileResultViewSet(AbstractModelViewSet):
 class TransactionImportJson(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         return Response({"status": "ok"})
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         from poms.integrations.tasks import complex_transaction_csv_file_import_parallel
 
         # _l.debug('request.data %s' % request.data)
@@ -1682,7 +1682,7 @@ class SupersetGetSecurityToken(APIView):
 
         return response_json["result"]
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         id = request.query_params.get("id", None)
 
         tokens = self.get_admin_access_token()

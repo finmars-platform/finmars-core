@@ -180,7 +180,7 @@ def get_access_table(member):
 class ConfigurationExportViewSet(AbstractModelViewSet):
     serializer_class = EmptySerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         '''ConfigurationExportViewSet.list
         very old functionanliy and now works not that efficient since it tries to export everything Configuration
         related in runtime
@@ -2284,7 +2284,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 class MappingExportViewSet(AbstractModelViewSet):
     serializer_class = EmptySerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         self._master_user = request.user.master_user
         self._member = request.user.member
 

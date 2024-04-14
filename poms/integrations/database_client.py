@@ -2,6 +2,8 @@ import logging
 import traceback
 
 from django.conf import settings
+
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.http_client import HttpClient, HttpClientError
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.serializers import CallBackDataDictRequestSerializer
@@ -11,9 +13,10 @@ log = "DatabaseClient"
 
 # TODO REALM_REFACTOR: szhitenev change to realm_code callback
 
-def get_backend_callback_url():
 
+def get_backend_callback_url() -> dict:
     from poms.users.models import MasterUser
+
     master_user = MasterUser.objects.all().first()
 
     COMMON_PART = "api/v1/import/finmars-database"
@@ -28,7 +31,6 @@ def get_backend_callback_url():
         "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
         "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
     }
-
 
 
 V1_EXPORT = "api/v1/export"
@@ -77,9 +79,14 @@ class DatabaseService:
             )
         except HttpClientError as e:
             return Monad(status=MonadStatus.ERROR, message=repr(e))
+
         except Exception as e:
-            _l.error(f"{log}.get_monad unexpected {repr(e)} {traceback.format_exc()}")
-            raise
+            err_msg = f"{log} unexpected {repr(e)}"
+            _l.error(f"{err_msg}  trace {traceback.format_exc()}")
+            raise FinmarsBaseException(
+                message=err_msg,
+                error_key="finmars_database_error",
+            ) from e
 
         serializer = CallBackDataDictMonadSerializer(data=response_json)
         return (
