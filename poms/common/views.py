@@ -572,10 +572,15 @@ class AbstractAsyncViewSet(AbstractViewSet):
 
             instance.task_id = task_id
         else:
-            res = self.celery_task.apply_async(kwargs={"instance": instance, 'context': {
-                'space_code': request.space_code,
-                'realm_code': request.realm_code
-            }})
+            res = self.celery_task.apply_async(
+                kwargs={
+                    "instance": instance,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
+            )
             instance.task_id = signer.sign(f"{res.id}")
 
             print(f"CREATE CELERY TASK {res.id}")
@@ -676,7 +681,7 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
-                value_string__isnull=False
+                value_string__isnull=False,
             )
             .order_by("value_string")
             .values_list("value_string", flat=True)
@@ -687,7 +692,7 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
-                value_float__isnull=False
+                value_float__isnull=False,
             )
             .order_by("value_float")
             .values_list("value_float", flat=True)
@@ -698,7 +703,7 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
-                classifier__name__isnull=False
+                classifier__name__isnull=False,
             )
             .order_by("classifier__name")
             .values_list("classifier__name", flat=True)
@@ -709,7 +714,7 @@ def _get_values_of_generic_attribute(master_user, value_type, content_type, key)
             GenericAttribute.objects.filter(
                 content_type=content_type,
                 attribute_type=attribute_type,
-                value_date__isnull=False
+                value_date__isnull=False,
             )
             .order_by("value_date")
             .values_list("value_date", flat=True)
@@ -731,18 +736,18 @@ def _get_values_from_report(content_type, report_instance_id, key):
     :return list:
     """
 
-    report_instance_model = apps.get_model(content_type + 'instance')
+    report_instance_model = apps.get_model(content_type + "instance")
 
     report_instance = report_instance_model.objects.get(id=report_instance_id)
 
-    full_items = report_instance.data['items']
+    full_items = report_instance.data["items"]
 
     # for item in full_items:
     #     if key in item and item[key] not in (None, ''):
     #         values.add(item[key])
-    values = {item[key] for item in full_items
-              if key in item and
-              item[key] not in (None, '')}
+    values = {
+        item[key] for item in full_items if key in item and item[key] not in (None, "")
+    }
 
     values = list(values)
     values.sort()
@@ -751,7 +756,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
 
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         content_type_name = request.query_params.get("content_type", None)
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
@@ -827,23 +832,24 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         model = content_type.model_class()
 
-        is_report = content_type_name in ("reports.balancereport",
-                                          "reports.plreport",
-                                          "reports.transactionreport")
+        is_report = content_type_name in (
+            "reports.balancereport",
+            "reports.plreport",
+            "reports.transactionreport",
+        )
 
         if is_report:
             report_system_attrs_keys_list = [
-                item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
+                item["key"]
+                for item in model.get_system_attrs()
+                if item["value_type"] != "field"
             ]
 
         if "attributes." in key:
 
             try:
                 results = _get_values_of_generic_attribute(
-                    master_user,
-                    value_type,
-                    content_type,
-                    key
+                    master_user, value_type, content_type, key
                 )
             except GenericAttributeType.DoesNotExist:
                 return Response(
@@ -854,7 +860,9 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-        elif is_report and (key in report_system_attrs_keys_list or "custom_fields." in key):
+        elif is_report and (
+            key in report_system_attrs_keys_list or "custom_fields." in key
+        ):
 
             if report_instance_id is None:
                 return Response(
@@ -865,7 +873,9 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-            results = _get_values_from_report(content_type_name, report_instance_id, key)
+            results = _get_values_from_report(
+                content_type_name, report_instance_id, key
+            )
 
         elif content_type_name == "instruments.pricehistory":
             results = _get_values_for_select(
@@ -923,7 +933,7 @@ class DebugLogViewSet(AbstractViewSet):
                 context["log"].close()
                 return
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         log_file = "/var/log/finmars/backend/django.log"
 
         seek_to = request.query_params.get("seek_to", 0)
@@ -959,19 +969,19 @@ class RealmMigrateSchemeView(APIView):
     throttle_classes = []
     permission_classes = []
     authentication_classes = []  # no auth neede
-    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    parser_classes = (
+        parsers.FormParser,
+        parsers.MultiPartParser,
+        parsers.JSONParser,
+    )
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = RealmMigrateSchemeSerializer
 
     def get_serializer_context(self):
-        return {
-            'request': self.request,
-            'format': self.format_kwarg,
-            'view': self
-        }
+        return {"request": self.request, "format": self.format_kwarg, "view": self}
 
     def get_serializer(self, *args, **kwargs):
-        kwargs['context'] = self.get_serializer_context()
+        kwargs["context"] = self.get_serializer_context()
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -981,25 +991,25 @@ class RealmMigrateSchemeView(APIView):
             serializer.is_valid(raise_exception=True)
 
             # realm_code = serializer.validated_data.get('realm_code')
-            space_code = serializer.validated_data.get('space_code')
+            space_code = serializer.validated_data.get("space_code")
 
             with connection.cursor() as cursor:
                 cursor.execute(f"SET search_path TO {space_code};")
 
-            _l.info('RealmMigrateSchemeView.space_code %s' % space_code)
+            _l.info("RealmMigrateSchemeView.space_code %s" % space_code)
 
             # Programmatically call the migrate command
-            call_command('migrate')
+            call_command("migrate")
 
             # Optionally, reset the search path to default after migrating
             # with connection.cursor() as cursor:
             #     cursor.execute("SET search_path TO public;")
 
-            return Response({'status': 'ok'})
+            return Response({"status": "ok"})
 
         except Exception as e:
 
             _l.error(f"RealmMigrateSchemeView.exception: {str(e)}")
             _l.error(f"RealmMigrateSchemeView.traceback: {traceback.format_exc()}")
 
-            return Response({'status': 'error', 'message': str(e)})
+            return Response({"status": "error", "message": str(e)})

@@ -27,7 +27,7 @@ class VaultViewSet(AbstractViewSet):
         }
     )
     @action(detail=False, methods=['post'], url_path="init", serializer_class=VaultSealSerializer)
-    def init(self, request):
+    def init(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -40,7 +40,7 @@ class VaultViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path="health", serializer_class=VaultStatusSerializer)
-    def health(self, request):
+    def health(self, request, *args, **kwargs):
 
         data = {}
 
@@ -57,7 +57,7 @@ class VaultViewSet(AbstractViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
-    def get_status(self, request):
+    def get_status(self, request, *args, **kwargs):
 
         data = {}
 
@@ -87,7 +87,7 @@ class VaultViewSet(AbstractViewSet):
         }
     )
     @action(detail=False, methods=['post'], url_path="seal", serializer_class=VaultSealSerializer)
-    def seal(self, request):
+    def seal(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -100,7 +100,7 @@ class VaultViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path="unseal", serializer_class=VaultUnsealSerializer)
-    def unseal(self, request):
+    def unseal(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -122,7 +122,7 @@ class VaultSecretViewSet(AbstractViewSet):
 class VaultEngineViewSet(AbstractViewSet):
     serializer_class = VaultEngineSerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
         data = finmars_vault.get_list_engines()
@@ -137,7 +137,7 @@ class VaultEngineViewSet(AbstractViewSet):
         }
     )
     @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultEngineSerializer)
-    def create_engine(self, request):
+    def create_engine(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -152,7 +152,7 @@ class VaultEngineViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultEngineSerializer)
-    def delete_engine(self, request):
+    def delete_engine(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -170,7 +170,7 @@ class VaultEngineViewSet(AbstractViewSet):
 class VaultSecretViewSet(AbstractViewSet):
     serializer_class = VaultSecretSerializer
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         engine_name = request.query_params.get('engine_name')
 
@@ -191,7 +191,7 @@ class VaultSecretViewSet(AbstractViewSet):
         }
     )
     @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultSecretSerializer)
-    def create_secret(self, request):
+    def create_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -208,7 +208,7 @@ class VaultSecretViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path="update", serializer_class=UpdateVaultSecretSerializer)
-    def update_secret(self, request):
+    def update_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -230,7 +230,7 @@ class VaultSecretViewSet(AbstractViewSet):
         responses={200: VaultSecretSerializer}
     )
     @action(detail=False, methods=['get'], url_path="get", serializer_class=GetVaultSecretSerializer)
-    def get_secret(self, request):
+    def get_secret(self, request, *args, **kwargs):
         engine_name = request.query_params.get('engine_name')
         path = request.query_params.get('path')
         version = request.query_params.get('version', None)
@@ -251,7 +251,7 @@ class VaultSecretViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path="get-metadata", serializer_class=GetVaultSecretSerializer)
-    def get_metadata(self, request):
+    def get_metadata(self, request, *args, **kwargs):
         engine_name = request.query_params.get('engine_name')
         path = request.query_params.get('path')
 
@@ -267,7 +267,7 @@ class VaultSecretViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultSecretSerializer)
-    def delete_secret(self, request):
+    def delete_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

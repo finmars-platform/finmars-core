@@ -100,7 +100,7 @@ class CurrencyPricingSchemeTypeViewSet(AbstractModelViewSet):
 class PricingBrokerBloombergHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -145,7 +145,7 @@ class PricingBrokerBloombergHandler(APIView):
 class PricingBrokerBloombergForwardsHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -189,7 +189,7 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 class PricingBrokerWtradeHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -234,7 +234,7 @@ class PricingBrokerWtradeHandler(APIView):
 class PricingBrokerFixerHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -279,7 +279,7 @@ class PricingBrokerFixerHandler(APIView):
 class PricingBrokerFxCbondsHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -324,7 +324,7 @@ class PricingBrokerFxCbondsHandler(APIView):
 class PricingBrokerAlphavHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         # _l.debug('request.data %s' % request.data)
 
@@ -370,7 +370,7 @@ class PricingBrokerAlphavHandler(APIView):
 class PricingBrokerCbondsHandler(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
         procedure_id = request.data['procedure']
 
