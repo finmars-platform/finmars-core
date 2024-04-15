@@ -1,211 +1,16 @@
-from django.conf import settings
-
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BIG, BaseTestCase
 from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionInput,
     ComplexTransactionStatus,
+    Transaction,
     TransactionType,
     TransactionTypeGroup,
     TransactionTypeInput,
 )
-
-EXPECTED_COMPLEX_TRANSACTION = {
-    "id": 1,
-    "date": "2023-10-23",
-    "status": 2,
-    "code": 100,
-    "text": None,
-    "transaction_type": 13,
-    "transactions": [],
-    "transaction_unique_code": "87648176382763",
-    "is_locked": False,
-    "is_canceled": False,
-    "error_code": None,
-    "is_deleted": False,
-    "user_text_1": "QKARGVBJML",
-    "user_text_2": "VMBKMMTZPB",
-    "user_text_3": None,
-    "user_text_4": None,
-    "user_text_5": None,
-    "user_text_6": None,
-    "user_text_7": None,
-    "user_text_8": None,
-    "user_text_9": None,
-    "user_text_10": None,
-    "user_text_11": None,
-    "user_text_12": None,
-    "user_text_13": None,
-    "user_text_14": None,
-    "user_text_15": None,
-    "user_text_16": None,
-    "user_text_17": None,
-    "user_text_18": None,
-    "user_text_19": None,
-    "user_text_20": None,
-    "user_text_21": None,
-    "user_text_22": None,
-    "user_text_23": None,
-    "user_text_24": None,
-    "user_text_25": None,
-    "user_text_26": None,
-    "user_text_27": None,
-    "user_text_28": None,
-    "user_text_29": None,
-    "user_text_30": None,
-    "user_number_1": None,
-    "user_number_2": None,
-    "user_number_3": None,
-    "user_number_4": None,
-    "user_number_5": None,
-    "user_number_6": None,
-    "user_number_7": None,
-    "user_number_8": None,
-    "user_number_9": None,
-    "user_number_10": None,
-    "user_number_11": None,
-    "user_number_12": None,
-    "user_number_13": None,
-    "user_number_14": None,
-    "user_number_15": None,
-    "user_number_16": None,
-    "user_number_17": None,
-    "user_number_18": None,
-    "user_number_19": None,
-    "user_number_20": None,
-    "user_date_1": None,
-    "user_date_2": None,
-    "user_date_3": None,
-    "user_date_4": None,
-    "user_date_5": None,
-    "recon_fields": [],
-    "execution_log": None,
-    "source": None,
-    "inputs": [],
-    "attributes": [
-        {
-            "id": 2,
-            "attribute_type": 2,
-            "value_string": "ELQMDDKLRI",
-            "value_float": 1289.0,
-            "value_date": "2023-07-24",
-            "classifier": None,
-            "attribute_type_object": {
-                "id": 2,
-                "user_code": "local.poms.space00000:auth.permission:skbii",
-                "name": "",
-                "short_name": "CC",
-                "public_name": None,
-                "notes": None,
-                "can_recalculate": False,
-                "value_type": 20,
-                "order": 0,
-                "is_hidden": False,
-                "kind": 1,
-            },
-            "classifier_object": None,
-        }
-    ],
-    "transaction_type_object": {
-        "id": 13,
-        "group": 5,
-        "user_code": "local.poms.space00000:kpprwgt",
-        "name": "MYTRGYVSEZ",
-        "short_name": "CKQ",
-        "public_name": None,
-        "notes": None,
-        "is_valid_for_all_portfolios": True,
-        "is_valid_for_all_instruments": True,
-        "is_deleted": False,
-        "transaction_unique_code_expr": "WYDRYHRAMX",
-        "transaction_unique_code_options": 3,
-        "user_text_1": "ACEUWUDLUO",
-        "user_text_2": "TLUEHXJRAE",
-        "user_text_3": "",
-        "user_text_4": "",
-        "user_text_5": "",
-        "user_text_6": "",
-        "user_text_7": "",
-        "user_text_8": "",
-        "user_text_9": "",
-        "user_text_10": "",
-        "user_text_11": "",
-        "user_text_12": "",
-        "user_text_13": "",
-        "user_text_14": "",
-        "user_text_15": "",
-        "user_text_16": "",
-        "user_text_17": "",
-        "user_text_18": "",
-        "user_text_19": "",
-        "user_text_20": "",
-        "user_text_21": "",
-        "user_text_22": "",
-        "user_text_23": "",
-        "user_text_24": "",
-        "user_text_25": "",
-        "user_text_26": "",
-        "user_text_27": "",
-        "user_text_28": "",
-        "user_text_29": "",
-        "user_text_30": "",
-        "user_number_1": "EIGSNVITEP",
-        "user_number_2": "CRSMCTSCZL",
-        "user_number_3": "",
-        "user_number_4": "",
-        "user_number_5": "",
-        "user_number_6": "",
-        "user_number_7": "",
-        "user_number_8": "",
-        "user_number_9": "",
-        "user_number_10": "",
-        "user_number_11": "",
-        "user_number_12": "",
-        "user_number_13": "",
-        "user_number_14": "",
-        "user_number_15": "",
-        "user_number_16": "",
-        "user_number_17": "",
-        "user_number_18": "",
-        "user_number_19": "",
-        "user_number_20": "",
-        "user_date_1": "2024-01-21",
-        "user_date_2": "2024-05-31",
-        "user_date_3": "",
-        "user_date_4": "",
-        "user_date_5": "",
-        "deleted_user_code": None,
-        "meta": {
-            "content_type": "transactions.transactiontype",
-            "app_label": "transactions",
-            "model_name": "transactiontype",
-            "space_code": "space00000",
-        },
-        "group_object": {
-            "id": 5,
-            "user_code": "local.poms.space00000:lzzrpsw",
-            "name": "YXJHQKXBUH",
-            "short_name": "YXJHQKXBUH",
-            "public_name": None,
-            "notes": None,
-            "is_deleted": False,
-            "deleted_user_code": None,
-            "meta": {
-                "content_type": "transactions.transactiontypegroup",
-                "app_label": "transactions",
-                "model_name": "transactiontypegroup",
-                "space_code": "space00000",
-            },
-        },
-    },
-    "transactions_object": [],
-    "meta": {
-        "content_type": "transactions.complextransaction",
-        "app_label": "transactions",
-        "model_name": "complextransaction",
-        "space_code": "space00000",
-    },
-}
+from poms.transactions.tests.transaction_test_data import (
+    EXPECTED_COMPLEX_TRANSACTION,
+)
 
 
 class ComplexTransactionViewSetTest(BaseTestCase):
@@ -409,3 +214,34 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__fake_delete_complex_transaction(self):
+        portfolio = self.db_data.portfolios[BIG]
+
+        self.assertIsNone(Transaction.objects.filter(portfolio=portfolio).first())
+        self.assertIsNone(portfolio.first_transaction_date)
+        self.assertIsNone(portfolio.first_cash_flow_date)
+
+        complex_transaction, transaction = self.db_data.cash_in_transaction(
+            portfolio,
+            day=self.random_future_date(),
+        )
+        self.assertIsNotNone(portfolio.first_transaction_date)
+        self.assertIsNotNone(portfolio.first_cash_flow_date)
+        self.assertFalse(complex_transaction.is_deleted)
+
+        # 1st time - fake delete, but base transactions - should be deleted
+        complex_transaction.fake_delete()
+
+        portfolio.refresh_from_db()
+        self.assertTrue(complex_transaction.is_deleted)
+        self.assertIsNone(Transaction.objects.filter(pk=transaction.id).first())
+        self.assertIsNone(portfolio.first_transaction_date)
+        self.assertIsNone(portfolio.first_cash_flow_date)
+
+        # 2nd time - real delete
+        complex_transaction.fake_delete()
+
+        self.assertIsNone(
+            ComplexTransaction.objects.filter(pk=complex_transaction.id).first()
+        )
