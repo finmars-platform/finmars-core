@@ -1,4 +1,4 @@
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BIG, BaseTestCase
 from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionInput,
@@ -213,3 +213,12 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__delete_complex_transaction_deleted_transactions(self):
+        portfolio = self.db_data.portfolios[BIG]
+        complex_transaction, transaction = self.db_data.cash_in_transaction(
+            portfolio,
+            day=self.random_future_date(),
+        )
+        self.assertIsNotNone(portfolio.first_transaction_date)
+        self.assertIsNotNone(portfolio.first_cash_flow_date)
