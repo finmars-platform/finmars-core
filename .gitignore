@@ -159,3 +159,5 @@ finmars_data
 configurations/
 tmp/
 static/
+migrate_legacy_base.py
+backend_*.sql

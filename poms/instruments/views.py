@@ -1006,7 +1006,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events-range-for-single-instrument",
         serializer_class=serializers.Serializer,
     )
-    def generate_events_range_for_single_instrument(self, request):
+    def generate_events_range_for_single_instrument(self, request, *args, **kwargs):
         print(f"request.data {request.data} ")
 
         date_from_string = request.data.get("effective_date_0", None)
@@ -1057,7 +1057,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="process-events",
         serializer_class=serializers.Serializer,
     )
-    def process_events(self, request):
+    def process_events(self, request, *args, **kwargs):
         ret = process_events.apply_async(
             kwargs={"master_users": [request.user.master_user.pk], 'context': {
                 'space_code': request.space_code,
@@ -1077,7 +1077,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="recalculate-prices-accrued-price",
         serializer_class=InstrumentCalculatePricesAccruedPriceSerializer,
     )
-    def calculate_prices_accrued_price(self, request):
+    def calculate_prices_accrued_price(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         begin_date = serializer.validated_data["begin_date"]
@@ -1096,7 +1096,7 @@ class InstrumentViewSet(AbstractModelViewSet):
 class InstrumentExternalAPIViewSet(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         token = request.data["token"]
 
         master_user = MasterUser.objects.get(token=token)
@@ -1166,12 +1166,12 @@ class InstrumentExternalAPIViewSet(APIView):
 class InstrumentFDBCreateFromCallbackViewSet(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         _l.info("InstrumentFDBCreateFromCallbackViewSet get")
 
         return Response({"ok"})
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         from poms.celery_tasks.models import CeleryTask
         from poms.integrations.tasks import (
             create_currency_from_callback_data,
@@ -1251,7 +1251,7 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
 class InstrumentDatabaseSearchViewSet(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         if settings.CBONDS_BROKER_URL:
             headers = {"Content-type": "application/json"}
 

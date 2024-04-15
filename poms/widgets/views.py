@@ -22,7 +22,7 @@ _l = logging.getLogger('poms.widgets')
 
 class HistoryNavViewSet(AbstractViewSet):
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         try:
 
@@ -213,7 +213,7 @@ class HistoryNavViewSet(AbstractViewSet):
 
 class HistoryPlViewSet(AbstractViewSet):
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
@@ -396,7 +396,7 @@ class HistoryPlViewSet(AbstractViewSet):
 
 class StatsViewSet(AbstractViewSet):
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         date = request.query_params.get('date', None)
         portfolio = request.query_params.get('portfolio', None)
         benchmark = request.query_params.get('benchmark', 'sp_500')
@@ -427,7 +427,7 @@ class StatsViewSet(AbstractViewSet):
 class CollectHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
@@ -508,7 +508,7 @@ class CollectHistoryViewSet(AbstractViewSet):
 class CollectBalanceHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
@@ -579,7 +579,7 @@ class CollectBalanceHistoryViewSet(AbstractViewSet):
 class CollectPlHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
 
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
@@ -651,7 +651,7 @@ class CollectPlHistoryViewSet(AbstractViewSet):
 class CollectStatsViewSet(AbstractViewSet):
     serializer_class = CollectStatsSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
         portfolio_id = request.data.get('portfolio', None)

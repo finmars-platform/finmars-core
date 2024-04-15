@@ -103,7 +103,7 @@ class RequestsTransport(HttpAuthenticated):
             return '"getFields"'
         return "''"
 
-    def send(self, request):
+    def send(self, request, *args, **kwargs):
         """
         Transport to send request with SSL client cert. Use temporary files for certs, which get deleted right after
         request completed.

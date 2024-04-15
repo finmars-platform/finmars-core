@@ -1,10 +1,36 @@
 from django.conf import settings
 from django.shortcuts import render
-from django.urls import re_path, include
+from django.urls import re_path, include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from drf_yasg.generators import OpenAPISchemaGenerator
+
+class TenantSchemaGenerator(OpenAPISchemaGenerator):
+
+    def get_schema(self, request=None, public=False):
+        swagger = super().get_schema(request, public)
+
+        # Iterate over paths and replace placeholder parameters with default values
+        for path in list(swagger.paths.keys()):
+            new_path = path.replace('{realm_code}', request.realm_code).replace('{space_code}', request.space_code)
+            swagger.paths[new_path] = swagger.paths[path]
+            del swagger.paths[path]
+
+        return swagger
+
+    def get_tags(self, operation_keys=None):
+        tags = super().get_tags(operation_keys)
+
+        print('tags %s' % tags)
+        # Custom logic to modify tags if necessary
+        return tags
+
+def scheme_get_method_decorator(func):
+    def wrapper(self, request, version='', format=None, *args, **kwargs):
+        return func(self, request, version='', format=None)
+    return wrapper
 
 def generate_schema(local_urlpatterns):
     schema_view = get_schema_view(
@@ -18,22 +44,25 @@ def generate_schema(local_urlpatterns):
             x_logo={
                 "url": "https://finmars.com/wp-content/uploads/2023/04/logo.png",
                 "backgroundColor": "#000",
-                "href": '/' + settings.BASE_API_URL + '/docs/api/v1/'
+                "href": '/' + settings.REALM_CODE + '/docs/api/v1/'
             }
         ),
         patterns=local_urlpatterns,
         public=True,
-        permission_classes=[permissions.AllowAny],
+        # permission_classes=[permissions.AllowAny],
+        generator_class=TenantSchemaGenerator,
     )
+
+    schema_view.get = scheme_get_method_decorator(schema_view.get)
 
     return schema_view
 
 
-def get_account_documentation():
+def get_account_documentation(*args, **kwargs):
     import poms.accounts.urls as account_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/accounts/', include(account_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/accounts/', include(account_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -41,11 +70,11 @@ def get_account_documentation():
     return schema_view
 
 
-def get_portfolio_documentation():
+def get_portfolio_documentation(*args, **kwargs):
     import poms.portfolios.urls as portfolio_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/portfolios/', include(portfolio_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/portfolios/', include(portfolio_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -53,11 +82,11 @@ def get_portfolio_documentation():
     return schema_view
 
 
-def get_currency_documentation():
+def get_currency_documentation(*args, **kwargs):
     import poms.currencies.urls as currency_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/currencies/', include(currency_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/currencies/', include(currency_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -65,11 +94,11 @@ def get_currency_documentation():
     return schema_view
 
 
-def get_instrument_documentation():
+def get_instrument_documentation(*args, **kwargs):
     import poms.instruments.urls as instrument_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/instruments/', include(instrument_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/instruments/', include(instrument_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -77,11 +106,11 @@ def get_instrument_documentation():
     return schema_view
 
 
-def get_transaction_documentation():
+def get_transaction_documentation(*args, **kwargs):
     import poms.transactions.urls as transaction_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/transactions/', include(transaction_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/transactions/', include(transaction_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -89,11 +118,11 @@ def get_transaction_documentation():
     return schema_view
 
 
-def get_counterparty_documentation():
+def get_counterparty_documentation(*args, **kwargs):
     import poms.counterparties.urls as counterparty_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/counterparties/', include(counterparty_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/counterparties/', include(counterparty_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -101,11 +130,11 @@ def get_counterparty_documentation():
     return schema_view
 
 
-def get_strategy_documentation():
+def get_strategy_documentation(*args, **kwargs):
     import poms.strategies.urls as strategy_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/strategies/', include(strategy_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/strategies/', include(strategy_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -113,11 +142,11 @@ def get_strategy_documentation():
     return schema_view
 
 
-def get_report_documentation():
+def get_report_documentation(*args, **kwargs):
     import poms.reports.urls as report_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/reports/', include(report_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/reports/', include(report_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -125,11 +154,11 @@ def get_report_documentation():
     return schema_view
 
 
-def get_procedure_documentation():
+def get_procedure_documentation(*args, **kwargs):
     import poms.procedures.urls as procedure_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/procedures/', include(procedure_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/procedures/', include(procedure_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -137,11 +166,11 @@ def get_procedure_documentation():
     return schema_view
 
 
-def get_ui_documentation():
+def get_ui_documentation(*args, **kwargs):
     import poms.ui.urls as ui_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/ui/', include(ui_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/ui/', include(ui_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -149,11 +178,11 @@ def get_ui_documentation():
     return schema_view
 
 
-def get_explorer_documentation():
+def get_explorer_documentation(*args, **kwargs):
     import poms.explorer.urls as explorer_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/explorer/', include(explorer_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/explorer/', include(explorer_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -161,13 +190,13 @@ def get_explorer_documentation():
     return schema_view
 
 
-def get_import_documentation():
+def get_import_documentation(*args, **kwargs):
     import poms.integrations.urls as integrations_router
     import poms.csv_import.urls as csv_import_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(integrations_router.router.urls)),
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(csv_import_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/import/', include(integrations_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/import/', include(csv_import_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -175,11 +204,11 @@ def get_import_documentation():
     return schema_view
 
 
-def get_iam_documentation():
+def get_iam_documentation(*args, **kwargs):
     import poms.iam.urls as iam_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/iam/', include(iam_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/iam/', include(iam_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -187,11 +216,11 @@ def get_iam_documentation():
     return schema_view
 
 
-def get_vault_documentation():
+def get_vault_documentation(*args, **kwargs):
     import poms.vault.urls as vault_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/vault/', include(vault_router.router.urls)),
+        path('<slug:realm_code>/<slug:space_code>/api/v1/vault/', include(vault_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -200,9 +229,10 @@ def get_vault_documentation():
 
 
 
-def render_main_page(request):
+def render_main_page(request, *args, **kwargs):
     context = {
-        'space_code': settings.BASE_API_URL
+        'realm_code': request.realm_code,
+        'space_code': request.space_code
     }
 
     return render(request, 'finmars_redoc.html', context)
@@ -226,34 +256,34 @@ def get_redoc_urlpatterns():
 
     urlpatterns = [
 
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/$', render_main_page, name='main'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/account',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/', render_main_page, name='main'),
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/account',
                 account_schema_view.with_ui('redoc', cache_timeout=0), name='account'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/portfolio',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/portfolio',
                 portfolio_schema_view.with_ui('redoc', cache_timeout=0), name='portfolio'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/currency',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/currency',
                 currency_schema_view.with_ui('redoc', cache_timeout=0), name='currency'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/instrument',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/instrument',
                 instrument_schema_view.with_ui('redoc', cache_timeout=0), name='instrument'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/transaction',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/transaction',
                 transaction_schema_view.with_ui('redoc', cache_timeout=0), name='transaction'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/counterparty',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/counterparty',
                 counterparty_schema_view.with_ui('redoc', cache_timeout=0), name='counterparty'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/strategy',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/strategy',
                 strategy_schema_view.with_ui('redoc', cache_timeout=0), name='strategy'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/report',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/report',
                 report_schema_view.with_ui('redoc', cache_timeout=0), name='report'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/procedure',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/procedure',
                 procedure_schema_view.with_ui('redoc', cache_timeout=0), name='procedure'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/ui',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/ui',
                 ui_schema_view.with_ui('redoc', cache_timeout=0), name='ui'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/explorer',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/explorer',
                 explorer_schema_view.with_ui('redoc', cache_timeout=0), name='explorer'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/import',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/import',
                 import_schema_view.with_ui('redoc', cache_timeout=0), name='import'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/iam',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/iam',
                 iam_schema_view.with_ui('redoc', cache_timeout=0), name='iam'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/vault',
+        path('<slug:realm_code>/<slug:space_code>/docs/api/v1/vault',
                 vault_schema_view.with_ui('redoc', cache_timeout=0), name='vault'),
 
     ]

@@ -685,7 +685,7 @@ class PersonalAccessTokenViewSet(AbstractModelViewSet):
         url_path="create-token",
         serializer_class=CreatePersonalAccessTokenSerializer,
     )
-    def create_personal_access_token(self, request):
+    def create_personal_access_token(self, request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
