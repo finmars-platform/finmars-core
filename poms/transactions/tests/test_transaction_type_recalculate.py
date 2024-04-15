@@ -13,7 +13,7 @@ from poms.transactions.models import (
     TransactionTypeInput,
     TransactionTypeInputSettings,
 )
-from poms.transactions.tests.transaction_type_dicts import (
+from poms.transactions.tests.transaction_test_data import (
     RECALCULATE_PAYLOAD,
 )
 

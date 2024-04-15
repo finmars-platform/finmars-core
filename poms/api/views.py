@@ -808,7 +808,7 @@ class SystemInfoViewSet(AbstractViewSet):
 
         return rabbitmq_status        
 
-    def __workflow_status(self, request):
+    def __workflow_status(self, request, *args, **kwargs):
 
         base_url = ''
 
@@ -849,7 +849,7 @@ class SystemInfoViewSet(AbstractViewSet):
         }
 
 
-    def __vault_status(self, request):
+    def __vault_status(self, request, *args, **kwargs):
         try:
             finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
             # it seems that this function, in case something is wrong with the Vault, always gives an exeption
