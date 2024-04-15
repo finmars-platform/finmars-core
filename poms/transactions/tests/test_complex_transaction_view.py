@@ -3,6 +3,7 @@ from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionInput,
     ComplexTransactionStatus,
+    Transaction,
     TransactionType,
     TransactionTypeGroup,
     TransactionTypeInput,
@@ -214,11 +215,25 @@ class ComplexTransactionViewSetTest(BaseTestCase):
 
         self.assertTrue(response_json["is_deleted"])
 
-    def test__delete_complex_transaction_deleted_transactions(self):
+    def test__fake_delete_complex_transaction(self):
         portfolio = self.db_data.portfolios[BIG]
+
+        self.assertIsNone(Transaction.objects.filter(portfolio=portfolio).first())
+        self.assertIsNone(portfolio.first_transaction_date)
+        self.assertIsNone(portfolio.first_cash_flow_date)
+
         complex_transaction, transaction = self.db_data.cash_in_transaction(
             portfolio,
             day=self.random_future_date(),
         )
         self.assertIsNotNone(portfolio.first_transaction_date)
         self.assertIsNotNone(portfolio.first_cash_flow_date)
+        self.assertFalse(complex_transaction.is_deleted)
+
+        complex_transaction.fake_delete()
+
+        portfolio.refresh_from_db()
+        self.assertTrue(complex_transaction.is_deleted)
+        self.assertIsNone(Transaction.objects.filter(pk=transaction.id).first())
+        self.assertIsNone(portfolio.first_transaction_date)
+        self.assertIsNone(portfolio.first_cash_flow_date)
