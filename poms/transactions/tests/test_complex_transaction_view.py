@@ -230,6 +230,7 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         self.assertIsNotNone(portfolio.first_cash_flow_date)
         self.assertFalse(complex_transaction.is_deleted)
 
+        # 1st time - fake delete, but base transactions - should be deleted
         complex_transaction.fake_delete()
 
         portfolio.refresh_from_db()
@@ -237,3 +238,10 @@ class ComplexTransactionViewSetTest(BaseTestCase):
         self.assertIsNone(Transaction.objects.filter(pk=transaction.id).first())
         self.assertIsNone(portfolio.first_transaction_date)
         self.assertIsNone(portfolio.first_cash_flow_date)
+
+        # 2nd time - real delete
+        complex_transaction.fake_delete()
+
+        self.assertIsNone(
+            ComplexTransaction.objects.filter(pk=complex_transaction.id).first()
+        )
