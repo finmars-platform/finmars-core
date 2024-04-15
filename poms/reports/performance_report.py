@@ -1170,6 +1170,8 @@ class PerformanceReportBuilder:
                 )
                 grand_return = 0
 
+        earliest_transaction_date = min(portfolio.first_transaction_date for portfolio in portfolios)
+        self.instance.begin_date = min(date_to, max(date_from, earliest_transaction_date))
         self.instance.grand_return = grand_return
         self.instance.grand_cash_flow = grand_cash_flow
         self.instance.grand_cash_flow_weighted = grand_cash_flow_weighted
