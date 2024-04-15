@@ -13,7 +13,7 @@ from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionStatus,
 )
-from poms.transactions.tests.transaction_type_dicts import (
+from poms.transactions.tests.transaction_test_data import (
     TRANSACTION_TYPE_WITH_INPUTS_DICT,
     TRANSACTION_TYPE_DICT,
     TRANSACTION_TYPE_BOOK_DICT,
