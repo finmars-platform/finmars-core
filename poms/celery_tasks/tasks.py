@@ -4,6 +4,7 @@ import traceback
 from datetime import datetime, timedelta, timezone
 
 from django.contrib.contenttypes.models import ContentType
+import django.db.utils
 from django.utils.timezone import now
 
 from celery.utils.log import get_task_logger
@@ -251,6 +252,9 @@ def bulk_restore(self, task_id, *args, **kwargs):
 
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.mark_task_as_finished()
+
+    except django.db.utils.IntegrityError as e:
+        raise  # PLAT-551: celery task must have status "error" on duplicate
 
     except Exception as e:
         err_msg = f"bulk_restore exception {repr(e)} {traceback.format_exc()}"
