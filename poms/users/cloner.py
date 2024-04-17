@@ -598,7 +598,7 @@ class FullDataCloner(object):
 
         self._simple_list_clone(TransactionTypeInput, 'transaction_type__master_user',
                                 'transaction_type', 'name', 'tooltip', 'verbose_name', 'value_type', 'content_type',
-                                'order', 'value_expr', 'is_fill_from_context', 'context_property', 'value', 'account',
+                                'order', 'value_expr', 'context_property', 'value', 'account',
                                 'instrument_type',
                                 'instrument', 'currency', 'counterparty', 'responsible', 'portfolio', 'strategy1',
                                 'strategy2', 'strategy3', 'daily_pricing_model', 'payment_size_detail',

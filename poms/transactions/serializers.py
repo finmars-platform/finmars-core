@@ -238,11 +238,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         allow_blank=True,
         default="",
     )
-    is_fill_from_context = serializers.BooleanField(
-        default=False,
-        initial=False,
-        required=False,
-    )
     value = ExpressionField(
         max_length=EXPRESSION_FIELD_LENGTH,
         required=False,
@@ -272,7 +267,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             "can_recalculate",
             "value_expr",
             "tooltip",
-            "is_fill_from_context",
             "context_property",
             "value",
             "settings",

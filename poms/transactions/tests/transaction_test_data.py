@@ -223,7 +223,6 @@ TRANSACTION_TYPE_WITH_INPUTS_DICT = {
             "can_recalculate": False,
             "value_expr": None,
             "tooltip": "AQULCAVWIX",
-            "is_fill_from_context": False,
             "context_property": None,
             "value": "8805",
             "settings": {
