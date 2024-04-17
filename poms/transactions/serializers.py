@@ -267,7 +267,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             "can_recalculate",
             "value_expr",
             "tooltip",
-            "context_property",
             "value",
             "settings",
             "button_data",
