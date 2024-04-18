@@ -85,21 +85,26 @@ def schema_exists(schema_name):
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
 
-    _l.info(f"task_prerun.task {task}")
+    _l.info(f"task_prerun.task {task} context: {kwargs['context']}" )
 
     context = kwargs.get('context')
     if context:
         if context.get('space_code'):
 
-            if schema_exists(context.get('space_code')):
+            _l.info("context.get('space_code') %s" % context.get('space_code'))
 
-                space_code = context.get('space_code')
+            space_code = context.get('space_code')
+
+            if schema_exists(space_code):
+
+                _l.info("================")
+
                 with connection.cursor() as cursor:
+                    _l.info("OLOLO?")
                     cursor.execute(f"SET search_path TO {space_code};")
                     _l.info(f"task_prerun.context {space_code}")
-            else: # REMOVE IN 1.9.0, PROBABLY SECURITY ISSUE
-                with connection.cursor() as cursor:
-                    cursor.execute(f"SET search_path TO public;")
+            else:
+                raise Exception('No scheme in database')
         else:
             raise Exception('No space_code in context')
     else:

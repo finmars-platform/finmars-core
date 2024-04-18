@@ -63,6 +63,10 @@ class ConfigurationModel(OwnerModel):
 
         super().save(*args, **kwargs)
 
+CHANNEL_CHOICES = [
+    ["stable", "Stable"],
+    ["rc", "Release Candidate"],
+]
 
 class Configuration(models.Model):
     # com.finmars.hnwi
@@ -90,6 +94,11 @@ class Configuration(models.Model):
     version = models.CharField(
         max_length=255,
         verbose_name=gettext_lazy("version"),
+    )
+    channel = models.CharField(
+        max_length=255,
+        choices=CHANNEL_CHOICES,
+        default="stable",
     )
     is_from_marketplace = models.BooleanField(
         default=False,
