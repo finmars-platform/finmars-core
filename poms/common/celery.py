@@ -90,17 +90,10 @@ def set_task_context(task_id, task, kwargs=None, **unused):
     context = kwargs.get('context')
     if context:
         if context.get('space_code'):
-
-            _l.info("context.get('space_code') %s" % context.get('space_code'))
-
             space_code = context.get('space_code')
 
             if schema_exists(space_code):
-
-                _l.info("================")
-
                 with connection.cursor() as cursor:
-                    _l.info("OLOLO?")
                     cursor.execute(f"SET search_path TO {space_code};")
                     _l.info(f"task_prerun.context {space_code}")
             else:
