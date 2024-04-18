@@ -118,7 +118,9 @@ def health_check():
 
 
 @finmars_task(name="integrations.send_mail_async", ignore_result=True)
-def send_mail_async(subject, message, from_email, recipient_list, html_message=None, *args, **kwargs):
+def send_mail_async(
+    subject, message, from_email, recipient_list, html_message=None, *args, **kwargs
+):
     django_send_mail(
         subject,
         message,
@@ -129,17 +131,23 @@ def send_mail_async(subject, message, from_email, recipient_list, html_message=N
     )
 
 
-def send_mail(subject, message, from_email, recipient_list, html_message=None, space_code=None, realm_code=None):
+def send_mail(
+    subject,
+    message,
+    from_email,
+    recipient_list,
+    html_message=None,
+    space_code=None,
+    realm_code=None,
+):
     send_mail_async.apply_async(
         kwargs={
             "subject": subject,
             "message": message,
             "from_email": from_email,
             "recipient_list": recipient_list,
-            "html_message": html_message, 'context': {
-                'space_code': space_code,
-                'realm_code': realm_code
-            }
+            "html_message": html_message,
+            "context": {"space_code": space_code, "realm_code": realm_code},
         }
     )
 
@@ -328,10 +336,13 @@ def download_instrument(
             task.save()
             transaction.on_commit(
                 lambda: download_instrument_async.apply_async(
-                    kwargs={"task_id": task.id, 'context': {
-                        'space_code': task.master_user.space_code,
-                        'realm_code': task.master_user.realm_code
-                    }}
+                    kwargs={
+                        "task_id": task.id,
+                        "context": {
+                            "space_code": task.master_user.space_code,
+                            "realm_code": task.master_user.realm_code,
+                        },
+                    }
                 )
             )
     elif task.status == CeleryTask.STATUS_DONE:
@@ -546,7 +557,7 @@ def create_instrument_cbond(data, master_user, member):
 
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                user_code=user_code
+                user_code=user_code,
                 # user_code__contains=instrument_data["instrument_type"],
             )
 
@@ -642,7 +653,7 @@ def download_instrument_cbond(
         options["request_id"] = task.pk
         options["base_api_url"] = master_user.space_code
 
-        if (master_user.realm_code):
+        if master_user.realm_code:
             options["callback_url"] = (
                 f"https://{settings.DOMAIN_NAME}/{master_user.realm_code}/{master_user.space_code}"
                 f"/api/instruments/fdb-create-from-callback/"
@@ -902,8 +913,15 @@ def task_error(err_msg, task):
     return None
 
 
-# DEPRECATED
 def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
+    """
+    Create new Instrument object from narrow instrument data if it doesn't exist,
+    otherwise return existing Instrument
+    Args:
+        task: Task object which stores short instrument data
+    Returns:
+        Instrument object or None
+    """
     from poms.instruments.handlers import InstrumentTypeProcess
     from poms.instruments.serializers import InstrumentSerializer
 
@@ -911,13 +929,18 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     options_data = task.options_object["data"]
     _l.info(f"{func} started options_data={options_data}")
 
+    instrument = Instrument.objects.filter(user_code=options_data["user_code"]).first()
+    if instrument:
+        _l.warning(f"{func} instrument {options_data['user_code']} exists!")
+        return instrument
+
     type_user_type = options_data["type_user_code"]
     instrument_type_user_code_full = f"{TYPE_PREFIX}{type_user_type}"
     try:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
             user_code=instrument_type_user_code_full,
-            # user_code__contains=type_user_type,  #TODO FOR DEBUG ONLY!
+            # user_code__contains=type_user_type,  # TODO FOR DEBUG ONLY!
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
@@ -1445,10 +1468,13 @@ def test_certificate(master_user=None, member=None, task=None):
 
                 transaction.on_commit(
                     lambda: test_certificate_async.apply_async(
-                        kwargs={"task_id": task.id, 'context': {
-                            'space_code': task.master_user.space_code,
-                            'realm_code': task.master_user.realm_code
-                        }}
+                        kwargs={
+                            "task_id": task.id,
+                            "context": {
+                                "space_code": task.master_user.space_code,
+                                "realm_code": task.master_user.realm_code,
+                            },
+                        }
                     )
                 )
 
@@ -1913,7 +1939,9 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id, *args, **
 
 # DEPRECATED
 @finmars_task(name="integrations.complex_transaction_csv_file_import", bind=True)
-def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
+def complex_transaction_csv_file_import(
+    self, task_id, procedure_instance_id=None, *args, **kwargs
+):
     try:
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.transactions.models import TransactionTypeInput
@@ -3072,7 +3100,9 @@ def complex_transaction_csv_file_import_parallel(task_id, *args, **kwargs):
     name="integrations.complex_transaction_csv_file_import_validate_parallel_finish",
     bind=True,
 )
-def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id, *args, **kwargs):
+def complex_transaction_csv_file_import_validate_parallel_finish(
+    self, task_id, *args, **kwargs
+):
     try:
         _l.info(
             "complex_transaction_csv_file_import_validate_parallel_finish task_id %s "
@@ -4270,10 +4300,13 @@ def complex_transaction_csv_file_import_by_procedure(
 
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
-                            kwargs={"task_id": sub_task.id, 'context': {
-                                'space_code': sub_task.master_user.space_code,
-                                'realm_code': sub_task.master_user.realm_code
-                            }},
+                            kwargs={
+                                "task_id": sub_task.id,
+                                "context": {
+                                    "space_code": sub_task.master_user.space_code,
+                                    "realm_code": sub_task.master_user.realm_code,
+                                },
+                            },
                             queue="backend-background-queue",
                         )
                     )
@@ -4381,10 +4414,11 @@ def complex_transaction_csv_file_import_by_procedure_json(
             lambda: transaction_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }
+                    "procedure_instance_id": procedure_instance_id,
+                    "context": {
+                        "space_code": celery_task.master_user.space_code,
+                        "realm_code": celery_task.master_user.realm_code,
+                    },
                 },
                 queue="backend-background-queue",
             )
@@ -4582,7 +4616,6 @@ def update_task_with_instrument_data(data: dict, task: CeleryTask):
         task_done_with_instrument_info(instrument, task)
 
 
-# DEPRECATED
 def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     result = task.result_object or {}
     result["remote_task_id"] = remote_task_id
@@ -4722,10 +4755,16 @@ def import_from_database_task(task_id: int, operation: str):
         elif monad.status == MonadStatus.TASK_CREATED:
             _l.info(f"{func} received remote task_id={monad.task_id}")
 
-            result = task.result_object
-            result["remote_task_id"] = monad.task_id
-            task.result_object = result
-            task.save()
+            if operation == "instrument":
+                update_task_with_simple_instrument(
+                    remote_task_id=monad.task_id,
+                    task=task,
+                )
+            else:
+                result = task.result_object
+                result["remote_task_id"] = monad.task_id
+                task.result_object = result
+                task.save()
 
         else:
             err_msg = f"{func} received error={monad.message}"
