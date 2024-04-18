@@ -1,8 +1,6 @@
 from unittest import mock, skip
 from datetime import date
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.database_client import get_backend_callback_url
@@ -16,11 +14,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/instrument/"
-        )
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/instrument/"
         self.task = self.create_task(
             name="Test",
             func="test",
@@ -81,8 +77,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-
-        print("task_ready", response_json)
 
         self.assertIn("result_id", response_json)
         self.assertIn("errors", response_json)
@@ -194,9 +188,54 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print("error", response_json)
-
         self.assertNotIn("result_id", response_json)
 
         self.assertIn("errors", response_json)
         self.assertIn(message, response_json["errors"])
+
+    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    def test__task_ready_instrument_exists(self, mock_get_monad):
+        remote_task_id = self.random_int()
+        mock_get_monad.return_value = Monad(
+            status=MonadStatus.TASK_CREATED,
+            task_id=remote_task_id,
+        )
+        user_code = self.random_string()
+        name = self.random_string()
+        request_data = {
+            "user_code": user_code,
+            "name": name,
+            "instrument_type_user_code": "bond",
+        }
+        instrument = self.create_instrument()  # create instrument
+        instrument.user_code = user_code
+        instrument.name = name
+        instrument.save()
+
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        mock_get_monad.assert_called_once()
+
+        response_json = response.json()
+
+        self.assertIn("result_id", response_json)
+        self.assertIn("errors", response_json)
+        self.assertIsNone(response_json["errors"])
+
+        self.assertIn("task", response_json)
+        self.assertEqual(response_json["name"], name)
+        self.assertEqual(response_json["user_code"], user_code)
+
+        self.assertIn("remote_task_id", response_json)
+        self.assertEqual(response_json["remote_task_id"], remote_task_id)
+
+        simple_instrument = Instrument.objects.get(pk=response_json["result_id"])
+        self.assertTrue(simple_instrument.is_active)
+
+        celery_task = CeleryTask.objects.get(pk=response_json["task"])
+        options = celery_task.options_object
+
+        backend_callback_urls = get_backend_callback_url()
+
+        self.assertEqual(options["callback_url"], backend_callback_urls["instrument"])
