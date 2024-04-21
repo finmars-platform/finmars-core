@@ -35,6 +35,12 @@ class HealthcheckView(APIView):
             ]
         return self._plugins
 
+    def unlock(self, request):
+
+        key = request.data["SPACE_SECRET_KEY"]
+
+
+
     def run_check(self):
         errors = []
 

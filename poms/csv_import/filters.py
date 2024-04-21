@@ -1,3 +1,5 @@
+import traceback
+
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 
@@ -63,13 +65,18 @@ def scheme_content_type_choices():
         .order_by("app_label", "model")
         .filter(pk__in=get_scheme_content_types())
     )
+    choices = []
     for c in queryset:
-        yield "%s.%s" % (c.app_label, c.model), c.model_class()._meta.verbose_name
+        choices.append(("%s.%s" % (c.app_label, c.model), c.model_class()._meta.verbose_name))
+    return choices
 
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-        kwargs["choices"] = scheme_content_type_choices
+
+        dynamic_choices = scheme_content_type_choices()  # Call the method here to get dynamic choices
+        kwargs["choices"] = dynamic_choices
+
         super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
 
     def filter(self, qs, value):

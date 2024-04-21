@@ -167,6 +167,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         #  need to be destroyed inside task
         options_object = {
             "configuration_code": request.data.get("configuration_code", None),
+            "channel": request.data.get("channel", None),
             "version": request.data.get("version", None),
             "is_package": request.data.get("is_package", False),
             "access_token": get_access_token(request)
