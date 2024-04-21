@@ -14,10 +14,6 @@ from io import BytesIO
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
-import requests
-from celery import chord
-from celery.exceptions import MaxRetriesExceededError, TimeoutError
-from dateutil.rrule import DAILY, rrule
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins as django_mail_admins
@@ -28,6 +24,11 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+
+import requests
+from celery import chord
+from celery.exceptions import MaxRetriesExceededError, TimeoutError
+from dateutil.rrule import DAILY, rrule
 from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
@@ -35,20 +36,18 @@ from openpyxl.utils import column_index_from_string
 from poms.accounts.models import Account
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
-from poms.expressions_engine import formula
-from poms.common.middleware import activate
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
-from poms.integrations.database_client import DatabaseService, get_backend_callback_url
-from poms.expressions_engine.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
+from poms.common.middleware import activate
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.integrations.monad import Monad, MonadStatus
 from poms.common.storage import get_storage
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.expressions_engine import formula
+from poms.expressions_engine.formula import ExpressionEvalError
 from poms.file_reports.models import FileReport
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -60,6 +59,7 @@ from poms.instruments.models import (
     PriceHistory,
     PricingCondition,
 )
+from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.integrations.models import (
     AccountMapping,
     AccrualCalculationModelMapping,
@@ -83,6 +83,7 @@ from poms.integrations.models import (
     Strategy3Mapping,
     TransactionFileResult,
 )
+from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.providers.base import (
     AbstractProvider,
     get_provider,
@@ -446,9 +447,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             ecosystem_defaults,
             attribute_types,
         )
-        object_data["short_name"] = (
-            object_data["name"] + " (" + object_data["user_code"] + ")"
-        )
 
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
         activate(proxy_request)
@@ -659,7 +657,6 @@ def download_instrument_cbond(
                 f"/api/instruments/fdb-create-from-callback/"
             )
         else:
-
             options["callback_url"] = (
                 f"https://{settings.DOMAIN_NAME}/{master_user.space_code}"
                 f"/api/instruments/fdb-create-from-callback/"
@@ -4448,8 +4445,8 @@ def complex_transaction_csv_file_import_by_procedure_json(
 
 
 def create_counterparty_from_callback_data(data, master_user, member) -> Counterparty:
-    from poms.counterparties.serializers import CounterpartySerializer
     from poms.counterparties.models import CounterpartyGroup
+    from poms.counterparties.serializers import CounterpartySerializer
 
     func = "create_counterparty_from_database"
 
