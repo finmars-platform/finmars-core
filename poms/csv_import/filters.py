@@ -73,17 +73,23 @@ def scheme_content_type_choices():
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-
-        dynamic_choices = scheme_content_type_choices()  # Call the method here to get dynamic choices
-        kwargs["choices"] = dynamic_choices
-
+        # Initialize without setting the choices
         super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
+        self._dynamic_choices = None
+
+    @property
+    def choices(self):
+        # Generate choices lazily
+        if self._dynamic_choices is None:
+            self._dynamic_choices = scheme_content_type_choices()
+        return self._dynamic_choices
 
     def filter(self, qs, value):
-        value = value or tuple()
+        if not value:
+            return qs
         cvalue = []
         for v in value:
-            ctype = v.split(".")
-            ctype = ContentType.objects.get(app_label=ctype[0], model=ctype[1])
+            app_label, model = v.split(".")
+            ctype = ContentType.objects.get(app_label=app_label, model=model)
             cvalue.append(ctype.id)
         return super(SchemeContentTypeFilter, self).filter(qs, cvalue)

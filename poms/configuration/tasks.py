@@ -740,6 +740,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
             child_options_object = {
                 "configuration_code": dependency["configuration_code"],
                 "version": dependency["version"],
+                "channel": remote_configuration_release["channel"],
                 "is_package": False,
                 "step": step
                 # "access_token": access_token
