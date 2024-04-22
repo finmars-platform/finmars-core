@@ -151,18 +151,18 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         return (
             super(GenericAttributeTypeViewSet, self)
             .get_queryset()
-            .filter(content_type=self.target_model_content_type)
+            .filter(content_type=ContentType.objects.get_for_model(self.target_model))
         )
 
     def get_serializer(self, *args, **kwargs):
         return super().get_serializer(*args, **kwargs)
 
-    @property
-    def target_model_content_type(self):
-        return ContentType.objects.get_for_model(self.target_model)
+    # @property
+    # def target_model_content_type(self):
+    #     return ContentType.objects.get_for_model(self.target_model)
 
     def perform_create(self, serializer):
-        serializer.save(content_type=self.target_model_content_type)
+        serializer.save(content_type=ContentType.objects.get_for_model(self.target_model))
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
