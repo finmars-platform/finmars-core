@@ -7,13 +7,14 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.db import connection
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
-import pandas as pd
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -775,3 +776,8 @@ def attr_is_relation(content_type_key, attribute_key):
         'portfolio_register',
         'valuation_currency',
     ]
+
+
+def set_scheme(space_code):
+    with connection.cursor() as cursor:
+        cursor.execute(f"SET search_path TO {space_code};")
