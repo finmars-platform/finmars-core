@@ -1050,7 +1050,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         ids = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from,
                                                 modified__lte=date_to).values_list('id', flat=True)
 
-        content_type = ContentType.objects.get_for_model(ComplexTransaction)
+        content_type = ContentType.objects.get(app_label='transactions', model="complextransaction")
         content_type_key = content_type.app_label + '.' + content_type.model
 
         options_object = {

@@ -163,8 +163,9 @@ class AbstractEvGroupViewSet(
 
         filtered_qs = filtered_qs.filter(master_user=master_user)
 
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
         )
 
         try:
@@ -208,8 +209,9 @@ class AbstractEvGroupViewSet(
         groups_values = request.data.get("groups_values", None)
         groups_order = request.data.get("groups_order", None)
         master_user = request.user.master_user
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
         )
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
@@ -342,8 +344,9 @@ class AbstractModelViewSet(
     def list_ev_item(self, request, *args, **kwargs):
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
         )
         master_user = request.user.master_user
 

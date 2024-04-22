@@ -310,8 +310,8 @@ def _filter_queryset_for_attribute(self_obj, request, queryset, view):
     else:
         return queryset
 
-    content_type = ContentType.objects.get_for_model(
-        model, for_concrete_model=False
+    content_type = ContentType.objects.get(
+        app_label=model._meta.app_label, model=model._meta.model_name
     )
 
     content_type_key = f"{content_type.app_label}.{content_type.model}"

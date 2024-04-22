@@ -130,7 +130,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         data = serializer.validated_data
         queryset = self.filter_queryset(self.get_queryset())
 
-        content_type = ContentType.objects.get_for_model(queryset.model)
+        content_type = ContentType.objects.get(app_label=queryset.model._meta.app_label, model=queryset.model._meta.model_name)
         content_type_key = f"{content_type.app_label}.{content_type.model}"
 
         options_object = {"content_type": content_type_key, "ids": data["ids"]}
@@ -162,7 +162,7 @@ class BulkRestoreModelMixin(DestroyModelMixin):
         data = serializer.validated_data
         queryset = self.filter_queryset(self.get_queryset())
 
-        content_type = ContentType.objects.get_for_model(queryset.model)
+        content_type = ContentType.objects.get(app_label=queryset.model._meta.app_label, model=queryset.model._meta.model_name)
         content_type_key = f"{content_type.app_label}.{content_type.model}"
 
         options_object = {"content_type": content_type_key, "ids": data["ids"]}

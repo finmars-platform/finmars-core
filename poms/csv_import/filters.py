@@ -56,7 +56,8 @@ def get_scheme_content_types():
         TransactionTypeGroup,
         TransactionType,
     ]
-    return [ContentType.objects.get_for_model(model).pk for model in models]
+
+    return [ContentType.objects.get(app_label=model._meta.app_label, model=model._meta.model_name).pk for model in models]
 
 
 def scheme_content_type_choices():
@@ -73,23 +74,17 @@ def scheme_content_type_choices():
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-        # Initialize without setting the choices
-        super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
-        self._dynamic_choices = None
 
-    @property
-    def choices(self):
-        # Generate choices lazily
-        if self._dynamic_choices is None:
-            self._dynamic_choices = scheme_content_type_choices()
-        return self._dynamic_choices
+        dynamic_choices = scheme_content_type_choices()  # Call the method here to get dynamic choices
+        kwargs["choices"] = dynamic_choices
+
+        super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
 
     def filter(self, qs, value):
-        if not value:
-            return qs
+        value = value or tuple()
         cvalue = []
         for v in value:
-            app_label, model = v.split(".")
-            ctype = ContentType.objects.get(app_label=app_label, model=model)
+            ctype = v.split(".")
+            ctype = ContentType.objects.get(app_label=ctype[0], model=ctype[1])
             cvalue.append(ctype.id)
         return super(SchemeContentTypeFilter, self).filter(qs, cvalue)
