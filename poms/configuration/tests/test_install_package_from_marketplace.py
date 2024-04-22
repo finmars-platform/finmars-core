@@ -27,6 +27,7 @@ class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
         options_object = {
             "configuration_code": POST_PAYLOAD["configuration_code"],
             "version": POST_PAYLOAD["version"],
+            "channel": POST_PAYLOAD["channel"],
             "is_package": POST_PAYLOAD["is_package"],
             "access_token": TOKEN,
         }

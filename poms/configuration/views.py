@@ -167,7 +167,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         #  need to be destroyed inside task
         options_object = {
             "configuration_code": request.data.get("configuration_code", None),
-            "channel": request.data.get("channel", None),
+            "channel": request.data.get("channel", "stable"),
             "version": request.data.get("version", None),
             "is_package": request.data.get("is_package", False),
             "access_token": get_access_token(request)
@@ -240,6 +240,7 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
             options_object = {
                 "configuration_code": new_member_setup_configuration.target_configuration_code,
                 "version": new_member_setup_configuration.target_configuration_version,
+                "channel": "stable", # TODO get channel from target_configuration?
                 "is_package": new_member_setup_configuration.target_configuration_is_package,
                 "access_token": get_access_token(request),
             }

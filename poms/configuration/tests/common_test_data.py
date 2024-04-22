@@ -1,9 +1,11 @@
 VERSION = "1.0.1"
+CHANNEL = "stable"
 CONFIGURATION_CODE = "com.finmars.initial"
 TOKEN = "test_token"
 POST_PAYLOAD = {
     "configuration_code": "com.finmars.initial",
     "version": VERSION,
+    "channel": CHANNEL,
     "is_package": True,
 }
 OPTIONS = {

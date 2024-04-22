@@ -145,6 +145,7 @@ class GenericAttributeInline(GenericTabularInline):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'attribute_type':
             qs = kwargs.get('queryset', db_field.remote_field.model.objects)
+            # TODO beware of cached values for get_for_model, refactor
             kwargs['queryset'] = qs.select_related('content_type').filter(
                 content_type=ContentType.objects.get_for_model(self.parent_model)
             )
