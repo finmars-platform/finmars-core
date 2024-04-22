@@ -693,18 +693,20 @@ class GenericAttributeTypeViewSerializer(serializers.ModelSerializer):
 class GenericAttributeListSerializer(serializers.ListSerializer):
     # Used as list_serializer_class if many=True in AbstractAttributeSerializer
     def get_attribute(self, instance):
-        member = get_member_from_context(self.context)
-        if member.is_superuser:
-            return instance.attributes
+        # member = get_member_from_context(self.context)
+        # if member.is_superuser:
+        #     return instance.attributes
+
         master_user = get_master_user_from_context(self.context)
-        attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
+
+        # attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
 
         content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         return GenericAttribute.objects.filter(
             content_type=content_type,
             object_id=instance.id,
-            attribute_type__in=attribute_type_qs,
+            # attribute_type__in=attribute_type_qs,
         )
 
 

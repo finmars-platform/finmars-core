@@ -8,7 +8,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 class GenericAttributeTypeField(UserCodeOrPrimaryKeyRelatedField):
-    queryset = GenericAttributeType.objects
+    queryset = GenericAttributeType.objects.all()
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
@@ -26,7 +26,7 @@ class GenericClassifierField(RelatedField):
     queryset = GenericClassifier.objects
     filter_backends = [
         OwnerByAttributeTypeFilter,
-        GenericClassifierPermissionBackend,
+        # GenericClassifierPermissionBackend,
     ]
 
     def to_internal_value(self, data):
