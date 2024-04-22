@@ -311,7 +311,7 @@ class BackendReportHelperService:
                 data["item_transaction_classes"]
             )
 
-        content_type = ContentType.objects.get_for_model(Instrument)
+        content_type = ContentType.objects.get(app_label='instruments', model='instrument')
         instrument_attribute_types = GenericAttributeType.objects.filter(
             content_type=content_type
         )
