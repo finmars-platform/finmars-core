@@ -312,6 +312,7 @@ class BootstrapConfig(AppConfig):
                     # check if restored from backup
                     master_user.name = master_user_name
                     master_user.space_code = base_api_url
+                    master_user.realm_code = settings.REALM_CODE
                     master_user.save()
 
                     BootstrapConfig.deactivate_old_members()
@@ -325,6 +326,7 @@ class BootstrapConfig(AppConfig):
                 master_user = MasterUser.objects.create_master_user(
                     name=master_user_name,
                     space_code=base_api_url,
+                    realm_code=settings.REALM_CODE
                 )
 
                 _l.info(
