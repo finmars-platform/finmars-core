@@ -107,7 +107,16 @@ class GenericClassifierViewSet(AbstractReadOnlyModelViewSet):
 
     @property
     def target_model_content_type(self):
-        return ContentType.objects.get_for_model(self.target_model)
+        # return ContentType.objects.get_for_model(self.target_model)
+        # TODO important objects.get_for_model return cached value
+        # from public scheme, it can lead to unexpected behavior
+        # ContentType.objects.get_for_model(self.target_model)
+        # Assuming 'self.target_model' is a Django model class
+        app_label = self.target_model._meta.app_label
+        model = self.target_model._meta.model_name  # 'model_name' is always lowercase
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+        return content_type
 
 
 class GenericAttributeTypeFilterSet(FilterSet):
@@ -170,7 +179,18 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         return content_type
 
     def perform_create(self, serializer):
-        serializer.save(content_type=ContentType.objects.get_for_model(self.target_model))
+
+
+        # TODO important objects.get_for_model return cached value
+        # from public scheme, it can lead to unexpected behavior
+        # ContentType.objects.get_for_model(self.target_model)
+        # Assuming 'self.target_model' is a Django model class
+        app_label = self.target_model._meta.app_label
+        model = self.target_model._meta.model_name  # 'model_name' is always lowercase
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+
+        serializer.save(content_type=content_type)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
