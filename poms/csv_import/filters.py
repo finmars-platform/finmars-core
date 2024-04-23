@@ -2,7 +2,7 @@ import traceback
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-
+from django.utils.functional import lazy
 from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import (
     Counterparty,
@@ -75,8 +75,7 @@ def scheme_content_type_choices():
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
 
-        dynamic_choices = scheme_content_type_choices()  # Call the method here to get dynamic choices
-        kwargs["choices"] = dynamic_choices
+        kwargs["choices"] = lazy(scheme_content_type_choices, list)
 
         super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
 
