@@ -81,9 +81,11 @@ class AccessPolicy(permissions.BasePermission):
         if request.user.member and request.user.member.is_admin:
             return True
 
-        # Check if the user is the owner
-        if obj.owner == request.user.member:
-            return True
+        # TODO Member entity itself has no owner, be careful if other entities have no owner
+        if hasattr(obj, 'owner'):
+            # Check if the user is the owner
+            if obj.owner == request.user.member:
+                return True
 
         return self.has_specific_permission(view, request)
 
