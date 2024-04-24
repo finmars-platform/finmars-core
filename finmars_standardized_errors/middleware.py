@@ -56,7 +56,8 @@ class ExceptionMiddleware(MiddlewareMixin):
 
         url = request.build_absolute_uri()
         username = str(request.user.username)
-        message = http_code_to_message[500]
+        status_code = getattr(exception, 'status_code', 500)
+        message = http_code_to_message[status_code]
 
         details = {
             'traceback': '\n'.join(traceback_lines),
@@ -72,16 +73,16 @@ class ExceptionMiddleware(MiddlewareMixin):
                 'username': username,
                 'details': details,
                 'message': message,
-                'status_code': 500,
+                'status_code': status_code,
                 'datetime': str(datetime.datetime.strftime(now(), '%Y-%m-%d %H:%M:%S'))
             }
         }
 
-        ErrorRecord.objects.create(url=url, username=username, status_code=500, message=message, details={
+        ErrorRecord.objects.create(url=url, username=username, status_code=status_code, message=message, details={
             'traceback': '\n'.join(traceback_lines),
             'error_message': repr(exception),
         })
 
         response_json = json.dumps(data, indent=2, sort_keys=True)
 
-        return HttpResponse(response_json, status=500, content_type="application/json")
+        return HttpResponse(response_json, status=status_code, content_type="application/json")

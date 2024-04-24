@@ -1,5 +1,5 @@
 class FinmarsBaseException(Exception):
-    def __init__(self, error_key: str, message: str = ""):
+    def __init__(self, error_key: str, message: str = "", status_code: int = 500):
         """
         A custom exception for Finmars with an obligatory error_key property.
 
@@ -8,6 +8,7 @@ class FinmarsBaseException(Exception):
         """
         super().__init__(message)
         self.error_key = error_key
+        self.status_code = status_code
 
     def __str__(self):
         """
