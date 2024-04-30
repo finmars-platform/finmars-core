@@ -4604,7 +4604,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.save()
 
         simple_import.apply(
-            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.realm_code, "space_code": celery_task.space_code}}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return {"task_id": celery_task.id}
@@ -4661,7 +4661,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.save()
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.realm_code, "space_code": celery_task.space_code}}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return None
