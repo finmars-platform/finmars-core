@@ -29,7 +29,7 @@ class InstrumentViewSetTest(BaseTestCase):
         expected = response_json["results"][0]["instrument_type_object"]["user_code"]
         self.assertEqual(user_code, expected)
 
-    def test__filter_by_query_and_response(self):
+    def test__filter_by_query(self):
         response = self.client.get(path=f"{self.url}?query=App")
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -39,3 +39,11 @@ class InstrumentViewSetTest(BaseTestCase):
         user_code = response_json["results"][0]["instrument_type"]
         expected = response_json["results"][0]["instrument_type_object"]["user_code"]
         self.assertEqual(user_code, expected)
+
+    def test__filter_by_empty_query(self):
+        response = self.client.get(path=f"{self.url}?query=")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json["results"]), 3)
