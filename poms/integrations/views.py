@@ -35,7 +35,7 @@ from poms.common.mixins import (
     UpdateModelMixinExt,
 )
 from poms.common.storage import get_storage
-from poms.common.utils import datetime_now
+from poms.common.utils import datetime_now, get_current_schema
 from poms.common.views import (
     AbstractApiView,
     AbstractAsyncViewSet,
@@ -1110,10 +1110,14 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }}, queue="backend-background-queue"
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
+            queue="backend-background-queue",
         )
 
         _l.info(
@@ -1166,10 +1170,14 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }}, queue="backend-background-queue"
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
+            queue="backend-background-queue",
         )
 
         _l.info(
@@ -1204,6 +1212,9 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         }
 
         _l.info(f"options_object {options_object}")
+        _l.info(f"request.realm_code {request.realm_code}")
+        _l.info(f"request.user {request.user}")
+        _l.info(f"request.user.master_user {request.user.master_user}")
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
@@ -1215,8 +1226,18 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         _l.info(f"celery_task {celery_task.pk} created ")
 
+        current_schema = get_current_schema()
+
+        _l.info("before_apply current schema %s" % current_schema)
+
         transaction_import.apply(
-            kwargs={"task_id": celery_task.pk, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}},
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "realm_code": celery_task.master_user.realm_code,
+                    "space_code": celery_task.master_user.space_code,
+                },
+            },
             queue="backend-background-queue",
         )
 
@@ -1234,6 +1255,14 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             "ComplexTransaction Dry Run done: %s",
             "{:3.3f}".format(time.perf_counter() - st),
         )
+        _l.info(
+            "ComplexTransaction Dry Run done: realm_code %s"
+            % celery_task.master_user.realm_code
+        )
+
+        current_schema = get_current_schema()
+
+        _l.info("after_apply current schema %s" % current_schema)
 
         ComplexTransaction.objects.filter(linked_import_task=celery_task.pk).delete()
 
@@ -1311,9 +1340,9 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         response = HttpResponse(
             new_raw_items, content_type="application/force-download"
         )
-        response[
-            "Content-Disposition"
-        ] = f"attachment; filename=preprocessed_{filename_without_ext}.json"
+        response["Content-Disposition"] = (
+            f"attachment; filename=preprocessed_{filename_without_ext}.json"
+        )
 
         return response
 
@@ -1439,10 +1468,13 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         )
 
         transaction_import.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
             queue="backend-background-queue",
         )
 
