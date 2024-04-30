@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument
 
@@ -22,6 +20,17 @@ class InstrumentViewSetTest(BaseTestCase):
 
     def test__filter_and_response(self):
         response = self.client.get(path=f"{self.url}?user_code=Apple")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json["results"]), 1)
+        user_code = response_json["results"][0]["instrument_type"]
+        expected = response_json["results"][0]["instrument_type_object"]["user_code"]
+        self.assertEqual(user_code, expected)
+
+    def test__filter_by_query_and_response(self):
+        response = self.client.get(path=f"{self.url}?query=App")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
