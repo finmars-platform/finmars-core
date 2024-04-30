@@ -1216,7 +1216,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         _l.info(f"celery_task {celery_task.pk} created ")
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.pk},
+            kwargs={"task_id": celery_task.pk, "context": {"realm_code": celery_task.realm_code, "space_code": celery_task.space_code}},
             queue="backend-background-queue",
         )
 

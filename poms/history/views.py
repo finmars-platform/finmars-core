@@ -96,7 +96,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
 
         from poms_app import celery_app
 
-        celery_app.send_task('history.export_journal_to_storage', kwargs={"task_id": task.id},
+        celery_app.send_task('history.export_journal_to_storage', kwargs={"task_id": task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}},
                              queue='backend-background-queue')
 
         return Response({"task_id": task.id})

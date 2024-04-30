@@ -4107,7 +4107,7 @@ def _run_task(evaluator, task_name, options={}):
             options_object=options,
         )
 
-        celery_app.send_task(task_name, kwargs={"task_id": task.id})
+        celery_app.send_task(task_name, kwargs={"task_id": task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
 
     except Exception as e:
         _l.error("_run_task.exception %s" % e)
@@ -4604,7 +4604,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.save()
 
         simple_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.realm_code, "space_code": celery_task.space_code}}, queue="backend-background-queue"
         )
 
         return {"task_id": celery_task.id}
@@ -4661,7 +4661,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.save()
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.realm_code, "space_code": celery_task.space_code}}, queue="backend-background-queue"
         )
 
         return None
