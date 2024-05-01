@@ -19,6 +19,21 @@ class BaseReport:
         (MODE_INTERDEPENDENT, "Offsetting (Interdependent - 0/100, 100/0, 50/50)"),
     )
 
+    CALCULATION_GROUP_NO_GROUPING = 'no_grouping'
+    CALCULATION_GROUP_PORTFOLIO = 'portfolio.id'
+    CALCULATION_GROUP_ACCOUNT = 'account.id'
+    CALCULATION_GROUP_STRATEGY1 = 'strategy1'
+    CALCULATION_GROUP_STRATEGY2 = 'strategy2'
+    CALCULATION_GROUP_STRATEGY3 = 'strategy3'
+    CALCULATION_GROUP_CHOICES = (
+        (CALCULATION_GROUP_NO_GROUPING, "No Grouping"),
+        (CALCULATION_GROUP_PORTFOLIO, "Portfolio"),
+        (CALCULATION_GROUP_ACCOUNT, "Account"),
+        (CALCULATION_GROUP_STRATEGY1, "Strategy 1"),
+        (CALCULATION_GROUP_STRATEGY2, "Strategy 2"),
+        (CALCULATION_GROUP_STRATEGY3, "Strategy 3"),
+    )
+
     def __init__(
             self, id=None, master_user=None, member=None, task_id=None, task_status=None
     ):
@@ -70,6 +85,7 @@ class Report(BaseReport):
             report_currency=None,
             pricing_policy=None,
             cost_method=None,
+            calculation_group=BaseReport.CALCULATION_GROUP_NO_GROUPING,
             portfolio_mode=BaseReport.MODE_INDEPENDENT,
             account_mode=BaseReport.MODE_INDEPENDENT,
             strategy1_mode=BaseReport.MODE_INDEPENDENT,
@@ -127,6 +143,7 @@ class Report(BaseReport):
         self.pl_first_date = pl_first_date
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)
+        self.calculation_group = calculation_group
 
         self.report_instance_name = report_instance_name
         self.save_report = save_report
