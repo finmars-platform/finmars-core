@@ -107,6 +107,7 @@ def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise e
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
