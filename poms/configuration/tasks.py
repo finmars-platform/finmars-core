@@ -342,6 +342,7 @@ def export_configuration(self, task_id, *args, **kwargs):
         "name": configuration.name,
         "configuration_code": configuration.configuration_code,
         "version": configuration.version,
+        "channel": configuration.channel,
         "date": str(date.today()),
     }
 
@@ -400,6 +401,7 @@ def push_configuration_to_marketplace(self, task_id, *args, **kwargs):
         "configuration_code": configuration.configuration_code,
         "name": configuration.name,
         "version": configuration.version,
+        "channel": configuration.channel,
         "description": configuration.description,
         "author": username,
         "changelog": options_object.get("changelog", ""),
@@ -485,6 +487,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     else:
         data = {
             "configuration_code": options_object["configuration_code"],
+            "channel": options_object["channel"],
             "version": options_object["version"],
         }
 
@@ -518,6 +521,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     configuration.name = remote_configuration["name"]
     configuration.description = remote_configuration["description"]
     configuration.version = remote_configuration_release["version"]
+    configuration.channel = remote_configuration_release["channel"]
     configuration.is_package = False
     configuration.manifest = remote_configuration_release["manifest"]
     configuration.is_from_marketplace = True
@@ -668,6 +672,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
     data = {
         "configuration_code": parent_options_object["configuration_code"],
         "version": parent_options_object["version"],
+        "channel": parent_options_object["channel"],
     }
     headers = {}
     # headers['Authorization'] = 'Token ' + access_token
@@ -702,6 +707,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
     configuration.name = remote_configuration["name"]
     configuration.description = remote_configuration["description"]
     configuration.version = remote_configuration_release["version"]
+    configuration.channel = remote_configuration_release["channel"]
     configuration.is_package = True
     configuration.manifest = remote_configuration_release["manifest"]
     configuration.is_from_marketplace = True
@@ -734,6 +740,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
             child_options_object = {
                 "configuration_code": dependency["configuration_code"],
                 "version": dependency["version"],
+                "channel": remote_configuration_release["channel"],
                 "is_package": False,
                 "step": step
                 # "access_token": access_token

@@ -243,7 +243,7 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         if attribute_type:
             if (
                     attribute_type.content_type_id
-                    != ContentType.objects.get_for_model(Instrument).id
+                    != ContentType.objects.get(app_label='instruments', model="instrument").id
             ):
                 self.fields["attribute_type"].fail(
                     "does_not_exist", pk_value=attribute_type.id
@@ -898,7 +898,7 @@ class InstrumentAttributeValueMappingSerializer(AbstractMappingSerializer):
         if content_object:
             if (
                     content_object.content_type_id
-                    != ContentType.objects.get_for_model(Instrument).id
+                    != ContentType.objects.get(app_label="instruments", model="instrument").id
             ):
                 self.fields["content_object"].fail(
                     "does_not_exist", pk_value=content_object.id

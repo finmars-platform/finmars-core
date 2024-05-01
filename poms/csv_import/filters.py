@@ -1,6 +1,8 @@
+import traceback
+
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-
+from django.utils.functional import lazy
 from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import (
     Counterparty,
@@ -54,7 +56,8 @@ def get_scheme_content_types():
         TransactionTypeGroup,
         TransactionType,
     ]
-    return [ContentType.objects.get_for_model(model).pk for model in models]
+
+    return [ContentType.objects.get(app_label=model._meta.app_label, model=model._meta.model_name).pk for model in models]
 
 
 def scheme_content_type_choices():
@@ -63,13 +66,17 @@ def scheme_content_type_choices():
         .order_by("app_label", "model")
         .filter(pk__in=get_scheme_content_types())
     )
+    choices = []
     for c in queryset:
-        yield "%s.%s" % (c.app_label, c.model), c.model_class()._meta.verbose_name
+        choices.append(("%s.%s" % (c.app_label, c.model), c.model_class()._meta.verbose_name))
+    return choices
 
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-        kwargs["choices"] = scheme_content_type_choices
+
+        kwargs["choices"] = lazy(scheme_content_type_choices, list)
+
         super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
 
     def filter(self, qs, value):

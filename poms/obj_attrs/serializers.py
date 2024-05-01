@@ -73,7 +73,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def create_attributes_if_not_exists(self, instance):
         master_user = get_master_user_from_context(self.context)
 
-        content_type = ContentType.objects.get_for_model(instance)
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         attribute_types = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -154,7 +154,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
     def calculate_attributes(self, instance):
         master_user = get_master_user_from_context(self.context)
-        content_type = ContentType.objects.get_for_model(instance)
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         attr_types_qs = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -227,7 +227,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         if not attributes:
             return
 
-        ctype = ContentType.objects.get_for_model(instance)
+        ctype = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         for attr in attributes:
             attribute_type = attr["attribute_type"]
@@ -693,18 +693,20 @@ class GenericAttributeTypeViewSerializer(serializers.ModelSerializer):
 class GenericAttributeListSerializer(serializers.ListSerializer):
     # Used as list_serializer_class if many=True in AbstractAttributeSerializer
     def get_attribute(self, instance):
-        member = get_member_from_context(self.context)
-        if member.is_superuser:
-            return instance.attributes
-        master_user = get_master_user_from_context(self.context)
-        attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
+        # member = get_member_from_context(self.context)
+        # if member.is_superuser:
+        #     return instance.attributes
 
-        content_type = ContentType.objects.get_for_model(instance)
+        master_user = get_master_user_from_context(self.context)
+
+        # attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
+
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         return GenericAttribute.objects.filter(
             content_type=content_type,
             object_id=instance.id,
-            attribute_type__in=attribute_type_qs,
+            # attribute_type__in=attribute_type_qs,
         )
 
 
@@ -751,7 +753,7 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         parent = self.parent
         if isinstance(parent, ListSerializer):
             parent = parent.parent
-        owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
+        # owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
 
         return attrs
 

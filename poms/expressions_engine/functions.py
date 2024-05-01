@@ -3012,7 +3012,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
         attribute_type = GenericAttributeType.objects.get(
             master_user=master_user,
             user_code=attribute_user_code,
-            content_type=ContentType.objects.get_for_model(Instrument),
+            content_type=ContentType.objects.get(app_label='instruments', model='instrument'),
         )
     except GenericAttributeType.DoesNotExist:
         raise ExpressionEvalError("Attribute type is not found")
@@ -3023,7 +3023,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
         attribute = GenericAttribute.objects.get(
             attribute_type=attribute_type,
             object_id=pk,
-            content_type=ContentType.objects.get_for_model(Instrument),
+            content_type=ContentType.objects.get(app_label='instruments', model='instrument'),
         )
     except GenericAttribute.DoesNotExist:
         raise ExpressionEvalError("Attribute is not found")

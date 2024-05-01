@@ -93,10 +93,12 @@ router.register(
 router.register(
     r"configuration/configuration",
     configuration.ConfigurationViewSet,
+    "configuration"
 )
 router.register(
     r"configuration/new-member-setup-configuration",
     configuration.NewMemberSetupConfigurationViewSet,
+    "newmembersetupconfiguration"
 )
 router.register(
     r"transactions/bank-file",
@@ -277,6 +279,7 @@ router.register(
 router.register(
     r"schedules/schedule",
     schedules.ScheduleViewSet,
+    "schedule"
 )
 router.register(
     r"system-messages/message",
