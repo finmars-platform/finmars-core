@@ -431,15 +431,6 @@ class TransactionTypeProcess:
             if (i.name not in self.values) and ("context_" not in i.name):
                 value = None
 
-                if i.is_fill_from_context:
-                    try:
-                        value = self.context_values[i.context_property]
-
-                        _l.debug(f"Set from context. input {i.name} value {value}")
-
-                    except KeyError:
-                        _l.debug(f"Can't find context variable {i.context_property}")
-
                 if value is None:
                     if i.value_type == TransactionTypeInput.RELATION:
                         model_class = i.content_type.model_class()
