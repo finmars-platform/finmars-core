@@ -220,7 +220,7 @@ class InstrumentUserFieldSerializer(ModelWithUserCodeSerializer, ModelMetaSerial
         ]
 
 
-class TemplateLayoutSerializer(serializers.ModelSerializer):
+class TemplateLayoutSerializer(ModelWithUserCodeSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
