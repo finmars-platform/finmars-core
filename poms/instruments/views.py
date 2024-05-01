@@ -1220,10 +1220,36 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
+    query = CharFilter(method="query_search")
 
     class Meta:
         model = Instrument
-        fields = []
+        fields = [
+            "id",
+            "is_deleted",
+            "user_code",
+            "name",
+            "public_name",
+            "short_name",
+        ]
+
+    @staticmethod
+    def query_search(queryset, name, value):
+        if value:
+            # Split the value by spaces to get individual search terms
+            search_terms = value.split()
+
+            # Create an OR condition to search across multiple fields
+            conditions = Q()
+            for term in search_terms:
+                conditions |= (
+                    Q(name__icontains=term)
+                    | Q(short_name__icontains=term)
+                    | Q(user_code__icontains=term)
+                )
+            queryset = queryset.filter(conditions)
+
+        return queryset
 
 
 class InstrumentForSelectViewSet(AbstractModelViewSet):
