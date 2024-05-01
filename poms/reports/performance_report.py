@@ -201,6 +201,9 @@ class PerformanceReportBuilder:
         if self.end_date < begin_date:
             self.end_date = begin_date
 
+        if self.instance.adjustment_type == "annualized":
+            self.check_can_calculate_annualized_report()
+
         self.instance.periods = self.get_periods(
             begin_date, self.end_date, self.instance.segmentation_type
         )
@@ -1183,15 +1186,37 @@ class PerformanceReportBuilder:
 
         self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
 
+    def check_can_calculate_annualized_report(self):
+        if self.instance.bundle:
+            portfolio_registers = self.instance.bundle.registers.all()
+        else:
+            portfolio_registers = self.instance.registers
+        short_portfolios = []
+        for portfolio_register in portfolio_registers:
+            transaction_date = portfolio_register.portfolio.first_cash_flow_date
+            if not transaction_date or (self.end_date - transaction_date).days < 365:
+                short_portfolios.append(portfolio_register.portfolio.user_code)
+        if short_portfolios:
+            raise FinmarsBaseException(
+                error_key="less_than_year",
+                message=(
+                    f"Return period of {', '.join(short_portfolios[:10])} "
+                    f"s less than a year (<365 days) (must not be annualized)"
+                ),
+            )
+
     def calc_annualized_grand_total(self):
         value = None
         try:
-            if self.instance.grand_return < -1:
-                raise Exception('Cannot calculate annualize. Inception less than 100%')
-            diff_in_years = (self.instance.end_date - self.instance.begin_date).days / 365
+            diff_in_years = (self.end_date - self.instance.begin_date).days / 365
             if diff_in_years < 1:
-                raise Exception('Cannot calculate annualize. There are less than 365 day in period.')
+                raise Exception('Return period is less than a year (<365 days) (must not be annualized)')
             if self.instance.calculation_type == "time_weighted":
+                if self.instance.grand_return < -1:
+                    raise FinmarsBaseException(
+                        error_key="less_than_100_pct",
+                        message="Return since inception is less than -100% (can’t calculate the geometric mean)",
+                    )
                 # formula to calculate annualized return
                 # (return_since_inception+1)^(1/number_of_years_since_inception) - 1`
                 value = math.pow(self.instance.grand_return + 1, 1 / diff_in_years) - 1
