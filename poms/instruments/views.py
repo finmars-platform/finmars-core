@@ -1418,7 +1418,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         "accrued_price",
     ]
 
-    @action(detail=False, methods=["post"], url_path="bulk-create")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-create",
+        serializer_class=PriceHistorySerializer,
+    )
     def bulk_create(self, request, *args, **kwargs):
         valid_data = []
         errors = []
@@ -1714,7 +1719,12 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=["put"], url_path="informed")
+    @action(
+        detail=True,
+        methods=["put"],
+        url_path="informed",
+        serializer_class=GeneratedEventSerializer,
+    )
     def ignore(self, request, pk=None):
         generated_event = self.get_object()
 
