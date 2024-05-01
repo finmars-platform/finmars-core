@@ -130,7 +130,8 @@ class ReportCountrySerializer(ModelMetaSerializer):
         model = Country
         fields = [
             'id',
-            'user_code', 'name', 'short_name'
+            'country_code', 'name', 'region', 'region_code', 'sub_region', 'sub_region_code',
+            'user_code', 'short_name'
         ]
         read_only_fields = fields
 
