@@ -58,7 +58,9 @@ def define_content_type(file_name: str) -> Optional[str]:
 
 
 def join_path(space_code: str, path: str) -> str:
-    return f"{space_code}{path}" if path[0] == "/" else f"{space_code}/{path}"
+    space_code = space_code.removesuffix("/")
+    path = path.removeprefix("/")
+    return f"{space_code}/{path}"
 
 
 def remove_first_folder_from_path(path: str) -> str:

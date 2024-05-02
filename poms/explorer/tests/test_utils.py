@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.utils import define_content_type
+from poms.explorer.utils import define_content_type, join_path
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -30,3 +30,14 @@ class DefineContentTypeTest(BaseTestCase):
     )
     def test__content_type(self, filename, content_type):
         self.assertEqual(define_content_type(filename), content_type)
+
+
+class JoinPathTest(BaseTestCase):
+    @BaseTestCase.cases(
+        ("1", "realm0000.space0000", "path", "realm0000.space0000/path"),
+        ("2", "realm0000.space0000", "/path", "realm0000.space0000/path"),
+        ("3", "realm0000.space0000/", "/path", "realm0000.space0000/path"),
+        ("4", "realm0000.space0000/", "path", "realm0000.space0000/path"),
+    )
+    def test__content_type(self, space_code, path, result):
+        self.assertEqual(join_path(space_code, path), result)
