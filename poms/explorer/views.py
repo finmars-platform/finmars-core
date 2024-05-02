@@ -4,11 +4,15 @@ import mimetypes
 import os
 import traceback
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
+from django.core.files import File
 from django.http import FileResponse, HttpResponse
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
+
+from bs4 import BeautifulSoup
 
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
@@ -24,27 +28,85 @@ _l = logging.getLogger("poms.explorer")
 storage = get_storage()
 
 
+def define_content_type(file: File) -> Optional[str]:
+    file_content_type = None
+    file_name = file.name
+
+    if file_name.endswith(".html"):
+        file_content_type = "text/html"
+
+    elif file_name.endswith(".txt"):
+        file_content_type = "plain/text"
+
+    elif file_name.endswith(".js"):
+        file_content_type = "text/javascript"
+
+    elif file_name.endswith(".csv"):
+        file_content_type = "text/csv"
+
+    elif file_name.endswith(".json"):
+        file_content_type = "application/json"
+
+    elif file_name.endswith(".yml") or file_name.endswith(".yaml"):
+        file_content_type = "application/yaml"
+
+    elif file_name.endswith(".py"):
+        file_content_type = "text/x-python"
+
+    elif file_name.endswith(".png"):
+        file_content_type = "image/png"
+
+    elif file_name.endswith("jpg") or file_name.endswith("jpeg"):
+        file_content_type = "image/jpeg"
+
+    elif file_name.endswith(".pdf"):
+        file_content_type = "application/pdf"
+
+    elif file_name.endswith(".doc") or file_name.endswith(".docx"):
+        file_content_type = "application/msword"
+
+    elif file_name.endswith(".css"):
+        file_content_type = "text/css"
+
+    elif file_name.endswith(".xls"):
+        file_content_type = "application/vnd.ms-excel"
+
+    elif file_name.endswith(".xlsx"):
+        file_content_type = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    return file_content_type
+
+
+def sanitize_html(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    for script in soup(["script", "style"]):  # Remove these tags
+        script.extract()
+
+    return str(soup)
+
+
 class ExplorerViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def remove_first_folder_from_path(self, path):
         split_path = path.split(os.path.sep)
-        new_path = os.path.sep.join(split_path[1:])
-        return new_path
+        return os.path.sep.join(split_path[1:])
 
     def list(self, request, *args, **kwargs):
         path = request.query_params.get("path")
 
         if not path:
-            path = request.space_code + "/"
+            path = f"{request.space_code}/"
+        elif path[0] == "/":
+            path = request.space_code + path
         else:
-            if path[0] == "/":
-                path = request.space_code + path
-            else:
-                path = request.space_code + "/" + path
+            path = f"{request.space_code}/{path}"
 
         if path[-1] != "/":
-            path = path + "/"
+            path = f"{path}/"
 
         items = storage.listdir(path)
 
@@ -52,19 +114,16 @@ class ExplorerViewSet(AbstractViewSet):
             "user__username", flat=True
         )
 
-        results = []
-
-        for dir in items[0]:
-            if path == request.space_code + "/":
-                if dir not in members_usernames:
-                    results.append({"type": "dir", "name": dir})
-
-            else:
-                results.append({"type": "dir", "name": dir})
-
+        results = [
+            {"type": "dir", "name": dir}
+            for dir in items[0]
+            if path == f"{request.space_code}/"
+            and dir not in members_usernames
+            or path != f"{request.space_code}/"
+        ]
         for file in items[1]:
-            created = storage.get_created_time(path + "/" + file)
-            modified = storage.get_modified_time(path + "/" + file)
+            created = storage.get_created_time(f"{path}/{file}")
+            modified = storage.get_modified_time(f"{path}/{file}")
 
             mime_type, encoding = mimetypes.guess_type(file)
 
@@ -76,9 +135,8 @@ class ExplorerViewSet(AbstractViewSet):
                 "modified": modified,
                 "file_path": "/"
                 + self.remove_first_folder_from_path(os.path.join(path, file)),
-                # path already has / in end of str
-                "size": storage.size(path + "/" + file),
-                "size_pretty": storage.convert_size(storage.size(path + "/" + file)),
+                "size": storage.size(f"{path}/{file}"),
+                "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),
             }
 
             results.append(item)
@@ -95,157 +153,57 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
             if not path:
                 raise ValidationError("Path is required")
+
+            if path[0] == "/":
+                path = request.space_code + path
             else:
-                if path[0] == "/":
-                    path = request.space_code + path
-                else:
-                    path = request.space_code + "/" + path
+                path = f"{request.space_code}/{path}"
 
-            if settings.AZURE_ACCOUNT_KEY:
-                if path[-1] != "/":
-                    path = path + "/"
+            if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
+                path = f"{path}/"
 
-            # TODO validate path that eiher public/import/system or user home folder
+            # TODO validate path that either public/import/system or user home folder
 
             with storage.open(path, "rb") as file:
                 result = file.read()
-
-                file_content_type = None
-
-                if ".txt" in file.name:
-                    file_content_type = "plain/text"
-
-                if ".csv" in file.name:
-                    file_content_type = "text/csv"
-
-                if ".json" in file.name:
-                    file_content_type = "application/json"
-
-                if ".yml" in file.name or ".yaml" in file.name:
-                    file_content_type = "application/yaml"
-
-                if ".py" in file.name:
-                    file_content_type = "text/x-python"
-
-                if ".png" in file.name:
-                    file_content_type = "image/png"
-
-                if ".jp" in file.name:
-                    file_content_type = "image/jpeg"
-
-                if ".pdf" in file.name:
-                    file_content_type = "application/pdf"
-
-                if ".doc" in file.name:
-                    file_content_type = "application/msword"
-
-                if ".doc" in file.name:
-                    file_content_type = "application/msword"
-
-                if ".xls" in file.name:
-                    file_content_type = "application/vnd.ms-excel"
-
-                if ".xlsx" in file.name:
-                    file_content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-                if file_content_type:
-                    response = HttpResponse(result, content_type=file_content_type)
-                else:
-                    response = HttpResponse(result)
+                file_content_type = define_content_type(file)
+                response = (
+                    HttpResponse(result, content_type=file_content_type)
+                    if file_content_type
+                    else HttpResponse(result)
+                )
 
             return response
 
         except Exception as e:
-            _l.error("view file error %s" % e)
-            _l.error("view file traceback %s" % traceback.format_exc())
+            _l.error(f"view file error {e} trace {traceback.format_exc()}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-from bs4 import BeautifulSoup
-
-
-def sanitize_html(html):
-    soup = BeautifulSoup(html, "html.parser")
-
-    for script in soup(["script", "style"]):  # Remove these tags
-        script.extract()
-
-    return str(soup)
 
 
 class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def retrieve(self, request, filepath=None, *args, **kwargs):
-        _l.info("ExplorerServeFileViewSet.filepath %s" % filepath)
+        _l.info(f"ExplorerServeFileViewSet.filepath {filepath}")
         filepath = filepath.rstrip("/")
 
-        if not "." in filepath.split("/")[-1]:  # if the file does not have an extension
+        if "." not in filepath.split("/")[-1]:  # if the file does not have an extension
             filepath += ".html"
 
-        path = request.space_code + "/" + filepath
+        path = f"{request.space_code}/{filepath}"
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
-        _l.info("path %s" % path)
+        _l.info(f"path {path}")
 
         with storage.open(path, "rb") as file:
             result = file.read()
-
-            file_content_type = None
-
-            if ".html" in file.name:
-                file_content_type = "text/html"
-                # result = sanitize_html(result)
-
-            if ".txt" in file.name:
-                file_content_type = "plain/text"
-
-            if ".js" in file.name:
-                file_content_type = "text/javascript"
-
-            if ".csv" in file.name:
-                file_content_type = "text/csv"
-
-            if ".json" in file.name:
-                file_content_type = "application/json"
-
-            if ".yml" in file.name or ".yaml" in file.name:
-                file_content_type = "application/yaml"
-
-            if ".py" in file.name:
-                file_content_type = "text/x-python"
-
-            if ".png" in file.name:
-                file_content_type = "image/png"
-
-            if ".jp" in file.name:
-                file_content_type = "image/jpeg"
-
-            if ".pdf" in file.name:
-                file_content_type = "application/pdf"
-
-            if ".doc" in file.name:
-                file_content_type = "application/msword"
-
-            if ".doc" in file.name:
-                file_content_type = "application/msword"
-
-            if ".css" in file.name:
-                file_content_type = "text/css"
-
-            if ".xls" in file.name:
-                file_content_type = "application/vnd.ms-excel"
-
-            if ".xlsx" in file.name:
-                file_content_type = (
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-            if file_content_type:
-                response = HttpResponse(result, content_type=file_content_type)
-            else:
-                response = HttpResponse(result)
+            file_content_type = define_content_type(file)
+            response = (
+                HttpResponse(result, content_type=file_content_type)
+                if file_content_type
+                else HttpResponse(result)
+            )
 
         return response
 
@@ -254,34 +212,33 @@ class ExplorerUploadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def create(self, request, *args, **kwargs):
-        _l.info("request %s" % request.data)
+        _l.info(f"request {request.data}")
 
         path = request.data["path"]
 
         if not path:
             path = request.space_code
+        elif path[0] == "/":
+            path = request.space_code + path
         else:
-            if path[0] == "/":
-                path = request.space_code + path
-            else:
-                path = request.space_code + "/" + path
+            path = f"{request.space_code}/{path}"
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
         for file in request.FILES.getlist("file"):
-            _l.info("f %s" % file)
+            _l.info(f"f {file}")
 
-            filepath = path + "/" + file.name
+            filepath = f"{path}/{file.name}"
 
-            _l.info("going to save %s" % filepath)
+            _l.info(f"going to save {filepath}")
 
             storage.save(filepath, file)
 
-        _l.info("path %s" % path)
+        _l.info(f"path {path}")
 
-        if path == request.space_code + "/import":
+        if path == f"{request.space_code}/import":
             try:
-                settings_path = request.space_code + "/import/.settings.json"
+                settings_path = f"{request.space_code}/import/.settings.json"
 
                 with storage.open(settings_path) as file:
                     import_settings = json.loads(file.read())
@@ -289,7 +246,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
                     procedures = import_settings["on_create"]["expression_procedure"]
 
                     for item in procedures:
-                        _l.info("Trying to execute %s" % item)
+                        _l.info(f"Trying to execute {item}")
 
                         procedure = ExpressionProcedure.objects.get(user_code=item)
 
@@ -301,7 +258,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
                         instance.process()
 
             except Exception as e:
-                _l.error("Could not import anything %s" % e)
+                _l.error(f"Could not import anything due to {repr(e)}")
 
         return Response({"status": "ok"})
 
@@ -309,13 +266,12 @@ class ExplorerUploadViewSet(AbstractViewSet):
 class ExplorerDeleteViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
-    def create(
-        self, request, *args, **kwargs
-    ):  # refactor later, for destroy id is required
+    def create(self, request, *args, **kwargs):
+        # refactor later, for destroy id is required
         path = request.query_params.get("path")
         is_dir = request.query_params.get("is_dir")
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
         if is_dir == "true":
             is_dir = True
@@ -327,21 +283,21 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         elif path == "/":
             raise ValidationError("Could not remove root folder")
         else:
-            path = request.space_code + "/" + path
+            path = f"{request.space_code}/{path}"
 
-        if path == request.space_code + "/.system/":
+        if path == f"{request.space_code}/.system/":
             raise PermissionDenied("Could not remove .system folder")
 
         try:
-            _l.info("going to delete %s" % path)
+            _l.info(f"going to delete {path}")
 
             if is_dir:
                 storage.delete_directory(path)
 
             storage.delete(path)
         except Exception as e:
-            _l.error("ExplorerDeleteViewSet.e %s" % e)
-            pass
+            _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -351,12 +307,12 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
         if not path:
             raise ValidationError("Path is required")
         else:
-            path = request.space_code + "/" + path + "/.init"
+            path = f"{request.space_code}/{path}/.init"
 
         with NamedTemporaryFile() as tmpf:
             tmpf.write(b"")
@@ -372,17 +328,15 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
 
-        # TODO validate path that eiher public/import/system or user home folder
-
         if not path:
             raise ValidationError("Path is required")
-        else:
-            if path[0] == "/":
-                path = request.space_code + path
-            else:
-                path = request.space_code + "/" + path
 
-        _l.info("Delete directory %s" % path)
+        if path[0] == "/":
+            path = request.space_code + path
+        else:
+            path = f"{request.space_code}/{path}"
+
+        _l.info(f"Delete directory {path}")
 
         storage.delete_directory(path)
 
@@ -395,7 +349,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         paths = request.data.get("paths")
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
         if not paths:
             raise ValidationError("paths is required")
@@ -406,7 +360,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
         response = FileResponse(
             open(zip_file_path, "rb"), content_type="application/zip"
         )
-        response["Content-Disposition"] = f'attachment; filename="archive.zip"'
+        response["Content-Disposition"] = 'attachment; filename="archive.zip"'
 
         return response
 
@@ -417,14 +371,14 @@ class DownloadViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
         if not path:
             raise ValidationError("path is required")
 
-        _l.info("path %s" % path)
+        _l.info(f"path {path}")
 
-        path = request.space_code + "/" + path
+        path = f"{request.space_code}/{path}"
 
         # Serve the zipped file or file as a response
         with storage.open(path, "rb") as file:
