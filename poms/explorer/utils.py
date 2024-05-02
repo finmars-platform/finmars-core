@@ -57,15 +57,6 @@ def define_content_type(file: File) -> Optional[str]:
     return file_content_type
 
 
-def sanitize_html(html: str) -> str:
-    soup = BeautifulSoup(html, "html.parser")
-
-    for script in soup(["script", "style"]):  # Remove these tags
-        script.extract()
-
-    return str(soup)
-
-
 def join_path(space_code: str, path: str) -> str:
     return f"{space_code}{path}" if path[0] == "/" else f"{space_code}/{path}"
 
@@ -73,3 +64,12 @@ def join_path(space_code: str, path: str) -> str:
 def remove_first_folder_from_path(path: str) -> str:
     split_path = path.split(os.path.sep)
     return os.path.sep.join(split_path[1:])
+
+
+def sanitize_html(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    for script in soup(["script", "style"]):  # Remove these tags
+        script.extract()
+
+    return str(soup)
