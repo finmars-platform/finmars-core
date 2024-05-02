@@ -1,0 +1,32 @@
+from poms.common.common_base_test import BaseTestCase
+from poms.explorer.utils import define_content_type
+
+
+class DefineContentTypeTest(BaseTestCase):
+    @BaseTestCase.cases(
+        ("none", "file.pdf.html.csv.txt.xxx", None),
+        ("no_extension", "file.pdf.html.csv.txt.", None),
+        ("html", "file.pdf.html", "text/html"),
+        ("text", "file.html.txt", "plain/text"),
+        ("js", "file.css.js", "text/javascript"),
+        ("csv", "file.html.csv", "text/csv"),
+        ("json", "file.pdf.json", "application/json"),
+        ("yml", "file.pdf.yml", "application/yaml"),
+        ("yaml", "file.pdf.yaml", "application/yaml"),
+        ("py", "file.js.py", "text/x-python"),
+        ("png", "file.pdf.png", "image/png"),
+        ("jpg", "file.png.jpg", "image/jpeg"),
+        ("jpeg", "file.pdf.jpeg", "image/jpeg"),
+        ("pdf", "file.html.pdf", "application/pdf"),
+        ("doc", "file.pdf.doc", "application/msword"),
+        ("docx", "file.pdf.docx", "application/msword"),
+        ("css", "file.pdf.css", "text/css"),
+        ("xls", "file.txt.xls", "application/vnd.ms-excel"),
+        (
+            "xlsx",
+            "file.csv.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ),
+    )
+    def test__content_type(self, filename, content_type):
+        self.assertEqual(define_content_type(filename), content_type)

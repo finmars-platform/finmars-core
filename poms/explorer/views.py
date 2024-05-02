@@ -98,7 +98,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
             with storage.open(path, "rb") as file:
                 result = file.read()
-                file_content_type = define_content_type(file)
+                file_content_type = define_content_type(file.name)
                 response = (
                     HttpResponse(result, content_type=file_content_type)
                     if file_content_type
@@ -130,7 +130,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
         with storage.open(path, "rb") as file:
             result = file.read()
-            file_content_type = define_content_type(file)
+            file_content_type = define_content_type(file.name)
             response = (
                 HttpResponse(result, content_type=file_content_type)
                 if file_content_type
