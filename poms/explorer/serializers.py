@@ -6,6 +6,8 @@ class ExplorerSerializer(serializers.Serializer):
 
     def validate_path(self, value):
         if value[-1] == "/":
-            raise serializers.ValidationError("Path should not end with a slash")
+            raise serializers.ValidationError("Path should not end with '/'")
+        if value[0] == "/":
+            raise serializers.ValidationError("Path should not start with '/'")
 
         return value
