@@ -88,6 +88,10 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
+def join_path(space_code: str, path: str) -> str:
+    return f"{space_code}{path}" if path[0] == "/" else f"{space_code}/{path}"
+
+
 class ExplorerViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
@@ -100,10 +104,8 @@ class ExplorerViewSet(AbstractViewSet):
 
         if not path:
             path = f"{request.space_code}/"
-        elif path[0] == "/":
-            path = request.space_code + path
         else:
-            path = f"{request.space_code}/{path}"
+            path = join_path(request.space_code, path)
 
         if path[-1] != "/":
             path = f"{path}/"
@@ -154,10 +156,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             if not path:
                 raise ValidationError("Path is required")
 
-            if path[0] == "/":
-                path = request.space_code + path
-            else:
-                path = f"{request.space_code}/{path}"
+            path = join_path(request.space_code, path)
 
             if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
                 path = f"{path}/"
@@ -216,12 +215,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         path = request.data["path"]
 
-        if not path:
-            path = request.space_code
-        elif path[0] == "/":
-            path = request.space_code + path
-        else:
-            path = f"{request.space_code}/{path}"
+        path = join_path(request.space_code, path) if path else request.space_code
 
         # TODO validate path that either public/import/system or user home folder
 
@@ -269,14 +263,9 @@ class ExplorerDeleteViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         # refactor later, for destroy id is required
         path = request.query_params.get("path")
-        is_dir = request.query_params.get("is_dir")
+        is_dir = request.query_params.get("is_dir") == "true"
 
         # TODO validate path that either public/import/system or user home folder
-
-        if is_dir == "true":
-            is_dir = True
-        else:
-            is_dir = False
 
         if not path:
             raise ValidationError("Path is required")
@@ -331,10 +320,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
         if not path:
             raise ValidationError("Path is required")
 
-        if path[0] == "/":
-            path = request.space_code + path
-        else:
-            path = f"{request.space_code}/{path}"
+        path = join_path(request.space_code, path)
 
         _l.info(f"Delete directory {path}")
 
