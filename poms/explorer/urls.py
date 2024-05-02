@@ -12,35 +12,35 @@ router.register(
 router.register(
     r"view",
     explorer.ExplorerViewFileViewSet,
-    "explorerView",
+    "explorer_view",
 )
 router.register(
     r"upload",
     explorer.ExplorerUploadViewSet,
-    "explorerUpload",
+    "explorer_upload",
 )
 router.register(
     r"delete",
     explorer.ExplorerDeleteViewSet,
-    "explorerDelete",
+    "explorer_delete",
 )
 router.register(
     r"create-folder",
     explorer.ExplorerCreateFolderViewSet,
-    "explorerCreateFolder",
+    "explorer_create_folder",
 )
 router.register(
     r"delete-folder",
     explorer.ExplorerDeleteFolderViewSet,
-    "explorerDeleteFolder",
+    "explorer_delete_folder",
 )
 router.register(
     r"download-as-zip",
     explorer.DownloadAsZipViewSet,
-    "downloadAsZip",
+    "download_as_zip",
 )
 router.register(
     r"download",
     explorer.DownloadViewSet,
-    "explorerDownload",
+    "explorer_download",
 )
