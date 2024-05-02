@@ -481,7 +481,7 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         return f"{settings.MEDIA_ROOT}/{name}"
 
-    def listdir(self, path):
+    def listdir(self, path) -> tuple:
         path = self.path(path)
         directories, files = [], []
         with os.scandir(path) as entries:

@@ -33,7 +33,10 @@ class ExplorerViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def list(self, request, *args, **kwargs):
-        path = request.query_params.get("path")
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        path = serializer.validated_data["path"]
+
         space_code = request.space_code
 
         path = join_path(space_code, path) if path else f"{space_code}/"
@@ -41,7 +44,7 @@ class ExplorerViewSet(AbstractViewSet):
         if path[-1] != "/":
             path = f"{path}/"
 
-        items = storage.listdir(path)
+        directories, files = storage.listdir(path)
 
         members_usernames = Member.objects.exclude(user=request.user).values_list(
             "user__username", flat=True
@@ -52,12 +55,12 @@ class ExplorerViewSet(AbstractViewSet):
                 "type": "dir",
                 "name": dir_name,
             }
-            for dir_name in items[0]
+            for dir_name in directories
             if path == f"{space_code}/"
             and dir_name not in members_usernames
             or path != f"{space_code}/"
         ]
-        for file in items[1]:
+        for file in files:
             created = storage.get_created_time(f"{path}/{file}")
             modified = storage.get_modified_time(f"{path}/{file}")
 
@@ -83,9 +86,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def list(self, request, *args, **kwargs):
-        try:
-            path = request.query_params.get("path")
+        path = request.query_params.get("path")
 
+        try:
             if not path:
                 raise ValidationError("Path is required")
 
@@ -119,7 +122,8 @@ class ExplorerServeFileViewSet(AbstractViewSet):
         _l.info(f"ExplorerServeFileViewSet.filepath {filepath}")
         filepath = filepath.rstrip("/")
 
-        if "." not in filepath.split("/")[-1]:  # if the file does not have an extension
+        # check if the file does not have an extension
+        if "." not in filepath.split("/")[-1]:
             filepath += ".html"
 
         path = f"{request.space_code}/{filepath}"
@@ -152,16 +156,16 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         # TODO validate path that either public/import/system or user home folder
 
+        _l.info(f"path {path}")
+
         for file in request.FILES.getlist("file"):
-            _l.info(f"f {file}")
+            _l.info(f"file {file} from request list ")
 
             filepath = f"{path}/{file.name}"
 
             _l.info(f"going to save {filepath}")
 
             storage.save(filepath, file)
-
-        _l.info(f"path {path}")
 
         if path == f"{request.space_code}/import":
             try:
