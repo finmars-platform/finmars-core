@@ -17,6 +17,7 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
+from rest_framework.exceptions import ErrorDetail
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
@@ -1587,6 +1588,9 @@ class SimpleImportProcess:
             self.handle_successful_item_import(item, serializer)
 
         except Exception as e:
+
+            non_field_errors = e.message_dict.get('non_field_errors', [])
+
             if self.scheme.mode == "overwrite":
                 try:
                     model = self.scheme.content_type.model_class()
@@ -1668,10 +1672,24 @@ class SimpleImportProcess:
                         f" final_inputs={item.final_inputs} error {e} traceback "
                         f"{traceback.format_exc()}"
                     )
-
             else:
-                item.status = "error"
-                item.error_message = f"{item.error_message} ====  Create Exception {e}"
+
+                if 'non_field_errors' in e.message_dict:
+                    # Loop through each error detail in non_field_errors
+                    for detail in e.message_dict['non_field_errors']:
+                        if isinstance(detail, ErrorDetail) and detail.code == 'unique':
+                            item.status = "skip"
+                            item.error_message = (
+                                f"{item.error_message} ==== Skipped due to uniqueness constraint violation"
+                            )
+                            break  # Stop checking further once the unique error is found
+                    else:
+                        item.status = "error"
+                        item.error_message = f"{item.error_message} ====  Create Exception {e}"
+
+                else:
+                    item.status = "error"
+                    item.error_message = f"{item.error_message} ====  Create Exception {e}"
 
     @staticmethod
     def calculate_pricehistory_null_fields(model: str, final_inputs: dict) -> Optional[str]:
