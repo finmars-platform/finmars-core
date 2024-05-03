@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
-from poms.explorer.serializers import ExplorerSerializer
+from poms.explorer.serializers import ExplorerPathSerializer
 from poms.explorer.utils import (
     define_content_type,
     join_path,
@@ -30,7 +30,8 @@ storage = get_storage()
 
 
 class ExplorerViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
+    http_method_names = ["get"]
 
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
@@ -83,20 +84,17 @@ class ExplorerViewSet(AbstractViewSet):
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
+    http_method_names = ["get"]
 
     def list(self, request, *args, **kwargs):
-        path = request.query_params.get("path")
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        path = join_path(request.space_code, serializer.validated_data["path"])
+        if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
+            path = f"{path}/"
 
         try:
-            if not path:
-                raise ValidationError("Path is required")
-
-            path = join_path(request.space_code, path)
-
-            if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
-                path = f"{path}/"
-
             # TODO validate path that either public/import/system or user home folder
 
             with storage.open(path, "rb") as file:
@@ -108,15 +106,16 @@ class ExplorerViewFileViewSet(AbstractViewSet):
                     else HttpResponse(result)
                 )
 
-            return response
-
         except Exception as e:
             _l.error(f"view file error {repr(e)} trace {traceback.format_exc()}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        else:
+            return response
+
 
 class ExplorerServeFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def retrieve(self, request, filepath=None, *args, **kwargs):
         _l.info(f"ExplorerServeFileViewSet.filepath {filepath}")
@@ -145,7 +144,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         _l.info(f"request {request.data}")
@@ -195,7 +194,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         # refactor later, for destroy id is required
@@ -228,7 +227,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
@@ -249,7 +248,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
@@ -267,7 +266,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         paths = request.data.get("paths")
@@ -289,7 +288,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
 
 
 class DownloadViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ExplorerPathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")

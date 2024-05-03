@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 
-class ExplorerSerializer(serializers.Serializer):
+class ExplorerPathSerializer(serializers.Serializer):
     path = serializers.CharField(required=True, allow_blank=False, allow_null=False)
 
     def validate_path(self, value):

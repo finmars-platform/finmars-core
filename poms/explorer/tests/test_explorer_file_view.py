@@ -13,10 +13,13 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
         self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/explorer/view/"
 
-    @mock.patch("poms.explorer.views.storage")
-    def test__url(self, storage):
-        storage.return_value = mock.MagicMock(spec=FinmarsS3Storage)
+        self.storage_patch = mock.patch(
+            "poms.explorer.views.storage",
+            spec=FinmarsS3Storage,
+        )
+        self.storage_mock = self.storage_patch.start()
+        self.addCleanup(self.storage_patch.stop)
 
+    def test__no_path(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 400)
-        response_data = response.json()
