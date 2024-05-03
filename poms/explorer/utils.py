@@ -85,7 +85,7 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
-def prepare_file_response(storage: FinmarsS3Storage, path: str) -> HttpResponse:
+def response_with_file(storage: FinmarsS3Storage, path: str) -> HttpResponse:
     try:
         with storage.open(path, "rb") as file:
             result = file.read()
