@@ -1,7 +1,8 @@
 from unittest import mock
 
-from poms.common.common_base_test import BaseTestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
+from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 
 
@@ -30,3 +31,18 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
 
         response = self.client.get(self.url, {"path": path})
         self.assertEqual(response.status_code, 400)
+
+    def test__valid_file(self):
+        path = f"{self.random_string()}.txt"
+        mock_file = SimpleUploadedFile(
+            path,
+            b"file content",
+            content_type="text/plain",
+        )
+
+        self.storage_mock.open.return_value = mock_file
+
+        response = self.client.get(self.url, {"path": path})
+        self.assertEqual(response.status_code, 200)
+
+        print(response.content)
