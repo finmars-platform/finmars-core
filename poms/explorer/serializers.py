@@ -1,13 +1,23 @@
 from rest_framework import serializers
 
+from poms.explorer.utils import has_slash
+
 
 class ExplorerFolderPathSerializer(serializers.Serializer):
     path = serializers.CharField(
         required=False,
-        default="",
         allow_blank=True,
         allow_null=True,
     )
+
+    def validate_path(self, value):
+        if not value:
+            return ""
+
+        if has_slash(value):
+            raise serializers.ValidationError("Path should not start or end with '/'")
+
+        return value
 
 
 class ExplorerFilePathSerializer(serializers.Serializer):
@@ -18,9 +28,7 @@ class ExplorerFilePathSerializer(serializers.Serializer):
     )
 
     def validate_path(self, value):
-        if value[-1] == "/":
-            raise serializers.ValidationError("Path should not end with '/'")
-        if value[0] == "/":
-            raise serializers.ValidationError("Path should not start with '/'")
+        if has_slash(value):
+            raise serializers.ValidationError("Path should not start or end with '/'")
 
         return value

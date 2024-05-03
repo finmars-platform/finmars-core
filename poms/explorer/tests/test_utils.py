@@ -38,6 +38,8 @@ class JoinPathTest(BaseTestCase):
         ("2", "realm0000.space0000", "/path", "realm0000.space0000/path"),
         ("3", "realm0000.space0000/", "/path", "realm0000.space0000/path"),
         ("4", "realm0000.space0000/", "path", "realm0000.space0000/path"),
+        ("empty", "realm0000.space0000/", "", "realm0000.space0000"),
+        ("null", "realm0000.space0000/", None, "realm0000.space0000"),
     )
     def test__content_type(self, space_code, path, result):
         self.assertEqual(join_path(space_code, path), result)

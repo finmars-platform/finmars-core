@@ -28,20 +28,17 @@ class ExplorerViewSetTest(BaseTestCase):
         self.mimetypes_mock = self.mimetypes_patch.start()
         self.addCleanup(self.mimetypes_patch.stop)
 
-    def test__no_path(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 400)
-
     @BaseTestCase.cases(
         ("1", "test/"),
         ("2", "/test"),
         ("3", "/test/"),
     )
-    def test__path_ends_with_slash(self, path):
+    def test__path_ends_or_starts_with_slash(self, path):
         response = self.client.get(self.url, {"path": path})
         self.assertEqual(response.status_code, 400)
 
     @BaseTestCase.cases(
+        ("null", ""),
         ("test", "test"),
         ("test_test", "test/test"),
     )
@@ -54,13 +51,20 @@ class ExplorerViewSetTest(BaseTestCase):
         self.storage_mock.listdir.assert_called_once()
 
         response_data = response.json()
-        self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+        if path:
+            self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+        else:
+            self.assertEqual(response_data["path"], f"{self.space_code}/")
         self.assertEqual(response_data["results"], [])
 
-    def test__path(self):
+    @BaseTestCase.cases(
+        ("null", ""),
+        ("test", "test"),
+        ("test_test", "test/test"),
+    )
+    def test__path(self, path):
         directories = ["first", "second"]
         files = ["file.csv", "file.txt", "file.json"]
-        path = self.random_string()
         size = self.random_int(10000, 50000)
 
         self.storage_mock.listdir.return_value = directories, files
@@ -75,5 +79,8 @@ class ExplorerViewSetTest(BaseTestCase):
         self.storage_mock.listdir.assert_called_once()
 
         response_data = response.json()
-        self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+        if path:
+            self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+        else:
+            self.assertEqual(response_data["path"], f"{self.space_code}/")
         self.assertEqual(len(response_data["results"]), len(directories) + len(files))
