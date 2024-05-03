@@ -11,10 +11,7 @@ from rest_framework.response import Response
 
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
-from poms.explorer.serializers import (
-    ExplorerFilePathSerializer,
-    ExplorerFolderPathSerializer,
-)
+from poms.explorer.serializers import FilePathSerializer, FolderPathSerializer
 from poms.explorer.utils import (
     join_path,
     remove_first_folder_from_path,
@@ -32,20 +29,15 @@ storage = get_storage()
 
 
 class ExplorerViewSet(AbstractViewSet):
-    serializer_class = ExplorerFolderPathSerializer
+    serializer_class = FolderPathSerializer
     http_method_names = ["get"]
 
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
-        path = serializer.validated_data["path"]
 
         space_code = request.space_code
-
-        path = join_path(space_code, path) if path else f"{space_code}/"
-
-        if path[-1] != "/":
-            path = f"{path}/"
+        path = f"{join_path(space_code, serializer.validated_data['path'])}/"
 
         directories, files = storage.listdir(path)
 
@@ -86,7 +78,7 @@ class ExplorerViewSet(AbstractViewSet):
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerFilePathSerializer
+    serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
     def list(self, request, *args, **kwargs):
@@ -102,7 +94,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
 
 class ExplorerServeFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerFilePathSerializer
+    serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
     def retrieve(self, request, filepath=None, *args, **kwargs):
@@ -118,7 +110,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-    serializer_class = ExplorerFolderPathSerializer
+    serializer_class = FolderPathSerializer
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
@@ -170,7 +162,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
-    serializer_class = ExplorerFilePathSerializer
+    serializer_class = FilePathSerializer
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
@@ -204,7 +196,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerFolderPathSerializer
+    serializer_class = FolderPathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
@@ -225,7 +217,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerFolderPathSerializer
+    serializer_class = FolderPathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")
@@ -243,7 +235,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
-    serializer_class = ExplorerFilePathSerializer
+    serializer_class = FilePathSerializer
 
     def create(self, request, *args, **kwargs):
         paths = request.data.get("paths")
@@ -265,7 +257,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
 
 
 class DownloadViewSet(AbstractViewSet):
-    serializer_class = ExplorerFilePathSerializer
+    serializer_class = FilePathSerializer
 
     def create(self, request, *args, **kwargs):
         path = request.data.get("path")

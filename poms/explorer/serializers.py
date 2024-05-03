@@ -3,7 +3,7 @@ from rest_framework import serializers
 from poms.explorer.utils import has_slash
 
 
-class ExplorerFolderPathSerializer(serializers.Serializer):
+class FolderPathSerializer(serializers.Serializer):
     path = serializers.CharField(
         required=False,
         allow_blank=True,
@@ -20,7 +20,7 @@ class ExplorerFolderPathSerializer(serializers.Serializer):
         return value
 
 
-class ExplorerFilePathSerializer(serializers.Serializer):
+class FilePathSerializer(serializers.Serializer):
     path = serializers.CharField(
         required=True,
         allow_blank=False,
