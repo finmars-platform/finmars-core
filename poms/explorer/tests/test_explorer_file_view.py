@@ -23,3 +23,10 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
     def test__no_path(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 400)
+
+    def test__path_invalid(self):
+        path = self.random_string()
+        self.storage_mock.open.side_effect = FileNotFoundError("No such file")
+
+        response = self.client.get(self.url, {"path": path})
+        self.assertEqual(response.status_code, 400)

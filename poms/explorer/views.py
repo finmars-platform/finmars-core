@@ -108,7 +108,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
         except Exception as e:
             _l.error(f"view file error {repr(e)} trace {traceback.format_exc()}")
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": repr(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
             return response

@@ -75,6 +75,5 @@ class ExplorerViewSetTest(BaseTestCase):
         self.storage_mock.listdir.assert_called_once()
 
         response_data = response.json()
-        print(response_data)
         self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
         self.assertEqual(len(response_data["results"]), len(directories) + len(files))
