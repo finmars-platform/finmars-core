@@ -3387,6 +3387,7 @@ def _get_transactions_amounts_on_date(
             try:
 
                 if trn.transaction_currency_id == report_currency.id:
+                    result_position_size = trn.position_size_with_sign
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                     result_carry = trn.carry_with_sign * trn.reference_fx_rate
                     result_overheads = trn.overheads_with_sign * trn.reference_fx_rate
