@@ -34,9 +34,10 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
 
     def test__valid_file(self):
         path = f"{self.random_string()}.txt"
+        content = b"file content"
         mock_file = SimpleUploadedFile(
             path,
-            b"file content",
+            content,
             content_type="text/plain",
         )
 
@@ -44,5 +45,4 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
 
         response = self.client.get(self.url, {"path": path})
         self.assertEqual(response.status_code, 200)
-
-        print(response.content)
+        self.assertEqual(response.content, content)
