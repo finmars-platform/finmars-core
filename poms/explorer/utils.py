@@ -1,7 +1,15 @@
+import json
+import logging
 import os
 from typing import Optional
 
+from django.http import HttpResponse
+
 from bs4 import BeautifulSoup
+
+from poms.common.storage import FinmarsS3Storage
+
+_l = logging.getLogger("poms.explorer")
 
 
 def define_content_type(file_name: str) -> Optional[str]:
@@ -75,3 +83,27 @@ def sanitize_html(html: str) -> str:
         script.extract()
 
     return str(soup)
+
+
+def prepare_file_response(storage: FinmarsS3Storage, path: str) -> HttpResponse:
+    try:
+        with storage.open(path, "rb") as file:
+            result = file.read()
+            file_content_type = define_content_type(file.name)
+            response = (
+                HttpResponse(result, content_type=file_content_type)
+                if file_content_type
+                else HttpResponse(result)
+            )
+
+    except Exception as e:
+        _l.error(f"get file resulted in {repr(e)}")
+        data = {"error": repr(e)}
+        response = HttpResponse(
+            json.dumps(data),
+            content_type="application/json",
+            status=400,
+            reason="Bad Request",
+        )
+
+    return response

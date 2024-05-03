@@ -2,10 +2,9 @@ import json
 import logging
 import mimetypes
 import os
-import traceback
 from tempfile import NamedTemporaryFile
 
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -14,9 +13,9 @@ from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
 from poms.explorer.serializers import ExplorerPathSerializer
 from poms.explorer.utils import (
-    define_content_type,
     join_path,
     remove_first_folder_from_path,
+    prepare_file_response,
 )
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -94,53 +93,25 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
             path = f"{path}/"
 
-        try:
-            # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
-            with storage.open(path, "rb") as file:
-                result = file.read()
-                file_content_type = define_content_type(file.name)
-                response = (
-                    HttpResponse(result, content_type=file_content_type)
-                    if file_content_type
-                    else HttpResponse(result)
-                )
-
-        except Exception as e:
-            _l.error(f"view file error {repr(e)} trace {traceback.format_exc()}")
-            return Response({"error": repr(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            return response
+        return prepare_file_response(storage, path)
 
 
 class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = ExplorerPathSerializer
+    http_method_names = ["get"]
 
     def retrieve(self, request, filepath=None, *args, **kwargs):
-        _l.info(f"ExplorerServeFileViewSet.filepath {filepath}")
-        filepath = filepath.rstrip("/")
-
-        # check if the file does not have an extension
+        serializer = self.get_serializer(data={"path": filepath})
+        serializer.is_valid(raise_exception=True)
         if "." not in filepath.split("/")[-1]:
             filepath += ".html"
-
-        path = f"{request.space_code}/{filepath}"
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
         # TODO validate path that either public/import/system or user home folder
 
-        _l.info(f"path {path}")
-
-        with storage.open(path, "rb") as file:
-            result = file.read()
-            file_content_type = define_content_type(file.name)
-            response = (
-                HttpResponse(result, content_type=file_content_type)
-                if file_content_type
-                else HttpResponse(result)
-            )
-
-        return response
+        return prepare_file_response(storage, path)
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
