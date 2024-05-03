@@ -117,9 +117,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        path = request.data["path"]
-
-        path = join_path(request.space_code, path) if path else request.space_code
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
         # TODO validate path that either public/import/system or user home folder
 

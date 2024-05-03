@@ -25,6 +25,7 @@ class FolderPathSerializer(BasePathSerializer):
         required=False,
         allow_blank=True,
         allow_null=True,
+        default="",
     )
 
 
