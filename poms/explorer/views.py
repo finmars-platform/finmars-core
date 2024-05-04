@@ -154,7 +154,9 @@ class ExplorerUploadViewSet(AbstractViewSet):
                         instance.process()
 
             except Exception as e:
-                _l.error(f"Could not import anything due to {repr(e)}")
+                _l.error(f"get file resulted in {repr(e)}")
+                data = {"status": "error", "details": repr(e)}
+                return Response(data, status=400)
 
         return Response({"status": "ok"})
 

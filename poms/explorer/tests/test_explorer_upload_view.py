@@ -35,25 +35,20 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.storage_mock.save.assert_called_once()
 
-    # @BaseTestCase.cases(
-    #     ("null", ""),
-    #     ("test", "test"),
-    #     ("test_test", "test/test"),
-    # )
-    # def test__with_empty_path(self, path):
-    #     self.storage_mock.listdir.return_value = [], []
-    #
-    #     response = self.client.get(self.url, {"path": path})
-    #
-    #     self.assertEqual(response.status_code, 200)
-    #     self.storage_mock.listdir.assert_called_once()
-    #
-    #     response_data = response.json()
-    #     if path:
-    #         self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
-    #     else:
-    #         self.assertEqual(response_data["path"], f"{self.space_code}/")
-    #     self.assertEqual(response_data["results"], [])
+    @BaseTestCase.cases(
+        ("test", "test"),
+        ("test_test", "test/test"),
+    )
+    def test__with_empty_path(self, path):
+        file = self.create_file()
+
+        response = self.client.post(self.url, {"path": path, "file": file})
+
+        self.assertEqual(response.status_code, 200)
+        self.storage_mock.save.assert_called_once()
+
+        response_data = response.json()
+        print(response_data)
     #
     # @BaseTestCase.cases(
     #     ("null", ""),
