@@ -39,7 +39,7 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         ("test", "test"),
         ("test_test", "test/test"),
     )
-    def test__with_empty_path(self, path):
+    def test__with_path(self, path):
         file = self.create_file()
 
         response = self.client.post(self.url, {"path": path, "file": file})
@@ -49,17 +49,17 @@ class ExplorerUploadViewSetTest(BaseTestCase):
 
         response_data = response.json()
         print(response_data)
-    #
-    # @BaseTestCase.cases(
-    #     ("null", ""),
-    #     ("test", "test"),
-    #     ("test_test", "test/test"),
-    # )
-    # def test__path(self, path):
-    #     directories = ["first", "second"]
-    #     files = ["file.csv", "file.txt", "file.json"]
-    #     size = self.random_int(10000, 50000)
-    #
+        self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+
+    def test__import_path(self):
+        file = self.create_file()
+        response = self.client.post(self.url, {"path": "import", "file": file})
+
+        self.assertEqual(response.status_code, 200)
+        self.storage_mock.save.assert_called_once()
+
+        response_data = response.json()
+
     #     self.storage_mock.listdir.return_value = directories, files
     #     self.storage_mock.get_created_time.return_value = datetime.now()
     #     self.storage_mock.get_modified_time.return_value = datetime.now()
