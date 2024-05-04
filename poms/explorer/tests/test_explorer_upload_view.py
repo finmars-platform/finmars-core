@@ -2,6 +2,7 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class ExplorerUploadViewSetTest(BaseTestCase):
@@ -20,9 +21,19 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.storage_mock = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
+    def create_file(self, name: str = "test.txt"):
+        file = SimpleUploadedFile(name, b'This is a test file')
+        return file
+
     def test__no_path_no_files(self):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 200)
+
+    def test__upload_one_file(self):
+        file = self.create_file()
+        response = self.client.post(self.url, {"file": file})
+        self.assertEqual(response.status_code, 200)
+        self.storage_mock.save.assert_called_once()
 
     # @BaseTestCase.cases(
     #     ("null", ""),
