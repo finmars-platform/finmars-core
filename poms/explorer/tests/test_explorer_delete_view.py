@@ -1,7 +1,5 @@
 from unittest import mock
 
-from django.core.files.uploadedfile import SimpleUploadedFile
-
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 
@@ -30,3 +28,27 @@ class ExplorerUploadViewSetTest(BaseTestCase):
     def test__no_path_error(self, path):
         response = self.client.post(self.url, {"path": path})
         self.assertEqual(response.status_code, 400)
+
+    @BaseTestCase.cases(
+        ("1", ""),
+        ("2", "false"),
+        ("3", "0"),
+    )
+    def test__delete_file(self, is_dir):
+        response = self.client.post(self.url, {"path": "test.txt", "is_dir": is_dir})
+
+        self.assertEqual(response.status_code, 204)
+        self.storage_mock.delete.assert_called_once()
+        self.storage_mock.delete_directory.assert_not_called()
+
+    @BaseTestCase.cases(
+        ("1", "1"),
+        ("2", "true"),
+        ("3", "yes"),
+    )
+    def test__delete_directory(self, is_dir):
+        response = self.client.post(self.url, {"path": "test.txt", "is_dir": is_dir})
+
+        self.assertEqual(response.status_code, 204)
+        self.storage_mock.delete_directory.assert_called_once()
+        self.storage_mock.delete.assert_not_called()

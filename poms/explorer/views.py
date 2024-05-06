@@ -194,8 +194,9 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
             if is_dir:
                 storage.delete_directory(path)
+            else:
+                storage.delete(path)
 
-            storage.delete(path)
         except Exception as e:
             _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
             data = {"status": "error", "details": repr(e)}
