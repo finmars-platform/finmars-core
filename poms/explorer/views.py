@@ -123,21 +123,22 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         _l.info(f"path {path}")
 
+        files = []
         for file in request.FILES.getlist("file"):
-            _l.info(f"file {file} from request list ")
-
             filepath = f"{path}/{file.name}"
 
             _l.info(f"going to save {filepath}")
 
             storage.save(filepath, file)
 
+            files.append(filepath)
+
         if path == f"{request.space_code}/import":
             try:
                 settings_path = f"{request.space_code}/import/.settings.json"
 
-                with storage.open(settings_path) as file:
-                    import_settings = json.loads(file.read())
+                with storage.open(settings_path) as settings_file:
+                    import_settings = json.loads(settings_file.read())
 
                     procedures = import_settings["on_create"]["expression_procedure"]
 
@@ -158,7 +159,13 @@ class ExplorerUploadViewSet(AbstractViewSet):
                 data = {"status": "error", "details": repr(e)}
                 return Response(data, status=400)
 
-        return Response({"status": "ok"})
+        return Response(
+            {
+                "status": "ok",
+                "path": path,
+                "files": files,
+            }
+        )
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):

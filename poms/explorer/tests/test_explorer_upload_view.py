@@ -1,8 +1,9 @@
 from unittest import mock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class ExplorerUploadViewSetTest(BaseTestCase):
@@ -21,8 +22,18 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.storage_mock = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
-    def create_file(self, name: str = "test.txt"):
-        file = SimpleUploadedFile(name, b'This is a test file')
+    @staticmethod
+    def create_text_file(name: str = "test.txt"):
+        file = SimpleUploadedFile(name, b"This is a test file")
+        return file
+
+    @staticmethod
+    def create_json_file(name: str = "test.json"):
+        file = SimpleUploadedFile(
+            name,
+            b'{"on_create": {"expression_procedure": []}}',
+            content_type="application/json",
+        )
         return file
 
     def test__no_path_no_files(self):
@@ -30,7 +41,7 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test__upload_one_file(self):
-        file = self.create_file()
+        file = self.create_text_file()
         response = self.client.post(self.url, {"file": file})
         self.assertEqual(response.status_code, 200)
         self.storage_mock.save.assert_called_once()
@@ -40,7 +51,7 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         ("test_test", "test/test"),
     )
     def test__with_path(self, path):
-        file = self.create_file()
+        file = self.create_text_file()
 
         response = self.client.post(self.url, {"path": path, "file": file})
 
@@ -48,32 +59,19 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.storage_mock.save.assert_called_once()
 
         response_data = response.json()
-        print(response_data)
-        self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+        self.assertEqual(response_data["status"], "ok")
+        self.assertEqual(response_data["path"], f"{self.space_code}/{path}")
+        self.assertEqual(len(response_data["files"]), 1)
 
     def test__import_path(self):
-        file = self.create_file()
-        response = self.client.post(self.url, {"path": "import", "file": file})
+        self.storage_mock.open.return_value = self.create_json_file()
+
+        response = self.client.post(self.url, {"path": "import"})
 
         self.assertEqual(response.status_code, 200)
-        self.storage_mock.save.assert_called_once()
+        self.storage_mock.save.assert_not_called()
+        self.storage_mock.open.assert_called_once()
 
         response_data = response.json()
-
-    #     self.storage_mock.listdir.return_value = directories, files
-    #     self.storage_mock.get_created_time.return_value = datetime.now()
-    #     self.storage_mock.get_modified_time.return_value = datetime.now()
-    #     self.storage_mock.size.return_value = size
-    #     self.storage_mock.convert_size.return_value = f"{size // 1024}KB"
-    #
-    #     response = self.client.get(self.url, {"path": path})
-    #
-    #     self.assertEqual(response.status_code, 200)
-    #     self.storage_mock.listdir.assert_called_once()
-    #
-    #     response_data = response.json()
-    #     if path:
-    #         self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
-    #     else:
-    #         self.assertEqual(response_data["path"], f"{self.space_code}/")
-    #     self.assertEqual(len(response_data["results"]), len(directories) + len(files))
+        self.assertEqual(response_data["path"], f"{self.space_code}/import")
+        self.assertEqual(len(response_data["files"]), 0)
