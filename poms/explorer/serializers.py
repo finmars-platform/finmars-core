@@ -62,8 +62,12 @@ class DeletePathSerializer(BasePathSerializer):
 class ResponseSerializer(serializers.Serializer):
     status = serializers.CharField(required=True)
     path = serializers.CharField(required=False)
+    details = serializers.CharField(required=False)
     files = serializers.ListField(
         required=False,
         child=serializers.CharField(),
     )
-    details = serializers.CharField(required=False)
+    results = serializers.ListField(
+        required=False,
+        child=serializers.DictField(),
+    )

@@ -79,7 +79,8 @@ class ExplorerViewSet(AbstractViewSet):
 
             results.append(item)
 
-        return Response({"path": path, "results": results})
+        result = {"status": "ok", "path": path, "results": results}
+        return Response(ResponseSerializer(result).data)
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
@@ -161,15 +162,14 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
             except Exception as e:
                 _l.error(f"get file resulted in {repr(e)}")
-                data = {"status": "error", "details": repr(e)}
-                return Response(data, status=400)
+                result = {"status": "error", "details": repr(e)}
+                return Response(
+                    ResponseSerializer(result).data,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        result = {
-            "status": "ok",
-            "path": path,
-            "files": files,
-        }
-        return Response(ResponseSerializer(data=result).data)
+        result = {"status": "ok", "path": path, "files": files}
+        return Response(ResponseSerializer(result).data)
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
@@ -200,15 +200,18 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         except Exception as e:
             _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
             result = {"status": "error", "details": repr(e)}
-            return Response(ResponseSerializer(data=result).data, status=400)
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         else:
             result = {"status": "ok", "path": path}
-            return Response(ResponseSerializer(data=result).data)
+            return Response(ResponseSerializer(result).data)
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    serializer_class = FilePathSerializer
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
@@ -225,7 +228,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
             storage.save(path, tmpf)
 
         result = {"status": "ok", "path": path}
-        return Response(ResponseSerializer(data=result).data)
+        return Response(ResponseSerializer(result).data)
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):

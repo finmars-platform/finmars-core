@@ -5,8 +5,6 @@ from typing import Optional
 
 from django.http import HttpResponse
 
-from bs4 import BeautifulSoup
-
 from poms.common.storage import FinmarsS3Storage
 
 _l = logging.getLogger("poms.explorer")
@@ -75,6 +73,8 @@ def response_with_file(storage: FinmarsS3Storage, path: str) -> HttpResponse:
 
 # PROBABLY DEPRECATED
 def sanitize_html(html: str) -> str:
+    from bs4 import BeautifulSoup
+
     soup = BeautifulSoup(html, "html.parser")
     for script in soup(["script", "style"]):  # Remove these tags
         script.extract()
