@@ -31,3 +31,29 @@ class FolderPathSerializer(BasePathSerializer):
 
 class FilePathSerializer(BasePathSerializer):
     pass
+
+
+TRUTHY_VALUES = {"true", "1", "yes"}
+
+
+class DeletePathSerializer(BasePathSerializer):
+    is_dir = serializers.CharField(
+        default="false",
+        required=False,
+        allow_null=True,
+    )
+
+    def validate_is_dir(self, value) -> bool:
+        return bool(value and (value.lower() in TRUTHY_VALUES))
+
+    def validate_path(self, value):
+        if not value:
+            raise serializers.ValidationError("Path required")
+
+        if value == "/":
+            raise serializers.ValidationError("Path '/' is not allowed")
+
+        if ".system" in value:
+            raise serializers.ValidationError("Path '.system' is not allowed")
+
+        return value

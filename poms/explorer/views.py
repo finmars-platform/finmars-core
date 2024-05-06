@@ -11,7 +11,11 @@ from rest_framework.response import Response
 
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
-from poms.explorer.serializers import FilePathSerializer, FolderPathSerializer
+from poms.explorer.serializers import (
+    DeletePathSerializer,
+    FilePathSerializer,
+    FolderPathSerializer,
+)
 from poms.explorer.utils import (
     join_path,
     remove_first_folder_from_path,
@@ -169,22 +173,18 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
-    serializer_class = FilePathSerializer
+    serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
         # refactor later, for destroy id is required
-        path = request.query_params.get("path")
-        is_dir = request.query_params.get("is_dir") == "true"
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         # TODO validate path that either public/import/system or user home folder
 
-        if not path:
-            raise ValidationError("Path is required")
-        elif path == "/":
-            raise ValidationError("Could not remove root folder")
-        else:
-            path = f"{request.space_code}/{path}"
+        path = f"{request.space_code}/{serializer.validated_data['path']}"
+        is_dir = serializer.validated_data['is_dir']
 
         if path == f"{request.space_code}/.system/":
             raise PermissionDenied("Could not remove .system folder")
@@ -198,8 +198,10 @@ class ExplorerDeleteViewSet(AbstractViewSet):
             storage.delete(path)
         except Exception as e:
             _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            data = {"status": "error", "details": repr(e)}
+            return Response(data, status=400)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
