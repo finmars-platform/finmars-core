@@ -17,7 +17,6 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
-from rest_framework.exceptions import ErrorDetail
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
@@ -113,15 +112,15 @@ RELATION_FIELDS_MAP = {
 
 ## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(
-        instrument_object, instrument_type, ecosystem_default
+    instrument_object, instrument_type, ecosystem_default
 ):
     try:
         # Set system attributes
 
         if instrument_type.payment_size_detail_id:
-            instrument_object[
-                "payment_size_detail"
-            ] = instrument_type.payment_size_detail_id
+            instrument_object["payment_size_detail"] = (
+                instrument_type.payment_size_detail_id
+            )
         else:
             instrument_object["payment_size_detail"] = None
 
@@ -139,16 +138,16 @@ def set_defaults_from_instrument_type(
         instrument_object["default_accrued"] = instrument_type.default_accrued
 
         if instrument_type.exposure_calculation_model_id:
-            instrument_object[
-                "exposure_calculation_model"
-            ] = instrument_type.exposure_calculation_model_id
+            instrument_object["exposure_calculation_model"] = (
+                instrument_type.exposure_calculation_model_id
+            )
         else:
             instrument_object["exposure_calculation_model"] = None
 
         if instrument_type.pricing_condition_id:
-            instrument_object[
-                "pricing_condition"
-            ] = instrument_type.pricing_condition_id
+            instrument_object["pricing_condition"] = (
+                instrument_type.pricing_condition_id
+            )
         else:
             instrument_object["pricing_condition"] = None
 
@@ -159,13 +158,13 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception as e:
             _l.info("Could not set long_underlying_instrument, fallback to default")
-            instrument_object[
-                "long_underlying_instrument"
-            ] = ecosystem_default.instrument.pk
+            instrument_object["long_underlying_instrument"] = (
+                ecosystem_default.instrument.pk
+            )
 
-        instrument_object[
-            "underlying_long_multiplier"
-        ] = instrument_type.underlying_long_multiplier
+        instrument_object["underlying_long_multiplier"] = (
+            instrument_type.underlying_long_multiplier
+        )
 
         try:
             instrument_object["short_underlying_instrument"] = Instrument.objects.get(
@@ -174,52 +173,52 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception as e:
             _l.info("Could not set short_underlying_instrument, fallback to default")
-            instrument_object[
-                "short_underlying_instrument"
-            ] = ecosystem_default.instrument.pk
+            instrument_object["short_underlying_instrument"] = (
+                ecosystem_default.instrument.pk
+            )
 
-        instrument_object[
-            "underlying_short_multiplier"
-        ] = instrument_type.underlying_short_multiplier
+        instrument_object["underlying_short_multiplier"] = (
+            instrument_type.underlying_short_multiplier
+        )
 
-        instrument_object[
-            "long_underlying_exposure"
-        ] = instrument_type.long_underlying_exposure_id
-        instrument_object[
-            "short_underlying_exposure"
-        ] = instrument_type.short_underlying_exposure_id
+        instrument_object["long_underlying_exposure"] = (
+            instrument_type.long_underlying_exposure_id
+        )
+        instrument_object["short_underlying_exposure"] = (
+            instrument_type.short_underlying_exposure_id
+        )
 
         try:
-            instrument_object[
-                "co_directional_exposure_currency"
-            ] = Currency.objects.get(
-                master_user=instrument_type.master_user,
-                user_code=instrument_type.co_directional_exposure_currency,
-            ).pk
+            instrument_object["co_directional_exposure_currency"] = (
+                Currency.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.co_directional_exposure_currency,
+                ).pk
+            )
         except Exception as e:
             _l.info(
                 f"Could not set co_directional_exposure_currency, "
                 f"fallback to default {repr(e)}"
             )
-            instrument_object[
-                "co_directional_exposure_currency"
-            ] = ecosystem_default.currency.pk
+            instrument_object["co_directional_exposure_currency"] = (
+                ecosystem_default.currency.pk
+            )
 
         try:
-            instrument_object[
-                "counter_directional_exposure_currency"
-            ] = Currency.objects.get(
-                master_user=instrument_type.master_user,
-                user_code=instrument_type.counter_directional_exposure_currency,
-            ).pk
+            instrument_object["counter_directional_exposure_currency"] = (
+                Currency.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.counter_directional_exposure_currency,
+                ).pk
+            )
         except Exception as e:
             _l.info(
                 f"Could not set counter_directional_exposure_currency, "
                 f"fallback to default {repr(e)}"
             )
-            instrument_object[
-                "counter_directional_exposure_currency"
-            ] = ecosystem_default.currency.pk
+            instrument_object["counter_directional_exposure_currency"] = (
+                ecosystem_default.currency.pk
+            )
 
         # Set attributes
         instrument_object["attributes"] = []
@@ -433,7 +432,7 @@ def set_periodicity_period(source_data, accrual):
 
 # Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(
-        source_data, instrument_type, master_user, ecosystem_default, attribute_types
+    source_data, instrument_type, master_user, ecosystem_default, attribute_types
 ):
     func = "handler_instrument_object"
 
@@ -497,9 +496,9 @@ def handler_instrument_object(
         object_data["maturity_date"] = None
 
     if (
-            "country" in source_data
-            and source_data["country"]
-            and source_data["country"].get("alpha_3")
+        "country" in source_data
+        and source_data["country"]
+        and source_data["country"].get("alpha_3")
     ):
         try:
             country = Country.objects.get(alpha_3=source_data["country"]["alpha_3"])
@@ -601,8 +600,8 @@ def handler_instrument_object(
     #     ]["first_payment_date"]
 
     if (
-            "accrual_calculation_schedules" in source_data
-            and source_data["accrual_calculation_schedules"]
+        "accrual_calculation_schedules" in source_data
+        and source_data["accrual_calculation_schedules"]
     ):
         _l.info("Setting up accrual schedules. Overwrite Existing")
         accrual = source_data["accrual_calculation_schedules"][0]
@@ -715,8 +714,8 @@ class SimpleImportProcess:
         import_system_message_performed_by = self.member.username
         import_system_message_title = "Simple import (start)"
         if (
-                self.execution_context
-                and self.execution_context["started_by"] == "procedure"
+            self.execution_context
+            and self.execution_context["started_by"] == "procedure"
         ):
             import_system_message_performed_by = "System"
             import_system_message_title = "Simple import from broker (start)"
@@ -738,7 +737,7 @@ class SimpleImportProcess:
             "total": self.result.total_rows,
             "error": 0,
             "success": 0,
-            "skip": 0
+            "skip": 0,
         }
         self.preprocess()
         self.process()
@@ -957,10 +956,10 @@ class SimpleImportProcess:
 
                         # TODO check encoding (maybe should be taken from scheme)
                         with open(
-                                tmpf.name,
-                                mode="rt",
-                                encoding="utf_8_sig",
-                                errors="ignore",
+                            tmpf.name,
+                            mode="rt",
+                            encoding="utf_8_sig",
+                            errors="ignore",
                         ) as cf:
                             # TODO check quotechar (maybe should be taken from scheme)
                             reader = csv.reader(
@@ -1010,8 +1009,8 @@ class SimpleImportProcess:
         ws = (
             wb[self.scheme.spreadsheet_active_tab_name]
             if (
-                    self.scheme.spreadsheet_active_tab_name
-                    and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
+                self.scheme.spreadsheet_active_tab_name
+                and self.scheme.spreadsheet_active_tab_name in wb.sheetnames
             )
             else wb.active
         )
@@ -1119,10 +1118,10 @@ class SimpleImportProcess:
             for scheme_input in self.scheme.csv_fields.all():
                 try:
                     names = raw_item
-                    conversion_item.conversion_inputs[
-                        scheme_input.name
-                    ] = formula.safe_eval(
-                        scheme_input.name_expr, names=names, context=self.context
+                    conversion_item.conversion_inputs[scheme_input.name] = (
+                        formula.safe_eval(
+                            scheme_input.name_expr, names=names, context=self.context
+                        )
                     )
                 except Exception:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -1135,7 +1134,7 @@ class SimpleImportProcess:
     def recursive_preprocess(self, deep=1, current_level=0):
         if len(self.preprocessed_items) == 0:
             for row_number, conversion_item in enumerate(
-                    self.conversion_items, start=1
+                self.conversion_items, start=1
             ):
                 preprocess_item = SimpleImportProcessPreprocessItem()
                 preprocess_item.file_inputs = conversion_item.file_inputs
@@ -1152,9 +1151,9 @@ class SimpleImportProcess:
                 key_column_name = scheme_input.column_name
 
                 try:
-                    preprocess_item.inputs[
-                        scheme_input.name
-                    ] = preprocess_item.conversion_inputs[scheme_input.name]
+                    preprocess_item.inputs[scheme_input.name] = (
+                        preprocess_item.conversion_inputs[scheme_input.name]
+                    )
 
                 except Exception as e:
                     preprocess_item.inputs[scheme_input.name] = None
@@ -1225,30 +1224,30 @@ class SimpleImportProcess:
         for attribute_type in self.attribute_types:
             for entity_field in all_entity_fields_models:
                 if (
-                        entity_field.attribute_user_code
-                        and entity_field.attribute_user_code == attribute_type.user_code
+                    entity_field.attribute_user_code
+                    and entity_field.attribute_user_code == attribute_type.user_code
                 ):
                     attribute = {"attribute_type": attribute_type.id}
 
                     if (
-                            attribute_type.value_type == GenericAttributeType.STRING
-                            and item.final_inputs[entity_field.attribute_user_code]
+                        attribute_type.value_type == GenericAttributeType.STRING
+                        and item.final_inputs[entity_field.attribute_user_code]
                     ):
                         attribute["value_string"] = item.final_inputs[
                             entity_field.attribute_user_code
                         ]
 
                     if attribute_type.value_type == GenericAttributeType.NUMBER and (
-                            item.final_inputs[entity_field.attribute_user_code]
-                            or item.final_inputs[entity_field.attribute_user_code] == 0
+                        item.final_inputs[entity_field.attribute_user_code]
+                        or item.final_inputs[entity_field.attribute_user_code] == 0
                     ):
                         attribute["value_float"] = item.final_inputs[
                             entity_field.attribute_user_code
                         ]
 
                     if (
-                            attribute_type.value_type == GenericAttributeType.CLASSIFIER
-                            and item.final_inputs[entity_field.attribute_user_code]
+                        attribute_type.value_type == GenericAttributeType.CLASSIFIER
+                        and item.final_inputs[entity_field.attribute_user_code]
                     ):
                         try:
                             attribute["classifier"] = GenericClassifier.objects.get(
@@ -1274,8 +1273,8 @@ class SimpleImportProcess:
                             attribute["classifier"] = None
 
                     if (
-                            item.final_inputs[entity_field.attribute_user_code]
-                            and attribute_type.value_type == GenericAttributeType.DATE
+                        item.final_inputs[entity_field.attribute_user_code]
+                        and attribute_type.value_type == GenericAttributeType.DATE
                     ):
                         attribute["value_date"] = item.final_inputs[
                             entity_field.attribute_user_code
@@ -1294,12 +1293,12 @@ class SimpleImportProcess:
         for attribute in result_item["attributes"]:
             for entity_field in all_entity_fields_models:
                 if entity_field.attribute_user_code and (
-                        entity_field.attribute_user_code
-                        == attribute["attribute_type_object"]["user_code"]
+                    entity_field.attribute_user_code
+                    == attribute["attribute_type_object"]["user_code"]
                 ):
                     if (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.STRING
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.STRING
                     ):
                         if item.final_inputs[entity_field.attribute_user_code]:
                             attribute["value_string"] = item.final_inputs[
@@ -1307,8 +1306,8 @@ class SimpleImportProcess:
                             ]
 
                     elif (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.NUMBER
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.NUMBER
                     ):
                         if item.final_inputs[entity_field.attribute_user_code]:
                             attribute["value_float"] = item.final_inputs[
@@ -1316,8 +1315,8 @@ class SimpleImportProcess:
                             ]
 
                     elif (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.CLASSIFIER
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.CLASSIFIER
                     ):
                         if item.final_inputs[entity_field.attribute_user_code]:
                             try:
@@ -1346,8 +1345,8 @@ class SimpleImportProcess:
                                 attribute["classifier"] = None
 
                     elif (
-                            attribute["attribute_type_object"]["value_type"]
-                            == GenericAttributeType.DATE
+                        attribute["attribute_type_object"]["value_type"]
+                        == GenericAttributeType.DATE
                     ):
                         if item.final_inputs[entity_field.attribute_user_code]:
                             attribute["value_date"] = item.final_inputs[
@@ -1358,6 +1357,7 @@ class SimpleImportProcess:
         self, key_model_user_code="-", pricing_policy__user_code="-", date="-"
     ):
         return f"{key_model_user_code}-{pricing_policy__user_code}-{date}"
+
     def __relation_fields_map_for_content_type(self):
         relation_fields_map = RELATION_FIELDS_MAP
 
@@ -1589,8 +1589,6 @@ class SimpleImportProcess:
 
         except Exception as e:
 
-            non_field_errors = e.message_dict.get('non_field_errors', [])
-
             if self.scheme.mode == "overwrite":
                 try:
                     model = self.scheme.content_type.model_class()
@@ -1674,25 +1672,24 @@ class SimpleImportProcess:
                     )
             else:
 
-                if 'non_field_errors' in e.message_dict:
-                    # Loop through each error detail in non_field_errors
-                    for detail in e.message_dict['non_field_errors']:
-                        if isinstance(detail, ErrorDetail) and detail.code == 'unique':
-                            item.status = "skip"
-                            item.error_message = (
-                                f"{item.error_message} ==== Skipped due to uniqueness constraint violation"
-                            )
-                            break  # Stop checking further once the unique error is found
-                    else:
-                        item.status = "error"
-                        item.error_message = f"{item.error_message} ====  Create Exception {e}"
+                # _l.info("e %s" % e)
+                # _l.info("e %s" % e)
+                # _l.info("e %s" % e.__dict__)
+
+                if 'make a unique set' in str(e.__dict__):
+                    item.status = "skip"
+                    item.error_message = f"{item.error_message} ==== Skipped due to uniqueness constraint violation"
 
                 else:
                     item.status = "error"
-                    item.error_message = f"{item.error_message} ====  Create Exception {e}"
+                    item.error_message = (
+                        f"{item.error_message} ==== Create Exception {e}"
+                    )
 
     @staticmethod
-    def calculate_pricehistory_null_fields(model: str, final_inputs: dict) -> Optional[str]:
+    def calculate_pricehistory_null_fields(
+        model: str, final_inputs: dict
+    ) -> Optional[str]:
         """
         Calculates accrued_price & factor for PriceHistory if in the file
         their values are null, and update final_inputs dict
@@ -1746,8 +1743,7 @@ class SimpleImportProcess:
         relation_models_user_codes = {}
         for item_index in batch_indexes:
             self.items[item_index].final_inputs = self.get_final_inputs(
-                self.items[item_index],
-                all_entity_fields_models
+                self.items[item_index], all_entity_fields_models
             )
             # dict for getting relation models at the next step
             relation_models_user_codes = self.__get_relation_to_convert(
@@ -1819,8 +1815,7 @@ class SimpleImportProcess:
                     )
             except Exception as e:
                 self.items[item_index].status = "error"
-                self.items[
-                    item_index].error_message = (
+                self.items[item_index].error_message = (
                     f"{self.items[item_index].error_message} "
                     f"Relation model error: {repr(e)}"
                 )
@@ -1893,10 +1888,9 @@ class SimpleImportProcess:
 
                     try:
                         # models_for_bulk_update.append(model_for_update_ids[item_key_for_matching_model])
-                        models_for_bulk_update[
-                            item_key_for_matching_model
-                        ] = model_for_update_ids[
-                            item_key_for_matching_model]
+                        models_for_bulk_update[item_key_for_matching_model] = (
+                            model_for_update_ids[item_key_for_matching_model]
+                        )
 
                     except Exception as e:
                         self.items[item_index].status = "error"
@@ -1907,8 +1901,7 @@ class SimpleImportProcess:
 
                 else:
                     self.items[item_index].status = "error"
-                    self.items[
-                        item_index].error_message = (
+                    self.items[item_index].error_message = (
                         f"{self.items[item_index].error_message}"
                         f"====  Overwrite disabled"
                     )
@@ -1962,8 +1955,7 @@ class SimpleImportProcess:
                         f"==== Create Exception dcsd {e}"
                     )
                     self.items[item_index].status = "error"
-                    self.items[
-                        item_index].error_message = (
+                    self.items[item_index].error_message = (
                         f"{self.items[item_index].error_message}"
                         f"==== Create Exception {e}"
                     )
@@ -1993,7 +1985,7 @@ class SimpleImportProcess:
         _l.info(
             f"SimpleImportProcess.Task filter_for_async_functions_eval count."
             f" {len(filter_for_async_functions_eval)} "
-)
+        )
 
         return batch_rows_count
 
@@ -2100,8 +2092,7 @@ class SimpleImportProcess:
                 except Exception as e:
                     success = False
                     self.items[item_index].status = "error"
-                    self.items[
-                        item_index].message = (
+                    self.items[item_index].message = (
                         f"item.row_number {self.items[item_index].row_number} "
                         f"error {repr(e)}"
                     )
@@ -2165,10 +2156,13 @@ class SimpleImportProcess:
         )
 
         simple_import_bulk_insert_final_updates_procedure.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
             queue="backend-background-queue",
         )
 
@@ -2192,8 +2186,8 @@ class SimpleImportProcess:
             self.result.error_message = f"General Import Error. Exception {repr(e)}"
 
             if (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
             ):
                 send_system_message(
                     master_user=self.master_user,
@@ -2239,8 +2233,8 @@ class SimpleImportProcess:
 
             system_message_title = "New Items (import from file)"
             if self.process_type == ProcessType.JSON and (
-                    self.execution_context
-                    and self.execution_context["started_by"] == "procedure"
+                self.execution_context
+                and self.execution_context["started_by"] == "procedure"
             ):
                 system_message_title = "New itmes (import from broker)"
                 system_message_performed_by = "System"
