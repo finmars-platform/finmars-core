@@ -15,6 +15,7 @@ from poms.explorer.serializers import (
     DeletePathSerializer,
     FilePathSerializer,
     FolderPathSerializer,
+    ResponseSerializer,
 )
 from poms.explorer.utils import (
     join_path,
@@ -163,13 +164,12 @@ class ExplorerUploadViewSet(AbstractViewSet):
                 data = {"status": "error", "details": repr(e)}
                 return Response(data, status=400)
 
-        return Response(
-            {
-                "status": "ok",
-                "path": path,
-                "files": files,
-            }
-        )
+        result = {
+            "status": "ok",
+            "path": path,
+            "files": files,
+        }
+        return Response(ResponseSerializer(data=result).data)
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
@@ -184,7 +184,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         # TODO validate path that either public/import/system or user home folder
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
-        is_dir = serializer.validated_data['is_dir']
+        is_dir = serializer.validated_data["is_dir"]
 
         if path == f"{request.space_code}/.system/":
             raise PermissionDenied("Could not remove .system folder")
@@ -199,31 +199,33 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         except Exception as e:
             _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
-            data = {"status": "error", "details": repr(e)}
-            return Response(data, status=400)
+            result = {"status": "error", "details": repr(e)}
+            return Response(ResponseSerializer(data=result).data, status=400)
+
         else:
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(data=result).data)
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
     serializer_class = FolderPathSerializer
+    http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
-        path = request.data.get("path")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         # TODO validate path that either public/import/system or user home folder
 
-        if not path:
-            raise ValidationError("Path is required")
-        else:
-            path = f"{request.space_code}/{path}/.init"
+        path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
 
         with NamedTemporaryFile() as tmpf:
             tmpf.write(b"")
             tmpf.flush()
             storage.save(path, tmpf)
 
-        return Response({"path": path})
+        result = {"status": "ok", "path": path}
+        return Response(ResponseSerializer(data=result).data)
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):

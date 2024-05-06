@@ -57,3 +57,13 @@ class DeletePathSerializer(BasePathSerializer):
             raise serializers.ValidationError("Path '.system' is not allowed")
 
         return value
+
+
+class ResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(required=True)
+    path = serializers.CharField(required=False)
+    files = serializers.ListField(
+        required=False,
+        child=serializers.CharField(),
+    )
+    details = serializers.CharField(required=False)
