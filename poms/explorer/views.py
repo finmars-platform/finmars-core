@@ -39,7 +39,7 @@ class ExplorerViewSet(AbstractViewSet):
     http_method_names = ["get"]
 
     @swagger_auto_schema(
-        request_body=FolderPathSerializer(),
+        query_serializer=FolderPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
         },
@@ -147,7 +147,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=DeletePathSerializer,
+        request_body=FolderPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -211,7 +211,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=DeletePathSerializer,
+        request_body=DeletePathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -253,7 +253,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer,
+        request_body=FilePathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -291,7 +291,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=DeletePathSerializer,
+        request_body=DeletePathSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
             status.HTTP_200_OK: ResponseSerializer(),
@@ -323,7 +323,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer,
+        request_body=FilePathSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
             status.HTTP_200_OK: openapi.Schema(
@@ -364,7 +364,7 @@ class DownloadViewSet(AbstractViewSet):
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer,
+        request_body=FilePathSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
             status.HTTP_200_OK: openapi.Schema(
