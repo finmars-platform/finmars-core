@@ -5,8 +5,9 @@ import os
 from tempfile import NamedTemporaryFile
 
 from django.http import FileResponse
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from poms.common.storage import get_storage
@@ -37,6 +38,12 @@ class ExplorerViewSet(AbstractViewSet):
     serializer_class = FolderPathSerializer
     http_method_names = ["get"]
 
+    @swagger_auto_schema(
+        request_body=FolderPathSerializer(),
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -87,6 +94,16 @@ class ExplorerViewFileViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
+    @swagger_auto_schema(
+        query_serializer=FilePathSerializer(),
+        responses={
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -103,6 +120,16 @@ class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
+    @swagger_auto_schema(
+        query_serializer=FilePathSerializer(),
+        responses={
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def retrieve(self, request, filepath=None, *args, **kwargs):
         serializer = self.get_serializer(data={"path": filepath})
         serializer.is_valid(raise_exception=True)
@@ -119,6 +146,13 @@ class ExplorerUploadViewSet(AbstractViewSet):
     serializer_class = FolderPathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=DeletePathSerializer,
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -176,6 +210,13 @@ class ExplorerDeleteViewSet(AbstractViewSet):
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=DeletePathSerializer,
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
         # refactor later, for destroy id is required
         serializer = self.get_serializer(data=request.data)
@@ -211,6 +252,13 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FilePathSerializer,
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -224,19 +272,31 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
                 tmpf.write(b"")
                 tmpf.flush()
                 storage.save(path, tmpf)
-            result = {"status": "ok", "path": path}
 
         except Exception as e:
             _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
             result = {"status": "error", "path": path, "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        return Response(ResponseSerializer(result).data)
+        else:
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(result).data)
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=DeletePathSerializer,
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -244,17 +304,35 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
         path = join_path(request.space_code, serializer.validated_data["path"])
 
         _l.info(f"Delete directory {path}")
-
-        storage.delete_directory(path)
-
-        result = {"status": "ok", "path": path}
-        return Response(ResponseSerializer(result).data)
+        try:
+            storage.delete_directory(path)
+        except Exception as e:
+            _l.error(f"ExplorerDeleteFolderViewSet failed due to {repr(e)}")
+            result = {"status": "error", "path": path, "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(result).data)
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FilePathSerializer,
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -285,6 +363,17 @@ class DownloadViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FilePathSerializer,
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
