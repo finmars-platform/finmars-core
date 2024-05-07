@@ -162,7 +162,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
             except Exception as e:
                 _l.error(f"get file resulted in {repr(e)}")
-                result = {"status": "error", "details": repr(e)}
+                result = {"status": "error", "path": path, "details": repr(e)}
                 return Response(
                     ResponseSerializer(result).data,
                     status=status.HTTP_400_BAD_REQUEST,
@@ -196,7 +196,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         except Exception as e:
             _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
-            result = {"status": "error", "details": repr(e)}
+            result = {"status": "error", "path": path, "details": repr(e)}
             return Response(
                 ResponseSerializer(result).data,
                 status=status.HTTP_400_BAD_REQUEST,
@@ -215,16 +215,21 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that either public/import/system or user home folder
-
         path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
 
-        with NamedTemporaryFile() as tmpf:
-            tmpf.write(b"")
-            tmpf.flush()
-            storage.save(path, tmpf)
+        # TODO validate path that either public/import/system or user home folder
 
-        result = {"status": "ok", "path": path}
+        try:
+            with NamedTemporaryFile() as tmpf:
+                tmpf.write(b"")
+                tmpf.flush()
+                storage.save(path, tmpf)
+            result = {"status": "ok", "path": path}
+
+        except Exception as e:
+            _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
+            result = {"status": "error", "path": path, "details": repr(e)}
+
         return Response(ResponseSerializer(result).data)
 
 
@@ -248,48 +253,59 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
+    http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        paths = request.data.get("paths")
 
         # TODO validate path that either public/import/system or user home folder
 
-        if not paths:
-            raise ValidationError("paths is required")
-
-        zip_file_path = storage.download_paths_as_zip(paths)
-
-        # Serve the zip file as a response
-        response = FileResponse(
-            open(zip_file_path, "rb"), content_type="application/zip"
-        )
-        response["Content-Disposition"] = 'attachment; filename="archive.zip"'
-
-        return response
+        try:
+            zip_file_path = storage.download_paths_as_zip(
+                [serializer.validated_data["path"]]
+            )
+        except Exception as e:
+            _l.error(f"DownloadAsZipViewSet failed due to {repr(e)}")
+            result = {"status": "error", "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            response = FileResponse(
+                open(zip_file_path, "rb"),
+                content_type="application/zip",
+            )
+            response["Content-Disposition"] = 'attachment; filename="archive.zip"'
+            return response
 
 
 class DownloadViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
+    http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
-        path = request.data.get("path")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        path = f"{request.space_code}/{serializer.validated_data['path']}"
 
         # TODO validate path that either public/import/system or user home folder
 
-        if not path:
-            raise ValidationError("path is required")
+        try:
+            with storage.open(path, "rb") as file:
+                response = FileResponse(file, content_type="application/octet-stream")
+                response[
+                    "Content-Disposition"
+                ] = f'attachment; filename="{os.path.basename(path)}"'
 
-        _l.info(f"path {path}")
-
-        path = f"{request.space_code}/{path}"
-
-        # Serve the zipped file or file as a response
-        with storage.open(path, "rb") as file:
-            response = FileResponse(file, content_type="application/octet-stream")
-            response[
-                "Content-Disposition"
-            ] = f'attachment; filename="{os.path.basename(path)}"'
-
-        return response
+        except Exception as e:
+            _l.error(f"DownloadViewSet failed due to {repr(e)}")
+            result = {"status": "error", "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return response
