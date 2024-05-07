@@ -44,3 +44,8 @@ router.register(
     explorer.DownloadViewSet,
     "explorer_download",
 )
+router.register(
+    r"move",
+    explorer.MoveViewSet,
+    "explorer_move",
+)

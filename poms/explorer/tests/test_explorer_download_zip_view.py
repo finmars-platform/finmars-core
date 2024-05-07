@@ -12,7 +12,7 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/" f"download-as-zip/"
+            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/download-as-zip/"
         )
 
         self.storage_patch = mock.patch(

@@ -415,3 +415,13 @@ class MoveViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        target_directory_path = (
+            f"{request.space_code}/{serializer.validated_data['target_directory_path']}"
+        )
+        items = [
+            f"{request.space_code}/{item}"
+            for item in serializer.validated_data["items"]
+        ]
+
+        return Response(ResponseSerializer({"status": "ok"}).data)

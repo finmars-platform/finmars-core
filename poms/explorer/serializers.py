@@ -73,5 +73,28 @@ class ResponseSerializer(serializers.Serializer):
     )
 
 
-class MoveSerializer(BasePathSerializer):
-    pass
+class MoveSerializer(serializers.Serializer):
+    target_directory_path = serializers.CharField(required=True, allow_blank=False)
+    items = serializers.ListField(
+        child=serializers.CharField(allow_blank=False),
+    )
+
+    def validate(self, attrs):
+        target_directory_path = attrs["target_directory_path"]
+        if has_slash(target_directory_path):
+            raise serializers.ValidationError(
+                "'target_directory_path' should not start or end with '/'"
+            )
+
+        items = attrs["items"]
+        for item in items:
+            if has_slash(item):
+                raise serializers.ValidationError(
+                    f"item {item} should not start or end with '/'"
+                )
+            if target_directory_path in item:
+                raise serializers.ValidationError(
+                    f"item {item} should not be part of the target directory"
+                )
+
+        return attrs
