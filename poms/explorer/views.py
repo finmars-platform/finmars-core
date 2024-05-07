@@ -181,13 +181,10 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that either public/import/system or user home folder
-
         path = f"{request.space_code}/{serializer.validated_data['path']}"
         is_dir = serializer.validated_data["is_dir"]
 
-        if path == f"{request.space_code}/.system/":
-            raise PermissionDenied("Could not remove .system folder")
+        # TODO validate path that either public/import/system or user home folder
 
         try:
             _l.info(f"going to delete {path}")
@@ -232,27 +229,29 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    serializer_class = DeletePathSerializer
+    http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
-        path = request.data.get("path")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not path:
-            raise ValidationError("Path is required")
-
-        path = join_path(request.space_code, path)
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
         _l.info(f"Delete directory {path}")
 
         storage.delete_directory(path)
 
-        return Response({"status": "ok"})
+        result = {"status": "ok", "path": path}
+        return Response(ResponseSerializer(result).data)
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
 
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         paths = request.data.get("paths")
 
         # TODO validate path that either public/import/system or user home folder
