@@ -16,6 +16,7 @@ from poms.explorer.serializers import (
     DeletePathSerializer,
     FilePathSerializer,
     FolderPathSerializer,
+    MoveSerializer,
     ResponseSerializer,
 )
 from poms.explorer.utils import (
@@ -398,3 +399,19 @@ class DownloadViewSet(AbstractViewSet):
             )
         else:
             return response
+
+
+class MoveViewSet(AbstractViewSet):
+    serializer_class = MoveSerializer
+    http_method_names = ["post"]
+
+    @swagger_auto_schema(
+        request_body=MoveSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)

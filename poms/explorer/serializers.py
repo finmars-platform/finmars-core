@@ -71,3 +71,7 @@ class ResponseSerializer(serializers.Serializer):
         required=False,
         child=serializers.DictField(),
     )
+
+
+class MoveSerializer(BasePathSerializer):
+    pass
