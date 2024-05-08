@@ -81,36 +81,29 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
-def move_file(storage, root, source_folder, file_name, destination_folder):
+def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str):
     """
     Move a file from the source folder to the destination folder.
 
     Args:
         storage (Storage): The storage instance to use.
-        root (str): The root path where the file is located.
-        source_folder (str): The path of the source folder.
-        file_name (str): The name of the file to be moved.
-        destination_folder (str): The path of the destination folder.
+        source_path (str): The path of the source file.
+        destination_path (str): The path of the destination folder.
     Returns:
         None
     """
-    source_file_path = os.path.join(root, file_name)
-    destination_file_path = os.path.join(
-        destination_folder,
-        os.path.relpath(source_file_path, source_folder),
-    )
 
     # Read content of file
-    content = storage.open(source_file_path).read()
+    content = storage.open(source_path).read()
 
     # Save content to destination
-    storage.save(destination_file_path, content)
+    storage.save(destination_path, content)
 
     # Delete file from source
-    storage.delete(source_file_path)
+    storage.delete(source_path)
 
 
-def move_folder(storage, source_folder: str, destination_folder: str):
+def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
     """
     Move a folder and its contents recursively within the storage.
     Args:
@@ -121,19 +114,33 @@ def move_folder(storage, source_folder: str, destination_folder: str):
         None
     """
 
-    for root, dirs, files in os.walk(source_folder):
+    for dirs, files in storage.listdir(source_folder):
         for dir_name in dirs:
-            source_dir_path = os.path.join(root, dir_name)
-            destination_dir_path = os.path.join(
-                destination_folder,
-                os.path.relpath(source_dir_path, source_folder),
-            )
-
-            if not storage.exists(destination_dir_path):
-                storage.makedirs(destination_dir_path)
+            s = os.path.join(source_folder, dir_name)
+            d = os.path.join(destination_folder, dir_name)
+            move_folder(storage, s, d)
 
         for file_name in files:
-            storage.move_file(root, source_folder, file_name, destination_folder)
+            s = os.path.join(source_folder, file_name)
+            d = os.path.join(destination_folder, file_name)
+            move_file(storage, s, d)
 
-    _l.info(
-        f"folder '{source_folder}' moved to '{destination_folder}'")
+    _l.info(f"folder '{source_folder}' moved to '{destination_folder}'")
+
+
+def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
+    """
+    Check if the given path is a file in the storage.
+    Args:
+        storage (FinmarsS3Storage): The storage object to use.
+        file_path (str): The path of the file to check.
+    Returns:
+        bool: True if the path is a file, False otherwise.
+    """
+    try:
+        file_size = storage.size(file_path)
+        return file_size > 0
+
+    except Exception as e:
+        _l.error(f"path_is_file check resulted in {repr(e)}")
+        return False

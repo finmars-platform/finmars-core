@@ -82,19 +82,20 @@ class MoveSerializer(serializers.Serializer):
     def validate(self, attrs):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
-        target_directory_path = f"{space_code}/{attrs['target_directory_path']}"
-        items = [f"{space_code}/{item}" for item in attrs["items"]]
 
+        target_directory_path = attrs['target_directory_path']
         if has_slash(target_directory_path):
             raise serializers.ValidationError(
                 "'target_directory_path' should not start or end with '/'"
             )
-        if not storage.exists(target_directory_path):
+        target_directory_path = f"{space_code}/{target_directory_path}"
+        if storage and not storage.exists(target_directory_path):
             raise serializers.ValidationError(
-                f"target folder '{target_directory_path}' does not exist."
+                f"target folder '{target_directory_path}' does not exist"
             )
 
-        for item in items:
+        updated_items = []
+        for item in attrs["items"]:
             if has_slash(item):
                 raise serializers.ValidationError(
                     f"item {item} should not start or end with '/'"
@@ -103,7 +104,11 @@ class MoveSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"item {item} should not be part of the target directory"
                 )
-            if not storage.exists(item):
-                raise serializers.ValidationError(f"item {item} does not exist.")
+            item = f"{space_code}/{item}"
+            if storage and not storage.exists(item):
+                raise serializers.ValidationError(f"item {item} does not exist")
 
+            updated_items.append(item)
+
+        attrs["items"] = updated_items
         return attrs

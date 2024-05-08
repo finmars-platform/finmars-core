@@ -23,6 +23,9 @@ from poms.explorer.utils import (
     join_path,
     remove_first_folder_from_path,
     response_with_file,
+    move_file,
+    move_folder,
+path_is_file,
 )
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -405,6 +408,16 @@ class MoveViewSet(AbstractViewSet):
     serializer_class = MoveSerializer
     http_method_names = ["post"]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                "storage": storage,
+                "space_code": self.request.space_code,
+            },
+        )
+        return context
+
     @swagger_auto_schema(
         request_body=MoveSerializer(),
         responses={
@@ -413,25 +426,22 @@ class MoveViewSet(AbstractViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(
-            data=request.data,
-            context={"storage": storage, "space_code": request.space_code},
-        )
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        target_directory_path = (
-            f"{request.space_code}/{serializer.validated_data['target_directory_path']}"
-        )
-        items = [
-            storage.path(f"{request.space_code}/{item}")
-            for item in serializer.validated_data["items"]
-        ]
-
-        directories, files = [], []
-        for item in items:
-            if item.is_dir():
-                directories.append(item)
-            else:
+        directories = []
+        files = []
+        for item in serializer.validated_data["items"]:
+            if path_is_file(storage, item):
                 files.append(item)
+            else:
+                directories.append(item)
+
+        destination_folder = serializer.validated_data["target_directory_path"]
+        for directory in directories:
+            move_folder(storage, directory, destination_folder)
+
+        for file in files:
+            move_file(storage, file, destination_folder)
 
         return Response(ResponseSerializer({"status": "ok"}).data)
