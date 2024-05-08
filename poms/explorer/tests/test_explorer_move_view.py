@@ -4,7 +4,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 
 
-class ExplorerViewFileViewSetTest(BaseTestCase):
+class MoveViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -34,3 +34,9 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
     def test__invalid_data(self, request_data):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
+
+    @BaseTestCase.cases(
+        ("ok", {"target_directory_path": "test", "items": ["file.txt"]}),
+    )
+    def test__valid_data(self, request_data):
+        response = self.client.post(self.url, request_data)

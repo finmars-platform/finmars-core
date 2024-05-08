@@ -80,13 +80,20 @@ class MoveSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        target_directory_path = attrs["target_directory_path"]
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+        target_directory_path = f"{space_code}/{attrs['target_directory_path']}"
+        items = [f"{space_code}/{item}" for item in attrs["items"]]
+
         if has_slash(target_directory_path):
             raise serializers.ValidationError(
                 "'target_directory_path' should not start or end with '/'"
             )
+        if not storage.exists(target_directory_path):
+            raise serializers.ValidationError(
+                f"target folder '{target_directory_path}' does not exist."
+            )
 
-        items = attrs["items"]
         for item in items:
             if has_slash(item):
                 raise serializers.ValidationError(
@@ -96,5 +103,7 @@ class MoveSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"item {item} should not be part of the target directory"
                 )
+            if not storage.exists(item):
+                raise serializers.ValidationError(f"item {item} does not exist.")
 
         return attrs

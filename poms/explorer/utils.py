@@ -79,3 +79,61 @@ def sanitize_html(html: str) -> str:
     for script in soup(["script", "style"]):  # Remove these tags
         script.extract()
     return str(soup)
+
+
+def move_file(storage, root, source_folder, file_name, destination_folder):
+    """
+    Move a file from the source folder to the destination folder.
+
+    Args:
+        storage (Storage): The storage instance to use.
+        root (str): The root path where the file is located.
+        source_folder (str): The path of the source folder.
+        file_name (str): The name of the file to be moved.
+        destination_folder (str): The path of the destination folder.
+    Returns:
+        None
+    """
+    source_file_path = os.path.join(root, file_name)
+    destination_file_path = os.path.join(
+        destination_folder,
+        os.path.relpath(source_file_path, source_folder),
+    )
+
+    # Read content of file
+    content = storage.open(source_file_path).read()
+
+    # Save content to destination
+    storage.save(destination_file_path, content)
+
+    # Delete file from source
+    storage.delete(source_file_path)
+
+
+def move_folder(storage, source_folder: str, destination_folder: str):
+    """
+    Move a folder and its contents recursively within the storage.
+    Args:
+        storage (Storage): The storage instance to use.
+        source_folder (str): The path of the source folder.
+        destination_folder (str): The path of the destination folder.
+    Returns:
+        None
+    """
+
+    for root, dirs, files in os.walk(source_folder):
+        for dir_name in dirs:
+            source_dir_path = os.path.join(root, dir_name)
+            destination_dir_path = os.path.join(
+                destination_folder,
+                os.path.relpath(source_dir_path, source_folder),
+            )
+
+            if not storage.exists(destination_dir_path):
+                storage.makedirs(destination_dir_path)
+
+        for file_name in files:
+            storage.move_file(root, source_folder, file_name, destination_folder)
+
+    _l.info(
+        f"folder '{source_folder}' moved to '{destination_folder}'")
