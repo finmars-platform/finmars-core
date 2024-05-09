@@ -1200,8 +1200,9 @@ class PerformanceReportBuilder:
             raise FinmarsBaseException(
                 error_key="less_than_year",
                 message=(
-                    f"Return period of {', '.join(short_portfolios[:10])} "
-                    f"s less than a year (<365 days) (must not be annualized)"
+                    f"Return period of the following portfolio registers is "
+                    f"less than a year (<365 days) (must not be annualized): "
+                    f"{', '.join(short_portfolios[:10])}"
                 ),
             )
 
