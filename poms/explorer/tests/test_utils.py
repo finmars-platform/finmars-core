@@ -99,7 +99,7 @@ class TestMoveFolder(BaseTestCase):
 
         # Mock the listdir return values
         self.storage.listdir.return_value = ([], ["file1.txt"])
-        self.storage.open.read.return_value = file_content
+        self.storage.open.return_value.read.return_value = file_content
         move_folder(self.storage, source_folder, destination_folder)
 
         # Assert the move of files
