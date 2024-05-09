@@ -1,7 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.utils import define_content_type, join_path, move_file, move_folder
-
-from unittest.mock import MagicMock
+from poms.explorer.utils import define_content_type, join_path, move_folder
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -48,43 +46,51 @@ class JoinPathTest(BaseTestCase):
 
 
 class TestMoveFolder(BaseTestCase):
+    def setUp(self):
+        from unittest import mock
+        from poms.common.storage import FinmarsS3Storage
+
+        super().setUp()
+        self.storage_patch = mock.patch(
+            "poms.explorer.views.storage",
+            spec=FinmarsS3Storage,
+        )
+        self.storage = self.storage_patch.start()
+        self.addCleanup(self.storage_patch.stop)
+
     def test_move_empty_folder(self):
-        storage = MagicMock()
+        self.storage.listdir.return_value = ([], [])
         source_folder = "empty_folder"
-        destination_folder = "destination/empty_folder"
+        destination_folder = "destination/folder"
 
-        move_folder(storage, source_folder, destination_folder)
+        move_folder(self.storage, source_folder, destination_folder)
 
-        # Assert that the destination folder is created
-        storage.listdir.assert_called_with(source_folder)
-        storage.listdir.assert_called_with(destination_folder)
+        self.storage.listdir.assert_called_with(source_folder)
 
     def test_move_folder_with_subdirectories(self):
-        storage = MagicMock()
         source_folder = "source_folder"
-        destination_folder = "destination/source_folder"
+        destination_folder = "destination/folder"
 
         # Mock the listdir return values
-        storage.listdir.return_value = (["subdir1", "subdir2"], [])
+        self.storage.listdir.side_effect = [(["subdir1", "subdir2"], []), ([], [])]
 
-        move_folder(storage, source_folder, destination_folder)
+        move_folder(self.storage, source_folder, destination_folder)
 
         # Assert the recursive move of subdirectories
-        storage.listdir.assert_called_with(source_folder)
-        storage.listdir.assert_called_with(destination_folder + "/subdir1")
-        storage.listdir.assert_called_with(destination_folder + "/subdir2")
+        self.storage.listdir.assert_called_with(source_folder)
+        self.storage.listdir.assert_called_with(destination_folder + "/subdir1")
+        self.storage.listdir.assert_called_with(destination_folder + "/subdir2")
 
     def test_move_folder_with_files(self):
-        storage = MagicMock()
         source_folder = "files_folder"
         destination_folder = "destination/files_folder"
 
         # Mock the listdir return values
-        storage.listdir.return_value = ([], ["file1.txt", "file2.txt"])
+        self.storage.listdir.side_effect = [([], ["file1.txt", "file2.txt"]), ([], [])]
 
-        move_folder(storage, source_folder, destination_folder)
+        move_folder(self.storage, source_folder, destination_folder)
 
         # Assert the move of files
-        storage.listdir.assert_called_with(source_folder)
-        storage.listdir.assert_called_with(destination_folder + "/file1.txt")
-        storage.listdir.assert_called_with(destination_folder + "/file2.txt")
+        self.storage.listdir.assert_called_with(source_folder)
+        self.storage.listdir.assert_called_with(destination_folder + "/file1.txt")
+        self.storage.listdir.assert_called_with(destination_folder + "/file2.txt")

@@ -106,6 +106,7 @@ def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str
 def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
     """
     Move a folder and its contents recursively within the storage.
+    Empty folder will not be moved/created in the storage!
     Args:
         storage (Storage): The storage instance to use.
         source_folder (str): The path of the source folder.
@@ -113,17 +114,17 @@ def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folde
     Returns:
         None
     """
+    dirs, files = storage.listdir(source_folder)
 
-    for dirs, files in storage.listdir(source_folder):
-        for dir_name in dirs:
-            s = os.path.join(source_folder, dir_name)
-            d = os.path.join(destination_folder, dir_name)
-            move_folder(storage, s, d)
+    for dir_name in dirs:
+        s = os.path.join(source_folder, dir_name)
+        d = os.path.join(destination_folder, dir_name)
+        move_folder(storage, s, d)
 
-        for file_name in files:
-            s = os.path.join(source_folder, file_name)
-            d = os.path.join(destination_folder, file_name)
-            move_file(storage, s, d)
+    for file_name in files:
+        s = os.path.join(source_folder, file_name)
+        d = os.path.join(destination_folder, file_name)
+        move_file(storage, s, d)
 
     _l.info(f"folder '{source_folder}' moved to '{destination_folder}'")
 
