@@ -72,25 +72,40 @@ class TestMoveFolder(BaseTestCase):
         destination_folder = "destination/folder"
 
         # Mock the listdir return values
-        self.storage.listdir.side_effect = [(["subdir1", "subdir2"], []), ([], [])]
+        self.storage.listdir.side_effect = [
+            (["subdir1", "subdir2"], []),
+            ([], []),
+            ([], []),
+        ]
 
         move_folder(self.storage, source_folder, destination_folder)
 
         # Assert the recursive move of subdirectories
-        self.storage.listdir.assert_called_with(source_folder)
-        self.storage.listdir.assert_called_with(destination_folder + "/subdir1")
-        self.storage.listdir.assert_called_with(destination_folder + "/subdir2")
+        self.assertEqual(self.storage.listdir.call_count, 3)
+        expected_args = [
+            ("source_folder",),
+            ("source_folder/subdir1",),
+            ("source_folder/subdir2",),
+        ]
+        for i in range(3):
+            self.assertEqual(
+                self.storage.listdir.call_args_list[i][0], expected_args[i]
+            )
 
     def test_move_folder_with_files(self):
         source_folder = "files_folder"
         destination_folder = "destination/files_folder"
+        file_content = "file_content"
 
         # Mock the listdir return values
-        self.storage.listdir.side_effect = [([], ["file1.txt", "file2.txt"]), ([], [])]
-
+        self.storage.listdir.return_value = ([], ["file1.txt"])
+        self.storage.open.read.return_value = file_content
         move_folder(self.storage, source_folder, destination_folder)
 
         # Assert the move of files
         self.storage.listdir.assert_called_with(source_folder)
-        self.storage.listdir.assert_called_with(destination_folder + "/file1.txt")
-        self.storage.listdir.assert_called_with(destination_folder + "/file2.txt")
+        self.storage.open.assert_called_with(f"{source_folder}/file1.txt")
+        self.storage.save.assert_called_with(
+            f"{destination_folder}/file1.txt", file_content
+        )
+        self.storage.delete.assert_called_with(f"{source_folder}/file1.txt")
