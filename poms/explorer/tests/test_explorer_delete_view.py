@@ -25,8 +25,10 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         ("2", "/"),
         ("3", ".system/super"),
     )
-    def test__no_path_error(self, path):
-        response = self.client.post(self.url, {"path": path})
+    def test__path_error(self, path):
+        response = self.client.post(
+            f"{self.url}?path={path}",
+        )
         self.assertEqual(response.status_code, 400)
 
     @BaseTestCase.cases(
@@ -35,8 +37,9 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         ("3", "0"),
     )
     def test__delete_file(self, is_dir):
-        response = self.client.post(self.url, {"path": "test.txt", "is_dir": is_dir})
-
+        response = self.client.post(
+            f"{self.url}?path=sokol-1/test-create-2.txt&is_dir={is_dir}",
+        )
         self.assertEqual(response.status_code, 200)
         self.storage_mock.delete.assert_called_once()
         self.storage_mock.delete_directory.assert_not_called()
@@ -47,7 +50,9 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         ("3", "yes"),
     )
     def test__delete_directory(self, is_dir):
-        response = self.client.post(self.url, {"path": "test.txt", "is_dir": is_dir})
+        response = self.client.post(
+            f"{self.url}?path=sokol-1/test&is_dir={is_dir}",
+        )
 
         self.assertEqual(response.status_code, 200)
         self.storage_mock.delete_directory.assert_called_once()

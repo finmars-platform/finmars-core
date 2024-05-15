@@ -223,7 +223,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
     )
     def create(self, request, *args, **kwargs):
         # refactor later, for destroy id is required
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
