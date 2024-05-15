@@ -59,20 +59,6 @@ class DeletePathSerializer(BasePathSerializer):
         return value
 
 
-class ResponseSerializer(serializers.Serializer):
-    status = serializers.CharField(required=True)
-    path = serializers.CharField(required=False)
-    details = serializers.CharField(required=False)
-    files = serializers.ListField(
-        required=False,
-        child=serializers.CharField(),
-    )
-    results = serializers.ListField(
-        required=False,
-        child=serializers.DictField(),
-    )
-
-
 class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
     items = serializers.ListField(
@@ -113,3 +99,32 @@ class MoveSerializer(serializers.Serializer):
         attrs["target_directory_path"] = new_target_directory_path
         attrs["items"] = updated_items
         return attrs
+
+
+class ZipFilesSerializer(serializers.Serializer):
+    paths = serializers.ListField(
+        child=serializers.CharField(allow_blank=False),
+    )
+
+    def validate(self, attrs):
+        for path in attrs["paths"]:
+            if has_slash(path):
+                raise serializers.ValidationError(
+                    f"path {path} should not start or end with '/'"
+                )
+
+        return attrs
+
+
+class ResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(required=True)
+    path = serializers.CharField(required=False)
+    details = serializers.CharField(required=False)
+    files = serializers.ListField(
+        required=False,
+        child=serializers.CharField(),
+    )
+    results = serializers.ListField(
+        required=False,
+        child=serializers.DictField(),
+    )

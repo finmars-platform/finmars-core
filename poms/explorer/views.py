@@ -18,6 +18,7 @@ from poms.explorer.serializers import (
     FolderPathSerializer,
     MoveSerializer,
     ResponseSerializer,
+    ZipFilesSerializer,
 )
 from poms.explorer.utils import (
     join_path,
@@ -323,11 +324,11 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
-    serializer_class = FilePathSerializer
+    serializer_class = ZipFilesSerializer
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer(),
+        request_body=ZipFilesSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
             status.HTTP_200_OK: openapi.Schema(
@@ -345,7 +346,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
 
         try:
             zip_file_path = storage.download_paths_as_zip(
-                [serializer.validated_data["path"]]
+                serializer.validated_data["paths"],
             )
         except Exception as e:
             _l.error(f"DownloadAsZipViewSet failed due to {repr(e)}")
