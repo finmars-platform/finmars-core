@@ -705,6 +705,7 @@ class MemberSerializer(serializers.ModelSerializer):
             "join_date",
             "is_superuser",
             "is_deleted",
+            "is_owner",
             "first_name",
             "last_name",
             "display_name",

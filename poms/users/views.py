@@ -927,6 +927,9 @@ class MemberViewSet(AbstractModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         member = self.get_object()
         if member.username == "finmars_bot":
             raise PermissionDenied()
@@ -937,11 +940,7 @@ class MemberViewSet(AbstractModelViewSet):
         else:
             self.validate_member_settings(request)
 
-        form_data_is_owner = request.data.get("is_owner", False)
-        form_data_is_admin = request.data.get("is_admin", False)
-
-        if member.is_owner and form_data_is_owner is False:
-            raise ValidationError("Could not remove owner rights from owner")
+        form_data_is_admin = serializer.data["is_admin"]
 
         if (
             member.is_owner
