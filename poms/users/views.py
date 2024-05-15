@@ -934,22 +934,25 @@ class MemberViewSet(AbstractModelViewSet):
         if request.user.member.id != member.id:
             if not request.user.member.is_admin:
                 raise PermissionDenied()
-
-            form_data_is_owner = request.data.get("is_owner", False)
-            form_data_is_admin = request.data.get("is_admin", False)
-
-            if member.is_owner and form_data_is_owner is False:
-                raise ValidationError("Could not remove owner rights from owner")
-
-            if (
-                member.is_owner
-                and member.is_admin
-                and form_data_is_admin is False
-            ):
-                raise ValidationError("Could not remove admin rights from owner")
-
-        if request.user.member.id == member.id:
+        else:
             self.validate_member_settings(request)
+
+        form_data_is_owner = request.data.get("is_owner", False)
+        form_data_is_admin = request.data.get("is_admin", False)
+
+        if member.is_owner and form_data_is_owner is False:
+            raise ValidationError("Could not remove owner rights from owner")
+
+        if (
+            member.is_owner
+            and member.is_admin
+            and form_data_is_admin is False
+        ):
+            raise ValidationError("Could not remove admin rights from owner")
+
+        if member.is_admin != form_data_is_admin:
+            authorizer = AuthorizerService()
+            authorizer.update_member(member, request.realm_code, request.space_code, is_admin=form_data_is_admin)
 
         return super().update(request, *args, **kwargs)
 
