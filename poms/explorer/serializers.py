@@ -89,7 +89,7 @@ class MoveSerializer(serializers.Serializer):
                     f"item {file_path} should not start or end with '/'"
                 )
 
-            folder_path = os.path.basename(file_path)
+            folder_path = os.path.dirname(file_path)
             if target_directory_path == folder_path:
                 raise serializers.ValidationError(
                     f"path {file_path} belongs to target directory path"
