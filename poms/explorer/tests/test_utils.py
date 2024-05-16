@@ -1,3 +1,5 @@
+from django.core.files.base import ContentFile
+
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.utils import define_content_type, join_path, move_folder
 
@@ -106,6 +108,6 @@ class TestMoveFolder(BaseTestCase):
         self.storage.listdir.assert_called_with(source_folder)
         self.storage.open.assert_called_with(f"{source_folder}/file1.txt")
         self.storage.save.assert_called_with(
-            f"{destination_folder}/file1.txt", file_content
+            f"{destination_folder}/file1.txt", ContentFile(file_content, "file1.txt")
         )
         self.storage.delete.assert_called_with(f"{source_folder}/file1.txt")

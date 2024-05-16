@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 from django.http import HttpResponse
+from django.core.files.base import ContentFile
 
 from poms.common.storage import FinmarsS3Storage
 
@@ -92,7 +93,6 @@ def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str
     Returns:
         None
     """
-    from django.core.files.base import ContentFile
 
     content = storage.open(source_path).read()
 

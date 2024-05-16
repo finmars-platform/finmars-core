@@ -1,3 +1,5 @@
+import os.path
+
 from rest_framework import serializers
 
 from poms.explorer.utils import has_slash
@@ -86,9 +88,11 @@ class MoveSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"item {file_path} should not start or end with '/'"
                 )
-            if target_directory_path == file_path:
+
+            folder_path = os.path.basename(file_path)
+            if target_directory_path == folder_path:
                 raise serializers.ValidationError(
-                    f"path {file_path} if the same as target directory path"
+                    f"path {file_path} belongs to target directory path"
                 )
             file_path = f"{space_code}/{file_path}"
 
