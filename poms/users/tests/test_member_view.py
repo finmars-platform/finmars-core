@@ -67,8 +67,9 @@ class MemberViewSetTest(BaseTestCase):
 
         self.assertEqual(Member.objects.all().count(), 2)  # member created
 
+    @mock.patch("poms.users.views.AuthorizerService.update_member")
     @mock.patch("poms.users.views.AuthorizerService.invite_member")
-    def test__double_update(self, requests_post):
+    def test__double_update(self, requests_post, requests_patch):
         user_name = self.random_string()
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = user_name
