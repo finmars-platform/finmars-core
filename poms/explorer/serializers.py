@@ -90,7 +90,7 @@ class MoveSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"path {file_path} if the same as target directory path"
                 )
-            file_path = f"{space_code}/{file_path}/"
+            file_path = f"{space_code}/{file_path}"
 
             updated_items.append(file_path)
 

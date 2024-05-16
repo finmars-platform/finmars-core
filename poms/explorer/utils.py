@@ -92,15 +92,21 @@ def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str
     Returns:
         None
     """
+    from django.core.files.base import ContentFile
 
-    # Read content of file
     content = storage.open(source_path).read()
 
-    # Save content to destination
-    storage.save(destination_path, content)
+    _l.info(f"move_file: {source_path} content length={len(content)}")
 
-    # Delete file from source
+    file_name = os.path.basename(source_path)
+    file_destination = os.path.join(destination_path, file_name)
+    storage.save(file_destination, ContentFile(content, name=file_name))
+
+    _l.info(f"move_file: content saved to {file_destination}")
+
     storage.delete(source_path)
+
+    _l.info(f"move_file: source path {source_path} deleted")
 
 
 def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
@@ -140,6 +146,7 @@ def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
     """
     try:
         file_size = storage.size(file_path)
+        _l.info(f"path_is_file: {file_path} size is {file_size}")
         return file_size > 0
 
     except Exception as e:

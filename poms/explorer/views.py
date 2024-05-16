@@ -439,6 +439,9 @@ class MoveViewSet(AbstractViewSet):
                 directories.append(item)
 
         destination_folder = serializer.validated_data["target_directory_path"]
+
+        _l.info(f"MoveViewSet: move {len(directories)} folders & {len(files)} files")
+
         for directory in directories:
             move_folder(storage, directory, destination_folder)
 
