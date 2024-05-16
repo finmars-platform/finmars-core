@@ -236,7 +236,7 @@ DATABASES = {
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
-        "PORT": ENV_INT("DB_PORT", 5434),
+        "PORT": ENV_INT("DB_PORT", 5432),
         "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 300),
     },
 }
