@@ -940,7 +940,14 @@ class MemberViewSet(AbstractModelViewSet):
         else:
             self.validate_member_settings(request)
 
-        form_data_is_admin = serializer.data["is_admin"]
+        form_data_is_owner = serializer.validated_data["is_owner"]
+        form_data_is_admin = serializer.validated_data["is_admin"]
+
+        if member.is_owner and form_data_is_owner is False:
+            raise ValidationError("Could not remove owner rights from owner")
+        if not member.is_owner and form_data_is_owner is True:
+            if not self.request.user.member.is_owner:
+                raise ValidationError("Only the owner himself can pass owner rights to another user")
 
         if (
             member.is_owner
@@ -949,9 +956,16 @@ class MemberViewSet(AbstractModelViewSet):
         ):
             raise ValidationError("Could not remove admin rights from owner")
 
-        if member.is_admin != form_data_is_admin:
+        if member.is_admin != form_data_is_admin or member.is_owner != form_data_is_owner:
             authorizer = AuthorizerService()
-            authorizer.update_member(member, request.realm_code, request.space_code, is_admin=form_data_is_admin)
+            authorizer.update_member(member, request.realm_code, request.space_code,
+                                     is_admin=form_data_is_admin, is_owner=form_data_is_owner)
+
+        if not member.is_owner and form_data_is_owner is True:
+            master_user = MasterUser.objects.get(space_code=kwargs["space_code"])
+            for member in master_user.members.all():
+                member.is_owner = False
+                member.save()
 
         return super().update(request, *args, **kwargs)
 
