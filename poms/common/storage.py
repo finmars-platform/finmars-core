@@ -473,6 +473,14 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
         return zip_file_path
 
+    def check_dir_exists(self, directory_path) -> bool:
+        try:
+            _, _ = self.listdir(directory_path)
+            return True
+
+        except Exception:
+            return False
+
 
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
     def path(self, name):
