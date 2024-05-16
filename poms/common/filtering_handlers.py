@@ -490,6 +490,22 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 Q(**options) | Q(**include_null_options)
             )
 
+    elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
+        max_value = filter_config["value"]["max_value"]
+        min_value = filter_config["value"]["min_value"]
+
+        if max_value is not None and min_value is not None:
+            q_less_than_min = Q(value_float__lt=min_value)
+            q_greater_than_max = Q(value_float__gt=max_value)
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options["value_float__isnull"] = True
+
+            attributes_qs = attributes_qs.filter(
+                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+            )
+
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {"value_float__isnull": True}
 
@@ -606,6 +622,22 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
             attributes_qs = attributes_qs.filter(
                 Q(**options) | Q(**include_null_options)
+            )
+
+    elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
+        max_value = filter_config["value"]["max_value"]
+        min_value = filter_config["value"]["min_value"]
+
+        if max_value and min_value:
+            q_less_than_min = Q(value_date__lt=datetime.strptime(min_value, DATE_FORMAT).date())
+            q_greater_than_max = Q(value_date__gt=datetime.strptime(max_value, DATE_FORMAT).date())
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options["value_date__isnull"] = True
+
+            attributes_qs = attributes_qs.filter(
+                q_less_than_min | q_greater_than_max | Q(**include_null_options)
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
@@ -1006,6 +1038,22 @@ def add_filter(qs, filter_config):
 
             qs = qs.filter(Q(**options) | Q(**include_null_options))
 
+    elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
+        max_value = filter_config["value"]["max_value"]
+        min_value = filter_config["value"]["min_value"]
+
+        if max_value is not None and min_value is not None:
+            q_less_than_min = Q(**{key + "__lt": min_value})
+            q_greater_than_max = Q(**{key + "__gt": max_value})
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + "__isnull"] = True
+
+            qs = qs.filter(
+                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+            )
+
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {}
         include_null_options[key + "__isnull"] = True
@@ -1113,6 +1161,22 @@ def add_filter(qs, filter_config):
                 include_null_options[key + "__isnull"] = True
 
             qs = qs.filter(Q(**options) | Q(**include_null_options))
+
+    elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
+        max_value = filter_config["value"]["max_value"]
+        min_value = filter_config["value"]["min_value"]
+
+        if max_value and min_value:
+            q_less_than_min = Q(**{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()})
+            q_greater_than_max = Q(**{key + "__gt": datetime.strptime(max_value, DATE_FORMAT).date()})
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + "__isnull"] = True
+
+            qs = qs.filter(
+                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+            )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
         include_null_options = {}
