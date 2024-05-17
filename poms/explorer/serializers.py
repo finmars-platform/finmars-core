@@ -65,6 +65,7 @@ class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
     items = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
+        required=True,
     )
 
     def validate(self, attrs):
