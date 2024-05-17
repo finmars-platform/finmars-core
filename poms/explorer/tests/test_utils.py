@@ -1,7 +1,5 @@
-from django.core.files.base import ContentFile
-
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.utils import define_content_type, join_path, move_folder
+from poms.explorer.utils import define_content_type, join_path, last_folder, move_folder
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -50,6 +48,7 @@ class JoinPathTest(BaseTestCase):
 class TestMoveFolder(BaseTestCase):
     def setUp(self):
         from unittest import mock
+
         from poms.common.storage import FinmarsS3Storage
 
         super().setUp()
@@ -110,3 +109,13 @@ class TestMoveFolder(BaseTestCase):
         self.storage.delete.assert_called_with(f"{source_folder}/file1.txt")
         args, kwargs = self.storage.save.call_args_list[0]
         self.assertEqual(args[0], f"{destination_folder}/{source_folder}/file1.txt")
+
+
+class LastFolderTest(BaseTestCase):
+    @BaseTestCase.cases(
+        ("empty", "", ""),
+        ("end_slash", "space0000/test/source/", "source/"),
+        ("no_end_slash", "space0000/test/sp/source", "source/"),
+    )
+    def test__content_type(self, path, result):
+        self.assertEqual(last_folder(path), result)

@@ -111,6 +111,16 @@ def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str
     _l.info(f"move_file: source path {source_path} deleted")
 
 
+def last_folder(path: str) -> str:
+    if not path:
+        return path
+
+    if path.endswith("/"):
+        path = path[:-1]
+
+    return f"{path.rsplit('/', 1)[-1]}/"
+
+
 def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
     """
     Move a folder and its contents recursively within the storage.
@@ -133,7 +143,11 @@ def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folde
 
     for file_name in files:
         s = os.path.join(source_folder, file_name)
-        d = os.path.join(destination_folder, source_folder, file_name)
+        d = os.path.join(
+            destination_folder,
+            last_folder(source_folder),
+            file_name,
+        )
         move_file(storage, s, d)
 
 
