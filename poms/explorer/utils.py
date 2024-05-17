@@ -143,11 +143,10 @@ def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folde
 
     for file_name in files:
         s = os.path.join(source_folder, file_name)
-        d = os.path.join(
-            destination_folder,
-            last_folder(source_folder),
-            file_name,
+        real_destination_path = os.path.join(
+            destination_folder, last_folder(source_folder)
         )
+        d = os.path.join(real_destination_path, file_name)
         move_file(storage, s, d)
 
 
