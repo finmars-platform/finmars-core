@@ -275,7 +275,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
         try:
             with NamedTemporaryFile() as tmpf:
-                tmpf.write(b"")
+                tmpf.write(b"init")
                 tmpf.flush()
                 storage.save(path, tmpf)
 
