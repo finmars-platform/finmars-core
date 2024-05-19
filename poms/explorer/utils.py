@@ -129,6 +129,11 @@ def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
     Returns:
         None
     """
+    file_name = os.path.basename(source_file_path)
+    _l.info(
+        f"move_file: move file {file_name} from {source_file_path} "
+        f"to {destin_file_path}"
+    )
 
     content = storage.open(source_file_path).read()
     _l.info(
@@ -136,7 +141,6 @@ def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
         f"from {source_file_path} to {destin_file_path}"
     )
 
-    file_name = os.path.basename(source_file_path)
     storage.save(destin_file_path, ContentFile(content, name=file_name))
     _l.info(f"move_file: content saved to {destin_file_path}")
 
@@ -155,7 +159,7 @@ def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
     Returns:
         None
     """
-    _l.info(f"try to move directory from '{source_dir}' to '{destin_dir}'")
+    _l.info(f"move_dir: move content of directory '{source_dir}' to '{destin_dir}'")
 
     dirs, files = storage.listdir(source_dir)
 
