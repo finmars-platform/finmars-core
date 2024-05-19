@@ -100,6 +100,7 @@ class TestMoveFolder(BaseTestCase):
 
         # Mock the listdir return values
         self.storage.listdir.return_value = ([], ["file1.txt"])
+        self.storage.dir_exists.return_value = True
         self.storage.open.return_value.read.return_value = file_content
         move_dir(self.storage, source_folder, destination_folder)
 
@@ -108,7 +109,7 @@ class TestMoveFolder(BaseTestCase):
         self.storage.open.assert_called_with(f"{source_folder}/file1.txt")
         self.storage.delete.assert_called_with(f"{source_folder}/file1.txt")
         args, kwargs = self.storage.save.call_args_list[0]
-        self.assertEqual(args[0], f"{destination_folder}/{source_folder}/file1.txt")
+        self.assertEqual(args[0], f"{destination_folder}/file1.txt")
 
 
 class LastDirTest(BaseTestCase):
