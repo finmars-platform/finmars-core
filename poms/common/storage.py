@@ -214,6 +214,8 @@ class FinmarsStorage(EncryptedStorage):
                             zf.write(full_path, arcname=relative_path)
 
     def download_directory_content_as_zip(self, path_to_directory):
+        from poms.users.models import MasterUser
+
         unique_path_prefix = os.urandom(32).hex()
 
         temp_dir_path = os.path.join(
@@ -223,7 +225,6 @@ class FinmarsStorage(EncryptedStorage):
 
         local_filename = temp_dir_path
 
-        from poms.users.models import MasterUser
         master_user = MasterUser.objects.all().first()
         # TODO REFACTOR HERE
         # get space_code somewhere else
@@ -242,6 +243,8 @@ class FinmarsStorage(EncryptedStorage):
         return output_zip_filename
 
     def download_paths_as_zip(self, paths):
+        from poms.users.models import MasterUser
+
         unique_path_prefix = os.urandom(32).hex()
 
         temp_dir_path = os.path.join(
@@ -251,7 +254,6 @@ class FinmarsStorage(EncryptedStorage):
 
         _l.info(f"temp_dir_path {temp_dir_path}  paths {paths}")
 
-        from poms.users.models import MasterUser
         master_user = MasterUser.objects.all().first()
         # TODO REFACTOR HERE
         # get space_code somewhere else
@@ -473,13 +475,13 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
         return zip_file_path
 
-    def check_dir_exists(self, directory_path) -> bool:
+    def dir_exists(self, directory_path: str) -> bool:
         try:
-            _, _ = self.listdir(directory_path)
-            return True
-
+            self.listdir(directory_path)
         except Exception:
             return False
+        else:
+            return True
 
 
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
@@ -530,7 +532,7 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
                 path, os.path.join(local_destination_path, file)
             )
 
-                # _l.info('download_directory.path %s' % path)
+            # _l.info('download_directory.path %s' % path)
 
         for directory in directories:
             path = src + directory if src.endswith("/") else f"{src}/{directory}"
@@ -560,6 +562,7 @@ def get_storage():
         storage = FinmarsLocalFileSystemStorage()
 
     if storage:
-        storage.get_symmetric_key()  # IMPORTANT Storage MUST BE inherited from EncryptedStorage
+        # IMPORTANT! Storage MUST BE inherited from EncryptedStorage
+        storage.get_symmetric_key()
 
     return storage

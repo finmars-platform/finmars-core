@@ -2,7 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.explorer.utils import has_slash, check_is_true
+from poms.explorer.utils import check_is_true, has_slash
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -75,7 +75,7 @@ class MoveSerializer(serializers.Serializer):
                 "'target_directory_path' should not start or end with '/'"
             )
         new_target_directory_path = f"{space_code}/{target_directory_path}/"
-        if not storage.check_dir_exists(new_target_directory_path):
+        if not storage.dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
                 f"target directory '{new_target_directory_path}' does not exist"
             )
