@@ -22,6 +22,7 @@ from poms.explorer.serializers import (
 )
 from poms.explorer.utils import (
     join_path,
+    last_dir_name,
     move_dir,
     move_file,
     path_is_file,
@@ -440,10 +441,14 @@ class MoveViewSet(AbstractViewSet):
 
         destination_directory = serializer.validated_data["target_directory_path"]
 
-        _l.info(f"MoveViewSet: move {len(directories)} directorys & {len(files)} files")
+        _l.info(
+            f"MoveViewSet: move {len(directories)} directories & {len(files)} files"
+        )
 
         for directory in directories:
-            move_dir(storage, directory, destination_directory)
+            last_dir = last_dir_name(directory)
+            new_destination_directory = os.path.join(destination_directory, last_dir)
+            move_dir(storage, directory, new_destination_directory)
 
         for file in files:
             move_file(storage, file, destination_directory)

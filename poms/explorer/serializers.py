@@ -81,20 +81,24 @@ class MoveSerializer(serializers.Serializer):
             )
 
         updated_items = []
-        for file_path in attrs["items"]:
-            if has_slash(file_path):
+        for path in attrs["items"]:
+            if has_slash(path):
                 raise serializers.ValidationError(
-                    f"item {file_path} should not start or end with '/'"
+                    f"item {path} should not start or end with '/'"
                 )
 
-            directory_path = os.path.dirname(file_path)
+            directory_path = os.path.dirname(path)
             if target_directory_path == directory_path:
                 raise serializers.ValidationError(
-                    f"path {file_path} belongs to target directory path"
+                    f"path {path} belongs to target directory path"
                 )
-            file_path = f"{space_code}/{file_path}"
 
-            updated_items.append(file_path)
+            path = f"{space_code}/{path}"
+            if storage.dir_exists(f"{path}/"):
+                # this is a directory
+                path = f"{path}/"
+
+            updated_items.append(path)
 
         attrs["target_directory_path"] = new_target_directory_path
         attrs["items"] = updated_items

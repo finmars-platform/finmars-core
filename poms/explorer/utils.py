@@ -82,6 +82,42 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
+def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
+    """
+    Check if the given path is a file in the storage.
+    Args:
+        storage (FinmarsS3Storage): The storage object to use.
+        file_path (str): The path of the file to check.
+    Returns:
+        bool: True if the path is a file, False otherwise.
+    """
+    try:
+        file_size = storage.size(file_path)
+        _l.info(f"path_is_file: {file_path} size is {file_size}")
+        return file_size > 0
+
+    except Exception as e:
+        _l.error(f"path_is_file check resulted in {repr(e)}")
+        return False
+
+
+TRUTHY_VALUES = {"true", "1", "yes"}
+
+
+def check_is_true(value: str) -> bool:
+    return bool(value and (value.lower() in TRUTHY_VALUES))
+
+
+def last_dir_name(path: str) -> str:
+    if not path:
+        return path
+
+    if path.endswith("/"):
+        path = path[:-1]
+
+    return f"{path.rsplit('/', 1)[-1]}/"
+
+
 def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
     """
     Move a file from the source path to the destination path.
@@ -132,39 +168,3 @@ def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
         s_file = os.path.join(source_dir, file_name)
         d_file = os.path.join(destin_dir, file_name)
         move_file(storage, s_file, d_file)
-
-
-def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
-    """
-    Check if the given path is a file in the storage.
-    Args:
-        storage (FinmarsS3Storage): The storage object to use.
-        file_path (str): The path of the file to check.
-    Returns:
-        bool: True if the path is a file, False otherwise.
-    """
-    try:
-        file_size = storage.size(file_path)
-        _l.info(f"path_is_file: {file_path} size is {file_size}")
-        return file_size > 0
-
-    except Exception as e:
-        _l.error(f"path_is_file check resulted in {repr(e)}")
-        return False
-
-
-TRUTHY_VALUES = {"true", "1", "yes"}
-
-
-def check_is_true(value: str) -> bool:
-    return bool(value and (value.lower() in TRUTHY_VALUES))
-
-
-def last_dir_name(path: str) -> str:
-    if not path:
-        return path
-
-    if path.endswith("/"):
-        path = path[:-1]
-
-    return f"{path.rsplit('/', 1)[-1]}/"
