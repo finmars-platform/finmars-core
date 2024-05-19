@@ -475,13 +475,20 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
         return zip_file_path
 
-    def dir_exists(self, directory_path: str) -> bool:
+    def dir_exists(self, path: str) -> bool:
+        if not path.endswith("/"):
+            raise ValueError("dir path must ends with /")
+
         try:
-            self.listdir(directory_path)
-        except Exception:
+            dirs, files = self.listdir(path)
+            if dirs or files:
+                return True
+
+            return self.size(path[:-1]) == 0
+
+        except Exception as e:
+            _l.error(f"dir_exists: check resulted in {repr(e)}")
             return False
-        else:
-            return True
 
 
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
