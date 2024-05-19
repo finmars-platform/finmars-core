@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.utils import define_content_type, join_path, last_folder, move_folder
+from poms.explorer.utils import define_content_type, join_path, move_dir, last_dir_name
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -64,7 +64,7 @@ class TestMoveFolder(BaseTestCase):
         source_folder = "empty_folder"
         destination_folder = "destination/folder"
 
-        move_folder(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder)
 
         self.storage.listdir.assert_called_with(source_folder)
 
@@ -79,7 +79,7 @@ class TestMoveFolder(BaseTestCase):
             ([], []),
         ]
 
-        move_folder(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder)
 
         # Assert the recursive move of subdirectories
         self.assertEqual(self.storage.listdir.call_count, 3)
@@ -101,7 +101,7 @@ class TestMoveFolder(BaseTestCase):
         # Mock the listdir return values
         self.storage.listdir.return_value = ([], ["file1.txt"])
         self.storage.open.return_value.read.return_value = file_content
-        move_folder(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder)
 
         # Assert the move of files
         self.storage.listdir.assert_called_with(source_folder)
@@ -111,11 +111,11 @@ class TestMoveFolder(BaseTestCase):
         self.assertEqual(args[0], f"{destination_folder}/{source_folder}/file1.txt")
 
 
-class LastFolderTest(BaseTestCase):
+class LastDirTest(BaseTestCase):
     @BaseTestCase.cases(
         ("empty", "", ""),
         ("end_slash", "space0000/test/source/", "source/"),
         ("no_end_slash", "space0000/test/sp/source", "source/"),
     )
     def test__content_type(self, path, result):
-        self.assertEqual(last_folder(path), result)
+        self.assertEqual(last_dir_name(path), result)

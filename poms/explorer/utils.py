@@ -42,7 +42,7 @@ def join_path(space_code: str, path: Optional[str]) -> str:
         return f"{space_code.rstrip('/')}"
 
 
-def remove_first_folder_from_path(path: str) -> str:
+def remove_first_dir_from_path(path: str) -> str:
     return os.path.sep.join(path.split(os.path.sep)[1:])
 
 
@@ -52,7 +52,7 @@ def has_slash(path: str) -> bool:
 
 def response_with_file(storage: FinmarsS3Storage, path: str) -> HttpResponse:
     try:
-        with storage.open(path, "rb") as file:
+        with storage.open(path) as file:
             result = file.read()
             file_content_type = define_content_type(file.name)
             response = (
@@ -82,72 +82,56 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
-def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str):
+def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
     """
-    Move a file from the source folder to the destination folder.
+    Move a file from the source path to the destination path.
 
     Args:
         storage (Storage): The storage instance to use.
-        source_path (str): The path of the source file.
-        destination_path (str): The path of the destination folder.
+        source_file_path (str): The path of the source file.
+        destin_file_path (str): The path of the destination file.
     Returns:
         None
     """
 
-    content = storage.open(source_path).read()
-
+    content = storage.open(source_file_path).read()
     _l.info(
         f"move_file: with content len={len(content)} "
-        f"from {source_path} to {destination_path}"
+        f"from {source_file_path} to {destin_file_path}"
     )
 
-    file_name = os.path.basename(source_path)
-    storage.save(destination_path, ContentFile(content, name=file_name))
+    file_name = os.path.basename(source_file_path)
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    _l.info(f"move_file: content saved to {destin_file_path}")
 
-    _l.info(f"move_file: content saved to {destination_path}")
-
-    storage.delete(source_path)
-
-    _l.info(f"move_file: source path {source_path} deleted")
+    storage.delete(source_file_path)
+    _l.info(f"move_file: source file {source_file_path} deleted")
 
 
-def last_folder(path: str) -> str:
-    if not path:
-        return path
-
-    if path.endswith("/"):
-        path = path[:-1]
-
-    return f"{path.rsplit('/', 1)[-1]}/"
-
-
-def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
+def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
     """
-    Move a folder and its contents recursively within the storage.
-    Empty folder will not be moved/created in the storage!
+    Move a directory and its contents recursively within the storage.
+    Empty directory will not be moved/created in the storage!
     Args:
         storage (Storage): The storage instance to use.
-        source_folder (str): The path of the source folder.
-        destination_folder (str): The path of the destination folder.
+        source_dir (str): The path of the source directory.
+        destin_dir (str): The path of the destination directory.
     Returns:
         None
     """
-    _l.info(f"try to move folder from '{source_folder}' to '{destination_folder}'")
+    _l.info(f"try to move directory from '{source_dir}' to '{destin_dir}'")
 
-    dirs, files = storage.listdir(source_folder)
+    dirs, files = storage.listdir(source_dir)
 
     for dir_name in dirs:
-        s = os.path.join(source_folder, dir_name)
-        d = os.path.join(destination_folder, dir_name)
-        move_folder(storage, s, d)
+        s_dir = os.path.join(source_dir, dir_name)
+        d_dir = os.path.join(destin_dir, dir_name)
+        move_dir(storage, s_dir, d_dir)
 
     for file_name in files:
-        s = os.path.join(source_folder, file_name)
-        real_destination_path = os.path.join(
-            destination_folder, last_folder(source_folder)
-        )
-        d = os.path.join(real_destination_path, file_name)
-        move_file(storage, s, d)
+        s_file = os.path.join(source_dir, file_name)
+        d_file = os.path.join(destin_dir, file_name)
+        move_file(storage, s_file, d_file)
 
 
 def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
@@ -167,3 +151,20 @@ def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
     except Exception as e:
         _l.error(f"path_is_file check resulted in {repr(e)}")
         return False
+
+
+TRUTHY_VALUES = {"true", "1", "yes"}
+
+
+def check_is_true(value: str) -> bool:
+    return bool(value and (value.lower() in TRUTHY_VALUES))
+
+
+def last_dir_name(path: str) -> str:
+    if not path:
+        return path
+
+    if path.endswith("/"):
+        path = path[:-1]
+
+    return f"{path.rsplit('/', 1)[-1]}/"

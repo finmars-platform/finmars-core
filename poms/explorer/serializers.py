@@ -2,7 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.explorer.utils import has_slash
+from poms.explorer.utils import has_slash, check_is_true
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -35,9 +35,6 @@ class FilePathSerializer(BasePathSerializer):
     pass
 
 
-TRUTHY_VALUES = {"true", "1", "yes"}
-
-
 class DeletePathSerializer(BasePathSerializer):
     is_dir = serializers.CharField(
         default="false",
@@ -46,7 +43,7 @@ class DeletePathSerializer(BasePathSerializer):
     )
 
     def validate_is_dir(self, value) -> bool:
-        return bool(value and (value.lower() in TRUTHY_VALUES))
+        return check_is_true(value)
 
     def validate_path(self, value):
         if not value:
@@ -72,15 +69,15 @@ class MoveSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = attrs['target_directory_path']
+        target_directory_path = attrs["target_directory_path"]
         if has_slash(target_directory_path):
             raise serializers.ValidationError(
                 "'target_directory_path' should not start or end with '/'"
             )
         new_target_directory_path = f"{space_code}/{target_directory_path}/"
-        if storage and not storage.check_dir_exists(new_target_directory_path):
+        if not storage.check_dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
-                f"target folder '{new_target_directory_path}' does not exist"
+                f"target directory '{new_target_directory_path}' does not exist"
             )
 
         updated_items = []
@@ -90,8 +87,8 @@ class MoveSerializer(serializers.Serializer):
                     f"item {file_path} should not start or end with '/'"
                 )
 
-            folder_path = os.path.dirname(file_path)
-            if target_directory_path == folder_path:
+            directory_path = os.path.dirname(file_path)
+            if target_directory_path == directory_path:
                 raise serializers.ValidationError(
                     f"path {file_path} belongs to target directory path"
                 )

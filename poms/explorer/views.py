@@ -22,11 +22,11 @@ from poms.explorer.serializers import (
 )
 from poms.explorer.utils import (
     join_path,
-    remove_first_folder_from_path,
+    remove_first_dir_from_path,
     response_with_file,
     move_file,
-    move_folder,
-path_is_file,
+    move_dir,
+    path_is_file,
 )
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -84,7 +84,7 @@ class ExplorerViewSet(AbstractViewSet):
                 "name": file,
                 "created": created,
                 "modified": modified,
-                "file_path": f"/{remove_first_folder_from_path(os.path.join(path, file))}",
+                "file_path": f"/{remove_first_dir_from_path(os.path.join(path, file))}",
                 "size": storage.size(f"{path}/{file}"),
                 "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),
             }
@@ -116,7 +116,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
             path = f"{path}/"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         return response_with_file(storage, path)
 
@@ -142,7 +142,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
             filepath += ".html"
         path = join_path(request.space_code, serializer.validated_data["path"])
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         return response_with_file(storage, path)
 
@@ -164,7 +164,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         path = join_path(request.space_code, serializer.validated_data["path"])
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         _l.info(f"path {path}")
 
@@ -230,7 +230,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         path = f"{request.space_code}/{serializer.validated_data['path']}"
         is_dir = serializer.validated_data["is_dir"]
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             _l.info(f"going to delete {path}")
@@ -270,7 +270,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             with NamedTemporaryFile() as tmpf:
@@ -342,7 +342,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             zip_file_path = storage.download_paths_as_zip(
@@ -385,7 +385,7 @@ class DownloadViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             with storage.open(path, "rb") as file:
@@ -438,14 +438,14 @@ class MoveViewSet(AbstractViewSet):
             else:
                 directories.append(item)
 
-        destination_folder = serializer.validated_data["target_directory_path"]
+        destination_directory = serializer.validated_data["target_directory_path"]
 
-        _l.info(f"MoveViewSet: move {len(directories)} folders & {len(files)} files")
+        _l.info(f"MoveViewSet: move {len(directories)} directorys & {len(files)} files")
 
         for directory in directories:
-            move_folder(storage, directory, destination_folder)
+            move_dir(storage, directory, destination_directory)
 
         for file in files:
-            move_file(storage, file, destination_folder)
+            move_file(storage, file, destination_directory)
 
         return Response(ResponseSerializer({"status": "ok"}).data)
