@@ -225,6 +225,14 @@ class ReportSerializer(ReportSerializerWithLogs):
         queryset=CostMethod.objects, allow_null=True, allow_empty=True
     )
 
+    calculation_group = serializers.ChoiceField(
+        default=Report.CALCULATION_GROUP_NO_GROUPING,
+        initial=Report.CALCULATION_GROUP_PORTFOLIO,
+        choices=Report.CALCULATION_GROUP_CHOICES,
+        required=False,
+        help_text="Calculation grouping",
+    )
+
     portfolio_mode = serializers.ChoiceField(
         default=Report.MODE_INDEPENDENT,
         initial=Report.MODE_INDEPENDENT,
@@ -1323,17 +1331,9 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             full_items, instance.frontend_request_options
         )
 
-        total_market_value = 0
-
-        try:
-            for item in full_items:
-                total_market_value = total_market_value + item["market_value"]
-
-        except Exception as e:
-            _l.error(
-                f"Could not calculate market_value, some prices/fxrates are missing {e}"
-            )
-            total_market_value = None
+        full_items = helper_service.calculate_market_value_percent(
+            full_items, instance.calculation_group
+        )
 
         full_items = helper_service.filter_by_groups_filters(
             full_items, instance.frontend_request_options
@@ -1349,7 +1349,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         group_type = groups_types[len(groups_types) - 1]
 
         unique_groups = helper_service.get_unique_groups(
-            full_items, group_type, columns, total_market_value
+            full_items, group_type, columns
         )
         unique_groups = helper_service.sort_groups(
             unique_groups, instance.frontend_request_options
@@ -1470,16 +1470,9 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             full_items, instance.frontend_request_options
         )
 
-        total_market_value = 0
-        try:
-            for item in full_items:
-                total_market_value = total_market_value + item["market_value"]
-
-        except Exception as e:
-            _l.error(
-                "Could not calculate market_value, some prices/fxrates are missing"
-            )
-            total_market_value = None
+        full_items = helper_service.calculate_market_value_percent(
+            full_items, instance.calculation_group
+        )
 
         full_items = helper_service.filter_by_groups_filters(
             full_items, instance.frontend_request_options
@@ -1488,8 +1481,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         full_items = helper_service.sort_items(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, total_market_value
+        full_items = helper_service.format_market_value_percent(
+            full_items
         )
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
@@ -1613,22 +1606,13 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
         )
-        total_market_value = 0
-        try:
-            for item in full_items:
-                total_market_value = total_market_value + item["market_value"]
-
-        except Exception as e:
-            _l.error(
-                "Could not calculate market_value, some prices/fxrates are missing"
-            )
-            total_market_value = None
+        full_items = helper_service.calculate_market_value_percent(
+            full_items, instance.calculation_group
+        )
 
         full_items = helper_service.filter_by_groups_filters(
             full_items, instance.frontend_request_options
         )
-
-        groups = []
 
         # _l.info('instance.frontend_request_options %s' % instance.frontend_request_options)
         # _l.info('original_items0 %s' % full_items[0])
@@ -1639,7 +1623,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         group_type = groups_types[len(groups_types) - 1]
 
         unique_groups = helper_service.get_unique_groups(
-            full_items, group_type, columns, total_market_value
+            full_items, group_type, columns
         )
         unique_groups = helper_service.sort_groups(
             unique_groups, instance.frontend_request_options
@@ -1649,15 +1633,13 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         data["count"] = len(unique_groups)
 
-        groups = helper_service.paginate_items(
+        data["items"] = helper_service.paginate_items(
             unique_groups,
             {
                 "page_size": instance.page_size,
                 "page": instance.page,
             },
         )
-
-        data["items"] = groups
 
         _l.info("BackendBalanceReportGroupsSerializer.to_representation")
 
@@ -1744,16 +1726,9 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
         )
-        total_market_value = 0
-        try:
-            for item in full_items:
-                total_market_value = total_market_value + item["market_value"]
-
-        except Exception:
-            _l.error(
-                "Could not calculate market_value, some prices/fxrates are missing"
-            )
-            total_market_value = None
+        full_items = helper_service.calculate_market_value_percent(
+            full_items, instance.calculation_group
+        )
 
         _l.info(f"PL BEFORE ALL GLOBAL FILTER full_items len {len(full_items)}")
         full_items = helper_service.filter_by_groups_filters(
@@ -1762,8 +1737,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         full_items = helper_service.sort_items(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, total_market_value
+        full_items = helper_service.format_market_value_percent(
+            full_items
         )
         _l.info(f"PL BEFORE AFTER ALL FILTERS full_items len {len(full_items)}")
 

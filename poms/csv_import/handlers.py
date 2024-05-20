@@ -945,6 +945,9 @@ class SimpleImportProcess:
                     with storage.open(self.file_path, "rb") as f:
                         self.file_items = json.loads(f.read())
 
+                if not isinstance(self.file_items, list):
+                    raise ValueError('Input json is not a list. Did you forget to wrap it into []?')
+
             elif self.process_type == ProcessType.CSV:
                 _l.info(f"ProcessType.CSV self.file_path {self.file_path}")
 
