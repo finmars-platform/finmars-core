@@ -1255,7 +1255,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     @staticmethod
     def filter_instrument_type(queryset, name, value):
         if value:
-            queryset = queryset.filter(instrument_type__user_cod__endswith=value)
+            queryset = queryset.filter(instrument_type__user_code__endswith=value)
         return queryset
 
 
