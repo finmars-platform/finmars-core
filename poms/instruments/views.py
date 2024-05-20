@@ -1233,7 +1233,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
-    instrument_type = CharFilter(method="filter_instrument_type")
+    instrument_type = django_filters.CharFilter(method="instrument_type_search")
     query = CharFilter(method="query_search")
 
     class Meta:
@@ -1245,11 +1245,10 @@ class InstrumentForSelectFilterSet(FilterSet):
             "name",
             "public_name",
             "short_name",
-            "instrument_type",
         ]
 
     @staticmethod
-    def query_search(queryset, name, value):
+    def query_search(queryset, field_name, value):
         if value:
             # Split the value by spaces to get individual search terms
             search_terms = value.split()
@@ -1267,7 +1266,7 @@ class InstrumentForSelectFilterSet(FilterSet):
         return queryset
 
     @staticmethod
-    def filter_instrument_type(queryset, name, value):
+    def instrument_type_search(queryset, field_name, value):
         if value:
             queryset = queryset.filter(instrument_type__user_code__endswith=value)
         return queryset
