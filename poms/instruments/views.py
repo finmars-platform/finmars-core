@@ -1220,6 +1220,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
+    instrument_type = CharFilter(method="filter_instrument_type")
     query = CharFilter(method="query_search")
 
     class Meta:
@@ -1249,6 +1250,12 @@ class InstrumentForSelectFilterSet(FilterSet):
                 )
             queryset = queryset.filter(conditions)
 
+        return queryset
+
+    @staticmethod
+    def filter_instrument_type(queryset, name, value):
+        if value:
+            queryset = queryset.filter(instrument_type__user_cod__endswith=value)
         return queryset
 
 
