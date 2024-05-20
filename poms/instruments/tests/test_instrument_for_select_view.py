@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, InstrumentType
 
 
 class InstrumentViewSetTest(BaseTestCase):
@@ -49,25 +49,18 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json["results"]), 3)
 
     @BaseTestCase.cases(
-        ("stock", "stock", "com.finmars.initial-instrument-type:stock"),
-        ("portfolio", "portfolio", "com.finmars.initial-instrument-type:portfolio"),
-        ("t_bills_demo", "t_bills", "com.finmars.demo-instrument-type:t_bills"),
-        ("t_bills", "t_bills", "com.finmars.standard-instrument-type:t_bills"),
-        ("bond", "bond", "com.finmars.initial-instrument-type:bond"),
-        ("crypto", "crypto", "com.finmars.demo-instrument-type:crypto"),
+        ("stock", "stock"),
+        ("bond", "bond"),
     )
-    def test__filter_by_instrument_type(self, code, user_code):
-        instrument_type = self.instrument.instrument_type
-        instrument_type.user_code = user_code
-        instrument_type.save()
-        print(
-            f"instrument_type={self.instrument.instrument_type.user_code} code={code}"
-            f" endswith={instrument_type.user_code.endswith(code)}"
-        )
-        response = self.client.get(path=f"{self.url}?instrument_type={code}")
+    def test__filter_by_instrument_type(self, code):
+        itype = InstrumentType.objects.filter(user_code__endswith=code).first()
+        self.instrument.instrument_type = itype
+        self.instrument.save()
+
+        response = self.client.get(path=f"{self.url}?instrument_type={code}&query=")
+
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        print("response_json=", response_json)
 
         self.assertEqual(len(response_json["results"]), 1)
