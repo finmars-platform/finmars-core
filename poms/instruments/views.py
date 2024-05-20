@@ -938,10 +938,15 @@ class InstrumentViewSet(AbstractModelViewSet):
             type="generate_events",
         )
 
-        ret = generate_events.apply_async(kwargs={"task_id": celery_task.id, 'context': {
-            'space_code': celery_task.master_user.space_code,
-            'realm_code': celery_task.master_user.realm_code
-        }})
+        ret = generate_events.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            }
+        )
         return Response(
             {
                 "success": True,
@@ -991,10 +996,14 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
-                kwargs={"master_user_id": request.user.master_user.id, "date": dte, 'context': {
-                    'space_code': request.space_code,
-                    'realm_code': request.realm_code
-                }}
+                kwargs={
+                    "master_user_id": request.user.master_user.id,
+                    "date": dte,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
             )
             tasks_ids.append(res.id)
 
@@ -1041,10 +1050,11 @@ class InstrumentViewSet(AbstractModelViewSet):
                 kwargs={
                     "master_user_id": request.user.master_user.id,
                     "date": str(dte),
-                    "instrument_id": instrument.id, 'context': {
-                        'space_code': request.space_code,
-                        'realm_code': request.realm_code
-                    }
+                    "instrument_id": instrument.id,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
                 }
             )
             tasks_ids.append(res.id)
@@ -1059,10 +1069,13 @@ class InstrumentViewSet(AbstractModelViewSet):
     )
     def process_events(self, request, *args, **kwargs):
         ret = process_events.apply_async(
-            kwargs={"master_users": [request.user.master_user.pk], 'context': {
-                'space_code': request.space_code,
-                'realm_code': request.realm_code
-            }}
+            kwargs={
+                "master_users": [request.user.master_user.pk],
+                "context": {
+                    "space_code": request.space_code,
+                    "realm_code": request.realm_code,
+                },
+            }
         )
         return Response(
             {
@@ -1232,6 +1245,7 @@ class InstrumentForSelectFilterSet(FilterSet):
             "name",
             "public_name",
             "short_name",
+            "instrument_type",
         ]
 
     @staticmethod
