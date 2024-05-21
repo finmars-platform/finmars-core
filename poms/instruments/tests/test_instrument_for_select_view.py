@@ -57,7 +57,7 @@ class InstrumentViewSetTest(BaseTestCase):
         self.instrument.instrument_type = itype
         self.instrument.save()
 
-        response = self.client.get(path=f"{self.url}?instrument_type={code}&query=")
+        response = self.client.get(path=f"{self.url}?query=&instrument_type={code}")
 
         self.assertEqual(response.status_code, 200, response.content)
 

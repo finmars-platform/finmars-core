@@ -1233,7 +1233,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
-    instrument_type = django_filters.CharFilter(method="instrument_type_search")
+    instrument_type = CharFilter(method="instrument_type_search")
     query = CharFilter(method="query_search")
 
     class Meta:
