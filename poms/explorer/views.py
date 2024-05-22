@@ -2,477 +2,447 @@ import json
 import logging
 import mimetypes
 import os
-import traceback
 from tempfile import NamedTemporaryFile
 
 from django.http import FileResponse
-from django.http import HttpResponse
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
 
+from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
-from poms.explorer.serializers import ExplorerSerializer
+from poms.explorer.serializers import (
+    DeletePathSerializer,
+    FilePathSerializer,
+    FolderPathSerializer,
+    MoveSerializer,
+    ResponseSerializer,
+    ZipFilesSerializer,
+)
+from poms.explorer.utils import (
+    join_path,
+    remove_first_folder_from_path,
+    response_with_file,
+    move_file,
+    move_folder,
+path_is_file,
+)
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
 from poms_app import settings
 
-_l = logging.getLogger('poms.explorer')
+_l = logging.getLogger("poms.explorer")
 
-from poms.common.storage import get_storage
 
 storage = get_storage()
 
 
 class ExplorerViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FolderPathSerializer
+    http_method_names = ["get"]
 
-    def remove_first_folder_from_path(self, path):
-        split_path = path.split(os.path.sep)
-        new_path = os.path.sep.join(split_path[1:])
-        return new_path
-
+    @swagger_auto_schema(
+        query_serializer=FolderPathSerializer(),
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
     def list(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
 
-        path = request.query_params.get('path')
+        space_code = request.space_code
+        path = f"{join_path(space_code, serializer.validated_data['path'])}/"
 
-        if not path:
-            path = request.space_code + '/'
-        else:
-            if path[0] == '/':
-                path = request.space_code + path
-            else:
-                path = request.space_code + '/' + path
+        directories, files = storage.listdir(path)
 
-        if path[-1] != '/':
-            path = path + '/'
+        members_usernames = Member.objects.exclude(user=request.user).values_list(
+            "user__username", flat=True
+        )
 
-        items = storage.listdir(path)
-
-        members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
-
-        results = []
-
-        for dir in items[0]:
-
-            if path == request.space_code + '/':
-
-                if dir not in members_usernames:
-                    results.append({
-                        'type': 'dir',
-                        'name': dir
-                    })
-
-            else:
-
-                results.append({
-                    'type': 'dir',
-                    'name': dir
-                })
-
-        for file in items[1]:
-            created = storage.get_created_time(path + '/' + file)
-            modified = storage.get_modified_time(path + '/' + file)
+        results = [
+            {
+                "type": "dir",
+                "name": dir_name,
+            }
+            for dir_name in directories
+            if path == f"{space_code}/"
+            and dir_name not in members_usernames
+            or path != f"{space_code}/"
+        ]
+        for file in files:
+            created = storage.get_created_time(f"{path}/{file}")
+            modified = storage.get_modified_time(f"{path}/{file}")
 
             mime_type, encoding = mimetypes.guess_type(file)
 
             item = {
-                'type': 'file',
-                'mime_type': mime_type,
-                'name': file,
-                'created': created,
-                'modified': modified,
-                'file_path': '/' + self.remove_first_folder_from_path(os.path.join(path, file)),
-                # path already has / in end of str
-                'size': storage.size(path + '/' + file),
-                'size_pretty': storage.convert_size(storage.size(path + '/' + file))
+                "type": "file",
+                "mime_type": mime_type,
+                "name": file,
+                "created": created,
+                "modified": modified,
+                "file_path": f"/{remove_first_folder_from_path(os.path.join(path, file))}",
+                "size": storage.size(f"{path}/{file}"),
+                "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),
             }
 
             results.append(item)
 
-        return Response({
-            "path": path,
-            "results": results
-        })
+        result = {"status": "ok", "path": path, "results": results}
+        return Response(ResponseSerializer(result).data)
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FilePathSerializer
+    http_method_names = ["get"]
 
+    @swagger_auto_schema(
+        query_serializer=FilePathSerializer(),
+        responses={
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def list(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        path = join_path(request.space_code, serializer.validated_data["path"])
+        if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
+            path = f"{path}/"
 
-        try:
+        # TODO validate path that either public/import/system or user home folder
 
-            path = request.query_params.get('path')
-
-            if not path:
-                raise ValidationError("Path is required")
-            else:
-                if path[0] == '/':
-                    path = request.space_code + path
-                else:
-                    path = request.space_code + '/' + path
-
-            if settings.AZURE_ACCOUNT_KEY:
-                if path[-1] != '/':
-                    path = path + '/'
-
-            # TODO validate path that eiher public/import/system or user home folder
-
-            with storage.open(path, 'rb') as file:
-
-                result = file.read()
-
-                file_content_type = None
-
-                if '.txt' in file.name:
-                    file_content_type = 'plain/text'
-
-                if '.csv' in file.name:
-                    file_content_type = 'text/csv'
-
-                if '.json' in file.name:
-                    file_content_type = 'application/json'
-
-                if '.yml' in file.name or '.yaml' in file.name:
-                    file_content_type = 'application/yaml'
-
-                if '.py' in file.name:
-                    file_content_type = 'text/x-python'
-
-                if '.png' in file.name:
-                    file_content_type = 'image/png'
-
-                if '.jp' in file.name:
-                    file_content_type = 'image/jpeg'
-
-                if '.pdf' in file.name:
-                    file_content_type = 'application/pdf'
-
-                if '.doc' in file.name:
-                    file_content_type = 'application/msword'
-
-                if '.doc' in file.name:
-                    file_content_type = 'application/msword'
-
-                if '.xls' in file.name:
-                    file_content_type = 'application/vnd.ms-excel'
-
-                if '.xlsx' in file.name:
-                    file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-                # if file_content_type:
-                #     response = FileResponse(result, content_type=file_content_type)
-                # else:
-                #     response = FileResponse(result)
-
-                if file_content_type:
-                    response = HttpResponse(result, content_type=file_content_type)
-                else:
-                    response = HttpResponse(result)
-
-            return response
-
-        except Exception as e:
-            _l.error('view file error %s' % e)
-            _l.error('view file traceback %s' % traceback.format_exc())
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-from bs4 import BeautifulSoup
-
-
-def sanitize_html(html):
-    soup = BeautifulSoup(html, "html.parser")
-
-    for script in soup(["script", "style"]):  # Remove these tags
-        script.extract()
-
-    return str(soup)
+        return response_with_file(storage, path)
 
 
 class ExplorerServeFileViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FilePathSerializer
+    http_method_names = ["get"]
 
+    @swagger_auto_schema(
+        query_serializer=FilePathSerializer(),
+        responses={
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def retrieve(self, request, filepath=None, *args, **kwargs):
+        serializer = self.get_serializer(data={"path": filepath})
+        serializer.is_valid(raise_exception=True)
+        if "." not in filepath.split("/")[-1]:
+            filepath += ".html"
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
-        _l.info('ExplorerServeFileViewSet.filepath %s' % filepath)
-        filepath = filepath.rstrip('/')
+        # TODO validate path that either public/import/system or user home folder
 
-        if not '.' in filepath.split('/')[-1]:  # if the file does not have an extension
-            filepath += '.html'
-
-        path = request.space_code + '/' + filepath
-
-        # TODO validate path that eiher public/import/system or user home folder
-
-        _l.info('path %s' % path)
-
-        with storage.open(path, 'rb') as file:
-
-            result = file.read()
-
-            file_content_type = None
-
-            if '.html' in file.name:
-                file_content_type = 'text/html'
-                # result = sanitize_html(result)
-
-            if '.txt' in file.name:
-                file_content_type = 'plain/text'
-
-            if '.js' in file.name:
-                file_content_type = 'text/javascript'
-
-            if '.csv' in file.name:
-                file_content_type = 'text/csv'
-
-            if '.json' in file.name:
-                file_content_type = 'application/json'
-
-            if '.yml' in file.name or '.yaml' in file.name:
-                file_content_type = 'application/yaml'
-
-            if '.py' in file.name:
-                file_content_type = 'text/x-python'
-
-            if '.png' in file.name:
-                file_content_type = 'image/png'
-
-            if '.jp' in file.name:
-                file_content_type = 'image/jpeg'
-
-            if '.pdf' in file.name:
-                file_content_type = 'application/pdf'
-
-            if '.doc' in file.name:
-                file_content_type = 'application/msword'
-
-            if '.doc' in file.name:
-                file_content_type = 'application/msword'
-
-            if '.css' in file.name:
-                file_content_type = 'text/css'
-
-            if '.xls' in file.name:
-                file_content_type = 'application/vnd.ms-excel'
-
-            if '.xlsx' in file.name:
-                file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-            # if file_content_type:
-            #     response = FileResponse(result, content_type=file_content_type)
-            # else:
-            #     response = FileResponse(result)
-
-            if file_content_type:
-                response = HttpResponse(result, content_type=file_content_type)
-            else:
-                response = HttpResponse(result)
-
-        return response
+        return response_with_file(storage, path)
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FolderPathSerializer
+    http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FolderPathSerializer(),
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        _l.info('request %s' % request.data)
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
-        path = request.data['path']
+        # TODO validate path that either public/import/system or user home folder
 
-        if not path:
-            path = request.space_code
-        else:
-            if path[0] == '/':
-                path = request.space_code + path
-            else:
-                path = request.space_code + '/' + path
+        _l.info(f"path {path}")
 
-        # TODO validate path that eiher public/import/system or user home folder
+        files = []
+        for file in request.FILES.getlist("file"):
+            filepath = f"{path}/{file.name}"
 
-        for file in request.FILES.getlist('file'):
-            _l.info('f %s' % file)
-
-            filepath = path + '/' + file.name
-
-            _l.info('going to save %s' % filepath)
-
-            # Possibly deprecated
-            # try:
-            #
-            #     storage.delete(filepath)
-            #
-            #     _l.info("File exist, going to delete")
-            #
-            # except Exception as e:
-            #     _l.info("File is not exists, going to create")
+            _l.info(f"going to save {filepath}")
 
             storage.save(filepath, file)
 
-        _l.info('path %s' % path)
+            files.append(filepath)
 
-        if path == request.space_code + '/import':
-
+        if path == f"{request.space_code}/import":
             try:
+                settings_path = f"{request.space_code}/import/.settings.json"
 
-                settings_path = request.space_code + '/import/.settings.json'
+                with storage.open(settings_path) as settings_file:
+                    import_settings = json.loads(settings_file.read())
 
-                with storage.open(settings_path) as file:
-
-                    import_settings = json.loads(file.read())
-
-                    procedures = import_settings['on_create']['expression_procedure']
+                    procedures = import_settings["on_create"]["expression_procedure"]
 
                     for item in procedures:
-                        _l.info("Trying to execute %s" % item)
+                        _l.info(f"Trying to execute {item}")
 
                         procedure = ExpressionProcedure.objects.get(user_code=item)
 
-                        instance = ExpressionProcedureProcess(procedure=procedure, master_user=request.user.master_user,
-                                                              member=request.user.member)
+                        instance = ExpressionProcedureProcess(
+                            procedure=procedure,
+                            master_user=request.user.master_user,
+                            member=request.user.member,
+                        )
                         instance.process()
 
             except Exception as e:
-                _l.error("Could not import anything %s" % e)
+                _l.error(f"get file resulted in {repr(e)}")
+                result = {"status": "error", "path": path, "details": repr(e)}
+                return Response(
+                    ResponseSerializer(result).data,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        return Response({
-            'status': 'ok'
-        })
+        result = {"status": "ok", "path": path, "files": files}
+        return Response(ResponseSerializer(result).data)
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = DeletePathSerializer
+    http_method_names = ["post"]
 
-    def create(self, request, *args, **kwargs):  # refactor later, for destroy id is required
+    @swagger_auto_schema(
+        request_body=DeletePathSerializer(),
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        # refactor later, for destroy id is required
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
 
-        path = request.query_params.get('path')
-        is_dir = request.query_params.get('is_dir')
+        path = f"{request.space_code}/{serializer.validated_data['path']}"
+        is_dir = serializer.validated_data["is_dir"]
 
-        # TODO validate path that eiher public/import/system or user home folder
-
-        if is_dir == 'true':
-            is_dir = True
-        else:
-            is_dir = False
-
-        if not path:
-            raise ValidationError("Path is required")
-        elif path == '/':
-            raise ValidationError("Could not remove root folder")
-        else:
-            path = request.space_code + '/' + path
-
-        if path == request.space_code + '/.system/':
-            raise PermissionDenied('Could not remove .system folder')
+        # TODO validate path that either public/import/system or user home folder
 
         try:
-            _l.info('going to delete %s' % path)
+            _l.info(f"going to delete {path}")
 
             if is_dir:
                 storage.delete_directory(path)
+            else:
+                storage.delete(path)
 
-            storage.delete(path)
         except Exception as e:
-            _l.error("ExplorerDeleteViewSet.e %s" % e)
-            pass
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            _l.error(f"ExplorerDeleteViewSet failed due to {repr(e)}")
+            result = {"status": "error", "path": path, "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        else:
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(result).data)
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FilePathSerializer
+    http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FilePathSerializer(),
+        responses={
+            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        path = request.data.get('path')
+        path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
-        if not path:
-            raise ValidationError("Path is required")
+        try:
+            with NamedTemporaryFile() as tmpf:
+                tmpf.write(b"")
+                tmpf.flush()
+                storage.save(path, tmpf)
+
+        except Exception as e:
+            _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
+            result = {"status": "error", "path": path, "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         else:
-            path = request.space_code + '/' + path + '/.init'
-
-        with NamedTemporaryFile() as tmpf:
-
-            tmpf.write(b'')
-            tmpf.flush()
-            storage.save(path, tmpf)
-
-        return Response({
-            "path": path
-        })
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(result).data)
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = DeletePathSerializer
+    http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=DeletePathSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        path = request.data.get('path')
+        path = join_path(request.space_code, serializer.validated_data["path"])
 
-        # TODO validate path that eiher public/import/system or user home folder
-
-        if not path:
-            raise ValidationError("Path is required")
+        _l.info(f"Delete directory {path}")
+        try:
+            storage.delete_directory(path)
+        except Exception as e:
+            _l.error(f"ExplorerDeleteFolderViewSet failed due to {repr(e)}")
+            result = {"status": "error", "path": path, "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         else:
-            if path[0] == '/':
-                path = request.space_code + path
-            else:
-                path = request.space_code + '/' + path
-
-        _l.info("Delete directory %s" % path)
-
-        storage.delete_directory(path)
-
-        return Response({
-            "status": 'ok'
-        })
+            result = {"status": "ok", "path": path}
+            return Response(ResponseSerializer(result).data)
 
 
 class DownloadAsZipViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = ZipFilesSerializer
+    http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=ZipFilesSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def create(self, request, *args, **kwargs):
-        paths = request.data.get('paths')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that eiher public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home folder
 
-        if not paths:
-            raise ValidationError("paths is required")
-
-        zip_file_path = storage.download_paths_as_zip(paths)
-
-        # Serve the zip file as a response
-        response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="archive.zip"'
-
-        return response
+        try:
+            zip_file_path = storage.download_paths_as_zip(
+                serializer.validated_data["paths"],
+            )
+        except Exception as e:
+            _l.error(f"DownloadAsZipViewSet failed due to {repr(e)}")
+            result = {"status": "error", "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            response = FileResponse(
+                open(zip_file_path, "rb"),
+                content_type="application/zip",
+            )
+            response["Content-Disposition"] = 'attachment; filename="archive.zip"'
+            return response
 
 
 class DownloadViewSet(AbstractViewSet):
-    serializer_class = ExplorerSerializer
+    serializer_class = FilePathSerializer
+    http_method_names = ["post"]
 
+    @swagger_auto_schema(
+        request_body=FilePathSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: openapi.Schema(
+                type="string",
+                format="binary",
+                description="File response",
+            ),
+        },
+    )
     def create(self, request, *args, **kwargs):
-        path = request.data.get('path')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that eiher public/import/system or user home folder
+        path = f"{request.space_code}/{serializer.validated_data['path']}"
 
-        if not path:
-            raise ValidationError("path is required")
+        # TODO validate path that either public/import/system or user home folder
 
-        _l.info('path %s' % path)
+        try:
+            with storage.open(path, "rb") as file:
+                response = FileResponse(file, content_type="application/octet-stream")
+                response[
+                    "Content-Disposition"
+                ] = f'attachment; filename="{os.path.basename(path)}"'
 
-        path = request.space_code + '/' + path
+        except Exception as e:
+            _l.error(f"DownloadViewSet failed due to {repr(e)}")
+            result = {"status": "error", "details": repr(e)}
+            return Response(
+                ResponseSerializer(result).data,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return response
 
-        # Serve the zip file as a response
-        # Serve the file as a response
-        with storage.open(path, 'rb') as file:
-            response = FileResponse(file, content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(path)}"'
 
-        return response
+class MoveViewSet(AbstractViewSet):
+    serializer_class = MoveSerializer
+    http_method_names = ["post"]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                "storage": storage,
+                "space_code": self.request.space_code,
+            },
+        )
+        return context
+
+    @swagger_auto_schema(
+        request_body=MoveSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: ResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        directories = []
+        files = []
+        for item in serializer.validated_data["items"]:
+            if path_is_file(storage, item):
+                files.append(item)
+            else:
+                directories.append(item)
+
+        destination_folder = serializer.validated_data["target_directory_path"]
+        for directory in directories:
+            move_folder(storage, directory, destination_folder)
+
+        for file in files:
+            move_file(storage, file, destination_folder)
+
+        return Response(ResponseSerializer({"status": "ok"}).data)
