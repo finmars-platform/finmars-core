@@ -1243,7 +1243,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     public_name = CharFilter()
     short_name = CharFilter()
     query = CharFilter(method="filter_query")
-    instrument_type = NoOpFilter(method="filter_instrument_type")
+    instrument_type = CharFilter(method="filter_instrument_type")
 
     class Meta:
         model = Instrument
