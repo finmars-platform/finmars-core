@@ -3,17 +3,19 @@ import logging
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from django.contrib.contenttypes.models import ContentType
 import django.db.utils
+from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
 from celery.utils.log import get_task_logger
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
+from poms.common.storage import get_storage
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
-from poms_app.celery import app
+
+storage = get_storage()
 
 
 @finmars_task(name="explorer.tasks.move_directory_in_storage", bind=True)

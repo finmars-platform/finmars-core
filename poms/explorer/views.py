@@ -10,6 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
 from poms.explorer.serializers import (
@@ -20,6 +21,7 @@ from poms.explorer.serializers import (
     ResponseSerializer,
     ZipFilesSerializer,
 )
+from poms.explorer.tasks import move_directory_in_storage
 from poms.explorer.utils import (
     join_path,
     last_dir_name,
@@ -456,3 +458,26 @@ class MoveViewSet(AbstractViewSet):
             move_file(storage, file_path, destination_file_path)
 
         return Response(ResponseSerializer({"status": "ok"}).data)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Move directory in storage",
+            type="move_directory_in_storage",
+        )
+
+        move_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+        return Response(
+            {
+                "success": True,
+                "task_id": celery_task.id,
+            }
+        )
