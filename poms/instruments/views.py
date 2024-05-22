@@ -938,10 +938,15 @@ class InstrumentViewSet(AbstractModelViewSet):
             type="generate_events",
         )
 
-        ret = generate_events.apply_async(kwargs={"task_id": celery_task.id, 'context': {
-            'space_code': celery_task.master_user.space_code,
-            'realm_code': celery_task.master_user.realm_code
-        }})
+        ret = generate_events.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            }
+        )
         return Response(
             {
                 "success": True,
@@ -991,10 +996,14 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
-                kwargs={"master_user_id": request.user.master_user.id, "date": dte, 'context': {
-                    'space_code': request.space_code,
-                    'realm_code': request.realm_code
-                }}
+                kwargs={
+                    "master_user_id": request.user.master_user.id,
+                    "date": dte,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
             )
             tasks_ids.append(res.id)
 
@@ -1041,10 +1050,11 @@ class InstrumentViewSet(AbstractModelViewSet):
                 kwargs={
                     "master_user_id": request.user.master_user.id,
                     "date": str(dte),
-                    "instrument_id": instrument.id, 'context': {
-                        'space_code': request.space_code,
-                        'realm_code': request.realm_code
-                    }
+                    "instrument_id": instrument.id,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
                 }
             )
             tasks_ids.append(res.id)
@@ -1059,10 +1069,13 @@ class InstrumentViewSet(AbstractModelViewSet):
     )
     def process_events(self, request, *args, **kwargs):
         ret = process_events.apply_async(
-            kwargs={"master_users": [request.user.master_user.pk], 'context': {
-                'space_code': request.space_code,
-                'realm_code': request.realm_code
-            }}
+            kwargs={
+                "master_users": [request.user.master_user.pk],
+                "context": {
+                    "space_code": request.space_code,
+                    "realm_code": request.realm_code,
+                },
+            }
         )
         return Response(
             {
@@ -1213,6 +1226,15 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
             return Response({"status": "error"})
 
 
+class CustomInstrumentTypeFilter(django_filters.Filter):
+    field_class = django_filters.CharFilter
+
+    def filter(self, qs, value):
+        if value:
+            qs = qs.filter(instrument_type__user_code__endswith=value)
+        return qs
+
+
 class InstrumentForSelectFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -1220,7 +1242,8 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
-    query = CharFilter(method="query_search")
+    query = CharFilter(method="filter_query")
+    instrument_type = CharFilter(method="filter_instrument_type")
 
     class Meta:
         model = Instrument
@@ -1234,7 +1257,15 @@ class InstrumentForSelectFilterSet(FilterSet):
         ]
 
     @staticmethod
-    def query_search(queryset, name, value):
+    def filter_instrument_type(queryset, _, value):
+        return (
+            queryset.filter(instrument_type__user_code__endswith=value)
+            if value
+            else queryset
+        )
+
+    @staticmethod
+    def filter_query(queryset, _, value):
         if value:
             # Split the value by spaces to get individual search terms
             search_terms = value.split()
@@ -1263,7 +1294,6 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
     serializer_class = InstrumentForSelectSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        InstrumentSelectSpecialQueryFilter,
     ]
     filter_class = InstrumentForSelectFilterSet
     ordering_fields = [
