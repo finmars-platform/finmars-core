@@ -53,7 +53,6 @@ class CreateMasterUserSerializer(serializers.Serializer):
 
 class RenameMasterUserSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("name"))
-    unique_id = serializers.CharField(label=_("Unique id"))
 
 
 class MasterUserChangeOwnerSerializer(serializers.Serializer):
