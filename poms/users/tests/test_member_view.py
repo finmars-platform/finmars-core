@@ -67,8 +67,9 @@ class MemberViewSetTest(BaseTestCase):
 
         self.assertEqual(Member.objects.all().count(), 2)  # member created
 
+    @mock.patch("poms.users.views.AuthorizerService.update_member")
     @mock.patch("poms.users.views.AuthorizerService.invite_member")
-    def test__double_update(self, requests_post):
+    def test__double_update(self, requests_post, requests_patch):
         user_name = self.random_string()
         data = copy.deepcopy(REQUEST_DATA)
         data["username"] = user_name
@@ -77,20 +78,20 @@ class MemberViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201, response.content)
         member_data = response.json()
 
-        update_data = {
+        data.update(**{
             "data": {"key": "value"},
             "is_admin": True,
             "is_owner": True,
-        }
+        })
 
         response = self.client.patch(
             path=f"{self.url}{member_data['id']}/",
             format="json",
-            data=update_data,
+            data=data,
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["data"], update_data["data"])
+        self.assertEqual(response_json["data"], data["data"])
 
     @BaseTestCase.cases(
         ("groups", "groups"),
