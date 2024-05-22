@@ -90,6 +90,24 @@ class AuthorizerService:
         if response.status_code != 200:
             raise RuntimeError(f"Error kicking member {response.text}")
 
+    def update_member(self, member, realm_code, space_code, **kwargs):
+        headers = self.prepare_headers()
+        data = {
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "username": member.username,
+        }
+        data.update(**kwargs)
+        url = f"{settings.AUTHORIZER_URL}/api/v2/internal/update-member/"
+
+        _l.info(f"update_member url={url} data={data}")
+
+        response = requests.post(
+            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
+        )
+        if response.status_code != 200:
+            raise RuntimeError(f"Error updating member {response.text}")
+
     def prepare_and_post_request(self, worker, url, realm_code, err_msg):
         headers = self.prepare_headers()
         data = {

@@ -488,12 +488,10 @@ class RenameMasterUser(APIView):
         serializer.is_valid(raise_exception=True)
 
         name = serializer.validated_data["name"]
-        unique_id = serializer.validated_data["unique_id"]
+        space_code = kwargs["space_code"]
 
-        master_user = MasterUser.objects.get(unique_id=unique_id)
-
+        master_user = MasterUser.objects.get(space_code=space_code)
         master_user.name = name
-
         master_user.save()
 
         return Response({"status": "ok"})
