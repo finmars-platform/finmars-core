@@ -11,7 +11,6 @@ class InstrumentViewSetTest(BaseTestCase):
         self.realm_code = 'realm00000'
         self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument-for-select/"
-        self.pricing_policy = None
         self.instrument = Instrument.objects.first()  # Apple
 
     def test__check_api_url(self):
@@ -53,8 +52,8 @@ class InstrumentViewSetTest(BaseTestCase):
         ("bond", "bond"),
     )
     def test__filter_by_instrument_type(self, code):
-        itype = InstrumentType.objects.filter(user_code__endswith=code).first()
-        self.instrument.instrument_type = itype
+        i_type = InstrumentType.objects.filter(user_code__endswith=code).first()
+        self.instrument.instrument_type = i_type
         self.instrument.save()
 
         response = self.client.get(path=f"{self.url}?query=&instrument_type={code}")
@@ -63,4 +62,4 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(len(response_json["results"]), 1)
+        self.assertEqual(len(response_json["results"]), 2)

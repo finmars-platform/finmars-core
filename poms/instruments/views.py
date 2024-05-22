@@ -1226,6 +1226,15 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
             return Response({"status": "error"})
 
 
+class CustomInstrumentTypeFilter(django_filters.Filter):
+    field_class = django_filters.CharFilter
+
+    def filter(self, qs, value):
+        if value:
+            qs = qs.filter(instrument_type__user_code__endswith=value)
+        return qs
+
+
 class InstrumentForSelectFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -1233,8 +1242,8 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
-    instrument_type = CharFilter(method="instrument_type_search")
-    query = CharFilter(method="query_search")
+    query = CharFilter(method="filter_query")
+    instrument_type = NoOpFilter(method="filter_instrument_type")
 
     class Meta:
         model = Instrument
@@ -1248,7 +1257,15 @@ class InstrumentForSelectFilterSet(FilterSet):
         ]
 
     @staticmethod
-    def query_search(queryset, field_name, value):
+    def filter_instrument_type(queryset, _, value):
+        return (
+            queryset.filter(instrument_type__user_code__endswith=value)
+            if value
+            else queryset
+        )
+
+    @staticmethod
+    def filter_query(queryset, _, value):
         if value:
             # Split the value by spaces to get individual search terms
             search_terms = value.split()
@@ -1265,12 +1282,6 @@ class InstrumentForSelectFilterSet(FilterSet):
 
         return queryset
 
-    @staticmethod
-    def instrument_type_search(queryset, field_name, value):
-        if value:
-            queryset = queryset.filter(instrument_type__user_code__endswith=value)
-        return queryset
-
 
 class InstrumentForSelectViewSet(AbstractModelViewSet):
     http_method_names = ["get"]
@@ -1283,7 +1294,6 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
     serializer_class = InstrumentForSelectSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        InstrumentSelectSpecialQueryFilter,
     ]
     filter_class = InstrumentForSelectFilterSet
     ordering_fields = [
