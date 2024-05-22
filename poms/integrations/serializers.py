@@ -2396,18 +2396,12 @@ class ComplexTransactionImportSchemeSerializer(
         ).transaction_type
 
         for rule_values in rules:
-            if rule_values["is_default_rule_scenario"]:
-                if "transaction_type" not in rule_values:
-                    _l.info("Set default transaction type to default scenario")
-                    rule_values["transaction_type"] = default_transaction_type
 
-            if not "is_error_rule_scenario" in rule_values:
+            # TODO: remove in release 1.9.0 after testing
+            # that there are no complexTransactionImportScheme
+            # without field `is_error_rule_scenario`
+            if "is_error_rule_scenario" not in rule_values:
                 rule_values["is_error_rule_scenario"] = False
-
-            if rule_values["is_error_rule_scenario"]:
-                if "transaction_type" not in rule_values:
-                    _l.info("Set error transaction type to default scenario")
-                    rule_values["transaction_type"] = default_transaction_type
 
             rule_id = rule_values.pop("id", None)
             rule = None
