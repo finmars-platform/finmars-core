@@ -107,6 +107,9 @@ class TestMoveFolder(BaseTestCase):
         # Assert the move of files
         self.storage.listdir.assert_called_with(source_folder)
         self.storage.open.assert_called_with(f"{source_folder}/file1.txt")
+        self.storage.save.assert_called_with(
+            f"{destination_folder}/file1.txt", file_content
+        )
         self.storage.delete.assert_called_with(f"{source_folder}/file1.txt")
         args, kwargs = self.storage.save.call_args_list[0]
         self.assertEqual(args[0], f"{destination_folder}/file1.txt")

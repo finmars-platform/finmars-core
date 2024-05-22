@@ -69,7 +69,7 @@ class MoveSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = attrs["target_directory_path"]
+        target_directory_path = attrs['target_directory_path']
         if has_slash(target_directory_path):
             raise serializers.ValidationError(
                 "'target_directory_path' should not start or end with '/'"
