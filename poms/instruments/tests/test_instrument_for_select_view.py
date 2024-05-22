@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, InstrumentType
 
 
 class InstrumentViewSetTest(BaseTestCase):
@@ -11,8 +11,7 @@ class InstrumentViewSetTest(BaseTestCase):
         self.realm_code = 'realm00000'
         self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument-for-select/"
-        self.pricing_policy = None
-        self.instrument = Instrument.objects.first()
+        self.instrument = Instrument.objects.first()  # Apple
 
     def test__check_api_url(self):
         response = self.client.get(path=self.url)
@@ -47,3 +46,20 @@ class InstrumentViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(len(response_json["results"]), 3)
+
+    @BaseTestCase.cases(
+        ("stock", "stock"),
+        ("bond", "bond"),
+    )
+    def test__filter_by_instrument_type(self, code):
+        i_type = InstrumentType.objects.filter(user_code__endswith=code).first()
+        self.instrument.instrument_type = i_type
+        self.instrument.save()
+
+        response = self.client.get(path=f"{self.url}?query=&instrument_type={code}")
+
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json["results"]), 2)
