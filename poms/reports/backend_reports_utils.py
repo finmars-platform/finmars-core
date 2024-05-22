@@ -94,6 +94,12 @@ class BackendReportHelperService:
                 else:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
+            if "exposure" in result_group["subtotal"]:
+                if total_value := sum(map(lambda item: item.get("exposure_percent") or 0, group_items)):
+                    result_group["subtotal"]["exposure_percent"] = round(total_value * 100, 2)
+                else:
+                    result_group["subtotal"]["exposure_percent"] = "No Data"
+
         return result_groups
 
     def convert_helper_dict(self, helper_list):
@@ -653,7 +659,7 @@ class BackendReportHelperService:
 
         return items
 
-    def calculate_market_value_percent(self, items, group_field):
+    def calculate_value_percent(self, items, group_field, data_field):
         if not items:
             return items
         if group_field == 'no_grouping':
@@ -665,19 +671,19 @@ class BackendReportHelperService:
                 lambda item: item[group_field]
             )]
         for items_group in item_groups:
-            if group_market_value := sum(map(lambda item: item["market_value"], items_group)):
+            if group_market_value := sum(map(lambda item: item[data_field], items_group)):
                 for item in items_group:
-                    item["market_value_percent"] = item["market_value"] / group_market_value
+                    item[f"{data_field}_percent"] = item[data_field] / group_market_value
             else:
                 for item in items_group:
-                    item["market_value_percent"] = None
+                    item[f"{data_field}_percent"] = None
 
         return items
 
-    def format_market_value_percent(self, items):
+    def format_value_percent(self, items, field_name):
         for item in items:
-            item["market_value_percent"] = round(item["market_value_percent"] * 100, 2) \
-                if item.get("market_value_percent") else "-"
+            item[field_name] = round(item[field_name] * 100, 2) \
+                if item.get(field_name) else "-"
         return items
 
     def calculate_total_percent(self, items, total_total_value):
