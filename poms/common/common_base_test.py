@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase  # TransactionTestCase
 from rest_framework.test import APIClient
 
 import dateutil.utils
@@ -60,7 +60,9 @@ from poms.transactions.models import (
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
-TEST_CASE = TransactionTestCase if settings.USE_DB_REPLICA else TestCase
+# TEST_CASE = TransactionTestCase  # if settings.USE_DB_REPLICA == True
+TEST_CASE = TestCase
+
 MASTER_USER = "test_master"
 FINMARS_BOT = "finmars_bot"
 FINMARS_USER = "test_user"
