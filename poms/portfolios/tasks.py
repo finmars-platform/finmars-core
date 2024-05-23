@@ -178,13 +178,13 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
         portfolio_user_codes = task.options_object.get("portfolios", [])
         if portfolio_user_codes:
             portfolio_registers = PortfolioRegister.objects.filter(
-                master_user_id=master_user,
+                master_user=master_user,
                 portfolio__user_code__in=portfolio_user_codes,
             )
 
         else:
             portfolio_registers = PortfolioRegister.objects.filter(
-                master_user_id=master_user, is_deleted=False
+                master_user=master_user, is_deleted=False
             )
 
         portfolio_ids = []
