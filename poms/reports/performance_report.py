@@ -1087,7 +1087,7 @@ class PerformanceReportBuilder:
             for portfolio in portfolios:
                 first_transaction_date = portfolio.first_transaction_date
                 if not first_transaction_date:
-                    no_first_date.append(portfolio.name)
+                    no_first_date.append(portfolio.user_code)
                     continue
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
@@ -1103,7 +1103,7 @@ class PerformanceReportBuilder:
                 ).order_by("transaction_date")
 
                 if not portfolio_records:
-                    no_register_records.append(portfolio.name)
+                    no_register_records.append(portfolio.user_code)
                     continue
 
                 _l.info("portfolio_records count %s " % len(portfolio_records))
@@ -1165,14 +1165,14 @@ class PerformanceReportBuilder:
                     message=(
                         f"The following portfolios have empty first_transaction"
                         f"_date field, check if they have transactions: "
-                        f"{', '.join(no_first_date[:10])}"
+                        f"{', '.join(no_first_date)}"
                     ),
                 )
             if no_register_records:
                 raise FinmarsBaseException(
                     error_key="no_portfolio_register_records_found",
                     message=(
-                        f"No portfolio records found for the following portfolios: "
+                        f"No portfolio register records found for the following portfolios: "
                         f"{', '.join(no_register_records)}"
                     ),
                 )
