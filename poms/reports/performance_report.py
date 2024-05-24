@@ -1082,16 +1082,13 @@ class PerformanceReportBuilder:
         )
 
         if date_to > date_from:
+            no_first_date = []
+            no_register_records = []
             for portfolio in portfolios:
                 first_transaction_date = portfolio.first_transaction_date
                 if not first_transaction_date:
-                    raise FinmarsBaseException(
-                        error_key="no_first_transaction_date",
-                        message=(
-                            f"Portfolio {portfolio.name} has empty first_transaction"
-                            f"_date field, check if portfolio has transactions"
-                        ),
-                    )
+                    no_first_date.append(portfolio.name)
+                    continue
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
                     portfolio_register__portfolio=portfolio,
@@ -1104,6 +1101,10 @@ class PerformanceReportBuilder:
                         TransactionClass.DISTRIBUTION,
                     ],
                 ).order_by("transaction_date")
+
+                if not portfolio_records:
+                    no_register_records.append(portfolio.name)
+                    continue
 
                 _l.info("portfolio_records count %s " % len(portfolio_records))
 
@@ -1157,6 +1158,24 @@ class PerformanceReportBuilder:
                             "grand_cash_flow_weighted": grand_cash_flow_weighted,
                         }
                     )
+
+            if no_first_date:
+                raise FinmarsBaseException(
+                    error_key="no_first_transaction_date",
+                    message=(
+                        f"The following portfolios have empty first_transaction"
+                        f"_date field, check if they have transactions: "
+                        f"{', '.join(no_first_date[:10])}"
+                    ),
+                )
+            if no_register_records:
+                raise FinmarsBaseException(
+                    error_key="no_portfolio_register_records_found",
+                    message=(
+                        f"No portfolio records found for the following portfolios: "
+                        f"{', '.join(no_register_records)}"
+                    ),
+                )
 
             try:
                 cf_adjusted_total_nav = total_nav + grand_cash_flow
