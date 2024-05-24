@@ -629,6 +629,7 @@ def generate_events(self, task_id, *args, **kwargs):
 
         _l.info(f"generate_events0 exception occurred {e}")
         _l.info(traceback.format_exc())
+        raise RuntimeError(celery_task.error_message) from e
 
 
 @finmars_task(name="instruments.generate_events_do_not_inform_apply_default", bind=True)
@@ -972,3 +973,4 @@ def process_events(self, *args, **kwargs):
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise RuntimeError(err_msg) from e

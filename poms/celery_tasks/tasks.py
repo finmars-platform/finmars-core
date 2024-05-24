@@ -199,6 +199,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
         else:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.error_message = err_msg
+            raise RuntimeError(err_msg) from e
 
     finally:
         celery_task.save()
@@ -253,15 +254,13 @@ def bulk_restore(self, task_id, *args, **kwargs):
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.mark_task_as_finished()
 
-    except django.db.utils.IntegrityError as e:
-        raise  # PLAT-551: celery task must have status "error" on duplicate
-
     except Exception as e:
         err_msg = f"bulk_restore exception {repr(e)} {traceback.format_exc()}"
         _l.error(f"content_type={options_object['content_type']}: {err_msg}")
 
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.error_message = err_msg
+        raise RuntimeError(err_msg) from e
 
     finally:
         celery_task.save()
@@ -381,7 +380,9 @@ def universal_input(self, task_id, *args, **kwargs):
         celery_task.save()
 
     except Exception as e:
+        err_msg = f"universal_input exception {repr(e)} {traceback.format_exc()}"
         celery_task.result_object = result
         celery_task.status = CeleryTask.STATUS_ERROR
-        celery_task.error_message = str(e)
+        celery_task.error_message = err_msg
         celery_task.save()
+        raise RuntimeError(err_msg) from e

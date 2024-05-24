@@ -492,7 +492,9 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
             description=repr(e),
         )
 
-        _l.error(f"{log} error {repr(e)} --> {traceback.format_exc()}")
+        err_msg = f"{log} error {repr(e)}"
+        _l.error(f"{err_msg} --> {traceback.format_exc()}")
+        raise RuntimeError(err_msg) from e
 
 
 @finmars_task(name="portfolios.calculate_portfolio_register_price_history", bind=True)
@@ -526,7 +528,7 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
         task.error_message = err_msg
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     task.celery_tasks_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
@@ -745,6 +747,7 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
         task.save()
 
         _l.error(err_msg)
+        raise RuntimeError(err_msg) from e
 
 
 @finmars_task(name="portfolios.calculate_portfolio_history", bind=True)
@@ -773,7 +776,7 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
         task.error_message = err_msg
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     task.celery_tasks_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
@@ -934,7 +937,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         task.error_message = err_msg
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     task.celery_tasks_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
@@ -997,7 +1000,8 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             count = count + 1
 
         except Exception as e:
-            _l.error("calculate_portfolio_reconcile_history.e %s" % e)
+            err_msg = "calculate_portfolio_reconcile_history.e %s" % e
+            _l.error(err_msg)
             _l.error(
                 "calculate_portfolio_reconcile_history.e %s" % traceback.format_exc()
             )
@@ -1005,3 +1009,4 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             task.status = CeleryTask.STATUS_ERROR
             task.error_message = e
             task.save()
+            raise RuntimeError(err_msg) from e
