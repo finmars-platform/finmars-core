@@ -1172,8 +1172,8 @@ class PerformanceReportBuilder:
                 raise FinmarsBaseException(
                     error_key="no_portfolio_register_records_found",
                     message=(
-                        f"No portfolio register records found for the following portfolios: "
-                        f"{', '.join(no_register_records)}"
+                        f"No portfolio register records found for the following portfolios "
+                        f"for the specified period: {', '.join(no_register_records)}"
                     ),
                 )
 
