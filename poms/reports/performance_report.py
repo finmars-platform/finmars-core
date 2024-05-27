@@ -1174,14 +1174,17 @@ class PerformanceReportBuilder:
                     ),
                 )
 
-            if begin_nav == 0 and grand_cash_flow == 0:
-                raise FinmarsBaseException(
-                    error_key="no_begin_nav",
-                    message=(
-                        f"No begin NAV found for the following portfolios "
-                        f"for the specified period: {', '.join(no_register_records)}"
-                    ),
-                )
+            # 2024-05-27
+            # szhitenev
+            # TODO come back in 1.7.0 asignee = aalekseev
+            # if begin_nav == 0 and grand_cash_flow == 0:
+            #     raise FinmarsBaseException(
+            #         error_key="no_begin_nav",
+            #         message=(
+            #             f"No begin NAV found for the following portfolios "
+            #             f"for the specified period: {', '.join(no_register_records)}"
+            #         ),
+            #     )
 
             # if no_register_records:
             #     raise FinmarsBaseException(
