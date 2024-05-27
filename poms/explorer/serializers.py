@@ -133,3 +133,8 @@ class ResponseSerializer(serializers.Serializer):
         required=False,
         child=serializers.DictField(),
     )
+
+
+class TaskResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(required=True)
+    task_id = serializers.CharField(required=True)

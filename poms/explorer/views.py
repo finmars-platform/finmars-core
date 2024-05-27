@@ -18,6 +18,7 @@ from poms.explorer.serializers import (
     FilePathSerializer,
     FolderPathSerializer,
     MoveSerializer,
+    TaskResponseSerializer,
     ResponseSerializer,
     ZipFilesSerializer,
 )
@@ -421,7 +422,7 @@ class MoveViewSet(AbstractViewSet):
         request_body=MoveSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
-            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
         },
     )
     def create(self, request, *args, **kwargs):
@@ -445,4 +446,13 @@ class MoveViewSet(AbstractViewSet):
                 },
             }
         )
-        return Response(ResponseSerializer({"status": "ok"}).data)
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
