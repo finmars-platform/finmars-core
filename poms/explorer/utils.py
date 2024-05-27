@@ -172,3 +172,23 @@ def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
         s_file = os.path.join(source_dir, file_name)
         d_file = os.path.join(destin_dir, file_name)
         move_file(storage, s_file, d_file)
+
+
+def count_files(storage: FinmarsS3Storage, source_dir: str):
+    """
+    Recursively count the number of files in a directory and all its subdirectories
+    Args:
+        storage: The storage instance to use.
+        source_dir: The path of the source directory.
+    Returns:
+        The total number of files in the directory and all its subdirectories.
+    """
+
+    def count_files_helper(dir):
+        dirs, files = storage.listdir(dir)
+        count = len(files)
+        for subdir in dirs:
+            count += count_files_helper(os.path.join(dir, subdir))
+        return count
+
+    return count_files_helper(source_dir)

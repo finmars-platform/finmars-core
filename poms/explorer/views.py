@@ -24,10 +24,6 @@ from poms.explorer.serializers import (
 from poms.explorer.tasks import move_directory_in_storage
 from poms.explorer.utils import (
     join_path,
-    last_dir_name,
-    move_dir,
-    move_file,
-    path_is_file,
     remove_first_dir_from_path,
     response_with_file,
 )
