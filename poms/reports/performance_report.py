@@ -159,13 +159,14 @@ class PerformanceReportBuilder:
 
             if self.instance.period_type == "inception":
                 begin_date = get_last_business_day(
-                    self.instance.first_transaction_date - timedelta(days=1)
+                    self.instance.first_transaction_date
                 )
 
             elif self.instance.period_type == "ytd":
                 begin_date = get_last_business_day_of_previous_year(
                     self.instance.end_date
                 )
+
 
             elif self.instance.period_type == "qtd":
                 begin_date = get_last_business_day_in_previous_quarter(
@@ -185,13 +186,10 @@ class PerformanceReportBuilder:
         else:
             begin_date = self.instance.begin_date
 
-            if not begin_date or begin_date <= self.instance.first_transaction_date:
-                # if inception date, we take -1 day of inception day
-                # 2023-11-20
-                # szhitenev
-                begin_date = get_last_business_day(
-                    self.instance.first_transaction_date - timedelta(days=1)
-                )
+
+        if not begin_date or begin_date <= self.instance.first_transaction_date:
+
+            begin_date = get_last_business_day(self.instance.first_transaction_date)
 
         self.instance.begin_date = begin_date
 
