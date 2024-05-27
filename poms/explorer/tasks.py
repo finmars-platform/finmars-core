@@ -28,7 +28,7 @@ def move_directory_in_storage(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
-    validated_data = celery_task.options
+    validated_data = celery_task.options_object
     directories = []
     files_paths = []
     for item in validated_data["items"]:

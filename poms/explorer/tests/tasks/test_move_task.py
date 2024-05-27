@@ -33,7 +33,7 @@ class MoveViewSetTest(BaseTestCase):
             member=self.member,
             verbose_name="Move directory in storage",
             type="move_directory_in_storage",
-            options=validated_data,
+            options_object=validated_data,
         )
 
         move_directory_in_storage(task_id=celery_task.id, context=context)
