@@ -4,6 +4,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.serializers import MoveSerializer
 from poms.celery_tasks.models import CeleryTask
+from poms.explorer.tasks import move_directory_in_storage
 
 
 class MoveViewSetTest(BaseTestCase):
@@ -22,7 +23,8 @@ class MoveViewSetTest(BaseTestCase):
 
     def test__ok(self):
         request_data = {"target_directory_path": "test", "items": ["file.txt"]}
-        serializer = MoveSerializer(data=request_data)
+        context = {"storage": self.storage_mock, "space_code": self.space_code}
+        serializer = MoveSerializer(data=request_data, context=context)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
@@ -33,6 +35,8 @@ class MoveViewSetTest(BaseTestCase):
             type="move_directory_in_storage",
             options=validated_data,
         )
+
+        move_directory_in_storage(task_id=celery_task.id, context=context)
 
         file_content = "file_content"
         self.storage_mock.open.return_value.read.return_value = file_content
