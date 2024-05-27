@@ -2,6 +2,8 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.serializers import MoveSerializer
+from poms.celery_tasks.models import CeleryTask
 
 
 class MoveViewSetTest(BaseTestCase):
@@ -18,11 +20,25 @@ class MoveViewSetTest(BaseTestCase):
         self.storage_mock = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
-    # def test__valid_data(self):
-    #     request_data = {"target_directory_path": "test", "items": ["file.txt"]}
-    #     file_content = "file_content"
-    #     self.storage_mock.open.return_value.read.return_value = file_content
-    #     self.storage_mock.listdir.return_value = ([], ["file.txt"])
-    #     response = self.client.post(self.url, request_data)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.data, {"status": "ok"})
+    def test__ok(self):
+        request_data = {"target_directory_path": "test", "items": ["file.txt"]}
+        serializer = MoveSerializer(data=request_data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        celery_task = CeleryTask.objects.create(
+            master_user=self.master_user,
+            member=self.member,
+            verbose_name="Move directory in storage",
+            type="move_directory_in_storage",
+            options=validated_data,
+        )
+
+        file_content = "file_content"
+        self.storage_mock.open.return_value.read.return_value = file_content
+        self.storage_mock.listdir.return_value = ([], ["file.txt"])
+
+        self.storage_mock.listdir.assert_called_once()
+        self.storage_mock.open.assert_called_once()
+        self.storage_mock.save.assert_called_once()
+        self.storage_mock.delete.assert_called_once()
