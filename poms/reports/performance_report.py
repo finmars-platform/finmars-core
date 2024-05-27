@@ -1132,10 +1132,14 @@ class PerformanceReportBuilder:
 
                     # 319 - 13 / 319 - 1
 
+                    # szhitenev
+                    # 2024-05-27
+                    # we never count initial cash flow to total cashflow
+                    # initial cash cash is baseline that we calculate performance based on
                     if record.transaction_date == date_from:
                         # transaction at the start of period is not weighed
                         time_weight = 0
-                        grand_cash_flow += record_cash_flow
+                        grand_cash_flow = 0
                         grand_cash_flow_weighted = 0
                         # total_nav += record_cash_flow
                     else:
