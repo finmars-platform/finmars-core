@@ -38,7 +38,6 @@ from poms_app import settings
 
 _l = logging.getLogger("poms.explorer")
 
-
 storage = get_storage()
 
 
@@ -433,37 +432,12 @@ class MoveViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        directories = []
-        files_paths = []
-        for item in serializer.validated_data["items"]:
-            if path_is_file(storage, item):
-                files_paths.append(item)
-            else:
-                directories.append(item)
-
-        destination_directory = serializer.validated_data["target_directory_path"]
-
-        _l.info(
-            f"MoveViewSet: move {len(directories)} directories & {len(files_paths)} files"
-        )
-
-        for directory in directories:
-            last_dir = last_dir_name(directory)
-            new_destination_directory = os.path.join(destination_directory, last_dir)
-            move_dir(storage, directory, new_destination_directory)
-
-        for file_path in files_paths:
-            file_name = os.path.basename(file_path)
-            destination_file_path = os.path.join(destination_directory, file_name)
-            move_file(storage, file_path, destination_file_path)
-
-        return Response(ResponseSerializer({"status": "ok"}).data)
-
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
             verbose_name="Move directory in storage",
             type="move_directory_in_storage",
+            options=serializer.validated_data,
         )
 
         move_directory_in_storage.apply_async(
@@ -475,9 +449,4 @@ class MoveViewSet(AbstractViewSet):
                 },
             }
         )
-        return Response(
-            {
-                "success": True,
-                "task_id": celery_task.id,
-            }
-        )
+        return Response(ResponseSerializer({"status": "ok"}).data)
