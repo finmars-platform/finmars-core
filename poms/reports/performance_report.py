@@ -1,10 +1,10 @@
 import datetime
 import json
 import logging
+import math
 import time
 import traceback
 from datetime import timedelta
-import math
 
 from django.db.utils import DataError
 from django.forms import model_to_dict
@@ -1092,8 +1092,8 @@ class PerformanceReportBuilder:
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
                     portfolio_register__portfolio=portfolio,
-                    transaction_date__gte=max(date_from, first_transaction_date),
-                    transaction_date__lte=date_to,
+                    transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
+                    transaction_date__lte=date_to, # 2023-10-31
                     transaction_class__in=[
                         TransactionClass.CASH_INFLOW,
                         TransactionClass.CASH_OUTFLOW,
@@ -1137,6 +1137,8 @@ class PerformanceReportBuilder:
                     if record.transaction_date == date_from:
                         # transaction at the start of period is not weighed
                         time_weight = 0
+                        grand_cash_flow += record_cash_flow
+                        grand_cash_flow_weighted = 0
                         total_nav += record_cash_flow
                     else:
                         time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
@@ -1168,14 +1170,24 @@ class PerformanceReportBuilder:
                         f"{', '.join(no_first_date)}"
                     ),
                 )
-            if no_register_records:
+
+            if begin_nav == 0:
                 raise FinmarsBaseException(
-                    error_key="no_portfolio_register_records_found",
+                    error_key="no_begin_nav",
                     message=(
-                        f"No portfolio register records found for the following portfolios "
+                        f"No begin NAV found for the following portfolios "
                         f"for the specified period: {', '.join(no_register_records)}"
                     ),
                 )
+
+            # if no_register_records:
+            #     raise FinmarsBaseException(
+            #         error_key="no_portfolio_register_records_found",
+            #         message=(
+            #             f"No portfolio register records found for the following portfolios "
+            #             f"for the specified period: {', '.join(no_register_records)}"
+            #         ),
+            #     )
 
             try:
                 cf_adjusted_total_nav = total_nav + grand_cash_flow
