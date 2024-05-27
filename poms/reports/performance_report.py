@@ -1171,7 +1171,7 @@ class PerformanceReportBuilder:
                     ),
                 )
 
-            if begin_nav == 0:
+            if begin_nav == 0 and total_nav == 0:
                 raise FinmarsBaseException(
                     error_key="no_begin_nav",
                     message=(
