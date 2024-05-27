@@ -1139,7 +1139,7 @@ class PerformanceReportBuilder:
                         time_weight = 0
                         grand_cash_flow += record_cash_flow
                         grand_cash_flow_weighted = 0
-                        total_nav += record_cash_flow
+                        # total_nav += record_cash_flow
                     else:
                         time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
                         grand_cash_flow += record_cash_flow
@@ -1149,6 +1149,7 @@ class PerformanceReportBuilder:
                         {
                             "record": record.id,
                             "date_n": date_n,
+                            "transaction_date": str(record.transaction_date),
                             "date_from_n": date_from_n,
                             "date_to_n": date_to_n,
                             "time_weight": time_weight,
