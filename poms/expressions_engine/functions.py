@@ -12,6 +12,7 @@ from typing import Optional
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
@@ -2543,7 +2544,7 @@ def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
     return accrual_calculation_model
 
 
-def _safe_get_instrument(evaluator, instrument):
+def _safe_get_instrument(evaluator, instrument, identifier=None):
     from poms.instruments.models import Instrument
     from poms.users.utils import get_master_user_from_context
 
@@ -2557,6 +2558,15 @@ def _safe_get_instrument(evaluator, instrument):
 
     pk = None
     user_code = None
+
+    print('identifier %s' % identifier)
+
+    if identifier:
+
+        query = {f'identifier__{identifier}': instrument}
+        instrument = Instrument.objects.filter(**query).first()
+        if instrument:
+            return instrument
 
     if isinstance(instrument, dict):
         pk = int(instrument["id"])
@@ -2800,9 +2810,9 @@ def _get_account_user_attribute(evaluator, account, user_code):
 _get_account_user_attribute.evaluator = True
 
 
-def _get_instrument(evaluator, instrument):
+def _get_instrument(evaluator, instrument, identifier=None):
     try:
-        instrument = _safe_get_instrument(evaluator, instrument)
+        instrument = _safe_get_instrument(evaluator, instrument, identifier)
 
         context = evaluator.context
 
