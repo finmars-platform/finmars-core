@@ -51,8 +51,15 @@ class MoveViewSetTest(BaseTestCase):
 
         move_directory_in_storage(task_id=celery_task.id, context=context)
 
-        self.mock_count.assert_called_once()
-        self.storage_mock.listdir.assert_called_once()
-        self.storage_mock.open.assert_called_once()
-        self.storage_mock.save.assert_called_once()
-        self.storage_mock.delete.assert_called_once()
+        celery_task.refresh_from_db()
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
+        self.assertEqual(celery_task.verbose_result, "moved 1 files")
+        self.assertEqual(
+            celery_task.progress_object,
+            {
+                "current": 1,
+                "total": 1,
+                "percent": 100,
+                "description": "move_directory_in_storage finished",
+            },
+        )
