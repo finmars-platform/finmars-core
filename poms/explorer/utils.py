@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponse
 
 from poms.common.storage import FinmarsS3Storage
+from poms.celery_tasks.models import CeleryTask
 
 _l = logging.getLogger("poms.explorer")
 
@@ -120,7 +121,7 @@ def last_dir_name(path: str) -> str:
 
 def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
     """
-    Move a file from the source path to the destination path.
+    Move a file from the source path to the destination path within the storage.
 
     Args:
         storage (Storage): The storage instance to use.
@@ -148,14 +149,21 @@ def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
     _l.info(f"move_file: source file {source_file_path} deleted")
 
 
-def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
+def move_dir(
+    storage: FinmarsS3Storage,
+    source_dir: str,
+    destin_dir: str,
+    celery_task: CeleryTask,
+):
     """
-    Move a directory and its contents recursively within the storage.
-    Empty directory will not be moved/created in the storage!
+    Move a directory and its contents recursively within the storage
+    and update the celery task progress. Empty directories will not be moved/created
+    in the storage!
     Args:
         storage (Storage): The storage instance to use.
         source_dir (str): The path of the source directory.
         destin_dir (str): The path of the destination directory.
+        celery_task (CeleryTask): The celery task to update.
     Returns:
         None
     """
@@ -166,12 +174,18 @@ def move_dir(storage: FinmarsS3Storage, source_dir: str, destin_dir: str):
     for dir_name in dirs:
         s_dir = os.path.join(source_dir, dir_name)
         d_dir = os.path.join(destin_dir, dir_name)
-        move_dir(storage, s_dir, d_dir)
+        move_dir(storage, s_dir, d_dir, celery_task)
 
     for file_name in files:
         s_file = os.path.join(source_dir, file_name)
         d_file = os.path.join(destin_dir, file_name)
         move_file(storage, s_file, d_file)
+
+    celery_task.refresh_from_db()
+    progres_dict = celery_task.progress_object
+    progres_dict["current"] += len(files)
+    progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
+    celery_task.update_progress(progres_dict)
 
 
 def count_files(storage: FinmarsS3Storage, source_dir: str):
