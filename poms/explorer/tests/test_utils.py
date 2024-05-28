@@ -49,9 +49,11 @@ class TestMoveFolder(BaseTestCase):
     def setUp(self):
         from unittest import mock
 
+        from poms.celery_tasks.models import CeleryTask
         from poms.common.storage import FinmarsS3Storage
 
         super().setUp()
+        self.init_test_case()
         self.storage_patch = mock.patch(
             "poms.explorer.views.storage",
             spec=FinmarsS3Storage,
@@ -59,12 +61,26 @@ class TestMoveFolder(BaseTestCase):
         self.storage = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
+        self.celery_task = CeleryTask.objects.create(
+            master_user=self.master_user,
+            member=self.member,
+            verbose_name="Move directory in storage",
+            type="move_directory_in_storage",
+            options_object={},
+            progress_object={
+                "current": 0,
+                "total": 100,
+                "percent": 0,
+                "description": "move_directory_in_storage starting ...",
+            },
+        )
+
     def test_move_empty_folder(self):
         self.storage.listdir.return_value = ([], [])
         source_folder = "empty_folder"
         destination_folder = "destination/folder"
 
-        move_dir(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
 
         self.storage.listdir.assert_called_with(source_folder)
 
@@ -79,7 +95,7 @@ class TestMoveFolder(BaseTestCase):
             ([], []),
         ]
 
-        move_dir(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
 
         # Assert the recursive move of subdirectories
         self.assertEqual(self.storage.listdir.call_count, 3)
@@ -102,7 +118,7 @@ class TestMoveFolder(BaseTestCase):
         self.storage.listdir.return_value = ([], ["file1.txt"])
         self.storage.dir_exists.return_value = True
         self.storage.open.return_value.read.return_value = file_content
-        move_dir(self.storage, source_folder, destination_folder)
+        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
 
         # Assert the move of files
         self.storage.listdir.assert_called_with(source_folder)
