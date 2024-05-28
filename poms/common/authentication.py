@@ -1,12 +1,12 @@
 import logging
-import jwt
 
+import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication, get_authorization_header
-from django.contrib.auth.models import User
 
 from poms.common.keycloak import KeycloakConnect
 
@@ -208,8 +208,8 @@ class JWTAuthentication(TokenAuthentication):
 
         except jwt.ExpiredSignatureError:
             raise exceptions.AuthenticationFailed('Token has expired')
-        except jwt.InvalidTokenError:
-            raise exceptions.AuthenticationFailed('Invalid token')
+        except jwt.InvalidTokenError as e:
+            raise exceptions.AuthenticationFailed(f'Invalid token: {str(e)}')
         except Exception as e:
             raise exceptions.AuthenticationFailed(str(e))
 

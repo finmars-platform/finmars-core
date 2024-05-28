@@ -3387,6 +3387,7 @@ def _get_transactions_amounts_on_date(
             try:
 
                 if trn.transaction_currency_id == report_currency.id:
+                    result_position_size = trn.position_size_with_sign
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                     result_carry = trn.carry_with_sign * trn.reference_fx_rate
                     result_overheads = trn.overheads_with_sign * trn.reference_fx_rate
@@ -4107,7 +4108,7 @@ def _run_task(evaluator, task_name, options={}):
             options_object=options,
         )
 
-        celery_app.send_task(task_name, kwargs={"task_id": task.id})
+        celery_app.send_task(task_name, kwargs={"task_id": task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
 
     except Exception as e:
         _l.error("_run_task.exception %s" % e)
@@ -4604,7 +4605,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.save()
 
         simple_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return {"task_id": celery_task.id}
@@ -4661,7 +4662,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.save()
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return None

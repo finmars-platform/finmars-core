@@ -110,8 +110,13 @@ def set_task_context(task_id, task, kwargs=None, **unused):
 
 @task_postrun.connect
 def cleanup(task_id, **kwargs):
+
+    _l.info("cleanup %s" % task_id)
+
     celery_state.celery_task_id = None
     celery_state.task = None
     # _l.info('cleaned current_tenant.id')
-    with connection.cursor() as cursor:
-        cursor.execute("SET search_path TO public;")
+    # TODO szhitenev 2024-04-30
+    # weird behavior when we call sync task (.apply()) we break context of viewset that executes that tasks
+    # with connection.cursor() as cursor:
+    #     cursor.execute("SET search_path TO public;")
