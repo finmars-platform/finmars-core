@@ -15,7 +15,7 @@ class MoveViewSetTest(BaseTestCase):
         self.space_code = "space00000"
 
         self.storage_patch = mock.patch(
-            "poms.explorer.views.storage",
+            "poms.explorer.tasks.storage",
             spec=FinmarsS3Storage,
         )
         self.storage_mock = self.storage_patch.start()
@@ -36,11 +36,11 @@ class MoveViewSetTest(BaseTestCase):
             options_object=validated_data,
         )
 
-        move_directory_in_storage(task_id=celery_task.id, context=context)
-
         file_content = "file_content"
         self.storage_mock.open.return_value.read.return_value = file_content
         self.storage_mock.listdir.return_value = ([], ["file.txt"])
+
+        move_directory_in_storage(task_id=celery_task.id, context=context)
 
         self.storage_mock.listdir.assert_called_once()
         self.storage_mock.open.assert_called_once()
