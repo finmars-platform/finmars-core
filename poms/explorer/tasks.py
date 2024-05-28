@@ -52,7 +52,7 @@ def move_directory_in_storage(self, *args, **kwargs):
     )
     celery_task.update_progress(
         {
-            "current":0,
+            "current": 0,
             "total": total_files,
             "percent": 0,
             "description": "move_directory_in_storage starting ...",

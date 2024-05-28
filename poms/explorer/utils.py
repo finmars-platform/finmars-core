@@ -184,11 +184,11 @@ def count_files(storage: FinmarsS3Storage, source_dir: str):
         The total number of files in the directory and all its subdirectories.
     """
 
-    def count_files_helper(dir):
-        dirs, files = storage.listdir(dir)
+    def count_files_helper(dir_path: str) -> int:
+        dirs, files = storage.listdir(dir_path)
         count = len(files)
         for subdir in dirs:
-            count += count_files_helper(os.path.join(dir, subdir))
+            count += count_files_helper(os.path.join(dir_path, subdir))
         return count
 
     return count_files_helper(source_dir)

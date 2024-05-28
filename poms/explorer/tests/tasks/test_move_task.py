@@ -21,6 +21,13 @@ class MoveViewSetTest(BaseTestCase):
         self.storage_mock = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
+        self.mock_count_patch = mock.patch(
+            "poms.explorer.utils.count_files",
+            return_value=1,
+        )
+        self.mock_count = self.mock_count_patch.start()
+        self.addCleanup(self.mock_count_patch.stop)
+
     def test__ok(self):
         request_data = {"target_directory_path": "test", "items": ["file.txt"]}
         context = {"storage": self.storage_mock, "space_code": self.space_code}
@@ -39,9 +46,12 @@ class MoveViewSetTest(BaseTestCase):
         file_content = "file_content"
         self.storage_mock.open.return_value.read.return_value = file_content
         self.storage_mock.listdir.return_value = ([], ["file.txt"])
+        self.storage_mock.size.return_value = len(file_content)
+        self.storage_mock.dir_exists.return_value = False
 
         move_directory_in_storage(task_id=celery_task.id, context=context)
 
+        self.mock_count.assert_called_once()
         self.storage_mock.listdir.assert_called_once()
         self.storage_mock.open.assert_called_once()
         self.storage_mock.save.assert_called_once()
