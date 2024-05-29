@@ -226,6 +226,7 @@ EXPECTED_INSTRUMENT = {
         "model_name": "instrument",
         "space_code": "space00000",
     },
+    "identifier": {},
 }
 
 INSTRUMENT_CREATE_DATA = {
