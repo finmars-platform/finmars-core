@@ -1,10 +1,10 @@
 import datetime
 import json
 import logging
+import math
 import time
 import traceback
 from datetime import timedelta
-import math
 
 from django.db.utils import DataError
 from django.forms import model_to_dict
@@ -159,13 +159,14 @@ class PerformanceReportBuilder:
 
             if self.instance.period_type == "inception":
                 begin_date = get_last_business_day(
-                    self.instance.first_transaction_date - timedelta(days=1)
+                    self.instance.first_transaction_date
                 )
 
             elif self.instance.period_type == "ytd":
                 begin_date = get_last_business_day_of_previous_year(
                     self.instance.end_date
                 )
+
 
             elif self.instance.period_type == "qtd":
                 begin_date = get_last_business_day_in_previous_quarter(
@@ -185,13 +186,10 @@ class PerformanceReportBuilder:
         else:
             begin_date = self.instance.begin_date
 
-            if not begin_date or begin_date <= self.instance.first_transaction_date:
-                # if inception date, we take -1 day of inception day
-                # 2023-11-20
-                # szhitenev
-                begin_date = get_last_business_day(
-                    self.instance.first_transaction_date - timedelta(days=1)
-                )
+
+        if not begin_date or begin_date <= self.instance.first_transaction_date:
+
+            begin_date = get_last_business_day(self.instance.first_transaction_date)
 
         self.instance.begin_date = begin_date
 
@@ -1085,21 +1083,18 @@ class PerformanceReportBuilder:
         )
 
         if date_to > date_from:
+            no_first_date = []
+            no_register_records = []
             for portfolio in portfolios:
                 first_transaction_date = portfolio.first_transaction_date
                 if not first_transaction_date:
-                    raise FinmarsBaseException(
-                        error_key="no_first_transaction_date",
-                        message=(
-                            f"Portfolio {portfolio.name} has empty first_transaction"
-                            f"_date field, check if portfolio has transactions"
-                        ),
-                    )
+                    no_first_date.append(portfolio.user_code)
+                    continue
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
                     portfolio_register__portfolio=portfolio,
-                    transaction_date__gte=max(date_from, first_transaction_date),
-                    transaction_date__lte=date_to,
+                    transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
+                    transaction_date__lte=date_to, # 2023-10-31
                     transaction_class__in=[
                         TransactionClass.CASH_INFLOW,
                         TransactionClass.CASH_OUTFLOW,
@@ -1107,6 +1102,10 @@ class PerformanceReportBuilder:
                         TransactionClass.DISTRIBUTION,
                     ],
                 ).order_by("transaction_date")
+
+                if not portfolio_records:
+                    no_register_records.append(portfolio.user_code)
+                    continue
 
                 _l.info("portfolio_records count %s " % len(portfolio_records))
 
@@ -1136,10 +1135,16 @@ class PerformanceReportBuilder:
 
                     # 319 - 13 / 319 - 1
 
+                    # szhitenev
+                    # 2024-05-27
+                    # we never count initial cash flow to total cashflow
+                    # initial cash cash is baseline that we calculate performance based on
                     if record.transaction_date == date_from:
                         # transaction at the start of period is not weighed
                         time_weight = 0
-                        total_nav += record_cash_flow
+                        grand_cash_flow = 0
+                        grand_cash_flow_weighted = 0
+                        # total_nav += record_cash_flow
                     else:
                         time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
                         grand_cash_flow += record_cash_flow
@@ -1149,6 +1154,7 @@ class PerformanceReportBuilder:
                         {
                             "record": record.id,
                             "date_n": date_n,
+                            "transaction_date": str(record.transaction_date),
                             "date_from_n": date_from_n,
                             "date_to_n": date_to_n,
                             "time_weight": time_weight,
@@ -1160,6 +1166,37 @@ class PerformanceReportBuilder:
                             "grand_cash_flow_weighted": grand_cash_flow_weighted,
                         }
                     )
+
+            if no_first_date:
+                raise FinmarsBaseException(
+                    error_key="no_first_transaction_date",
+                    message=(
+                        f"The following portfolios have empty first_transaction"
+                        f"_date field, check if they have transactions: "
+                        f"{', '.join(no_first_date)}"
+                    ),
+                )
+
+            # 2024-05-27
+            # szhitenev
+            # TODO come back in 1.7.0 asignee = aalekseev
+            # if begin_nav == 0 and grand_cash_flow == 0:
+            #     raise FinmarsBaseException(
+            #         error_key="no_begin_nav",
+            #         message=(
+            #             f"No begin NAV found for the following portfolios "
+            #             f"for the specified period: {', '.join(no_register_records)}"
+            #         ),
+            #     )
+
+            # if no_register_records:
+            #     raise FinmarsBaseException(
+            #         error_key="no_portfolio_register_records_found",
+            #         message=(
+            #             f"No portfolio register records found for the following portfolios "
+            #             f"for the specified period: {', '.join(no_register_records)}"
+            #         ),
+            #     )
 
             try:
                 cf_adjusted_total_nav = total_nav + grand_cash_flow

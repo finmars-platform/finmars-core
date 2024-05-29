@@ -1069,7 +1069,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
         from poms_app import celery_app
 
-        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id},
+        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}},
                              queue='backend-background-queue')
 
         return Response({"task_id": celery_task.id})

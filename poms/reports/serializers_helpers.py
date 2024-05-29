@@ -657,6 +657,7 @@ def serialize_report_item_instrument(item):
         "name": item.name,
         "short_name": item.short_name,
         "user_code": item.user_code,
+        "identifier": item.identifier,
         "public_name": item.public_name,
         "pricing_currency": item.pricing_currency_id,
         "price_multiplier": item.price_multiplier,

@@ -1347,6 +1347,14 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("instrument type"),
     )
+
+    identifier = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name=gettext_lazy("Identifier"),
+        help_text="Dictionary of identifiers from different sources",
+    )
+
     is_active = models.BooleanField(
         default=True,
         verbose_name=gettext_lazy("is active"),
