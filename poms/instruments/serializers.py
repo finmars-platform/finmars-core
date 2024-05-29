@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import timedelta
 
@@ -1037,7 +1036,7 @@ class InstrumentSerializer(
     )
     country_object = CountrySerializer(source="country", read_only=True)
 
-    identifier = serializers.JSONField(allow_null=False, read_only=True)
+    identifier = serializers.JSONField(allow_null=False)
 
     class Meta:
         model = Instrument
