@@ -1037,7 +1037,7 @@ class InstrumentSerializer(
     )
     country_object = CountrySerializer(source="country", read_only=True)
 
-    identifier = serializers.JSONField(allow_null=False)
+    identifier = serializers.JSONField(allow_null=False, read_only=True)
 
     class Meta:
         model = Instrument

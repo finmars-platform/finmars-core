@@ -61,6 +61,8 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
+        print("------------------------->>>>>>>>>>>>", response_json["identifier"])
+
         # check fields
         self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT.keys())
 
