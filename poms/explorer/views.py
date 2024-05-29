@@ -485,9 +485,37 @@ class UnZipViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        zipped_file_path = serializer.validated_data["file_path"]
-        destination_path = serializer.validated_data["target_directory_path"]
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Unzip file in storage",
+            type="unzip_file_in_storage",
+            options=serializer.validated_data,
+        )
 
-        unzip_file(storage, zipped_file_path, destination_path)
+        move_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
 
-        return Response(ResponseSerializer({"status": "ok"}).data)
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+        # zipped_file_path = serializer.validated_data["file_path"]
+        # destination_path = serializer.validated_data["target_directory_path"]
+        #
+        # unzip_file(storage, zipped_file_path, destination_path)
+        #
+        # return Response(ResponseSerializer({"status": "ok"}).data)
