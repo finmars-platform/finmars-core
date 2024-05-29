@@ -2544,7 +2544,7 @@ def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
     return accrual_calculation_model
 
 
-def _safe_get_instrument(evaluator, instrument, identifier=None):
+def _safe_get_instrument(evaluator, instrument, identifier_key=None):
     from poms.instruments.models import Instrument
     from poms.users.utils import get_master_user_from_context
 
@@ -2559,11 +2559,9 @@ def _safe_get_instrument(evaluator, instrument, identifier=None):
     pk = None
     user_code = None
 
-    print('identifier %s' % identifier)
+    if identifier_key:
 
-    if identifier:
-
-        query = {f'identifier__{identifier}': instrument}
+        query = {f'identifier__{identifier_key}': instrument}
         instrument = Instrument.objects.filter(**query).first()
         if instrument:
             return instrument
@@ -2613,7 +2611,7 @@ def _safe_get_instrument(evaluator, instrument, identifier=None):
     return instrument
 
 
-def _add_instrument_identifier(evaluator, instrument, key, value):
+def _add_instrument_identifier(evaluator, instrument, identifier_key, value):
     """
     Adds or updates a key-value pair in the instrument's identifier JSON field.
 
@@ -2630,14 +2628,14 @@ def _add_instrument_identifier(evaluator, instrument, key, value):
     if instrument.identifier is None:
         instrument.identifier = {}
 
-    instrument.identifier[key] = value
+    instrument.identifier[identifier_key] = value
     instrument.save()
 
 
 _add_instrument_identifier.evaluator = True
 
 
-def _remove_instrument_identifier(evaluator, instrument, key):
+def _remove_instrument_identifier(evaluator, instrument, identifier_key):
     """
     Removes a key from the instrument's identifier JSON field if it exists.
 
@@ -2651,8 +2649,8 @@ def _remove_instrument_identifier(evaluator, instrument, key):
     context = evaluator.context
 
 
-    if instrument.identifier and key in instrument.identifier:
-        del instrument.identifier[key]
+    if instrument.identifier and identifier_key in instrument.identifier:
+        del instrument.identifier[identifier_key]
         instrument.save()
 
 
@@ -2856,9 +2854,9 @@ def _get_account_user_attribute(evaluator, account, user_code):
 _get_account_user_attribute.evaluator = True
 
 
-def _get_instrument(evaluator, instrument, identifier=None):
+def _get_instrument(evaluator, instrument, identifier_key=None):
     try:
-        instrument = _safe_get_instrument(evaluator, instrument, identifier)
+        instrument = _safe_get_instrument(evaluator, instrument, identifier_key)
 
         context = evaluator.context
 
