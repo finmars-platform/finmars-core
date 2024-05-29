@@ -1,9 +1,7 @@
 from copy import deepcopy
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument, AccrualCalculationSchedule
+from poms.instruments.models import AccrualCalculationSchedule, Instrument
 from poms.instruments.tests.common_test_data import (
     EXPECTED_INSTRUMENT,
     INSTRUMENT_CREATE_DATA,
@@ -16,9 +14,11 @@ class InstrumentViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument/"
+        )
         self.pricing_policy = None
         self.instrument = Instrument.objects.first()
 
@@ -43,6 +43,7 @@ class InstrumentViewSetTest(BaseTestCase):
         create_data["long_underlying_exposure"] = self.get_long_under_exp().id
         create_data["short_underlying_exposure"] = self.get_short_under_exp().id
         create_data["country"] = self.get_country().id
+        create_data["identifier"] = {}
 
         return create_data
 
@@ -217,6 +218,6 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        accrual_data = response_json['accrual_calculation_schedules'][0]
+        accrual_data = response_json["accrual_calculation_schedules"][0]
         self.assertEqual(accrual_data["accrual_start_date"], start_date)
         self.assertEqual(accrual_data["first_payment_date"], payment_date)
