@@ -2613,6 +2613,52 @@ def _safe_get_instrument(evaluator, instrument, identifier=None):
     return instrument
 
 
+def _add_instrument_identifier(evaluator, instrument, key, value):
+    """
+    Adds or updates a key-value pair in the instrument's identifier JSON field.
+
+    Args:
+    instrument (Instrument): The Instrument instance to modify.
+    key (str): The key to add or update in the identifier.
+    value (str): The value to set for the key.
+    """
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    context = evaluator.context
+
+    if instrument.identifier is None:
+        instrument.identifier = {}
+
+    instrument.identifier[key] = value
+    instrument.save()
+
+
+_add_instrument_identifier.evaluator = True
+
+
+def _remove_instrument_identifier(evaluator, instrument, key):
+    """
+    Removes a key from the instrument's identifier JSON field if it exists.
+
+    Args:
+    instrument (Instrument): The Instrument instance to modify.
+    key (str): The key to remove from the identifier.
+    """
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    context = evaluator.context
+
+
+    if instrument.identifier and key in instrument.identifier:
+        del instrument.identifier[key]
+        instrument.save()
+
+
+_remove_instrument_identifier.evaluator = True
+
+
 def _safe_get_account(evaluator, account):
     from poms.accounts.models import Account
     from poms.users.utils import get_master_user_from_context
@@ -4983,6 +5029,8 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("split", _split),
     SimpleEval2Def("simple_price", _simple_price),
     SimpleEval2Def("get_instrument", _get_instrument),
+    SimpleEval2Def("add_instrument_identifier", _add_instrument_identifier),
+    SimpleEval2Def("remove_instrument_identifier", _remove_instrument_identifier),
     SimpleEval2Def("get_currency", _get_currency),
     SimpleEval2Def("check_currency", _check_currency),
     SimpleEval2Def("get_account_type", _get_account_type),
