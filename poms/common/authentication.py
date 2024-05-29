@@ -204,7 +204,7 @@ class JWTAuthentication(TokenAuthentication):
 
         try:
             # Decode the JWT token
-            payload = jwt.decode(key, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(key, settings.SECRET_KEY, algorithms=["HS256"], options={"leeway": timedelta(seconds=5)})
 
         except jwt.ExpiredSignatureError:
             raise exceptions.AuthenticationFailed('Token has expired')
