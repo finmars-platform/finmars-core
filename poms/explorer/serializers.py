@@ -2,7 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.explorer.utils import check_is_true, has_slash
+from poms.explorer.utils import check_is_true, has_slash, path_is_file
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -138,3 +138,45 @@ class ResponseSerializer(serializers.Serializer):
 class TaskResponseSerializer(serializers.Serializer):
     status = serializers.CharField(required=True)
     task_id = serializers.CharField(required=True)
+
+
+class UnZipSerializer(serializers.Serializer):
+    target_directory_path = serializers.CharField(required=True, allow_blank=False)
+    file_path = serializers.CharField(required=True, allow_blank=False)
+
+    def validate_target_directory_path(self, value):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+
+        target_directory_path = value
+        if has_slash(target_directory_path):
+            raise serializers.ValidationError(
+                "'target_directory_path' should not start or end with '/'"
+            )
+
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        if not storage.dir_exists(new_target_directory_path):
+            raise serializers.ValidationError(
+                f"target folder '{target_directory_path}' does not exist"
+            )
+        return new_target_directory_path
+
+    def validate_file_path(self, value):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+
+        if has_slash(value):
+            raise serializers.ValidationError(
+                f"file {value} should not start or end with '/'"
+            )
+
+        if not value.endswith(".zip"):
+            raise serializers.ValidationError(
+                f"file {value} should be a zip file, with '.zip' extension"
+            )
+
+        new_file_path = f"{space_code}/{value}"
+        if not path_is_file(storage, new_file_path):
+            raise serializers.ValidationError(f"item {new_file_path} is not a file")
+
+        return new_file_path
