@@ -1486,6 +1486,8 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
     accrued_currency = CurrencyEvalSerializer(read_only=True)
     country = CountrySerializer(read_only=True)
 
+    identifier = serializers.JSONField(allow_null=False)
+
     class Meta:
         model = Instrument
         fields = [
