@@ -44,7 +44,10 @@ class MoveViewSetTest(BaseTestCase):
 
     def test__valid_data(self):
         request_data = {"target_directory_path": "test", "items": ["file.txt"]}
+        self.storage_mock.dir_exists.return_value = True
+
         response = self.client.post(self.url, request_data)
+
         response_json = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_json["status"], "ok")

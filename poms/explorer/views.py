@@ -477,7 +477,7 @@ class UnZipViewSet(AbstractViewSet):
         request_body=UnZipSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
-            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
         },
     )
     def create(self, request, *args, **kwargs):

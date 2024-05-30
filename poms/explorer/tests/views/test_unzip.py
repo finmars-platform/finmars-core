@@ -20,39 +20,45 @@ class UnzipViewSetTest(BaseTestCase):
         self.storage_mock = self.storage_patch.start()
         self.addCleanup(self.storage_patch.stop)
 
-        self.mimetypes_patch = mock.patch(
-            "poms.explorer.views.mimetypes.guess_type",
-            return_value=("text/plain", "utf-8"),
-        )
-        self.mimetypes_mock = self.mimetypes_patch.start()
-        self.addCleanup(self.mimetypes_patch.stop)
-
     @BaseTestCase.cases(
         ("no_target_1", {"target_directory_path": "", "file_path": "file"}),
         ("no_target_2", {"file_path": "file"}),
         ("no_file_path_1", {"target_directory_path": "target", "file_path": ""}),
-        ("no_file_path_2", {"target_directory_path": "target" }),
+        ("no_file_path_2", {"target_directory_path": "target"}),
     )
-    def test__path_ends_or_starts_with_slash(self, data):
-        response = self.client.post(self.url, data, format="json")
+    def test__path_ends_or_starts_with_slash(self, request_data):
+        response = self.client.post(self.url, request_data, format="json")
+        self.assertEqual(response.status_code, 400)
+
+    def test__path_does_not_exist(self):
+        request_data = {"target_directory_path": "invalid", "file_path": "file"}
+        self.storage_mock.dir_exists.return_value = False
+        response = self.client.post(self.url, request_data, format="json")
         self.assertEqual(response.status_code, 400)
 
     @BaseTestCase.cases(
         ("short_target", {"target_directory_path": "target", "file_path": "file.zip"}),
         ("long_target", {"target_directory_path": "a/b/c", "file_path": "file.zip"}),
     )
-    @mock.patch("poms.explorer.views.unzip_file")
-    def test__unzip(self, data, mock_unzip):
+    @mock.patch("poms.explorer.utils.path_is_file")
+    @mock.patch("poms.explorer.views.unzip_file_in_storage.apply_async")
+    def test__unzip(self, request_data, mock_unzip, mock_is_file):
         self.storage_mock.dir_exists.return_value = True
-        self.storage_mock.size.return_value = 100
+        mock_is_file.return_value = True
 
-        response = self.client.post(self.url, data, format="json")
+        response = self.client.post(self.url, request_data, format="json")
 
         self.assertEqual(response.status_code, 200)
-        self.storage_mock.dir_exists.assert_called_once()
-        self.storage_mock.size.assert_called_once()
 
+        mock_is_file.assert_called_once()
         mock_unzip.assert_called_once()
+
         args, kwargs = mock_unzip.call_args_list[0]
-        self.assertEqual(args[1], f'space00000/{data["file_path"]}')
-        self.assertEqual(args[2], f'space00000/{data["target_directory_path"]}/')
+        self.assertEqual(args[1], f'space00000/{request_data["file_path"]}')
+        self.assertEqual(args[2], f'space00000/{request_data["target_directory_path"]}/')
+
+        response_json = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_json["status"], "ok")
+        self.assertIn("task_id", response_json)
+        self.assertIsNotNone(response_json["task_id"])
