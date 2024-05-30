@@ -23,12 +23,14 @@ from poms.explorer.serializers import (
     UnZipSerializer,
     ZipFilesSerializer,
 )
-from poms.explorer.tasks import move_directory_in_storage
+from poms.explorer.tasks import (
+    move_directory_in_storage,
+    unzip_file_in_storage,
+)
 from poms.explorer.utils import (
     join_path,
     remove_first_dir_from_path,
     response_with_file,
-    unzip_file,
 )
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -493,7 +495,7 @@ class UnZipViewSet(AbstractViewSet):
             options=serializer.validated_data,
         )
 
-        move_directory_in_storage.apply_async(
+        unzip_file_in_storage.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {
@@ -512,10 +514,3 @@ class UnZipViewSet(AbstractViewSet):
             ).data,
             status=status.HTTP_200_OK,
         )
-
-        # zipped_file_path = serializer.validated_data["file_path"]
-        # destination_path = serializer.validated_data["target_directory_path"]
-        #
-        # unzip_file(storage, zipped_file_path, destination_path)
-        #
-        # return Response(ResponseSerializer({"status": "ok"}).data)
