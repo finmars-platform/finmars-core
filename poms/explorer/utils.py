@@ -239,6 +239,7 @@ def unzip_file(
                 "current": 0,
                 "total": len(file_names),
                 "percent": 0,
+                "description": "unzip_file_in_storage in progress"
             }
         )
         celery_task.update_progress(progress_dict)
@@ -262,3 +263,10 @@ def unzip_file(
                     f"unzip_file: save {file_name} of size {len(content)} "
                     f"type {type(content)} to {dest_file_path}"
                 )
+
+        progress_dict.update(
+            {
+                "description": "unzip_file_in_storage finished",
+                "percent": 100
+            }
+        )

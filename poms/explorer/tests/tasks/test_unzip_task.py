@@ -68,12 +68,15 @@ class UnzipTaskTest(BaseTestCase):
         celery_task.refresh_from_db()
 
         self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
-        self.assertEqual(celery_task.verbose_result, f"unzip file.zip to test")
+        self.assertEqual(
+            celery_task.verbose_result,
+            "unzip space00000/file.zip to space00000/test/",
+        )
         self.assertEqual(
             celery_task.progress_object,
             {
-                "current": 1,
-                "total": 1,
+                "current": 2,
+                "total": 2,
                 "percent": 100,
                 "description": "unzip_file_in_storage finished",
             },

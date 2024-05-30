@@ -125,15 +125,6 @@ def unzip_file_in_storage(self, *args, **kwargs):
         celery_task.save()
         return
 
-    celery_task.update_progress(
-        {
-            "current": 1,
-            "total": 1,
-            "percent": 100,
-            "description": "unzip_file_in_storage finished",
-        }
-    )
-
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"unzip {zipped_file_path} to {destination_path}"
     celery_task.save()
