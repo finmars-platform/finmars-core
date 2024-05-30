@@ -435,7 +435,7 @@ class MoveViewSet(AbstractViewSet):
             member=request.user.member,
             verbose_name="Move directory in storage",
             type="move_directory_in_storage",
-            options=serializer.validated_data,
+            options_object=serializer.validated_data,
         )
 
         move_directory_in_storage.apply_async(
@@ -489,7 +489,7 @@ class UnZipViewSet(AbstractViewSet):
             member=request.user.member,
             verbose_name="Unzip file in storage",
             type="unzip_file_in_storage",
-            options=serializer.validated_data,
+            options_object=serializer.validated_data,
         )
 
         unzip_file_in_storage.apply_async(
