@@ -30,15 +30,11 @@ class UnzipTaskTest(BaseTestCase):
         self.mock_is_file = self.mock_is_file_patch.start()
         self.addCleanup(self.mock_is_file_patch.stop)
 
-        # Create in-memory file-like objects for the files
         self.file1 = io.BytesIO()
         self.file2 = io.BytesIO()
-
-        # Write content to the files
         self.file1.write(b"This is file 1.")
         self.file2.write(b"This is file 2.")
 
-        # Create a new zip file in memory
         self.zip_file = io.BytesIO()
         with zipfile.ZipFile(
             self.zip_file, mode="w", compression=zipfile.ZIP_DEFLATED
@@ -46,7 +42,6 @@ class UnzipTaskTest(BaseTestCase):
             zf.writestr("file1.txt", self.file1.getvalue())
             zf.writestr("file2.txt", self.file2.getvalue())
 
-        # Reset the file pointers
         self.file1.seek(0)
         self.file2.seek(0)
         self.zip_file.seek(0)
@@ -65,20 +60,21 @@ class UnzipTaskTest(BaseTestCase):
             options_object=serializer.validated_data,
         )
 
-        self.storage_mock.open.return_value.read.return_value = self.zip_file.read()
+        # self.storage_mock.open.return_value.read.return_value = self.zip_file.read()
+        self.storage_mock.open.return_value = self.zip_file
 
         unzip_file_in_storage(task_id=celery_task.id, context=context)
 
-        # celery_task.refresh_from_db()
-        #
-        # self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
-        # self.assertEqual(celery_task.verbose_result, f"unzip file.zip to test")
-        # self.assertEqual(
-        #     celery_task.progress_object,
-        #     {
-        #         "current": 1,
-        #         "total": 1,
-        #         "percent": 100,
-        #         "description": "unzip_file_in_storage finished",
-        #     },
-        # )
+        celery_task.refresh_from_db()
+
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
+        self.assertEqual(celery_task.verbose_result, f"unzip file.zip to test")
+        self.assertEqual(
+            celery_task.progress_object,
+            {
+                "current": 1,
+                "total": 1,
+                "percent": 100,
+                "description": "unzip_file_in_storage finished",
+            },
+        )
