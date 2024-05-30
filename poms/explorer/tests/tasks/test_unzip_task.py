@@ -60,7 +60,6 @@ class UnzipTaskTest(BaseTestCase):
             options_object=serializer.validated_data,
         )
 
-        # self.storage_mock.open.return_value.read.return_value = self.zip_file.read()
         self.storage_mock.open.return_value = self.zip_file
 
         unzip_file_in_storage(task_id=celery_task.id, context=context)

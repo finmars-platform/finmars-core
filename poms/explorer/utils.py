@@ -270,3 +270,4 @@ def unzip_file(
                 "percent": 100
             }
         )
+        celery_task.update_progress(progress_dict)
