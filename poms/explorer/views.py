@@ -23,10 +23,7 @@ from poms.explorer.serializers import (
     UnZipSerializer,
     ZipFilesSerializer,
 )
-from poms.explorer.tasks import (
-    move_directory_in_storage,
-    unzip_file_in_storage,
-)
+from poms.explorer.tasks import move_directory_in_storage, unzip_file_in_storage
 from poms.explorer.utils import (
     join_path,
     remove_first_dir_from_path,

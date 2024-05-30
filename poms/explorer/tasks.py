@@ -11,8 +11,6 @@ from poms.explorer.utils import (
     path_is_file,
     unzip_file,
 )
-from poms.system_messages.handlers import send_system_message
-from poms.users.models import MasterUser
 
 storage = get_storage()
 
