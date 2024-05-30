@@ -118,7 +118,7 @@ def unzip_file_in_storage(self, *args, **kwargs):
     )
 
     try:
-        unzip_file(storage, zipped_file_path, destination_path)
+        unzip_file(storage, zipped_file_path, destination_path, celery_task)
     except Exception as e:
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.verbose_result = f"failed, due to {repr(e)}"

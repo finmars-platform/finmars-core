@@ -1,9 +1,11 @@
+import io
+import zipfile
 from unittest import mock
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.serializers import UnZipSerializer
-from poms.celery_tasks.models import CeleryTask
 from poms.explorer.tasks import unzip_file_in_storage
 
 
@@ -28,6 +30,27 @@ class UnzipTaskTest(BaseTestCase):
         self.mock_is_file = self.mock_is_file_patch.start()
         self.addCleanup(self.mock_is_file_patch.stop)
 
+        # Create in-memory file-like objects for the files
+        self.file1 = io.BytesIO()
+        self.file2 = io.BytesIO()
+
+        # Write content to the files
+        self.file1.write(b"This is file 1.")
+        self.file2.write(b"This is file 2.")
+
+        # Create a new zip file in memory
+        self.zip_file = io.BytesIO()
+        with zipfile.ZipFile(
+            self.zip_file, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zf:
+            zf.writestr("file1.txt", self.file1.getvalue())
+            zf.writestr("file2.txt", self.file2.getvalue())
+
+        # Reset the file pointers
+        self.file1.seek(0)
+        self.file2.seek(0)
+        self.zip_file.seek(0)
+
     def test__ok(self):
         request_data = {"target_directory_path": "test", "file_path": "file.zip"}
         context = {"storage": self.storage_mock, "space_code": self.space_code}
@@ -42,14 +65,10 @@ class UnzipTaskTest(BaseTestCase):
             options_object=serializer.validated_data,
         )
 
-        zipped_mock_content = "zip_content"
-        self.storage_mock.open.return_value.read.return_value = zipped_mock_content
-        self.storage_mock.listdir.return_value = ([], ["file.txt"])
-        self.storage_mock.size.return_value = len(zipped_mock_content)
-        self.storage_mock.dir_exists.return_value = False
+        self.storage_mock.open.return_value.read.return_value = self.zip_file.read()
 
-        # unzip_file_in_storage(task_id=celery_task.id, context=context)
-        #
+        unzip_file_in_storage(task_id=celery_task.id, context=context)
+
         # celery_task.refresh_from_db()
         #
         # self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
