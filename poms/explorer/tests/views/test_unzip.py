@@ -40,25 +40,33 @@ class UnzipViewSetTest(BaseTestCase):
         ("short_target", {"target_directory_path": "target", "file_path": "file.zip"}),
         ("long_target", {"target_directory_path": "a/b/c", "file_path": "file.zip"}),
     )
-    @mock.patch("poms.explorer.utils.path_is_file")
+    @mock.patch("poms.explorer.serializers.path_is_file")
     @mock.patch("poms.explorer.views.unzip_file_in_storage.apply_async")
     def test__unzip(self, request_data, mock_unzip, mock_is_file):
         self.storage_mock.dir_exists.return_value = True
         mock_is_file.return_value = True
 
         response = self.client.post(self.url, request_data, format="json")
+        response_json = response.json()
 
         self.assertEqual(response.status_code, 200)
 
         mock_is_file.assert_called_once()
         mock_unzip.assert_called_once()
 
-        args, kwargs = mock_unzip.call_args_list[0]
-        self.assertEqual(args[1], f'space00000/{request_data["file_path"]}')
-        self.assertEqual(args[2], f'space00000/{request_data["target_directory_path"]}/')
-
-        response_json = response.json()
-        self.assertEqual(response.status_code, 200)
+        self.assertIn("status", response_json)
         self.assertEqual(response_json["status"], "ok")
         self.assertIn("task_id", response_json)
-        self.assertIsNotNone(response_json["task_id"])
+
+        _, passed_kwargs = mock_unzip.call_args_list[0]
+        kwargs = passed_kwargs["kwargs"]
+
+        self.assertIn("task_id", kwargs)
+        self.assertIn("context", kwargs)
+        self.assertEqual(
+            kwargs["context"],
+            {
+                "space_code": "space00000",
+                "realm_code": "realm00000",
+            },
+        )
