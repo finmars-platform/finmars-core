@@ -115,7 +115,7 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
         fields = [
             'id', 'instrument_class', 'instrument_class_object',
             'user_code', 'name', 'short_name', 'public_name',
-            'notes',
+            'notes', 'maturity_date'
         ]
         read_only_fields = fields
 
@@ -202,7 +202,7 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
         model = Portfolio
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-
+            'first_transaction_date', 'first_cash_flow_date',
         ]
         read_only_fields = fields
 
