@@ -373,11 +373,14 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 if len(group_values) and index < len(group_values):
 
-                    if group_values[index] == '-':
-                        q = q & get_q_obj_for_group_dash(content_type_key, Model, groups_type)
+                    # TODO: delete in 1.9.0
+                    # if group_values[index] == '-':
+                    #     q = q & get_q_obj_for_group_dash(content_type_key, Model, groups_type)
+                    #
+                    # else:
+                    #     q = q & Q(**{f"{key}": group_values[index]})
 
-                    else:
-                        q = q & Q(**{f"{key}": group_values[index]})
+                    q = q & Q(**{f"{key}": group_values[index]})
 
                 else:
                     q = q & Q(**{f"{key}": item['group_identifier']})

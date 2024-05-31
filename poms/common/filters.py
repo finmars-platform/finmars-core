@@ -198,7 +198,6 @@ def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
 
     return q
 
-
 def get_q_obj_for_attribute_type(attribute_type, group_value):
     """
 
@@ -206,46 +205,26 @@ def get_q_obj_for_attribute_type(attribute_type, group_value):
     :param group_value:
     :return: Q object with filtering conditions for grouping by GenericAttribute
     """
+
+    value_type_to_field_map = {
+        10: "attributes__value_string",
+        20: "attributes__value_float",
+        30: "attributes__classifier",
+        40: "attributes__value_date",
+    }
+
     q = Q()
 
     if attribute_type.value_type in {10, 20, 30, 40}:
+
         q = Q(attributes__attribute_type=attribute_type)
+
+        field_key = value_type_to_field_map[attribute_type.value_type]
+        q = q & Q(**{f"{field_key}": group_value})
+
     else:
         _l.error(f"Attribute with invalid value_type passed: {attribute_type.value_type}")
         return q
-
-    if attribute_type.value_type == 20:
-
-        if group_value == "-":
-            # TODO: remove Q(attributes__value_float=0) after separating 0 and '-'
-            q = q & Q(Q(attributes__value_float__isnull=True) | Q(attributes__value_float=0))
-
-        else:
-            q = q & Q(attributes__value_float=group_value)
-
-    elif attribute_type.value_type == 10:
-
-        if group_value == '-':
-            q = q & Q(Q(attributes__value_string__isnull=True) | Q(attributes__value_string='-'))
-
-        else:
-            q = q & Q(Q(attributes__value_string=group_value))
-
-    elif attribute_type.value_type == 30:
-
-        if group_value == '-':
-            q = q & Q(Q(attributes__classifier__isnull=True) | Q(attributes__classifier__name='-'))
-
-        else:
-            q = q & Q(Q(attributes__classifier=group_value))
-
-
-    elif attribute_type.value_type == 40:
-
-        if group_value == '-':
-            q = q & Q(attributes__value_date__isnull=True)
-        else:
-            q = q & Q(attributes__value_date=group_value)
 
     return q
 
@@ -276,15 +255,16 @@ def filter_items_for_group(queryset, groups_types, groups_values, content_type_k
                     if q != Q():
                         queryset = queryset.filter(q)
 
-                elif groups_values[i] == "-":
-
-                    q = get_q_obj_for_group_dash(
-                        content_type_key,
-                        model,
-                        attr
-                    )
-
-                    queryset = queryset.filter(q)
+                # TODO: delete in 1.9.0
+                # elif groups_values[i] == "-":
+                #
+                #     q = get_q_obj_for_group_dash(
+                #         content_type_key,
+                #         model,
+                #         attr
+                #     )
+                #
+                #     queryset = queryset.filter(q)
 
                 else:
                     params = {}
