@@ -1,6 +1,8 @@
+import os.path
+
 from rest_framework import serializers
 
-from poms.explorer.utils import has_slash
+from poms.explorer.utils import check_is_true, has_slash
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -33,9 +35,6 @@ class FilePathSerializer(BasePathSerializer):
     pass
 
 
-TRUTHY_VALUES = {"true", "1", "yes"}
-
-
 class DeletePathSerializer(BasePathSerializer):
     is_dir = serializers.CharField(
         default="false",
@@ -44,7 +43,7 @@ class DeletePathSerializer(BasePathSerializer):
     )
 
     def validate_is_dir(self, value) -> bool:
-        return bool(value and (value.lower() in TRUTHY_VALUES))
+        return check_is_true(value)
 
     def validate_path(self, value):
         if not value:
@@ -63,38 +62,44 @@ class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
     items = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
+        required=True,
     )
 
     def validate(self, attrs):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = attrs['target_directory_path']
+        target_directory_path = attrs["target_directory_path"]
         if has_slash(target_directory_path):
             raise serializers.ValidationError(
                 "'target_directory_path' should not start or end with '/'"
             )
-        new_target_directory_path = f"{space_code}/{target_directory_path}"
-        if storage and not storage.exists(new_target_directory_path):
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        if not storage.dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
-                f"target folder '{target_directory_path}' does not exist"
+                f"target directory '{new_target_directory_path}' does not exist"
             )
 
         updated_items = []
-        for item in attrs["items"]:
-            if has_slash(item):
+        for path in attrs["items"]:
+            if has_slash(path):
                 raise serializers.ValidationError(
-                    f"item {item} should not start or end with '/'"
+                    f"item {path} should not start or end with '/'"
                 )
-            if target_directory_path in item:
-                raise serializers.ValidationError(
-                    f"item {item} should not be part of the target directory"
-                )
-            item = f"{space_code}/{item}"
-            if storage and not storage.exists(item):
-                raise serializers.ValidationError(f"item {item} does not exist")
 
-            updated_items.append(item)
+            directory_path = os.path.dirname(path)
+            if target_directory_path == directory_path:
+                raise serializers.ValidationError(
+                    f"path {path} belongs to target directory path"
+                )
+
+            path = f"{space_code}/{path}"
+            dir_path = path + "/"
+            if storage.dir_exists(dir_path):
+                # this is a directory
+                path = f"{path}/"
+
+            updated_items.append(path)
 
         attrs["target_directory_path"] = new_target_directory_path
         attrs["items"] = updated_items
@@ -128,3 +133,8 @@ class ResponseSerializer(serializers.Serializer):
         required=False,
         child=serializers.DictField(),
     )
+
+
+class TaskResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(required=True)
+    task_id = serializers.CharField(required=True)
