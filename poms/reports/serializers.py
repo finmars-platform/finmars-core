@@ -1331,8 +1331,11 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             full_items, instance.frontend_request_options
         )
 
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, instance.calculation_group
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "market_value"
+        )
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "exposure"
         )
 
         full_items = helper_service.filter_by_groups_filters(
@@ -1470,8 +1473,11 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             full_items, instance.frontend_request_options
         )
 
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, instance.calculation_group
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "market_value"
+        )
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "exposure"
         )
 
         full_items = helper_service.filter_by_groups_filters(
@@ -1481,8 +1487,11 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         full_items = helper_service.sort_items(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.format_market_value_percent(
-            full_items
+        full_items = helper_service.format_value_percent(
+            full_items, "market_value_percent"
+        )
+        full_items = helper_service.format_value_percent(
+            full_items, "exposure_percent"
         )
         # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
 
@@ -1610,8 +1619,11 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, instance.calculation_group
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "market_value"
+        )
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "exposure"
         )
 
         full_items = helper_service.filter_by_groups_filters(
@@ -1730,8 +1742,11 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.calculate_market_value_percent(
-            full_items, instance.calculation_group
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "market_value"
+        )
+        full_items = helper_service.calculate_value_percent(
+            full_items, instance.calculation_group, "exposure"
         )
 
         _l.info(f"PL BEFORE ALL GLOBAL FILTER full_items len {len(full_items)}")
@@ -1741,8 +1756,11 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         full_items = helper_service.sort_items(
             full_items, instance.frontend_request_options
         )
-        full_items = helper_service.format_market_value_percent(
-            full_items
+        full_items = helper_service.format_value_percent(
+            full_items, "market_value_percent"
+        )
+        full_items = helper_service.format_value_percent(
+            full_items, "exposure_percent"
         )
         _l.info(f"PL BEFORE AFTER ALL FILTERS full_items len {len(full_items)}")
 
