@@ -32,20 +32,21 @@ class MoveViewSetTest(BaseTestCase):
         ("no_target", {"items": ["test/file.txt"]}),
     )
     def test__invalid_data(self, request_data):
-        self.storage_mock.exists.return_value = True
+        self.storage_mock.listdir.return_value = [], []
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
 
     def test__path_does_not_exist(self):
-        request_data = {"target_directory_path": "test", "items": ["file.txt"]}
-        self.storage_mock.exists.return_value = False
+        request_data = {"target_directory_path": "invalid", "items": ["file.txt"]}
+        self.storage_mock.dir_exists.return_value = False
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
 
     def test__valid_data(self):
         request_data = {"target_directory_path": "test", "items": ["file.txt"]}
-        self.storage_mock.exists.return_value = True
-        self.storage_mock.listdir.return_value = ([], ["file.txt"])
         response = self.client.post(self.url, request_data)
+        response_json = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"status": "ok"})
+        self.assertEqual(response_json["status"], "ok")
+        self.assertIn("task_id", response_json)
+        self.assertIsNotNone(response_json["task_id"])
