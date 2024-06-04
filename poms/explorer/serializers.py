@@ -12,14 +12,9 @@ class BasePathSerializer(serializers.Serializer):
         allow_null=False,
     )
 
-    def validate_path(self, value):
-        if not value:
-            return ""
-
-        if has_slash(value):
-            raise serializers.ValidationError("Path should not start or end with '/'")
-
-        return value
+    @staticmethod
+    def validate_path(path: str):
+        return path.strip("/") if path else ""
 
 
 class FolderPathSerializer(BasePathSerializer):
@@ -42,7 +37,8 @@ class DeletePathSerializer(BasePathSerializer):
         allow_null=True,
     )
 
-    def validate_is_dir(self, value) -> bool:
+    @staticmethod
+    def validate_is_dir(value) -> bool:
         return check_is_true(value)
 
     def validate_path(self, value):
@@ -113,10 +109,7 @@ class ZipFilesSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         for path in attrs["paths"]:
-            if has_slash(path):
-                raise serializers.ValidationError(
-                    f"path {path} should not start or end with '/'"
-                )
+            path = path.strip("/")
 
         return attrs
 

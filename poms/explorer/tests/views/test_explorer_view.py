@@ -29,15 +29,6 @@ class ExplorerViewSetTest(BaseTestCase):
         self.addCleanup(self.mimetypes_patch.stop)
 
     @BaseTestCase.cases(
-        ("1", "test/"),
-        ("2", "/test"),
-        ("3", "/test/"),
-    )
-    def test__path_ends_or_starts_with_slash(self, path):
-        response = self.client.get(self.url, {"path": path})
-        self.assertEqual(response.status_code, 400)
-
-    @BaseTestCase.cases(
         ("null", ""),
         ("test", "test"),
         ("test_test", "test/test"),
@@ -60,7 +51,14 @@ class ExplorerViewSetTest(BaseTestCase):
     @BaseTestCase.cases(
         ("null", ""),
         ("test", "test"),
+        ("test_1", "test/"),
+        ("test_2", "/test"),
+        ("test_3", "/test/"),
         ("test_test", "test/test"),
+        ("test_test_1", "/test/test/"),
+        ("test_test_2", "/test/test"),
+        ("test_test_3", "test/test/"),
+
     )
     def test__path(self, path):
         directories = ["first", "second"]
@@ -80,7 +78,7 @@ class ExplorerViewSetTest(BaseTestCase):
 
         response_data = response.json()
         if path:
-            self.assertEqual(response_data["path"], f"{self.space_code}/{path}/")
+            self.assertEqual(response_data["path"], f"{self.space_code}/{path.strip('/')}/")
         else:
             self.assertEqual(response_data["path"], f"{self.space_code}/")
         self.assertEqual(len(response_data["results"]), len(directories) + len(files))
