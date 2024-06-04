@@ -2,7 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.explorer.utils import check_is_true, has_slash
+from poms.explorer.utils import check_is_true
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -12,14 +12,9 @@ class BasePathSerializer(serializers.Serializer):
         allow_null=False,
     )
 
-    def validate_path(self, value):
-        if not value:
-            return ""
-
-        if has_slash(value):
-            raise serializers.ValidationError("Path should not start or end with '/'")
-
-        return value
+    @staticmethod
+    def validate_path(path: str):
+        return path.strip("/") if path else ""
 
 
 class FolderPathSerializer(BasePathSerializer):
@@ -42,7 +37,8 @@ class DeletePathSerializer(BasePathSerializer):
         allow_null=True,
     )
 
-    def validate_is_dir(self, value) -> bool:
+    @staticmethod
+    def validate_is_dir(value) -> bool:
         return check_is_true(value)
 
     def validate_path(self, value):
@@ -69,11 +65,7 @@ class MoveSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = attrs["target_directory_path"]
-        if has_slash(target_directory_path):
-            raise serializers.ValidationError(
-                "'target_directory_path' should not start or end with '/'"
-            )
+        target_directory_path = attrs["target_directory_path"].strip("/")
         new_target_directory_path = f"{space_code}/{target_directory_path}/"
         if not storage.dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
@@ -82,10 +74,7 @@ class MoveSerializer(serializers.Serializer):
 
         updated_items = []
         for path in attrs["items"]:
-            if has_slash(path):
-                raise serializers.ValidationError(
-                    f"item {path} should not start or end with '/'"
-                )
+            path = path.strip("/")
 
             directory_path = os.path.dirname(path)
             if target_directory_path == directory_path:
@@ -113,10 +102,7 @@ class ZipFilesSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         for path in attrs["paths"]:
-            if has_slash(path):
-                raise serializers.ValidationError(
-                    f"path {path} should not start or end with '/'"
-                )
+            path = path.strip("/")
 
         return attrs
 
