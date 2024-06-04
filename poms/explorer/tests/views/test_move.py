@@ -24,11 +24,8 @@ class MoveViewSetTest(BaseTestCase):
         ("no_required_data", {"action": "move"}),
         ("no_items", {"target_directory_path": "test"}),
         ("empty_items", {"target_directory_path": "test", "items": []}),
-        ("inv_target_1", {"target_directory_path": "/test", "items": ["file.txt"]}),
-        ("inv_target_2", {"target_directory_path": "test/", "items": ["file.txt"]}),
-        ("inv_item_1", {"target_directory_path": "test", "items": ["/file.txt"]}),
-        ("inv_item_2", {"target_directory_path": "test", "items": ["test/file.txt"]}),
-        ("empty_target", {"target_directory_path": "", "items": ["test/file.txt"]}),
+        ("same_dir", {"target_directory_path": "test", "items": ["test/file.txt"]}),
+        ("empty_target", {"target_directory_path": "", "items": ["other/file.txt"]}),
         ("no_target", {"items": ["test/file.txt"]}),
     )
     def test__invalid_data(self, request_data):
@@ -42,8 +39,16 @@ class MoveViewSetTest(BaseTestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
 
-    def test__valid_data(self):
-        request_data = {"target_directory_path": "test", "items": ["file.txt"]}
+    @BaseTestCase.cases(
+        ("target_1", {"target_directory_path": "/test", "items": ["file.txt"]}),
+        ("target_2", {"target_directory_path": "test/", "items": ["file.txt"]}),
+        ("target_3", {"target_directory_path": "/test/", "items": ["file.txt"]}),
+        ("item_1", {"target_directory_path": "test", "items": ["/file.txt"]}),
+        ("item_2", {"target_directory_path": "test", "items": ["file.txt/"]}),
+        ("item_3", {"target_directory_path": "test", "items": ["/file.txt/"]}),
+        ("no_slashes", {"target_directory_path": "test", "items": ["file.txt"]}),
+    )
+    def test__valid_data(self, request_data):
         response = self.client.post(self.url, request_data)
         response_json = response.json()
         self.assertEqual(response.status_code, 200)

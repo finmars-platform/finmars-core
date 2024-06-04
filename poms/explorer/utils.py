@@ -47,10 +47,6 @@ def remove_first_dir_from_path(path: str) -> str:
     return os.path.sep.join(path.split(os.path.sep)[1:])
 
 
-def has_slash(path: str) -> bool:
-    return path.startswith("/") or path.endswith("/")
-
-
 def response_with_file(storage: FinmarsS3Storage, path: str) -> HttpResponse:
     try:
         with storage.open(path) as file:
