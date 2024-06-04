@@ -145,7 +145,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             options_object=options,
         )
 
-        result = celery_app.send_task(task_name, kwargs={"task_id": celery_task.id})
+        result = celery_app.send_task(task_name, kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}})
 
         _l.info(f"result {result}")
 
@@ -199,7 +199,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         celery_app.send_task(
             "celery_tasks.bulk_delete",
-            kwargs={"task_id": celery_task.id},
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}},
             queue="backend-background-queue",
         )
 

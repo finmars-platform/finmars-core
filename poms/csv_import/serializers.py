@@ -3,22 +3,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
-from poms_app import settings
-
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
-    ModelMetaSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.common.storage import get_storage
 from poms.users.fields import HiddenMemberField, MasterUserField
-
-from ..celery_tasks.models import CeleryTask
-from ..file_reports.serializers import FileReportSerializer
-from ..obj_attrs.models import GenericAttributeType
-from ..transaction_import.models import TransactionImportResult
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 from .models import (
     CsvField,
@@ -27,6 +19,10 @@ from .models import (
     EntityField,
     SimpleImportProcessItem,
 )
+from ..celery_tasks.models import CeleryTask
+from ..file_reports.serializers import FileReportSerializer
+from ..obj_attrs.models import GenericAttributeType
+from ..transaction_import.models import TransactionImportResult
 
 storage = get_storage()
 
@@ -261,6 +257,9 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "short_name",
                 "public_name",
                 "notes",
+
+                "identifier",
+
                 "country",
                 "reference_for_pricing",
                 "instrument_type",

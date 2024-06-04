@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from functools import reduce
 
+from dateutil.parser import parse
 from django.conf import settings
 from django.db.models import (
     CharField,
@@ -18,8 +19,6 @@ from django.db.models import (
     Q,
     TextField,
 )
-
-from dateutil.parser import parse
 
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
@@ -35,6 +34,7 @@ class ValueType:
     DATE = "40"
     BOOLEAN = "50"
     FIELD = "field"
+    JSON = "json"
 
 
 class FilterType:

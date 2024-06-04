@@ -778,6 +778,13 @@ def attr_is_relation(content_type_key, attribute_key):
     ]
 
 
-def set_scheme(space_code):
+def set_schema(space_code):
     with connection.cursor() as cursor:
         cursor.execute(f"SET search_path TO {space_code};")
+
+
+def get_current_schema():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_schema();")
+        current_schema = cursor.fetchone()[0]
+        return current_schema

@@ -489,8 +489,8 @@ class PortfolioRegisterSerializer(
         instrument_object["short_name"] = new_linked_instrument["short_name"]
         instrument_object["user_code"] = new_linked_instrument["user_code"]
         instrument_object["public_name"] = new_linked_instrument["public_name"]
+        instrument_object["identifier"] = new_linked_instrument["identifier"]
         instrument_object["has_linked_with_portfolio"] = True
-
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
         instrument_object["co_directional_exposure_currency"] = (

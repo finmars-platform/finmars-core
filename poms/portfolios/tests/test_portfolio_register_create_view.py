@@ -1,10 +1,7 @@
-from django.conf import settings
-
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
-from poms.instruments.models import PricingPolicy, InstrumentType, Instrument
+from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
 from poms.portfolios.models import PortfolioRegister
-
 
 EXPECTED_RESPONSE = {
     "id": 1,
@@ -224,6 +221,7 @@ class PortfolioRegisterCreateTest(BaseTestCase):
                 "user_code": self.pr_user_code,
                 "public_name": self.random_string(20),
                 "instrument_type": self.instrument_type.id,
+                "identifier": {},
             },
         }
         new_pr_data.pop("linked_instrument")

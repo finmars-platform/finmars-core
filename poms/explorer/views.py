@@ -10,6 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractViewSet
 from poms.explorer.serializers import (
@@ -17,16 +18,15 @@ from poms.explorer.serializers import (
     FilePathSerializer,
     FolderPathSerializer,
     MoveSerializer,
+    TaskResponseSerializer,
     ResponseSerializer,
     ZipFilesSerializer,
 )
+from poms.explorer.tasks import move_directory_in_storage
 from poms.explorer.utils import (
     join_path,
-    remove_first_folder_from_path,
+    remove_first_dir_from_path,
     response_with_file,
-    move_file,
-    move_folder,
-path_is_file,
 )
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -34,7 +34,6 @@ from poms.users.models import Member
 from poms_app import settings
 
 _l = logging.getLogger("poms.explorer")
-
 
 storage = get_storage()
 
@@ -84,7 +83,7 @@ class ExplorerViewSet(AbstractViewSet):
                 "name": file,
                 "created": created,
                 "modified": modified,
-                "file_path": f"/{remove_first_folder_from_path(os.path.join(path, file))}",
+                "file_path": f"/{remove_first_dir_from_path(os.path.join(path, file))}",
                 "size": storage.size(f"{path}/{file}"),
                 "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),
             }
@@ -116,7 +115,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         if settings.AZURE_ACCOUNT_KEY and path[-1] != "/":
             path = f"{path}/"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         return response_with_file(storage, path)
 
@@ -142,7 +141,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
             filepath += ".html"
         path = join_path(request.space_code, serializer.validated_data["path"])
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         return response_with_file(storage, path)
 
@@ -164,7 +163,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
         path = join_path(request.space_code, serializer.validated_data["path"])
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         _l.info(f"path {path}")
 
@@ -230,7 +229,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         path = f"{request.space_code}/{serializer.validated_data['path']}"
         is_dir = serializer.validated_data["is_dir"]
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             _l.info(f"going to delete {path}")
@@ -270,11 +269,11 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             with NamedTemporaryFile() as tmpf:
-                tmpf.write(b"")
+                tmpf.write(b"init")
                 tmpf.flush()
                 storage.save(path, tmpf)
 
@@ -342,7 +341,7 @@ class DownloadAsZipViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             zip_file_path = storage.download_paths_as_zip(
@@ -385,7 +384,7 @@ class DownloadViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
 
-        # TODO validate path that either public/import/system or user home folder
+        # TODO validate path that either public/import/system or user home directory
 
         try:
             with storage.open(path, "rb") as file:
@@ -423,26 +422,37 @@ class MoveViewSet(AbstractViewSet):
         request_body=MoveSerializer(),
         responses={
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
-            status.HTTP_200_OK: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
         },
     )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        directories = []
-        files = []
-        for item in serializer.validated_data["items"]:
-            if path_is_file(storage, item):
-                files.append(item)
-            else:
-                directories.append(item)
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Move directory in storage",
+            type="move_directory_in_storage",
+            options_object=serializer.validated_data,
+        )
 
-        destination_folder = serializer.validated_data["target_directory_path"]
-        for directory in directories:
-            move_folder(storage, directory, destination_folder)
+        move_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
 
-        for file in files:
-            move_file(storage, file, destination_folder)
-
-        return Response(ResponseSerializer({"status": "ok"}).data)
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )

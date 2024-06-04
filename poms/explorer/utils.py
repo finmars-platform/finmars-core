@@ -3,9 +3,11 @@ import logging
 import os
 from typing import Optional
 
+from django.core.files.base import ContentFile
 from django.http import HttpResponse
 
 from poms.common.storage import FinmarsS3Storage
+from poms.celery_tasks.models import CeleryTask
 
 _l = logging.getLogger("poms.explorer")
 
@@ -41,7 +43,7 @@ def join_path(space_code: str, path: Optional[str]) -> str:
         return f"{space_code.rstrip('/')}"
 
 
-def remove_first_folder_from_path(path: str) -> str:
+def remove_first_dir_from_path(path: str) -> str:
     return os.path.sep.join(path.split(os.path.sep)[1:])
 
 
@@ -51,7 +53,7 @@ def has_slash(path: str) -> bool:
 
 def response_with_file(storage: FinmarsS3Storage, path: str) -> HttpResponse:
     try:
-        with storage.open(path, "rb") as file:
+        with storage.open(path) as file:
             result = file.read()
             file_content_type = define_content_type(file.name)
             response = (
@@ -81,54 +83,6 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
-def move_file(storage: FinmarsS3Storage, source_path: str, destination_path: str):
-    """
-    Move a file from the source folder to the destination folder.
-
-    Args:
-        storage (Storage): The storage instance to use.
-        source_path (str): The path of the source file.
-        destination_path (str): The path of the destination folder.
-    Returns:
-        None
-    """
-
-    # Read content of file
-    content = storage.open(source_path).read()
-
-    # Save content to destination
-    storage.save(destination_path, content)
-
-    # Delete file from source
-    storage.delete(source_path)
-
-
-def move_folder(storage: FinmarsS3Storage, source_folder: str, destination_folder: str):
-    """
-    Move a folder and its contents recursively within the storage.
-    Empty folder will not be moved/created in the storage!
-    Args:
-        storage (Storage): The storage instance to use.
-        source_folder (str): The path of the source folder.
-        destination_folder (str): The path of the destination folder.
-    Returns:
-        None
-    """
-    dirs, files = storage.listdir(source_folder)
-
-    for dir_name in dirs:
-        s = os.path.join(source_folder, dir_name)
-        d = os.path.join(destination_folder, dir_name)
-        move_folder(storage, s, d)
-
-    for file_name in files:
-        s = os.path.join(source_folder, file_name)
-        d = os.path.join(destination_folder, file_name)
-        move_file(storage, s, d)
-
-    _l.info(f"folder '{source_folder}' moved to '{destination_folder}'")
-
-
 def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
     """
     Check if the given path is a file in the storage.
@@ -140,8 +94,115 @@ def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
     """
     try:
         file_size = storage.size(file_path)
+        _l.info(f"path_is_file: {file_path} size is {file_size}")
         return file_size > 0
 
     except Exception as e:
         _l.error(f"path_is_file check resulted in {repr(e)}")
         return False
+
+
+TRUTHY_VALUES = {"true", "1", "yes"}
+
+
+def check_is_true(value: str) -> bool:
+    return bool(value and (value.lower() in TRUTHY_VALUES))
+
+
+def last_dir_name(path: str) -> str:
+    if not path:
+        return path
+
+    if path.endswith("/"):
+        path = path[:-1]
+
+    return f"{path.rsplit('/', 1)[-1]}/"
+
+
+def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
+    """
+    Move a file from the source path to the destination path within the storage.
+
+    Args:
+        storage (Storage): The storage instance to use.
+        source_file_path (str): The path of the source file.
+        destin_file_path (str): The path of the destination file.
+    Returns:
+        None
+    """
+    file_name = os.path.basename(source_file_path)
+    _l.info(
+        f"move_file: move file {file_name} from {source_file_path} "
+        f"to {destin_file_path}"
+    )
+
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"move_file: with content len={len(content)} "
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    _l.info(f"move_file: content saved to {destin_file_path}")
+
+    storage.delete(source_file_path)
+    _l.info(f"move_file: source file {source_file_path} deleted")
+
+
+def move_dir(
+    storage: FinmarsS3Storage,
+    source_dir: str,
+    destin_dir: str,
+    celery_task: CeleryTask,
+):
+    """
+    Move a directory and its contents recursively within the storage
+    and update the celery task progress. Empty directories will not be moved/created
+    in the storage!
+    Args:
+        storage (Storage): The storage instance to use.
+        source_dir (str): The path of the source directory.
+        destin_dir (str): The path of the destination directory.
+        celery_task (CeleryTask): The celery task to update.
+    Returns:
+        None
+    """
+    _l.info(f"move_dir: move content of directory '{source_dir}' to '{destin_dir}'")
+
+    dirs, files = storage.listdir(source_dir)
+
+    for dir_name in dirs:
+        s_dir = os.path.join(source_dir, dir_name)
+        d_dir = os.path.join(destin_dir, dir_name)
+        move_dir(storage, s_dir, d_dir, celery_task)
+
+    for file_name in files:
+        s_file = os.path.join(source_dir, file_name)
+        d_file = os.path.join(destin_dir, file_name)
+        move_file(storage, s_file, d_file)
+
+    celery_task.refresh_from_db()
+    progres_dict = celery_task.progress_object
+    progres_dict["current"] += len(files)
+    progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
+    celery_task.update_progress(progres_dict)
+
+
+def count_files(storage: FinmarsS3Storage, source_dir: str):
+    """
+    Recursively count the number of files in a directory and all its subdirectories
+    Args:
+        storage: The storage instance to use.
+        source_dir: The path of the source directory.
+    Returns:
+        The total number of files in the directory and all its subdirectories.
+    """
+
+    def count_files_helper(dir_path: str) -> int:
+        dirs, files = storage.listdir(dir_path)
+        count = len(files)
+        for subdir in dirs:
+            count += count_files_helper(os.path.join(dir_path, subdir))
+        return count
+
+    return count_files_helper(source_dir)

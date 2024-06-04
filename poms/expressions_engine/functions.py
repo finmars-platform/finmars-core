@@ -12,6 +12,7 @@ from typing import Optional
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.utils import numberformat
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
@@ -2543,7 +2544,7 @@ def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
     return accrual_calculation_model
 
 
-def _safe_get_instrument(evaluator, instrument):
+def _safe_get_instrument(evaluator, instrument, identifier_key=None):
     from poms.instruments.models import Instrument
     from poms.users.utils import get_master_user_from_context
 
@@ -2557,6 +2558,13 @@ def _safe_get_instrument(evaluator, instrument):
 
     pk = None
     user_code = None
+
+    if identifier_key:
+
+        query = {f'identifier__{identifier_key}': instrument}
+        instrument = Instrument.objects.filter(**query).first()
+        if instrument:
+            return instrument
 
     if isinstance(instrument, dict):
         pk = int(instrument["id"])
@@ -2601,6 +2609,52 @@ def _safe_get_instrument(evaluator, instrument):
         ] = instrument
 
     return instrument
+
+
+def _add_instrument_identifier(evaluator, instrument, identifier_key, value):
+    """
+    Adds or updates a key-value pair in the instrument's identifier JSON field.
+
+    Args:
+    instrument (Instrument): The Instrument instance to modify.
+    key (str): The key to add or update in the identifier.
+    value (str): The value to set for the key.
+    """
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    context = evaluator.context
+
+    if instrument.identifier is None:
+        instrument.identifier = {}
+
+    instrument.identifier[identifier_key] = value
+    instrument.save()
+
+
+_add_instrument_identifier.evaluator = True
+
+
+def _remove_instrument_identifier(evaluator, instrument, identifier_key):
+    """
+    Removes a key from the instrument's identifier JSON field if it exists.
+
+    Args:
+    instrument (Instrument): The Instrument instance to modify.
+    key (str): The key to remove from the identifier.
+    """
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    context = evaluator.context
+
+
+    if instrument.identifier and identifier_key in instrument.identifier:
+        del instrument.identifier[identifier_key]
+        instrument.save()
+
+
+_remove_instrument_identifier.evaluator = True
 
 
 def _safe_get_account(evaluator, account):
@@ -2800,9 +2854,9 @@ def _get_account_user_attribute(evaluator, account, user_code):
 _get_account_user_attribute.evaluator = True
 
 
-def _get_instrument(evaluator, instrument):
+def _get_instrument(evaluator, instrument, identifier_key=None):
     try:
-        instrument = _safe_get_instrument(evaluator, instrument)
+        instrument = _safe_get_instrument(evaluator, instrument, identifier_key)
 
         context = evaluator.context
 
@@ -3387,6 +3441,7 @@ def _get_transactions_amounts_on_date(
             try:
 
                 if trn.transaction_currency_id == report_currency.id:
+                    result_position_size = trn.position_size_with_sign
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                     result_carry = trn.carry_with_sign * trn.reference_fx_rate
                     result_overheads = trn.overheads_with_sign * trn.reference_fx_rate
@@ -4107,7 +4162,7 @@ def _run_task(evaluator, task_name, options={}):
             options_object=options,
         )
 
-        celery_app.send_task(task_name, kwargs={"task_id": task.id})
+        celery_app.send_task(task_name, kwargs={"task_id": task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
 
     except Exception as e:
         _l.error("_run_task.exception %s" % e)
@@ -4604,7 +4659,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.save()
 
         simple_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return {"task_id": celery_task.id}
@@ -4661,7 +4716,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.save()
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.id}, queue="backend-background-queue"
+            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
         )
 
         return None
@@ -4972,6 +5027,8 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("split", _split),
     SimpleEval2Def("simple_price", _simple_price),
     SimpleEval2Def("get_instrument", _get_instrument),
+    SimpleEval2Def("add_instrument_identifier", _add_instrument_identifier),
+    SimpleEval2Def("remove_instrument_identifier", _remove_instrument_identifier),
     SimpleEval2Def("get_currency", _get_currency),
     SimpleEval2Def("check_currency", _check_currency),
     SimpleEval2Def("get_account_type", _get_account_type),

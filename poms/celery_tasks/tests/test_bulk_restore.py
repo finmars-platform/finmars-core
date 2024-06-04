@@ -53,19 +53,20 @@ class BulkRestoreTestCase(BaseTestCase):
 
     @mock.patch("poms.celery_tasks.models.CeleryTask.update_progress")
     def test__complex_transaction_bulk_restore_handle_exception(self, update_progress):
-        update_progress.side_effect = [None, RuntimeError]
+        update_progress.side_effect = [None, ZeroDivisionError]
 
         self.assertEqual(self.celery_task.status, CeleryTask.STATUS_INIT)
 
-        bulk_restore(
-            task_id=self.celery_task.id,
-            kwargs={
-                "context": {
-                    "realm_code": None,
-                    "space_code": self.master_user.space_code,
-                }
-            },
-        )
+        with self.assertRaises(RuntimeError):
+            bulk_restore(
+                task_id=self.celery_task.id,
+                kwargs={
+                    "context": {
+                        "realm_code": None,
+                        "space_code": self.master_user.space_code,
+                    }
+                },
+            )
 
         self.celery_task.refresh_from_db()
 

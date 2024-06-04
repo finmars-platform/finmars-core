@@ -52,6 +52,7 @@ def _get_result_stats(instance):
             if item["status"] in ["success", "skip", "error"]:
                 key = f"{item['status']}_count"
                 result_stats[key] = result_stats[key] + 1
+            result_stats["total_count"] = result_stats["total_count"] + 1
 
     return result_stats
 

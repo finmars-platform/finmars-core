@@ -1036,6 +1036,8 @@ class InstrumentSerializer(
     )
     country_object = CountrySerializer(source="country", read_only=True)
 
+    identifier = serializers.JSONField(allow_null=False)
+
     class Meta:
         model = Instrument
         fields = [
@@ -1048,6 +1050,7 @@ class InstrumentSerializer(
             "short_name",
             "public_name",
             "notes",
+            "identifier",
             "is_active",
             "is_deleted",
             "has_linked_with_portfolio",
@@ -1466,6 +1469,7 @@ class InstrumentLightSerializer(ModelWithUserCodeSerializer):
             "name",
             "short_name",
             "public_name",
+            "identifier",
             "is_active",
             "is_deleted",
             "is_enabled",
@@ -1481,6 +1485,8 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
     accrued_currency = CurrencyEvalSerializer(read_only=True)
     country = CountrySerializer(read_only=True)
 
+    identifier = serializers.JSONField(allow_null=False)
+
     class Meta:
         model = Instrument
         fields = [
@@ -1493,6 +1499,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "is_active",
             "is_deleted",
             "is_enabled",
+            "identifier",
             "has_linked_with_portfolio",
             "pricing_currency",
             "accrued_currency",
@@ -1531,6 +1538,7 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
             "user_code",
             "name",
             "short_name",
+            "identifier",
             "modified",
             "instrument_type",
             "instrument_type_object",
@@ -1560,6 +1568,7 @@ class InstrumentViewSerializer(ModelWithUserCodeSerializer):
             "notes",
             "is_active",
             "is_deleted",
+            "identifier",
             "has_linked_with_portfolio",
             "user_text_1",
             "user_text_2",
