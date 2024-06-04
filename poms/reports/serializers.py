@@ -1519,9 +1519,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             },
         )
 
-        if any(1 for col in instance.frontend_request_options["columns"] if col["key"] == "date"):
-            for item in data["items"]:
-                item["date"] = data["report_date"]
+        for item in data["items"]:
+            item["date"] = data["report_date"]
 
         data.pop("item_currencies", [])
         data.pop("item_portfolios", [])
