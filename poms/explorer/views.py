@@ -20,9 +20,11 @@ from poms.explorer.serializers import (
     MoveSerializer,
     TaskResponseSerializer,
     ResponseSerializer,
+    TaskResponseSerializer,
+    UnZipSerializer,
     ZipFilesSerializer,
 )
-from poms.explorer.tasks import move_directory_in_storage
+from poms.explorer.tasks import move_directory_in_storage, unzip_file_in_storage
 from poms.explorer.utils import (
     join_path,
     remove_first_dir_from_path,
@@ -438,6 +440,60 @@ class MoveViewSet(AbstractViewSet):
         )
 
         move_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class UnZipViewSet(AbstractViewSet):
+    serializer_class = UnZipSerializer
+    http_method_names = ["post"]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                "storage": storage,
+                "space_code": self.request.space_code,
+            },
+        )
+        return context
+
+    @swagger_auto_schema(
+        request_body=UnZipSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Unzip file in storage",
+            type="unzip_file_in_storage",
+            options_object=serializer.validated_data,
+        )
+
+        unzip_file_in_storage.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {

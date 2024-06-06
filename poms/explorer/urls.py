@@ -49,3 +49,8 @@ router.register(
     explorer.MoveViewSet,
     "explorer_move",
 )
+router.register(
+    r"unzip",
+    explorer.UnZipViewSet,
+    "explorer_unzip",
+)

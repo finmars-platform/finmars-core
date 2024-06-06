@@ -7,7 +7,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.explorer.tasks import move_directory_in_storage
 
 
-class MoveViewSetTest(BaseTestCase):
+class MoveTaskTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -33,14 +33,13 @@ class MoveViewSetTest(BaseTestCase):
         context = {"storage": self.storage_mock, "space_code": self.space_code}
         serializer = MoveSerializer(data=request_data, context=context)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
 
         celery_task = CeleryTask.objects.create(
             master_user=self.master_user,
             member=self.member,
             verbose_name="Move directory in storage",
             type="move_directory_in_storage",
-            options_object=validated_data,
+            options_object=serializer.validated_data,
         )
 
         file_content = "file_content"

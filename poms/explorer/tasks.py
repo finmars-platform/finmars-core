@@ -9,6 +9,7 @@ from poms.explorer.utils import (
     move_dir,
     move_file,
     path_is_file,
+    unzip_file,
 )
 
 storage = get_storage()
@@ -58,15 +59,22 @@ def move_directory_in_storage(self, *args, **kwargs):
         }
     )
 
-    for directory in directories:
-        last_dir = last_dir_name(directory)
-        new_destination_directory = os.path.join(destination_directory, last_dir)
-        move_dir(storage, directory, new_destination_directory, celery_task)
+    try:
+        for directory in directories:
+            last_dir = last_dir_name(directory)
+            new_destination_directory = os.path.join(destination_directory, last_dir)
+            move_dir(storage, directory, new_destination_directory, celery_task)
 
-    for file_path in files_paths:
-        file_name = os.path.basename(file_path)
-        destination_file_path = os.path.join(destination_directory, file_name)
-        move_file(storage, file_path, destination_file_path)
+        for file_path in files_paths:
+            file_name = os.path.basename(file_path)
+            destination_file_path = os.path.join(destination_directory, file_name)
+            move_file(storage, file_path, destination_file_path)
+
+    except Exception as e:
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.verbose_result = f"failed, due to {repr(e)}"
+        celery_task.save()
+        return
 
     celery_task.update_progress(
         {
@@ -79,4 +87,44 @@ def move_directory_in_storage(self, *args, **kwargs):
 
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"moved {total_files} files"
+    celery_task.save()
+
+
+@finmars_task(name="explorer.tasks.unzip_file_in_storage", bind=True)
+def unzip_file_in_storage(self, *args, **kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
+    context = kwargs["context"]
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    validated_data = celery_task.options_object
+    zipped_file_path = validated_data["file_path"]
+    destination_path = validated_data["target_directory_path"]
+
+    _l.info(
+        f"unzip_file_in_storage: file_path={zipped_file_path} "
+        f"destination_path={destination_path}"
+    )
+    celery_task.update_progress(
+        {
+            "current": 0,
+            "total": 1,
+            "percent": 0,
+            "description": "unzip_file_in_storage starting ...",
+        }
+    )
+
+    try:
+        unzip_file(storage, zipped_file_path, destination_path, celery_task)
+    except Exception as e:
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.verbose_result = f"failed, due to {repr(e)}"
+        celery_task.save()
+        return
+
+    celery_task.status = CeleryTask.STATUS_DONE
+    celery_task.verbose_result = f"unzip {zipped_file_path} to {destination_path}"
     celery_task.save()

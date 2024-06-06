@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import zipfile
 from typing import Optional
 
 from django.core.files.base import ContentFile
@@ -202,3 +203,67 @@ def count_files(storage: FinmarsS3Storage, source_dir: str):
         return count
 
     return count_files_helper(source_dir)
+
+
+def unzip_file(
+    storage: FinmarsS3Storage,
+    zip_path: str,
+    destination_folder: str,
+    celery_task: CeleryTask,
+):
+    """
+    Unzips a file from the given zip_path using the provided storage object.
+    Args:
+        celery_task: CeleryTask - The celery task to update progress.
+        storage (FinmarsS3Storage): The storage object to use.
+        zip_path (str): The path to the zip file to unzip.
+        destination_folder (str): The folder where the contents of
+                the zip file will be extracted.
+    Returns:
+        None
+    """
+    _l.info(f"unzip_file: zip_path {zip_path} destination_folder {destination_folder}")
+    zip_archive = storage.open(zip_path)
+
+    with zipfile.ZipFile(zip_archive) as s3_zip:
+        file_names = s3_zip.namelist()
+        _l.info(f"unzip_file: try to unzip files {file_names} from archive {zip_path}")
+        celery_task.refresh_from_db()
+        progress_dict = celery_task.progress_object
+        progress_dict.update(
+            {
+                "current": 0,
+                "total": len(file_names),
+                "percent": 0,
+                "description": "unzip_file_in_storage in progress"
+            }
+        )
+        celery_task.update_progress(progress_dict)
+
+        for file_name in file_names:
+            if file_name.startswith("__") or file_name.startswith("._"):
+                _l.info(f"unzip_file: skip system file {file_name}")
+                continue
+
+            progress_dict["current"] += 1
+            progress_dict["percent"] = int(
+                progress_dict["current"] / progress_dict["total"] * 100,
+            )
+            celery_task.update_progress(progress_dict)
+
+            dest_file_path = os.path.join(destination_folder, file_name)
+            with s3_zip.open(file_name) as zipped_file:
+                content = zipped_file.read()
+                storage.save(dest_file_path, ContentFile(content, name=file_name))
+                _l.info(
+                    f"unzip_file: save {file_name} of size {len(content)} "
+                    f"type {type(content)} to {dest_file_path}"
+                )
+
+        progress_dict.update(
+            {
+                "description": "unzip_file_in_storage finished",
+                "percent": 100
+            }
+        )
+        celery_task.update_progress(progress_dict)
