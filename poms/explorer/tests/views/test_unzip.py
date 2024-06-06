@@ -38,7 +38,12 @@ class UnzipViewSetTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("short_target", {"target_directory_path": "target", "file_path": "file.zip"}),
-        ("long_target", {"target_directory_path": "a/b/c", "file_path": "file.zip"}),
+        ("short_target", {"target_directory_path": "target", "file_path": "/file.zip"}),
+        ("short_target", {"target_directory_path": "target", "file_path": "/abc/file.zip"}),
+        ("long_target_1", {"target_directory_path": "/a/b/c", "file_path": "file.zip"}),
+        ("long_target_2", {"target_directory_path": "a/b/c/", "file_path": "file.zip"}),
+        ("long_target_3", {"target_directory_path": "/a/b/c/", "file_path": "file.zip"}),
+        ("long_target_4", {"target_directory_path": "a/b/c", "file_path": "file.zip"}),
     )
     @mock.patch("poms.explorer.serializers.path_is_file")
     @mock.patch("poms.explorer.views.unzip_file_in_storage.apply_async")
