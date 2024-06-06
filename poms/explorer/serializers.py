@@ -2,7 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.explorer.utils import check_is_true
+from poms.explorer.utils import check_is_true, path_is_file
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -134,12 +134,7 @@ class UnZipSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = value
-        if has_slash(target_directory_path):
-            raise serializers.ValidationError(
-                "'target_directory_path' should not start or end with '/'"
-            )
-
+        target_directory_path = value.strip("/")
         new_target_directory_path = f"{space_code}/{target_directory_path}/"
         if not storage.dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
@@ -151,10 +146,7 @@ class UnZipSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        if has_slash(value):
-            raise serializers.ValidationError(
-                f"file {value} should not start or end with '/'"
-            )
+        value = value.strip("/")
 
         if not value.endswith(".zip"):
             raise serializers.ValidationError(
