@@ -51,17 +51,18 @@ class BulkDeleteTestCase(BaseTestCase):
     def test__complex_transaction_bulk_delete_handle_exception(self, update_progress):
         self.assertEqual(self.celery_task.status, CeleryTask.STATUS_INIT)
 
-        update_progress.side_effect = [None, RuntimeError]
+        update_progress.side_effect = [None, ZeroDivisionError]
 
-        bulk_delete(
-            task_id=self.celery_task.id,
-            kwargs={
-                "context": {
-                    "realm_code": None,
-                    "space_code": self.master_user.space_code,
-                }
-            },
-        )
+        with self.assertRaises(RuntimeError):
+            bulk_delete(
+                task_id=self.celery_task.id,
+                kwargs={
+                    "context": {
+                        "realm_code": None,
+                        "space_code": self.master_user.space_code,
+                    }
+                },
+            )
 
         self.celery_task.refresh_from_db()
 

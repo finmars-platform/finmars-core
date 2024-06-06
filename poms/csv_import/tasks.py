@@ -230,3 +230,4 @@ def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_i
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise RuntimeError(err_msg) from e

@@ -483,3 +483,4 @@ def recalculate_user_fields(self, task_id, *args, **kwargs):
         task.error_message = str(e)
         task.save()
         _l.error(f"recalculate_user_fields: {repr(e)}\n{traceback.format_exc()}")
+        raise RuntimeError(task.error_message) from e

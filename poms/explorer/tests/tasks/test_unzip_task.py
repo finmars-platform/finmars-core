@@ -24,7 +24,7 @@ class UnzipTaskTest(BaseTestCase):
         self.addCleanup(self.storage_patch.stop)
 
         self.mock_is_file_patch = mock.patch(
-            "poms.explorer.serializers.path_is_file",
+            "poms.explorer.tasks.path_is_file",
             return_value=True,
         )
         self.mock_is_file = self.mock_is_file_patch.start()

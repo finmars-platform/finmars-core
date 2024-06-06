@@ -72,7 +72,8 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
     def test__no_options_in_celery_task(self, system_message):
         celery_task = self.create_celery_task()
 
-        calculate_portfolio_register_price_history(task_id=celery_task.id)
+        with self.assertRaises(RuntimeError):
+            calculate_portfolio_register_price_history(task_id=celery_task.id)
 
         celery_task.refresh_from_db()
         self.assertEqual(celery_task.status, CeleryTask.STATUS_ERROR)

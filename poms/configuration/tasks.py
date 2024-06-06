@@ -440,6 +440,8 @@ def push_configuration_to_marketplace(self, task_id, *args, **kwargs):
     if response.status_code != 200:
         task.status = CeleryTask.STATUS_ERROR
         task.error_message = response.text
+        task.save()
+        raise RuntimeError(response.text)
     else:
         _l.info("push_configuration_to_marketplace.Configuration pushed to marketplace")
 
