@@ -433,7 +433,10 @@ def create_instrument_from_finmars_database(data, master_user, member):
                 # user_code__contains=short_type,  #TODO FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
-            err_msg = f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
+            err_msg = (
+                f"{func} no such InstrumentType "
+                f"user_code={instrument_type_user_code_full}"
+            )
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
