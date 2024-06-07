@@ -4,7 +4,6 @@ import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
 
-from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +12,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+
+from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.formula_accruals import get_coupon
@@ -24,7 +25,6 @@ from poms.common.models import (
     NamedModel,
 )
 from poms.common.utils import date_now, isclose
-# from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
@@ -264,34 +264,20 @@ class ShortUnderlyingExposure(AbstractClassModel):
 
 
 class AccrualCalculationModel(AbstractClassModel):
-
+    # NEW DAY COUNT CONVENTION - 2023-09-07
     DAY_COUNT_NONE = 1  # Probably dont used
     DAY_COUNT_ACT_ACT_ISMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
     DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
     DAY_COUNT_ACT_360 = 4  # Actual/360: Actual days in the period divided by 360.
     DAY_COUNT_ACT_365 = 5  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
-    # ACT_365_25 = 6 # DEPRECATED
     DAY_COUNT_ACT_365L = 7  # Actual/365L: Similar to Actual/365, but uses 366 for leap years.
-    # ACT_1_365 = 8 # DEPRECATED
-    # ACT_1_360 = 9 # DEPRECATED
-    # C_30_ACT = 10 # DEPRECATED
     DAY_COUNT_30_360_ISDA = 11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
-    # C_30_360_NO_EOM = 12 # DEPRECATED
     DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
-    # C_30E_P_360_ITL = 13 # DEPRECATED
     DAY_COUNT_NL_365 = 14  # NL/365: Uses actual days but assumes 365 days in year, even for leap years.
-    # NL_365_NO_EOM = 15 # DEPRECATED
     DAY_COUNT_30_360_ISMA = 16 # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
-    # ISMA_30_360_NO_EOM = 17 DEPRECATED
     DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
-    #US_MINI_30_360_NO_EOM = 19 #DEPRECATED
     DAY_COUNT_BD_252 = 20 # # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
     DAY_COUNT_30_360_GERMAN = 21 # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
-    # GERMAN_30_360_NO_EOM = 22 #DEPRECATED
-    #REVERSED_ACT_365 = 23 #DEPRECATED
-
-    # NEW DAY COUNT CONVENTION
-    # 2023-09-07
 
     DAY_COUNT_ACT_ACT_AFB = 26 # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
     DAY_COUNT_ACT_365_FIXED = 27 # Actual/365: Assumes a fixed 365-day year.
@@ -303,7 +289,6 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
-
 
     CLASSES = (
         (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
