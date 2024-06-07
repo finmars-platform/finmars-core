@@ -1098,7 +1098,7 @@ def download_instrument_pricing_async(self, task_id, *args, **kwargs):
     try:
         provider_id = 1  # bloomberg
         provider = get_provider(task.master_user, provider_id)
-    except Exception:
+    except Exception as e:
         err_msg = "provider load error"
         _l.debug(err_msg, exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
