@@ -69,7 +69,6 @@ ACCRUAL_MAP = {
     "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
     "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
-    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
     "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
     "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
     "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
@@ -82,6 +81,8 @@ ACCRUAL_MAP = {
     "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
     "30/360 (30/360 ISMA)": AccrualCalculationModel.DAY_COUNT_30_360_ISMA,
     "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+    # currently unused by CBOND
+    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
     "30/365": AccrualCalculationModel.DAY_COUNT_30_365,
     "Simple": AccrualCalculationModel.DAY_COUNT_SIMPLE,
     "none": AccrualCalculationModel.DAY_COUNT_NONE,
@@ -110,7 +111,7 @@ RELATION_FIELDS_MAP = {
 }
 
 
-## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
+# Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(
     instrument_object, instrument_type, ecosystem_default
 ):

@@ -20,8 +20,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Instrument From Finmars Database",
             func="import_instrument_finmars_database",
         )
-        BACKEND_CALLBACK_URLS = get_backend_callback_url()
-        self.url = BACKEND_CALLBACK_URLS["instrument"]
+        backend_callback_urls = get_backend_callback_url()
+        self.url = backend_callback_urls["instrument"]
 
     def validate_result_instrument(self, instrument_code):
         result = Instrument.objects.filter(user_code=instrument_code).first()
@@ -81,7 +81,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
-    @skip("till fix the full name instrument type")
+    # @skip("till fix the full name instrument type")
     def test__instrument_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
