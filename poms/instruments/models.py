@@ -410,24 +410,22 @@ class Periodicity(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_periodicity(finmars_periodicity):
-        import QuantLib as QL
+        import QuantLib as Ql
 
-        default = QL.Period(12, QL.Months)  # default semi-annually
+        default_period = Ql.Period(12, Ql.Months)  # default semi-annually
 
-        mapping = {
+        period_mapping = {
             # TODO probably add mapping for other finmars periodicities
-            Periodicity.N_DAY: QL.Period(1, QL.Days),
-            Periodicity.WEEKLY: QL.Period(1, QL.Weeks),
-            Periodicity.MONTHLY: QL.Period(1, QL.Months),
-            Periodicity.BIMONTHLY: QL.Period(2, QL.Months),
-            Periodicity.QUARTERLY: QL.Period(3, QL.Months),
-            Periodicity.SEMI_ANNUALLY: QL.Period(6, QL.Months),
-            Periodicity.ANNUALLY: QL.Period(12, QL.Months),
+            Periodicity.N_DAY: Ql.Period(1, Ql.Days),
+            Periodicity.WEEKLY: Ql.Period(1, Ql.Weeks),
+            Periodicity.MONTHLY: Ql.Period(1, Ql.Months),
+            Periodicity.BIMONTHLY: Ql.Period(2, Ql.Months),
+            Periodicity.QUARTERLY: Ql.Period(3, Ql.Months),
+            Periodicity.SEMI_ANNUALLY: Ql.Period(6, Ql.Months),
+            Periodicity.ANNUALLY: Ql.Period(12, Ql.Months),
         }
 
-        result = mapping.get(finmars_periodicity, default)
-
-        return result
+        return period_mapping.get(finmars_periodicity, default_period)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("periodicity")
