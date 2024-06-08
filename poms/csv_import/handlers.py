@@ -111,7 +111,8 @@ RELATION_FIELDS_MAP = {
 }
 
 
-# Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
+# TO BE DEPRECATED SOON !
+# Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(
     instrument_object, instrument_type, ecosystem_default
 ):
@@ -157,7 +158,7 @@ def set_defaults_from_instrument_type(
                 master_user=instrument_type.master_user,
                 user_code=instrument_type.long_underlying_instrument,
             ).pk
-        except Exception as e:
+        except Exception:
             _l.info("Could not set long_underlying_instrument, fallback to default")
             instrument_object["long_underlying_instrument"] = (
                 ecosystem_default.instrument.pk
@@ -172,7 +173,7 @@ def set_defaults_from_instrument_type(
                 master_user=instrument_type.master_user,
                 user_code=instrument_type.short_underlying_instrument,
             ).pk
-        except Exception as e:
+        except Exception:
             _l.info("Could not set short_underlying_instrument, fallback to default")
             instrument_object["short_underlying_instrument"] = (
                 ecosystem_default.instrument.pk
