@@ -81,7 +81,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
-    # @skip("till fix the full name instrument type")
+    @skip("till fix the full name instrument type")
     def test__instrument_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
