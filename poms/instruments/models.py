@@ -322,26 +322,27 @@ class AccrualCalculationModel(AbstractClassModel):
         default = ql.SimpleDayCounter()
 
         map_daycount_convention = {
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
             AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
             AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
             AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
-            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
             AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
             AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
             AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
             AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
-            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
+            # CURRENTLY UNUSED BY CBOND
+            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
             AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
         }
 
         return map_daycount_convention.get(finmars_accrual_calculation_model, default)
