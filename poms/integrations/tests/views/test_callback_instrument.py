@@ -32,8 +32,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
     @skip("till fix the full name instrument type")
     def test__stock_instrument_with_currency_created(self):
-        instrument_code = self.random_string(10)
-        currency_code = self.random_string(3)
+        instrument_code = self.random_string()
+        currency_code = self.random_choice(["USD", "EUR"])
         post_data = {
             "request_id": self.task.id,
             "task_id": None,

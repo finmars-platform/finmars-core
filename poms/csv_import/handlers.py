@@ -477,7 +477,11 @@ def handler_instrument_object(
             user_code=source_data["payment_size_detail"]
         ).id
     except Exception:
-        object_data["payment_size_detail"] = ecosystem_default.payment_size_detail.id
+        object_data["payment_size_detail"] = (
+            ecosystem_default.payment_size_detail.id
+            if ecosystem_default.payment_size_detail
+            else PaymentSizeDetail.DEFAULT
+        )
 
     if "maturity_price" in source_data:
         try:

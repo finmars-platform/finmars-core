@@ -429,8 +429,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                user_code=instrument_type_user_code_full,
-                # user_code__contains=short_type,  #TODO FOR DEBUG ONLY!
+                # user_code=instrument_type_user_code_full,
+                user_code__contains=short_type,  # TODO FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
             err_msg = (
@@ -440,11 +440,10 @@ def create_instrument_from_finmars_database(data, master_user, member):
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )
-
         attribute_types = GenericAttributeType.objects.filter(
             master_user=master_user, content_type=content_type
         )
@@ -452,9 +451,10 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instrument_data,
             instrument_type,
             master_user,
-            ecosystem_defaults,
+            ecosystem_default,
             attribute_types,
         )
+        object_data["identifier"] = {}
 
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
         activate(proxy_request)
@@ -468,7 +468,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instance = Instrument.objects.get(
                 master_user=master_user, user_code=object_data["user_code"]
             )
-
             instance.is_active = True
 
             serializer = InstrumentSerializer(
@@ -944,8 +943,8 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     try:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
-            user_code=instrument_type_user_code_full,
-            # user_code__contains=type_user_type,  # TODO FOR DEBUG ONLY!
+            # user_code=instrument_type_user_code_full,
+            user_code__contains=type_user_type,  # TODO FOR DEBUG ONLY!
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
