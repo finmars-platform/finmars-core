@@ -319,8 +319,7 @@ class AccrualCalculationModel(AbstractClassModel):
     def get_quantlib_day_count(finmars_accrual_calculation_model):
         import QuantLib as Ql
 
-        default = Ql.SimpleDayCounter()
-
+        default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: Ql.ActualActual(Ql.ActualActual.ISMA),
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
@@ -345,7 +344,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
         }
 
-        return map_daycount_convention.get(finmars_accrual_calculation_model, default)
+        return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
