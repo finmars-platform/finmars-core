@@ -410,19 +410,19 @@ class Periodicity(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_periodicity(finmars_periodicity):
-        import QuantLib as ql
+        import QuantLib as QL
 
-        default = ql.Period(12, ql.Months)  # default semi-annually
+        default = QL.Period(12, QL.Months)  # default semi-annually
 
         mapping = {
             # TODO probably add mapping for other finmars periodicities
-            Periodicity.N_DAY: ql.Period(1, ql.Days),
-            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
-            Periodicity.MONTHLY: ql.Period(1, ql.Months),
-            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
-            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
-            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
-            Periodicity.ANNUALLY: ql.Period(12, ql.Months),
+            Periodicity.N_DAY: QL.Period(1, QL.Days),
+            Periodicity.WEEKLY: QL.Period(1, QL.Weeks),
+            Periodicity.MONTHLY: QL.Period(1, QL.Months),
+            Periodicity.BIMONTHLY: QL.Period(2, QL.Months),
+            Periodicity.QUARTERLY: QL.Period(3, QL.Months),
+            Periodicity.SEMI_ANNUALLY: QL.Period(6, QL.Months),
+            Periodicity.ANNUALLY: QL.Period(12, QL.Months),
         }
 
         result = mapping.get(finmars_periodicity, default)
