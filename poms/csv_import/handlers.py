@@ -611,25 +611,6 @@ def handler_instrument_object(
 
     return object_data
 
-# UNUSED, TO BE DEPRECATED
-# def set_accrual_dates_and_size(source_data, accrual):
-#     if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
-#         accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
-#             "accrual_start_date"
-#         ]
-#
-#     if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-#         accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
-#             "first_payment_date"
-#         ]
-#
-#     try:
-#         accrual["accrual_size"] = float(
-#             source_data["accrual_calculation_schedules"][0]["accrual_size"]
-#         )
-#     except Exception:
-#         accrual["accrual_size"] = 0
-
 
 class SimpleImportProcess:
     def __init__(self, task_id, procedure_instance_id=None):
