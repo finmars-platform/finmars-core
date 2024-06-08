@@ -182,7 +182,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         instrument = self.validate_result_instrument(instrument_code)
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
-        self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)
+        self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 2)
 
         accrual = AccrualCalculationSchedule.objects.filter(
             instrument=instrument

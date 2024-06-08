@@ -587,33 +587,16 @@ def handler_instrument_object(
 
     set_events_for_instrument(object_data, source_data, instrument_type)
 
-    # FIXME coupon_event is not used !
-    # if (
-    #     (
-    #         "accrual_calculation_schedules" in source_data
-    #         and source_data["accrual_calculation_schedules"]
-    #     )
-    #     and (
-    #         len(source_data["accrual_calculation_schedules"])
-    #         and len(object_data["event_schedules"])
-    #     )
-    #     and "first_payment_date" in source_data["accrual_calculation_schedules"][0]
-    # ):
-    #     coupon_event = object_data["event_schedules"][0]
-    #
-    #     coupon_event["effective_date"] = source_data["accrual_calculation_schedules"][
-    #         0
-    #     ]["first_payment_date"]
-
     if (
         "accrual_calculation_schedules" in source_data
         and source_data["accrual_calculation_schedules"]
     ):
         _l.info("Setting up accrual schedules. Overwrite Existing")
-        accrual = source_data["accrual_calculation_schedules"][0]
-        accrual.pop("id")  # remove id of finmars_database accrual object
-        set_periodicity_period(source_data, accrual)
-        object_data["accrual_calculation_schedules"] = [accrual]
+        object_data["accrual_calculation_schedules"] = []
+        for accrual in source_data["accrual_calculation_schedules"]:
+            accrual.pop("id")  # remove id of finmars_database accrual object
+            set_periodicity_period(source_data, accrual)
+            object_data["accrual_calculation_schedules"].append(accrual)
 
     else:
         set_default_accrual(object_data, instrument_type)
@@ -628,24 +611,24 @@ def handler_instrument_object(
 
     return object_data
 
-
-def set_accrual_dates_and_size(source_data, accrual):
-    if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
-        accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
-            "accrual_start_date"
-        ]
-
-    if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-        accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
-            "first_payment_date"
-        ]
-
-    try:
-        accrual["accrual_size"] = float(
-            source_data["accrual_calculation_schedules"][0]["accrual_size"]
-        )
-    except Exception:
-        accrual["accrual_size"] = 0
+# UNUSED, TO BE DEPRECATED
+# def set_accrual_dates_and_size(source_data, accrual):
+#     if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
+#         accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
+#             "accrual_start_date"
+#         ]
+#
+#     if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
+#         accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
+#             "first_payment_date"
+#         ]
+#
+#     try:
+#         accrual["accrual_size"] = float(
+#             source_data["accrual_calculation_schedules"][0]["accrual_size"]
+#         )
+#     except Exception:
+#         accrual["accrual_size"] = 0
 
 
 class SimpleImportProcess:
