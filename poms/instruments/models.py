@@ -317,32 +317,32 @@ class AccrualCalculationModel(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_day_count(finmars_accrual_calculation_model):
-        import QuantLib as ql
+        import QuantLib as Ql
 
-        default = ql.SimpleDayCounter()
+        default = Ql.SimpleDayCounter()
 
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
-            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
-            AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
-            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
-            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
-            AccrualCalculationModel.DAY_COUNT_ACT_365A: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
-            AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: Ql.ActualActual(Ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
+            AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
+            AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
-            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
-            AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
-            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
         }
 
         return map_daycount_convention.get(finmars_accrual_calculation_model, default)
