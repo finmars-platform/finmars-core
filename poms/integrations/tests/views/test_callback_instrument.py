@@ -184,15 +184,24 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 2)
 
-        accrual = AccrualCalculationSchedule.objects.filter(
+        accruals = AccrualCalculationSchedule.objects.filter(
             instrument=instrument
-        ).first()
-        self.assertIsNotNone(accrual)
+        ).order_by("accrual_start_date")
+        accrual_1 = accruals[0]
+        self.assertIsNotNone(accrual_1)
         self.assertEqual(
-            accrual.accrual_calculation_model.user_code,
+            accrual_1.accrual_calculation_model.user_code,
             "DAY_COUNT_30_360_GERMAN",  # code 21
         )
-        self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[2])
+        self.assertEqual(accrual_1.periodicity_id, PERIODICITY_MAP[2])
+
+        accrual_2 = accruals[1]
+        self.assertIsNotNone(accrual_2)
+        self.assertEqual(
+            accrual_2.accrual_calculation_model.user_code,
+            "DAY_COUNT_ACT_ACT_ISDA",  # code 3
+        )
+        self.assertEqual(accrual_2.periodicity_id, PERIODICITY_MAP[2])
 
     @skip("till fix the full name instrument type")
     def test__instrument_with_periodicity_created(self):
