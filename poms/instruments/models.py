@@ -264,7 +264,7 @@ class ShortUnderlyingExposure(AbstractClassModel):
 
 
 class AccrualCalculationModel(AbstractClassModel):
-    # DAY COUNT CONVENTION UPDATED ON 2023-09-07
+    # DAY COUNT CONVENTION UPDATED ON 2023-09-07 AND CHECKED ON 2024-06-10
 
     DAY_COUNT_ACT_ACT_ICMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
     DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
@@ -298,11 +298,9 @@ class AccrualCalculationModel(AbstractClassModel):
         (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
         (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
         (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
-        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
         (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
         (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
-        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
@@ -311,6 +309,8 @@ class AccrualCalculationModel(AbstractClassModel):
         # CURRENTLY UNUSED BY CBOND
         (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
         (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
+        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
+        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
         (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
     )
