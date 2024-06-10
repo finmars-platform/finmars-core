@@ -20,8 +20,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Instrument From Finmars Database",
             func="import_instrument_finmars_database",
         )
-        BACKEND_CALLBACK_URLS = get_backend_callback_url()
-        self.url = BACKEND_CALLBACK_URLS["instrument"]
+        backend_callback_urls = get_backend_callback_url()
+        self.url = backend_callback_urls["instrument"]
 
     def validate_result_instrument(self, instrument_code):
         result = Instrument.objects.filter(user_code=instrument_code).first()
@@ -32,8 +32,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
     @skip("till fix the full name instrument type")
     def test__stock_instrument_with_currency_created(self):
-        instrument_code = self.random_string(10)
-        currency_code = self.random_string(3)
+        instrument_code = self.random_string()
+        currency_code = self.random_choice(["USD", "EUR"])
         post_data = {
             "request_id": self.task.id,
             "task_id": None,
@@ -115,7 +115,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "id": 63,
                                 "accrual_start_date": "2017-02-08",
                                 "first_payment_date": "2017-02-08",
-                                "accrual_size": 0.0875,
+                                "accrual_size": 0.1,
                                 "periodicity_n": 2,
                                 "accrual_calculation_model": 21,
                                 "accrual_calculation_model_object": {
@@ -123,6 +123,32 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                     "name": "30/360 German",
                                     "short_name": None,
                                     "user_code": "30/360 German",
+                                    "public_name": None,
+                                    "notes": None,
+                                },
+                                "periodicity": 12,
+                                "periodicity_object": {
+                                    "id": 12,
+                                    "name": " Annually",
+                                    "short_name": None,
+                                    "user_code": "ANNUALLY",
+                                    "public_name": None,
+                                    "notes": None,
+                                },
+                                "notes": "",
+                            },
+                            {
+                                "id": 64,
+                                "accrual_start_date": "2018-01-31",
+                                "first_payment_date": "2018-02-27",
+                                "accrual_size": 0.2,
+                                "periodicity_n": 2,
+                                "accrual_calculation_model": 3,
+                                "accrual_calculation_model_object": {
+                                    "id": 3,
+                                    "name": "Actual/Actual (ISDA)",
+                                    "short_name": None,
+                                    "user_code": "Actual/Actual (ISDA)",
                                     "public_name": None,
                                     "notes": None,
                                 },
@@ -156,17 +182,26 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         instrument = self.validate_result_instrument(instrument_code)
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
-        self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)
+        self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 2)
 
-        accrual = AccrualCalculationSchedule.objects.filter(
+        accruals = AccrualCalculationSchedule.objects.filter(
             instrument=instrument
-        ).first()
-        self.assertIsNotNone(accrual)
+        ).order_by("accrual_start_date")
+        accrual_1 = accruals[0]
+        self.assertIsNotNone(accrual_1)
         self.assertEqual(
-            accrual.accrual_calculation_model.user_code,
+            accrual_1.accrual_calculation_model.user_code,
             "DAY_COUNT_30_360_GERMAN",  # code 21
         )
-        self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[2])
+        self.assertEqual(accrual_1.periodicity_id, PERIODICITY_MAP[2])
+
+        accrual_2 = accruals[1]
+        self.assertIsNotNone(accrual_2)
+        self.assertEqual(
+            accrual_2.accrual_calculation_model.user_code,
+            "DAY_COUNT_ACT_ACT_ISDA",  # code 3
+        )
+        self.assertEqual(accrual_2.periodicity_id, PERIODICITY_MAP[2])
 
     @skip("till fix the full name instrument type")
     def test__instrument_with_periodicity_created(self):

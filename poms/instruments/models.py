@@ -4,7 +4,6 @@ import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
 
-from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +12,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+
+from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.formula_accruals import get_coupon
@@ -24,7 +25,6 @@ from poms.common.models import (
     NamedModel,
 )
 from poms.common.utils import date_now, isclose
-# from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
@@ -264,101 +264,87 @@ class ShortUnderlyingExposure(AbstractClassModel):
 
 
 class AccrualCalculationModel(AbstractClassModel):
+    # DAY COUNT CONVENTION UPDATED ON 2023-09-07 AND CHECKED ON 2024-06-10
 
-    DAY_COUNT_NONE = 1  # Probably dont used
-    DAY_COUNT_ACT_ACT_ISMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
+    DAY_COUNT_ACT_ACT_ICMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
     DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
     DAY_COUNT_ACT_360 = 4  # Actual/360: Actual days in the period divided by 360.
-    DAY_COUNT_ACT_365 = 5  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
-    # ACT_365_25 = 6 # DEPRECATED
-    DAY_COUNT_ACT_365L = 7  # Actual/365L: Similar to Actual/365, but uses 366 for leap years.
-    # ACT_1_365 = 8 # DEPRECATED
-    # ACT_1_360 = 9 # DEPRECATED
-    # C_30_ACT = 10 # DEPRECATED
+    DAY_COUNT_ACT_365L = 7  # Actual/365L: If the end day is in leap year then Day count basis = 366 else Day count basis = 365.
     DAY_COUNT_30_360_ISDA = 11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
-    # C_30_360_NO_EOM = 12 # DEPRECATED
-    DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
-    # C_30E_P_360_ITL = 13 # DEPRECATED
     DAY_COUNT_NL_365 = 14  # NL/365: Uses actual days but assumes 365 days in year, even for leap years.
-    # NL_365_NO_EOM = 15 # DEPRECATED
-    DAY_COUNT_30_360_ISMA = 16 # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
-    # ISMA_30_360_NO_EOM = 17 DEPRECATED
     DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
-    #US_MINI_30_360_NO_EOM = 19 #DEPRECATED
-    DAY_COUNT_BD_252 = 20 # # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
-    DAY_COUNT_30_360_GERMAN = 21 # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
-    # GERMAN_30_360_NO_EOM = 22 #DEPRECATED
-    #REVERSED_ACT_365 = 23 #DEPRECATED
-
-    # NEW DAY COUNT CONVENTION
-    # 2023-09-07
-
-    DAY_COUNT_ACT_ACT_AFB = 26 # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
-    DAY_COUNT_ACT_365_FIXED = 27 # Actual/365: Assumes a fixed 365-day year.
-
+    DAY_COUNT_BD_252 = 20  # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
+    DAY_COUNT_30_360_GERMAN = 21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
+    DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
+    DAY_COUNT_ACT_365_FIXED = 27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
     DAY_COUNT_30E_360 = 28  # 30E/360: European version. Assumes 30 days per month, 360 days per year, but doesn't adjust end-month dates.
-    DAY_COUNT_ACT_365A = 29  # Actual/365A: Year fraction is actual days in period over average of 365 and 366 if leap year included.
+    DAY_COUNT_ACT_365A = 29  # Actual/365A: Year fraction is actual days in period over average of 365 and 366 if February 29 is included .
     DAY_COUNT_ACT_366 = 30  # Actual/366: Assumes a fixed 366-day year.
     DAY_COUNT_ACT_364 = 31  # Actual/364: Assumes a fixed 364-day year.
+
+    # DAY COUNT CONVENTIONS CURRENTLY UNUSED BY CBOND
+    DAY_COUNT_NONE = 1  # Probably dont used
+    DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
+    DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
+    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
+    DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
-    DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
-
-
     CLASSES = (
-        (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
-        (DAY_COUNT_ACT_ACT_ISMA, "DAY_COUNT_ACT_ACT_ISMA", gettext_lazy("Actual/Actual (ICMA)")),
+        (DAY_COUNT_ACT_ACT_ICMA, "DAY_COUNT_ACT_ACT_ICMA", gettext_lazy("Actual/Actual (ICMA)")),
         (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
         (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
-        (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
         (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
         (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
         (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
         (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
-        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
         (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
         (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
-        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
         (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
         (DAY_COUNT_ACT_364, "DAY_COUNT_ACT_364", gettext_lazy("Actual/364")),
-        (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
+        # CURRENTLY UNUSED BY CBOND
+        (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
+        (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
+        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
+        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
+        (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
     )
 
     @staticmethod
     def get_quantlib_day_count(finmars_accrual_calculation_model):
-        import QuantLib as ql
+        import QuantLib as Ql
 
-        default = ql.SimpleDayCounter()
-
+        default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
-            AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
-            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
-            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: ql.ActualActual(ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
-            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365A: ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
-            AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
-            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
-            AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
+            AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
+            AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
+            # CURRENTLY UNUSED BY CBOND
+            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
         }
 
-        return map_daycount_convention.get(finmars_accrual_calculation_model, default)
+        return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -423,24 +409,22 @@ class Periodicity(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_periodicity(finmars_periodicity):
-        import QuantLib as ql
+        import QuantLib as Ql
 
-        default = ql.Period(12, ql.Months)  # default semi-annually
+        default_period = Ql.Period(12, Ql.Months)  # default semi-annually
 
-        mapping = {
+        period_mapping = {
             # TODO probably add mapping for other finmars periodicities
-            Periodicity.N_DAY: ql.Period(1, ql.Days),
-            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
-            Periodicity.MONTHLY: ql.Period(1, ql.Months),
-            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
-            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
-            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
-            Periodicity.ANNUALLY: ql.Period(12, ql.Months),
+            Periodicity.N_DAY: Ql.Period(1, Ql.Days),
+            Periodicity.WEEKLY: Ql.Period(1, Ql.Weeks),
+            Periodicity.MONTHLY: Ql.Period(1, Ql.Months),
+            Periodicity.BIMONTHLY: Ql.Period(2, Ql.Months),
+            Periodicity.QUARTERLY: Ql.Period(3, Ql.Months),
+            Periodicity.SEMI_ANNUALLY: Ql.Period(6, Ql.Months),
+            Periodicity.ANNUALLY: Ql.Period(12, Ql.Months),
         }
 
-        result = mapping.get(finmars_periodicity, default)
-
-        return result
+        return period_mapping.get(finmars_periodicity, default_period)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("periodicity")
