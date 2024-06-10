@@ -111,7 +111,7 @@ def coupon_accrual_factor(
         #     CouponAccrualFactor = 0
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA:
         # Case 1  'ACT/ACT
         #     CouponAccrualFactor = (dt2 - dt1) / (dt3 - dt1) / freq
         return (dt2 - dt1).days / (dt3 - dt1).days / freq
@@ -407,7 +407,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         #         GetCoupon = 0
         return 0
 
-    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA:
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA:
         #     Case 1  'ACT/ACT
         #         GetCoupon = CPN / freq
         return cpn / freq
