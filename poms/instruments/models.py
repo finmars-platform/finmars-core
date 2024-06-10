@@ -328,11 +328,9 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
             AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
             AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
             AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
             AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
             AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
             AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
             AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
@@ -340,6 +338,8 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
             AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
             AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
             AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
         }
