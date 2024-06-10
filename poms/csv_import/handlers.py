@@ -65,7 +65,7 @@ _l = getLogger("poms.csv_import")
 
 ACCRUAL_MAP = {
     "Actual/Actual (AFB)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB,
-    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA,
     "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
     "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,

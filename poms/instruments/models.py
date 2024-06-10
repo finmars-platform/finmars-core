@@ -266,18 +266,16 @@ class ShortUnderlyingExposure(AbstractClassModel):
 class AccrualCalculationModel(AbstractClassModel):
     # DAY COUNT CONVENTION UPDATED ON 2023-09-07
 
-    DAY_COUNT_ACT_ACT_ISMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
+    DAY_COUNT_ACT_ACT_ICMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
     DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
     DAY_COUNT_ACT_360 = 4  # Actual/360: Actual days in the period divided by 360.
     DAY_COUNT_ACT_365L = 7  # Actual/365L: Similar to Actual/365, but uses 366 for leap years.
     DAY_COUNT_30_360_ISDA = 11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
     DAY_COUNT_NL_365 = 14  # NL/365: Uses actual days but assumes 365 days in year, even for leap years.
-    DAY_COUNT_30_360_ISMA = 16 # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
     DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
-    DAY_COUNT_BD_252 = 20  # # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
+    DAY_COUNT_BD_252 = 20  # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
     DAY_COUNT_30_360_GERMAN = 21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
     DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
-    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
     DAY_COUNT_ACT_365_FIXED = 27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
     DAY_COUNT_30E_360 = 28  # 30E/360: European version. Assumes 30 days per month, 360 days per year, but doesn't adjust end-month dates.
     DAY_COUNT_ACT_365A = 29  # Actual/365A: Year fraction is actual days in period over average of 365 and 366 if leap year included.
@@ -287,11 +285,13 @@ class AccrualCalculationModel(AbstractClassModel):
     # DAY COUNT CONVENTIONS CURRENTLY UNUSED BY CBOND
     DAY_COUNT_NONE = 1  # Probably dont used
     DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
+    DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
+    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
     DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     CLASSES = (
-        (DAY_COUNT_ACT_ACT_ISMA, "DAY_COUNT_ACT_ACT_ISMA", gettext_lazy("Actual/Actual (ICMA)")),
+        (DAY_COUNT_ACT_ACT_ICMA, "DAY_COUNT_ACT_ACT_ICMA", gettext_lazy("Actual/Actual (ICMA)")),
         (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
         (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
         (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
@@ -321,7 +321,7 @@ class AccrualCalculationModel(AbstractClassModel):
 
         default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA: Ql.ActualActual(Ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
             AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
             AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
