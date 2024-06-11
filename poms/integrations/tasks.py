@@ -249,10 +249,11 @@ def download_instrument_async(self, task_id=None, *args, **kwargs):
         raise
 
     if provider is None:
-        _l.debug("provider not found")
+        err_msg = "provider not found"
+        _l.debug(err_msg)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.debug("invalid task status")
@@ -261,9 +262,12 @@ def download_instrument_async(self, task_id=None, *args, **kwargs):
 
     try:
         result, is_ready = provider.download_instrument(options)
-    except Exception:
-        _l.error("provider processing error", exc_info=True)
+    except Exception as e:
+        err_msg = "provider processing error"
+        _l.error(err_msg, exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        raise RuntimeError(err_msg) from e
     else:
         if is_ready:
             _l.info(f"download_instrument_async.result {result}")
@@ -292,6 +296,7 @@ def download_instrument_async(self, task_id=None, *args, **kwargs):
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
+            raise RuntimeError("timeout")
         return
 
     return task_id
@@ -425,18 +430,20 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
                 user_code=instrument_type_user_code_full,
-                # user_code__contains=short_type,  #TODO FOR DEBUG ONLY!
+                # user_code__contains=short_type,  # TODO FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
-            err_msg = f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
+            err_msg = (
+                f"{func} no such InstrumentType "
+                f"user_code={instrument_type_user_code_full}"
+            )
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )
-
         attribute_types = GenericAttributeType.objects.filter(
             master_user=master_user, content_type=content_type
         )
@@ -444,9 +451,10 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instrument_data,
             instrument_type,
             master_user,
-            ecosystem_defaults,
+            ecosystem_default,
             attribute_types,
         )
+        object_data["identifier"] = {}
 
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
         activate(proxy_request)
@@ -460,7 +468,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instance = Instrument.objects.get(
                 master_user=master_user, user_code=object_data["user_code"]
             )
-
             instance.is_active = True
 
             serializer = InstrumentSerializer(
@@ -1093,17 +1100,19 @@ def download_instrument_pricing_async(self, task_id, *args, **kwargs):
     try:
         provider_id = 1  # bloomberg
         provider = get_provider(task.master_user, provider_id)
-    except Exception:
-        _l.debug("provider load error", exc_info=True)
+    except Exception as e:
+        err_msg = "provider load error"
+        _l.debug(err_msg, exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg) from e
 
     if provider is None:
-        _l.debug("provider not found")
+        err_msg = "provider not found"
+        _l.debug(err_msg)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warning("invalid task status")
@@ -1113,9 +1122,12 @@ def download_instrument_pricing_async(self, task_id, *args, **kwargs):
 
     try:
         result, is_ready = provider.download_instrument_pricing(options)
-    except Exception:
-        _l.warning("provider processing error", exc_info=True)
+    except Exception as e:
+        err_msg = "provider processing error"
+        _l.warning(err_msg, exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        raise RuntimeError(err_msg) from e
     else:
         if is_ready:
             task.status = CeleryTask.STATUS_DONE
@@ -1138,9 +1150,10 @@ def download_instrument_pricing_async(self, task_id, *args, **kwargs):
             )
             # self.retry(countdown=provider.get_retry_delay(), max_retries=
             # provider.get_max_retries(), throw=False)
-        except MaxRetriesExceededError:
+        except MaxRetriesExceededError as e:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
+            raise RuntimeError("timeout") from e
         return
 
     return task_id
@@ -1164,16 +1177,18 @@ def test_certificate_async(self, task_id, *args, **kwargs):
 
         provider = get_provider(task.master_user, provider_id)
     except Exception:
-        _l.error("provider load error", exc_info=True)
+        err_msg = "provider load error"
+        _l.error(err_msg, exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     if provider is None:
-        _l.error("provider not found")
+        err_msg = "provider not found"
+        _l.error(err_msg)
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        return
+        raise RuntimeError(err_msg)
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.error("invalid task status")
@@ -1247,6 +1262,7 @@ def test_certificate_async(self, task_id, *args, **kwargs):
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
+            raise RuntimeError("timeout")
         return
 
     return task_id
@@ -4608,6 +4624,7 @@ def update_task_with_instrument_data(data: dict, task: CeleryTask):
         task.status = CeleryTask.STATUS_ERROR
         task.error_message = err_msg
         task.save()
+        raise RuntimeError(err_msg)
 
     else:
         task_done_with_instrument_info(instrument, task)
@@ -4628,6 +4645,8 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
 
     else:
         task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        raise RuntimeError(task.error_message)
 
     task.result_object = result
     task.save()
@@ -4781,6 +4800,10 @@ def download_instrument_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_instrument_finmars_database_async {task_id}")
     import_instrument_finmars_database(task_id)
 
+    task = CeleryTask.objects.get(id=task_id)
+    if task.status == CeleryTask.STATUS_ERROR:
+        raise RuntimeError(task.error_message)
+
 
 def import_currency_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="currency")
@@ -4790,6 +4813,10 @@ def import_currency_finmars_database(task_id: int):
 def download_currency_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_currency_finmars_database_async {task_id}")
     import_currency_finmars_database(task_id)
+
+    task = CeleryTask.objects.get(id=task_id)
+    if task.status == CeleryTask.STATUS_ERROR:
+        raise RuntimeError(task.error_message)
 
 
 def import_company_finmars_database(task_id: int):
@@ -4801,6 +4828,10 @@ def download_company_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_company_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
 
+    task = CeleryTask.objects.get(id=task_id)
+    if task.status == CeleryTask.STATUS_ERROR:
+        raise RuntimeError(task.error_message)
+
 
 def import_price_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="price")
@@ -4810,6 +4841,10 @@ def import_price_finmars_database(task_id: int):
 def download_price_finmars_database_async(self, task_id, *args, **kwargs):
     _l.info(f"download_price_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
+
+    task = CeleryTask.objects.get(id=task_id)
+    if task.status == CeleryTask.STATUS_ERROR:
+        raise RuntimeError(task.error_message)
 
 
 FINAL_STATUSES = {

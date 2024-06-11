@@ -1176,6 +1176,7 @@ class InstrumentExternalAPIViewSet(APIView):
         return Response({"ok"})
 
 
+# DEPRECATED
 class InstrumentFDBCreateFromCallbackViewSet(APIView):
     permission_classes = []
 

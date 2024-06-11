@@ -65,11 +65,10 @@ _l = getLogger("poms.csv_import")
 
 ACCRUAL_MAP = {
     "Actual/Actual (AFB)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB,
-    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISMA,
+    "Actual/Actual (ICMA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA,
     "Actual/Actual (ISDA)": AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     "Actual/360": AccrualCalculationModel.DAY_COUNT_ACT_360,
     "Actual/364": AccrualCalculationModel.DAY_COUNT_ACT_364,
-    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
     "Actual/365 (Actual/365F)": AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
     "Actual/366": AccrualCalculationModel.DAY_COUNT_ACT_366,
     "Actual/365L": AccrualCalculationModel.DAY_COUNT_ACT_365L,
@@ -82,6 +81,8 @@ ACCRUAL_MAP = {
     "30/360 (30/360 ISDA)": AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
     "30/360 (30/360 ISMA)": AccrualCalculationModel.DAY_COUNT_30_360_ISMA,
     "30/360 German": AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
+    # currently unused by CBOND
+    "Actual/365": AccrualCalculationModel.DAY_COUNT_ACT_365,
     "30/365": AccrualCalculationModel.DAY_COUNT_30_365,
     "Simple": AccrualCalculationModel.DAY_COUNT_SIMPLE,
     "none": AccrualCalculationModel.DAY_COUNT_NONE,
@@ -110,7 +111,8 @@ RELATION_FIELDS_MAP = {
 }
 
 
-## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
+# TO BE DEPRECATED SOON !
+# Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(
     instrument_object, instrument_type, ecosystem_default
 ):
@@ -156,7 +158,7 @@ def set_defaults_from_instrument_type(
                 master_user=instrument_type.master_user,
                 user_code=instrument_type.long_underlying_instrument,
             ).pk
-        except Exception as e:
+        except Exception:
             _l.info("Could not set long_underlying_instrument, fallback to default")
             instrument_object["long_underlying_instrument"] = (
                 ecosystem_default.instrument.pk
@@ -171,7 +173,7 @@ def set_defaults_from_instrument_type(
                 master_user=instrument_type.master_user,
                 user_code=instrument_type.short_underlying_instrument,
             ).pk
-        except Exception as e:
+        except Exception:
             _l.info("Could not set short_underlying_instrument, fallback to default")
             instrument_object["short_underlying_instrument"] = (
                 ecosystem_default.instrument.pk
@@ -476,7 +478,11 @@ def handler_instrument_object(
             user_code=source_data["payment_size_detail"]
         ).id
     except Exception:
-        object_data["payment_size_detail"] = ecosystem_default.payment_size_detail.id
+        object_data["payment_size_detail"] = (
+            ecosystem_default.payment_size_detail.id
+            if ecosystem_default.payment_size_detail
+            else PaymentSizeDetail.DEFAULT
+        )
 
     if "maturity_price" in source_data:
         try:
@@ -581,33 +587,16 @@ def handler_instrument_object(
 
     set_events_for_instrument(object_data, source_data, instrument_type)
 
-    # FIXME coupon_event is not used !
-    # if (
-    #     (
-    #         "accrual_calculation_schedules" in source_data
-    #         and source_data["accrual_calculation_schedules"]
-    #     )
-    #     and (
-    #         len(source_data["accrual_calculation_schedules"])
-    #         and len(object_data["event_schedules"])
-    #     )
-    #     and "first_payment_date" in source_data["accrual_calculation_schedules"][0]
-    # ):
-    #     coupon_event = object_data["event_schedules"][0]
-    #
-    #     coupon_event["effective_date"] = source_data["accrual_calculation_schedules"][
-    #         0
-    #     ]["first_payment_date"]
-
     if (
         "accrual_calculation_schedules" in source_data
         and source_data["accrual_calculation_schedules"]
     ):
         _l.info("Setting up accrual schedules. Overwrite Existing")
-        accrual = source_data["accrual_calculation_schedules"][0]
-        accrual.pop("id")  # remove id of finmars_database accrual object
-        set_periodicity_period(source_data, accrual)
-        object_data["accrual_calculation_schedules"] = [accrual]
+        object_data["accrual_calculation_schedules"] = []
+        for accrual in source_data["accrual_calculation_schedules"]:
+            accrual.pop("id")  # remove id of finmars_database accrual object
+            set_periodicity_period(source_data, accrual)
+            object_data["accrual_calculation_schedules"].append(accrual)
 
     else:
         set_default_accrual(object_data, instrument_type)
@@ -621,25 +610,6 @@ def handler_instrument_object(
     _l.info(f"{func} instrument={source_data['user_code']} object_data={object_data}")
 
     return object_data
-
-
-def set_accrual_dates_and_size(source_data, accrual):
-    if "accrual_start_date" in source_data["accrual_calculation_schedules"][0]:
-        accrual["accrual_start_date"] = source_data["accrual_calculation_schedules"][0][
-            "accrual_start_date"
-        ]
-
-    if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-        accrual["first_payment_date"] = source_data["accrual_calculation_schedules"][0][
-            "first_payment_date"
-        ]
-
-    try:
-        accrual["accrual_size"] = float(
-            source_data["accrual_calculation_schedules"][0]["accrual_size"]
-        )
-    except Exception:
-        accrual["accrual_size"] = 0
 
 
 class SimpleImportProcess:

@@ -1,6 +1,8 @@
+import os.path
+
 from rest_framework import serializers
 
-from poms.explorer.utils import has_slash
+from poms.explorer.utils import check_is_true, path_is_file
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -10,14 +12,9 @@ class BasePathSerializer(serializers.Serializer):
         allow_null=False,
     )
 
-    def validate_path(self, value):
-        if not value:
-            return ""
-
-        if has_slash(value):
-            raise serializers.ValidationError("Path should not start or end with '/'")
-
-        return value
+    @staticmethod
+    def validate_path(path: str):
+        return path.strip("/") if path else ""
 
 
 class FolderPathSerializer(BasePathSerializer):
@@ -33,9 +30,6 @@ class FilePathSerializer(BasePathSerializer):
     pass
 
 
-TRUTHY_VALUES = {"true", "1", "yes"}
-
-
 class DeletePathSerializer(BasePathSerializer):
     is_dir = serializers.CharField(
         default="false",
@@ -43,8 +37,9 @@ class DeletePathSerializer(BasePathSerializer):
         allow_null=True,
     )
 
-    def validate_is_dir(self, value) -> bool:
-        return bool(value and (value.lower() in TRUTHY_VALUES))
+    @staticmethod
+    def validate_is_dir(value) -> bool:
+        return check_is_true(value)
 
     def validate_path(self, value):
         if not value:
@@ -63,38 +58,37 @@ class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
     items = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
+        required=True,
     )
 
     def validate(self, attrs):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
 
-        target_directory_path = attrs['target_directory_path']
-        if has_slash(target_directory_path):
+        target_directory_path = attrs["target_directory_path"].strip("/")
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        if not storage.dir_exists(new_target_directory_path):
             raise serializers.ValidationError(
-                "'target_directory_path' should not start or end with '/'"
-            )
-        new_target_directory_path = f"{space_code}/{target_directory_path}"
-        if storage and not storage.exists(new_target_directory_path):
-            raise serializers.ValidationError(
-                f"target folder '{target_directory_path}' does not exist"
+                f"target directory '{new_target_directory_path}' does not exist"
             )
 
         updated_items = []
-        for item in attrs["items"]:
-            if has_slash(item):
-                raise serializers.ValidationError(
-                    f"item {item} should not start or end with '/'"
-                )
-            if target_directory_path in item:
-                raise serializers.ValidationError(
-                    f"item {item} should not be part of the target directory"
-                )
-            item = f"{space_code}/{item}"
-            if storage and not storage.exists(item):
-                raise serializers.ValidationError(f"item {item} does not exist")
+        for path in attrs["items"]:
+            path = path.strip("/")
 
-            updated_items.append(item)
+            directory_path = os.path.dirname(path)
+            if target_directory_path == directory_path:
+                raise serializers.ValidationError(
+                    f"path {path} belongs to target directory path"
+                )
+
+            path = f"{space_code}/{path}"
+            dir_path = path + "/"
+            if storage.dir_exists(dir_path):
+                # this is a directory
+                path = f"{path}/"
+
+            updated_items.append(path)
 
         attrs["target_directory_path"] = new_target_directory_path
         attrs["items"] = updated_items
@@ -108,10 +102,7 @@ class ZipFilesSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         for path in attrs["paths"]:
-            if has_slash(path):
-                raise serializers.ValidationError(
-                    f"path {path} should not start or end with '/'"
-                )
+            path = path.strip("/")
 
         return attrs
 
@@ -128,3 +119,42 @@ class ResponseSerializer(serializers.Serializer):
         required=False,
         child=serializers.DictField(),
     )
+
+
+class TaskResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(required=True)
+    task_id = serializers.CharField(required=True)
+
+
+class UnZipSerializer(serializers.Serializer):
+    target_directory_path = serializers.CharField(required=True, allow_blank=False)
+    file_path = serializers.CharField(required=True, allow_blank=False)
+
+    def validate_target_directory_path(self, value):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+
+        target_directory_path = value.strip("/")
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        if not storage.dir_exists(new_target_directory_path):
+            raise serializers.ValidationError(
+                f"target folder '{target_directory_path}' does not exist"
+            )
+        return new_target_directory_path
+
+    def validate_file_path(self, value):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+
+        value = value.strip("/")
+
+        if not value.endswith(".zip"):
+            raise serializers.ValidationError(
+                f"file {value} should be a zip file, with '.zip' extension"
+            )
+
+        new_file_path = f"{space_code}/{value}"
+        if not path_is_file(storage, new_file_path):
+            raise serializers.ValidationError(f"item {new_file_path} is not a file")
+
+        return new_file_path

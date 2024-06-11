@@ -108,7 +108,7 @@ class AuthorizerService:
         if response.status_code != 200:
             raise RuntimeError(f"Error updating member {response.text}")
 
-    def prepare_and_post_request(self, worker, url, realm_code, err_msg):
+    def prepare_and_post_request(self, url, worker, realm_code, err_msg):
         headers = self.prepare_headers()
         data = {
             "realm_code": realm_code,
@@ -126,33 +126,33 @@ class AuthorizerService:
 
     def start_worker(self, worker, realm_code):
         self.prepare_and_post_request(
+            "/api/v1/internal/start-worker/",
             worker,
             realm_code,
-            "/api/v1/internal/start-worker/",
             "Error starting worker ",
         )
 
     def stop_worker(self, worker, realm_code):
         self.prepare_and_post_request(
+            "/api/v1/internal/stop-worker/",
             worker,
             realm_code,
-            "/api/v1/internal/stop-worker/",
             "Error stopping worker ",
         )
 
     def restart_worker(self, worker, realm_code):
         self.prepare_and_post_request(
+            "/api/v1/internal/restart-worker/",
             worker,
             realm_code,
-            "/api/v1/internal/restart-worker/",
             "Error restarting worker ",
         )
 
     def delete_worker(self, worker, realm_code):
         self.prepare_and_post_request(
+            "/api/v1/internal/delete-worker/",
             worker,
             realm_code,
-            "/api/v1/internal/delete-worker/",
             "Error deleting worker ",
         )
 
