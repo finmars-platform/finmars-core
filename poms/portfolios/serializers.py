@@ -253,6 +253,7 @@ class PortfolioSerializer(
                     "short_name": instance.short_name,
                     "public_name": instance.public_name,
                     "instrument_type": "com.finmars.initial-instrument-type:portfolio",
+                    "identifier": {},
                 }
 
                 try:
