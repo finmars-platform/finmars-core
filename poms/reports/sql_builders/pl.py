@@ -64,7 +64,7 @@ class PLReportBuilderSql:
 
                 self.instance.pl_first_date = get_last_business_day(
                     first_portfolio.first_transaction_date - timedelta(days=1),
-                )
+                    )
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
@@ -367,9 +367,9 @@ class PLReportBuilderSql:
                                    when rn_total=group_border
                                    then
                                        case
-                                           when NOT rolling_position_size_prev*position_size_with_sign = 0 and not rolling_position_size_prev+position_size_with_sign = 0
+                                           when NOT rolling_position_size_prev * position_size_with_sign = 0 and not rolling_position_size_prev + position_size_with_sign = 0
                                               then
-                                                  ln(1+(rolling_position_size_prev/position_size_with_sign))
+                                                  ln(1+(rolling_position_size_prev / position_size_with_sign))
                                               else
                                                   0
                                            end
@@ -377,7 +377,7 @@ class PLReportBuilderSql:
                                       case
                                         when rolling_position_size_prev*position_size_with_sign < 0
                                           then
-                                                  ln(1+(position_size_with_sign/rolling_position_size_prev))
+                                                  ln(1+(position_size_with_sign / rolling_position_size_prev))
                                           else
                                           0
                                       end
@@ -1266,7 +1266,7 @@ class PLReportBuilderSql:
                         end as position_return,
                         
                         case
-                            when amount_invested_fixed != 0
+                            when amount_invested != 0
                             then ((((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -amount_invested) * cross_loc_prc_fx)
                             else 0
                         end as position_return_loc,
@@ -1404,7 +1404,7 @@ class PLReportBuilderSql:
                             end as ytm_at_cost,
                             
                             rep_cur_fx,
-                            (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
+                            (rep_cur_fx / i.prc_cur_fx) cross_loc_prc_fx,
         
                             position_size,
                             position_size_opened,
@@ -1428,19 +1428,19 @@ class PLReportBuilderSql:
         
                             -- вроде, не используется
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as net_cost_price,
                             -- испольщуется только эта
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as net_cost_price_loc,
                             
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                     then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as principal_cost_price_loc, -- wtf?
@@ -1448,19 +1448,19 @@ class PLReportBuilderSql:
                             
                             -- вроде, не используется
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as gross_cost_price,
                             -- испольщуется только эта
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as gross_cost_price_loc,
                             
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0
                                 then time_invested_sum / position_size_opened / 365
                                 else 0
                             end as time_invested,
@@ -2472,13 +2472,13 @@ class PLReportBuilderSql:
                     (0) as position_size,
                     (0) as nominal_position_size,
                     
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx)     as carry_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_opened,
 
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_fx_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx) as carry_fx_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_fx_opened,
                      
                     (0) as principal_fixed_opened,
                     (0) as carry_fixed_opened,
@@ -2808,13 +2808,13 @@ class PLReportBuilderSql:
                     (0) as position_size,
                     (0) as nominal_position_size,
                     
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx)     as carry_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_opened,
 
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as carry_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as overheads_fx_opened,
                      
                     (0) as principal_fixed_opened,
                     (0) as carry_fixed_opened,
