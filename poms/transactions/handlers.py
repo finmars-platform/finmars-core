@@ -645,6 +645,7 @@ class TransactionTypeProcess:
                             user_code=user_code,
                             name=user_code,
                             owner=self.member,
+                            identifier={},
                             instrument_type=ecosystem_default.instrument_type,
                             accrued_currency=ecosystem_default.currency,
                             pricing_currency=ecosystem_default.currency,
@@ -655,7 +656,7 @@ class TransactionTypeProcess:
 
                     _l.debug(f"instrument.user_code {instrument.user_code} ")
 
-                    object_data = {"user_code": instrument.user_code}
+                    object_data = {"user_code": instrument.user_code, "identifier": {}}
 
                     if instrument.user_code not in [
                         "-",
