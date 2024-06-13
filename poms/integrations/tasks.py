@@ -957,6 +957,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     instrument_dict["name"] = options_data["name"]
     instrument_dict["user_code"] = options_data["user_code"]
     instrument_dict["is_active"] = False
+    instrument_dict["identifier"] = {}
     context = {
         "master_user": task.master_user,
         "request": ProxyRequest(ProxyUser(task.member, task.master_user)),
