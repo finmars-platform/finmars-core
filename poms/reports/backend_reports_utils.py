@@ -88,7 +88,7 @@ class BackendReportHelperService:
                 group_items, columns
             )
 
-            subtotal_mv = result_group["subtotal"]["market_value"]
+            subtotal_mv = result_group["subtotal"].get("market_value")
             if subtotal_mv and isinstance(subtotal_mv, (int, float)):
                 total_value = sum(map(lambda item: item["market_value_percent"], group_items))
                 if total_value:
@@ -96,7 +96,7 @@ class BackendReportHelperService:
                 else:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
-            subtotal_exp = result_group["subtotal"]["exposure"]
+            subtotal_exp = result_group["subtotal"].get("exposure")
             if subtotal_exp and isinstance(subtotal_exp, (int, float)):
                 total_value = sum(map(lambda item: item["exposure_percent"], group_items))
                 if total_value:
