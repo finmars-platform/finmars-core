@@ -95,7 +95,7 @@ class InstrumentTypeProcess(object):
             master_user=self.instrument_type.master_user
         )
 
-        self.instrument_object = {"instrument_type": instrument_type.id}
+        self.instrument_object = {"instrument_type": instrument_type.id, "identifier": {}}
         self.fill_instrument_with_instrument_type_defaults()
         self.set_pricing_policies()
 
