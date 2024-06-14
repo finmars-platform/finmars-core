@@ -88,20 +88,19 @@ class BackendReportHelperService:
                 group_items, columns
             )
 
-            subtotal_mv = result_group["subtotal"].get("market_value")
-            if subtotal_mv and isinstance(subtotal_mv, (int, float)):
-                total_value = sum(map(lambda item: item["market_value_percent"], group_items))
-                if total_value:
+            if result_group["subtotal"].get("market_value"):
+                try:
+                    total_value = sum(map(lambda item: item["market_value_percent"], group_items)) or None
+                    # None is to raise an exception if sum is 0
                     result_group["subtotal"]["market_value_percent"] = round(total_value * 100, 2)
-                else:
+                except Exception as e:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
-            subtotal_exp = result_group["subtotal"].get("exposure")
-            if subtotal_exp and isinstance(subtotal_exp, (int, float)):
-                total_value = sum(map(lambda item: item["exposure_percent"], group_items))
-                if total_value:
+            if result_group["subtotal"].get("exposure"):
+                try:
+                    total_value = sum(map(lambda item: item["exposure_percent"], group_items)) or None
                     result_group["subtotal"]["exposure_percent"] = round(total_value * 100, 2)
-                else:
+                except Exception as e:
                     result_group["subtotal"]["exposure_percent"] = "No Data"
 
         return result_groups
@@ -675,13 +674,11 @@ class BackendReportHelperService:
                 lambda item: item[group_field]
             )]
         for items_group in item_groups:
-            all_numbers = all(isinstance(item[data_field], (int, float)) for item in items_group)
-            if all_numbers:
+            try:
                 group_value = sum(item[data_field] for item in items_group)
-            if all_numbers and group_value:
                 for item in items_group:
                     item[f"{data_field}_percent"] = item[data_field] / group_value
-            else:
+            except Exception as e:
                 for item in items_group:
                     item[f"{data_field}_percent"] = None
 
