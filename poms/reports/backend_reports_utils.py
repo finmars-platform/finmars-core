@@ -88,14 +88,18 @@ class BackendReportHelperService:
                 group_items, columns
             )
 
-            if "market_value" in result_group["subtotal"]:
-                if total_value := sum(map(lambda item: item.get("market_value_percent") or 0, group_items)):
+            subtotal_mv = result_group["subtotal"]["market_value"]
+            if subtotal_mv and isinstance(subtotal_mv, (int, float)):
+                total_value = sum(map(lambda item: item["market_value_percent"], group_items))
+                if total_value:
                     result_group["subtotal"]["market_value_percent"] = round(total_value * 100, 2)
                 else:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
-            if "exposure" in result_group["subtotal"]:
-                if total_value := sum(map(lambda item: item.get("exposure_percent") or 0, group_items)):
+            subtotal_exp = result_group["subtotal"]["exposure"]
+            if subtotal_exp and isinstance(subtotal_exp, (int, float)):
+                total_value = sum(map(lambda item: item["exposure_percent"], group_items))
+                if total_value:
                     result_group["subtotal"]["exposure_percent"] = round(total_value * 100, 2)
                 else:
                     result_group["subtotal"]["exposure_percent"] = "No Data"
@@ -671,9 +675,12 @@ class BackendReportHelperService:
                 lambda item: item[group_field]
             )]
         for items_group in item_groups:
-            if group_market_value := sum(map(lambda item: item[data_field], items_group)):
+            all_numbers = all(isinstance(item[data_field], (int, float)) for item in items_group)
+            if all_numbers:
+                group_value = sum(item[data_field] for item in items_group)
+            if all_numbers and group_value:
                 for item in items_group:
-                    item[f"{data_field}_percent"] = item[data_field] / group_market_value
+                    item[f"{data_field}_percent"] = item[data_field] / group_value
             else:
                 for item in items_group:
                     item[f"{data_field}_percent"] = None
@@ -683,7 +690,7 @@ class BackendReportHelperService:
     def format_value_percent(self, items, field_name):
         for item in items:
             item[field_name] = round(item[field_name] * 100, 2) \
-                if item.get(field_name) else "-"
+                if item.get(field_name) else None
         return items
 
     def calculate_total_percent(self, items, total_total_value):
