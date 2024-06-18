@@ -735,20 +735,6 @@ class MasterUser(models.Model):
         #     name="DFT",
         #     expr="(ask+bid)/2",
         # )
-        instrument_pricing_scheme = InstrumentPricingScheme.objects.create(
-            master_user=self,
-            name="-",
-            user_code="",
-            type_id=1,
-            owner=finmars_bot,
-        )
-        currency_pricing_scheme = CurrencyPricingScheme.objects.create(
-            master_user=self,
-            name="-",
-            user_code="",
-            type_id=1,
-            owner=finmars_bot,
-        )
 
         # bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
 
@@ -809,8 +795,6 @@ class MasterUser(models.Model):
         ecosystem_defaults.mismatch_account = account
         ecosystem_defaults.pricing_policy = pricing_policy
         ecosystem_defaults.transaction_type = transaction_type
-        ecosystem_defaults.instrument_pricing_scheme = instrument_pricing_scheme
-        ecosystem_defaults.currency_pricing_scheme = currency_pricing_scheme
 
         ecosystem_defaults.instrument_class = InstrumentClass.objects.get(
             pk=InstrumentClass.DEFAULT
@@ -1134,20 +1118,6 @@ class EcosystemDefault(models.Model):
         blank=True,
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("pricing condition"),
-    )
-    instrument_pricing_scheme = models.ForeignKey(
-        "pricing.InstrumentPricingScheme",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("instrument pricing scheme"),
-    )
-    currency_pricing_scheme = models.ForeignKey(
-        "pricing.CurrencyPricingScheme",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("currency pricing scheme"),
     )
 
 

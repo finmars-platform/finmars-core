@@ -22,8 +22,8 @@ class CalculateSimpleBalanceReportTest(BaseTestCase):
             owner=self.member,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
-            default_instrument_pricing_scheme=None,
-            default_currency_pricing_scheme=None,
+            # default_instrument_pricing_scheme=None,
+            # default_currency_pricing_scheme=None,
         )
 
     def test__report_portfolio_register_with_instrument(self):

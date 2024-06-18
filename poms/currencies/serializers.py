@@ -15,7 +15,7 @@ from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField, CountryField
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.pricing.models import CurrencyHistoryError, CurrencyPricingPolicy
+from poms.pricing.models import CurrencyHistoryError
 from poms.system_messages.handlers import send_system_message
 from poms.users.fields import MasterUserField
 from poms.users.utils import get_master_user_from_context, get_member_from_context
@@ -59,32 +59,36 @@ class CurrencySerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        from poms.pricing.serializers import CurrencyPricingPolicySerializer
+        # from poms.pricing.serializers import CurrencyPricingPolicySerializer
 
         super().__init__(*args, **kwargs)
 
-        self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
-            allow_null=True, many=True, required=False
-        )
+        # TODO pricingv2 - refactor to new CurrencyPricingPolicySerializer
+        # self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
+        #     allow_null=True, many=True, required=False
+        # )
 
         from poms.instruments.serializers import CountrySerializer
         self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
 
     def create(self, validated_data):
+
         pricing_policies = validated_data.pop("pricing_policies", None)
 
         instance = super(CurrencySerializer, self).create(validated_data)
 
-        self.save_pricing_policies(instance, pricing_policies)
+        # TODO pricingv2 - update creating currency with pricing policies
+        # self.save_pricing_policies(instance, pricing_policies)
 
         return instance
 
     def update(self, instance, validated_data):
-        pricing_policies = validated_data.pop("pricing_policies", None)
+        # pricing_policies = validated_data.pop("pricing_policies", None)
 
         instance = super(CurrencySerializer, self).update(instance, validated_data)
 
-        self.save_pricing_policies(instance, pricing_policies)
+        # TODO pricingv2 - update creating currency with pricing policies
+        # self.save_pricing_policies(instance, pricing_policies)
 
         return instance
 
@@ -96,58 +100,6 @@ class CurrencySerializer(
         cpp.data = item["data"] if "data" in item else None
         cpp.notes = item["notes"]
         cpp.save()
-
-    def save_pricing_policies(self, instance, pricing_policies):
-        policies = PricingPolicy.objects.filter(master_user=instance.master_user)
-
-        ids = set()
-
-        for policy in policies:
-            try:
-                cpp = CurrencyPricingPolicy.objects.get(
-                    currency=instance, pricing_policy=policy
-                )
-
-            except CurrencyPricingPolicy.DoesNotExist:
-                cpp = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
-
-                if policy.default_currency_pricing_scheme:
-                    cpp.pricing_scheme = policy.default_currency_pricing_scheme
-
-                    parameters = policy.default_currency_pricing_scheme.get_parameters()
-                    set_currency_pricing_scheme_parameters(cpp, parameters)
-
-                cpp.save()
-                ids.add(cpp.id)
-
-        if pricing_policies:
-            for item in pricing_policies:
-                try:
-                    oid = item.get("id", None)
-                    ids.add(oid)
-
-                    cpp = CurrencyPricingPolicy.objects.get(
-                        currency_id=instance.id, id=oid
-                    )
-                    self._update_currency_pricing_policy(item, cpp)
-
-                except CurrencyPricingPolicy.DoesNotExist as e:
-                    try:
-                        cpp = CurrencyPricingPolicy.objects.get(
-                            currency_id=instance.id,
-                            pricing_policy=item["pricing_policy"],
-                        )
-                        self._update_currency_pricing_policy(item, cpp)
-
-                        ids.add(cpp.id)
-
-                    except Exception as e:
-                        print(f"Can't Find  Pricing Policy {e}")
-
-        if len(ids):
-            CurrencyPricingPolicy.objects.filter(
-                currency=instance,
-            ).exclude(id__in=ids).delete()
 
 
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):

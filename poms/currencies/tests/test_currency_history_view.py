@@ -33,8 +33,8 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),
-            default_instrument_pricing_scheme=self.instrument_pricing_schema,
-            default_currency_pricing_scheme=self.instrument_currency_schema,
+            # default_instrument_pricing_scheme=self.instrument_pricing_schema,
+            # default_currency_pricing_scheme=self.instrument_currency_schema,
         )
 
     def create_currency_history(self) -> CurrencyHistory:

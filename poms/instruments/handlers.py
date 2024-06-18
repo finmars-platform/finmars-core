@@ -97,7 +97,7 @@ class InstrumentTypeProcess(object):
 
         self.instrument_object = {"instrument_type": instrument_type.id, "identifier": {}}
         self.fill_instrument_with_instrument_type_defaults()
-        self.set_pricing_policies()
+        # self.set_pricing_policies()
 
         self.instrument = self.instrument_object
 
@@ -139,12 +139,12 @@ class InstrumentTypeProcess(object):
                     "pricing_currency"
                 ] = self.ecosystem_default.currency.pk
 
-            self.instrument_object["instrument_type_pricing_policies"] = []
-
-            if self.instrument_type.pricing_policies:
-                self.instrument_object[
-                    "_instrument_type_pricing_policies"
-                ] = self.instrument_type.pricing_policies
+            # self.instrument_object["instrument_type_pricing_policies"] = []
+            #
+            # if self.instrument_type.pricing_policies:
+            #     self.instrument_object[
+            #         "_instrument_type_pricing_policies"
+            #     ] = self.instrument_type.pricing_policies
 
             self.instrument_object["default_price"] = self.instrument_type.default_price
             self.instrument_object["maturity_date"] = self.instrument_type.maturity_date
@@ -393,21 +393,22 @@ class InstrumentTypeProcess(object):
                 f"InstrumentType is not configured correctly {repr(e)}"
             ) from e
 
-    def set_pricing_policies(self):
-        try:
-            self.instrument_object["pricing_policies"] = []
-
-            for it_pricing_policy in self.instrument_type.pricing_policies.all():
-                pricing_policy = {
-                    "pricing_policy": it_pricing_policy.pricing_policy.id,
-                    "pricing_scheme": it_pricing_policy.pricing_scheme.id,
-                    "notes": it_pricing_policy.notes,
-                    "default_value": it_pricing_policy.default_value,
-                    "attribute_key": it_pricing_policy.attribute_key,
-                    "json_data": it_pricing_policy.json_data,
-                }
-
-                self.instrument_object["pricing_policies"].append(pricing_policy)
-
-        except Exception as e:
-            _l.info(f"Can't set default pricing policy {e}")
+    # TODO pricingv2 reanimate with new pricing policies logic?
+    # def set_pricing_policies(self):
+    #     try:
+    #         self.instrument_object["pricing_policies"] = []
+    #
+    #         for it_pricing_policy in self.instrument_type.pricing_policies.all():
+    #             pricing_policy = {
+    #                 "pricing_policy": it_pricing_policy.pricing_policy.id,
+    #                 "pricing_scheme": it_pricing_policy.pricing_scheme.id,
+    #                 "notes": it_pricing_policy.notes,
+    #                 "default_value": it_pricing_policy.default_value,
+    #                 "attribute_key": it_pricing_policy.attribute_key,
+    #                 "json_data": it_pricing_policy.json_data,
+    #             }
+    #
+    #             self.instrument_object["pricing_policies"].append(pricing_policy)
+    #
+    #     except Exception as e:
+    #         _l.info(f"Can't set default pricing policy {e}")

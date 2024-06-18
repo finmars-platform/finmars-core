@@ -8,9 +8,6 @@ import poms.celery_tasks.views as celery_tasks
 import poms.common.views as common
 import poms.complex_import.views as complex_import
 import poms.configuration.views as configuration
-import poms.configuration_export.views as configuration_export
-import poms.configuration_import.views as configuration_import
-import poms.configuration_sharing.views as configuration_sharing
 import poms.counterparties.urls as counterparty_router
 import poms.credentials.views as credentials
 import poms.csv_import.urls as csv_import_router
@@ -171,26 +168,6 @@ router.register(
     "import_complex",
 )  # Probably deprecated
 router.register(
-    r"import/configuration-json",
-    configuration_import.ConfigurationImportAsJsonViewSet,
-    "configuration_import",
-)
-router.register(
-    r"export/configuration",
-    configuration_export.ConfigurationExportViewSet,
-    "configuration_export",
-)
-router.register(
-    r"export/mapping",
-    configuration_export.MappingExportViewSet,
-    "mapping_export",
-)
-router.register(
-    r"import/configuration/check-duplicates",
-    configuration_export.ConfigurationDuplicateCheckViewSet,
-    "configuration_import_check_duplicates",
-)
-router.register(
     r"reconciliation/process-bank-file",
     reconciliation.ProcessBankFileForReconcileViewSet,
     "process_bank_file_for_reconcile",
@@ -215,41 +192,7 @@ router.register(
     file_reports.FileReportViewSet,
     "file_reports",
 )
-router.register(
-    r"configuration-sharing/shared-configuration-file",
-    configuration_sharing.SharedConfigurationFileViewSet,
-    "shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"configuration-sharing/invites",
-    configuration_sharing.InviteToSharedConfigurationFileViewSet,
-    "invites_to_shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"configuration-sharing/my-invites",
-    configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
-    "my_invites_to_shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"pricing/instrument-pricing-scheme",
-    pricing.InstrumentPricingSchemeViewSet,
-    "pricing_instrument_pricing_scheme",
-)
-router.register(
-    r"pricing/instrument-pricing-scheme-type",
-    pricing.InstrumentPricingSchemeTypeViewSet,
-    "pricing_instrument_pricing_scheme type",
-)
-router.register(
-    r"pricing/currency-pricing-scheme",
-    pricing.CurrencyPricingSchemeViewSet,
-    "pricing_currency_pricing_scheme",
-)
-router.register(
-    r"pricing/currency-pricing-scheme-type",
-    pricing.CurrencyPricingSchemeTypeViewSet,
-    "pricing_currency_pricing_scheme_type",
-)
+
 router.register(
     r"pricing/price-history-error-ev-group",
     pricing.PriceHistoryErrorEvGroupViewSet,
@@ -374,35 +317,6 @@ urlpatterns = [
     re_path(r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"),
     re_path(
         r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
-    ),
-    # external callbacks
-    re_path(
-        r"internal/brokers/bloomberg/callback",
-        csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/bloomberg-forwards/callback",
-        csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/wtrade/callback",
-        csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/cbonds/callback",
-        csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/fx-cbonds/callback",
-        csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/fixer/callback",
-        csrf_exempt(pricing.PricingBrokerFixerHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/alphav/callback",
-        csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view()),
     ),
     # re_path(r'internal/data/transactions/callback',
     #         csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),

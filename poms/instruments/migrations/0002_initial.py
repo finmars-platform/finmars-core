@@ -13,26 +13,26 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="pricingpolicy",
-            name="default_currency_pricing_scheme",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="pricing.currencypricingscheme",
-                verbose_name="default currency pricing scheme",
-            ),
-        ),
-        migrations.AddField(
-            model_name="pricingpolicy",
-            name="default_instrument_pricing_scheme",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="pricing.instrumentpricingscheme",
-                verbose_name="default instrument pricing scheme",
-            ),
-        ),
+        # migrations.AddField(
+        #     model_name="pricingpolicy",
+        #     name="default_currency_pricing_scheme",
+        #     field=models.ForeignKey(
+        #         blank=True,
+        #         null=True,
+        #         on_delete=django.db.models.deletion.SET_NULL,
+        #         to="pricing.currencypricingscheme",
+        #         verbose_name="default currency pricing scheme",
+        #     ),
+        # ),
+        # migrations.AddField(
+        #     model_name="pricingpolicy",
+        #     name="default_instrument_pricing_scheme",
+        #     field=models.ForeignKey(
+        #         blank=True,
+        #         null=True,
+        #         on_delete=django.db.models.deletion.SET_NULL,
+        #         to="pricing.instrumentpricingscheme",
+        #         verbose_name="default instrument pricing scheme",
+        #     ),
+        # ),
     ]
