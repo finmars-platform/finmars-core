@@ -472,6 +472,7 @@ def handler_instrument_object(
         "pricing_currency"
     ]
     object_data["factor_schedules"] = source_data.get("factor_schedules", [])
+    object_data["identifier"] = source_data.get("identifier", {})
 
     try:
         object_data["payment_size_detail"] = PaymentSizeDetail.objects.get(

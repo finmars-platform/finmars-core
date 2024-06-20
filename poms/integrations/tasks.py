@@ -454,8 +454,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             ecosystem_default,
             attribute_types,
         )
-        object_data["identifier"] = {}
-
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
         activate(proxy_request)
         context = {
