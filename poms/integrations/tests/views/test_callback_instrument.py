@@ -31,7 +31,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         return result
 
     @skip("till fix the full name instrument type")
-    def test__stock_instrument_with_currency_created(self):
+    def test__stock_with_currency_created(self):
         instrument_code = self.random_string()
         currency_code = self.random_choice(["USD", "EUR"])
         post_data = {
@@ -74,7 +74,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
 
-        instrument = self.validate_result_instrument(instrument_code)
+        self.validate_result_instrument(instrument_code)
         self.assertIsNotNone(Currency.objects.filter(user_code=currency_code).first())
 
         self.task.refresh_from_db()
@@ -82,7 +82,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
     @skip("till fix the full name instrument type")
-    def test__instrument_with_factor_and_accrual_schedules_created(self):
+    def test__bond_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
         post_data = {
