@@ -33,11 +33,13 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         }
 
     def validate_result_instrument(self, instrument_code):
-        result = Instrument.objects.filter(user_code=instrument_code).first()
-        self.assertIsNotNone(result)
-        self.assertIsNotNone(result.country)
-        self.assertEqual(result.country.alpha_3, "USA")
-        return result
+        instrument = Instrument.objects.filter(user_code=instrument_code).first()
+        self.assertIsNotNone(instrument)
+        self.assertIsNotNone(instrument.country)
+        self.assertEqual(instrument.country.alpha_3, "USA")
+
+        self.assertEqual(instrument.identifier.keys(), self.identifier.keys())
+        return instrument
 
     @skip("till fix the full name instrument type")
     def test__stock_with_currency_created(self):
