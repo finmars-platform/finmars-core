@@ -22,6 +22,15 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         backend_callback_urls = get_backend_callback_url()
         self.url = backend_callback_urls["instrument"]
+        self.identifier = {
+            "cbond_id": f"{self.random_int(_max=1000)}",
+            "isin": self.random_string(12),
+            "state_reg_number": self.random_string(15),
+            "bbgid": self.random_string(),
+            "isin_code_144a": "",
+            "isin_code_3": "",
+            "database_id": self.random_int(_max=1000),
+        }
 
     def validate_result_instrument(self, instrument_code):
         result = Instrument.objects.filter(user_code=instrument_code).first()
@@ -54,6 +63,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                     },
                 ],
                 "currencies": [
@@ -105,6 +115,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},
@@ -227,6 +238,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},
