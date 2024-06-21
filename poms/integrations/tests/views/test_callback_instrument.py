@@ -41,7 +41,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(instrument.identifier.keys(), self.identifier.keys())
         return instrument
 
-    @skip("till fix the full name instrument type")
+    @skip("uncomment todo debug for local test")
     def test__stock_with_currency_created(self):
         instrument_code = self.random_string()
         currency_code = self.random_choice(["USD", "EUR"])
@@ -93,7 +93,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
-    @skip("till fix the full name instrument type")
+    @skip("uncomment todo debug for local test")
     def test__bond_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
@@ -216,7 +216,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.assertEqual(accrual_2.periodicity_id, PERIODICITY_MAP[2])
 
-    @skip("till fix the full name instrument type")
+    @skip("uncomment todo debug for local test")
     def test__instrument_with_periodicity_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
