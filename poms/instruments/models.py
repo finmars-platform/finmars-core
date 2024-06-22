@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+import re
 import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
@@ -8,6 +10,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -275,8 +278,12 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
     DAY_COUNT_BD_252 = 20  # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
     DAY_COUNT_30_360_GERMAN = 21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
-    DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
-    DAY_COUNT_ACT_365_FIXED = 27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
+    DAY_COUNT_30E_PLUS_360 = (
+        24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
+    )
+    DAY_COUNT_ACT_365_FIXED = (
+        27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
+    )
     DAY_COUNT_30E_360 = 28  # 30E/360: European version. Assumes 30 days per month, 360 days per year, but doesn't adjust end-month dates.
     DAY_COUNT_ACT_365A = 29  # Actual/365A: Year fraction is actual days in period over average of 365 and 366 if February 29 is included .
     DAY_COUNT_ACT_366 = 30  # Actual/366: Assumes a fixed 366-day year.
@@ -287,21 +294,43 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
     DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
     DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
-    DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
+    DAY_COUNT_30_365 = (
+        32  # 30/365: Assumes 30 days in each month and 365 days in a year.
+    )
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     CLASSES = (
-        (DAY_COUNT_ACT_ACT_ICMA, "DAY_COUNT_ACT_ACT_ICMA", gettext_lazy("Actual/Actual (ICMA)")),
-        (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
+        (
+            DAY_COUNT_ACT_ACT_ICMA,
+            "DAY_COUNT_ACT_ACT_ICMA",
+            gettext_lazy("Actual/Actual (ICMA)"),
+        ),
+        (
+            DAY_COUNT_ACT_ACT_ISDA,
+            "DAY_COUNT_ACT_ACT_ISDA",
+            gettext_lazy("Actual/Actual (ISDA)"),
+        ),
         (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
         (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
-        (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
+        (
+            DAY_COUNT_30_360_ISDA,
+            "DAY_COUNT_30_360_ISDA",
+            gettext_lazy("30/360 (30/360 ISDA)"),
+        ),
         (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
         (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
         (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
-        (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
-        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
+        (
+            DAY_COUNT_30_360_GERMAN,
+            "DAY_COUNT_30_360_GERMAN",
+            gettext_lazy("30/360 German"),
+        ),
+        (
+            DAY_COUNT_ACT_365_FIXED,
+            "DAY_COUNT_ACT_365_FIXED",
+            gettext_lazy("Actual/365 (Actual/365F)"),
+        ),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
         (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
@@ -309,8 +338,16 @@ class AccrualCalculationModel(AbstractClassModel):
         # CURRENTLY UNUSED BY CBOND
         (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
         (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
-        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
-        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
+        (
+            DAY_COUNT_30_360_ISMA,
+            "DAY_COUNT_30_360_ISMA",
+            gettext_lazy("30/360 (30/360 ISMA)"),
+        ),
+        (
+            DAY_COUNT_ACT_ACT_AFB,
+            "DAY_COUNT_ACT_ACT_AFB",
+            gettext_lazy("Actual/Actual (AFB)"),
+        ),
         (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
         (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
     )
@@ -321,30 +358,54 @@ class AccrualCalculationModel(AbstractClassModel):
 
         default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(
+                Ql.ActualActual.ISMA
+            ),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(
+                Ql.ActualActual.ISDA
+            ),
             AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(
+                Ql.Actual365Fixed.NoLeap
+            ),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(
+                Ql.Thirty360.ISDA
+            ),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(
+                Ql.Thirty360.Italian
+            ),
+            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(
+                Ql.Actual365Fixed.NoLeap
+            ),
             AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
             AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(
+                Ql.Thirty360.German
+            ),
             AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(
+                Ql.Thirty360.European
+            ),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
             AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
             AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
-            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(
+                Ql.ActualActual.Actual365
+            ),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(
+                Ql.Thirty360.ISMA
+            ),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(
+                Ql.ActualActual.AFB
+            ),
             AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
             AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
         }
 
-        return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
+        return map_daycount_convention.get(
+            finmars_accrual_calculation_model, default_day_counter
+        )
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -1697,13 +1758,8 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     date_pattern = "%Y-%m-%d"  # YYYY-MM-DD, used in calculate_ytm method
 
     def get_first_accrual(self):
-        result = None
-
         accruals = self.accrual_calculation_schedules.all()
-        if len(accruals):
-            result = accruals[0]
-
-        return result
+        return accruals[0] if len(accruals) else None
 
     def get_quantlib_bond(self):
         import QuantLib as ql
@@ -1716,17 +1772,21 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         calendar = ql.TARGET()
 
         if self.maturity_date:
-
-            _l.info('get_quantlib_bond.self.type maturity_date %s' % type(self.maturity_date))
-            _l.info('get_quantlib_bond.self.maturity_date %s' % self.maturity_date)
-            _l.info('get_quantlib_bond.self.date_pattern %s' % self.date_pattern)
+            _l.info(
+                f"get_quantlib_bond.self.type maturity_date {type(self.maturity_date)}"
+            )
+            _l.info(f"get_quantlib_bond.self.maturity_date {self.maturity_date}")
+            _l.info(f"get_quantlib_bond.self.date_pattern {self.date_pattern}")
 
             maturity = ql.Date(str(self.maturity_date), self.date_pattern)
 
             if self.has_factor_schedules():
                 factor_schedules = self.get_factors()
 
-                factor_dates = [ql.Date(str(item.effective_date), self.date_pattern) for item in factor_schedules]
+                factor_dates = [
+                    ql.Date(str(item.effective_date), self.date_pattern)
+                    for item in factor_schedules
+                ]
                 factor_values = [item.factor_value for item in factor_schedules]
 
                 # TODO OG commented: we need issue date
@@ -1739,7 +1799,9 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     first_accrual.periodicity
                 )
 
-                start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
+                start_date = ql.Date(
+                    str(first_accrual.accrual_start_date), self.date_pattern
+                )
                 float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
                 day_count = AccrualCalculationModel.get_quantlib_day_count(
@@ -1777,10 +1839,10 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                 # we need notinals (factors) list to be of same length as accrual schedule
                 for date in schedule_dates:
                     val = (
-                            active_factor(
-                                date=date, factors=factor_values, factor_dates=factor_dates
-                            )
-                            * face_value
+                        active_factor(
+                            date=date, factors=factor_values, factor_dates=factor_dates
+                        )
+                        * face_value
                     )
 
                     notionals.append(val)
@@ -1814,9 +1876,11 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
                         coupons = [float_accrual_size]
 
-                        face_value = 100 # probably self.default_price
+                        face_value = 100  # probably self.default_price
 
-                        bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
+                        bond = ql.FixedRateBond(
+                            settlementDays, face_value, schedule, coupons, day_count
+                        )
                     except Exception as e:
                         _l.error(f"get_quantlib_bond Error {e}")
 
@@ -1830,8 +1894,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     _l.info(f"ZeroCouponBond {bond}")
 
         return bond
-
-    # Important function for calculating YTM
     # 2023-08-21
     def calculate_quantlib_ytm(self, date, price):
         import QuantLib as ql
@@ -1845,7 +1907,9 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         # _l.info('calculate_quantlib_ytm price %s ' % price)
 
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(
+                str(date), self.date_pattern
+            )
 
             try:
                 frequency = bond.frequency()
@@ -1856,7 +1920,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
             _l.info(
-                f'calculate_quantlib_ytm frequency {frequency} of type {type(frequency)}'
+                f"calculate_quantlib_ytm frequency {frequency} of type {type(frequency)}"
             )
 
             ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
@@ -1870,7 +1934,9 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         bond = self.get_quantlib_bond()
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(
+                str(date), self.date_pattern
+            )
 
             try:
                 frequency = bond.frequency()
@@ -1997,10 +2063,10 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             eold = None
             for e0 in events:
                 if (
-                        e0.is_auto_generated
-                        and e0.event_class_id == EventClass.ONE_OFF
-                        and e0.accrual_calculation_schedule_id is None
-                        and e0.factor_schedule_id is None
+                    e0.is_auto_generated
+                    and e0.event_class_id == EventClass.ONE_OFF
+                    and e0.accrual_calculation_schedule_id is None
+                    and e0.factor_schedule_id is None
                 ):
                     eold = e0
                     break
@@ -2210,8 +2276,12 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         if accrual is None:
             return 0
 
-        accrual_start_date = datetime.strptime(accrual.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual.first_payment_date, DATE_FORMAT).date()
+        accrual_start_date = datetime.strptime(
+            accrual.accrual_start_date, DATE_FORMAT
+        ).date()
+        first_payment_date = datetime.strptime(
+            accrual.first_payment_date, DATE_FORMAT
+        ).date()
 
         _l.info(f"coupon_accrual_factor price_date {price_date} ")
 
@@ -2373,6 +2443,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
+
         from poms.configuration.utils import get_default_configuration_code
 
         content_type = ContentType.objects.get(
@@ -2810,13 +2881,13 @@ class PriceHistory(DataTimeStampedModel):
 
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
-                self.principal_price
-                * self.instrument.price_multiplier
-                * self.instrument.get_factor(dt)
-                + self.accrued_price
-                * self.instrument.accrued_multiplier
-                * self.instrument.get_factor(dt)
-                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+            self.principal_price
+            * self.instrument.price_multiplier
+            * self.instrument.get_factor(dt)
+            + self.accrued_price
+            * self.instrument.accrued_multiplier
+            * self.instrument.get_factor(dt)
+            * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
         )
 
         return dt, v0
@@ -2831,9 +2902,9 @@ class PriceHistory(DataTimeStampedModel):
         if instr.maturity_date is None or instr.maturity_date == date.max:
             return []
         if (
-                instr.maturity_price is None
-                or isnan(instr.maturity_price)
-                or isclose(instr.maturity_price, 0.0)
+            instr.maturity_price is None
+            or isnan(instr.maturity_price)
+            or isclose(instr.maturity_price, 0.0)
         ):
             return []
 
@@ -2846,14 +2917,14 @@ class PriceHistory(DataTimeStampedModel):
         data = [(d0, v0)]
 
         for cpn_date, cpn_val in instr.get_future_coupons(
-                begin_date=d0, with_maturity=False
+            begin_date=d0, with_maturity=False
         ):
             try:
                 factor = instr.get_factor(cpn_date)
                 k = (
-                        instr.accrued_multiplier
-                        * factor
-                        * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                    instr.accrued_multiplier
+                    * factor
+                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
                 )
             except ArithmeticError:
                 k = 0
@@ -2862,8 +2933,8 @@ class PriceHistory(DataTimeStampedModel):
         prev_factor = None
         for factor in instr.factor_schedules.all():
             if (
-                    factor.effective_date < d0
-                    or factor.effective_date > instr.maturity_date
+                factor.effective_date < d0
+                or factor.effective_date > instr.maturity_date
             ):
                 prev_factor = factor
                 continue
@@ -2892,9 +2963,9 @@ class PriceHistory(DataTimeStampedModel):
             accrual_size = self.instrument.get_accrual_size(dt)
 
             return (
-                    (accrual_size * self.instrument.accrued_multiplier)
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                    / (self.principal_price * self.instrument.price_multiplier)
+                (accrual_size * self.instrument.accrued_multiplier)
+                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
             self.handle_err(f"get_instr_ytm_x0 {repr(e)}")
@@ -2908,9 +2979,7 @@ class PriceHistory(DataTimeStampedModel):
         )
 
     def calculate_duration(self, date, ytm):
-        return self.instrument.calculate_quantlib_modified_duration(
-            date=date, ytm=ytm
-        )
+        return self.instrument.calculate_quantlib_modified_duration(date=date, ytm=ytm)
 
     def save(self, *args, **kwargs):
         from poms.instruments.fields import AUTO_CALCULATE
@@ -2927,8 +2996,8 @@ class PriceHistory(DataTimeStampedModel):
 
         try:
             if (
-                    self.instrument.accrued_currency_id
-                    == self.instrument.pricing_currency_id
+                self.instrument.accrued_currency_id
+                == self.instrument.pricing_currency_id
             ):
                 self.instr_accrued_ccy_cur_fx = 1
                 self.instr_pricing_ccy_cur_fx = 1
@@ -3148,7 +3217,7 @@ class EventSchedule(models.Model):
                 stop = False
                 try:
                     effective_date = edate + self.periodicity.to_timedelta(
-                        n=self.periodicity_n,
+                        n=int(self.periodicity_n),
                         i=i,
                         same_date=edate,
                     )
@@ -3156,8 +3225,8 @@ class EventSchedule(models.Model):
                     break
 
                 if (
-                        self.accrual_calculation_schedule_id is not None
-                        and effective_date >= fdate
+                    self.accrual_calculation_schedule_id is not None
+                    and effective_date >= fdate
                 ):
                     effective_date = fdate - timedelta(days=1)
                     stop = True
@@ -3436,7 +3505,7 @@ class GeneratedEvent(models.Model):
         return f"Event #{self.id}"
 
     def processed(
-            self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
+        self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
     ):
         from poms.transactions.models import TransactionType
 
@@ -3465,8 +3534,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-                self.effective_date == now
-                and notification_class.is_notify_on_effective_date
+            self.effective_date == now
+            and notification_class.is_notify_on_effective_date
         )
 
     def is_notify_on_notification_date(self, now=None):
@@ -3486,8 +3555,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-                self.notification_date == now
-                and notification_class.is_notify_on_notification_date
+            self.notification_date == now
+            and notification_class.is_notify_on_notification_date
         )
 
     def is_notify_on_date(self, now=None):
@@ -3501,8 +3570,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                    self.effective_date == now
-                    and notification_class.is_apply_default_on_effective_date
+                self.effective_date == now
+                and notification_class.is_apply_default_on_effective_date
             )
 
         return False
@@ -3512,8 +3581,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                    self.notification_date == now
-                    and notification_class.is_apply_default_on_notification_date
+                self.notification_date == now
+                and notification_class.is_apply_default_on_notification_date
             )
 
         return False
@@ -3529,8 +3598,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                    self.effective_date == now
-                    and notification_class.is_need_reaction_on_effective_date
+                self.effective_date == now
+                and notification_class.is_need_reaction_on_effective_date
             )
 
         return False
@@ -3540,8 +3609,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                    self.notification_date == now
-                    and notification_class.is_need_reaction_on_notification_date
+                self.notification_date == now
+                and notification_class.is_need_reaction_on_notification_date
             )
 
         return False
@@ -3668,19 +3737,29 @@ class EventScheduleConfig(models.Model):
         )
 
 
-def validate_file_name(value):
-    import os
+def validate_file_name(value: str):
     from rest_framework.exceptions import ValidationError
 
     if not os.path.basename(value):
-        raise ValidationError('Invalid file name.')
+        raise ValidationError(f"Invalid file name {value}")
+
+
+unix_file_path_regex = r"^(/[^/]+)+$"
+compiled_regex = re.compile(unix_file_path_regex)
+
+
+def validate_file_path(value: str):
+    from rest_framework.exceptions import ValidationError
+
+    if not re.match(compiled_regex, value):
+        raise ValidationError(f"Invalid file path {value}")
 
 
 class FinmarsFile(DataTimeStampedModel):
     name = models.CharField(max_length=255, validators=[validate_file_name])
     path = models.CharField(max_length=500, validators=[validate_file_path])
     extension = models.CharField(max_length=10)
-    size = models.BigIntegerField(min=0)
+    size = models.PositiveBigIntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
         return self.name
