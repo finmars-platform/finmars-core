@@ -1894,6 +1894,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     _l.info(f"ZeroCouponBond {bond}")
 
         return bond
+
     # 2023-08-21
     def calculate_quantlib_ytm(self, date, price):
         import QuantLib as ql
@@ -3737,28 +3738,32 @@ class EventScheduleConfig(models.Model):
         )
 
 
-def validate_file_name(value: str):
+filename_regex = r'^[^/\\:*?"<>|\r\n]+$'
+name_regex = re.compile(filename_regex)
+
+
+def validate_filename(value):
     from rest_framework.exceptions import ValidationError
 
-    if not os.path.basename(value):
-        raise ValidationError(f"Invalid file name {value}")
+    if not re.match(name_regex, value):
+        raise ValidationError("Invalid filename.")
 
 
 unix_file_path_regex = r"^(/[^/]+)+$"
-compiled_regex = re.compile(unix_file_path_regex)
+path_regex = re.compile(unix_file_path_regex)
 
 
 def validate_file_path(value: str):
     from rest_framework.exceptions import ValidationError
 
-    if not re.match(compiled_regex, value):
+    if not re.match(path_regex, value):
         raise ValidationError(f"Invalid file path {value}")
 
 
 class FinmarsFile(DataTimeStampedModel):
-    name = models.CharField(max_length=255, validators=[validate_file_name])
+    name = models.CharField(max_length=255, validators=[validate_filename])
     path = models.CharField(max_length=500, validators=[validate_file_path])
-    extension = models.CharField(max_length=10)
+    extension = models.CharField(max_length=255, validators=[validate_filename])
     size = models.PositiveBigIntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
