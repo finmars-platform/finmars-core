@@ -3666,3 +3666,21 @@ class EventScheduleConfig(models.Model):
             action_is_sent_to_pending=False,
             action_is_book_automatic=True,
         )
+
+
+def validate_file_name(value):
+    import os
+    from rest_framework.exceptions import ValidationError
+
+    if not os.path.basename(value):
+        raise ValidationError('Invalid file name.')
+
+
+class FinmarsFile(DataTimeStampedModel):
+    name = models.CharField(max_length=255, validators=[validate_file_name])
+    path = models.CharField(max_length=500, validators=[validate_file_path])
+    extension = models.CharField(max_length=10)
+    size = models.BigIntegerField(min=0)
+
+    def __str__(self):
+        return self.name
