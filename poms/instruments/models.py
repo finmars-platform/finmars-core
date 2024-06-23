@@ -3761,10 +3761,26 @@ def validate_file_path(value: str):
 
 
 class FinmarsFile(DataTimeStampedModel):
-    name = models.CharField(max_length=255, validators=[validate_filename])
-    path = models.CharField(max_length=500, validators=[validate_file_path])
-    extension = models.CharField(max_length=255, validators=[validate_filename])
-    size = models.PositiveBigIntegerField(validators=[MinValueValidator(1)])
+    name = models.CharField(
+        max_length=255,
+        validators=[validate_filename],
+        help_text="Name of the file, including extension",
+    )
+    path = models.CharField(
+        max_length=500,
+        validators=[validate_file_path],
+        help_text="Path to the file in the storage system",
+    )
+    extension = models.CharField(
+        null=True,
+        max_length=255,
+        validators=[validate_filename],
+        help_text="File name extension",
+    )
+    size = models.PositiveBigIntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Size of the file in bytes",
+    )
 
     def __str__(self):
         return self.name
