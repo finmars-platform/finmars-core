@@ -1570,7 +1570,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         on_delete=models.SET_NULL,
     )
     files = models.ManyToManyField(
-        FinmarsFile,
+        "FinmarsFile",
         related_name="instruments",
         blank=True,
         help_text="Files in the storage related to the instrument",
