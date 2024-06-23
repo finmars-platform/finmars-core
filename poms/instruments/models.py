@@ -1769,10 +1769,18 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def get_quantlib_bond(self):
         import QuantLib as ql
 
-        bond = None
-        # TODO OG commented: probably we need to add parameter notional
-        face_value = 100.0
+        def active_factor(date, factors, factor_dates):
+            tmp_list = {idate for idate in factor_dates if idate <= date}
+            factor = 1
+            if tmp_list:
+                active_date = max(tmp_list)
+                index = factor_dates.index(active_date)
+                factor = factors[index]
+            return factor
 
+        # TODO OG commented: probably we need to add parameter notional
+        bond = None
+        face_value = 100  # probably self.default_price
         calendar = ql.TARGET()
 
         if self.maturity_date:
@@ -1825,16 +1833,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     False,
                 )
 
-                # TODO probably need to move somewhere else
-                def active_factor(date, factors, factor_dates):
-                    tmp_list = {idate for idate in factor_dates if idate <= date}
-                    factor = 1
-                    if tmp_list:
-                        active_date = max(tmp_list)
-                        index = factor_dates.index(active_date)
-                        factor = factors[index]
-                    return factor
-
                 # cast to dates list
                 schedule_dates = list(schedule.dates())
                 # we need notinals (factors) list to be of same length as accrual schedule
@@ -1855,7 +1853,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
             else:
                 first_accrual = self.get_first_accrual()
-
                 settlementDays = 0
 
                 if first_accrual:
@@ -1877,8 +1874,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                         )
 
                         coupons = [float_accrual_size]
-
-                        face_value = 100  # probably self.default_price
 
                         bond = ql.FixedRateBond(
                             settlementDays, face_value, schedule, coupons, day_count
