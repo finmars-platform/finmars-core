@@ -3764,6 +3764,7 @@ class FinmarsFile(DataTimeStampedModel):
                 name="unique_file_path",
             )
         ]
+        ordering = ["path", "name"]
 
     def __str__(self):
         return self.name

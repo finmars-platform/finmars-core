@@ -2258,6 +2258,7 @@ class InstrumentTypeEvalSerializer(
 
 
 class FinmarsFileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = FinmarsFile
         fields = "__all__"

@@ -68,6 +68,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "abstract": False,
+                "ordering": ["path", "name"],
             },
         ),
         migrations.AddField(
