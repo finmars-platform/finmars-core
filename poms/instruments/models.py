@@ -3757,6 +3757,14 @@ class FinmarsFile(DataTimeStampedModel):
         help_text="Size of the file in bytes",
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["path", "name"],
+                name="unique_file_path",
+            )
+        ]
+
     def __str__(self):
         return self.name
 

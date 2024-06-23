@@ -36,9 +36,32 @@ class FinmarsFileTest(BaseTestCase):
         kwargs = dict(
             name="name.pdf",
             path="/test/",
-            size=1000,
+            size=self.random_int(10000),
         )
         kwargs[attr] = value
 
         with self.assertRaises(Exception):
             FinmarsFile.objects.create(**kwargs)
+
+    def test__add_files_to_instrument(self):
+        kwargs_1 = dict(
+            name="name_1.pdf",
+            path="/test/",
+            size=self.random_int(1, 10000000),
+        )
+        file_1 = FinmarsFile.objects.create(**kwargs_1)
+
+        kwargs_2 = dict(
+            name="name_2.pdf",
+            path="/test/",
+            size=self.random_int(1, 10000000),
+        )
+        file_2 = FinmarsFile.objects.create(**kwargs_2)
+
+        instrument = Instrument.objects.last()
+
+        self.assertEqual(len(instrument.files.all()), 0)
+
+        instrument.files.add(file_1, file_2)
+
+        self.assertEqual(len(instrument.files.all()), 2)
