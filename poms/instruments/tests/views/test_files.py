@@ -13,9 +13,34 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/files/"
         self.instrument = Instrument.objects.first()
 
-    def test__check_api_url(self):
+    def test__api_url(self):
         response = self.client.get(path=self.url)
+        response_json = response.json()
+
         self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(len(response_json["results"]), 0)
+        self.assertEqual(response_json["count"], 0)
+        self.assertIn("next", response_json)
+        self.assertIn("previous", response_json)
+        self.assertIn("meta", response_json)
+
+    def test_retrieve(self):
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=1111111111,
+        )
+        response = self.client.get(path=f"{self.url}{file.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["name"], "name.pdf")
+        self.assertEqual(response_json["extension"], "pdf")
+        self.assertEqual(response_json["path"], "/root/etc/system/")
+        self.assertEqual(response_json["size"], 1111111111)
+        self.assertIn("created", response_json)
+        self.assertEqual("modified", response_json)
 
     def test_list(self):
         amount = 10
@@ -28,3 +53,8 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], amount)
+        self.assertEqual(len(response_json["results"]), amount)
