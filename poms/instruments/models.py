@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import re
 import traceback
 from datetime import date, datetime, timedelta
@@ -1569,6 +1568,12 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         blank=True,
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
+    )
+    files = models.ManyToManyField(
+        FinmarsFile,
+        related_name="instruments",
+        blank=True,
+        help_text="Files in the storage related to the instrument",
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -3764,7 +3769,7 @@ class FinmarsFile(DataTimeStampedModel):
     name = models.CharField(
         max_length=255,
         validators=[validate_filename],
-        help_text="Name of the file, including extension",
+        help_text="File name, including extension",
     )
     path = models.CharField(
         max_length=500,
@@ -3772,7 +3777,8 @@ class FinmarsFile(DataTimeStampedModel):
         help_text="Path to the file in the storage system",
     )
     extension = models.CharField(
-        null=True,
+        blank=True,
+        default="",
         max_length=255,
         validators=[validate_filename],
         help_text="File name extension",
