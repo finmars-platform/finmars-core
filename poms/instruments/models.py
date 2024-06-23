@@ -1770,10 +1770,9 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         import QuantLib as ql
 
         bond = None
+        # TODO OG commented: probably we need to add parameter notional
+        face_value = 100.0
 
-        face_value = (
-            100.0  # TODO OG commented: probably we need to add parameter notional
-        )
         calendar = ql.TARGET()
 
         if self.maturity_date:
@@ -1826,11 +1825,6 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                     False,
                 )
 
-                # cast to dates list
-                schedule_dates = list(schedule)
-
-                notionals = []
-
                 # TODO probably need to move somewhere else
                 def active_factor(date, factors, factor_dates):
                     tmp_list = {idate for idate in factor_dates if idate <= date}
@@ -1841,7 +1835,10 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                         factor = factors[index]
                     return factor
 
+                # cast to dates list
+                schedule_dates = list(schedule.dates())
                 # we need notinals (factors) list to be of same length as accrual schedule
+                notionals = []
                 for date in schedule_dates:
                     val = (
                         active_factor(
