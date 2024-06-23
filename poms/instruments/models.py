@@ -3786,3 +3786,11 @@ class FinmarsFile(DataTimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def __get_extension(self) -> str:
+        parts = self.name.rsplit(".", 1)
+        return parts[1] if len(parts) > 1 else ""
+
+    def save(self, *args, **kwargs):
+        self.extension = self.__get_extension()
+        super().save(*args, **kwargs)
