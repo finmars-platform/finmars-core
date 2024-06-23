@@ -3748,10 +3748,8 @@ name_regex = re.compile(filename_regex)
 
 
 def validate_filename(value):
-    from rest_framework.exceptions import ValidationError
-
     if not re.match(name_regex, value):
-        raise ValidationError("Invalid filename.")
+        raise ValueError(f"Invalid filename '{value}'")
 
 
 unix_file_path_regex = r"^(/[^/]+)+$"
@@ -3759,10 +3757,8 @@ path_regex = re.compile(unix_file_path_regex)
 
 
 def validate_file_path(value: str):
-    from rest_framework.exceptions import ValidationError
-
     if not re.match(path_regex, value):
-        raise ValidationError(f"Invalid file path {value}")
+        raise ValueError(f"Invalid file path '{value}'")
 
 
 class FinmarsFile(DataTimeStampedModel):
@@ -3772,7 +3768,7 @@ class FinmarsFile(DataTimeStampedModel):
         help_text="File name, including extension",
     )
     path = models.CharField(
-        max_length=500,
+        max_length=255,
         validators=[validate_file_path],
         help_text="Path to the file in the storage system",
     )
