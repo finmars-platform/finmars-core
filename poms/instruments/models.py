@@ -7,9 +7,8 @@ from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -3735,54 +3734,48 @@ class EventScheduleConfig(models.Model):
         )
 
 
-filename_regex = r'^[^/\\:*?"<>|\r\n]+$'
-name_regex = re.compile(filename_regex)
-
-
-def validate_filename(value):
-    if not re.match(name_regex, value):
-        raise ValueError(f"Invalid filename '{value}'")
-
-
-unix_file_path_regex = r"^(/[^/]+)+$"
-path_regex = re.compile(unix_file_path_regex)
-
-
-def validate_file_path(value: str):
-    if not re.match(path_regex, value):
-        raise ValueError(f"Invalid file path '{value}'")
+forbidden_symbols = r'[/\\:*?"<>|;&]'
+name_regex = re.compile(forbidden_symbols)
 
 
 class FinmarsFile(DataTimeStampedModel):
     name = models.CharField(
         max_length=255,
-        validators=[validate_filename],
         help_text="File name, including extension",
     )
     path = models.CharField(
         max_length=255,
-        validators=[validate_file_path],
         help_text="Path to the file in the storage system",
     )
     extension = models.CharField(
         blank=True,
         default="",
         max_length=255,
-        validators=[validate_filename],
         help_text="File name extension",
     )
     size = models.PositiveBigIntegerField(
-        validators=[MinValueValidator(1)],
         help_text="Size of the file in bytes",
     )
 
     def __str__(self):
         return self.name
 
-    def __get_extension(self) -> str:
+    def _extract_extension(self) -> str:
         parts = self.name.rsplit(".", 1)
         return parts[1] if len(parts) > 1 else ""
 
+    @staticmethod
+    def validate_name(value: str):
+        if name_regex.search(value):
+            raise ValidationError("Invalid file name", params={"name": value})
+
+    @staticmethod
+    def validate_size(value: int):
+        if value < 1:
+            raise ValidationError("Invalid file size", params={"size": value})
+
     def save(self, *args, **kwargs):
-        self.extension = self.__get_extension()
+        self.validate_name(self.name)
+        self.validate_size(self.size)
+        self.extension = self._extract_extension()
         super().save(*args, **kwargs)
