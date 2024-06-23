@@ -80,4 +80,11 @@ class Migration(migrations.Migration):
                 to="instruments.finmarsfile",
             ),
         ),
+        migrations.AddConstraint(
+            model_name="FinmarsFile",
+            constraint=models.UniqueConstraint(
+                fields=("path", "name"),
+                name="unique_file_path",
+            ),
+        ),
     ]

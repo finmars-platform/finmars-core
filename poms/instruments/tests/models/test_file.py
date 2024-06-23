@@ -59,9 +59,19 @@ class FinmarsFileTest(BaseTestCase):
         file_2 = FinmarsFile.objects.create(**kwargs_2)
 
         instrument = Instrument.objects.last()
-
         self.assertEqual(len(instrument.files.all()), 0)
 
         instrument.files.add(file_1, file_2)
-
         self.assertEqual(len(instrument.files.all()), 2)
+
+    def test__unique_path_and_name(self):
+        kwargs = dict(
+            name="name.pdf",
+            path="/test/",
+            size=self.random_int(1, 10000000),
+        )
+        FinmarsFile.objects.create(**kwargs)
+
+        kwargs["size"] = self.random_int(100000, 100000000)
+        with self.assertRaises(Exception):
+            FinmarsFile.objects.create(**kwargs)
