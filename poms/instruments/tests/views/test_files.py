@@ -40,7 +40,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["path"], "/root/etc/system/")
         self.assertEqual(response_json["size"], 1111111111)
         self.assertIn("created", response_json)
-        self.assertEqual("modified", response_json)
+        self.assertIn("modified", response_json)
 
     def test_list(self):
         amount = 10
