@@ -44,7 +44,6 @@ from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
-    InstrumentSelectSpecialQueryFilter,
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
@@ -60,6 +59,7 @@ from poms.instruments.models import (
     EventSchedule,
     EventScheduleConfig,
     ExposureCalculationModel,
+    FinmarsFile,
     GeneratedEvent,
     Instrument,
     InstrumentClass,
@@ -89,6 +89,7 @@ from poms.instruments.serializers import (
     InstrumentTypeLightSerializer,
     InstrumentTypeProcessSerializer,
     InstrumentTypeSerializer,
+    FinmarsFileSerializer,
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
@@ -1858,3 +1859,8 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
+
+
+class FinmarsFilesView(AbstractModelViewSet):
+    queryset = FinmarsFile.objects.prefetch_related("instruments")
+    serializer_class = FinmarsFileSerializer

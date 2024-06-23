@@ -43,6 +43,7 @@ from poms.instruments.models import (
     EventScheduleAction,
     EventScheduleConfig,
     ExposureCalculationModel,
+    FinmarsFile,
     GeneratedEvent,
     Instrument,
     InstrumentClass,
@@ -2254,3 +2255,9 @@ class InstrumentTypeEvalSerializer(
         self.fields["pricing_policies"] = InstrumentTypePricingPolicySerializer(
             many=True, required=False, allow_null=True
         )
+
+
+class FinmarsFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FinmarsFile
+        fields = "__all__"
