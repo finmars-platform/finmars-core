@@ -62,8 +62,6 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print("------------------------->>>>>>>>>>>>", response_json["identifier"])
-
         # check fields
         self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT.keys())
 
@@ -84,6 +82,8 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(response_json["user_text_1"], instrument.user_text_1)
         self.assertEqual(response_json["user_text_2"], instrument.user_text_2)
         self.assertEqual(response_json["user_text_3"], instrument.user_text_3)
+
+        self.assertIn("files", response_json)
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")

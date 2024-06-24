@@ -1097,7 +1097,8 @@ class InstrumentSerializer(
             "short_underlying_exposure",
             "position_reporting",
             "country",
-            "country_object"
+            "country_object",
+            "files",
             # 'attributes'
         ]
 
@@ -1136,6 +1137,7 @@ class InstrumentSerializer(
         self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
             many=True, required=False, allow_null=True
         )
+        self.fields["files"] = FinmarsFileSerializer(many=True, required=False)
 
     def create(self, validated_data: dict) -> Instrument:
         func = f"{self.__class__.__name__}.create"
