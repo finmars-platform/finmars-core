@@ -89,7 +89,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         ("path_2", "etc", 3),
         ("path_3", "/system/", 3),
     )
-    def test__list_with_filters(self, filter, count,):
+    def test__list_with_filters(self, value, count, ):
         amount = 3
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
@@ -98,10 +98,30 @@ class FinmarsFileViewSetTest(BaseTestCase):
                 size=self.random_int(10, 1000),
             )
 
-        response = self.client.get(path=f"{self.url}?query={filter}")
+        response = self.client.get(path=f"{self.url}?query={value}")
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
 
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
+
+    def test__create(self):
+        file_data = dict(
+            name=f"{self.random_string(12)}.pdf",
+            path=f"/{self.random_string()}/{self.random_string(5)}/",
+            size=self.random_int(10, 1000000000),
+        )
+        response = self.client.post(path=self.url, data=file_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["name"], file_data["name"])
+        self.assertEqual(response_json["extension"], "pdf")
+        self.assertEqual(response_json["path"], file_data["path"])
+        self.assertEqual(response_json["size"], file_data["size"])
+        self.assertIn("id", response_json)
+        self.assertIn("instruments", response_json)
+        self.assertIn("created", response_json)
+        self.assertIn("modified", response_json)
