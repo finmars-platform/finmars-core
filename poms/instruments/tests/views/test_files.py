@@ -24,7 +24,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertIn("previous", response_json)
         self.assertIn("meta", response_json)
 
-    def test_retrieve(self):
+    def test__retrieve(self):
         file = FinmarsFile.objects.create(
             name="name.pdf",
             path="/root/etc/system/",
@@ -44,7 +44,27 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertIn("created", response_json)
         self.assertIn("modified", response_json)
 
-    def test_list(self):
+    def test__retrieve_with_instruments(self):
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=self.random_int(1, 1000),
+        )
+        instrument = Instrument.objects.last()
+        instrument.files.add(file)
+
+        response = self.client.get(path=f"{self.url}{file.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertIn("instruments", response_json)
+        self.assertEqual(len(response_json["instruments"]), 1)
+        instrument_data = response_json["instruments"][0]
+        self.assertEqual(instrument_data["id"], instrument.id)
+        self.assertEqual(instrument_data["user_code"], instrument.user_code)
+
+    def test__list(self):
         amount = 10
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
