@@ -2259,7 +2259,18 @@ class InstrumentTypeEvalSerializer(
         )
 
 
+class InstrumentMicroSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Instrument
+        fields = [
+            "id",
+            "user_code",
+        ]
+
+
 class FinmarsFileSerializer(serializers.ModelSerializer):
+    instruments = InstrumentMicroSerializer(many=True, read_only=True)
 
     class Meta:
         model = FinmarsFile

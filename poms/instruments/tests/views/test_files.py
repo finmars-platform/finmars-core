@@ -40,6 +40,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["extension"], "pdf")
         self.assertEqual(response_json["path"], "/root/etc/system/")
         self.assertEqual(response_json["size"], 1111111111)
+        self.assertIn("instruments", response_json)
         self.assertIn("created", response_json)
         self.assertIn("modified", response_json)
 
