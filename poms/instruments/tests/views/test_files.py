@@ -35,6 +35,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
+        self.assertEqual(response_json["id"], file.id)
         self.assertEqual(response_json["name"], "name.pdf")
         self.assertEqual(response_json["extension"], "pdf")
         self.assertEqual(response_json["path"], "/root/etc/system/")
