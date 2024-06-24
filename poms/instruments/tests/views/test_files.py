@@ -80,3 +80,28 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], amount)
         self.assertEqual(len(response_json["results"]), amount)
+
+    @BaseTestCase.cases(
+        ("name_1", "name_1", 1),
+        ("name_all", "name", 3),
+        ("exten", "2.pdf", 1),
+        ("path_1", "/root", 3),
+        ("path_2", "etc", 3),
+        ("path_3", "/system/", 3),
+    )
+    def test__list_with_filters(self, filter, count,):
+        amount = 3
+        for i in range(1, amount + 1):
+            FinmarsFile.objects.create(
+                name=f"name_{i}.pdf",
+                path="/root/etc/system/",
+                size=self.random_int(10, 1000),
+            )
+
+        response = self.client.get(path=f"{self.url}?query={filter}")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], count)
+        self.assertEqual(len(response_json["results"]), count)

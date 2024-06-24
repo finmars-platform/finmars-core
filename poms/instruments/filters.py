@@ -93,12 +93,10 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
 
         return queryset
 
+
 class ListDatesFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-
-        dates = request.query_params.getlist('dates', None)
-
-        print('dates %s' % dates )
+        dates = request.query_params.getlist("dates", None)
 
         if dates:
             return queryset.filter(date__in=dates)
@@ -108,10 +106,22 @@ class ListDatesFilter(BaseFilterBackend):
 
 class InstrumentsUserCodeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-
-        user_codes = request.query_params.getlist('user_codes', None)
+        user_codes = request.query_params.getlist("user_codes", None)
 
         if user_codes:
             return queryset.filter(instrument__user_code__in=user_codes)
 
         return queryset
+
+
+class FinmarsFileFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        query = request.query_params.get("query")
+        if not query:
+            return queryset
+
+        options = Q()
+        options.add(Q(name__icontains=query), Q.OR)
+        options.add(Q(path__icontains=query), Q.OR)
+
+        return queryset.filter(options)

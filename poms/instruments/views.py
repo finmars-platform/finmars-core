@@ -45,6 +45,7 @@ from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentsUserCodeFilter,
+    FinmarsFileFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
 )
@@ -1864,3 +1865,6 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 class FinmarsFilesView(AbstractModelViewSet):
     queryset = FinmarsFile.objects.prefetch_related("instruments")
     serializer_class = FinmarsFileSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        FinmarsFileFilter,
+    ]
