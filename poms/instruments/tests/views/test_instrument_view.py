@@ -223,3 +223,25 @@ class InstrumentViewSetTest(BaseTestCase):
         accrual_data = response_json["accrual_calculation_schedules"][0]
         self.assertEqual(accrual_data["accrual_start_date"], start_date)
         self.assertEqual(accrual_data["first_payment_date"], payment_date)
+
+    def test__retrieve_with_file(self):
+        from poms.instruments.models import FinmarsFile
+
+        instrument = self.create_instrument("bond")
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=1234567890,
+        )
+        instrument.files.add(file)
+
+        response = self.client.get(path=f"{self.url}{instrument.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        file_data = response_json["files"][0]
+        self.assertEqual(file_data["name"], file.name)
+        self.assertEqual(file_data["path"], file.path)
+        self.assertEqual(file_data["size"], file.size)
+        self.assertEqual(file_data["extension"], "pdf")
