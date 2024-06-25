@@ -1572,6 +1572,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         "FinmarsFile",
         related_name="instruments",
         through="InstrumentAttachment",
+        through_fields=("instrument", "file"),
         blank=True,
         help_text="Files in the storage related to the instrument",
     )

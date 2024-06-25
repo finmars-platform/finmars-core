@@ -233,7 +233,7 @@ class InstrumentViewSetTest(BaseTestCase):
             path="/root/etc/system/",
             size=1234567890,
         )
-        instrument.files.add(file)
+        instrument.files.add(file, through_defaults=None)
 
         response = self.client.get(path=f"{self.url}{instrument.id}/")
         self.assertEqual(response.status_code, 200, response.content)
