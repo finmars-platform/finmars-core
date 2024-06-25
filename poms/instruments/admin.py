@@ -15,9 +15,11 @@ from poms.instruments.models import (
     EventScheduleConfig,
     GeneratedEvent,
     Instrument,
+    InstrumentAttachment,
     InstrumentClass,
     InstrumentFactorSchedule,
     InstrumentType,
+    FinmarsFile,
     ManualPricingFormula,
     PaymentSizeDetail,
     Periodicity,
@@ -123,6 +125,16 @@ class EventScheduleInline(admin.TabularInline):
     }
 
 
+class InstrumentAttachmentInline(admin.TabularInline):
+    model = InstrumentAttachment
+    extra = 0
+    formfield_overrides = {
+        models.TextField: {
+            "widget": widgets.Textarea(attrs={"cols": "40", "rows": "3"})
+        },
+    }
+
+
 class InstrumentFactorScheduleInline(admin.TabularInline):
     model = InstrumentFactorSchedule
     extra = 0
@@ -162,6 +174,7 @@ class InstrumentAdmin(AbstractModelAdmin):
         InstrumentFactorScheduleInline,
         EventScheduleInline,
         GenericAttributeInline,
+        InstrumentAttachmentInline,
     ]
     actions = [
         "calculate_prices_accrued_price",
@@ -483,6 +496,14 @@ class EventScheduleConfigAdmin(AbstractModelAdmin):
     raw_id_fields = ("master_user",)
 
 
+class FinmarsFileAdmin(AbstractModelAdmin):
+    model = FinmarsFile
+
+    inlines = [
+        InstrumentAttachmentInline,
+    ]
+
+
 admin.site.register(Instrument, InstrumentAdmin)
 admin.site.register(InstrumentType, InstrumentTypeAdmin)
 admin.site.register(InstrumentFactorSchedule, InstrumentFactorScheduleAdmin)
@@ -505,3 +526,5 @@ admin.site.register(Periodicity, ClassModelAdmin)
 admin.site.register(CostMethod, ClassModelAdmin)
 admin.site.register(Country, CountryAdmin)
 admin.site.register(PaymentSizeDetail, ClassModelAdmin)
+
+admin.site.register(FinmarsFile, FinmarsFileAdmin)
