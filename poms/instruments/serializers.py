@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ReadOnlyField
@@ -18,6 +19,7 @@ from poms.common.serializers import (
     PomsClassSerializer,
 )
 from poms.common.utils import date_now
+from poms.currencies.models import CurrencyPricingPolicy
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
@@ -47,11 +49,13 @@ from poms.instruments.models import (
     Instrument,
     InstrumentClass,
     InstrumentFactorSchedule,
+    InstrumentPricingPolicy,
     InstrumentType,
     InstrumentTypeAccrual,
     InstrumentTypeEvent,
     InstrumentTypeInstrumentAttribute,
     InstrumentTypeInstrumentFactorSchedule,
+    InstrumentTypePricingPolicy,
     LongUnderlyingExposure,
     ManualPricingFormula,
     PaymentSizeDetail,
@@ -383,6 +387,30 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
         fields = ["id", "user_code", "name", "short_name", "notes", "expr"]
 
 
+class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
+    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+
+    class Meta:
+        model = InstrumentTypePricingPolicy
+        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+
+
+class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
+    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+
+    class Meta:
+        model = InstrumentPricingPolicy
+        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+
+
+class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
+    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+
+    class Meta:
+        model = CurrencyPricingPolicy
+        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+
+
 class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
     data = serializers.JSONField(allow_null=False)
 
@@ -490,6 +518,11 @@ class InstrumentTypeSerializer(
         source="pricing_condition",
         read_only=True,
     )
+    pricing_policies = InstrumentTypePricingPolicySerializer(
+        required=False,
+        many=True,
+        read_only=False
+    )
     instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(
         required=False,
         many=True,
@@ -551,7 +584,7 @@ class InstrumentTypeSerializer(
             "factor_down",
             "factor_down_object",
             "is_enabled",
-            # "pricing_policies", # TODO pricingv2 should be changed to pricing_schemas
+            "pricing_policies",
             "has_second_exposure_currency",
             "accruals",
             "events",
@@ -625,8 +658,7 @@ class InstrumentTypeSerializer(
         return attrs
 
     def create(self, validated_data):
-        # TODO pricingv2 should be changed to pricing_schemas
-        # pricing_policies = validated_data.pop("pricing_policies", [])
+        pricing_policies = validated_data.pop("pricing_policies", [])
         accruals = validated_data.pop("accruals", [])
         events = validated_data.pop("events", [])
         instrument_attributes = validated_data.pop("instrument_attributes", [])
@@ -636,7 +668,7 @@ class InstrumentTypeSerializer(
 
         instance = super().create(validated_data)
 
-        # self.save_pricing_policies(instance, pricing_policies)
+        self.save_pricing_policies(instance, pricing_policies)
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
         self.save_instrument_attributes(instance, instrument_attributes)
@@ -645,8 +677,7 @@ class InstrumentTypeSerializer(
         return instance
 
     def update(self, instance, validated_data):
-        # pricing_policies = validated_data.pop("pricing_policies", [])
-        pricing_schemas = validated_data.pop("pricing_schemas", [])
+        pricing_policies = validated_data.pop("pricing_policies", [])
         accruals = validated_data.pop("accruals", [])
         events = validated_data.pop("events", [])
         instrument_attributes = validated_data.pop("instrument_attributes", [])
@@ -656,9 +687,7 @@ class InstrumentTypeSerializer(
 
         instance = super().update(instance, validated_data)
 
-        # self.save_pricing_policies(instance, pricing_policies)
-        # TODO refactor to save_pricing_schemas
-        # self.save_pricing_schemas(instance, pricing_schemas)
+        self.save_pricing_policies(instance, pricing_policies)
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
         self.save_instrument_attributes(instance, instrument_attributes)
@@ -842,72 +871,68 @@ class InstrumentTypeSerializer(
             instrument_type=instance
         ).exclude(id__in=ids).delete()
 
-    # TODO pricingv2 refactor to new save_pricing_policies
-    # def save_pricing_policies(self, instance, pricing_policies):
-    #     policies = PricingPolicy.objects.filter(master_user=instance.master_user)
-    #
-    #     ids = set()
-    #
-    #     for policy in policies:
-    #         try:
-    #             _ = InstrumentTypePricingPolicy.objects.get(
-    #                 instrument_type=instance, pricing_policy=policy
-    #             )
-    #
-    #         except InstrumentTypePricingPolicy.DoesNotExist:
-    #             obj = InstrumentTypePricingPolicy(
-    #                 instrument_type=instance, pricing_policy=policy
-    #             )
-    #             if policy.default_instrument_pricing_scheme:
-    #                 obj.pricing_scheme = policy.default_instrument_pricing_scheme
-    #
-    #                 parameters = (
-    #                     policy.default_instrument_pricing_scheme.get_parameters()
-    #                 )
-    #                 set_instrument_pricing_scheme_parameters(obj, parameters)
-    #
-    #             obj.save()
-    #
-    #             ids.add(obj.id)
-    #
-    #     if pricing_policies:
-    #         for item in pricing_policies:
-    #             try:
-    #                 oid = item.get("id", None)
-    #                 ids.add(oid)
-    #
-    #                 obj = InstrumentTypePricingPolicy.objects.get(
-    #                     instrument_type=instance, id=oid
-    #                 )
-    #                 self._update_and_save_pricing_policies(item, obj)
-    #
-    #             except InstrumentTypePricingPolicy.DoesNotExist:
-    #                 try:
-    #                     obj = InstrumentTypePricingPolicy.objects.get(
-    #                         instrument_type=instance,
-    #                         pricing_policy=item["pricing_policy"],
-    #                     )
-    #
-    #                     self._update_and_save_pricing_policies(item, obj)
-    #                     ids.add(obj.id)
-    #
-    #                 except Exception as e:
-    #                     _l.warning(f"Can't Find  Pricing Policy {repr(e)}")
-    #
-    #     if len(ids):
-    #         InstrumentTypePricingPolicy.objects.filter(
-    #             instrument_type=instance
-    #         ).exclude(id__in=ids).delete()
+    def save_pricing_policies(self, instance, pricing_policies):
+        ids = set()
+        """policies = PricingPolicy.objects.filter(master_user=instance.master_user)
 
-    # @staticmethod
-    # def _update_and_save_pricing_policies(item: dict, obj: InstrumentTypePricingPolicy):
-    #     obj.pricing_scheme = item["pricing_scheme"]
-    #     obj.default_value = item["default_value"]
-    #     obj.attribute_key = item["attribute_key"]
-    #     obj.notes = item["notes"]
-    #     obj.data = item.get("data")
-    #     obj.overwrite_default_parameters = item["overwrite_default_parameters"]
-    #     obj.save()
+
+        for policy in policies:
+            try:
+                _ = InstrumentTypePricingPolicy.objects.get(
+                    instrument_type=instance, pricing_policy=policy
+                )
+
+            except InstrumentTypePricingPolicy.DoesNotExist:
+                obj = InstrumentTypePricingPolicy(
+                    instrument_type=instance, pricing_policy=policy
+                )
+                if policy.default_instrument_pricing_scheme:
+                    obj.pricing_scheme = policy.default_instrument_pricing_scheme
+
+                    parameters = (
+                        policy.default_instrument_pricing_scheme.get_parameters()
+                    )
+                    set_instrument_pricing_scheme_parameters(obj, parameters)
+
+                obj.save()
+
+                ids.add(obj.id)"""
+
+        pricing_policies = pricing_policies or []
+        for item in pricing_policies:
+            try:
+                oid = item.get("id", None)
+                ids.add(oid)
+
+                obj = InstrumentTypePricingPolicy.objects.get(
+                    instrument_type=instance, id=oid
+                )
+                self._update_and_save_pricing_policies(item, obj)
+
+            except InstrumentTypePricingPolicy.DoesNotExist:
+                try:
+                    obj = InstrumentTypePricingPolicy.objects.get(
+                        instrument_type=instance,
+                        pricing_policy__id=item["pricing_policy_id"],
+                    )
+
+                    self._update_and_save_pricing_policies(item, obj)
+                    ids.add(obj.id)
+
+                except Exception as e:
+                    _l.warning(f"Can't Find  Pricing Policy {repr(e)}")
+
+        if len(ids):
+            InstrumentTypePricingPolicy.objects.filter(
+                instrument_type=instance
+            ).exclude(id__in=ids).delete()
+
+    @staticmethod
+    def _update_and_save_pricing_policies(item: dict, obj: InstrumentTypePricingPolicy):
+        obj.pricing_policy_id = item["pricing_policy_id"]
+        obj.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
+        obj.options = item.get("options")
+        obj.save()
 
 
 class TransactionTypeSimpleViewSerializer(ModelWithUserCodeSerializer):
@@ -1062,7 +1087,7 @@ class InstrumentSerializer(
             "factor_schedules",
             "event_schedules",
             "is_enabled",
-            # "pricing_policies", # TODO pricingv2 should be changed to pricing_schemas
+            "pricing_policies",
             "exposure_calculation_model",
             "exposure_calculation_model_object",
             "co_directional_exposure_currency",
@@ -1115,9 +1140,9 @@ class InstrumentSerializer(
         self.fields["event_schedules"] = EventScheduleSerializer(
             many=True, required=False, allow_null=True
         )
-        # self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
-        #     many=True, required=False, allow_null=True
-        # )
+        self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
+            many=True, required=False, allow_null=True
+        )
 
     def create(self, validated_data: dict) -> Instrument:
         func = f"{self.__class__.__name__}.create"
@@ -1140,7 +1165,7 @@ class InstrumentSerializer(
             "event_schedules",
             None,
         )
-        # pricing_policies = validated_data.pop("pricing_policies", [])
+        pricing_policies = validated_data.pop("pricing_policies", [])
 
         instance = super().create(validated_data)
         _l.info(f"{func} created instrument.user_code={instance.user_code}")
@@ -1229,8 +1254,7 @@ class InstrumentSerializer(
                 event_schedules,
             )
 
-        # TODO pricingv2 refactor to save new Pricing Policies
-        # self.save_pricing_policies(instance, pricing_policies)
+        self.save_pricing_policies(instance, pricing_policies)
 
         try:  # can be set after in import
             self.calculate_prices_accrued_price(instance, False)
@@ -1242,78 +1266,43 @@ class InstrumentSerializer(
 
         return instance
 
-    # TODO pricingv2 refactor to save InstrumentPricingPolicy (many)
-    # def save_pricing_policies(self, instance, pricing_policies):
-    #     policies = PricingPolicy.objects.filter(master_user=instance.master_user)
-    #
-    #     ids = set()
-    #
-    #     for policy in policies:
-    #         try:
-    #             _ = InstrumentPricingPolicy.objects.get(
-    #                 instrument=instance, pricing_policy=policy
-    #             )
-    #
-    #         except InstrumentPricingPolicy.DoesNotExist:
-    #             obj = InstrumentPricingPolicy(
-    #                 instrument=instance, pricing_policy=policy
-    #             )
-    #
-    #             if policy.default_instrument_pricing_scheme:
-    #                 obj.pricing_scheme = policy.default_instrument_pricing_scheme
-    #
-    #                 parameters = (
-    #                     policy.default_instrument_pricing_scheme.get_parameters()
-    #                 )
-    #                 set_instrument_pricing_scheme_parameters(obj, parameters)
-    #
-    #             obj.save()
-    #
-    #             ids.add(obj.id)
-    #
-    #     if pricing_policies:
-    #         for item in pricing_policies:
-    #             try:
-    #                 oid = item.get("id", None)
-    #
-    #                 ids.add(oid)
-    #
-    #                 obj = InstrumentPricingPolicy.objects.get(
-    #                     instrument=instance, id=oid
-    #                 )
-    #
-    #                 obj.pricing_scheme = item["pricing_scheme"]
-    #                 obj.default_value = item["default_value"]
-    #                 obj.attribute_key = item["attribute_key"]
-    #                 obj.data = item.get("data")
-    #                 obj.notes = item["notes"]
-    #                 obj.save()
-    #
-    #                 _l.info(f"attribute_key={obj.attribute_key}")
-    #
-    #             except InstrumentPricingPolicy.DoesNotExist:
-    #                 try:
-    #                     obj = InstrumentPricingPolicy.objects.get(
-    #                         instrument=instance, pricing_policy=item["pricing_policy"]
-    #                     )
-    #                     obj.pricing_scheme = item["pricing_scheme"]
-    #                     obj.default_value = item["default_value"]
-    #                     obj.attribute_key = item["attribute_key"]
-    #                     obj.data = item.get("data")
-    #                     obj.notes = item["notes"]
-    #                     obj.save()
-    #
-    #                     ids.add(obj.id)
-    #
-    #                 except Exception as e:
-    #                     _l.info(f"Can't Find  Pricing Policy {repr(e)}")
-    #
-    #     if len(ids):
-    #         InstrumentPricingPolicy.objects.filter(
-    #             instrument=instance,
-    #         ).exclude(
-    #             id__in=ids,
-    #         ).delete()
+    def save_pricing_policies(self, instance, pricing_policies):
+        ids = set()
+        pricing_policies = pricing_policies or []
+        for item in pricing_policies:
+            try:
+                oid = item.get("id", None)
+                ids.add(oid)
+
+                obj = InstrumentPricingPolicy.objects.get(
+                    instrument_type=instance, id=oid
+                )
+                self._update_and_save_pricing_policies(item, obj)
+
+            except InstrumentPricingPolicy.DoesNotExist:
+                try:
+                    obj = InstrumentPricingPolicy.objects.get(
+                        instrument=instance,
+                        pricing_policy__id=item["pricing_policy_id"],
+                    )
+
+                    self._update_and_save_pricing_policies(item, obj)
+                    ids.add(obj.id)
+
+                except Exception as e:
+                    _l.warning(f"Can't Find  Pricing Policy {repr(e)}")
+
+        if len(ids):
+            InstrumentTypePricingPolicy.objects.filter(
+                instrument_type=instance
+            ).exclude(id__in=ids).delete()
+
+    @staticmethod
+    def _update_and_save_pricing_policies(item: dict, obj: InstrumentPricingPolicy):
+        obj.pricing_policy_id = item["pricing_policy_id"]
+        obj.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
+        obj.options = item.get("options")
+        obj.save()
 
     def save_instr_related(
         self,
@@ -1841,6 +1830,9 @@ class PriceHistorySerializer(ModelMetaSerializer):
 
         return attrs
 
+    def get_unique_together_validators(self):
+        return []
+
     @staticmethod
     def create_price_history_error(instance):
         history_item = PriceHistoryError()
@@ -2239,3 +2231,23 @@ class InstrumentTypeEvalSerializer(
             source="factor_down", read_only=True
         )
 
+
+class InstrumentTypeApplySerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(
+        required=False,
+        allow_null=True,
+        choices=("fill", "overwrite"),
+        default="overwrite"
+    )
+    fields_to_update = serializers.ListField(
+        child=serializers.ChoiceField(choices=(
+            "default_price",
+            "default_accrued",
+            "reference_for_pricing",
+            "maturity_date",
+            "maturity_price",
+            "pricing_policies",
+        )),
+        required=True,
+        allow_empty=False
+    )

@@ -1290,6 +1290,19 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         return str(self.effective_date)
 
 
+class InstrumentTypePricingPolicy(DataTimeStampedModel):
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE, related_name="pricing_policies")
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+    )
+    options = models.JSONField(default=dict, help_text="options populated from module form")
+
+    class Meta:
+        unique_together = ("pricing_policy", "instrument_type")
+
+
 # noinspection PyUnresolvedReferences
 class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     DIRECT_POSITION = 1
@@ -2543,6 +2556,19 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         except Exception as error:
             _l.error(f"Instrument save error {error}\n {traceback.format_exc()}")
+
+
+class InstrumentPricingPolicy(DataTimeStampedModel):
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, related_name="pricing_policies")
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+    )
+    options = models.JSONField(default=dict, help_text="options populated from module form")
+
+    class Meta:
+        unique_together = ("pricing_policy", "instrument")
 
 
 # DEPRECTATED (25.05.2020) delete soon

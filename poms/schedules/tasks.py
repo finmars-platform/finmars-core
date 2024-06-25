@@ -79,7 +79,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 #     context=context,
                 #     date_to=date_to,
                 # )
-                instance.process()
+                # instance.process()
 
             except Exception as e:
                 send_system_message(

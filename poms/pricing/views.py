@@ -2,19 +2,50 @@ import json
 from logging import getLogger
 
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
+from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import NoOpFilter, GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
+from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet, AbstractViewSet
 
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
-from poms.pricing.serializers import PriceHistoryErrorSerializer, CurrencyHistoryErrorSerializer
+from poms.pricing.serializers import (
+    RunPricingSerializer,
+    PriceHistoryErrorSerializer,
+    CurrencyHistoryErrorSerializer
+)
+from poms.pricing.tasks import run_pricing
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger('poms.pricing')
+
+
+class RunPricingView(AbstractViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = RunPricingSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            status=CeleryTask.STATUS_INIT,
+            type="run_pricing",
+        )
+        task.options_object = serializer.validated_data
+        task.save()
+
+        run_pricing.apply_async(kwargs={"task_id": task.id, "context": {
+            "space_code": task.master_user.space_code,
+            "realm_code": task.master_user.realm_code
+        }})
+        return Response({"status": "ok", "task_id": task.id}, status=status.HTTP_201_CREATED)
 
 
 class PriceHistoryErrorFilterSet(FilterSet):

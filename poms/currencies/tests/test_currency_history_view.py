@@ -7,7 +7,6 @@ from poms.currencies.tests.common_test_data import (
     EXPECTED_CURRENCY_HISTORY,
 )
 from poms.instruments.models import PricingPolicy
-from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
 
 
 class CurrencyHistoryViewSetTest(BaseTestCase):
@@ -22,8 +21,6 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency-history/"
         )
         self.currency = Currency.objects.last()
-        self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
-        self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
         self.currency_history = None
 
     def create_pricing_policy(self) -> PricingPolicy:

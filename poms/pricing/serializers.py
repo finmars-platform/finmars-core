@@ -6,6 +6,19 @@ from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
 
 
+class RunPricingSerializer(serializers.Serializer):
+    date_from = serializers.DateField()
+    date_to = serializers.DateField()
+    pricing_policies = serializers.ListField(child=serializers.CharField())
+    instruments = serializers.ListField(child=serializers.CharField(), required=False)
+    currencies = serializers.ListField(child=serializers.CharField(), required=False)
+
+    def validate(self, data):
+        if not data.get('instruments') and not data.get('currencies'):
+            raise serializers.ValidationError('Either "instruments" or "currencies" must be provided.')
+        return data
+
+
 class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
     modified = serializers.DateTimeField(read_only=True, allow_null=False)

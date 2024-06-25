@@ -194,6 +194,11 @@ router.register(
 )
 
 router.register(
+    r"pricing/run",
+    pricing.RunPricingView,
+    "runpricing",
+)
+router.register(
     r"pricing/price-history-error-ev-group",
     pricing.PriceHistoryErrorEvGroupViewSet,
     "pricehistoryerrorevgroup",

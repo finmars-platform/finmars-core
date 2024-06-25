@@ -4,7 +4,6 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.exceptions import FinmarsBaseException
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingPolicy
-from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
 
 
 class CurrencyHistoryModelTest(BaseTestCase):
@@ -14,8 +13,6 @@ class CurrencyHistoryModelTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.currency = Currency.objects.last()
-        self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
-        self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
         self.currency_history = None
 
     def create_pricing_policy(self) -> PricingPolicy:

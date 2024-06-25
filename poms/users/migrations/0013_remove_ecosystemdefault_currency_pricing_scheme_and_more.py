@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
         #     model_name="ecosystemdefault",
         #     name="instrument_pricing_scheme",
         # ),
-        migrations.RunPython(remove_columns, reverse_code=migrations.RunPython.noop)
+        # migrations.RunPython(remove_columns, reverse_code=migrations.RunPython.noop)
 
 
     ]

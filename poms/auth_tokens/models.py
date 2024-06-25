@@ -79,3 +79,8 @@ class PersonalAccessToken(NamedModel):
 
     def __str__(self):
         return f"Token for {self.member.username} (Expires: {self.expires_at})"
+
+
+class FinmarsRefreshToken:
+    def __init__(self, jwt_token):
+        self.access_token = jwt_token

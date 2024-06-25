@@ -11,7 +11,7 @@ from poms.common.serializers import (
     ModelWithUserCodeSerializer,
 )
 from poms.currencies.fields import CurrencyField
-from poms.currencies.models import Currency, CurrencyHistory
+from poms.currencies.models import Currency, CurrencyHistory, CurrencyPricingPolicy
 from poms.instruments.fields import PricingPolicyField, CountryField
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
@@ -59,14 +59,13 @@ class CurrencySerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        # from poms.pricing.serializers import CurrencyPricingPolicySerializer
+        from poms.instruments.serializers import CurrencyPricingPolicySerializer
 
         super().__init__(*args, **kwargs)
 
-        # TODO pricingv2 - refactor to new CurrencyPricingPolicySerializer
-        # self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
-        #     allow_null=True, many=True, required=False
-        # )
+        self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
+            allow_null=True, many=True, required=False
+        )
 
         from poms.instruments.serializers import CountrySerializer
         self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
@@ -77,28 +76,55 @@ class CurrencySerializer(
 
         instance = super(CurrencySerializer, self).create(validated_data)
 
-        # TODO pricingv2 - update creating currency with pricing policies
-        # self.save_pricing_policies(instance, pricing_policies)
+        self.save_pricing_policies(instance, pricing_policies)
 
         return instance
 
     def update(self, instance, validated_data):
-        # pricing_policies = validated_data.pop("pricing_policies", None)
+        pricing_policies = validated_data.pop("pricing_policies", None)
 
         instance = super(CurrencySerializer, self).update(instance, validated_data)
 
-        # TODO pricingv2 - update creating currency with pricing policies
-        # self.save_pricing_policies(instance, pricing_policies)
+        self.save_pricing_policies(instance, pricing_policies)
 
         return instance
 
+    def save_pricing_policies(self, instance, pricing_policies):
+        ids = set()
+        pricing_policies = pricing_policies or []
+        for item in pricing_policies:
+            try:
+                oid = item.get("id", None)
+                ids.add(oid)
+
+                obj = CurrencyPricingPolicy.objects.get(
+                    instrument_type=instance, id=oid
+                )
+                self._update_currency_pricing_policy(item, obj)
+
+            except CurrencyPricingPolicy.DoesNotExist:
+                try:
+                    obj = CurrencyPricingPolicy.objects.get(
+                        instrument_type=instance,
+                        pricing_policy__id=item["pricing_policy_id"],
+                    )
+
+                    self._update_currency_pricing_policy(item, obj)
+                    ids.add(obj.id)
+
+                except Exception as e:
+                    print(f"Can't Find  Pricing Policy {repr(e)}")
+
+        if len(ids):
+            CurrencyPricingPolicy.objects.filter(
+                instrument_type=instance
+            ).exclude(id__in=ids).delete()
+
     @staticmethod
-    def _update_currency_pricing_policy(item, cpp):
-        cpp.pricing_scheme = item["pricing_scheme"]
-        cpp.default_value = item["default_value"]
-        cpp.attribute_key = item["attribute_key"]
-        cpp.data = item["data"] if "data" in item else None
-        cpp.notes = item["notes"]
+    def _update_currency_pricing_policy(item: dict, cpp: CurrencyPricingPolicy):
+        cpp.pricing_policy_id = item["pricing_policy_id"]
+        cpp.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
+        cpp.options = item.get("options")
         cpp.save()
 
 
@@ -164,6 +190,9 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(
             source="pricing_policy", read_only=True
         )
+
+    def get_unique_together_validators(self):
+        return []
 
     def create(self, validated_data):
         instance = super().create(validated_data)
