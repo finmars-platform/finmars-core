@@ -1571,6 +1571,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     files = models.ManyToManyField(
         "FinmarsFile",
         related_name="instruments",
+        through="InstrumentAttachment",
         blank=True,
         help_text="Files in the storage related to the instrument",
     )
@@ -3788,3 +3789,14 @@ class FinmarsFile(DataTimeStampedModel):
         self.validate_size(self.size)
         self.extension = self._extract_extension()
         super().save(*args, **kwargs)
+
+
+class InstrumentAttachment(models.Model):
+    instrument = models.ForeignKey(
+        Instrument,
+        on_delete=models.CASCADE,
+    )
+    file = models.ForeignKey(
+        FinmarsFile,
+        on_delete=models.CASCADE,
+    )
