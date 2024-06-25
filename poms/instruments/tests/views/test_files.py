@@ -51,7 +51,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
             size=self.random_int(1, 1000),
         )
         instrument = Instrument.objects.last()
-        instrument.files.add(file)
+        instrument.files.add(file, through_defaults=None)
 
         response = self.client.get(path=f"{self.url}{file.id}/")
         self.assertEqual(response.status_code, 200, response.content)
@@ -170,3 +170,20 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         file = FinmarsFile.objects.get(id=file_id)
         self.assertEqual(file.path, "/root/")
+
+    def test__simple_delete(self):
+        file_data = dict(
+            name=f"{self.random_string(12)}.pdf",
+            path=f"/{self.random_string()}/{self.random_string(5)}/",
+            size=self.random_int(10, 1000000000),
+        )
+        response = self.client.post(path=self.url, data=file_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+        file_id = response_json["id"]
+
+        response = self.client.delete(path=f"{self.url}{file_id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        file = FinmarsFile.objects.filter(id=file_id).first()
+        self.assertIsNone(file)
