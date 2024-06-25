@@ -3793,6 +3793,9 @@ class FinmarsFile(DataTimeStampedModel):
 
 
 class InstrumentAttachment(models.Model):
+    """
+    Intermediate model for many-to-many relation between instruments and files
+    """
     instrument = models.ForeignKey(
         Instrument,
         on_delete=models.CASCADE,

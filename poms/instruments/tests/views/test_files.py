@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument, FinmarsFile
+from poms.instruments.models import Instrument, FinmarsFile, InstrumentAttachment
 
 
 class FinmarsFileViewSetTest(BaseTestCase):
@@ -185,5 +185,25 @@ class FinmarsFileViewSetTest(BaseTestCase):
         response = self.client.delete(path=f"{self.url}{file_id}/")
         self.assertEqual(response.status_code, 204, response.content)
 
-        file = FinmarsFile.objects.filter(id=file_id).first()
-        self.assertIsNone(file)
+        self.assertIsNone(FinmarsFile.objects.filter(id=file_id).first())
+
+    def test__delete_from_attachments(self):
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=self.random_int(1, 1000),
+        )
+        instrument = Instrument.objects.last()
+        instrument.files.add(file, through_defaults=None)
+
+        attachment = InstrumentAttachment.objects.filter(file_id=file.id).first()
+        self.assertIsNotNone(attachment)
+        self.assertEqual(attachment.instrument_id, instrument.id)
+
+        response = self.client.delete(path=f"{self.url}{file.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        self.assertIsNone(FinmarsFile.objects.filter(id=file.id).first())
+
+        attachment = InstrumentAttachment.objects.filter(instrument=instrument).first()
+        self.assertIsNone(attachment)
