@@ -83,6 +83,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("name_1", "name_1", 1),
+        ("name_2", "1,2", 2),
         ("name_all", "name", 3),
         ("exten", "2.pdf", 1),
         ("path_1", "/root", 3),

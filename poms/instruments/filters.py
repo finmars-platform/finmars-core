@@ -54,7 +54,6 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         user_code_q = Q()
         short_name_q = Q()
         reference_for_pricing_q = Q()
-        instrument_type_name = Q()
         instrument_type_user_code = Q()
 
         for piece in pieces:
@@ -89,19 +88,14 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         if instrument_type:
             options.add(Q(instrument_type__user_code=instrument_type), Q.AND)
 
-        queryset = queryset.filter(options)
-
-        return queryset
+        return queryset.filter(options)
 
 
 class ListDatesFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         dates = request.query_params.getlist("dates", None)
 
-        if dates:
-            return queryset.filter(date__in=dates)
-
-        return queryset
+        return queryset.filter(date__in=dates) if dates else queryset
 
 
 class InstrumentsUserCodeFilter(BaseFilterBackend):
@@ -116,12 +110,13 @@ class InstrumentsUserCodeFilter(BaseFilterBackend):
 
 class FinmarsFileFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        query = request.query_params.get("query")
-        if not query:
+        queries = request.query_params.get("query")
+        if not queries:
             return queryset
 
         options = Q()
-        options.add(Q(name__icontains=query), Q.OR)
-        options.add(Q(path__icontains=query), Q.OR)
+        for query in queries.split(","):
+            options.add(Q(name__icontains=query), Q.OR)
+            options.add(Q(path__icontains=query), Q.OR)
 
         return queryset.filter(options)
