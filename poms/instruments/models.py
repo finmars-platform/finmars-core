@@ -1,13 +1,12 @@
 import json
 import logging
-import re
 import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
@@ -3736,10 +3735,6 @@ class EventScheduleConfig(models.Model):
         )
 
 
-forbidden_symbols = r'[/\\:*?"<>|;&]'
-name_regex = re.compile(forbidden_symbols)
-
-
 class FinmarsFile(DataTimeStampedModel):
     name = models.CharField(
         max_length=255,
@@ -3775,27 +3770,19 @@ class FinmarsFile(DataTimeStampedModel):
         parts = self.name.rsplit(".", 1)
         return parts[1] if len(parts) > 1 else ""
 
-    @staticmethod
-    def validate_name(value: str):
-        if name_regex.search(value):
-            raise ValidationError("Invalid file name", params={"name": value})
-
-    @staticmethod
-    def validate_size(value: int):
-        if value < 1:
-            raise ValidationError("Invalid file size", params={"size": value})
-
     def save(self, *args, **kwargs):
-        self.validate_name(self.name)
-        self.validate_size(self.size)
         self.extension = self._extract_extension()
         super().save(*args, **kwargs)
+
+    def filepath(self):
+        return f"{self.path.rstrip('/')}/{self.name}"
 
 
 class InstrumentAttachment(models.Model):
     """
     Intermediate model for many-to-many relation between instruments and files
     """
+
     instrument = models.ForeignKey(
         Instrument,
         on_delete=models.CASCADE,

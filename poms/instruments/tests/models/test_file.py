@@ -27,22 +27,6 @@ class FinmarsFileTest(BaseTestCase):
         self.assertIsNotNone(file.created)
         self.assertIsNotNone(file.modified)
 
-    @BaseTestCase.cases(
-        ("name", "name", "&name.txt"),
-        ("extension", "name", "name.pdf*"),
-        ("size", "size", 0),
-    )
-    def test__validators(self, attr, value):
-        kwargs = dict(
-            name="name.pdf",
-            path="/test/",
-            size=self.random_int(10000),
-        )
-        kwargs[attr] = value
-
-        with self.assertRaises(Exception):
-            FinmarsFile.objects.create(**kwargs)
-
     def test__add_files_to_instrument(self):
         kwargs_1 = dict(
             name="name_1.pdf",

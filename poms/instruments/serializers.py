@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -2260,7 +2261,6 @@ class InstrumentTypeEvalSerializer(
 
 
 class InstrumentMicroSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Instrument
         fields = [
@@ -2269,9 +2269,37 @@ class InstrumentMicroSerializer(serializers.ModelSerializer):
         ]
 
 
+forbidden_symbols_in_name = r'[/\\:*?"<>|;&]'
+name_regex = re.compile(forbidden_symbols_in_name)
+
+forbidden_symbols_in_path = r'[:*?"<>|;&]'
+path_regex = re.compile(forbidden_symbols_in_path)
+
+
 class FinmarsFileSerializer(serializers.ModelSerializer):
     instruments = InstrumentMicroSerializer(many=True, read_only=True)
 
     class Meta:
         model = FinmarsFile
         fields = "__all__"
+
+    @staticmethod
+    def validate_path(path: str) -> str:
+        if path_regex.search(path):
+            raise ValidationError(detail=f"Invalid path {path}", code="path")
+
+        return path
+
+    @staticmethod
+    def validate_name(name: str) -> str:
+        if name_regex.search(name):
+            raise ValidationError(detail=f"Invalid name {name}", code="name")
+
+        return name
+
+    @staticmethod
+    def validate_size(size: int) -> int:
+        if size < 1:
+            raise ValidationError(detail=f"Invalid size {size}", code="size")
+
+        return size

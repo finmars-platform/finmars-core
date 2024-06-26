@@ -207,3 +207,19 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         attachment = InstrumentAttachment.objects.filter(instrument=instrument).first()
         self.assertIsNone(attachment)
+
+    @BaseTestCase.cases(
+        ("name", "name", "&name.txt"),
+        ("extension", "name", "name.pdf*"),
+        ("path", "path", "[test/ytyt?/"),
+        ("size", "size", 0),
+    )
+    def test__create_with_invalid_parm(self, attr, value):
+        file_data = dict(
+            name=f"{self.random_string(12)}.pdf",
+            path=f"/{self.random_string()}/{self.random_string(5)}/",
+            size=self.random_int(10, 1000000000),
+        )
+        file_data[attr] = value
+        response = self.client.post(path=self.url, data=file_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
