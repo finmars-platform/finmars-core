@@ -1,3 +1,6 @@
+from django.contrib.contenttypes.models import ContentType
+
+
 def serialize_price_checker_item(item):
     result = {
         "type": item["type"]
@@ -603,7 +606,15 @@ def serialize_pl_report_item(item):
 def serialize_report_item_instrument(item):
     attributes = []
 
-    for attribute in item.attributes.all():
+    from poms.obj_attrs.models import GenericAttribute
+    content_type = ContentType.objects.get(
+        app_label="instruments", model="instrument"
+    )
+    # szhitenev 2024-06-27
+    # Important: could be solution to missing attributes in report
+    instrument_attributes = GenericAttribute.objects.filter(object_id=item.id, content_type=content_type)
+
+    for attribute in instrument_attributes:
 
         attr_result = {
             "id": attribute.id,

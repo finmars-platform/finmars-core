@@ -24,4 +24,4 @@ SECRET_KEY=mv83o5mq \
 FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
-celery --app=poms_app worker --concurrency=1 -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend --max-tasks-per-child=1
+celery --app=poms_app worker --concurrency=1 -Q backend-general-queue,backend-background-queue --loglevel=INFO -n backend --max-tasks-per-child=1 --pool=solo
