@@ -9,6 +9,8 @@ from poms.explorer.utils import (
     move_dir,
     move_file,
     path_is_file,
+    sync_file_in_database,
+    sync_files,
     unzip_file,
 )
 
@@ -129,13 +131,14 @@ def unzip_file_in_storage(self, *args, **kwargs):
 def sync_files_with_database(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
 
+    storage_root = "/"
     context = kwargs["context"]
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
-    total_files = count_files(storage, "/")
+    total_files = count_files(storage, storage_root)
 
     _l.info(f"sync_files_with_database: {total_files} files")
 
@@ -147,3 +150,31 @@ def sync_files_with_database(self, *args, **kwargs):
             "description": "sync_files_with_database starting ...",
         }
     )
+
+    dirs, files = storage.listdir(storage_root)
+
+    try:
+        for directory in dirs:
+            sync_files(storage, directory)
+
+        for file_path in files:
+            sync_file_in_database(file_path)
+
+    except Exception as e:
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.verbose_result = f"failed, due to {repr(e)}"
+        celery_task.save()
+        return
+
+    celery_task.update_progress(
+        {
+            "current": total_files,
+            "total": total_files,
+            "percent": 100,
+            "description": "sync_files_with_database finished",
+        }
+    )
+
+    celery_task.status = CeleryTask.STATUS_DONE
+    celery_task.verbose_result = f"synced {total_files} items"
+    celery_task.save()
