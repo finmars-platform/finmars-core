@@ -288,6 +288,12 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str):
 
 
 def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
+    """
+    Creates or updates file model in database for the given file path
+    Args:
+        storage: The storage instance to use
+        filepath: path to the file in storage
+    """
     from poms.instruments.models import FinmarsFile
 
     path, name = os.path.split(filepath)
