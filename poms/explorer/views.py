@@ -518,14 +518,14 @@ class UnZipViewSet(AbstractViewSet):
 
 
 class SyncViewSet(AbstractViewSet):
-    http_method_names = ["put"]
+    http_method_names = ["post"]
 
     @swagger_auto_schema(
         responses={
             status.HTTP_200_OK: TaskResponseSerializer(),
         },
     )
-    def update(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
