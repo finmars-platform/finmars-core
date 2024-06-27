@@ -54,3 +54,8 @@ router.register(
     explorer.UnZipViewSet,
     "explorer_unzip",
 )
+router.register(
+    r"sync",
+    explorer.SyncViewSet,
+    "explorer_sync",
+)

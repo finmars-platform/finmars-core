@@ -23,7 +23,11 @@ from poms.explorer.serializers import (
     UnZipSerializer,
     ZipFilesSerializer,
 )
-from poms.explorer.tasks import move_directory_in_storage, unzip_file_in_storage
+from poms.explorer.tasks import (
+    move_directory_in_storage,
+    sync_files_with_database,
+    unzip_file_in_storage,
+)
 from poms.explorer.utils import (
     join_path,
     remove_first_dir_from_path,
@@ -493,6 +497,44 @@ class UnZipViewSet(AbstractViewSet):
         )
 
         unzip_file_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class SyncViewSet(AbstractViewSet):
+    http_method_names = ["put"]
+
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def update(self, request, *args, **kwargs):
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Sync files with database",
+            type="sync_files_with_database",
+            options_object={},
+        )
+
+        sync_files_with_database.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {

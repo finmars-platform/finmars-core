@@ -128,3 +128,8 @@ def unzip_file_in_storage(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"unzip {zipped_file_path} to {destination_path}"
     celery_task.save()
+
+
+@finmars_task(name="explorer.tasks.sync_files_with_database", bind=True)
+def sync_files_with_database(**kwargs):
+    pass
