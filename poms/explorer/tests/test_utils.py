@@ -1,5 +1,16 @@
+from unittest import mock
+
+from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.utils import define_content_type, join_path, last_dir_name, move_dir
+from poms.common.storage import FinmarsS3Storage
+from poms.explorer.utils import (
+    define_content_type,
+    join_path,
+    last_dir_name,
+    move_dir,
+    sync_file_in_database,
+)
+from poms.instruments.models import FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -47,11 +58,6 @@ class JoinPathTest(BaseTestCase):
 
 class TestMoveFolder(BaseTestCase):
     def setUp(self):
-        from unittest import mock
-
-        from poms.celery_tasks.models import CeleryTask
-        from poms.common.storage import FinmarsS3Storage
-
         super().setUp()
         self.init_test_case()
         self.storage_patch = mock.patch(
@@ -137,3 +143,27 @@ class LastDirTest(BaseTestCase):
     )
     def test__content_type(self, path, result):
         self.assertEqual(last_dir_name(path), result)
+
+
+class SyncFileInDatabaseTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.storage_patch = mock.patch(
+            "poms.explorer.views.storage",
+            spec=FinmarsS3Storage,
+        )
+        self.storage = self.storage_patch.start()
+        self.addCleanup(self.storage_patch.stop)
+
+    def test__created_new_object(self):
+        filepath = "/test/super/file.pdf"
+        size = self.random_int(1000, 1000000)
+        self.storage.size.return_value = size
+
+        sync_file_in_database(self.storage, filepath)
+
+        file = FinmarsFile.objects.filter(name="file.pdf").first()
+        self.assertIsNotNone(file)
+        self.assertEqual(file.size, size)
+        self.assertEqual(file.path, "/test/super")
