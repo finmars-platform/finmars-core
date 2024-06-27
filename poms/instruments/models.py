@@ -3738,10 +3738,12 @@ class EventScheduleConfig(models.Model):
 class FinmarsFile(DataTimeStampedModel):
     name = models.CharField(
         max_length=255,
+        db_index=True,
         help_text="File name, including extension",
     )
     path = models.CharField(
         max_length=255,
+        db_index=True,
         help_text="Path to the file in the storage system",
     )
     extension = models.CharField(

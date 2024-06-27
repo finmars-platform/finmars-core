@@ -40,12 +40,14 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
+                        db_index=True,
                         help_text="File name, including extension", max_length=255
                     ),
                 ),
                 (
                     "path",
                     models.CharField(
+                        db_index=True,
                         help_text="Path to the file in the storage system",
                         max_length=255,
                     ),

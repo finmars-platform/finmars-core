@@ -279,7 +279,7 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str):
         dirs, files = storage.listdir(dir_path)
         count = len(files)
         for file in files:
-            sync_file_in_database(file)
+            sync_file_in_database(storage, file)
         for subdir in dirs:
             count += sync_files_helper(os.path.join(dir_path, subdir))
         return count
@@ -287,5 +287,14 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str):
     return sync_files_helper(source_dir)
 
 
-def sync_file_in_database(file: str):
-    pass
+def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
+    from poms.instruments.models import FinmarsFile
+
+    path, name = os.path.split(filepath)
+    size = storage.size(filepath)
+
+    FinmarsFile.objects.update_or_create(
+        name=name,
+        path=path,
+        defaults=dict(size=size),
+    )
