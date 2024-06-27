@@ -298,9 +298,7 @@ class BootstrapConfig(AppConfig):
                     f"no need to deactivate old members"
                 )
 
-            master_user = MasterUser.objects.using(settings.DB_DEFAULT).filter(
-                space_code=base_api_url,
-            ).first()
+            master_user = MasterUser.objects.using(settings.DB_DEFAULT).first()
 
             if master_user:
                 _l.info(
@@ -308,13 +306,13 @@ class BootstrapConfig(AppConfig):
                     f"base_api_url {master_user.space_code} exists"
                 )
 
+                master_user.name = master_user_name
+                master_user.space_code = base_api_url
+                master_user.realm_code = settings.REALM_CODE
+                master_user.save()
+
                 if master_user.name == old_backup_name:
                     # check if restored from backup
-                    master_user.name = master_user_name
-                    master_user.space_code = base_api_url
-                    master_user.realm_code = settings.REALM_CODE
-                    master_user.save()
-
                     BootstrapConfig.deactivate_old_members()
 
                     _l.info(
@@ -349,6 +347,8 @@ class BootstrapConfig(AppConfig):
                 current_owner_member.user = user
                 current_owner_member.is_owner = True
                 current_owner_member.is_admin = True
+                current_owner_member.is_deleted = False
+                current_owner_member.status = Member.STATUS_ACTIVE
                 current_owner_member.save()
 
             _l.info(
