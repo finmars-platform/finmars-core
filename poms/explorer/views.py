@@ -18,7 +18,6 @@ from poms.explorer.serializers import (
     FilePathSerializer,
     FolderPathSerializer,
     MoveSerializer,
-    TaskResponseSerializer,
     ResponseSerializer,
     TaskResponseSerializer,
     UnZipSerializer,
