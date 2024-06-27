@@ -83,7 +83,7 @@ class MoveSerializer(serializers.Serializer):
                 )
 
             path = f"{space_code}/{path}"
-            dir_path = path + "/"
+            dir_path = f"{path}/"
             if storage.dir_exists(dir_path):
                 # this is a directory
                 path = f"{path}/"

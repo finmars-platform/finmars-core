@@ -52,7 +52,7 @@ class MoveTaskTest(BaseTestCase):
 
         celery_task.refresh_from_db()
         self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
-        self.assertEqual(celery_task.verbose_result, "moved 1 files")
+        self.assertEqual(celery_task.verbose_result, "moved 1 items")
         self.assertEqual(
             celery_task.progress_object,
             {
