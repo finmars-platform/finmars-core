@@ -350,6 +350,7 @@ class BootstrapConfig(AppConfig):
                 current_owner_member.is_deleted = False
                 current_owner_member.status = Member.STATUS_ACTIVE
                 current_owner_member.save()
+            Member.objects.exclude(user=user).update(is_owner=False)
 
             _l.info(
                 f"{log} current_owner_member with username {owner_username} and master"
