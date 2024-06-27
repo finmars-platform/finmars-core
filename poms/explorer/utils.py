@@ -110,9 +110,7 @@ def last_dir_name(path: str) -> str:
     if not path:
         return path
 
-    if path.endswith("/"):
-        path = path[:-1]
-
+    path = path.removesuffix("/")
     return f"{path.rsplit('/', 1)[-1]}/"
 
 
