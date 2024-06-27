@@ -31,29 +31,24 @@ def move_directory_in_storage(self, *args, **kwargs):
     validated_data = celery_task.options_object
     directories = []
     files_paths = []
-    for item in validated_data["items"]:
+    items = validated_data["items"]
+    total_items = len(items)
+    for item in items:
         if path_is_file(storage, item):
             files_paths.append(item)
         else:
             directories.append(item)
 
     destination_directory = validated_data["target_directory_path"]
-    total_files = count_files(storage, destination_directory)
-    if total_files > MAX_FILES:
-        celery_task.status = CeleryTask.STATUS_ERROR
-        celery_task.verbose_result = (
-            f"number of files to be moved {total_files} > max allowed {MAX_FILES}"
-        )
-        celery_task.save()
-        return
 
     _l.info(
-        f"move_directory_in_storage: move {len(directories)} directories & {len(files_paths)} files"
+        f"move_directory_in_storage: move {len(directories)} dirs, {len(files_paths)} "
+        f"files, total {total_items} items"
     )
     celery_task.update_progress(
         {
             "current": 0,
-            "total": total_files,
+            "total": total_items,
             "percent": 0,
             "description": "move_directory_in_storage starting ...",
         }
@@ -78,15 +73,15 @@ def move_directory_in_storage(self, *args, **kwargs):
 
     celery_task.update_progress(
         {
-            "current": total_files,
-            "total": total_files,
+            "current": total_items,
+            "total": total_items,
             "percent": 100,
             "description": "move_directory_in_storage finished",
         }
     )
 
     celery_task.status = CeleryTask.STATUS_DONE
-    celery_task.verbose_result = f"moved {total_files} files"
+    celery_task.verbose_result = f"moved {total_items} items"
     celery_task.save()
 
 
@@ -131,5 +126,24 @@ def unzip_file_in_storage(self, *args, **kwargs):
 
 
 @finmars_task(name="explorer.tasks.sync_files_with_database", bind=True)
-def sync_files_with_database(**kwargs):
-    pass
+def sync_files_with_database(self, *args, **kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
+    context = kwargs["context"]
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    total_files = count_files(storage, "/")
+
+    _l.info(f"sync_files_with_database: {total_files} files")
+
+    celery_task.update_progress(
+        {
+            "current": 0,
+            "total": total_files,
+            "percent": 0,
+            "description": "sync_files_with_database starting ...",
+        }
+    )
