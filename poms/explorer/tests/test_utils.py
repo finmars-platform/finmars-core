@@ -9,6 +9,7 @@ from poms.explorer.utils import (
     last_dir_name,
     move_dir,
     sync_file_in_database,
+    sync_files,
 )
 from poms.instruments.models import FinmarsFile
 
@@ -187,3 +188,29 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         file = FinmarsFile.objects.filter(name="file.pdf").first()
         self.assertEqual(file.size, new_size)
+
+
+class SyncFilesTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.storage_patch = mock.patch(
+            "poms.explorer.views.storage",
+            spec=FinmarsS3Storage,
+        )
+        self.storage = self.storage_patch.start()
+        self.addCleanup(self.storage_patch.stop)
+
+    def test__files_created(self):
+        # Mock the listdir return values
+        f1 = "/test/next/file_1.doc"
+        f2 = "/test/next/file_2.zip"
+        size = self.random_int(10000, 100000000)
+        self.storage.listdir.return_value = ([], [f1, f2])
+        self.storage.size.return_value = size
+
+        sync_files(self.storage, "/test/next")
+
+        files = FinmarsFile.objects.all()
+
+        self.assertEqual(files.count(), 2)
