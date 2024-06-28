@@ -3,11 +3,9 @@ import os.path
 
 from rest_framework import serializers
 
-from poms.common.storage import get_storage
+from poms.common.storage import pretty_size
 from poms.explorer.utils import check_is_true, path_is_file
 from poms.instruments.models import FinmarsFile
-
-storage = get_storage()
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -179,7 +177,7 @@ class SearchResultSerializer(serializers.ModelSerializer):
             "name": name,
             "created": instance.created,
             "modified": instance.modified,
-            "file_path": instance.filepath,
+            "file_path": instance.path,
             "size": size,
-            "size_pretty": storage.convert_size(size),
+            "size_pretty": pretty_size(size),
         }

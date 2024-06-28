@@ -1,10 +1,8 @@
-from unittest import mock
-
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import FinmarsFile
 
 
-class ExplorerViewFileViewSetTest(BaseTestCase):
+class SearchFileViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -41,3 +39,28 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
         response = self.client.get(f"{self.url}1/")
 
         self.assertEqual(response.status_code, 405)
+
+    def test__list_no_query(self):
+        size = self.random_int(111, 10000000)
+        kwargs = dict(
+            name="name_1.pdf",
+            path="/test/",
+            size=size,
+        )
+        file = FinmarsFile.objects.create(**kwargs)
+
+        response = self.client.get(self.url)
+        response_json = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response_json), 1)
+
+        file_json = response_json[0]
+        self.assertEqual(file_json["type"], "file")
+        self.assertEqual(file_json["mime_type"], "application/pdf")
+        self.assertEqual(file_json["name"], file.name)
+        self.assertIn("created", file_json)
+        self.assertIn("modified", file_json)
+        self.assertEqual(file_json["file_path"], file.path)
+        self.assertEqual(file_json["size"], file.size)
+        self.assertIn("size_pretty", file_json)
