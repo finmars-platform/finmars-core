@@ -2,6 +2,7 @@ import os.path
 
 from rest_framework import serializers
 
+from poms.instruments.models import FinmarsFile
 from poms.explorer.utils import check_is_true, path_is_file
 
 
@@ -160,5 +161,11 @@ class UnZipSerializer(serializers.Serializer):
         return new_file_path
 
 
-class SearchSerializer(serializers.Serializer):
-    pass
+class SearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FinmarsFile
+        fields = [
+            "path",
+            "name",
+            "size",
+        ]
