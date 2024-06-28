@@ -19,7 +19,7 @@ from poms.explorer.serializers import (
     FolderPathSerializer,
     MoveSerializer,
     ResponseSerializer,
-    SearchSerializer,
+    SearchResultSerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
@@ -563,9 +563,13 @@ class FileFilter(FinmarsFileFilter):
 
 
 class SearchViewSet(AbstractModelViewSet):
-    serializer_class = SearchSerializer
+    serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects
+    pagination_class = None
     http_method_names = ["get"]
     filter_backends = AbstractModelViewSet.filter_backends + [
         FileFilter,
     ]
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

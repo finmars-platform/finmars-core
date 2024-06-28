@@ -165,7 +165,7 @@ class UnZipSerializer(serializers.Serializer):
         return new_file_path
 
 
-class SearchSerializer(serializers.ModelSerializer):
+class SearchResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinmarsFile
 
