@@ -158,3 +158,7 @@ class UnZipSerializer(serializers.Serializer):
             raise serializers.ValidationError(f"item {new_file_path} is not a file")
 
         return new_file_path
+
+
+class SearchSerializer(serializers.Serializer):
+    pass

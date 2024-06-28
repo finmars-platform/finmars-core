@@ -4,21 +4,24 @@ import mimetypes
 import os
 from tempfile import NamedTemporaryFile
 
+from django.db.models import Q
 from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
-from poms.common.views import AbstractViewSet
+from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.serializers import (
     DeletePathSerializer,
     FilePathSerializer,
     FolderPathSerializer,
     MoveSerializer,
     ResponseSerializer,
+    SearchSerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
@@ -33,6 +36,7 @@ from poms.explorer.utils import (
     remove_first_dir_from_path,
     response_with_file,
 )
+from poms.instruments.models import FinmarsFile
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
@@ -553,3 +557,26 @@ class SyncViewSet(AbstractViewSet):
             ).data,
             status=status.HTTP_200_OK,
         )
+
+
+class FileFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        queries = request.query_params.get("query")
+        if not queries:
+            return queryset
+
+        options = Q()
+        for query in queries.split(","):
+            options.add(Q(name__icontains=query), Q.OR)
+            options.add(Q(path__icontains=query), Q.OR)
+
+        return queryset.filter(options)
+
+
+class SearchViewSet(AbstractModelViewSet):
+    serializer_class = SearchSerializer
+    queryset = FinmarsFile.objects
+    http_method_names = ["get"]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        FileFilter,
+    ]

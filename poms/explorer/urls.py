@@ -59,3 +59,8 @@ router.register(
     explorer.SyncViewSet,
     "explorer_sync",
 )
+router.register(
+    r"search",
+    explorer.SearchViewSet,
+    "explorer_search",
+)
