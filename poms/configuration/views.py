@@ -240,7 +240,7 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
             options_object = {
                 "configuration_code": new_member_setup_configuration.target_configuration_code,
                 "version": new_member_setup_configuration.target_configuration_version,
-                "channel": "stable", # TODO get channel from target_configuration?
+                "channel": new_member_setup_configuration.target_configuration_channel,
                 "is_package": new_member_setup_configuration.target_configuration_is_package,
                 "access_token": get_access_token(request),
             }

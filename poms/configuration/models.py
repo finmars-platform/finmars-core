@@ -208,6 +208,11 @@ class NewMemberSetupConfiguration(ConfigurationModel):
         null=True,
         blank=True,
     )
+    target_configuration_channel = models.CharField(
+        max_length=255,
+        choices=CHANNEL_CHOICES,
+        default="stable",
+    )
     target_configuration_is_package = models.BooleanField(
         default=False,
     )
