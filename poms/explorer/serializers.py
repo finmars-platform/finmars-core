@@ -1,9 +1,12 @@
 import os.path
-
+import mimetypes
 from rest_framework import serializers
 
 from poms.instruments.models import FinmarsFile
 from poms.explorer.utils import check_is_true, path_is_file
+from poms.common.storage import get_storage
+
+storage = get_storage()
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -162,10 +165,21 @@ class UnZipSerializer(serializers.Serializer):
 
 
 class SearchSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = FinmarsFile
-        fields = [
-            "path",
-            "name",
-            "size",
-        ]
+
+    def to_representation(self, instance: FinmarsFile) -> dict:
+        name = instance.name
+        size = instance.size
+        mime_type, _ = mimetypes.guess_type(name)
+        return {
+            "type": "file",
+            "mime_type": mime_type,
+            "name": name,
+            "created": instance.created,
+            "modified": instance.modified,
+            "file_path": instance.filepath,
+            "size": size,
+            "size_pretty": storage.convert_size(size),
+        }

@@ -3776,6 +3776,7 @@ class FinmarsFile(DataTimeStampedModel):
         self.extension = self._extract_extension()
         super().save(*args, **kwargs)
 
+    @property
     def filepath(self):
         return f"{self.path.rstrip('/')}/{self.name}"
 

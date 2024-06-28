@@ -147,7 +147,8 @@ class FinmarsStorage(EncryptedStorage):
         self.delete(name)
         return super().get_available_name(name, max_length)
 
-    def convert_size(self, size_bytes):
+    @staticmethod
+    def convert_size(size_bytes: int) -> str:
         if size_bytes == 0:
             return "0B"
         size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
