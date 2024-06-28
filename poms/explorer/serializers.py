@@ -1,10 +1,11 @@
-import os.path
 import mimetypes
+import os.path
+
 from rest_framework import serializers
 
-from poms.instruments.models import FinmarsFile
-from poms.explorer.utils import check_is_true, path_is_file
 from poms.common.storage import get_storage
+from poms.explorer.utils import check_is_true, path_is_file
+from poms.instruments.models import FinmarsFile
 
 storage = get_storage()
 
@@ -165,7 +166,6 @@ class UnZipSerializer(serializers.Serializer):
 
 
 class SearchSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = FinmarsFile
 
