@@ -23,3 +23,21 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
         self.assertEqual(len(response_json), 0)
+
+    @BaseTestCase.cases(
+        ("post", "post"),
+        ("put", "put"),
+        ("patch", "patch"),
+        ("delete", "delete"),
+    )
+    def test__405_methods(self, name: str):
+        method = getattr(self.client, name)
+
+        response = method(self.url)
+
+        self.assertEqual(response.status_code, 405)
+
+    def test__405_retrieve(self):
+        response = self.client.get(f"{self.url}1/")
+
+        self.assertEqual(response.status_code, 405)
