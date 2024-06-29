@@ -81,19 +81,19 @@ class SearchFileViewSetTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("name_1", "name_1", 1),
-        ("name_2", "1,2", 2),
-        ("name_all", "name", 3),
+        ("name_2", "1,2,3", 3),
+        ("name_all", "name", None),
         ("exten", "2.pdf", 1),
-        ("path_1", "/root", 3),
-        ("path_2", "etc", 3),
-        ("path_3", "/system/", 3),
+        ("path_1", "/root", None),
+        ("path_2", "etc", None),
+        ("path_3", "/system/", None),
     )
     def test__list_with_filters(
         self,
         value,
         count,
     ):
-        amount = self.random_int(5, 10)
+        amount = self.random_int(5, 9)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
                 name=f"name_{i}.pdf",
@@ -101,10 +101,10 @@ class SearchFileViewSetTest(BaseTestCase):
                 size=self.random_int(10, 1000),
             )
 
-        # response = self.client.get(path=f"{self.url}?query={value}")
-        # self.assertEqual(response.status_code, 200, response.content)
-        #
-        # response_json = response.json()
-        #
-        # self.assertEqual(response_json["count"], count)
-        # self.assertEqual(len(response_json["results"]), count)
+        count = count or amount
+        response = self.client.get(path=f"{self.url}?query={value}")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json), count)
