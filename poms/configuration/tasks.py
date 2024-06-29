@@ -5,13 +5,12 @@ import os
 import traceback
 from datetime import date
 
+import requests
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import File
 from django.db import transaction
 from django.utils.timezone import now
-
-import requests
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -739,10 +738,15 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
                 type="install_configuration_from_marketplace",
             )
 
+            dependency_channel = remote_configuration_release["channel"]
+
+            if "channel" in dependency:
+                dependency_channel = dependency["channel"]
+
             child_options_object = {
                 "configuration_code": dependency["configuration_code"],
                 "version": dependency["version"],
-                "channel": remote_configuration_release["channel"],
+                "channel": dependency_channel,
                 "is_package": False,
                 "step": step
                 # "access_token": access_token
