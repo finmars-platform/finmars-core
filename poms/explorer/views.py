@@ -564,8 +564,7 @@ class FileFilter(FinmarsFileFilter):
 
 class SearchViewSet(AbstractModelViewSet):
     serializer_class = SearchResultSerializer
-    queryset = FinmarsFile.objects
-    pagination_class = None
+    queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]
     filter_backends = AbstractModelViewSet.filter_backends + [
         FileFilter,

@@ -20,7 +20,8 @@ class SearchFileViewSetTest(BaseTestCase):
         response = self.client.get(api_url)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
-        self.assertEqual(len(response_json), 0)
+        self.assertEqual(response_json["count"], 0)
+        self.assertEqual(len(response_json["results"]), 0)
 
     @BaseTestCase.cases(
         ("post", "post"),
@@ -50,12 +51,14 @@ class SearchFileViewSetTest(BaseTestCase):
         file = FinmarsFile.objects.create(**kwargs)
 
         response = self.client.get(self.url)
-        response_json = response.json()
-
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_json), 1)
 
-        file_json = response_json[0]
+        response_json = response.json()
+        self.assertIn("meta", response_json)
+        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(len(response_json["results"]), 1)
+
+        file_json = response_json["results"][0]
         self.assertEqual(file_json["type"], "file")
         self.assertEqual(file_json["mime_type"], "application/pdf")
         self.assertEqual(file_json["name"], file.name)
@@ -74,10 +77,12 @@ class SearchFileViewSetTest(BaseTestCase):
                 size=self.random_int(10, 1000),
             )
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
         response_json = response.json()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response_json), amount)
+        self.assertEqual(response_json["count"], amount)
+        self.assertEqual(len(response_json["results"]), amount)
 
     @BaseTestCase.cases(
         ("name_1", "name_1", 1),
@@ -107,4 +112,5 @@ class SearchFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(len(response_json), count)
+        self.assertEqual(response_json["count"], count)
+        self.assertEqual(len(response_json["results"]), count)
