@@ -1880,4 +1880,5 @@ class InstrumentAttachmentView(AbstractModelViewSet):
         serializer = AttachmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.update(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        response_json = FinmarsFileSerializer(instance=instance.files, many=True).data
+        return Response(response_json, status=status.HTTP_200_OK)

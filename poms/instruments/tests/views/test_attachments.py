@@ -1,6 +1,39 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument, FinmarsFile
 
+expected_response = [
+    {
+        "id": 1,
+        "instruments": [{"id": 1, "user_code": "-"}],
+        "created": "2024-06-30T15:38:23.565757Z",
+        "modified": "2024-06-30T15:38:23.565764Z",
+        "name": "file_1.json",
+        "path": "/root/workload",
+        "extension": "json",
+        "size": 730,
+    },
+    {
+        "id": 2,
+        "instruments": [{"id": 1, "user_code": "-"}],
+        "created": "2024-06-30T15:38:23.566583Z",
+        "modified": "2024-06-30T15:38:23.566588Z",
+        "name": "file_2.json",
+        "path": "/root/workload",
+        "extension": "json",
+        "size": 632,
+    },
+    {
+        "id": 3,
+        "instruments": [{"id": 1, "user_code": "-"}],
+        "created": "2024-06-30T15:38:23.567007Z",
+        "modified": "2024-06-30T15:38:23.567012Z",
+        "name": "file_3.json",
+        "path": "/root/workload",
+        "extension": "json",
+        "size": 332,
+    },
+]
+
 
 class AttachmentViewSetTest(BaseTestCase):
     databases = "__all__"
@@ -44,4 +77,7 @@ class AttachmentViewSetTest(BaseTestCase):
             data={"attachments": files},
             format="json",
         )
-        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json), amount)
