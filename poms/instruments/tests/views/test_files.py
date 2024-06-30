@@ -2,6 +2,19 @@ from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument, FinmarsFile, InstrumentAttachment
 
 
+expected_data = {
+    "id": 1,
+    "instruments": [],
+    "created": "2024-06-30T10:50:56.250144Z",
+    "modified": "2024-06-30T10:50:56.250150Z",
+    "name": "QCNAGIYMNXYA.pdf",
+    "path": "/ERIJAMHBSR/WXFND/",
+    "extension": "pdf",
+    "size": 574176201,
+    "meta": {"execution_time": 4, "request_id": "438278da-8001-4675-aeb6-ac0942ab8581"},
+}
+
+
 class FinmarsFileViewSetTest(BaseTestCase):
     databases = "__all__"
 
