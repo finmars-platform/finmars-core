@@ -81,3 +81,35 @@ class AttachmentViewSetTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(len(response_json), amount)
+
+        file_data = response_json[0]
+        self.assertIn("id", file_data)
+        self.assertIn("instruments", file_data)
+        self.assertEqual(len(file_data["instruments"]), 1)
+        self.assertIn("created", file_data)
+        self.assertIn("modified", file_data)
+        self.assertIn("name", file_data)
+        self.assertIn("path", file_data)
+        self.assertEqual(file_data["path"], path)
+        self.assertIn("extension", file_data)
+        self.assertEqual(file_data["extension"], "json")
+        self.assertIn("size", file_data)
+
+    def test__no_attachments(self):
+        response = self.client.patch(
+            path=f"{self.url}{self.instrument.id}/",
+            data={"attachments": []},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(len(response_json), 0)
+
+    def test__invalid_data(self):
+        response = self.client.patch(
+            path=f"{self.url}{self.instrument.id}/",
+            data={"wrong_name": []},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 204, response.content)
