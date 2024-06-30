@@ -39,13 +39,14 @@ from poms.common.views import (
     AbstractClassModelViewSet,
     AbstractModelViewSet,
     AbstractReadOnlyModelViewSet,
+    AbstractViewSet,
 )
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import (
+    FinmarsFileFilter,
     GeneratedEventPermissionFilter,
     InstrumentsUserCodeFilter,
-    FinmarsFileFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
 )
@@ -81,7 +82,9 @@ from poms.instruments.serializers import (
     DailyPricingModelSerializer,
     EventScheduleConfigSerializer,
     ExposureCalculationModelSerializer,
+    FinmarsFileSerializer,
     GeneratedEventSerializer,
+    InstrumentAttachmentSerializer,
     InstrumentCalculatePricesAccruedPriceSerializer,
     InstrumentClassSerializer,
     InstrumentForSelectSerializer,
@@ -90,7 +93,6 @@ from poms.instruments.serializers import (
     InstrumentTypeLightSerializer,
     InstrumentTypeProcessSerializer,
     InstrumentTypeSerializer,
-    FinmarsFileSerializer,
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
@@ -1335,7 +1337,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             )
 
             if instrument_type:
-                url = url + "&instrument_type=" + str(instrument_type)
+                url = f"{url}&instrument_type={str(instrument_type)}"
 
             _l.info(f"Requesting URL {url}")
 
@@ -1401,15 +1403,15 @@ class InstrumentDatabaseSearchViewSet(APIView):
                 mappedItems = []
 
                 for item in response_json["results"]:
-                    mappedItem = {}
-
-                    mappedItem["instrumentType"] = item["instrument_type"]
-                    mappedItem["issueName"] = item["name"]
-                    mappedItem["referenceId"] = item["isin"]
-                    mappedItem["commonCode"] = ""
-                    mappedItem["figi"] = ""
-                    mappedItem["issuerName"] = ""
-                    mappedItem["wkn"] = ""
+                    mappedItem = {
+                        "instrumentType": item["instrument_type"],
+                        "issueName": item["name"],
+                        "referenceId": item["isin"],
+                        "commonCode": "",
+                        "figi": "",
+                        "issuerName": "",
+                        "wkn": "",
+                    }
 
                     mappedItems.append(mappedItem)
 
@@ -1868,3 +1870,7 @@ class FinmarsFilesView(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         FinmarsFileFilter,
     ]
+
+
+class InstrumentAttachmentView(AbstractViewSet):
+    serializer_class = InstrumentAttachmentSerializer

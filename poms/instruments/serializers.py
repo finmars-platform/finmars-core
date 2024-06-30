@@ -2303,3 +2303,8 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
             raise ValidationError(detail=f"Invalid size {size}", code="size")
 
         return size
+
+
+class InstrumentAttachmentSerializer(serializers.Serializer):
+    instrument = serializers.IntegerField()
+    attachments = serializers.ListSerializer()
