@@ -73,7 +73,7 @@ class SearchFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
-        print(response_json)
+
         self.assertIn("meta", response_json)
         self.assertEqual(response_json["count"], 1)
         self.assertEqual(len(response_json["results"]), 1)
