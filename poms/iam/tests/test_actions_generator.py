@@ -75,10 +75,7 @@ class ActionHandlingTest(BaseTestCase):
         self.assertEqual(all_access_policies.count(), 175)
 
         for policy in all_access_policies:
-            self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
-            self.assertTrue("-full" in policy.user_code)
-            self.assertTrue("Full Access" in policy.name)
+            self._check_policy(policy, "-full", "Full Access")
 
     def test__generate_readonly_access_policies_for_viewsets(self):
         all_access_policies = AccessPolicy.objects.all()
@@ -90,7 +87,10 @@ class ActionHandlingTest(BaseTestCase):
         self.assertEqual(len(policies), 215)
 
         for policy in all_access_policies:
-            self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
-            self.assertTrue("-readonly" in policy.user_code)
-            self.assertTrue("Readonly Access" in policy.name)
+            self._check_policy(policy, "-readonly", "Readonly Access")
+
+    def _check_policy(self, policy, arg1, arg2):
+        self.assertEqual(policy.owner.username, "finmars_bot")
+        self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
+        self.assertTrue(arg1 in policy.user_code)
+        self.assertTrue(arg2 in policy.name)
