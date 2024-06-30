@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument, FinmarsFile, InstrumentAttachment
+from poms.instruments.models import Instrument, FinmarsFile
 
 
 class AttachmentViewSetTest(BaseTestCase):
@@ -26,7 +26,7 @@ class AttachmentViewSetTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 405)
 
-    def test__files_added_ok(self):
+    def test__files_added(self):
         amount = self.random_int(2, 10)
         files = []
         path = "/root/workload"
@@ -40,9 +40,8 @@ class AttachmentViewSetTest(BaseTestCase):
             files.append(f"{path}/{name}")
 
         response = self.client.patch(
-            path=self.url, data={"files": files}, format="json"
+            path=f"{self.url}{self.instrument.id}/",
+            data={"attachments": files},
+            format="json",
         )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-        print(response_json)
+        self.assertEqual(response.status_code, 204, response.content)

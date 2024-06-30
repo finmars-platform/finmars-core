@@ -1876,7 +1876,8 @@ class InstrumentAttachmentView(AbstractModelViewSet):
     http_method_names = ["patch"]
 
     def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
         serializer = AttachmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.update(self.get_object())
+        serializer.update(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
