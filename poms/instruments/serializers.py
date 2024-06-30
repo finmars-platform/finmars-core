@@ -2305,6 +2305,5 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
         return size
 
 
-class InstrumentAttachmentSerializer(serializers.Serializer):
-    instrument = serializers.IntegerField()
-    attachments = serializers.ListSerializer()
+class AttachmentSerializer(serializers.Serializer):
+    attachments = serializers.ListSerializer(child=serializers.CharField())

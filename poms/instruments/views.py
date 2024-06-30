@@ -39,7 +39,6 @@ from poms.common.views import (
     AbstractClassModelViewSet,
     AbstractModelViewSet,
     AbstractReadOnlyModelViewSet,
-    AbstractViewSet,
 )
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
@@ -77,6 +76,7 @@ from poms.instruments.models import (
 )
 from poms.instruments.serializers import (
     AccrualCalculationModelSerializer,
+    AttachmentSerializer,
     CostMethodSerializer,
     CountrySerializer,
     DailyPricingModelSerializer,
@@ -84,7 +84,6 @@ from poms.instruments.serializers import (
     ExposureCalculationModelSerializer,
     FinmarsFileSerializer,
     GeneratedEventSerializer,
-    InstrumentAttachmentSerializer,
     InstrumentCalculatePricesAccruedPriceSerializer,
     InstrumentClassSerializer,
     InstrumentForSelectSerializer,
@@ -1872,5 +1871,10 @@ class FinmarsFilesView(AbstractModelViewSet):
     ]
 
 
-class InstrumentAttachmentView(AbstractViewSet):
-    serializer_class = InstrumentAttachmentSerializer
+class InstrumentAttachmentView(AbstractModelViewSet):
+    queryset = Instrument.objects.prefetch_related("files")
+    http_method_names = ["patch"]
+    serializer_class = AttachmentSerializer
+
+    def partial_update(self, request, *args, **kwargs):
+        pass
