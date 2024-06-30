@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
@@ -24,8 +23,8 @@ class ActionHandlingTest(BaseTestCase):
         self.init_test_case()
         self.all_actions = set()
         self.all_actions_names = set()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.all_viewsets = get_viewsets_from_all_apps()
         for viewset in self.all_viewsets:
             for action in viewset.get_extra_actions():
@@ -73,7 +72,7 @@ class ActionHandlingTest(BaseTestCase):
 
         generate_full_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 174)
+        self.assertEqual(all_access_policies.count(), 175)
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
@@ -87,8 +86,8 @@ class ActionHandlingTest(BaseTestCase):
 
         policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 198)
-        self.assertEqual(len(policies), 214)
+        self.assertEqual(all_access_policies.count(), 199)
+        self.assertEqual(len(policies), 215)
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
