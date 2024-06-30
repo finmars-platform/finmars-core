@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from datetime import timedelta
 
@@ -2308,9 +2309,7 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
 class AttachmentSerializer(serializers.Serializer):
     attachments = serializers.ListSerializer(child=serializers.CharField())
 
-    def validate(self, attrs: dict) -> list:
-        import os
-
+    def validate(self, attrs: dict) -> dict:
         files = []
         for file_path in attrs["attachments"]:
             directory_path, file_name = os.path.split(file_path)
@@ -2323,4 +2322,8 @@ class AttachmentSerializer(serializers.Serializer):
 
             files.append(file)
 
-        return files
+        attrs["files"] = files
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.files.add(validated_data["files"])
