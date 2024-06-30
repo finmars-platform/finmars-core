@@ -26,13 +26,23 @@ class AttachmentViewSetTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 405)
 
-    # def test__api_url(self):
-    #     response = self.client.get(path=self.url)
-    #     response_json = response.json()
-    #
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     self.assertEqual(len(response_json["results"]), 0)
-    #     self.assertEqual(response_json["count"], 0)
-    #     self.assertIn("next", response_json)
-    #     self.assertIn("previous", response_json)
-    #     self.assertIn("meta", response_json)
+    def test__files_added_ok(self):
+        amount = self.random_int(2, 10)
+        files = []
+        path = "/root/workload"
+        for i in range(1, amount + 1):
+            name = f"file_{i}.json"
+            FinmarsFile.objects.create(
+                name=name,
+                path=path,
+                size=self.random_int(10, 1000),
+            )
+            files.append(f"{path}/{name}")
+
+        response = self.client.patch(
+            path=self.url, data={"files": files}, format="json"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        print(response_json)

@@ -1874,7 +1874,9 @@ class FinmarsFilesView(AbstractModelViewSet):
 class InstrumentAttachmentView(AbstractModelViewSet):
     queryset = Instrument.objects.prefetch_related("files")
     http_method_names = ["patch"]
-    serializer_class = AttachmentSerializer
 
     def partial_update(self, request, *args, **kwargs):
-        pass
+        serializer = AttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.get_object())
+        return Response(status=status.HTTP_204_NO_CONTENT)
