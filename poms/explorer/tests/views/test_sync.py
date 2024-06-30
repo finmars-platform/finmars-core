@@ -1,6 +1,16 @@
 from poms.common.common_base_test import BaseTestCase
 
 
+expected_data = {
+    "status": "ok",
+    "task_id": "1",
+    "meta": {
+        "execution_time": 41,
+        "request_id": "44b3ffbe-afc2-4c97-ae32-0700b35eac2d",
+    },
+}
+
+
 class SyncViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -15,6 +25,7 @@ class SyncViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
+        print(response_json)
         self.assertIn("status", response_json)
         self.assertEqual(response_json["status"], "ok")
         self.assertIn("task_id", response_json)
