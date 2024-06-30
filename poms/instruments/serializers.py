@@ -2326,4 +2326,4 @@ class AttachmentSerializer(serializers.Serializer):
         return attrs
 
     def update(self, instance, validated_data):
-        instance.files.add(validated_data["files"])
+        instance.files.add(*validated_data["files"])
