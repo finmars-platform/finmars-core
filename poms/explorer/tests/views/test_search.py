@@ -1,6 +1,25 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import FinmarsFile
 
+expected_response = {
+    "count": 1,
+    "next": None,
+    "previous": None,
+    "results": [
+        {
+            "type": "file",
+            "mime_type": "application/pdf",
+            "name": "name_1.pdf",
+            "created": "2024-06-30T11:02:20.655172Z",
+            "modified": "2024-06-30T11:02:20.655180Z",
+            "file_path": "/test/",
+            "size": 8567748,
+            "size_pretty": "8.17 MB",
+        }
+    ],
+    "meta": {"execution_time": 3, "request_id": "b212f36e-9144-4f13-aaed-d9a16b54133d"},
+}
+
 
 class SearchFileViewSetTest(BaseTestCase):
     def setUp(self):
@@ -54,6 +73,7 @@ class SearchFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
+        print(response_json)
         self.assertIn("meta", response_json)
         self.assertEqual(response_json["count"], 1)
         self.assertEqual(len(response_json["results"]), 1)

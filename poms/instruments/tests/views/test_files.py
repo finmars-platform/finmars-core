@@ -2,7 +2,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument, FinmarsFile, InstrumentAttachment
 
 
-expected_data = {
+expected_response = {
     "id": 1,
     "instruments": [],
     "created": "2024-06-30T10:50:56.250144Z",

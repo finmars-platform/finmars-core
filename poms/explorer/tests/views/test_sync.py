@@ -1,7 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 
 
-expected_data = {
+expected_response = {
     "status": "ok",
     "task_id": "1",
     "meta": {
@@ -25,7 +25,6 @@ class SyncViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
         response_json = response.json()
-        print(response_json)
         self.assertIn("status", response_json)
         self.assertEqual(response_json["status"], "ok")
         self.assertIn("task_id", response_json)
