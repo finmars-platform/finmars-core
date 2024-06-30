@@ -2307,3 +2307,20 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
 
 class AttachmentSerializer(serializers.Serializer):
     attachments = serializers.ListSerializer(child=serializers.CharField())
+
+    def validate(self, attrs: dict) -> list:
+        import os
+
+        files = []
+        for file_path in attrs["attachments"]:
+            directory_path, file_name = os.path.split(file_path)
+            file = FinmarsFile.objects.filter(
+                name=file_name,
+                path=directory_path,
+            ).first()
+            if not file:
+                raise ValidationError(f"no such file: {file_path}")
+
+            files.append(file)
+
+        return files
