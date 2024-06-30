@@ -112,4 +112,12 @@ class AttachmentViewSetTest(BaseTestCase):
             data={"wrong_name": []},
             format="json",
         )
-        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test__invalid_filenames(self):
+        response = self.client.patch(
+            path=f"{self.url}{self.instrument.id}/",
+            data={"attachments": ["/wrong/file/name.doc"]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400, response.content)
