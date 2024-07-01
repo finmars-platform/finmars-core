@@ -3736,6 +3736,9 @@ class EventScheduleConfig(models.Model):
 
 
 class FinmarsFile(DataTimeStampedModel):
+    """
+    Model representing a file in the Finmars storage (File system, AWS, Azure...).
+    """
     name = models.CharField(
         max_length=255,
         db_index=True,
