@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Case, Prefetch, Q, Value, When
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -1875,6 +1876,12 @@ class InstrumentAttachmentView(AbstractModelViewSet):
     queryset = Instrument.objects.prefetch_related("files")
     http_method_names = ["patch"]
 
+    @swagger_auto_schema(
+        request_body=AttachmentSerializer(),
+        responses={
+            status.HTTP_200_OK: FinmarsFileSerializer(many=True),
+        },
+    )
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = AttachmentSerializer(data=request.data)
