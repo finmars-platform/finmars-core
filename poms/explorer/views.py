@@ -18,6 +18,7 @@ from poms.explorer.serializers import (
     FilePathSerializer,
     FolderPathSerializer,
     MoveSerializer,
+    QuerySearchSerializer,
     ResponseSerializer,
     SearchResultSerializer,
     TaskResponseSerializer,
@@ -569,6 +570,15 @@ class SearchViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         FileFilter,
     ]
+
+    @swagger_auto_schema(
+        query_serializer=QuerySearchSerializer(),
+        responses={
+            status.HTTP_200_OK: SearchResultSerializer(many=True),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -181,3 +181,7 @@ class SearchResultSerializer(serializers.ModelSerializer):
             "size": size,
             "size_pretty": pretty_size(size),
         }
+
+
+class QuerySearchSerializer(serializers.Serializer):
+    query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
