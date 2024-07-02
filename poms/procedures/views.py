@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet
 from poms.integrations.providers.base import parse_date_iso
-from poms.pricing.handlers import PricingProcedureProcess
+# from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import (
     ExpressionProcedure,
@@ -39,7 +39,7 @@ class PricingProcedureFilterSet(FilterSet):
         model = PricingProcedure
         fields = []
 
-
+# DEPRECATED (remove in 1.9.0)
 class PricingProcedureViewSet(AbstractModelViewSet):
     queryset = PricingProcedure.objects.filter(type=PricingProcedure.CREATED_BY_USER)
     serializer_class = PricingProcedureSerializer
@@ -74,13 +74,14 @@ class PricingProcedureViewSet(AbstractModelViewSet):
         if "user_price_date_to" in request.data and request.data["user_price_date_to"]:
             date_to = parse_date_iso(request.data["user_price_date_to"])
 
-        instance = PricingProcedureProcess(
-            procedure=procedure,
-            master_user=master_user,
-            date_from=date_from,
-            date_to=date_to,
-        )
-        instance.process()
+        instance = None
+        # instance = PricingProcedureProcess(
+        #     procedure=procedure,
+        #     master_user=master_user,
+        #     date_from=date_from,
+        #     date_to=date_to,
+        # )
+        # instance.process()
 
         serializer = self.get_serializer(instance=instance)
 

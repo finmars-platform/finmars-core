@@ -88,6 +88,7 @@ from poms.instruments.serializers import (
     InstrumentSerializer,
     InstrumentTypeLightSerializer,
     InstrumentTypeProcessSerializer,
+    InstrumentTypeApplySerializer,
     InstrumentTypeSerializer,
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
@@ -513,43 +514,94 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
+        methods=["put"],
+        url_path="apply",
+        permission_classes=[IsAuthenticated],
+        serializer_class=InstrumentTypeApplySerializer,
+    )
+    def apply_type_to_instruments(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instrument_type = self.get_object()
+        instruments = Instrument.objects.filter(instrument_type=instrument_type)
+
+        _l.info(
+            f"instrument_type.apply request.data={request.data} "
+            f"instruments affected={len(instruments)}"
+        )
+
+        if serializer.data["fields"].pop("pricing_policies", None):
+            self._apply_pricing_to_instruments(instrument_type, instruments, serializer.data["mode"])
+
+        to_update = []
+        for instrument in instruments:
+            for field in serializer.data["fields"]:
+                if serializer.data["mode"] == "fill" and not getattr(instrument, field, None) \
+                   or serializer.data["mode"] == "overwrite":
+                    setattr(instrument, field, getattr(instrument_type, field))
+                    to_update.append(instrument)
+
+        Instrument.objects.bulk_update(to_update, serializer.data["fields"])
+
+        return Response(
+            {
+                "status": "ok",
+                "data": {"instruments_affected": len(instruments)},
+            }
+        )
+
+    @staticmethod
+    def _apply_pricing_to_instruments(instrument_type, instruments, fill_or_overwrite):
+        from poms.instruments.models import InstrumentPricingPolicy
+
+        pricing_policies = instrument_type.pricing_policies.all()
+        # Add missing pricing policies to each instrument
+        instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
+            instrument__in=instruments,
+            pricing_policy_id__in=[pp.pricing_policy_id for pp in pricing_policies]
+        )
+        existing_policies = set(instrument_pricing_policies.values_list('pricing_policy_id', 'instrument_id'))
+
+        to_create = []
+        for instrument in instruments:
+            for pricing_policy in pricing_policies:
+                if (pricing_policy.id, instrument.id) not in existing_policies:
+                    to_create.append(InstrumentPricingPolicy(
+                        pricing_policy=pricing_policy,
+                        instrument=instrument,
+                        target_pricing_schema_user_code=pricing_policy.target_pricing_schema_user_code,
+                        options=pricing_policy.options
+                    ))
+
+        if to_create:
+            InstrumentPricingPolicy.objects.bulk_create(to_create)
+
+        if fill_or_overwrite == "overwrite":
+            # Remove instrument pricing policies that are no longer associated with the given instrument type
+            to_delete = InstrumentPricingPolicy.objects.filter(
+                instrument__in=instruments
+            ).exclude(
+                pricing_policy__in=pricing_policies
+            )
+            to_delete.delete()
+
+    @action(
+        detail=True,
         methods=["get", "put"],
         url_path="update-pricing",
         permission_classes=[IsAuthenticated],
     )
     def update_pricing(self, request, pk=None, realm_code=None, space_code=None):
-        from poms.pricing.models import InstrumentPricingPolicy
-
         instrument_type = self.get_object()
-        instruments = Instrument.objects.filter(
-            instrument_type=instrument_type, master_user=request.user.master_user
-        )
+        instruments = Instrument.objects.filter(instrument_type=instrument_type)
 
         _l.info(
             f"update_pricing request.data={request.data} "
             f"instruments affected={len(instruments)}"
         )
 
-        for instrument in instruments:
-            try:
-                policy = InstrumentPricingPolicy.objects.get(
-                    instrument=instrument,
-                    pricing_policy=request.data["pricing_policy"],
-                )
-                if request.data["overwrite_default_parameters"]:
-                    policy.pricing_scheme_id = request.data.get("pricing_scheme", None)
-                    policy.default_value = request.data.get("default_value", None)
-                    policy.data = request.data.get("data", None)
-                    policy.attribute_key = request.data.get("attribute_key", None)
-                    policy.save()
-
-                    _l.info(f"update_pricing policy.id={policy.id} updated")
-
-                else:
-                    _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
-
-            except InstrumentPricingPolicy.DoesNotExist:
-                _l.error(f"Policy was not found for instrument.id={instrument.id}")
+        self._apply_pricing_to_instruments(instrument_type, instruments, "fill")
 
         return Response(
             {
@@ -1494,7 +1546,9 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"PriceHistoryViewSet.valid_data {len(valid_data)}")
 
-        PriceHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+        PriceHistory.objects.bulk_create(valid_data, update_conflicts=True,
+                                         unique_fields=["instrument", "pricing_policy", "date"],
+                                         update_fields=["principal_price", "accrued_price"])
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")

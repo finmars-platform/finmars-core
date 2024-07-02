@@ -7,7 +7,6 @@ from poms.currencies.tests.common_test_data import (
     EXPECTED_CURRENCY_HISTORY,
 )
 from poms.instruments.models import PricingPolicy
-from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
 
 
 class CurrencyHistoryViewSetTest(BaseTestCase):
@@ -22,8 +21,6 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency-history/"
         )
         self.currency = Currency.objects.last()
-        self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
-        self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
         self.currency_history = None
 
     def create_pricing_policy(self) -> PricingPolicy:
@@ -33,8 +30,8 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),
-            default_instrument_pricing_scheme=self.instrument_pricing_schema,
-            default_currency_pricing_scheme=self.instrument_currency_schema,
+            # default_instrument_pricing_scheme=self.instrument_pricing_schema,
+            # default_currency_pricing_scheme=self.instrument_currency_schema,
         )
 
     def create_currency_history(self) -> CurrencyHistory:

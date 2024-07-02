@@ -1,74 +1,50 @@
 import logging
 
-from celery import shared_task
-from django.utils.timezone import now
-
 from poms.celery_tasks import finmars_task
-from poms.pricing.models import PricingProcedureInstance
-from poms.procedures.models import PricingParentProcedureInstance
+from poms.celery_tasks.models import CeleryTask
+from poms.currencies.models import Currency
+from poms.instruments.models import Instrument
+from poms.configuration.utils import run_workflow, wait_workflow_until_end
 
 _l = logging.getLogger('poms.pricing')
 
 
-@finmars_task(name='pricing.clear_old_pricing_procedure_instances', bind=True)
-def clear_old_pricing_procedure_instances():
-    _l.debug("Pricing: clear_old_pricing_procedure_instances")
+@finmars_task(name="pricing.tasks.run_pricing", bind=True)
+def run_pricing(self, *args, **kwargs):
+    task = CeleryTask.objects.get(id=kwargs["task_id"])
+    task.celery_task_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+    options = task.options_object
 
-    today = now()
+    last_exception = None
+    if options.get("instruments"):
+        objects = Instrument.objects.filter(user_code__in=options["instruments"])
+    else:
+        objects = Currency.objects.filter(user_code__in=options["currencies"])
 
-    ids_to_delete = []
+    for obj in objects:
+        for schema in obj.pricing_policies.all():
+            payload = schema.options.copy()
+            payload["date_from"] = options["date_from"]
+            payload["date_to"] = options["date_to"]
+            payload["reference"] = obj.id  # !!! or user_code? depends on the market module
+            payload["pricing_policy"] = schema.pricing_policy.user_code
+            # TODO, when instrument whill have reference_dict we can fetch different reference base on provider
 
-    items = PricingProcedureInstance.objects.all()
+            try:
+                workflow = schema.target_pricing_schema_user_code
+                _l.info(f"run_pricing.going to execute workflow {workflow}")
 
-    for item in items:
+                response_data = run_workflow(workflow, payload, task)
+                #response_data = wait_workflow_until_end(response_data["id"], task)
 
-        diff = today - item.created
+                _l.info(f"run_pricing.workflow finished {response_data}")
+            except Exception as e:
+                last_exception = e
+                _l.exception(f"Could not execute run_pricing.workflow for instrument {payload['reference']}"
+                             f" and pricing policy {payload['pricing_policy']}")
 
-        if diff.days > 3:
-            ids_to_delete.append(item.id)
-
-    if len(ids_to_delete):
-        PricingProcedureInstance.objects.filter(id__in=ids_to_delete).delete()
-
-    _l.debug("PricingProcedureInstance items deleted %s" % len(ids_to_delete))
-
-    ids_to_delete = []
-
-    items = PricingParentProcedureInstance.objects.all()
-
-    for item in items:
-
-        diff = today - item.created
-
-        if diff.days > 3:
-            ids_to_delete.append(item.id)
-
-    if len(ids_to_delete):
-        PricingParentProcedureInstance.objects.filter(id__in=ids_to_delete).delete()
-
-    _l.debug("PricingParentProcedureInstance items deleted %s" % len(ids_to_delete))
-
-
-@finmars_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
-def set_old_processing_procedure_instances_to_error():
-    _l.debug("Pricing: set_old_processing_procedure_instances_to_error")
-
-    today = now()
-
-    items = PricingProcedureInstance.objects.all()
-
-    count = 0
-
-    for item in items:
-
-        diff = today - item.created
-
-        if diff.days > 1:
-
-            if item.status == PricingProcedureInstance.STATUS_PENDING:
-                item.status = PricingProcedureInstance.STATUS_ERROR
-                item.save()
-
-                count = count + 1
-
-    _l.debug("PricingParentProcedureInstance items set to error status %s" % len(count))
+    if last_exception:
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()

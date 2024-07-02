@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     "healthcheck",
     "poms.history",  # order is important because it registers models to listen to
     "poms.system",
+    "poms.pricing",
     "poms.users",
     "poms.iam",
     "poms.notifications",
@@ -115,14 +116,12 @@ INSTALLED_APPS = [
     "poms.csv_import",
     "poms.transaction_import",
     "poms.complex_import",
-    "poms.configuration_export",  # DEPRECATED
-    "poms.configuration_import",  # DEPRECATED
     "poms.reference_tables",
     "poms.celery_tasks",
     "poms.reconciliation",
     "poms.file_reports",
     "poms.configuration_sharing",  # DEPRECATED
-    "poms.pricing",
+
     "poms.schedules",
     "poms.procedures",
     "poms.credentials",

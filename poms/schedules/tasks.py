@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from poms.celery_tasks import finmars_task
-from poms.pricing.handlers import PricingProcedureProcess
+# from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import (
     ExpressionProcedure,
@@ -67,16 +67,19 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                         if "end_date" in schedule.data:
                             date_to = schedule.data["end_date"]
 
-                instance = PricingProcedureProcess(
-                    procedure=item,
-                    master_user=master_user,
-                    member=finmars_bot,
-                    schedule_instance=schedule_instance,
-                    date_from=date_from,
-                    context=context,
-                    date_to=date_to,
-                )
-                instance.process()
+                # TODO pricingv2 do something? probably all deprecated
+                # TODO delete in 1.9.0?
+                instance = None
+                # instance = PricingProcedureProcess(
+                #     procedure=item,
+                #     master_user=master_user,
+                #     member=finmars_bot,
+                #     schedule_instance=schedule_instance,
+                #     date_from=date_from,
+                #     context=context,
+                #     date_to=date_to,
+                # )
+                # instance.process()
 
             except Exception as e:
                 send_system_message(

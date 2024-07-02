@@ -793,8 +793,6 @@ class PriceHistoryCheckerSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-            'pricing_policies',
-            'pricing_policies__pricing_scheme'
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
