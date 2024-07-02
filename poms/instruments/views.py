@@ -536,13 +536,18 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         )
 
         if serializer.data["fields"].pop("pricing_policies", None):
-            self._apply_pricing_to_instruments(instrument_type, instruments, serializer.data["mode"])
+            self._apply_pricing_to_instruments(
+                instrument_type, instruments, serializer.data["mode"]
+            )
 
         to_update = []
         for instrument in instruments:
             for field in serializer.data["fields"]:
-                if serializer.data["mode"] == "fill" and not getattr(instrument, field, None) \
-                   or serializer.data["mode"] == "overwrite":
+                if (
+                    serializer.data["mode"] == "fill"
+                    and not getattr(instrument, field, None)
+                    or serializer.data["mode"] == "overwrite"
+                ):
                     setattr(instrument, field, getattr(instrument_type, field))
                     to_update.append(instrument)
 
@@ -563,20 +568,26 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         # Add missing pricing policies to each instrument
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
             instrument__in=instruments,
-            pricing_policy_id__in=[pp.pricing_policy_id for pp in pricing_policies]
+            pricing_policy_id__in=[pp.pricing_policy_id for pp in pricing_policies],
         )
-        existing_policies = set(instrument_pricing_policies.values_list('pricing_policy_id', 'instrument_id'))
+        existing_policies = set(
+            instrument_pricing_policies.values_list(
+                "pricing_policy_id", "instrument_id"
+            )
+        )
 
         to_create = []
         for instrument in instruments:
             for pricing_policy in pricing_policies:
                 if (pricing_policy.id, instrument.id) not in existing_policies:
-                    to_create.append(InstrumentPricingPolicy(
-                        pricing_policy=pricing_policy,
-                        instrument=instrument,
-                        target_pricing_schema_user_code=pricing_policy.target_pricing_schema_user_code,
-                        options=pricing_policy.options
-                    ))
+                    to_create.append(
+                        InstrumentPricingPolicy(
+                            pricing_policy=pricing_policy,
+                            instrument=instrument,
+                            target_pricing_schema_user_code=pricing_policy.target_pricing_schema_user_code,
+                            options=pricing_policy.options,
+                        )
+                    )
 
         if to_create:
             InstrumentPricingPolicy.objects.bulk_create(to_create)
@@ -585,9 +596,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             # Remove instrument pricing policies that are no longer associated with the given instrument type
             to_delete = InstrumentPricingPolicy.objects.filter(
                 instrument__in=instruments
-            ).exclude(
-                pricing_policy__in=pricing_policies
-            )
+            ).exclude(pricing_policy__in=pricing_policies)
             to_delete.delete()
 
     @action(
@@ -1032,8 +1041,6 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events_range(self, request, realm_code=None, space_code=None):
-        print(f"request.data {request.data} ")
-
         date_from_string = request.data.get("effective_date_0", None)
         date_to_string = request.data.get("effective_date_1", None)
 
@@ -1159,6 +1166,26 @@ class InstrumentViewSet(AbstractModelViewSet):
         )
 
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=AttachmentSerializer,
+        responses={
+            status.HTTP_200_OK: FinmarsFileSerializer(many=True),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["patch"],
+        url_path="attach-file",
+        serializer_class=AttachmentSerializer,
+    )
+    def attach_file(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = AttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(instance)
+        response_json = FinmarsFileSerializer(instance=instance.files, many=True).data
+        return Response(response_json, status=status.HTTP_200_OK)
 
 
 # Not for getting List
@@ -1550,9 +1577,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"PriceHistoryViewSet.valid_data {len(valid_data)}")
 
-        PriceHistory.objects.bulk_create(valid_data, update_conflicts=True,
-                                         unique_fields=["instrument", "pricing_policy", "date"],
-                                         update_fields=["principal_price", "accrued_price"])
+        PriceHistory.objects.bulk_create(
+            valid_data,
+            update_conflicts=True,
+            unique_fields=["instrument", "pricing_policy", "date"],
+            update_fields=["principal_price", "accrued_price"],
+        )
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")
@@ -1924,22 +1954,3 @@ class FinmarsFilesView(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         FinmarsFileFilter,
     ]
-
-
-class InstrumentAttachmentView(AbstractModelViewSet):
-    queryset = Instrument.objects.prefetch_related("files")
-    http_method_names = ["patch"]
-
-    @swagger_auto_schema(
-        request_body=AttachmentSerializer(),
-        responses={
-            status.HTTP_200_OK: FinmarsFileSerializer(many=True),
-        },
-    )
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = AttachmentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.update(instance)
-        response_json = FinmarsFileSerializer(instance=instance.files, many=True).data
-        return Response(response_json, status=status.HTTP_200_OK)

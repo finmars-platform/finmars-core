@@ -94,7 +94,3 @@ router.register(
     "files",
     instruments.FinmarsFilesView,
 )
-router.register(
-    "attachments",
-    instruments.InstrumentAttachmentView,
-)
