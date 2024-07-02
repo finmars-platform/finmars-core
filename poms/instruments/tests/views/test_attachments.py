@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument, FinmarsFile
+from poms.instruments.models import FinmarsFile, Instrument
 
 expected_response = [
     {
@@ -34,6 +34,8 @@ expected_response = [
     },
 ]
 
+API_URL = f"/realm00000/space00000/api/v1/instruments/instrument/{{}}/attach-file/"
+
 
 class AttachmentViewSetTest(BaseTestCase):
     databases = "__all__"
@@ -41,9 +43,7 @@ class AttachmentViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm = "realm00000"
-        self.space = "space00000"
-        self.url = f"/{self.realm}/{self.space}/api/v1/instruments/attachments/"
+        self.url = API_URL
         self.instrument = Instrument.objects.first()
 
     @BaseTestCase.cases(
@@ -73,7 +73,7 @@ class AttachmentViewSetTest(BaseTestCase):
             files.append(f"{path}/{name}")
 
         response = self.client.patch(
-            path=f"{self.url}{self.instrument.id}/",
+            path=self.url.format(self.instrument.id),
             data={"attachments": files},
             format="json",
         )
@@ -97,7 +97,7 @@ class AttachmentViewSetTest(BaseTestCase):
 
     def test__no_attachments(self):
         response = self.client.patch(
-            path=f"{self.url}{self.instrument.id}/",
+            path=self.url.format(self.instrument.id),
             data={"attachments": []},
             format="json",
         )
@@ -108,7 +108,7 @@ class AttachmentViewSetTest(BaseTestCase):
 
     def test__invalid_data(self):
         response = self.client.patch(
-            path=f"{self.url}{self.instrument.id}/",
+            path=self.url.format(self.instrument.id),
             data={"wrong_name": []},
             format="json",
         )
@@ -116,7 +116,7 @@ class AttachmentViewSetTest(BaseTestCase):
 
     def test__invalid_filenames(self):
         response = self.client.patch(
-            path=f"{self.url}{self.instrument.id}/",
+            path=self.url.format(self.instrument.id),
             data={"attachments": ["/wrong/file/name.doc"]},
             format="json",
         )
