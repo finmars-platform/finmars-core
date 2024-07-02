@@ -2,7 +2,6 @@ from copy import deepcopy
 
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument, PriceHistory, PricingPolicy
-from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
 
 EXPECTED_PRICE_HISTORY = {
     "id": 1,
@@ -159,8 +158,6 @@ class PriceHistoryViewSetTest(BaseTestCase):
         self.pricing_policy = None
         self.pricing_history = None
         self.instrument = Instrument.objects.first()
-        self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
-        self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
 
     def create_pricing_policy(self) -> PricingPolicy:
         self.pricing_policy = PricingPolicy.objects.create(
@@ -169,8 +166,8 @@ class PriceHistoryViewSetTest(BaseTestCase):
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),
-            default_instrument_pricing_scheme=self.instrument_pricing_schema,
-            default_currency_pricing_scheme=self.instrument_currency_schema,
+            # default_instrument_pricing_scheme=self.instrument_pricing_schema,
+            # default_currency_pricing_scheme=self.instrument_currency_schema,
         )
         return self.pricing_policy
 

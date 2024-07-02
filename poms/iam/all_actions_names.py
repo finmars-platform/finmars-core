@@ -1,5 +1,6 @@
 ALL_EXTRA_ACTIONS = {
     "abort_transaction_import",
+    "apply_type_to_instruments",
     "book",
     "book_pending",
     "bulk_create",
@@ -93,10 +94,12 @@ ALL_EXTRA_ACTIONS = {
     "seal",
     "unseal",
     "update_secret",
+    "update_status",
     "view_log",
 }
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
+    "apply_type_to_instruments",
     "book",
     "book_pending",
     "bulk_create",
@@ -169,6 +172,7 @@ FULL_ACCESS_ACTIONS = {
     "seal",
     "unseal",
     "update_secret",
+    "update_status",
 }
 READ_ACCESS_ACTIONS = {
     "export_configuration",

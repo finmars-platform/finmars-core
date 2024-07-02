@@ -88,12 +88,11 @@ def serialize_price_checker_item_instrument(item):
             "pricing_policy": policy.pricing_policy_id
         }
 
-        if policy.pricing_scheme_id:
-            policy_result["pricing_scheme"] = policy.pricing_scheme_id,
-            policy_result["pricing_scheme_object"] = {
-                "id": policy.pricing_scheme.id,
-                "user_code": policy.pricing_scheme.user_code,
-                "name": policy.pricing_scheme.name,
+        if policy.pricing_policy_id:
+            policy_result["pricing_policy_object"] = {
+                "id": policy.pricing_policy.id,
+                "user_code": policy.pricing_policy.user_code,
+                "name": policy.pricing_policy.name,
             }
 
         pricing_policies.append(policy_result)

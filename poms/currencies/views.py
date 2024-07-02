@@ -239,7 +239,9 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"CurrencyHistoryViewSet.valid_data {len(valid_data)}")
 
-        CurrencyHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+        CurrencyHistory.objects.bulk_create(valid_data, update_conflicts=True,
+                                            unique_fields=["currency", "pricing_policy", "date"],
+                                            update_fields=['fx_rate'])
 
         if errors:
             _l.info(f"CurrencyHistoryViewSet.bulk_create.errors {errors}")

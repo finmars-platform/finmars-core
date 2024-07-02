@@ -2074,7 +2074,7 @@ def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
 
 _add_factor_schedule.evaluator = True
 
-
+# DEPRECATED
 def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
     from poms.users.utils import get_master_user_from_context
 
@@ -2096,6 +2096,7 @@ def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
 _get_instrument_pricing_scheme.evaluator = True
 
 
+# DEPRECATED
 def _get_currency_pricing_scheme(evaluator, currency, pricing_policy):
     from poms.users.utils import get_master_user_from_context
 

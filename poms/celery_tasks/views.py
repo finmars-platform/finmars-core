@@ -5,7 +5,7 @@ from celery.result import AsyncResult
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -130,6 +130,30 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         }
 
         return Response(result)
+
+    @action(detail=True, methods=["post"], url_path="update-status")
+    def update_status(self, request, pk=None, *args, **kwargs):
+        task = CeleryTask.objects.get(pk=pk)
+        if task.status in (CeleryTask.STATUS_ERROR, CeleryTask.STATUS_CANCELED):
+            response = {"status": "ignored", "error_message": "Task is already finished, update impossible"}
+            return Response(response)
+
+        new_status = request.data.get("status")
+        if new_status == "progress":
+            task.status = CeleryTask.STATUS_PENDING
+            if request.data.get("progress"):
+                task.progress = (task.progress or []) + [request.data["progress"]]
+        elif new_status == "error":
+            task.status = CeleryTask.STATUS_ERROR
+        elif new_status == "success":
+            task.status = CeleryTask.STATUS_DONE
+        elif new_status == "canceled":
+            task.cancel()
+        else:
+            raise ValidationError("unknown status value")
+        task.save()
+
+        return Response({"status": "ok"})
 
     @action(detail=False, methods=["post"], url_path="execute")
     def execute(self, request, pk=None, realm_code=None, space_code=None):

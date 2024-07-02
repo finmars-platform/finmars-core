@@ -139,12 +139,12 @@ class InstrumentTypeProcess(object):
                     "pricing_currency"
                 ] = self.ecosystem_default.currency.pk
 
-            self.instrument_object["instrument_type_pricing_policies"] = []
-
-            if self.instrument_type.pricing_policies:
-                self.instrument_object[
-                    "_instrument_type_pricing_policies"
-                ] = self.instrument_type.pricing_policies
+            # self.instrument_object["instrument_type_pricing_policies"] = []
+            #
+            # if self.instrument_type.pricing_policies:
+            #     self.instrument_object[
+            #         "_instrument_type_pricing_policies"
+            #     ] = self.instrument_type.pricing_policies
 
             self.instrument_object["default_price"] = self.instrument_type.default_price
             self.instrument_object["maturity_date"] = self.instrument_type.maturity_date
@@ -393,6 +393,7 @@ class InstrumentTypeProcess(object):
                 f"InstrumentType is not configured correctly {repr(e)}"
             ) from e
 
+    # TODO pricingv2 reanimate with new pricing policies logic?
     def set_pricing_policies(self):
         try:
             self.instrument_object["pricing_policies"] = []
@@ -400,11 +401,8 @@ class InstrumentTypeProcess(object):
             for it_pricing_policy in self.instrument_type.pricing_policies.all():
                 pricing_policy = {
                     "pricing_policy": it_pricing_policy.pricing_policy.id,
-                    "pricing_scheme": it_pricing_policy.pricing_scheme.id,
-                    "notes": it_pricing_policy.notes,
-                    "default_value": it_pricing_policy.default_value,
-                    "attribute_key": it_pricing_policy.attribute_key,
-                    "json_data": it_pricing_policy.json_data,
+                    "target_pricing_schema_user_code": it_pricing_policy.target_pricing_schema_user_code,
+                    "options": it_pricing_policy.options,
                 }
 
                 self.instrument_object["pricing_policies"].append(pricing_policy)
