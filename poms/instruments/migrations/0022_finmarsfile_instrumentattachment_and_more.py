@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("instruments", "0019_instrument_identifier"),
+        ("instruments", "0021_instrumenttypepricingpolicy_instrumentpricingpolicy"),
     ]
 
     operations = [
