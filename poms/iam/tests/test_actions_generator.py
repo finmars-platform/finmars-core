@@ -72,7 +72,7 @@ class ActionHandlingTest(BaseTestCase):
 
         generate_full_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 165)
+        self.assertEqual(all_access_policies.count(), 164)
 
         for policy in all_access_policies:
             self._check_policy(policy, "-full", "Full Access")
@@ -83,8 +83,8 @@ class ActionHandlingTest(BaseTestCase):
 
         policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 189)
-        self.assertEqual(len(policies), 205)
+        self.assertEqual(all_access_policies.count(), 188)
+        self.assertEqual(len(policies), 204)
 
         for policy in all_access_policies:
             self._check_policy(policy, "-readonly", "Readonly Access")
