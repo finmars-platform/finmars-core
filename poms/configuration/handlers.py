@@ -158,38 +158,6 @@ def export_configuration_to_directory(
 
         _l.info("Exported: integrations.instrumentdownloadscheme")
 
-        _l.info("Going to export: pricing.instrumentpricingscheme")
-
-        save_serialized_entity(
-            "pricing.instrumentpricingscheme",
-            configuration.configuration_code,
-            source_directory + "/instrument-pricing-schemes",
-            context,
-        )
-
-        _l.info("Exported: pricing.instrumentpricingscheme")
-
-        _l.info("Going to export: pricing.currencypricingscheme")
-
-        save_serialized_entity(
-            "pricing.currencypricingscheme",
-            configuration.configuration_code,
-            source_directory + "/currency-pricing-schemes",
-            context,
-        )
-
-        _l.info("Exported: pricing.currencypricingscheme")
-
-        _l.info("Going to export: procedures.pricingprocedure")
-
-        save_serialized_entity(
-            "procedures.pricingprocedure",
-            configuration.configuration_code,
-            source_directory + "/pricing-procedures",
-            context,
-        )
-
-        _l.info("Exported: procedures.pricingprocedure")
 
         _l.info("Going to export: procedures.expressionprocedure")
 
@@ -201,17 +169,6 @@ def export_configuration_to_directory(
         )
 
         _l.info("Exported: procedures.expressionprocedure")
-
-        _l.info("Going to export: procedures.requestdatafileprocedure")
-
-        save_serialized_entity(
-            "procedures.requestdatafileprocedure",
-            configuration.configuration_code,
-            source_directory + "/data-procedures",
-            context,
-        )
-
-        _l.info("Exported: procedures.requestdatafileprocedure")
 
         _l.info("Going to export: schedules.schedule")
 
