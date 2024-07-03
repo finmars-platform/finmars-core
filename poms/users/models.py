@@ -546,7 +546,7 @@ class MasterUser(models.Model):
             PricingPolicy,
         )
         from poms.portfolios.models import Portfolio
-        from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
+
         from poms.strategies.models import (
             Strategy1,
             Strategy1Group,

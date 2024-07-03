@@ -25,20 +25,14 @@ from poms.integrations.models import PriceDownloadScheme, ProviderClass, Accrual
     CurrencyMapping, InstrumentTypeMapping, AccrualCalculationModelMapping, PeriodicityMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, \
     Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, \
-    PricingAutomatedSchedule, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
+    ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
     ComplexTransactionImportSchemeField, ImportConfig, ComplexTransactionImportSchemeCalculatedInput, \
     ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeRuleScenario, \
     ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField
 from poms.obj_attrs.models import GenericAttributeType
 from poms.portfolios.models import Portfolio
-from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
-    CurrencyPricingScheme, InstrumentPricingSchemeManualPricingParameters, CurrencyPricingSchemeManualPricingParameters, \
-    InstrumentPricingSchemeSingleParameterFormulaParameters, CurrencyPricingSchemeSingleParameterFormulaParameters, \
-    InstrumentPricingSchemeMultipleParametersFormulaParameters, \
-    CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
-    CurrencyPricingSchemeBloombergParameters, InstrumentPricingSchemeAlphavParameters, \
-    CurrencyPricingSchemeFixerParameters, PricingProcedure, CurrencyPricingPolicy, InstrumentPricingPolicy, \
-    InstrumentTypePricingPolicy
+from poms.pricing.models import InstrumentPricingScheme, \
+    CurrencyPricingScheme
 from poms.reconciliation.models import TransactionTypeReconField, ReconciliationBankFileField, \
     ReconciliationNewBankFileField, ReconciliationComplexTransactionField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow

@@ -810,8 +810,6 @@ def _get_supported_models_serializer_class():
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.portfolios.models import Portfolio
     from poms.portfolios.serializers import PortfolioEvalSerializer
-    from poms.pricing.models import InstrumentPricingPolicy
-    from poms.pricing.serializers import InstrumentPricingPolicySerializer
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
     from poms.strategies.serializers import (
         Strategy1EvalSerializer,
@@ -856,7 +854,6 @@ def _get_supported_models_serializer_class():
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
         Country: CountrySerializer,
-        InstrumentPricingPolicy: InstrumentPricingPolicySerializer,
         AccrualCalculationSchedule: AccrualCalculationScheduleSerializer
     }
 
