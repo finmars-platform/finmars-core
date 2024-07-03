@@ -388,7 +388,7 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
 
 
 class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
-    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+    pricing_policy = PricingPolicyLightSerializer(read_only=True)
 
     class Meta:
         model = InstrumentTypePricingPolicy
@@ -396,7 +396,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
-    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+    pricing_policy = PricingPolicyLightSerializer(read_only=True)
 
     class Meta:
         model = InstrumentPricingPolicy
@@ -404,7 +404,7 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
 
 
 class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
-    pricing_policy = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
+    pricing_policy = PricingPolicyLightSerializer(read_only=True)
 
     class Meta:
         model = CurrencyPricingPolicy
