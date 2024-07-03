@@ -465,8 +465,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             "pricing_condition",
             "payment_size_detail",
             "periodicity",
-            "instrument_pricing_scheme",
-            "currency_pricing_scheme",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -492,10 +490,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             PricingPolicyViewSerializer,
         )
         from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.pricing.serializers import (
-            CurrencyPricingSchemeSerializer,
-            InstrumentPricingSchemeSerializer,
-        )
         from poms.strategies.serializers import (
             Strategy1GroupViewSerializer,
             Strategy1SubgroupViewSerializer,
@@ -527,16 +521,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
 
         self.fields["periodicity_object"] = PeriodicityViewSerializer(
             source="periodicity", read_only=True
-        )
-
-        self.fields[
-            "instrument_pricing_scheme_object"
-        ] = InstrumentPricingSchemeSerializer(
-            source="instrument_pricing_scheme", read_only=True
-        )
-
-        self.fields["currency_pricing_scheme_object"] = CurrencyPricingSchemeSerializer(
-            source="currency_pricing_scheme", read_only=True
         )
 
         self.fields["instrument_class_object"] = InstrumentClassViewSerializer(

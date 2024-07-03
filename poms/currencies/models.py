@@ -139,6 +139,19 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             return super().fake_delete()
 
 
+class CurrencyPricingPolicy(DataTimeStampedModel):
+    pricing_policy = models.ForeignKey("instruments.PricingPolicy", on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name="pricing_policies")
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+    )
+    options = models.JSONField(default=dict, help_text="options populated from module form")
+
+    class Meta:
+        unique_together = ("pricing_policy", "currency")
+
+
 class CurrencyHistoryManager(models.Manager):
     def get_fx_rate(self, currency_id, pricing_policy, date) -> float:
         history = (

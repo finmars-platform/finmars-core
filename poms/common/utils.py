@@ -341,6 +341,9 @@ def get_serializer(content_type_key):
         InstrumentTypeSerializer,
         PriceHistorySerializer,
         PricingPolicySerializer,
+        InstrumentTypePricingPolicySerializer,
+        InstrumentPricingPolicySerializer,
+        CurrencyPricingPolicySerializer,
     )
     from poms.integrations.serializers import (
         ComplexTransactionImportSchemeSerializer,
@@ -352,10 +355,6 @@ def get_serializer(content_type_key):
         PortfolioRegisterRecordSerializer,
         PortfolioRegisterSerializer,
         PortfolioSerializer,
-    )
-    from poms.pricing.serializers import (
-        CurrencyPricingSchemeSerializer,
-        InstrumentPricingSchemeSerializer,
     )
     from poms.procedures.serializers import (
         ExpressionProcedureSerializer,
@@ -395,6 +394,9 @@ def get_serializer(content_type_key):
         "instruments.accrualcalculationschedule": AccrualCalculationScheduleStandaloneSerializer,
         "instruments.instrumenttype": InstrumentTypeSerializer,
         "instruments.pricingpolicy": PricingPolicySerializer,
+        "instruments.instrumenttypepricingpolicy": InstrumentTypePricingPolicySerializer,
+        "instruments.instrumentpricingpolicy": InstrumentPricingPolicySerializer,
+        "instruments.currencypricingpolicy": CurrencyPricingPolicySerializer,
         "currencies.currency": CurrencySerializer,
         "accounts.account": AccountSerializer,
         "accounts.accounttype": AccountTypeSerializer,
@@ -427,8 +429,6 @@ def get_serializer(content_type_key):
         "ui.complextransactionuserfield": ComplexTransactionUserFieldSerializer,
         "ui.transactionuserfield": TransactionUserFieldSerializer,
         "ui.instrumentuserfield": InstrumentUserFieldSerializer,
-        "pricing.instrumentpricingscheme": InstrumentPricingSchemeSerializer,
-        "pricing.currencypricingscheme": CurrencyPricingSchemeSerializer,
         "iam.group": GroupSerializer,
         "iam.role": RoleSerializer,
         "iam.accesspolicy": AccessPolicySerializer,

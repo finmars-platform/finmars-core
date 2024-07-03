@@ -96,10 +96,10 @@ def export_pricing_policies(configuration_code, output_directory, master_user, m
         serialized_data = remove_id_key_recursively(serializer.data)
 
         serialized_data.pop("deleted_user_code", None)
-        serialized_data.pop("default_currency_pricing_scheme", None)
-        serialized_data.pop("default_currency_pricing_scheme_object", None)
-        serialized_data.pop("default_instrument_pricing_scheme", None)
-        serialized_data.pop("default_instrument_pricing_scheme_object", None)
+        # serialized_data.pop("default_currency_pricing_scheme", None)
+        # serialized_data.pop("default_currency_pricing_scheme_object", None)
+        # serialized_data.pop("default_instrument_pricing_scheme", None)
+        # serialized_data.pop("default_instrument_pricing_scheme_object", None)
 
         path = output_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 

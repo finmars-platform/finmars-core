@@ -29,11 +29,6 @@ from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-from poms.pricing.models import (
-    CurrencyPricingScheme,
-    InstrumentPricingPolicy,
-    InstrumentPricingScheme,
-)
 from poms.users.models import EcosystemDefault, MasterUser
 
 _l = logging.getLogger("poms.instruments")
@@ -612,20 +607,6 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         blank=True,
         null=True,
         verbose_name=gettext_lazy("expression"),
-    )
-    default_instrument_pricing_scheme = models.ForeignKey(
-        InstrumentPricingScheme,
-        null=True,
-        blank=True,
-        verbose_name=gettext_lazy("default instrument pricing scheme"),
-        on_delete=models.SET_NULL,
-    )
-    default_currency_pricing_scheme = models.ForeignKey(
-        CurrencyPricingScheme,
-        null=True,
-        blank=True,
-        verbose_name=gettext_lazy("default currency pricing scheme"),
-        on_delete=models.SET_NULL,
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -1307,6 +1288,19 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
     def __str__(self):
         return str(self.effective_date)
+
+
+class InstrumentTypePricingPolicy(DataTimeStampedModel):
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE, related_name="pricing_policies")
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+    )
+    options = models.JSONField(default=dict, help_text="options populated from module form")
+
+    class Meta:
+        unique_together = ("pricing_policy", "instrument_type")
 
 
 # noinspection PyUnresolvedReferences
@@ -2372,17 +2366,17 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         return res.factor_value if res else 1
 
     def generate_instrument_system_attributes(self):
-        from django.contrib.contenttypes.models import ContentType
-        from poms.configuration.utils import get_default_configuration_code
-
-        content_type = ContentType.objects.get(
-            app_label="instruments", model="instrument"
-        )
-        instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
-            instrument=self
-        )
-
-        configuration_code = get_default_configuration_code()
+        # from django.contrib.contenttypes.models import ContentType
+        # from poms.configuration.utils import get_default_configuration_code
+        #
+        # content_type = ContentType.objects.get(
+        #     app_label="instruments", model="instrument"
+        # )
+        # instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
+        #     instrument=self
+        # )
+        #
+        # configuration_code = get_default_configuration_code()
 
         # TODO
         # 2023-12-20 szhitenev, disabled obscure logic
@@ -2562,6 +2556,19 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
         except Exception as error:
             _l.error(f"Instrument save error {error}\n {traceback.format_exc()}")
+
+
+class InstrumentPricingPolicy(DataTimeStampedModel):
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, related_name="pricing_policies")
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+    )
+    options = models.JSONField(default=dict, help_text="options populated from module form")
+
+    class Meta:
+        unique_together = ("pricing_policy", "instrument")
 
 
 # DEPRECTATED (25.05.2020) delete soon

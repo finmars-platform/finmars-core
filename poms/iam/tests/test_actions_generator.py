@@ -73,7 +73,7 @@ class ActionHandlingTest(BaseTestCase):
 
         generate_full_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 173)
+        self.assertEqual(all_access_policies.count(), 163)
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")
@@ -87,8 +87,8 @@ class ActionHandlingTest(BaseTestCase):
 
         policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 197)
-        self.assertEqual(len(policies), 213)
+        self.assertEqual(all_access_policies.count(), 187)
+        self.assertEqual(len(policies), 203)
 
         for policy in all_access_policies:
             self.assertEqual(policy.owner.username, "finmars_bot")

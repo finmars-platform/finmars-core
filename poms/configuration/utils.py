@@ -14,6 +14,7 @@ from django.http import FileResponse
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_content_type_by_name, get_serializer
+from poms.auth_tokens.utils import get_refresh_token
 
 _l = logging.getLogger("poms.configuration")
 
@@ -392,7 +393,7 @@ def upload_directory_to_storage(local_directory, storage_directory):
                 storage.save(storage_file_path, ContentFile(content))
 
 
-def run_workflow(user_code, payload=None, realm_code=None, space_code=None):
+def run_workflow(user_code, payload, master_task):
     from django.contrib.auth import get_user_model
 
     from rest_framework_simplejwt.tokens import RefreshToken
@@ -403,7 +404,7 @@ def run_workflow(user_code, payload=None, realm_code=None, space_code=None):
 
     bot = User.objects.get(username="finmars_bot")
 
-    refresh = RefreshToken.for_user(bot)
+    refresh = get_refresh_token(bot, master_task.master_user)
 
     # _l.info('refresh %s' % refresh.access_token)
 
@@ -413,19 +414,18 @@ def run_workflow(user_code, payload=None, realm_code=None, space_code=None):
         "Authorization": f"Bearer {refresh.access_token}",
     }
 
-    if realm_code:
-        url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/run-workflow/"
-    else:
-        url = f"https://{settings.DOMAIN_NAME}/{space_code}/workflow/api/workflow/run-workflow/"
+    realm_code = master_task.master_user.realm_code
+    space_code = master_task.master_user.space_code
+    url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/run-workflow/"
 
-    data = {"user_code": user_code, "payload": payload}
+    data = {"user_code": user_code, "payload": payload, "platform_task_id": master_task.id}
 
     response = requests.post(url, headers=headers, json=data)
 
     return response.json()
 
 
-def get_workflow(workflow_id: int, realm_code:str, space_code: str):
+def get_workflow(workflow_id: int, master_task):
     from django.contrib.auth import get_user_model
 
     from rest_framework_simplejwt.tokens import RefreshToken
@@ -436,7 +436,7 @@ def get_workflow(workflow_id: int, realm_code:str, space_code: str):
 
     bot = User.objects.get(username="finmars_bot")
 
-    refresh = RefreshToken.for_user(bot)
+    refresh = get_refresh_token(bot, master_task.master_user)
 
     # _l.info('refresh %s' % refresh.access_token)
 
@@ -446,19 +446,18 @@ def get_workflow(workflow_id: int, realm_code:str, space_code: str):
         "Authorization": f"Bearer {refresh.access_token}",
     }
 
-    if realm_code:
-        url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/{workflow_id}/"
-    else:
-        url = f"https://{settings.DOMAIN_NAME}/{space_code}/workflow/api/workflow/{workflow_id}/"
+    realm_code = master_task.master_user.realm_code
+    space_code = master_task.master_user.space_code
+    url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/{workflow_id}/"
 
     response = requests.get(url, headers=headers)
 
     return response.json()
 
 
-def wait_workflow_until_end(workflow_id: int, realm_code=None, space_code=None):
+def wait_workflow_until_end(workflow_id: int, master_task):
     while True:
-        workflow = get_workflow(workflow_id, realm_code, space_code)
+        workflow = get_workflow(workflow_id, master_task)
 
         if workflow["status"] not in ("init", "progress"):
             return workflow

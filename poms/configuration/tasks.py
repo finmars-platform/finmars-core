@@ -268,9 +268,9 @@ def import_configuration(self, task_id, *args, **kwargs):
                             f"import_configuration.going to execute workflow {workflow}"
                         )
 
-                        response_data = run_workflow(workflow, {}, task.master_user.realm_code, task.master_user.space_code)
+                        response_data = run_workflow(workflow, {}, task)
 
-                        response_data = wait_workflow_until_end(response_data["id"], task.master_user.realm_code, task.master_user.space_code)
+                        response_data = wait_workflow_until_end(response_data["id"], task)
 
                         _l.info(
                             f"import_configuration.workflow finished {response_data}"
