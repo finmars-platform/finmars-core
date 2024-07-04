@@ -1,12 +1,9 @@
 import logging
 import os
-import re
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ReadOnlyField
@@ -21,8 +18,8 @@ from poms.common.serializers import (
     PomsClassSerializer,
 )
 from poms.common.utils import date_now
-from poms.currencies.models import CurrencyPricingPolicy
 from poms.currencies.fields import CurrencyDefault
+from poms.currencies.models import CurrencyPricingPolicy
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
     AUTO_CALCULATE,
@@ -47,7 +44,6 @@ from poms.instruments.models import (
     EventScheduleAction,
     EventScheduleConfig,
     ExposureCalculationModel,
-    FinmarsFile,
     GeneratedEvent,
     Instrument,
     InstrumentClass,
@@ -69,10 +65,7 @@ from poms.instruments.models import (
     ShortUnderlyingExposure,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.pricing.models import (
-    PriceHistoryError,
-)
-
+from poms.pricing.models import PriceHistoryError
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.fields import TransactionTypeField
 from poms.transactions.models import TransactionType
@@ -238,12 +231,11 @@ class PricingPolicySerializer(
             "name",
             "short_name",
             "notes",
-            "expr"
+            "expr",
         ]
 
     def __init__(self, *args, **kwargs):
         super(PricingPolicySerializer, self).__init__(*args, **kwargs)
-
 
     # def create_instrument_type_pricing_policies(self, instance):
     #     from poms.pricing.models import InstrumentTypePricingPolicy
@@ -395,7 +387,13 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentTypePricingPolicy
-        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+        fields = (
+            "id",
+            "pricing_policy_id",
+            "pricing_policy",
+            "target_pricing_schema_user_code",
+            "options",
+        )
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
@@ -403,7 +401,13 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentPricingPolicy
-        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+        fields = (
+            "id",
+            "pricing_policy_id",
+            "pricing_policy",
+            "target_pricing_schema_user_code",
+            "options",
+        )
 
 
 class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
@@ -411,7 +415,13 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CurrencyPricingPolicy
-        fields = ('id', 'pricing_policy_id', 'pricing_policy', 'target_pricing_schema_user_code', 'options')
+        fields = (
+            "id",
+            "pricing_policy_id",
+            "pricing_policy",
+            "target_pricing_schema_user_code",
+            "options",
+        )
 
 
 class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
@@ -522,9 +532,7 @@ class InstrumentTypeSerializer(
         read_only=True,
     )
     pricing_policies = InstrumentTypePricingPolicySerializer(
-        required=False,
-        many=True,
-        read_only=False
+        required=False, many=True, read_only=False
     )
     instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(
         required=False,
@@ -1114,6 +1122,7 @@ class InstrumentSerializer(
 
     def __init__(self, *args, **kwargs):
         from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.explorer.serializers import FinmarsFileSerializer
 
         super().__init__(*args, **kwargs)
 
@@ -1147,7 +1156,7 @@ class InstrumentSerializer(
         self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
             many=True, required=False, allow_null=True
         )
-        self.fields["files"] = FinmarsFileSerializer(many=True, required=False)
+        self.fields["files"] = FinmarsFileSerializer(many=True, read_only=True)
 
     def create(self, validated_data: dict) -> Instrument:
         func = f"{self.__class__.__name__}.create"
@@ -1227,7 +1236,6 @@ class InstrumentSerializer(
         )
 
         pricing_policies = validated_data.pop("pricing_policies", [])
-
 
         instance = super().update(instance, validated_data)
         _l.info(f"{func} updated instrument.user_code={instance.user_code}")
@@ -2242,71 +2250,30 @@ class InstrumentTypeApplySerializer(serializers.Serializer):
         required=False,
         allow_null=True,
         choices=("fill", "overwrite"),
-        default="overwrite"
+        default="overwrite",
     )
     fields_to_update = serializers.ListField(
-        child=serializers.ChoiceField(choices=(
-            "default_price",
-            "default_accrued",
-            "reference_for_pricing",
-            "maturity_date",
-            "maturity_price",
-            "pricing_policies",
-        )),
+        child=serializers.ChoiceField(
+            choices=(
+                "default_price",
+                "default_accrued",
+                "reference_for_pricing",
+                "maturity_date",
+                "maturity_price",
+                "pricing_policies",
+            )
+        ),
         required=True,
-        allow_empty=False
+        allow_empty=False,
     )
-
-
-class InstrumentMicroSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Instrument
-        fields = [
-            "id",
-            "user_code",
-        ]
-
-
-forbidden_symbols_in_name = r'[/\\:*?"<>|;&]'
-name_regex = re.compile(forbidden_symbols_in_name)
-
-forbidden_symbols_in_path = r'[:*?"<>|;&]'
-path_regex = re.compile(forbidden_symbols_in_path)
-
-
-class FinmarsFileSerializer(serializers.ModelSerializer):
-    instruments = InstrumentMicroSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = FinmarsFile
-        fields = "__all__"
-
-    @staticmethod
-    def validate_path(path: str) -> str:
-        if path_regex.search(path):
-            raise ValidationError(detail=f"Invalid path {path}", code="path")
-
-        return path
-
-    @staticmethod
-    def validate_name(name: str) -> str:
-        if name_regex.search(name):
-            raise ValidationError(detail=f"Invalid name {name}", code="name")
-
-        return name
-
-    @staticmethod
-    def validate_size(size: int) -> int:
-        if size < 1:
-            raise ValidationError(detail=f"Invalid size {size}", code="size")
-
-        return size
 
 
 class AttachmentSerializer(serializers.Serializer):
     attachments = serializers.ListSerializer(child=serializers.CharField())
 
     def validate(self, attrs: dict) -> dict:
+        from poms.explorer.models import FinmarsFile
+
         files = []
         for file_path in attrs["attachments"]:
             directory_path, file_name = os.path.split(file_path)

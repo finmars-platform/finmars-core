@@ -1,11 +1,13 @@
 import mimetypes
 import os.path
+import re
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
+from poms.explorer.models import FinmarsFile
 from poms.explorer.utils import check_is_true, path_is_file
-from poms.instruments.models import FinmarsFile
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -185,3 +187,49 @@ class SearchResultSerializer(serializers.ModelSerializer):
 
 class QuerySearchSerializer(serializers.Serializer):
     query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
+
+
+forbidden_symbols_in_name = r'[/\\:*?"<>|;&]'
+bad_name_regex = re.compile(forbidden_symbols_in_name)
+
+forbidden_symbols_in_path = r'[:*?"<>|;&]'
+bad_path_regex = re.compile(forbidden_symbols_in_path)
+
+
+class InstrumentMicroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Instrument
+        fields = [
+            "id",
+            "user_code",
+        ]
+
+
+
+class FinmarsFileSerializer(serializers.ModelSerializer):
+    instruments = InstrumentMicroSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = FinmarsFile
+        fields = "__all__"
+
+    @staticmethod
+    def validate_path(path: str) -> str:
+        if bad_path_regex.search(path):
+            raise ValidationError(detail=f"Invalid path {path}", code="path")
+
+        return path
+
+    @staticmethod
+    def validate_name(name: str) -> str:
+        if bad_name_regex.search(name):
+            raise ValidationError(detail=f"Invalid name {name}", code="name")
+
+        return name
+
+    @staticmethod
+    def validate_size(size: int) -> int:
+        if size < 1:
+            raise ValidationError(detail=f"Invalid size {size}", code="size")
+
+        return size
