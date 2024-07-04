@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from poms.common.storage import pretty_size
 from poms.explorer.models import FinmarsFile
 from poms.explorer.utils import check_is_true, path_is_file
+from poms.instruments.models import Instrument
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -203,7 +204,6 @@ class InstrumentMicroSerializer(serializers.ModelSerializer):
             "id",
             "user_code",
         ]
-
 
 
 class FinmarsFileSerializer(serializers.ModelSerializer):

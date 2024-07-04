@@ -36,7 +36,7 @@ from poms.explorer.utils import (
     response_with_file,
 )
 from poms.instruments.filters import FinmarsFileFilter
-from poms.instruments.models import FinmarsFile
+from poms.explorer.models import FinmarsFile
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
