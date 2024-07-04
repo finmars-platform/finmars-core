@@ -313,13 +313,14 @@ class AccrualCalculationModel(AbstractClassModel):
     @staticmethod
     def get_quantlib_day_count(finmars_accrual_calculation_model):
         import QuantLib as Ql
+        from poms.instruments.finmars_quantlib import Actual365A, Actual365L
 
         default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
             AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(ql.Actual365Fixed.NoLeap)
             AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
             AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
             AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
@@ -328,7 +329,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
             AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
             AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
-            AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365A: Actual365A(),  # ql.Actual365Fixed()
             AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
             AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
