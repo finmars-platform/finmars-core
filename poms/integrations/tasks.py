@@ -454,8 +454,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             ecosystem_default,
             attribute_types,
         )
-        object_data["identifier"] = {}
-
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
         activate(proxy_request)
         context = {
@@ -2549,27 +2547,6 @@ def complex_transaction_csv_file_import(
 
                 update_row_with_calculated_data(row, inputs, error_rows)
 
-                # for i in scheme_calculated_inputs:
-                #
-                #     error_rows['error_data']['columns']['calculated_columns'].append(i.name)
-                #
-                #     try:
-                #
-                #         index = original_columns_count + i.column - 1
-                #
-                #         # print('index %s ' % index)
-                #         # print('i.name %s ' % i.name)
-                #
-                #         inputs[i.name] = row[index]
-                #
-                #         error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                #     except Exception:
-                #         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                #         error_rows['error_data']['data']['calculated_columns'].append(gettext_lazy('Invalid expression'))
-                #         calculated_columns_error.append(i)
-
-                # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
-
                 try:
                     rule_value = formula.safe_eval(
                         scheme.rule_expr,
@@ -2692,21 +2669,6 @@ def complex_transaction_csv_file_import(
                 else:
                     total_rows = instance.total_rows
 
-                # DEPRECATED
-                # send_websocket_message(data={
-                #     'type': 'transaction_import_status',
-                #     'payload': {
-                #         'parent_task_id': celery_task.parent_id,
-                #         'task_id': instance.task_id,
-                #         'state': Task.STATUS_PENDING,
-                #         'processed_rows': instance.processed_rows,
-                #         'parent_total_rows': total_rows,
-                #         'total_rows': instance.total_rows,
-                #         'scheme_name': scheme.user_code,
-                #         'file_name': instance.file_name}
-                # }, level="member",
-                #     context={"master_user": master_user, "member": member})
-
         def _row_count_csv(file):
             delimiter = instance.delimiter.encode("utf-8").decode("unicode_escape")
 
@@ -2828,24 +2790,10 @@ def complex_transaction_csv_file_import(
                 or bool(instance.error_rows)
             )
 
-            # instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
-            #                                                   'Transaction Import', execution_context)
-
             _l.debug(
                 "complex_transaction_file_import execution_context: %s",
                 execution_context,
             )
-
-            # _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
-
-            # if execution_context and execution_context["started_by"] == 'procedure':
-            #
-            #     _l.debug('send final import message')
-            #
-            #     send_system_message(master_user=instance.master_user,
-            #                         source="Transaction Import Service",
-            #                         text="Import Finished",
-            #                         file_report_id=instance.stats_file_report)
 
             total_rows = 0
 
@@ -2853,30 +2801,6 @@ def complex_transaction_csv_file_import(
                 total_rows = (parent_celery_task.options_object["total_rows"],)
             else:
                 total_rows = instance.total_rows
-
-            # DEPRECATED
-            # send_websocket_message(data={
-            #     'type': 'transaction_import_status',
-            #     'payload': {
-            #         'parent_task_id': celery_task.parent_id,
-            #         'task_id': instance.task_id,
-            #         'state': Task.STATUS_DONE,
-            #         'processed_rows': instance.processed_rows,
-            #         'parent_total_rows': total_rows,
-            #         'total_rows': instance.total_rows,
-            #         'file_name': instance.file_name,
-            #         'error_rows': instance.error_rows,
-            #         'stats_file_report': instance.stats_file_report,
-            #         'scheme': scheme.id,
-            #         'scheme_object': {
-            #             'id': scheme.id,
-            #             'scheme_name': scheme.user_code,
-            #             'delimiter': scheme.delimiter,
-            #             'error_handler': scheme.error_handler,
-            #             'missing_data_handler': scheme.missing_data_handler
-            #         }}
-            # }, level="member",
-            #     context={"master_user": master_user, "member": member})
 
             result_object = {
                 "processed_rows": instance.processed_rows,
@@ -3071,16 +2995,6 @@ def complex_transaction_csv_file_import_parallel(task_id, *args, **kwargs):
 
             celery_sub_tasks = []
 
-            # for sub_task in sub_tasks:
-            #
-            #     _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
-            #
-            #     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-            #     celery_sub_tasks.append(ct)
-            #
-            # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
-            # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
-
             for sub_task in sub_tasks:
                 _l.info(
                     "initializing sub_task %s" % sub_task.options_object["file_path"]
@@ -3091,9 +3005,6 @@ def complex_transaction_csv_file_import_parallel(task_id, *args, **kwargs):
 
             _l.info("celery_sub_tasks len %s" % len(celery_sub_tasks))
             _l.info("celery_sub_tasks %s" % celery_sub_tasks)
-
-            # chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
-            # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
 
             transaction.on_commit(
                 lambda: chord(
@@ -3165,26 +3076,6 @@ def complex_transaction_csv_file_import_validate_parallel_finish(
             "Transaction Import Validation",
             False,
         )
-
-        # DEPRECATED
-        # send_websocket_message(data={
-        #     'type': 'transaction_import_status',
-        #     'payload': {'task_id': task_id,
-        #                 'state': Task.STATUS_DONE,
-        #                 'error_rows': result_object['error_rows'],
-        #                 'total_rows': result_object['total_rows'],
-        #                 'processed_rows': result_object['processed_rows'],
-        #                 'stats_file_report': result_object['stats_file_report'],
-        #                 'scheme': scheme.id,
-        #                 'scheme_object': {
-        #                     'id': scheme.id,
-        #                     'scheme_name': scheme.user_code,
-        #                     'delimiter': scheme.delimiter,
-        #                     'error_handler': scheme.error_handler,
-        #                     'missing_data_handler': scheme.missing_data_handler
-        #                 }}
-        # }, level="member",
-        #     context={"master_user": master_user, "member": member})
 
         celery_task.result_object = result_object
 
@@ -3561,10 +3452,6 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
                     try:
                         index = original_columns_count + i.column - 1
 
-                        # _l.info('original_columns_count %s' % original_columns_count)
-                        # _l.info('i.column %s' % i.column)
-                        # _l.info('row %s' % row)
-
                         inputs[i.name] = row[index]
 
                         error_rows["error_data"]["data"]["calculated_columns"].append(
@@ -3807,33 +3694,7 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
 
                 instance.error_rows.append(error_rows)
 
-                # if fields_error:
-                #
-                #     if instance.break_on_error:
-                #         error_rows['error_reaction'] = 'Break'
-                #         instance.error_row_index = row_index
-                #         return
-                #     else:
-                #         error_rows['error_reaction'] = 'Continue import'
-                #         continue
-
                 instance.processed_rows = instance.processed_rows + 1
-                # instance.save()
-
-                # DEPRECATED
-                # send_websocket_message(data={
-                #     'type': 'transaction_import_status',
-                #     'payload': {
-                #         'parent_task_id': celery_task.parent_id,
-                #         'task_id': instance.task_id,
-                #         'state': Task.STATUS_PENDING,
-                #         'processed_rows': instance.processed_rows,
-                #         'parent_total_rows': parent_celery_task.options_object['total_rows'],
-                #         'total_rows': instance.total_rows,
-                #         'scheme_name': scheme.user_code,
-                #         'file_name': instance.file_name}
-                # }, level="member",
-                #     context={"master_user": master_user, "member": member})
 
         def _row_count_xlsx(file):
             wb = load_workbook(filename=file)
@@ -3930,33 +3791,6 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
             or (instance.error_row_index is not None)
             or bool(instance.error_rows)
         )
-
-        # instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
-        #                                                   'Transaction Import Validation')
-
-        # DEPRECATED
-        # send_websocket_message(data={
-        #     'type': 'transaction_import_status',
-        #     'payload': {
-        #         'parent_task_id': celery_task.parent_id,
-        #         'task_id': instance.task_id,
-        #         'state': Task.STATUS_DONE,
-        #         'processed_rows': instance.processed_rows,
-        #         'parent_total_rows': parent_celery_task.options_object['total_rows'],
-        #         'total_rows': instance.total_rows,
-        #         'file_name': instance.file_name,
-        #         'error_rows': instance.error_rows,
-        #         'stats_file_report': instance.stats_file_report,
-        #         'scheme': scheme.id,
-        #         'scheme_object': {
-        #             'id': scheme.id,
-        #             'scheme_name': scheme.user_code,
-        #             'delimiter': scheme.delimiter,
-        #             'error_handler': scheme.error_handler,
-        #             'missing_data_handler': scheme.missing_data_handler
-        #         }}
-        # }, level="member",
-        #     context={"master_user": master_user, "member": member})
 
         result_object = {
             "processed_rows": instance.processed_rows,
@@ -4306,12 +4140,6 @@ def complex_transaction_csv_file_import_by_procedure(
 
                     sub_task.save()
 
-                    # transaction.on_commit(
-                    #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
-
-                    # transaction.on_commit(
-                    #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': sub_task.pk}))
-
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
                             kwargs={
@@ -4324,19 +4152,6 @@ def complex_transaction_csv_file_import_by_procedure(
                             queue="backend-background-queue",
                         )
                     )
-
-                    # celery_sub_tasks = []
-                    #
-                    # ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-                    # celery_sub_tasks.append(ct)
-                    #
-                    # _l.info("Creating %s subtasks" % len(celery_sub_tasks))
-                    #
-                    # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async()
-                    #
-                    # transaction.on_commit(
-                    #     lambda: chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(
-                    #         task_id=celery_task.pk)).apply_async())
 
                 except Exception as e:
                     _l.error(
