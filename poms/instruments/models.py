@@ -1561,14 +1561,14 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
     )
-    files = models.ManyToManyField(
-        "FinmarsFile",
-        related_name="instruments",
-        through="InstrumentAttachment",
-        through_fields=("instrument", "file"),
-        blank=True,
-        help_text="Files in the storage related to the instrument",
-    )
+    # files = models.ManyToManyField(
+    #     "FinmarsFile",
+    #     related_name="instruments",
+    #     through="InstrumentAttachment",
+    #     through_fields=("instrument", "file"),
+    #     blank=True,
+    #     help_text="Files in the storage related to the instrument",
+    # )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("instrument")
