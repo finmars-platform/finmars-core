@@ -359,9 +359,7 @@ class AccrualCalculationModel(AbstractClassModel):
                 Ql.ActualActual.ISDA
             ),
             AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(
-                ql.Actual365Fixed.NoLeap
-            )
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(ql.Actual365Fixed.NoLeap)
             AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(
                 Ql.Thirty360.ISDA
             ),
