@@ -44,12 +44,12 @@ from poms.common.views import (
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import (
-    FinmarsFileFilter,
     GeneratedEventPermissionFilter,
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
 )
+from poms.explorer.serializers import FinmarsFileSerializer
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
     DATE_FORMAT,
@@ -1944,11 +1944,3 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
-
-
-class FinmarsFilesView(AbstractModelViewSet):
-    queryset = FinmarsFile.objects.prefetch_related("instruments")
-    serializer_class = FinmarsFileSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        FinmarsFileFilter,
-    ]

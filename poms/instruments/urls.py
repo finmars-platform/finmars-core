@@ -90,7 +90,3 @@ router.register(
     "generated-event",
     instruments.GeneratedEventViewSet,
 )
-router.register(
-    "files",
-    instruments.FinmarsFilesView,
-)

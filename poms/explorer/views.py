@@ -24,6 +24,7 @@ from poms.explorer.serializers import (
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
+    FinmarsFileSerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
@@ -582,3 +583,11 @@ class SearchViewSet(AbstractModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class FinmarsFilesView(AbstractModelViewSet):
+    queryset = FinmarsFile.objects.prefetch_related("instruments")
+    serializer_class = FinmarsFileSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        FinmarsFileFilter,
+    ]

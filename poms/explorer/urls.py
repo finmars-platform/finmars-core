@@ -64,3 +64,8 @@ router.register(
     explorer.SearchViewSet,
     "explorer_search",
 )
+router.register(
+    r"files",
+    explorer.FinmarsFilesView,
+    "explorer_search",
+)
