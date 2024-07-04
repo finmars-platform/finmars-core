@@ -326,7 +326,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return cls.today() - timedelta(days=1)
 
     @classmethod
-    def random_future_date(cls, interval: int = 365*10) -> date:
+    def random_future_date(cls, interval: int = 365*50) -> date:
         days = cls.random_int(_max=interval)
         return cls.today() + timedelta(days=days)
 
@@ -395,7 +395,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
         return AccrualCalculationSchedule.objects.using(settings.DB_DEFAULT).create(
             instrument=instrument,
-            accrual_start_date=date.today().strftime("%Y-%m-%d"),
+            accrual_start_date=self.random_future_date().strftime("%Y-%m-%d"),
             accrual_start_date_value_type=SystemValueType.DATE,
             first_payment_date=self.random_future_date(),
             first_payment_date_value_type=SystemValueType.DATE,
@@ -473,7 +473,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             object_id=object_id or self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
-            value_date=date.today(),
+            value_date=self.random_future_date(),
         )
 
     def create_account_type(self) -> AccountType:
@@ -554,7 +554,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 public_name="-",
                 accrued_currency=self.usd,
                 pricing_currency=self.usd,
-                maturity_date=date.today(),
+                maturity_date=self.random_future_date(),
             ),
         )
         return instrument
@@ -687,13 +687,9 @@ class DbInitializer:
                     public_name=name,
                     accrued_currency=self.usd,
                     pricing_currency=self.usd,
-                    maturity_date=date.today(),
+                    maturity_date=BaseTestCase().random_future_date(),
                 ),
             )
-            if not instrument.maturity_date:
-                instrument.maturity_date = date.today()
-                instrument.save()
-
             instruments[name] = instrument
         return instruments
 
