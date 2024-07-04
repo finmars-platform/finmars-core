@@ -3747,16 +3747,16 @@ class EventScheduleConfig(models.Model):
         )
 
 
-class InstrumentAttachment(models.Model):
-    """
-    Intermediate model for many-to-many relation between instruments and files
-    """
-
-    instrument = models.ForeignKey(
-        Instrument,
-        on_delete=models.CASCADE,
-    )
-    file = models.ForeignKey(
-        "FinmarsFile",
-        on_delete=models.CASCADE,
-    )
+# class InstrumentAttachment(models.Model):
+#     """
+#     Intermediate model for many-to-many relation between instruments and files
+#     """
+#
+#     instrument = models.ForeignKey(
+#         Instrument,
+#         on_delete=models.CASCADE,
+#     )
+#     file = models.ForeignKey(
+#         "FinmarsFile",
+#         on_delete=models.CASCADE,
+#     )
