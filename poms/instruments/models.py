@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy
 from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.formula_accruals import get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
@@ -347,6 +348,7 @@ class AccrualCalculationModel(AbstractClassModel):
     @staticmethod
     def get_quantlib_day_count(finmars_accrual_calculation_model):
         import QuantLib as Ql
+        from poms.instruments.finmars_quantlib import Actual365A, Actual365L
 
         default_day_counter = Ql.SimpleDayCounter()
         map_daycount_convention = {
@@ -357,9 +359,9 @@ class AccrualCalculationModel(AbstractClassModel):
                 Ql.ActualActual.ISDA
             ),
             AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
-            AccrualCalculationModel.DAY_COUNT_ACT_365L: Ql.Actual365Fixed(
-                Ql.Actual365Fixed.NoLeap
-            ),
+            AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(
+                ql.Actual365Fixed.NoLeap
+            )
             AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(
                 Ql.Thirty360.ISDA
             ),
@@ -378,7 +380,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(
                 Ql.Thirty360.European
             ),
-            AccrualCalculationModel.DAY_COUNT_ACT_365A: Ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365A: Actual365A(),  # ql.Actual365Fixed()
             AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
             AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
@@ -2746,7 +2748,6 @@ class AccrualCalculationSchedule(models.Model):
         default="",
         verbose_name=gettext_lazy("notes"),
     )
-
     eom = models.BooleanField(
         default=False,
         verbose_name=gettext_lazy("EOM"),
@@ -2760,29 +2761,35 @@ class AccrualCalculationSchedule(models.Model):
     def save(self, *args, **kwargs):
         from dateutil.parser import parse
 
-        if self.accrual_start_date:
-            try:
-                self.accrual_start_date = parse(self.accrual_start_date).strftime(
-                    DATE_FORMAT
-                )
-            except Exception:
-                self.accrual_start_date = None
+        if not self.accrual_start_date or not self.first_payment_date:
+            raise FinmarsBaseException(
+                error_key="invalid accrual_start_date or first_payment_date",
+                message="accrual_start_date and first_payment_date shouldn't be null",
+            )
 
-        if self.first_payment_date:
-            try:
-                self.first_payment_date = parse(self.first_payment_date).strftime(
-                    DATE_FORMAT
-                )
-            except Exception:
-                self.first_payment_date = None
+        if isinstance(self.accrual_start_date, date):
+            self.accrual_start_date = self.accrual_start_date.strftime(DATE_FORMAT)
+        else:
+            self.accrual_start_date = parse(self.accrual_start_date).strftime(DATE_FORMAT)
+
+        if isinstance(self.first_payment_date, date):
+            self.first_payment_date = self.first_payment_date.strftime(DATE_FORMAT)
+        else:
+            self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
 
         super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = gettext_lazy("accrual calculation schedule")
         verbose_name_plural = gettext_lazy("accrual calculation schedules")
-        ordering = ["accrual_start_date"]
+        ordering = ["instrument", "accrual_start_date"]
         index_together = [["instrument", "accrual_start_date"]]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["instrument", "accrual_start_date"],
+                name="unique_instrument_accrual",
+            )
+        ]
 
     def __str__(self):
         return str(self.accrual_start_date)

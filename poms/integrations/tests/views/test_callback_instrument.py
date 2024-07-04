@@ -22,16 +22,27 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         backend_callback_urls = get_backend_callback_url()
         self.url = backend_callback_urls["instrument"]
+        self.identifier = {
+            "cbond_id": f"{self.random_int(_max=1000)}",
+            "isin": self.random_string(12),
+            "state_reg_number": self.random_string(15),
+            "bbgid": self.random_string(),
+            "isin_code_144a": "",
+            "isin_code_3": "",
+            "database_id": self.random_int(_max=1000),
+        }
 
     def validate_result_instrument(self, instrument_code):
-        result = Instrument.objects.filter(user_code=instrument_code).first()
-        self.assertIsNotNone(result)
-        self.assertIsNotNone(result.country)
-        self.assertEqual(result.country.alpha_3, "USA")
-        return result
+        instrument = Instrument.objects.filter(user_code=instrument_code).first()
+        self.assertIsNotNone(instrument)
+        self.assertIsNotNone(instrument.country)
+        self.assertEqual(instrument.country.alpha_3, "USA")
 
-    @skip("till fix the full name instrument type")
-    def test__stock_instrument_with_currency_created(self):
+        self.assertEqual(instrument.identifier.keys(), self.identifier.keys())
+        return instrument
+
+    @skip("uncomment todo debug for local test")
+    def test__stock_with_currency_created(self):
         instrument_code = self.random_string()
         currency_code = self.random_choice(["USD", "EUR"])
         post_data = {
@@ -54,6 +65,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                     },
                 ],
                 "currencies": [
@@ -74,15 +86,15 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
 
-        instrument = self.validate_result_instrument(instrument_code)
+        self.validate_result_instrument(instrument_code)
         self.assertIsNotNone(Currency.objects.filter(user_code=currency_code).first())
 
         self.task.refresh_from_db()
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
-    @skip("till fix the full name instrument type")
-    def test__instrument_with_factor_and_accrual_schedules_created(self):
+    @skip("uncomment todo debug for local test")
+    def test__bond_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
         post_data = {
@@ -105,6 +117,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},
@@ -203,7 +216,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.assertEqual(accrual_2.periodicity_id, PERIODICITY_MAP[2])
 
-    @skip("till fix the full name instrument type")
+    @skip("uncomment todo debug for local test")
     def test__instrument_with_periodicity_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
@@ -227,6 +240,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": self.identifier,
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},

@@ -369,7 +369,7 @@ class BackendReportHelperService:
             ):
                 return True
         elif isinstance(regular_filter_value, list):
-            if regular_filter_value[0] is not None:
+            if regular_filter_value and regular_filter_value[0]:
                 return True
         return False
 
