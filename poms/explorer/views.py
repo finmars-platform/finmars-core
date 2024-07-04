@@ -597,7 +597,7 @@ class SearchViewSet(AbstractModelViewSet):
 
 
 class FinmarsFilesView(AbstractModelViewSet):
-    queryset = FinmarsFile.objects.prefetch_related("instruments")
+    queryset = FinmarsFile.objects.all()
     serializer_class = FinmarsFileSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         FinmarsFileFilter,
