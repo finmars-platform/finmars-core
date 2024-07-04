@@ -106,17 +106,3 @@ class InstrumentsUserCodeFilter(BaseFilterBackend):
             return queryset.filter(instrument__user_code__in=user_codes)
 
         return queryset
-
-
-class FinmarsFileFilter(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        queries = request.query_params.get("query")
-        if not queries:
-            return queryset
-
-        options = Q()
-        for query in queries.split(","):
-            options.add(Q(name__icontains=query), Q.OR)
-            options.add(Q(path__icontains=query), Q.OR)
-
-        return queryset.filter(options)

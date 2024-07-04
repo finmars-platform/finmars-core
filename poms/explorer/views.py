@@ -4,18 +4,22 @@ import mimetypes
 import os
 from tempfile import NamedTemporaryFile
 
+from django.db.models import Q
 from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
     DeletePathSerializer,
     FilePathSerializer,
+    FinmarsFileSerializer,
     FolderPathSerializer,
     MoveSerializer,
     QuerySearchSerializer,
@@ -24,7 +28,6 @@ from poms.explorer.serializers import (
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
-    FinmarsFileSerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
@@ -36,8 +39,6 @@ from poms.explorer.utils import (
     remove_first_dir_from_path,
     response_with_file,
 )
-from poms.instruments.filters import FinmarsFileFilter
-from poms.explorer.models import FinmarsFile
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
@@ -560,8 +561,18 @@ class SyncViewSet(AbstractViewSet):
         )
 
 
-class FileFilter(FinmarsFileFilter):
-    pass
+class FinmarsFileFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        queries = request.query_params.get("query")
+        if not queries:
+            return queryset
+
+        options = Q()
+        for query in queries.split(","):
+            options.add(Q(name__icontains=query), Q.OR)
+            options.add(Q(path__icontains=query), Q.OR)
+
+        return queryset.filter(options)
 
 
 class SearchViewSet(AbstractModelViewSet):
@@ -569,7 +580,7 @@ class SearchViewSet(AbstractModelViewSet):
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]
     filter_backends = AbstractModelViewSet.filter_backends + [
-        FileFilter,
+        FinmarsFileFilter,
     ]
 
     @swagger_auto_schema(

@@ -3,6 +3,7 @@ from unittest import mock
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import FinmarsFile
 from poms.explorer.utils import (
     define_content_type,
     join_path,
@@ -11,7 +12,6 @@ from poms.explorer.utils import (
     sync_file_in_database,
     sync_files,
 )
-from poms.instruments.models import FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):

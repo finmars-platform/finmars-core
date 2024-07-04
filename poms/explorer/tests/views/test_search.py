@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import FinmarsFile
+from poms.explorer.models import FinmarsFile
 
 expected_response = {
     "count": 1,

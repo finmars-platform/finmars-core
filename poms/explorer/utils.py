@@ -9,6 +9,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import FinmarsFile
 
 _l = logging.getLogger("poms.explorer")
 
@@ -294,7 +295,6 @@ def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
         storage: The storage instance to use
         filepath: path to the file in storage
     """
-    from poms.instruments.models import FinmarsFile
 
     path, name = os.path.split(filepath)
     size = storage.size(filepath)
