@@ -1,8 +1,6 @@
-from unittest import skip
-
 from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
-from poms.portfolios.models import Portfolio, PortfolioRegister
+from poms.portfolios.models import Portfolio
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,

@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument  # , InstrumentAttachment
+from poms.instruments.models import Instrument, InstrumentAttachment
 from poms.explorer.models import FinmarsFile
 
 
@@ -25,7 +25,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/explorer/files/"
-        # self.instrument = Instrument.objects.first()
+        self.instrument = Instrument.objects.first()
 
     def test__api_url(self):
         response = self.client.get(path=self.url)
@@ -54,29 +54,29 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["extension"], "pdf")
         self.assertEqual(response_json["path"], "/root/etc/system/")
         self.assertEqual(response_json["size"], 1111111111)
-        # self.assertIn("instruments", response_json)
+        self.assertIn("instruments", response_json)
         self.assertIn("created", response_json)
         self.assertIn("modified", response_json)
 
-    # def test__retrieve_with_instruments(self):
-    #     file = FinmarsFile.objects.create(
-    #         name="name.pdf",
-    #         path="/root/etc/system/",
-    #         size=self.random_int(1, 1000),
-    #     )
-    #     instrument = Instrument.objects.last()
-    #     instrument.files.add(file, through_defaults=None)
-    #
-    #     response = self.client.get(path=f"{self.url}{file.id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     self.assertIn("instruments", response_json)
-    #     self.assertEqual(len(response_json["instruments"]), 1)
-    #     instrument_data = response_json["instruments"][0]
-    #     self.assertEqual(instrument_data["id"], instrument.id)
-    #     self.assertEqual(instrument_data["user_code"], instrument.user_code)
+    def test__retrieve_with_instruments(self):
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=self.random_int(1, 1000),
+        )
+        instrument = Instrument.objects.last()
+        instrument.files.add(file, through_defaults=None)
+
+        response = self.client.get(path=f"{self.url}{file.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertIn("instruments", response_json)
+        self.assertEqual(len(response_json["instruments"]), 1)
+        instrument_data = response_json["instruments"][0]
+        self.assertEqual(instrument_data["id"], instrument.id)
+        self.assertEqual(instrument_data["user_code"], instrument.user_code)
 
     def test__list(self):
         amount = 10
@@ -141,7 +141,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["path"], file_data["path"])
         self.assertEqual(response_json["size"], file_data["size"])
         self.assertIn("id", response_json)
-        # self.assertIn("instruments", response_json)
+        self.assertIn("instruments", response_json)
         self.assertIn("created", response_json)
         self.assertIn("modified", response_json)
 
@@ -202,26 +202,26 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertIsNone(FinmarsFile.objects.filter(id=file_id).first())
 
-    # def test__delete_from_attachments(self):
-    #     file = FinmarsFile.objects.create(
-    #         name="name.pdf",
-    #         path="/root/etc/system/",
-    #         size=self.random_int(1, 1000),
-    #     )
-    #     instrument = Instrument.objects.last()
-    #     instrument.files.add(file, through_defaults=None)
-    #
-    #     attachment = InstrumentAttachment.objects.filter(file_id=file.id).first()
-    #     self.assertIsNotNone(attachment)
-    #     self.assertEqual(attachment.instrument_id, instrument.id)
-    #
-    #     response = self.client.delete(path=f"{self.url}{file.id}/")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     self.assertIsNone(FinmarsFile.objects.filter(id=file.id).first())
-    #
-    #     attachment = InstrumentAttachment.objects.filter(instrument=instrument).first()
-    #     self.assertIsNone(attachment)
+    def test__delete_from_attachments(self):
+        file = FinmarsFile.objects.create(
+            name="name.pdf",
+            path="/root/etc/system/",
+            size=self.random_int(1, 1000),
+        )
+        instrument = Instrument.objects.last()
+        instrument.files.add(file, through_defaults=None)
+
+        attachment = InstrumentAttachment.objects.filter(file_id=file.id).first()
+        self.assertIsNotNone(attachment)
+        self.assertEqual(attachment.instrument_id, instrument.id)
+
+        response = self.client.delete(path=f"{self.url}{file.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        self.assertIsNone(FinmarsFile.objects.filter(id=file.id).first())
+
+        attachment = InstrumentAttachment.objects.filter(instrument=instrument).first()
+        self.assertIsNone(attachment)
 
     @BaseTestCase.cases(
         ("name", "name", "&name.txt"),
