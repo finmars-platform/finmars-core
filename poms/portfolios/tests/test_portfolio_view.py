@@ -1,7 +1,5 @@
 from unittest import skip
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.portfolios.models import Portfolio, PortfolioRegister
@@ -241,7 +239,3 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
-
-    @skip("To be implemented")
-    def test_create(self):
-        pass

@@ -1,5 +1,4 @@
 from urllib import parse
-from unittest import skip
 
 from django.conf import settings
 
@@ -294,22 +293,6 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
-
-    @skip("'ComplexTransaction' instance needs to have a primary key value ...")
-    def test__book_pending_get(self):
-        transaction_type = self.get_transaction_type()
-        type_id = transaction_type.id
-
-        response = self.client.get(
-            path=f"{self.url}{type_id}/book-pending/",
-            format="json",
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-
-        # check fields
         self.assertTrue(set(TRANSACTION_TYPE_BOOK_DICT).issubset(set(response_json)))
 
     def test__book_pending_put(self):

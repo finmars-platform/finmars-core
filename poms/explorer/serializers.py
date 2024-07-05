@@ -207,7 +207,7 @@ class InstrumentMicroSerializer(serializers.ModelSerializer):
 
 
 class FinmarsFileSerializer(serializers.ModelSerializer):
-    # instruments = InstrumentMicroSerializer(many=True, read_only=True)
+    instruments = InstrumentMicroSerializer(many=True, read_only=True)
 
     class Meta:
         model = FinmarsFile

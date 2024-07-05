@@ -1561,14 +1561,14 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
     )
-    # files = models.ManyToManyField(
-    #     "FinmarsFile",
-    #     related_name="instruments",
-    #     through="InstrumentAttachment",
-    #     through_fields=("instrument", "file"),
-    #     blank=True,
-    #     help_text="Files in the storage related to the instrument",
-    # )
+    files = models.ManyToManyField(
+        "explorer.FinmarsFile",
+        related_name="instruments",
+        through="InstrumentAttachment",
+        through_fields=("instrument", "file"),
+        blank=True,
+        help_text="Files in the storage related to the instrument",
+    )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("instrument")
@@ -3747,16 +3747,16 @@ class EventScheduleConfig(models.Model):
         )
 
 
-# class InstrumentAttachment(models.Model):
-#     """
-#     Intermediate model for many-to-many relation between instruments and files
-#     """
-#
-#     instrument = models.ForeignKey(
-#         Instrument,
-#         on_delete=models.CASCADE,
-#     )
-#     file = models.ForeignKey(
-#         "FinmarsFile",
-#         on_delete=models.CASCADE,
-#     )
+class InstrumentAttachment(models.Model):
+    """
+    Intermediate model for many-to-many relation between instruments and files
+    """
+
+    instrument = models.ForeignKey(
+        Instrument,
+        on_delete=models.CASCADE,
+    )
+    file = models.ForeignKey(
+        "explorer.FinmarsFile",
+        on_delete=models.CASCADE,
+    )
