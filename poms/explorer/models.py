@@ -1,6 +1,9 @@
 from django.db import models
+from django.utils.crypto import get_random_string
 
 from poms.common.models import DataTimeStampedModel
+from poms.iam.models import AccessPolicy, Group
+from poms.users.models import Member
 
 
 class FinmarsFile(DataTimeStampedModel):
@@ -51,8 +54,6 @@ class FinmarsFile(DataTimeStampedModel):
     @property
     def filepath(self):
         return f"{self.path.rstrip('/')}/{self.name}"
-
-
 
 
 class ShareAccessRecord(models.Model):
