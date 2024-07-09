@@ -27,6 +27,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             "description",
             "version",
             "channel",
+            "type",
             "is_from_marketplace",
             "is_package",
             "manifest",

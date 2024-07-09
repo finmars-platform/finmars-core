@@ -165,11 +165,16 @@ class FinmarsStorage(EncryptedStorage):
             if not self.listdir:
                 raise NotImplemented("Listdir method not implemented")
             # Check if the folder exists by listing its contents
-            files, folders = self.listdir(folder_path)
+            dirs, files = self.listdir(folder_path)
+
+            _l.info('folder_path %s' % folder_path)
+            _l.info('files %s' % files)
+            _l.info('folders %s' % dirs)
 
             # Return True if there are any files in the folder
             return bool(files)
         except Exception as e:
+            _l.error(f"folder_exists_and_has_files exception: {e}")
             return False
 
     def download_file_and_save_locally(self, storage_file_path, local_file_path):
