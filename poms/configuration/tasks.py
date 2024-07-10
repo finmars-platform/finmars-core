@@ -526,6 +526,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     configuration.is_package = False
     configuration.manifest = remote_configuration_release["manifest"]
     configuration.is_from_marketplace = True
+    configuration.type = remote_configuration_release.get("type", "general")
 
     configuration.save()
 
@@ -712,6 +713,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
     configuration.is_package = True
     configuration.manifest = remote_configuration_release["manifest"]
     configuration.is_from_marketplace = True
+    configuration.type = remote_configuration_release.get("type", "general")
 
     configuration.save()
 
