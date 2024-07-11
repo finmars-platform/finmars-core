@@ -1,4 +1,5 @@
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.crypto import get_random_string
 
 from poms.common.models import DataTimeStampedModel
@@ -10,7 +11,7 @@ MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
 
-class FinmarsDirectory(DataTimeStampedModel):
+class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     """
     Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
@@ -25,7 +26,7 @@ class FinmarsDirectory(DataTimeStampedModel):
         db_index=True,
         help_text="Path to the directory in the storage system",
     )
-    parent = models.ForeignKey(
+    parent = TreeForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
@@ -42,8 +43,12 @@ class FinmarsDirectory(DataTimeStampedModel):
         ]
         ordering = ["path", "name"]
 
+    class MPTTMeta:
+        level_attr = "mptt_level"
+        order_insertion_by = ["path", "name"]
+
     def __str__(self):
-        return self.name
+        return f"{self.path.rstrip('/')}/{self.name}"
 
 
 class FinmarsFile(DataTimeStampedModel):
