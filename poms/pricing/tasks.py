@@ -19,21 +19,22 @@ def run_pricing(self, *args, **kwargs):
 
     last_exception = None
     if options.get("instruments"):
-        objects = Instrument.objects.filter(user_code__in=options["instruments"])
+        objects = Instrument.objects.filter(id__in=options["instruments"])
     else:
-        objects = Currency.objects.filter(user_code__in=options["currencies"])
+        objects = Currency.objects.filter(id__in=options["currencies"])
 
     for obj in objects:
         for schema in obj.pricing_policies.all():
             payload = schema.options.copy()
             payload["date_from"] = options["date_from"]
             payload["date_to"] = options["date_to"]
-            payload["reference"] = obj.id  # !!! or user_code? depends on the market module
+            payload["reference"] = obj.id  # must be id, for price-history/bulk-create/
             payload["pricing_policy"] = schema.pricing_policy.user_code
+            payload["pricing_policy_id"] = schema.pricing_policy.id  # must send id, for price-history/bulk-create/
             # TODO, when instrument whill have reference_dict we can fetch different reference base on provider
 
             try:
-                workflow = schema.target_pricing_schema_user_code
+                workflow = schema.target_pricing_schema_user_code + ':run_pricing'
                 _l.info(f"run_pricing.going to execute workflow {workflow}")
 
                 response_data = run_workflow(workflow, payload, task)
@@ -42,8 +43,8 @@ def run_pricing(self, *args, **kwargs):
                 _l.info(f"run_pricing.workflow finished {response_data}")
             except Exception as e:
                 last_exception = e
-                _l.exception(f"Could not execute run_pricing.workflow for instrument {payload['reference']}"
-                             f" and pricing policy {payload['pricing_policy']}")
+                _l.exception(f"Could not execute run_pricing.workflow for instrument {obj.user_code}"
+                             f" and pricing policy {schema.pricing_policy.user_code}")
 
     if last_exception:
         task.status = CeleryTask.STATUS_ERROR

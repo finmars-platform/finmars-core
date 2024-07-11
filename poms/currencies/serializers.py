@@ -93,39 +93,22 @@ class CurrencySerializer(
         ids = set()
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
-            try:
-                oid = item.get("id", None)
-                ids.add(oid)
-
-                obj = CurrencyPricingPolicy.objects.get(
-                    instrument_type=instance, id=oid
-                )
-                self._update_currency_pricing_policy(item, obj)
-
-            except CurrencyPricingPolicy.DoesNotExist:
-                try:
-                    obj = CurrencyPricingPolicy.objects.get(
-                        instrument_type=instance,
-                        pricing_policy__id=item["pricing_policy_id"],
-                    )
-
-                    self._update_currency_pricing_policy(item, obj)
-                    ids.add(obj.id)
-
-                except Exception as e:
-                    print(f"Can't Find  Pricing Policy {repr(e)}")
+            obj, _ = CurrencyPricingPolicy.objects.get_or_create(
+                currency=instance,
+                pricing_policy_id=item["pricing_policy_id"]
+            )
+            self._update_and_save_pricing_policies(item, obj)
+            ids.add(obj.id)
 
         if len(ids):
-            CurrencyPricingPolicy.objects.filter(
-                instrument_type=instance
-            ).exclude(id__in=ids).delete()
+            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
     @staticmethod
-    def _update_currency_pricing_policy(item: dict, cpp: CurrencyPricingPolicy):
-        cpp.pricing_policy_id = item["pricing_policy_id"]
-        cpp.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
-        cpp.options = item.get("options")
-        cpp.save()
+    def _update_and_save_pricing_policies(item: dict, obj: CurrencyPricingPolicy):
+        obj.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
+        if "options" in item:
+            obj.options = item["options"]
+        obj.save()
 
 
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):
