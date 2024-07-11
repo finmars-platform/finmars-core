@@ -95,6 +95,12 @@ class Configuration(models.Model):
         max_length=255,
         verbose_name=gettext_lazy("version"),
     )
+    type = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("type"),
+        default="general",
+        help_text="Type of the configuration e.g general, pricing, ui, workflow, app",
+    )
     channel = models.CharField(
         max_length=255,
         choices=CHANNEL_CHOICES,

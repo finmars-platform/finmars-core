@@ -35,6 +35,7 @@ class ConfigurationFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     version = CharFilter()
+    type = CharFilter()
 
     class Meta:
         model = Configuration
