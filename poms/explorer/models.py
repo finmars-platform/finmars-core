@@ -37,15 +37,15 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["path", "name"],
+                fields=["path"],
                 name="unique_directory_path",
             )
         ]
-        ordering = ["path", "name"]
+        ordering = ["path"]
 
     class MPTTMeta:
         level_attr = "mptt_level"
-        order_insertion_by = ["path", "name"]
+        order_insertion_by = ["path"]
 
     def __str__(self):
         return f"{self.path.rstrip('/')}/{self.name}"
