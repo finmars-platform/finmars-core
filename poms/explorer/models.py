@@ -5,6 +5,9 @@ from poms.common.models import DataTimeStampedModel
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
 
+MAX_PATH_LENGTH = 2048
+MAX_NAME_LENGTH = 255
+
 
 class FinmarsDirectory(DataTimeStampedModel):
     """
@@ -12,12 +15,12 @@ class FinmarsDirectory(DataTimeStampedModel):
     """
 
     name = models.CharField(
-        max_length=255,
+        max_length=MAX_NAME_LENGTH,
         db_index=True,
         help_text="Directory name",
     )
     path = models.CharField(
-        max_length=255,
+        max_length=MAX_PATH_LENGTH,
         db_index=True,
         help_text="Path to the directory in the storage system",
     )
@@ -48,19 +51,19 @@ class FinmarsFile(DataTimeStampedModel):
     """
 
     name = models.CharField(
-        max_length=255,
+        max_length=MAX_NAME_LENGTH,
         db_index=True,
         help_text="File name, including extension",
     )
     path = models.CharField(
-        max_length=255,
+        max_length=MAX_PATH_LENGTH,
         db_index=True,
         help_text="Path to the file in the storage system",
     )
     extension = models.CharField(
         blank=True,
         default="",
-        max_length=255,
+        max_length=MAX_NAME_LENGTH,
         help_text="File name extension",
     )
     size = models.PositiveBigIntegerField(
@@ -102,7 +105,11 @@ class ShareAccessRecord(models.Model):
         Member,
         on_delete=models.CASCADE,
     )
-    path = models.CharField(max_length=255)  # Path to the file or directory
+    path = models.CharField(
+        db_index=True,
+        max_length=MAX_PATH_LENGTH,
+        help_text="Path to the file/directory in the storage system",
+    )
     shared_with_users = models.ManyToManyField(
         Member,
         through="MemberShare",
