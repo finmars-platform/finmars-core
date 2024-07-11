@@ -24,6 +24,7 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
         db_index=True,
+        unique=True,
         help_text="Path to the directory in the storage system",
     )
     parent = TreeForeignKey(
@@ -35,12 +36,6 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["path"],
-                name="unique_directory_path",
-            )
-        ]
         ordering = ["path"]
 
     class MPTTMeta:
