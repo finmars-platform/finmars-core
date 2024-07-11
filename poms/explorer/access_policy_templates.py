@@ -3,7 +3,7 @@ from typing import Union
 
 from poms.explorer.models import FinmarsFile, FinmarsDirectory
 
-FILE_PATH_TEMPLATE = "frn:finmars:explorer:{path}"
+FILE_PATH_TEMPLATE = "frn:finmars:explorer:{filepath}"
 DIR_PATH_TEMPLATE = "frn:finmars:explorer:{path}/*"
 FULL_ACTION = "finmars:explorer:update"
 READ_ACCESS_POLICY = {
@@ -14,7 +14,7 @@ READ_ACCESS_POLICY = {
                 "finmars:explorer:retrieve",
             ],
             "Effect": "Allow",
-            "Resource": FILE_PATH_TEMPLATE,
+            "Resource": "",
             "Principal": "*",
         }
     ],
@@ -37,7 +37,7 @@ def create_policy(obj: Union[FinmarsFile, FinmarsDirectory], access: str) -> dic
 
     if isinstance(obj, FinmarsFile):
         policy["Statement"][0]["Resource"] = FILE_PATH_TEMPLATE.format(
-            path=obj.filepath
+            filepath=obj.filepath
         )
     elif isinstance(obj, FinmarsDirectory):
         policy["Statement"][0]["Resource"] = DIR_PATH_TEMPLATE.format(path=obj.path)
