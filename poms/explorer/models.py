@@ -7,11 +7,12 @@ from poms.users.models import Member
 
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
+MAX_TOKEN_LENGTH = 32
 
 
 class FinmarsDirectory(DataTimeStampedModel):
     """
-    Model representing a directory in the Finmars storage (File system, AWS, Azure...).
+    Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
 
     name = models.CharField(
@@ -47,7 +48,7 @@ class FinmarsDirectory(DataTimeStampedModel):
 
 class FinmarsFile(DataTimeStampedModel):
     """
-    Model representing a file in the Finmars storage (File system, AWS, Azure...).
+    Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """
 
     name = models.CharField(
@@ -121,7 +122,7 @@ class ShareAccessRecord(models.Model):
         related_name="shared_files",
     )
     public_link_token = models.CharField(
-        max_length=100,
+        max_length=MAX_TOKEN_LENGTH,
         blank=True,
         null=True,
     )
@@ -137,7 +138,7 @@ class ShareAccessRecord(models.Model):
     )
 
     def generate_public_link(self):
-        self.public_link_token = get_random_string(32)
+        self.public_link_token = get_random_string(MAX_TOKEN_LENGTH)
         self.save()
 
 
