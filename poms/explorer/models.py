@@ -77,6 +77,8 @@ class FinmarsFile(DataTimeStampedModel):
     )
     directory = models.ForeignKey(
         FinmarsDirectory,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="files",
     )
