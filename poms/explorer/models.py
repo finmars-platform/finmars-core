@@ -6,6 +6,42 @@ from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
 
 
+class FinmarsDirectory(DataTimeStampedModel):
+    """
+    Model representing a directory in the Finmars storage (File system, AWS, Azure...).
+    """
+
+    name = models.CharField(
+        max_length=255,
+        db_index=True,
+        help_text="Directory name",
+    )
+    path = models.CharField(
+        max_length=255,
+        db_index=True,
+        help_text="Path to the directory in the storage system",
+    )
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["path", "name"],
+                name="unique_directory_path",
+            )
+        ]
+        ordering = ["path", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class FinmarsFile(DataTimeStampedModel):
     """
     Model representing a file in the Finmars storage (File system, AWS, Azure...).
@@ -29,6 +65,11 @@ class FinmarsFile(DataTimeStampedModel):
     )
     size = models.PositiveBigIntegerField(
         help_text="Size of the file in bytes",
+    )
+    directory = models.ForeignKey(
+        FinmarsDirectory,
+        on_delete=models.CASCADE,
+        related_name="files",
     )
 
     class Meta:
