@@ -181,7 +181,9 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        db_index=True, help_text="Directory name", max_length=255
+                        db_index=True,
+                        help_text="Directory name (last part of the path)",
+                        max_length=255,
                     ),
                 ),
                 (

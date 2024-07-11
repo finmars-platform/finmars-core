@@ -19,7 +19,7 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     name = models.CharField(
         max_length=MAX_NAME_LENGTH,
         db_index=True,
-        help_text="Directory name",
+        help_text="Directory name (last part of the path)",
     )
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
@@ -49,6 +49,10 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
 
     def __str__(self):
         return f"{self.path.rstrip('/')}/{self.name}"
+
+    @property
+    def fullpath(self):
+        return self.__str__()
 
 
 class FinmarsFile(DataTimeStampedModel):
