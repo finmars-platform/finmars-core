@@ -74,4 +74,4 @@ class FinmarsFileTest(BaseTestCase):
         )
         file = FinmarsFile.objects.create(**kwargs)
 
-        self.assertEqual(file.filepath, "/a/b/name.pdf")
+        self.assertEqual(file.fullpath, "/a/b/name.pdf")

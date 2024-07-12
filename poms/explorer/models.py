@@ -43,10 +43,14 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
         order_insertion_by = ["path"]
 
     def __str__(self):
-        return f"{self.path.rstrip('/')}/{self.name}"
+        return f"dir:{self.path}"
 
     @property
     def fullpath(self):
+        return self.path
+
+    @property
+    def policy_name(self):
         return self.__str__()
 
 
@@ -91,9 +95,6 @@ class FinmarsFile(DataTimeStampedModel):
         ]
         ordering = ["path", "name"]
 
-    def __str__(self):
-        return self.name
-
     def _extract_extension(self) -> str:
         parts = self.name.rsplit(".", 1)
         return parts[1] if len(parts) > 1 else ""
@@ -102,9 +103,16 @@ class FinmarsFile(DataTimeStampedModel):
         self.extension = self._extract_extension()
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"file:{self.fullpath}"
+
     @property
-    def filepath(self):
+    def fullpath(self):
         return f"{self.path.rstrip('/')}/{self.name}"
+
+    @property
+    def policy_name(self):
+        return self.__str__()
 
 
 class ShareAccessRecord(models.Model):
