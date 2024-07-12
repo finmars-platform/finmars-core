@@ -23,7 +23,7 @@ def run_pricing(self, *args, **kwargs):
     else:
         objects = Currency.objects.filter(id__in=options["currencies"])
 
-    for obj in objects:
+    for count, obj in enumerate(objects):
         for schema in obj.pricing_policies.all():
             payload = schema.options.copy()
             payload["date_from"] = options["date_from"]
@@ -46,6 +46,16 @@ def run_pricing(self, *args, **kwargs):
                 _l.exception(f"Could not execute run_pricing.workflow for instrument {obj.user_code}"
                              f" and pricing policy {schema.pricing_policy.user_code}")
 
+            task.status = CeleryTask.STATUS_REQUEST_SENT
+            task.update_progress(
+                {
+                    "current": count,
+                    "total": len(objects),
+                    "percent": round(count / (len(objects) / 100)),
+                    "description": f"Instance {obj.id} pricing scheduled",
+                }
+            )
+
     if last_exception:
-        task.status = CeleryTask.STATUS_ERROR
-        task.save()
+        raise last_exception
+    task.save()

@@ -17,6 +17,7 @@ from .models import CeleryTask, CeleryWorker
 from .serializers import (
     CeleryTaskLightSerializer,
     CeleryTaskSerializer,
+    CeleryTaskUpdateStatusSerializer,
     CeleryWorkerSerializer,
 )
 
@@ -131,26 +132,33 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         return Response(result)
 
-    @action(detail=True, methods=["post"], url_path="update-status")
+    @action(detail=True, methods=["post"], url_path="update-status", serializer_class=CeleryTaskUpdateStatusSerializer)
     def update_status(self, request, pk=None, *args, **kwargs):
         task = CeleryTask.objects.get(pk=pk)
         if task.status in (CeleryTask.STATUS_ERROR, CeleryTask.STATUS_CANCELED):
             response = {"status": "ignored", "error_message": "Task is already finished, update impossible"}
             return Response(response)
 
-        new_status = request.data.get("status")
-        if new_status == "progress":
-            task.status = CeleryTask.STATUS_PENDING
-            if request.data.get("progress"):
-                task.progress = (task.progress or []) + [request.data["progress"]]
-        elif new_status == "error":
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        new_status = data["status"]
+        if new_status == "error":
             task.status = CeleryTask.STATUS_ERROR
+            if data.get("error"):
+                task.error_message = request.data["error"]
+                task.result = None
         elif new_status == "success":
             task.status = CeleryTask.STATUS_DONE
-        elif new_status == "canceled":
+        elif new_status == "timeout":
+            task.status = CeleryTask.STATUS_TIMEOUT
+        elif new_status == CeleryTask.STATUS_CANCELED:
             task.cancel()
         else:
             raise ValidationError("unknown status value")
+        if data.get("result"):
+            task.result_object = data["result"]
         task.save()
 
         return Response({"status": "ok"})

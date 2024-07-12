@@ -155,6 +155,12 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
         )
 
 
+class CeleryTaskUpdateStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=("success", "error", "timeout", "canceled"))
+    result = serializers.JSONField(allow_null=True, required=False)
+    error = serializers.CharField(allow_null=True, required=False)
+
+
 class CeleryWorkerSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
 
