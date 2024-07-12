@@ -8,9 +8,10 @@ from poms.explorer.models import FinmarsDirectory, FinmarsFile
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
-FILE_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{filepath}}"
-DIR_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{path}}/*"
+FILE_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{fullpath}}"
+DIR_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{fullpath}}/*"
 FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:update"
+FULL_ACCESS = "full"
 READ_ACCESS_POLICY = {
     "Version": "2023-01-01",
     "Statement": [
@@ -37,17 +38,17 @@ def create_policy(obj: Union[FinmarsFile, FinmarsDirectory], access: str) -> dic
         dict: The generated policy based on the object and access level.
     """
     policy = deepcopy(READ_ACCESS_POLICY)
-    if access == "full":
+    if access == FULL_ACCESS:
         policy["Statement"][0]["Action"].append(FULL_ACTION)
 
     if isinstance(obj, FinmarsFile):
-        policy["Statement"][0]["Resource"] = FILE_PATH_TEMPLATE.format(
-            filepath=obj.fullpath
-        )
+        template = FILE_PATH_TEMPLATE
     elif isinstance(obj, FinmarsDirectory):
-        policy["Statement"][0]["Resource"] = DIR_PATH_TEMPLATE.format(path=obj.path)
+        template = DIR_PATH_TEMPLATE
     else:
         raise ValueError("Object must be of type FinmarsFile or FinmarsDirectory")
+
+    policy["Statement"][0]["Resource"] = template.format(fullpath=obj.fullpath)
 
     return policy
 
@@ -63,11 +64,10 @@ def update_or_create_file_access_policy(
     policy = create_policy(obj, access)
     name = obj.policy_name
     description = f"{name} : {access} access policy"
-    access_policy, created = AccessPolicy.objects.get_or_create(
+    access_policy, created = AccessPolicy.objects.update_or_create(
         user_code=user_code,
         owner=member,
-        name=name,
-        defaults={"policy": policy, "description": description},
+        defaults={"policy": policy, "name": name, "description": description},
     )
 
     return access_policy
@@ -77,4 +77,4 @@ def create_default_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory]
 ) -> AccessPolicy:
     member = Member.objects.get(username="finmars_bot")
-    return update_or_create_file_access_policy(obj, member, "full")
+    return update_or_create_file_access_policy(obj, member, FULL_ACCESS)
