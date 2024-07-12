@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import FinmarsDirectory, FinmarsFile
-from poms.explorer.policy_templates import create_default_access_policy, create_policy
+from poms.explorer.policy_templates import create_default_access_policy
 from poms.configuration.utils import get_default_configuration_code
 
 
@@ -35,7 +35,7 @@ class FileAccessPolicyTest(BaseTestCase):
 
         access_policy = create_default_access_policy(file)
 
-        self.assertEqual(access_policy.name, file.fullpath)
+        self.assertEqual(access_policy.name, file.resource)
         expected_user_code = (
             f"local.poms.space00000:finmars:explorer:file:{file.fullpath}-full"
         )
