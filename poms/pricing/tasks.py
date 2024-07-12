@@ -19,12 +19,15 @@ def run_pricing(self, *args, **kwargs):
 
     last_exception = None
     if options.get("instruments"):
-        objects = Instrument.objects.filter(id__in=options["instruments"])
+        objects = Instrument.objects.filter(user_code__in=options["instruments"])
     else:
-        objects = Currency.objects.filter(id__in=options["currencies"])
+        objects = Currency.objects.filter(user_code__in=options["currencies"])
 
     for count, obj in enumerate(objects):
-        for schema in obj.pricing_policies.all():
+        pricing_policies = obj.pricing_policies.all()
+        if options.get("pricing_policies"):
+            pricing_policies = pricing_policies.filter(pricing_policy__user_code__in=options["pricing_policies"])
+        for schema in pricing_policies:
             payload = schema.options.copy()
             payload["date_from"] = options["date_from"]
             payload["date_to"] = options["date_to"]
