@@ -50,7 +50,7 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
         return self.path
 
     @property
-    def policy_name(self):
+    def resource(self):
         return self.__str__()
 
 
@@ -111,7 +111,7 @@ class FinmarsFile(DataTimeStampedModel):
         return f"{self.path.rstrip('/')}/{self.name}"
 
     @property
-    def policy_name(self):
+    def resource(self):
         return self.__str__()
 
 

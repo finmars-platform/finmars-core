@@ -8,16 +8,16 @@ from poms.explorer.models import FinmarsDirectory, FinmarsFile
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
-FILE_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{fullpath}}"
-DIR_PATH_TEMPLATE = f"frn:{settings.SERVICE_NAME}:explorer:{{fullpath}}/*"
-FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:update"
+RESOURCE = f"frn:{settings.SERVICE_NAME}:explorer:{{resource}}"
+READ_ACCESS = "read"
 FULL_ACCESS = "full"
+FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{FULL_ACCESS}"
 READ_ACCESS_POLICY = {
     "Version": "2023-01-01",
     "Statement": [
         {
             "Action": [
-                f"{settings.SERVICE_NAME}:explorer:retrieve",
+                f"{settings.SERVICE_NAME}:explorer:{READ_ACCESS}",
             ],
             "Effect": "Allow",
             "Resource": "",
@@ -27,7 +27,10 @@ READ_ACCESS_POLICY = {
 }
 
 
-def create_policy(obj: Union[FinmarsFile, FinmarsDirectory], access: str) -> dict:
+def create_policy(
+    obj: Union[FinmarsFile, FinmarsDirectory],
+    access: str = READ_ACCESS,
+) -> dict:
     """
     A function that creates a policy dict based on the type of
     object (file or directory) and the access level.
@@ -37,18 +40,16 @@ def create_policy(obj: Union[FinmarsFile, FinmarsDirectory], access: str) -> dic
     Returns:
         dict: The generated policy based on the object and access level.
     """
+    if access not in [READ_ACCESS, FULL_ACCESS]:
+        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
+    if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
+        raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
+
     policy = deepcopy(READ_ACCESS_POLICY)
     if access == FULL_ACCESS:
         policy["Statement"][0]["Action"].append(FULL_ACTION)
 
-    if isinstance(obj, FinmarsFile):
-        template = FILE_PATH_TEMPLATE
-    elif isinstance(obj, FinmarsDirectory):
-        template = DIR_PATH_TEMPLATE
-    else:
-        raise ValueError("Object must be of type FinmarsFile or FinmarsDirectory")
-
-    policy["Statement"][0]["Resource"] = template.format(fullpath=obj.fullpath)
+    policy["Statement"][0]["Resource"] = RESOURCE.format(resource=obj.resource)
 
     return policy
 
@@ -59,10 +60,10 @@ def update_or_create_file_access_policy(
     configuration_code = get_default_configuration_code()
     user_code = (
         f"{configuration_code}:{settings.SERVICE_NAME}"
-        f":explorer:{obj.policy_name}-{access}"
+        f":explorer:{obj.resource}-{access}"
     )
     policy = create_policy(obj, access)
-    name = obj.policy_name
+    name = obj.resource
     description = f"{name} : {access} access policy"
     access_policy, created = AccessPolicy.objects.update_or_create(
         user_code=user_code,
