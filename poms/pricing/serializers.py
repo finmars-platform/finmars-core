@@ -10,8 +10,8 @@ class RunPricingSerializer(serializers.Serializer):
     date_from = serializers.DateField()
     date_to = serializers.DateField()
     pricing_policies = serializers.ListField(child=serializers.CharField(), required=False)
-    instruments = serializers.ListField(child=serializers.IntegerField(), required=False)
-    currencies = serializers.ListField(child=serializers.IntegerField(), required=False)
+    instruments = serializers.ListField(child=serializers.CharField(), required=False)
+    currencies = serializers.ListField(child=serializers.CharField(), required=False)
 
     def validate(self, data):
         if not data.get('instruments') and not data.get('currencies'):
