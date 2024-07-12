@@ -68,7 +68,12 @@ def update_or_create_file_access_policy(
     access_policy, created = AccessPolicy.objects.update_or_create(
         user_code=user_code,
         owner=member,
-        defaults={"policy": policy, "name": name, "description": description},
+        defaults={
+            "configuration_code": configuration_code,
+            "policy": policy,
+            "name": name,
+            "description": description,
+        },
     )
 
     return access_policy
