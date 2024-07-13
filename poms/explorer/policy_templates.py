@@ -58,18 +58,18 @@ def create_policy(
 
 
 def update_or_create_file_access_policy(
-    obj: Union[FinmarsFile, FinmarsDirectory], member: Member, access: str
+    obj: Union[FinmarsFile, FinmarsDirectory], owner: Member, access: str
 ) -> AccessPolicy:
     validate_obj_access(obj, access)
 
     configuration_code = get_default_configuration_code()
-    user_code = obj.policy_user_code(access)
-    policy = create_policy(obj, access)
+    user_code = obj.policy_user_code()
     name = obj.resource
+    policy = create_policy(obj, access)
     description = f"{name} : {access} access policy"
     access_policy, created = AccessPolicy.objects.update_or_create(
         user_code=user_code,
-        owner=member,
+        owner=owner,
         defaults={
             "configuration_code": configuration_code,
             "policy": policy,

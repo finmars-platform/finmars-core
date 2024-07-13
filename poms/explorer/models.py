@@ -22,10 +22,10 @@ class ObjMixin:
     def resource(self):
         return self.__str__()
 
-    def policy_user_code(self, access: str = READ_ACCESS):
+    def policy_user_code(self):
         return (
             f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
-            f":explorer:{self.resource}-{access}"
+            f":explorer:{self.resource}"
         )
 
 

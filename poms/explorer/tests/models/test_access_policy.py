@@ -1,8 +1,11 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
-from poms.explorer.policy_templates import create_default_access_policy, RESOURCE
 from poms.configuration.utils import get_default_configuration_code
-
+from poms.explorer.models import FinmarsDirectory, FinmarsFile, READ_ACCESS
+from poms.explorer.policy_templates import (
+    RESOURCE,
+    create_default_access_policy,
+    update_or_create_file_access_policy,
+)
 
 EXPECTED_FULL_POLICY = {
     "Version": "2023-01-01",
@@ -45,7 +48,7 @@ class FileAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:file:{file.fullpath}-full"
+            f"local.poms.space00000:finmars:explorer:file:{file.fullpath}"
         )
         self.assertEqual(access_policy.user_code, expected_user_code)
 
@@ -63,6 +66,32 @@ class FileAccessPolicyTest(BaseTestCase):
         access_policy_2 = create_default_access_policy(file)
         self.assertEqual(access_policy_1.id, access_policy_2.id)
         self.assertEqual(access_policy_1.user_code, access_policy_2.user_code)
+
+    def test__file_access_policy_updated(self):
+        file = self._create_file()
+
+        access_policy_1 = create_default_access_policy(file)
+
+        access_policy_2 = update_or_create_file_access_policy(
+            file, access_policy_1.owner, access=READ_ACCESS
+        )
+        self.assertEqual(access_policy_1.id, access_policy_2.id)
+
+        self.assertEqual(access_policy_2.name, file.resource)
+        self.assertEqual(
+            access_policy_2.configuration_code, get_default_configuration_code()
+        )
+        self.assertEqual(access_policy_2.owner.username, "finmars_bot")
+
+        expected_user_code = (
+            f"local.poms.space00000:finmars:explorer:file:{file.fullpath}"
+        )
+        self.assertEqual(access_policy_2.user_code, expected_user_code)
+
+        EXPECTED_FULL_POLICY["Statement"][0]["Resource"] = RESOURCE.format(
+            resource=file.resource
+        )
+        self.assertEqual(len(access_policy_2.policy["Statement"][0]["Action"]), 1)
 
 
 class DirectoryAccessPolicyTest(BaseTestCase):
@@ -89,7 +118,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:dir:{directory.fullpath}-full"
+            f"local.poms.space00000:finmars:explorer:dir:{directory.fullpath}"
         )
         self.assertEqual(access_policy.user_code, expected_user_code)
 
