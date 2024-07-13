@@ -1,8 +1,11 @@
+from django.conf import settings
 from django.db import models
-from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.crypto import get_random_string
 
+from mptt.models import MPTTModel, TreeForeignKey
+
 from poms.common.models import DataTimeStampedModel
+from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
 
@@ -10,8 +13,23 @@ MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
+READ_ACCESS = "read"
+FULL_ACCESS = "full"
 
-class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
+
+class ObjMixin:
+    @property
+    def resource(self):
+        return self.__str__()
+
+    def policy_user_code(self, access: str = READ_ACCESS):
+        return (
+            f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
+            f":explorer:{self.resource}-{access}"
+        )
+
+
+class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     """
     Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
@@ -34,6 +52,7 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
         blank=True,
         related_name="children",
     )
+    size = 0
 
     class Meta:
         ordering = ["path"]
@@ -49,12 +68,8 @@ class FinmarsDirectory(MPTTModel, DataTimeStampedModel):
     def fullpath(self):
         return self.path
 
-    @property
-    def resource(self):
-        return self.__str__()
 
-
-class FinmarsFile(DataTimeStampedModel):
+class FinmarsFile(ObjMixin, DataTimeStampedModel):
     """
     Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """
@@ -109,10 +124,6 @@ class FinmarsFile(DataTimeStampedModel):
     @property
     def fullpath(self):
         return f"{self.path.rstrip('/')}/{self.name}"
-
-    @property
-    def resource(self):
-        return self.__str__()
 
 
 class ShareAccessRecord(models.Model):

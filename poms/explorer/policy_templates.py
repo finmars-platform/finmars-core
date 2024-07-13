@@ -4,13 +4,12 @@ from typing import Union
 from django.conf import settings
 
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.models import FULL_ACCESS, READ_ACCESS, FinmarsDirectory, FinmarsFile
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
 RESOURCE = f"frn:{settings.SERVICE_NAME}:explorer:{{resource}}"
-READ_ACCESS = "read"
-FULL_ACCESS = "full"
+
 FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{FULL_ACCESS}"
 READ_ACCESS_POLICY = {
     "Version": "2023-01-01",
@@ -27,6 +26,13 @@ READ_ACCESS_POLICY = {
 }
 
 
+def validate_obj_access(obj: Union[FinmarsFile, FinmarsDirectory], access: str):
+    if access not in [READ_ACCESS, FULL_ACCESS]:
+        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
+    if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
+        raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
+
+
 def create_policy(
     obj: Union[FinmarsFile, FinmarsDirectory],
     access: str = READ_ACCESS,
@@ -40,10 +46,7 @@ def create_policy(
     Returns:
         dict: The generated policy based on the object and access level.
     """
-    if access not in [READ_ACCESS, FULL_ACCESS]:
-        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
-    if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
-        raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
+    validate_obj_access(obj, access)
 
     policy = deepcopy(READ_ACCESS_POLICY)
     if access == FULL_ACCESS:
@@ -57,11 +60,10 @@ def create_policy(
 def update_or_create_file_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory], member: Member, access: str
 ) -> AccessPolicy:
+    validate_obj_access(obj, access)
+
     configuration_code = get_default_configuration_code()
-    user_code = (
-        f"{configuration_code}:{settings.SERVICE_NAME}"
-        f":explorer:{obj.resource}-{access}"
-    )
+    user_code = obj.policy_user_code(access)
     policy = create_policy(obj, access)
     name = obj.resource
     description = f"{name} : {access} access policy"
