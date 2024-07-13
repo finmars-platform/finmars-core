@@ -136,3 +136,29 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         access_policy_2 = create_default_access_policy(directory)
         self.assertEqual(access_policy_1.id, access_policy_2.id)
         self.assertEqual(access_policy_1.user_code, access_policy_2.user_code)
+
+    def test__directory_access_policy_updated(self):
+        directory = self._create_directory()
+
+        access_policy_1 = create_default_access_policy(directory)
+
+        access_policy_2 = update_or_create_file_access_policy(
+            directory, access_policy_1.owner, access=READ_ACCESS
+        )
+        self.assertEqual(access_policy_1.id, access_policy_2.id)
+
+        self.assertEqual(access_policy_2.name, directory.resource)
+        self.assertEqual(
+            access_policy_2.configuration_code, get_default_configuration_code()
+        )
+        self.assertEqual(access_policy_2.owner.username, "finmars_bot")
+
+        expected_user_code = (
+            f"local.poms.space00000:finmars:explorer:dir:{directory.fullpath}"
+        )
+        self.assertEqual(access_policy_2.user_code, expected_user_code)
+
+        EXPECTED_FULL_POLICY["Statement"][0]["Resource"] = RESOURCE.format(
+            resource=directory.resource
+        )
+        self.assertEqual(len(access_policy_2.policy["Statement"][0]["Action"]), 1)
