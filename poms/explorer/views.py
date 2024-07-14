@@ -569,6 +569,7 @@ class FinmarsFileFilter(BaseFilterBackend):
 
         options = Q()
         for query in queries.split(","):
+            query = query.strip("/")
             options.add(Q(name__icontains=query), Q.OR)
             options.add(Q(path__icontains=query), Q.OR)
 

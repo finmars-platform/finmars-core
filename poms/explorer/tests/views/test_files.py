@@ -163,7 +163,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["path"], file_data["path"])
+        self.assertEqual(response_json["path"], file_data["path"].rstrip("/"))
 
     def test__patch(self):
         file_data = dict(
@@ -184,7 +184,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         file = FinmarsFile.objects.get(id=file_id)
-        self.assertEqual(file.path, "/root/")
+        self.assertEqual(file.path, "/root")
 
     def test__simple_delete(self):
         file_data = dict(
