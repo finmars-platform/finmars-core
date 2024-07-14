@@ -127,12 +127,12 @@ def unzip_file_in_storage(self, *args, **kwargs):
     celery_task.save()
 
 
-@finmars_task(name="explorer.tasks.sync_files_with_database", bind=True)
-def sync_files_with_database(self, *args, **kwargs):
+@finmars_task(name="explorer.tasks.sync_storage_with_database", bind=True)
+def sync_storage_with_database(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
+    task_name = "sync_storage_with_database"
 
     storage_root = "/"
-    context = kwargs["context"]
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -140,14 +140,14 @@ def sync_files_with_database(self, *args, **kwargs):
 
     total_files = count_files(storage, storage_root)
 
-    _l.info(f"sync_files_with_database: {total_files} files")
+    _l.info(f"{task_name}: {total_files} files")
 
     celery_task.update_progress(
         {
             "current": 0,
             "total": total_files,
             "percent": 0,
-            "description": "sync_files_with_database starting ...",
+            "description": f"{task_name} starting ...",
         }
     )
 
@@ -171,7 +171,7 @@ def sync_files_with_database(self, *args, **kwargs):
             "current": total_files,
             "total": total_files,
             "percent": 100,
-            "description": "sync_files_with_database finished",
+            "description": f"{task_name} finished",
         }
     )
 

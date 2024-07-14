@@ -31,7 +31,7 @@ from poms.explorer.serializers import (
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
-    sync_files_with_database,
+    sync_storage_with_database,
     unzip_file_in_storage,
 )
 from poms.explorer.utils import (
@@ -536,11 +536,11 @@ class SyncViewSet(AbstractViewSet):
             master_user=request.user.master_user,
             member=request.user.member,
             verbose_name="Sync files with database",
-            type="sync_files_with_database",
+            type="sync_storage_with_database",
             options_object={},
         )
 
-        sync_files_with_database.apply_async(
+        sync_storage_with_database.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {

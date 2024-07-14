@@ -1,7 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
 from poms.explorer.models import FinmarsDirectory, FinmarsFile, READ_ACCESS
-from poms.explorer.policy_templates import (
+from poms.explorer.policy_handlers import (
     RESOURCE,
     create_default_access_policy,
     upsert_storage_obj_access_policy,
