@@ -101,3 +101,6 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.assertEqual(dir_3.get_siblings().count(), 0)
 
         self.assertEqual(root.get_descendant_count(), 4)
+        self.assertEqual(dir_1.get_descendants().count(), 1)
+
+        self.assertEqual(dir_3.get_family().count(), 3)  # ancestors, itself, descendants
