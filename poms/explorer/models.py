@@ -28,6 +28,18 @@ class ObjMixin:
             f":explorer:{self.resource}"
         )
 
+    def _fix_path(self):
+        """
+        Ensures the path starts with a slash and does not end with a slash.
+        If the path is empty, sets it to "/".
+        """
+        if self.path and self.path[0] != '/':
+            self.path = '/' + self.path
+        if self.path and self.path[-1] == '/':
+            self.path = self.path.rstrip('/')
+        if not self.path:
+            self.path = '/'
+
 
 class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     """
@@ -41,6 +53,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
         unique=True,
+        blank=False,
         help_text="Path to the directory in the storage system",
     )
     parent = TreeForeignKey(
@@ -72,7 +85,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         from the `path` attribute and sets the `name` attribute to the
         last part of the `path`.
         """
-        self.path = self.path.rstrip("/")
+        self._fix_path()
         self.name = self.path.rsplit("/", 1)[-1]
         super().save(*args, **kwargs)
 
@@ -130,7 +143,7 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
         return parts[1] if len(parts) > 1 else ""
 
     def save(self, *args, **kwargs):
-        self.path = self.path.rstrip("/")
+        self._fix_path()
         self.extension = self._extract_extension()
         super().save(*args, **kwargs)
 

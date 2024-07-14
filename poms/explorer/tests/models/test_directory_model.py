@@ -37,9 +37,22 @@ class FinmarsDirectoryTest(BaseTestCase):
         ("0", "/a/b"),
         ("1", "/a/b/"),
         ("2", "/a/b//"),
+        ("3", "a/b//"),
+        ("4", "a/b"),
     )
-    def test__directory_name(self, path):
+    def test__directory_path(self, path):
         kwargs = dict(path=path)
         directory = FinmarsDirectory.objects.create(**kwargs)
 
         self.assertEqual(directory.fullpath, "/a/b")
+
+    @BaseTestCase.cases(
+        ("0", "/"),
+        ("1", "//"),
+        ("2", "///"),
+    )
+    def test__fix_directory_name(self, path):
+        kwargs = dict(path=path)
+        directory = FinmarsDirectory.objects.create(**kwargs)
+
+        self.assertEqual(directory.fullpath, "/")
