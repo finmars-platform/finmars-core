@@ -278,13 +278,14 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDire
 
     def sync_files_helper(directory: FinmarsDirectory) -> int:
         dir_paths, file_paths = storage.listdir(directory.path)
+
         count = len(file_paths)
         for filepath in file_paths:
-            sync_file_in_database(storage, filepath, directory)
-        for subdir in dir_paths:
-            subdir_path = f"{directory.path}/{subdir}"
-            sub_directory = FinmarsDirectory.objects.get_or_create(
-                name=subdir_path, parent=directory
+            sync_file(storage, filepath, directory)
+
+        for subdir_path in dir_paths:
+            sub_directory, _ = FinmarsDirectory.objects.get_or_create(
+                path=subdir_path, parent=directory
             )
             count += sync_files_helper(sub_directory)
         return count
@@ -292,13 +293,13 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDire
     return sync_files_helper(start_directory)
 
 
-def sync_file_in_database(
+def sync_file(
     storage: FinmarsS3Storage,
     filepath: str,
     directory: FinmarsDirectory,
 ):
     """
-    Creates or updates file model in database for the given file path
+    Creates or updates file model in database for the given file path in the storage
     Args:
         storage: The storage instance to use
         filepath: path to the file in storage

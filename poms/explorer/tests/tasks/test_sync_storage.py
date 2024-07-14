@@ -4,10 +4,7 @@ from unittest import mock
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import FinmarsDirectory, FinmarsFile
-from poms.explorer.utils import (
-    sync_file_in_database,
-    sync_storage_objects,
-)
+from poms.explorer.utils import sync_file, sync_storage_objects
 
 
 class SyncFileInDatabaseTest(BaseTestCase):
@@ -28,7 +25,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
         size = self.random_int(1000, 1000000)
         self.storage.size.return_value = size
 
-        sync_file_in_database(self.storage, filepath, self.directory)
+        sync_file(self.storage, filepath, self.directory)
 
         file = FinmarsFile.objects.filter(name=name).first()
         self.assertIsNotNone(file)
@@ -42,7 +39,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
         old_size = self.random_int(10, 100000000)
         self.storage.size.return_value = old_size
 
-        sync_file_in_database(self.storage, filepath, self.directory)
+        sync_file(self.storage, filepath, self.directory)
 
         file = FinmarsFile.objects.filter(name=name).first()
         self.assertEqual(file.size, old_size)
@@ -51,7 +48,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
         new_size = self.random_int(100000, 100000000000)
         self.storage.size.return_value = new_size
 
-        sync_file_in_database(self.storage, filepath, self.directory)
+        sync_file(self.storage, filepath, self.directory)
 
         file = FinmarsFile.objects.filter(name=name).first()
         self.assertEqual(file.size, new_size)
@@ -60,9 +57,9 @@ class SyncFileInDatabaseTest(BaseTestCase):
 class SyncFilesTest(BaseTestCase):
     def setUp(self):
         super().setUp()
-        self.init_test_case()
+        # self.init_test_case()
         self.storage_patch = mock.patch(
-            "poms.explorer.views.storage",
+            "poms.common.storage",
             spec=FinmarsS3Storage,
         )
         self.storage = self.storage_patch.start()
@@ -84,3 +81,18 @@ class SyncFilesTest(BaseTestCase):
         files = FinmarsFile.objects.all()
 
         self.assertEqual(files.count(), 2)
+
+    def test__directories_created(self):
+        # Mock the listdir return values
+        dirpath_1 = f"{self.directory.path}/dir1"
+        dirpath_2 = f"{self.directory.path}/dir2"
+        self.storage.listdir.side_effect = [
+            ([dirpath_1, dirpath_2], []),
+            ([], []),
+            ([], []),
+        ]
+        sync_storage_objects(self.storage, self.directory)
+
+        directories = FinmarsDirectory.objects.all()
+
+        self.assertEqual(directories.count(), 3)

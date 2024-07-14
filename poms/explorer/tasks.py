@@ -9,7 +9,7 @@ from poms.explorer.utils import (
     move_dir,
     move_file,
     path_is_file,
-    sync_file_in_database,
+    sync_file,
     sync_storage_objects,
     unzip_file,
 )
@@ -167,7 +167,7 @@ def sync_storage_with_database(self, *args, **kwargs):
             sync_storage_objects(storage, directory)
 
         for file_path in files:
-            sync_file_in_database(storage, file_path, root_directory)
+            sync_file(storage, file_path, root_directory)
 
     except Exception as e:
         celery_task.status = CeleryTask.STATUS_ERROR

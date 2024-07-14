@@ -102,10 +102,8 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         self.init_test_case()
 
     def _create_directory(self) -> FinmarsDirectory:
-        name = self.random_string(7)
-        path = f"/{self.random_string()}/{self.random_string(5)}/{name}/"
-
-        return FinmarsDirectory.objects.create(name=name, path=path, parent=None)
+        path = f"/{self.random_string()}/{self.random_string(3)}"
+        return FinmarsDirectory.objects.create(path=path, parent=None)
 
     def test__directory_access_policy_created(self):
         directory = self._create_directory()

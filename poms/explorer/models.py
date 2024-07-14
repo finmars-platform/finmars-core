@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+
 # from django.utils.crypto import get_random_string
 
 from mptt.models import MPTTModel, TreeForeignKey
@@ -33,12 +34,12 @@ class ObjMixin:
         Ensures the path starts with a slash and does not end with a slash.
         If the path is empty, sets it to "/".
         """
-        if self.path and self.path[0] != '/':
-            self.path = '/' + self.path
-        if self.path and self.path[-1] == '/':
-            self.path = self.path.rstrip('/')
+        if self.path and self.path[0] != "/":
+            self.path = "/" + self.path
+        if self.path and self.path[-1] == "/":
+            self.path = self.path.rstrip("/")
         if not self.path:
-            self.path = '/'
+            self.path = "/"
 
 
 class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
@@ -46,10 +47,6 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
 
-    name = models.CharField(
-        max_length=MAX_NAME_LENGTH,
-        help_text="Directory name (last part of the path)",
-    )
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
         unique=True,
@@ -63,7 +60,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         blank=True,
         related_name="children",
     )
-    size = 0
+    __size = 0
 
     class Meta:
         ordering = ["path"]
@@ -76,6 +73,14 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         return f"dir:{self.path}"
 
     @property
+    def size(self):
+        return self.__size
+
+    @property
+    def name(self):
+        return self.path
+
+    @property
     def fullpath(self):
         return self.path
 
@@ -86,7 +91,6 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         last part of the `path`.
         """
         self._fix_path()
-        self.name = self.path.rsplit("/", 1)[-1]
         super().save(*args, **kwargs)
 
 
