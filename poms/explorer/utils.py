@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import FinmarsDirectory, FinmarsFile
 
 _l = logging.getLogger("poms.explorer")
 
@@ -265,35 +265,44 @@ def unzip_file(
         celery_task.update_progress(progress_dict)
 
 
-def sync_files(storage: FinmarsS3Storage, source_dir: str):
+def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDirectory):
     """
-    Recursively syncs files in a directory and all its subdirectories with database file
-    objects.
+    Recursively syncs files/directories in the root directory and
+    all its subdirectories with database file/directory objects.
     Args:
         storage: The storage instance to use.
-        source_dir: The path of the source directory.
+        start_directory: The directory from which to start syncing.
     Returns:
-        The total number of files in the directory and all its subdirectories.
+        The total number of files in the start directory and all its subdirectories.
     """
 
-    def sync_files_helper(dir_path: str) -> int:
-        dirs, files = storage.listdir(dir_path)
-        count = len(files)
-        for file in files:
-            sync_file_in_database(storage, file)
-        for subdir in dirs:
-            count += sync_files_helper(os.path.join(dir_path, subdir))
+    def sync_files_helper(directory: FinmarsDirectory) -> int:
+        dir_paths, file_paths = storage.listdir(directory.path)
+        count = len(file_paths)
+        for filepath in file_paths:
+            sync_file_in_database(storage, filepath, directory)
+        for subdir in dir_paths:
+            subdir_path = f"{directory.path}/{subdir}"
+            sub_directory = FinmarsDirectory.objects.get_or_create(
+                name=subdir_path, parent=directory
+            )
+            count += sync_files_helper(sub_directory)
         return count
 
-    return sync_files_helper(source_dir)
+    return sync_files_helper(start_directory)
 
 
-def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
+def sync_file_in_database(
+    storage: FinmarsS3Storage,
+    filepath: str,
+    directory: FinmarsDirectory,
+):
     """
     Creates or updates file model in database for the given file path
     Args:
         storage: The storage instance to use
         filepath: path to the file in storage
+        directory: directory to which the file belongs
     """
 
     path, name = os.path.split(filepath)
@@ -302,5 +311,6 @@ def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
     FinmarsFile.objects.update_or_create(
         name=name,
         path=path,
+        directory=directory,
         defaults=dict(size=size),
     )

@@ -10,7 +10,7 @@ from poms.explorer.utils import (
     move_file,
     path_is_file,
     sync_file_in_database,
-    sync_files,
+    sync_storage_objects,
     unzip_file,
 )
 
@@ -64,7 +64,7 @@ def move_directory_in_storage(self, *args, **kwargs):
 
         for file_path in files_paths:
             file_name = os.path.basename(file_path)
-            destination_file_path = os.path.join(destination_directory, file_name)
+            destination_file_path = str(os.path.join(destination_directory, file_name))
             move_file(storage, file_path, destination_file_path)
 
     except Exception as e:
@@ -130,15 +130,17 @@ def unzip_file_in_storage(self, *args, **kwargs):
 @finmars_task(name="explorer.tasks.sync_storage_with_database", bind=True)
 def sync_storage_with_database(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
+    from poms.explorer.models import FinmarsDirectory
+
     task_name = "sync_storage_with_database"
 
-    storage_root = "/"
+    root_path = "/"
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
-    total_files = count_files(storage, storage_root)
+    total_files = count_files(storage, root_path)
 
     _l.info(f"{task_name}: {total_files} files")
 
@@ -151,14 +153,21 @@ def sync_storage_with_database(self, *args, **kwargs):
         }
     )
 
-    dirs, files = storage.listdir(storage_root)
+    root_directory, _ = FinmarsDirectory.objects.get_or_create(
+        name=root_path, parent=None
+    )
+    dir_paths, files = storage.listdir(root_path)
 
     try:
-        for directory in dirs:
-            sync_files(storage, directory)
+        for dir_path in dir_paths:
+            directory, _ = FinmarsDirectory.objects.get_or_create(
+                path=dir_path,
+                parent=root_directory,
+            )
+            sync_storage_objects(storage, directory)
 
         for file_path in files:
-            sync_file_in_database(file_path)
+            sync_file_in_database(storage, file_path, root_directory)
 
     except Exception as e:
         celery_task.status = CeleryTask.STATUS_ERROR
