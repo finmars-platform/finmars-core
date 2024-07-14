@@ -14,7 +14,7 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.name = self.random_string(7)
         self.path = f"/{self.random_string()}/{self.random_string(5)}/{self.name}/"
 
-        return FinmarsDirectory.objects.create(name=self.name, path=self.path)
+        return FinmarsDirectory.objects.create(path=self.path)
 
     def test__directory_created(self):
         directory = self._create_directory()
@@ -62,3 +62,42 @@ class FinmarsDirectoryTest(BaseTestCase):
         directory = FinmarsDirectory.objects.create(**kwargs)
 
         self.assertEqual(directory.fullpath, "/")
+
+    def test__directory_tree(self):
+        kwargs = dict(path="/root")
+        root = FinmarsDirectory.objects.create(**kwargs)
+
+        kwargs = dict(path=f"/root/path_1")
+        dir_1 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+
+        kwargs = dict(path=f"/root/path_2")
+        dir_2 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+
+        kwargs = dict(path=f"/root/path_1/path_3")
+        dir_3 = FinmarsDirectory.objects.create(parent=dir_1, **kwargs)
+
+        kwargs = dict(path=f"/root/path_4")
+        dir_4 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+
+        self.assertEqual(dir_1.get_root(), root)
+        self.assertEqual(dir_2.get_root(), root)
+        self.assertEqual(dir_3.get_root(), root)
+
+        self.assertEqual(root.children.count(), 3)
+        self.assertEqual(dir_1.children.count(), 1)
+        self.assertEqual(dir_2.children.count(), 0)
+        self.assertEqual(dir_3.children.count(), 0)
+        self.assertEqual(dir_4.children.count(), 0)
+
+        self.assertTrue(root.is_root_node())
+        self.assertTrue(dir_2.is_leaf_node())
+        self.assertTrue(dir_3.is_leaf_node())
+        self.assertTrue(dir_4.is_leaf_node())
+
+        self.assertEqual(root.get_siblings().count(), 0)
+        self.assertEqual(dir_1.get_siblings().count(), 2)
+        self.assertEqual(dir_2.get_siblings().count(), 2)
+        self.assertEqual(dir_4.get_siblings().count(), 2)
+        self.assertEqual(dir_3.get_siblings().count(), 0)
+
+        self.assertEqual(root.get_descendant_count(), 4)
