@@ -22,7 +22,7 @@ class FinmarsFileTest(BaseTestCase):
 
         self.assertIsNotNone(file)
         self.assertEqual(file.name, name)
-        self.assertEqual(file.path, path)
+        self.assertEqual(file.path, path.rstrip("/"))
         self.assertEqual(file.size, size)
         self.assertEqual(file.extension, extension)
         self.assertIsNotNone(file.created)

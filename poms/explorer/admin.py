@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
-from poms.explorer.models import FinmarsDirectory, FinmarsFile, ShareAccessRecord
+from poms.explorer.models import FinmarsDirectory, FinmarsFile
 
 
 @admin.register(FinmarsFile)
@@ -14,6 +14,6 @@ class FinmarsDirAdmin(AbstractModelAdmin):
     model = FinmarsDirectory
 
 
-@admin.register(ShareAccessRecord)
-class FinmarsDirAdmin(AbstractModelAdmin):
-    model = ShareAccessRecord
+# @admin.register(ShareAccessRecord)
+# class FinmarsDirAdmin(AbstractModelAdmin):
+#     model = ShareAccessRecord

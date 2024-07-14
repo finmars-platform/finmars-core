@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.utils.crypto import get_random_string
+# from django.utils.crypto import get_random_string
 
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -36,12 +36,10 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
 
     name = models.CharField(
         max_length=MAX_NAME_LENGTH,
-        db_index=True,
         help_text="Directory name (last part of the path)",
     )
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
-        db_index=True,
         unique=True,
         help_text="Path to the directory in the storage system",
     )
@@ -67,6 +65,16 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     @property
     def fullpath(self):
         return self.path
+
+    def save(self, *args, **kwargs):
+        """
+        This method overrides the default save method. It removes any trailing slashes
+        from the `path` attribute and sets the `name` attribute to the
+        last part of the `path`.
+        """
+        self.path = self.path.rstrip("/")
+        self.name = self.path.rsplit("/", 1)[-1]
+        super().save(*args, **kwargs)
 
 
 class FinmarsFile(ObjMixin, DataTimeStampedModel):
@@ -110,88 +118,89 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
         ]
         ordering = ["path", "name"]
 
-    def _extract_extension(self) -> str:
-        parts = self.name.rsplit(".", 1)
-        return parts[1] if len(parts) > 1 else ""
-
-    def save(self, *args, **kwargs):
-        self.extension = self._extract_extension()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"file:{self.fullpath}"
 
     @property
     def fullpath(self):
-        return f"{self.path.rstrip('/')}/{self.name}"
+        return f"{self.path}/{self.name}"
+
+    def _extract_extension(self) -> str:
+        parts = self.name.rsplit(".", 1)
+        return parts[1] if len(parts) > 1 else ""
+
+    def save(self, *args, **kwargs):
+        self.path = self.path.rstrip("/")
+        self.extension = self._extract_extension()
+        super().save(*args, **kwargs)
 
 
-class ShareAccessRecord(models.Model):
-    owner = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-    )
-    path = models.CharField(
-        db_index=True,
-        max_length=MAX_PATH_LENGTH,
-        help_text="Path to the file/directory in the storage system",
-    )
-    shared_with_users = models.ManyToManyField(
-        Member,
-        through="MemberShare",
-        related_name="shared_files",
-    )
-    shared_with_groups = models.ManyToManyField(
-        Group,
-        through="GroupShare",
-        related_name="shared_files",
-    )
-    public_link_token = models.CharField(
-        max_length=MAX_TOKEN_LENGTH,
-        blank=True,
-        null=True,
-    )
-    public_link_expires = models.DateTimeField(
-        blank=True,
-        null=True,
-    )
-    public_link_policy = models.ForeignKey(
-        AccessPolicy,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-
-    def generate_public_link(self):
-        self.public_link_token = get_random_string(MAX_TOKEN_LENGTH)
-        self.save()
-
-
-class MemberShare(models.Model):
-    share_access_record = models.ForeignKey(
-        ShareAccessRecord,
-        on_delete=models.CASCADE,
-    )
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-    )
-    policy = models.ForeignKey(
-        AccessPolicy,
-        on_delete=models.CASCADE,
-    )
-
-
-class GroupShare(models.Model):
-    share_access_record = models.ForeignKey(
-        ShareAccessRecord,
-        on_delete=models.CASCADE,
-    )
-    group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-    )
-    policy = models.ForeignKey(
-        AccessPolicy,
-        on_delete=models.CASCADE,
-    )
+# class ShareAccessRecord(models.Model):
+#     owner = models.ForeignKey(
+#         Member,
+#         on_delete=models.CASCADE,
+#     )
+#     path = models.CharField(
+#         db_index=True,
+#         max_length=MAX_PATH_LENGTH,
+#         help_text="Path to the file/directory in the storage system",
+#     )
+#     shared_with_users = models.ManyToManyField(
+#         Member,
+#         through="MemberShare",
+#         related_name="shared_files",
+#     )
+#     shared_with_groups = models.ManyToManyField(
+#         Group,
+#         through="GroupShare",
+#         related_name="shared_files",
+#     )
+#     public_link_token = models.CharField(
+#         max_length=MAX_TOKEN_LENGTH,
+#         blank=True,
+#         null=True,
+#     )
+#     public_link_expires = models.DateTimeField(
+#         blank=True,
+#         null=True,
+#     )
+#     public_link_policy = models.ForeignKey(
+#         AccessPolicy,
+#         on_delete=models.CASCADE,
+#         null=True,
+#         blank=True,
+#     )
+#
+#     def generate_public_link(self):
+#         self.public_link_token = get_random_string(MAX_TOKEN_LENGTH)
+#         self.save()
+#
+#
+# class MemberShare(models.Model):
+#     share_access_record = models.ForeignKey(
+#         ShareAccessRecord,
+#         on_delete=models.CASCADE,
+#     )
+#     member = models.ForeignKey(
+#         Member,
+#         on_delete=models.CASCADE,
+#     )
+#     policy = models.ForeignKey(
+#         AccessPolicy,
+#         on_delete=models.CASCADE,
+#     )
+#
+#
+# class GroupShare(models.Model):
+#     share_access_record = models.ForeignKey(
+#         ShareAccessRecord,
+#         on_delete=models.CASCADE,
+#     )
+#     group = models.ForeignKey(
+#         Group,
+#         on_delete=models.CASCADE,
+#     )
+#     policy = models.ForeignKey(
+#         AccessPolicy,
+#         on_delete=models.CASCADE,
+#     )

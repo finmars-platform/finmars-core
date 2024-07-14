@@ -217,7 +217,7 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
     def validate_path(path: str) -> str:
         if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {path}", code="path")
-
+        path = path.rstrip("/")
         return path
 
     @staticmethod

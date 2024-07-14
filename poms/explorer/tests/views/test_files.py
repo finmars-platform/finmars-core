@@ -52,7 +52,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["id"], file.id)
         self.assertEqual(response_json["name"], "name.pdf")
         self.assertEqual(response_json["extension"], "pdf")
-        self.assertEqual(response_json["path"], "/root/etc/system/")
+        self.assertEqual(response_json["path"], "/root/etc/system")
         self.assertEqual(response_json["size"], 1111111111)
         self.assertIn("instruments", response_json)
         self.assertIn("created", response_json)
@@ -138,7 +138,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["name"], file_data["name"])
         self.assertEqual(response_json["extension"], "pdf")
-        self.assertEqual(response_json["path"], file_data["path"])
+        self.assertEqual(response_json["path"], file_data["path"].rstrip("/"))
         self.assertEqual(response_json["size"], file_data["size"])
         self.assertIn("id", response_json)
         self.assertIn("instruments", response_json)
@@ -155,7 +155,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201, response.content)
         response_json = response.json()
         file_id = response_json["id"]
-        self.assertEqual(response_json["path"], file_data["path"])
+        self.assertEqual(response_json["path"], file_data["path"].rstrip("/"))
 
         file_data["path"] = "/root/"
         response = self.client.put(
@@ -175,7 +175,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201, response.content)
         response_json = response.json()
         file_id = response_json["id"]
-        self.assertEqual(response_json["path"], file_data["path"])
+        self.assertEqual(response_json["path"], file_data["path"].rstrip("/"))
 
         patch_data = {"path": "/root/"}
         response = self.client.patch(

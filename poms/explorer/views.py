@@ -579,9 +579,7 @@ class SearchViewSet(AbstractModelViewSet):
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        FinmarsFileFilter,
-    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]
 
     @swagger_auto_schema(
         query_serializer=QuerySearchSerializer(),
