@@ -4,7 +4,7 @@ from poms.explorer.models import FinmarsDirectory, FinmarsFile, READ_ACCESS
 from poms.explorer.policy_templates import (
     RESOURCE,
     create_default_access_policy,
-    update_or_create_file_access_policy,
+    upsert_storage_obj_access_policy,
 )
 
 EXPECTED_FULL_POLICY = {
@@ -72,7 +72,7 @@ class FileAccessPolicyTest(BaseTestCase):
 
         access_policy_1 = create_default_access_policy(file)
 
-        access_policy_2 = update_or_create_file_access_policy(
+        access_policy_2 = upsert_storage_obj_access_policy(
             file, access_policy_1.owner, access=READ_ACCESS
         )
         self.assertEqual(access_policy_1.id, access_policy_2.id)
@@ -142,7 +142,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
 
         access_policy_1 = create_default_access_policy(directory)
 
-        access_policy_2 = update_or_create_file_access_policy(
+        access_policy_2 = upsert_storage_obj_access_policy(
             directory, access_policy_1.owner, access=READ_ACCESS
         )
         self.assertEqual(access_policy_1.id, access_policy_2.id)

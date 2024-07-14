@@ -27,10 +27,10 @@ READ_ACCESS_POLICY = {
 
 
 def validate_obj_access(obj: Union[FinmarsFile, FinmarsDirectory], access: str):
-    if access not in [READ_ACCESS, FULL_ACCESS]:
-        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
     if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
         raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
+    if access not in [READ_ACCESS, FULL_ACCESS]:
+        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
 
 
 def create_policy(
@@ -57,7 +57,7 @@ def create_policy(
     return policy
 
 
-def update_or_create_file_access_policy(
+def upsert_storage_obj_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory], owner: Member, access: str
 ) -> AccessPolicy:
     validate_obj_access(obj, access)
@@ -84,5 +84,5 @@ def update_or_create_file_access_policy(
 def create_default_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory]
 ) -> AccessPolicy:
-    member = Member.objects.get(username="finmars_bot")
-    return update_or_create_file_access_policy(obj, member, FULL_ACCESS)
+    owner = Member.objects.get(username="finmars_bot")
+    return upsert_storage_obj_access_policy(obj, owner, FULL_ACCESS)
