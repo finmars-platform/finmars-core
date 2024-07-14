@@ -26,8 +26,14 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.assertIsNotNone(directory.created)
         self.assertIsNotNone(directory.modified)
 
-    def test__unique_path_and_name(self):
-        kwargs = dict(path="/test/")
+    @BaseTestCase.cases(
+        ("0", "/test"),
+        ("1", "/test/"),
+        ("2", "test/"),
+        ("3", "test"),
+    )
+    def test__unique_path_and_name(self, path):
+        kwargs = dict(path=path)
         FinmarsDirectory.objects.create(**kwargs)
 
         with self.assertRaises(Exception):
