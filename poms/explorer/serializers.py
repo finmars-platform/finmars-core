@@ -233,3 +233,9 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
             raise ValidationError(detail=f"Invalid size {size}", code="size")
 
         return size
+
+
+class StorageObjectAccessPolicySerializer(serializers.Serializer):
+
+    def set_access_policy(self):
+        pass

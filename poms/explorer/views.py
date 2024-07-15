@@ -25,6 +25,7 @@ from poms.explorer.serializers import (
     QuerySearchSerializer,
     ResponseSerializer,
     SearchResultSerializer,
+    StorageObjectAccessPolicySerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
@@ -47,6 +48,18 @@ from poms_app import settings
 _l = logging.getLogger("poms.explorer")
 
 storage = get_storage()
+
+
+class ContextMixin:
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                "storage": storage,
+                "space_code": self.request.space_code,
+            },
+        )
+        return context
 
 
 class ExplorerViewSet(AbstractViewSet):
@@ -415,19 +428,9 @@ class DownloadViewSet(AbstractViewSet):
             return response
 
 
-class MoveViewSet(AbstractViewSet):
+class MoveViewSet(ContextMixin, AbstractViewSet):
     serializer_class = MoveSerializer
     http_method_names = ["post"]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                "storage": storage,
-                "space_code": self.request.space_code,
-            },
-        )
-        return context
 
     @swagger_auto_schema(
         request_body=MoveSerializer(),
@@ -469,19 +472,9 @@ class MoveViewSet(AbstractViewSet):
         )
 
 
-class UnZipViewSet(AbstractViewSet):
+class UnZipViewSet(ContextMixin, AbstractViewSet):
     serializer_class = UnZipSerializer
     http_method_names = ["post"]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                "storage": storage,
-                "space_code": self.request.space_code,
-            },
-        )
-        return context
 
     @swagger_auto_schema(
         request_body=UnZipSerializer(),
@@ -601,3 +594,15 @@ class FinmarsFilesView(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         FinmarsFileFilter,
     ]
+
+
+class StorageObjectAccessPolicyViewSet(AbstractViewSet):
+    serializer_class = StorageObjectAccessPolicySerializer
+    http_method_names = ["post"]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.set_access_policy()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

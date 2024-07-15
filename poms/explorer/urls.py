@@ -69,3 +69,8 @@ router.register(
     explorer.FinmarsFilesView,
     "explorer_files",
 )
+router.register(
+    "set-access-policy",
+    explorer.StorageObjectAccessPolicyViewSet,
+    "explorer_set_access_policy",
+)
