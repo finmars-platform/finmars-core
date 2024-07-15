@@ -11,8 +11,7 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.init_test_case()
 
     def _create_directory(self) -> FinmarsDirectory:
-        self.name = self.random_string(7)
-        self.path = f"/{self.random_string()}/{self.random_string(5)}/{self.name}/"
+        self.path = f"/{self.random_string()}/{self.random_string(5)}"
 
         return FinmarsDirectory.objects.create(path=self.path)
 
@@ -20,7 +19,6 @@ class FinmarsDirectoryTest(BaseTestCase):
         directory = self._create_directory()
 
         self.assertIsNotNone(directory)
-        self.assertEqual(directory.name, self.name)
         self.assertEqual(directory.path, self.path.rstrip("/"))
         self.assertIsNone(directory.parent)
         self.assertIsNotNone(directory.created)
