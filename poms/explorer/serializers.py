@@ -254,7 +254,7 @@ class AccessPolicySerializer(serializers.ModelSerializer):
 
 
 class StorageObjectAccessPolicySerializer(serializers.Serializer):
-    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    full_path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
     object_type = serializers.CharField(allow_blank=False, max_length=10)
     policy = serializers.CharField(allow_blank=False, max_length=10)
     username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
@@ -278,11 +278,9 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         return value
 
     def validate_username(self, value: str) -> str:
-        space_code = self.context["space_code"]
         realm_code = self.context["realm_code"]
-        master_user = MasterUser.objects.filter(
-            space_code=space_code, realm_code=realm_code
-        ).first()
+        space_code = self.context["space_code"]
+        master_user = MasterUser.objects.filter(space_code=space_code).first()
         if not master_user:
             raise ValidationError(
                 detail=f"MasterUser not found for {realm_code}/{space_code}",
@@ -297,16 +295,17 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         return member
 
     def validate(self, attrs: dict) -> dict:
-        path = attrs["path"]
+        full_path = attrs["full_path"]
         object_type = attrs["object_type"]
         if object_type == DIR:
-            storage_object = FinmarsDirectory.objects.filter(path=path).first()
+            storage_object = FinmarsDirectory.objects.filter(path=full_path).first()
         else:
-            storage_object = FinmarsFile.objects.filter(path=path).first()
+            path, name = full_path.rsplit("/", 1)
+            storage_object = FinmarsFile.objects.filter(path=path, name=name).first()
 
         if storage_object is None:
             raise ValidationError(
-                detail=f"Storage object {path} of type {object_type} not found",
+                detail=f"Storage object {full_path} of type {object_type} not found",
                 code="path",
             )
 

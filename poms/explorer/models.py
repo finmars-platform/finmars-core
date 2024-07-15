@@ -101,15 +101,15 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
     Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """
 
-    name = models.CharField(
-        max_length=MAX_NAME_LENGTH,
-        db_index=True,
-        help_text="File name, including extension",
-    )
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
         db_index=True,
         help_text="Path to the file in the storage system",
+    )
+    name = models.CharField(
+        max_length=MAX_NAME_LENGTH,
+        db_index=True,
+        help_text="File name, including extension",
     )
     extension = models.CharField(
         blank=True,
