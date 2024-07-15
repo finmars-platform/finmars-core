@@ -19,3 +19,14 @@ class ListDatesFilter(BaseFilterBackend):
             return queryset.filter(date__in=dates.split(','))
 
         return queryset
+
+
+class CurrencyUserCodeFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        user_codes = request.query_params.getlist('user_codes', None)
+
+        if user_codes:
+            return queryset.filter(currency__user_code__in=user_codes)
+
+        return queryset
