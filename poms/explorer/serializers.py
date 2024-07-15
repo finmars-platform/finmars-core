@@ -6,7 +6,15 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import (
+    DIR,
+    FILE,
+    FULL,
+    MAX_PATH_LENGTH,
+    READ,
+    FinmarsDirectory,
+    FinmarsFile,
+)
 from poms.explorer.utils import check_is_true, path_is_file
 from poms.instruments.models import Instrument
 
@@ -236,6 +244,41 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
 
 
 class StorageObjectAccessPolicySerializer(serializers.Serializer):
+    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    object_type = serializers.CharField(allow_blank=False, max_length=10)
+    policy = serializers.CharField(allow_blank=False, max_length=10)
 
-    def set_access_policy(self):
-        pass
+    @staticmethod
+    def validate_path(value: str) -> str:
+        if bad_path_regex.search(value):
+            raise ValidationError(detail=f"Invalid path {value}", code="path")
+        return value
+
+    @staticmethod
+    def validate_object_type(value: str) -> str:
+        if value not in {DIR, FILE}:
+            raise ValidationError(detail=f"Invalid object type {value}", code="object")
+        return value
+
+    @staticmethod
+    def validate_policy(value: str) -> str:
+        if value not in {READ, FULL}:
+            raise ValidationError(detail=f"Invalid policy {value}", code="policy")
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        path = attrs["path"]
+        object_type = attrs["object_type"]
+        if object_type == DIR:
+            storage_object = FinmarsDirectory.objects.filter(path=path).first()
+        else:
+            storage_object = FinmarsFile.objects.filter(path=path).first()
+
+        if storage_object is None:
+            raise ValidationError(
+                detail=f"Storage object {path} of type {object_type} not found",
+                code="path",
+            )
+
+        attrs["storage_object"] = storage_object
+        return attrs

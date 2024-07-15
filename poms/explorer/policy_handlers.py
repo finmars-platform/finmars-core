@@ -4,19 +4,19 @@ from typing import Union
 from django.conf import settings
 
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.models import FULL_ACCESS, READ_ACCESS, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import FULL, READ, FinmarsDirectory, FinmarsFile
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
 RESOURCE = f"frn:{settings.SERVICE_NAME}:explorer:{{resource}}"
 
-FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{FULL_ACCESS}"
+FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{FULL}"
 READ_ACCESS_POLICY = {
     "Version": "2023-01-01",
     "Statement": [
         {
             "Action": [
-                f"{settings.SERVICE_NAME}:explorer:{READ_ACCESS}",
+                f"{settings.SERVICE_NAME}:explorer:{READ}",
             ],
             "Effect": "Allow",
             "Resource": "",
@@ -29,13 +29,13 @@ READ_ACCESS_POLICY = {
 def validate_obj_access(obj: Union[FinmarsFile, FinmarsDirectory], access: str):
     if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
         raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
-    if access not in [READ_ACCESS, FULL_ACCESS]:
-        raise ValueError(f"Access must be either '{READ_ACCESS}' or '{FULL_ACCESS}'")
+    if access not in [READ, FULL]:
+        raise ValueError(f"Access must be either '{READ}' or '{FULL}'")
 
 
 def create_policy(
     obj: Union[FinmarsFile, FinmarsDirectory],
-    access: str = READ_ACCESS,
+    access: str = READ,
 ) -> dict:
     """
     A function that creates a policy dict based on the type of
@@ -49,7 +49,7 @@ def create_policy(
     validate_obj_access(obj, access)
 
     policy = deepcopy(READ_ACCESS_POLICY)
-    if access == FULL_ACCESS:
+    if access == FULL:
         policy["Statement"][0]["Action"].append(FULL_ACTION)
 
     policy["Statement"][0]["Resource"] = RESOURCE.format(resource=obj.resource)
@@ -85,4 +85,4 @@ def create_default_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory]
 ) -> AccessPolicy:
     owner = Member.objects.get(username="finmars_bot")
-    return upsert_storage_obj_access_policy(obj, owner, FULL_ACCESS)
+    return upsert_storage_obj_access_policy(obj, owner, FULL)

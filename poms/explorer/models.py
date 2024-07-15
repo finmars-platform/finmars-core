@@ -14,8 +14,10 @@ MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
-READ_ACCESS = "read"
-FULL_ACCESS = "full"
+READ = "read"
+FULL = "full"
+DIR = "dir"
+FILE = "file"
 
 
 class ObjMixin:
@@ -70,7 +72,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         order_insertion_by = ["path"]
 
     def __str__(self):
-        return f"dir:{self.path}"
+        return f"{DIR}:{self.path}"
 
     @property
     def size(self):
@@ -136,7 +138,7 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
         ordering = ["path", "name"]
 
     def __str__(self):
-        return f"file:{self.fullpath}"
+        return f"{FILE}:{self.fullpath}"
 
     @property
     def fullpath(self):

@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.models import FinmarsDirectory, FinmarsFile, READ_ACCESS
+from poms.explorer.models import FinmarsDirectory, FinmarsFile, READ
 from poms.explorer.policy_handlers import (
     RESOURCE,
     create_default_access_policy,
@@ -73,7 +73,7 @@ class FileAccessPolicyTest(BaseTestCase):
         access_policy_1 = create_default_access_policy(file)
 
         access_policy_2 = upsert_storage_obj_access_policy(
-            file, access_policy_1.owner, access=READ_ACCESS
+            file, access_policy_1.owner, access=READ
         )
         self.assertEqual(access_policy_1.id, access_policy_2.id)
 
@@ -141,7 +141,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         access_policy_1 = create_default_access_policy(directory)
 
         access_policy_2 = upsert_storage_obj_access_policy(
-            directory, access_policy_1.owner, access=READ_ACCESS
+            directory, access_policy_1.owner, access=READ
         )
         self.assertEqual(access_policy_1.id, access_policy_2.id)
 
