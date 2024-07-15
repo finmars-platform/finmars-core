@@ -10,13 +10,17 @@ from poms.explorer.models import (
     DIR,
     FILE,
     FULL,
+    MAX_NAME_LENGTH,
     MAX_PATH_LENGTH,
     READ,
     FinmarsDirectory,
     FinmarsFile,
 )
+from poms.explorer.policy_handlers import upsert_storage_obj_access_policy
 from poms.explorer.utils import check_is_true, path_is_file
+from poms.iam.models import AccessPolicy
 from poms.instruments.models import Instrument
+from poms.users.models import MasterUser, Member
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -243,10 +247,17 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
         return size
 
 
+class AccessPolicySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessPolicy
+        fields = "__all__"
+
+
 class StorageObjectAccessPolicySerializer(serializers.Serializer):
     path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
     object_type = serializers.CharField(allow_blank=False, max_length=10)
     policy = serializers.CharField(allow_blank=False, max_length=10)
+    username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
 
     @staticmethod
     def validate_path(value: str) -> str:
@@ -266,6 +277,25 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
             raise ValidationError(detail=f"Invalid policy {value}", code="policy")
         return value
 
+    def validate_username(self, value: str) -> str:
+        space_code = self.context["space_code"]
+        realm_code = self.context["realm_code"]
+        master_user = MasterUser.objects.filter(
+            space_code=space_code, realm_code=realm_code
+        ).first()
+        if not master_user:
+            raise ValidationError(
+                detail=f"MasterUser not found for {realm_code}/{space_code}",
+                code="master_user",
+            )
+        member = Member.objects.filter(master_user=master_user, username=value).first()
+        if not master_user:
+            raise ValidationError(
+                detail=f"Member with username {value} not found in {realm_code}/{space_code}",
+                code="username",
+            )
+        return member
+
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
         object_type = attrs["object_type"]
@@ -282,3 +312,9 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
 
         attrs["storage_object"] = storage_object
         return attrs
+
+    def set_access_policy(self):
+        storage_object = self.validated_data["storage_object"]
+        policy = self.validated_data["policy"]
+        member = self.validated_data["username"]
+        return upsert_storage_obj_access_policy(storage_object, member, policy)

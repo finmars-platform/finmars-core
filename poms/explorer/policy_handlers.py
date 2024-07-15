@@ -29,7 +29,7 @@ READ_ACCESS_POLICY = {
 def validate_obj_access(obj: Union[FinmarsFile, FinmarsDirectory], access: str):
     if not (isinstance(obj, FinmarsFile) or isinstance(obj, FinmarsDirectory)):
         raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
-    if access not in [READ, FULL]:
+    if access not in {READ, FULL}:
         raise ValueError(f"Access must be either '{READ}' or '{FULL}'")
 
 

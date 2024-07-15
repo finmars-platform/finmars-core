@@ -17,6 +17,7 @@ from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
+    AccessPolicySerializer,
     DeletePathSerializer,
     FilePathSerializer,
     FinmarsFileSerializer,
@@ -57,6 +58,7 @@ class ContextMixin:
             {
                 "storage": storage,
                 "space_code": self.request.space_code,
+                "realm_code": self.request.realm_code,
             },
         )
         return context
@@ -596,13 +598,16 @@ class FinmarsFilesView(AbstractModelViewSet):
     ]
 
 
-class StorageObjectAccessPolicyViewSet(AbstractViewSet):
+class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
     serializer_class = StorageObjectAccessPolicySerializer
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.set_access_policy()
+        access_policy = serializer.set_access_policy()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            AccessPolicySerializer(access_policy).data,
+            status=status.HTTP_200_OK,
+        )
