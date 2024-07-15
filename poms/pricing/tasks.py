@@ -9,20 +9,9 @@ from poms.configuration.utils import run_workflow, wait_workflow_until_end
 _l = logging.getLogger('poms.pricing')
 
 
-@finmars_task(name="pricing.tasks.run_pricing", bind=True)
-def run_pricing(self, *args, **kwargs):
-    task = CeleryTask.objects.get(id=kwargs["task_id"])
-    task.celery_task_id = self.request.id
-    task.status = CeleryTask.STATUS_PENDING
-    task.save()
-    options = task.options_object
-
+def _run_pricing(task, reference_type, objects):
     last_exception = None
-    if options.get("instruments"):
-        objects = Instrument.objects.filter(user_code__in=options["instruments"])
-    else:
-        objects = Currency.objects.filter(user_code__in=options["currencies"])
-
+    options = task.options_object
     for count, obj in enumerate(objects):
         pricing_policies = obj.pricing_policies.all()
         if options.get("pricing_policies"):
@@ -31,9 +20,9 @@ def run_pricing(self, *args, **kwargs):
             payload = schema.options.copy()
             payload["date_from"] = options["date_from"]
             payload["date_to"] = options["date_to"]
-            payload["reference"] = obj.id  # must be id, for price-history/bulk-create/
+            payload["reference_type"] = reference_type
+            payload["reference"] = obj.user_code
             payload["pricing_policy"] = schema.pricing_policy.user_code
-            payload["pricing_policy_id"] = schema.pricing_policy.id  # must send id, for price-history/bulk-create/
             # TODO, when instrument whill have reference_dict we can fetch different reference base on provider
 
             try:
@@ -58,7 +47,31 @@ def run_pricing(self, *args, **kwargs):
                     "description": f"Instance {obj.id} pricing scheduled",
                 }
             )
+    return last_exception
 
-    if last_exception:
-        raise last_exception
+
+@finmars_task(name="pricing.tasks.run_pricing", bind=True)
+def run_pricing(self, *args, **kwargs):
+    task = CeleryTask.objects.get(id=kwargs["task_id"])
+    task.celery_task_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+    options = task.options_object
+
+    objects = instruments_exception = currencies_exception = None
+
+    if options.get("instrument_types"):
+        objects = Instrument.objects.filter(instrument_type__user_code__in=options["instrument_types"])
+    elif options.get("instruments"):
+        objects = Instrument.objects.filter(user_code__in=options["instruments"])
+    if objects:
+        instruments_exception = _run_pricing(task, "instruments", objects)
+
+    if options.get("currencies"):
+        objects = Currency.objects.filter(user_code__in=options["currencies"])
+        currencies_exception = _run_pricing(task, "currencies", objects)
+
+    exc = instruments_exception or currencies_exception
+    if exc:
+        raise exc
     task.save()
