@@ -16,7 +16,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.views import AbstractModelViewSet
-from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter
+from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter, CurrencyUserCodeFilter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.constants import MAIN_CURRENCIES
 from poms.currencies.serializers import (
@@ -204,6 +204,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
     serializer_class = CurrencyHistorySerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
+        CurrencyUserCodeFilter,
         OwnerByCurrencyFilter,
         AttributeFilter,
         ListDatesFilter,
