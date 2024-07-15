@@ -531,18 +531,19 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             f"instruments affected={len(instruments)}"
         )
 
-        if serializer.data["fields"].pop("pricing_policies", None):
+        if "pricing_policies" in serializer.data["fields_to_update"]:
+            serializer.data["fields_to_update"].remove("pricing_policies")
             self._apply_pricing_to_instruments(instrument_type, instruments, serializer.data["mode"])
 
         to_update = []
         for instrument in instruments:
-            for field in serializer.data["fields"]:
+            for field in serializer.data["fields_to_update"]:
                 if serializer.data["mode"] == "fill" and not getattr(instrument, field, None) \
                    or serializer.data["mode"] == "overwrite":
                     setattr(instrument, field, getattr(instrument_type, field))
                     to_update.append(instrument)
 
-        Instrument.objects.bulk_update(to_update, serializer.data["fields"])
+        Instrument.objects.bulk_update(to_update, serializer.data["fields_to_update"])
 
         return Response(
             {
@@ -556,33 +557,42 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         from poms.instruments.models import InstrumentPricingPolicy
 
         pricing_policies = instrument_type.pricing_policies.all()
+        pricing_policy_ids = [pp.pricing_policy_id for pp in pricing_policies]
         # Add missing pricing policies to each instrument
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
             instrument__in=instruments,
-            pricing_policy_id__in=[pp.pricing_policy_id for pp in pricing_policies]
+            pricing_policy_id__in=pricing_policy_ids
         )
-        existing_policies = set(instrument_pricing_policies.values_list('pricing_policy_id', 'instrument_id'))
+        existing_policies = {(ip.pricing_policy_id, ip.instrument_id): ip for ip in instrument_pricing_policies}
 
         to_create = []
+        to_update = []
         for instrument in instruments:
-            for pricing_policy in pricing_policies:
-                if (pricing_policy.id, instrument.id) not in existing_policies:
+            for instrument_type_pricing_policy in pricing_policies:
+                key = (instrument_type_pricing_policy.pricing_policy_id, instrument.id)
+                if key in existing_policies:
+                    ip = existing_policies[key]
+                    ip.target_pricing_schema_user_code = instrument_type_pricing_policy.target_pricing_schema_user_code,
+                    ip.options = instrument_type_pricing_policy.options
+                    to_update.append(ip)
+                else:
                     to_create.append(InstrumentPricingPolicy(
-                        pricing_policy=pricing_policy,
+                        pricing_policy=instrument_type_pricing_policy.pricing_policy,
                         instrument=instrument,
-                        target_pricing_schema_user_code=pricing_policy.target_pricing_schema_user_code,
-                        options=pricing_policy.options
+                        target_pricing_schema_user_code=instrument_type_pricing_policy.target_pricing_schema_user_code,
+                        options=instrument_type_pricing_policy.options
                     ))
 
         if to_create:
             InstrumentPricingPolicy.objects.bulk_create(to_create)
 
         if fill_or_overwrite == "overwrite":
+            InstrumentPricingPolicy.objects.bulk_update(to_update, ["target_pricing_schema_user_code", "options"])
             # Remove instrument pricing policies that are no longer associated with the given instrument type
             to_delete = InstrumentPricingPolicy.objects.filter(
                 instrument__in=instruments
             ).exclude(
-                pricing_policy__in=pricing_policies
+                pricing_policy_id__in=pricing_policy_ids
             )
             to_delete.delete()
 
