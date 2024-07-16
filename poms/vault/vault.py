@@ -18,6 +18,7 @@ def remove_trailing_slash_from_keys(data):
 class FinmarsVault():
 
     def __init__(self, realm_code=None, space_code=None):
+        from poms.system.models import VaultRecord
 
         self.realm_code = realm_code
         self.space_code = space_code
@@ -27,7 +28,7 @@ class FinmarsVault():
         else:
             self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.space_code + '/vault'
 
-        self.auth_token = settings.VAULT_TOKEN
+        self.auth_token = VaultRecord.objects.get(user_code='hashicorp-vault-token').data
 
     def get_headers(self):
 
