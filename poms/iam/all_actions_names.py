@@ -1,6 +1,7 @@
 ALL_EXTRA_ACTIONS = {
     "abort_transaction_import",
     "apply_type_to_instruments",
+    "attach_file",
     "book",
     "book_pending",
     "bulk_create",
@@ -100,6 +101,7 @@ ALL_EXTRA_ACTIONS = {
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
     "apply_type_to_instruments",
+    "attach_file",
     "book",
     "book_pending",
     "bulk_create",

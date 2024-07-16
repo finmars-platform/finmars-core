@@ -220,6 +220,7 @@ EXPECTED_INSTRUMENT = {
         "is_admin": True,
         "user": 1
     },
+    "files": [],
     "meta": {
         "content_type": "instruments.instrument",
         "app_label": "instruments",

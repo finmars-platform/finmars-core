@@ -4,27 +4,36 @@ import mimetypes
 import os
 from tempfile import NamedTemporaryFile
 
+from django.db.models import Q
 from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
-from poms.common.views import AbstractViewSet
+from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
     DeletePathSerializer,
     FilePathSerializer,
+    FinmarsFileSerializer,
     FolderPathSerializer,
     MoveSerializer,
-    TaskResponseSerializer,
+    QuerySearchSerializer,
     ResponseSerializer,
+    SearchResultSerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
 )
-from poms.explorer.tasks import move_directory_in_storage, unzip_file_in_storage
+from poms.explorer.tasks import (
+    move_directory_in_storage,
+    sync_files_with_database,
+    unzip_file_in_storage,
+)
 from poms.explorer.utils import (
     join_path,
     remove_first_dir_from_path,
@@ -512,3 +521,84 @@ class UnZipViewSet(AbstractViewSet):
             ).data,
             status=status.HTTP_200_OK,
         )
+
+
+class SyncViewSet(AbstractViewSet):
+    http_method_names = ["post"]
+
+    @swagger_auto_schema(
+        responses={
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Sync files with database",
+            type="sync_files_with_database",
+            options_object={},
+        )
+
+        sync_files_with_database.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class FinmarsFileFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        queries = request.query_params.get("query")
+        if not queries:
+            return queryset
+
+        options = Q()
+        for query in queries.split(","):
+            options.add(Q(name__icontains=query), Q.OR)
+            options.add(Q(path__icontains=query), Q.OR)
+
+        return queryset.filter(options)
+
+
+class SearchViewSet(AbstractModelViewSet):
+    serializer_class = SearchResultSerializer
+    queryset = FinmarsFile.objects.all()
+    http_method_names = ["get"]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        FinmarsFileFilter,
+    ]
+
+    @swagger_auto_schema(
+        query_serializer=QuerySearchSerializer(),
+        responses={
+            status.HTTP_200_OK: SearchResultSerializer(many=True),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class FinmarsFilesView(AbstractModelViewSet):
+    queryset = FinmarsFile.objects.all()
+    serializer_class = FinmarsFileSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        FinmarsFileFilter,
+    ]

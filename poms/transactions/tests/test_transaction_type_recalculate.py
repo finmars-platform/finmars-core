@@ -1,7 +1,4 @@
 import copy
-from unittest import skip
-
-from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
@@ -186,18 +183,3 @@ class TransactionTypeViewSetTest(BaseTestCase):
             data=payload,
         )
         self.assertEqual(response.status_code, 404, response.content)
-
-    @skip("need to create transaction type inputs")
-    def test__recalculate(self):
-        tt = self.create_transaction_type()
-
-        payload = copy.deepcopy(RECALCULATE_PAYLOAD)
-
-        response = self.client.put(
-            path=f"{self.url}{tt.id}/recalculate/",
-            format="json",
-            data=payload,
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()

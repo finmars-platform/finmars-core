@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Case, Prefetch, Q, Value, When
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -44,11 +45,11 @@ from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
-    InstrumentSelectSpecialQueryFilter,
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
 )
+from poms.explorer.serializers import FinmarsFileSerializer
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
     DATE_FORMAT,
@@ -75,6 +76,7 @@ from poms.instruments.models import (
 )
 from poms.instruments.serializers import (
     AccrualCalculationModelSerializer,
+    AttachmentSerializer,
     CostMethodSerializer,
     CountrySerializer,
     DailyPricingModelSerializer,
@@ -86,9 +88,9 @@ from poms.instruments.serializers import (
     InstrumentForSelectSerializer,
     InstrumentLightSerializer,
     InstrumentSerializer,
+    InstrumentTypeApplySerializer,
     InstrumentTypeLightSerializer,
     InstrumentTypeProcessSerializer,
-    InstrumentTypeApplySerializer,
     InstrumentTypeSerializer,
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
@@ -533,13 +535,18 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
         if "pricing_policies" in serializer.data["fields_to_update"]:
             serializer.data["fields_to_update"].remove("pricing_policies")
-            self._apply_pricing_to_instruments(instrument_type, instruments, serializer.data["mode"])
+            self._apply_pricing_to_instruments(
+                instrument_type, instruments, serializer.data["mode"]
+            )
 
         to_update = []
         for instrument in instruments:
             for field in serializer.data["fields_to_update"]:
-                if serializer.data["mode"] == "fill" and not getattr(instrument, field) \
-                   or serializer.data["mode"] == "overwrite":
+                if (
+                    serializer.data["mode"] == "fill"
+                    and not getattr(instrument, field)
+                    or serializer.data["mode"] == "overwrite"
+                ):
                     setattr(instrument, field, getattr(instrument_type, field))
                     to_update.append(instrument)
 
@@ -579,12 +586,14 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
                     to_update.append(ip)
                 else:
-                    to_create.append(InstrumentPricingPolicy(
-                        pricing_policy=instrument_type_pricing_policy.pricing_policy,
-                        instrument=instrument,
-                        target_pricing_schema_user_code=instrument_type_pricing_policy.target_pricing_schema_user_code,
-                        options=instrument_type_pricing_policy.options
-                    ))
+                    to_create.append(
+                        InstrumentPricingPolicy(
+                            pricing_policy=instrument_type_pricing_policy.pricing_policy,
+                            instrument=instrument,
+                            target_pricing_schema_user_code=instrument_type_pricing_policy.target_pricing_schema_user_code,
+                            options=instrument_type_pricing_policy.options,
+                        )
+                    )
 
         if to_create:
             InstrumentPricingPolicy.objects.bulk_create(to_create)
@@ -594,9 +603,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             # Remove instrument pricing policies that are no longer associated with the given instrument type
             to_delete = InstrumentPricingPolicy.objects.filter(
                 instrument__in=instruments
-            ).exclude(
-                pricing_policy_id__in=pricing_policy_ids
-            )
+            ).exclude(pricing_policy_id__in=pricing_policy_ids)
             to_delete.delete()
 
     @action(
@@ -1041,8 +1048,6 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events_range(self, request, realm_code=None, space_code=None):
-        print(f"request.data {request.data} ")
-
         date_from_string = request.data.get("effective_date_0", None)
         date_to_string = request.data.get("effective_date_1", None)
 
@@ -1168,6 +1173,26 @@ class InstrumentViewSet(AbstractModelViewSet):
         )
 
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=AttachmentSerializer,
+        responses={
+            status.HTTP_200_OK: FinmarsFileSerializer(many=True),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["patch"],
+        url_path="attach-file",
+        serializer_class=AttachmentSerializer,
+    )
+    def attach_file(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = AttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(instance)
+        response_json = FinmarsFileSerializer(instance=instance.files, many=True).data
+        return Response(response_json, status=status.HTTP_200_OK)
 
 
 # Not for getting List
@@ -1398,7 +1423,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             )
 
             if instrument_type:
-                url = url + "&instrument_type=" + str(instrument_type)
+                url = f"{url}&instrument_type={str(instrument_type)}"
 
             _l.info(f"Requesting URL {url}")
 
@@ -1464,15 +1489,15 @@ class InstrumentDatabaseSearchViewSet(APIView):
                 mappedItems = []
 
                 for item in response_json["results"]:
-                    mappedItem = {}
-
-                    mappedItem["instrumentType"] = item["instrument_type"]
-                    mappedItem["issueName"] = item["name"]
-                    mappedItem["referenceId"] = item["isin"]
-                    mappedItem["commonCode"] = ""
-                    mappedItem["figi"] = ""
-                    mappedItem["issuerName"] = ""
-                    mappedItem["wkn"] = ""
+                    mappedItem = {
+                        "instrumentType": item["instrument_type"],
+                        "issueName": item["name"],
+                        "referenceId": item["isin"],
+                        "commonCode": "",
+                        "figi": "",
+                        "issuerName": "",
+                        "wkn": "",
+                    }
 
                     mappedItems.append(mappedItem)
 
@@ -1559,9 +1584,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"PriceHistoryViewSet.valid_data {len(valid_data)}")
 
-        PriceHistory.objects.bulk_create(valid_data, update_conflicts=True,
-                                         unique_fields=["instrument", "pricing_policy", "date"],
-                                         update_fields=["principal_price", "accrued_price"])
+        PriceHistory.objects.bulk_create(
+            valid_data,
+            update_conflicts=True,
+            unique_fields=["instrument", "pricing_policy", "date"],
+            update_fields=["principal_price", "accrued_price"],
+        )
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")

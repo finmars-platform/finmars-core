@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.all_actions_names import (
@@ -24,8 +23,8 @@ class ActionHandlingTest(BaseTestCase):
         self.init_test_case()
         self.all_actions = set()
         self.all_actions_names = set()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.all_viewsets = get_viewsets_from_all_apps()
         for viewset in self.all_viewsets:
             for action in viewset.get_extra_actions():
@@ -73,13 +72,10 @@ class ActionHandlingTest(BaseTestCase):
 
         generate_full_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 163)
+        self.assertEqual(all_access_policies.count(), 166)
 
         for policy in all_access_policies:
-            self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
-            self.assertTrue("-full" in policy.user_code)
-            self.assertTrue("Full Access" in policy.name)
+            self._check_policy(policy, "-full", "Full Access")
 
     def test__generate_readonly_access_policies_for_viewsets(self):
         all_access_policies = AccessPolicy.objects.all()
@@ -87,11 +83,14 @@ class ActionHandlingTest(BaseTestCase):
 
         policies = generate_readonly_access_policies_for_viewsets(self.all_viewsets)
 
-        self.assertEqual(all_access_policies.count(), 187)
-        self.assertEqual(len(policies), 203)
+        self.assertEqual(all_access_policies.count(), 190)
+        self.assertEqual(len(policies), 206)
 
         for policy in all_access_policies:
-            self.assertEqual(policy.owner.username, "finmars_bot")
-            self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
-            self.assertTrue("-readonly" in policy.user_code)
-            self.assertTrue("Readonly Access" in policy.name)
+            self._check_policy(policy, "-readonly", "Readonly Access")
+
+    def _check_policy(self, policy, arg1, arg2):
+        self.assertEqual(policy.owner.username, "finmars_bot")
+        self.assertTrue(f"local.poms.{self.space_code}" in policy.user_code)
+        self.assertTrue(arg1 in policy.user_code)
+        self.assertTrue(arg2 in policy.name)
