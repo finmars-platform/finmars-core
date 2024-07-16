@@ -15,6 +15,7 @@ from poms.instruments.models import (
     EventScheduleConfig,
     GeneratedEvent,
     Instrument,
+    InstrumentAttachment,
     InstrumentClass,
     InstrumentFactorSchedule,
     InstrumentType,
@@ -123,6 +124,16 @@ class EventScheduleInline(admin.TabularInline):
     }
 
 
+class InstrumentAttachmentInline(admin.TabularInline):
+    model = InstrumentAttachment
+    extra = 0
+    formfield_overrides = {
+        models.TextField: {
+            "widget": widgets.Textarea(attrs={"cols": "40", "rows": "3"})
+        },
+    }
+
+
 class InstrumentFactorScheduleInline(admin.TabularInline):
     model = InstrumentFactorSchedule
     extra = 0
@@ -162,6 +173,7 @@ class InstrumentAdmin(AbstractModelAdmin):
         InstrumentFactorScheduleInline,
         EventScheduleInline,
         GenericAttributeInline,
+        InstrumentAttachmentInline,
     ]
     actions = [
         "calculate_prices_accrued_price",
