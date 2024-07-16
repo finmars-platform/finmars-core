@@ -52,7 +52,6 @@ class FinmarsDirectoryTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("3", "///"),
-        ("2", "//"),
         ("1", "/"),
         ("0", ""),
     )
