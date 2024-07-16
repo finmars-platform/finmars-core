@@ -1,8 +1,7 @@
-from django.conf import settings
-from django.db import models
 from pathlib import Path
 
-# from django.utils.crypto import get_random_string
+from django.conf import settings
+from django.db import models
 
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -10,6 +9,10 @@ from poms.common.models import DataTimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
+
+# from django.utils.crypto import get_random_string
+
+
 
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
