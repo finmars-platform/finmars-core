@@ -544,13 +544,14 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             for field in serializer.data["fields_to_update"]:
                 if (
                     serializer.data["mode"] == "fill"
-                    and not getattr(instrument, field, None)
+                    and not getattr(instrument, field)
                     or serializer.data["mode"] == "overwrite"
                 ):
                     setattr(instrument, field, getattr(instrument_type, field))
                     to_update.append(instrument)
 
-        Instrument.objects.bulk_update(to_update, serializer.data["fields_to_update"])
+        if serializer.data["fields_to_update"]:
+            Instrument.objects.bulk_update(to_update, serializer.data["fields_to_update"])
 
         return Response(
             {
@@ -579,8 +580,10 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 key = (instrument_type_pricing_policy.pricing_policy_id, instrument.id)
                 if key in existing_policies:
                     ip = existing_policies[key]
-                    ip.target_pricing_schema_user_code = instrument_type_pricing_policy.target_pricing_schema_user_code,
+
+                    ip.target_pricing_schema_user_code = instrument_type_pricing_policy.target_pricing_schema_user_code
                     ip.options = instrument_type_pricing_policy.options
+
                     to_update.append(ip)
                 else:
                     to_create.append(

@@ -65,11 +65,11 @@ def run_pricing(self, *args, **kwargs):
     elif options.get("instruments"):
         objects = Instrument.objects.filter(user_code__in=options["instruments"])
     if objects:
-        instruments_exception = _run_pricing(task, "instruments", objects)
+        instruments_exception = _run_pricing(task, "instrument", objects)
 
     if options.get("currencies"):
         objects = Currency.objects.filter(user_code__in=options["currencies"])
-        currencies_exception = _run_pricing(task, "currencies", objects)
+        currencies_exception = _run_pricing(task, "currency", objects)
 
     exc = instruments_exception or currencies_exception
     if exc:
