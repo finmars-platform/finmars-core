@@ -100,7 +100,7 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
 
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
-        db_index=True,
+        unique=True,
         help_text="Path to the file in the storage system with name and extension",
     )
     size = models.PositiveBigIntegerField(

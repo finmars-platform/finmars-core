@@ -51,9 +51,10 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.assertEqual(directory.path, "/a/b")
 
     @BaseTestCase.cases(
-        ("0", "/"),
-        ("1", "//"),
-        ("2", "///"),
+        ("3", "///"),
+        ("2", "//"),
+        ("1", "/"),
+        ("0", ""),
     )
     def test__fix_directory_name(self, path):
         kwargs = dict(path=path)

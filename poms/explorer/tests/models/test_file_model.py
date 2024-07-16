@@ -50,11 +50,11 @@ class FinmarsFileTest(BaseTestCase):
     def test__unique_path_and_name(self):
         kwargs = dict(
             path="/test/name.pdf",
-            size=self.random_int(1, 10000000),
+            size=1,
         )
         FinmarsFile.objects.create(**kwargs)
 
-        kwargs["size"] = self.random_int(100000, 100000000)
+        kwargs["size"] = 2
         with self.assertRaises(Exception):
             FinmarsFile.objects.create(**kwargs)
 

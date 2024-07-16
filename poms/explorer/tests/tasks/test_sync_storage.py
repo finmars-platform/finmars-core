@@ -31,7 +31,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
         self.assertIsNotNone(file)
         self.assertEqual(file.size, size)
         self.assertEqual(file.path, filepath)
-        self.assertEqual(file.extension, "doc")
+        self.assertEqual(file.extension, ".doc")
 
     def test__update_existing_object(self):
         name = "file.doc"
