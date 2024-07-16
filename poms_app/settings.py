@@ -2,6 +2,7 @@
 Django settings for the main Backend project.
 """
 
+
 import os
 from datetime import timedelta
 
@@ -24,7 +25,7 @@ INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, schedule
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-print('BASE_DIR %s' % BASE_DIR)
+print(f'BASE_DIR {BASE_DIR}')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL("DEBUG", True)
@@ -90,7 +91,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
 
-
     "drf_yasg",
     "django_filters",
     "mptt",
@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "poms.configuration",
     "poms.auth_tokens",
     "poms.widgets",
+    "poms.explorer",
 
     "crispy_forms",
     "rest_framework",
@@ -171,10 +172,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
 
-
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
-      # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     # "django.middleware.cache.UpdateCacheMiddleware",

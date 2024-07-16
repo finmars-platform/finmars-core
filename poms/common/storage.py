@@ -30,6 +30,16 @@ def download_local_folder_as_zip(folder_path):
     return zip_file_path
 
 
+def pretty_size(file_size: int) -> str:
+    if file_size == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    i = int(math.floor(math.log(file_size, 1024)))
+    p = math.pow(1024, i)
+    s = round(file_size / p, 2)
+    return f"{s} {size_name[i]}"
+
+
 class NamedBytesIO(BytesIO):
     def __init__(self, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,9 +60,10 @@ class EncryptedStorage(object):
                 self.symmetric_key = self._get_symmetric_key_from_vault()
 
             except Exception as e:
-                raise Exception(
-                    f"Could not connect to Vault symmetric_key is not set. Error {e}"
-                )
+                raise RuntimeError(
+                    f"Could not connect to Vault, symmetric_key is not set. "
+                    f"Error {repr(e)}"
+                ) from e
 
     def _get_symmetric_key_from_vault(self):
         # Retrieve the symmetric key from Vault
@@ -147,14 +158,9 @@ class FinmarsStorage(EncryptedStorage):
         self.delete(name)
         return super().get_available_name(name, max_length)
 
-    def convert_size(self, size_bytes):
-        if size_bytes == 0:
-            return "0B"
-        size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-        i = int(math.floor(math.log(size_bytes, 1024)))
-        p = math.pow(1024, i)
-        s = round(size_bytes / p, 2)
-        return f"{s} {size_name[i]}"
+    @staticmethod
+    def convert_size(size_bytes: int) -> str:
+        return pretty_size(size_bytes)
 
     def folder_exists_and_has_files(self, folder_path):
         # Ensure the folder path ends with a '/'
@@ -238,8 +244,7 @@ class FinmarsStorage(EncryptedStorage):
         )
 
         output_zip_filename = os.path.join(
-            settings.BASE_DIR
-            + "/tmp/temp_download/%s" % (unique_path_prefix + "_archive.zip")
+            f"{settings.BASE_DIR}/tmp/temp_download/{unique_path_prefix}_archive.zip"
         )
 
         self.zip_directory([temp_dir_path], output_zip_filename)
@@ -266,8 +271,7 @@ class FinmarsStorage(EncryptedStorage):
         for path in paths:
             local_filename = temp_dir_path
 
-            _l.info("path %s" % path)
-            _l.info("local_filename %s" % local_filename)
+            _l.info(f"path {path} local_filename {local_filename}")
 
             if path.endswith("/"):  # Assuming the path is a directory
                 local_filename = f"{local_filename}/" + path.split("/")[-2]
@@ -277,16 +281,14 @@ class FinmarsStorage(EncryptedStorage):
                         master_user.space_code + path, local_filename
                     )
                 else:
-                    self.download_directory(
-                        master_user.space_code + "/" + path, local_filename
-                    )
+                    self.download_directory(f"{master_user.space_code}/{path}", local_filename)
 
             else:
                 local_filename = f"{local_filename}/" + path.split("/")[-1]
 
                 # local_filename = local_filename  + '/' + path.split('/')[-1]
 
-                _l.info("local_filename %s " % local_filename)
+                _l.info(f"local_filename {local_filename} ")
 
                 if path[0] == "/":
                     self.download_file_and_save_locally(
@@ -294,12 +296,11 @@ class FinmarsStorage(EncryptedStorage):
                     )
                 else:
                     self.download_file_and_save_locally(
-                        master_user.space_code + "/" + path, local_filename
+                        f"{master_user.space_code}/{path}", local_filename
                     )
 
         output_zip_filename = os.path.join(
-            settings.BASE_DIR
-            + "/tmp/temp_download/%s" % (unique_path_prefix + "_archive.zip")
+            f'{settings.BASE_DIR}/tmp/temp_download/{unique_path_prefix}_archive.zip'
         )
 
         self.zip_directory([temp_dir_path], output_zip_filename)

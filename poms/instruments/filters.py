@@ -54,7 +54,6 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         user_code_q = Q()
         short_name_q = Q()
         reference_for_pricing_q = Q()
-        instrument_type_name = Q()
         instrument_type_user_code = Q()
 
         for piece in pieces:
@@ -89,27 +88,19 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         if instrument_type:
             options.add(Q(instrument_type__user_code=instrument_type), Q.AND)
 
-        queryset = queryset.filter(options)
+        return queryset.filter(options)
 
-        return queryset
 
 class ListDatesFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
+        dates = request.query_params.getlist("dates", None)
 
-        dates = request.query_params.getlist('dates', None)
-
-        print('dates %s' % dates )
-
-        if dates:
-            return queryset.filter(date__in=dates)
-
-        return queryset
+        return queryset.filter(date__in=dates) if dates else queryset
 
 
 class InstrumentsUserCodeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-
-        user_codes = request.query_params.getlist('user_codes', None)
+        user_codes = request.query_params.getlist("user_codes", None)
 
         if user_codes:
             return queryset.filter(instrument__user_code__in=user_codes)

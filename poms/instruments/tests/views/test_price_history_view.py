@@ -1,7 +1,5 @@
 from copy import deepcopy
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument, PriceHistory, PricingPolicy
 
@@ -149,13 +147,14 @@ CREATE_DATA = {
 class PriceHistoryViewSetTest(BaseTestCase):
     databases = "__all__"
 
-
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/instruments/price-history/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/instruments/price-history/"
+        )
         self.pricing_policy = None
         self.pricing_history = None
         self.instrument = Instrument.objects.first()
@@ -210,7 +209,9 @@ class PriceHistoryViewSetTest(BaseTestCase):
             response_json["principal_price"], pricing_history.principal_price
         )
         self.assertEqual(response_json["accrued_price"], pricing_history.accrued_price)
-        self.assertIn("object has no attribute 'dayCounter'", response_json["error_message"])
+        self.assertIn(
+            "object has no attribute 'dayCounter'", response_json["error_message"]
+        )
 
     def test__list_attributes(self):
         response = self.client.get(path=f"{self.url}attributes/")
@@ -374,5 +375,5 @@ class PriceHistoryViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["accrued_price"], 0.0)
 
-        price_history = PriceHistory.objects.get(pk=response_json['id'])
+        price_history = PriceHistory.objects.get(pk=response_json["id"])
         self.assertEqual(price_history.accrued_price, 0.0)
