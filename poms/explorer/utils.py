@@ -306,12 +306,9 @@ def sync_file(
         directory: directory to which the file belongs
     """
 
-    path, name = os.path.split(filepath)
-    size = storage.size(filepath)
-
+    _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
     FinmarsFile.objects.update_or_create(
-        name=name,
-        path=path,
+        path=filepath,
         directory=directory,
-        defaults=dict(size=size),
+        defaults=dict(size=storage.size(filepath)),
     )

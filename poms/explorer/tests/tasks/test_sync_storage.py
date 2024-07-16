@@ -27,10 +27,10 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(name=name).first()
+        file = FinmarsFile.objects.filter(path=filepath).first()
         self.assertIsNotNone(file)
         self.assertEqual(file.size, size)
-        self.assertEqual(file.fullpath, filepath)
+        self.assertEqual(file.path, filepath)
         self.assertEqual(file.extension, "doc")
 
     def test__update_existing_object(self):
@@ -41,7 +41,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(name=name).first()
+        file = FinmarsFile.objects.filter(path=filepath).first()
         self.assertEqual(file.size, old_size)
 
         # test that new size will be used in existing File

@@ -48,7 +48,7 @@ class FinmarsDirectoryTest(BaseTestCase):
         kwargs = dict(path=path)
         directory = FinmarsDirectory.objects.create(**kwargs)
 
-        self.assertEqual(directory.fullpath, "/a/b")
+        self.assertEqual(directory.path, "/a/b")
 
     @BaseTestCase.cases(
         ("0", "/"),
@@ -59,7 +59,7 @@ class FinmarsDirectoryTest(BaseTestCase):
         kwargs = dict(path=path)
         directory = FinmarsDirectory.objects.create(**kwargs)
 
-        self.assertEqual(directory.fullpath, "/")
+        self.assertEqual(directory.path, "/")
 
     def test__directory_tree(self):
         kwargs = dict(path="/root")

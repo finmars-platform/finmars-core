@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from pathlib import Path
 
 # from django.utils.crypto import get_random_string
 
@@ -31,17 +32,16 @@ class ObjMixin:
             f":explorer:{self.resource}"
         )
 
-    def _fix_path(self):
-        """
-        Ensures the path starts with a slash and does not end with a slash.
-        If the path is empty, sets it to "/".
-        """
-        if self.path and self.path[0] != "/":
-            self.path = "/" + self.path
-        if self.path and self.path[-1] == "/":
-            self.path = self.path.rstrip("/")
-        if not self.path:
-            self.path = "/"
+    @staticmethod
+    def fix_path(path: str) -> str:
+        if not path:
+            return "/"
+
+        path = str(Path(path))
+        if not path.startswith("/"):
+            path = f"/{path}"
+
+        return path
 
 
 class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
@@ -82,17 +82,14 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
     def name(self):
         return self.path
 
-    @property
-    def fullpath(self):
-        return self.path
-
     def save(self, *args, **kwargs):
         """
         This method overrides the default save method. It removes any trailing slashes
         from the `path` attribute and sets the `name` attribute to the
         last part of the `path`.
         """
-        self._fix_path()
+        self.path = self.fix_path(self.path)
+
         super().save(*args, **kwargs)
 
 
@@ -104,18 +101,7 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
     path = models.CharField(
         max_length=MAX_PATH_LENGTH,
         db_index=True,
-        help_text="Path to the file in the storage system",
-    )
-    name = models.CharField(
-        max_length=MAX_NAME_LENGTH,
-        db_index=True,
-        help_text="File name, including extension",
-    )
-    extension = models.CharField(
-        blank=True,
-        default="",
-        max_length=MAX_NAME_LENGTH,
-        help_text="File name extension",
+        help_text="Path to the file in the storage system with name and extension",
     )
     size = models.PositiveBigIntegerField(
         help_text="Size of the file in bytes",
@@ -129,28 +115,24 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
     )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["path", "name"],
-                name="unique_file_path",
-            )
-        ]
-        ordering = ["path", "name"]
+        ordering = ["path"]
 
     def __str__(self):
-        return f"{FILE}:{self.fullpath}"
+        return f"{FILE}:{self.path}"
 
     @property
-    def fullpath(self):
-        return f"{self.path}/{self.name}"
+    def name(self) -> str:
+        path = Path(self.path)
+        return path.name
 
-    def _extract_extension(self) -> str:
-        parts = self.name.rsplit(".", 1)
-        return parts[1] if len(parts) > 1 else ""
+    @property
+    def extension(self) -> str:
+        path = Path(self.path)
+        return path.suffix
 
     def save(self, *args, **kwargs):
-        self._fix_path()
-        self.extension = self._extract_extension()
+        self.path = self.fix_path(self.path)
+
         super().save(*args, **kwargs)
 
 

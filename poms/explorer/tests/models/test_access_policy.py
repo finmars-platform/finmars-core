@@ -31,10 +31,10 @@ class FileAccessPolicyTest(BaseTestCase):
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
         path = (
-            f"/{self.random_string()}/{self.random_string(5)}/{self.random_string(7)}/"
+            f"/{self.random_string()}/{self.random_string(5)}/{name}/"
         )
         size = self.random_int()
-        return FinmarsFile.objects.create(name=name, path=path, size=size)
+        return FinmarsFile.objects.create(path=path, size=size)
 
     def test__file_access_policy_created(self):
         file = self._create_file()
@@ -48,7 +48,7 @@ class FileAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:file:{file.fullpath}"
+            f"local.poms.space00000:finmars:explorer:file:{file.path}"
         )
         self.assertEqual(access_policy.user_code, expected_user_code)
 
@@ -84,7 +84,7 @@ class FileAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy_2.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:file:{file.fullpath}"
+            f"local.poms.space00000:finmars:explorer:file:{file.path}"
         )
         self.assertEqual(access_policy_2.user_code, expected_user_code)
 
@@ -116,7 +116,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:dir:{directory.fullpath}"
+            f"local.poms.space00000:finmars:explorer:dir:{directory.path}"
         )
         self.assertEqual(access_policy.user_code, expected_user_code)
 
@@ -152,7 +152,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         self.assertEqual(access_policy_2.owner.username, "finmars_bot")
 
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:dir:{directory.fullpath}"
+            f"local.poms.space00000:finmars:explorer:dir:{directory.path}"
         )
         self.assertEqual(access_policy_2.user_code, expected_user_code)
 
