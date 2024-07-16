@@ -229,8 +229,7 @@ class InstrumentViewSetTest(BaseTestCase):
 
         instrument = self.create_instrument("bond")
         file = FinmarsFile.objects.create(
-            name="name.pdf",
-            path="/root/etc/system/",
+            path="/root/etc/system/name.pdf",
             size=1234567890,
         )
         instrument.files.add(file, through_defaults=None)
@@ -244,4 +243,4 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(file_data["name"], file.name)
         self.assertEqual(file_data["path"], file.path)
         self.assertEqual(file_data["size"], file.size)
-        self.assertEqual(file_data["extension"], "pdf")
+        self.assertEqual(file_data["extension"], ".pdf")
