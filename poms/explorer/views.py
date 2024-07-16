@@ -20,7 +20,7 @@ from poms.explorer.serializers import (
     AccessPolicySerializer,
     DeletePathSerializer,
     FilePathSerializer,
-    FolderPathSerializer,
+    DirectoryPathSerializer,
     MoveSerializer,
     QuerySearchSerializer,
     ResponseSerializer,
@@ -64,11 +64,11 @@ class ContextMixin:
 
 
 class ExplorerViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    serializer_class = DirectoryPathSerializer
     http_method_names = ["get"]
 
     @swagger_auto_schema(
-        query_serializer=FolderPathSerializer(),
+        query_serializer=DirectoryPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
         },
@@ -172,11 +172,11 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    serializer_class = DirectoryPathSerializer
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FolderPathSerializer(),
+        request_body=DirectoryPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),

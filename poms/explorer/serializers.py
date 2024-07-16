@@ -1,6 +1,7 @@
 import mimetypes
 import os.path
 import re
+from pathlib import Path
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -23,6 +24,10 @@ from poms.instruments.models import Instrument
 from poms.users.models import MasterUser, Member
 
 
+forbidden_symbols_in_path = r'[:*?"<>|;&]'
+bad_path_regex = re.compile(forbidden_symbols_in_path)
+
+
 class BasePathSerializer(serializers.Serializer):
     path = serializers.CharField(
         required=True,
@@ -30,22 +35,26 @@ class BasePathSerializer(serializers.Serializer):
         allow_null=False,
     )
 
-    @staticmethod
-    def validate_path(path: str):
-        return path.strip("/") if path else ""
+    def validate_path(self, value: str) -> str:
+        if bad_path_regex.search(value):
+            raise ValidationError(detail=f"Invalid path {value}", code="path")
+
+        path = str(Path(value))
+        # TODO: check if path exists and has policy
+        return path
 
 
-class FolderPathSerializer(BasePathSerializer):
-    path = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        allow_null=True,
-        default="",
-    )
+class DirectoryPathSerializer(BasePathSerializer):
+    pass
 
 
 class FilePathSerializer(BasePathSerializer):
-    pass
+    def validate_path(self, value: str) -> str:
+        path = super().validate_path(value)
+        parent = Path(path).parent
+        # TODO: check if parent exists and has policy
+        path = str(str)
+        return path
 
 
 class DeletePathSerializer(BasePathSerializer):
@@ -202,8 +211,6 @@ class QuerySearchSerializer(serializers.Serializer):
     query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
 
 
-forbidden_symbols_in_path = r'[:*?"<>|;&]'
-bad_path_regex = re.compile(forbidden_symbols_in_path)
 
 
 class InstrumentMicroSerializer(serializers.ModelSerializer):
