@@ -63,8 +63,7 @@ class SearchFileViewSetTest(BaseTestCase):
     def test__list_no_query(self):
         size = self.random_int(111, 10000000)
         kwargs = dict(
-            name="name_1.pdf",
-            path="/test/",
+            path="/test/name_1.pdf",
             size=size,
         )
         file = FinmarsFile.objects.create(**kwargs)
@@ -92,8 +91,7 @@ class SearchFileViewSetTest(BaseTestCase):
         amount = self.random_int(5, 10)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root/etc/system/",
+                path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
         response = self.client.get(self.url)
@@ -121,8 +119,7 @@ class SearchFileViewSetTest(BaseTestCase):
         amount = self.random_int(5, 9)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root/etc/system/",
+                path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
 

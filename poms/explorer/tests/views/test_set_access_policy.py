@@ -42,11 +42,10 @@ class FinmarsFileViewSetTest(BaseTestCase):
             f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-access-policy/"
         )
         self.path = "/test/next"
-        self.filename = "test.pdf"
+        self.filename = f"{self.path}/test.pdf"
         self.directory = FinmarsDirectory.objects.create(path=self.path)
         self.file = FinmarsFile.objects.create(
             path=self.path,
-            name=self.filename,
             size=11111,
         )
 
@@ -56,7 +55,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
     )
     def test__file_access_policy_created(self, policy):
         data = {
-            "full_path": f"{self.path}/{self.filename}",
+            "path": f"{self.path}/{self.filename}",
             "object_type": FILE,
             "policy": policy,
             "username": "finmars_bot",
@@ -67,7 +66,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(response_json.keys(), expected_response.keys())
-        expected_user_code = f"local.poms.space00000:finmars:explorer:file:{self.path}/{self.filename}"
+        expected_user_code = f"local.poms.space00000:finmars:explorer:file:{self.path}"
         self.assertEqual(response_json["user_code"], expected_user_code)
 
         actions = response_json["policy"]["Statement"][0]["Action"]
@@ -86,7 +85,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
     )
     def test__directory_access_policy_created(self, policy):
         data = {
-            "full_path": self.path,
+            "path": self.path,
             "object_type": DIR,
             "policy": policy,
             "username": "finmars_bot",

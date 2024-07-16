@@ -50,7 +50,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(name=name).first()
+        file = FinmarsFile.objects.filter(path=filepath).first()
         self.assertEqual(file.size, new_size)
 
 

@@ -202,9 +202,6 @@ class QuerySearchSerializer(serializers.Serializer):
     query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
 
 
-forbidden_symbols_in_name = r'[/\\:*?"<>|;&]'
-bad_name_regex = re.compile(forbidden_symbols_in_name)
-
 forbidden_symbols_in_path = r'[:*?"<>|;&]'
 bad_path_regex = re.compile(forbidden_symbols_in_path)
 
@@ -220,10 +217,29 @@ class InstrumentMicroSerializer(serializers.ModelSerializer):
 
 class FinmarsFileSerializer(serializers.ModelSerializer):
     instruments = InstrumentMicroSerializer(many=True, read_only=True)
+    name = serializers.SerializerMethodField()
+    extension = serializers.SerializerMethodField()
 
     class Meta:
         model = FinmarsFile
-        fields = "__all__"
+        fields = [
+            "id",
+            "path",
+            "size",
+            "name",
+            "extension",
+            "created",
+            "modified",
+            "instruments",
+        ]
+
+    @staticmethod
+    def get_name(obj: FinmarsFile) -> str:
+        return obj.name
+
+    @staticmethod
+    def get_extension(obj: FinmarsFile) -> str:
+        return obj.extension
 
     @staticmethod
     def validate_path(path: str) -> str:
@@ -233,15 +249,8 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
         return path
 
     @staticmethod
-    def validate_name(name: str) -> str:
-        if bad_name_regex.search(name):
-            raise ValidationError(detail=f"Invalid name {name}", code="name")
-
-        return name
-
-    @staticmethod
     def validate_size(size: int) -> int:
-        if size < 1:
+        if size < 0:
             raise ValidationError(detail=f"Invalid size {size}", code="size")
 
         return size
@@ -254,7 +263,7 @@ class AccessPolicySerializer(serializers.ModelSerializer):
 
 
 class StorageObjectAccessPolicySerializer(serializers.Serializer):
-    full_path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
     object_type = serializers.CharField(allow_blank=False, max_length=10)
     policy = serializers.CharField(allow_blank=False, max_length=10)
     username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
@@ -295,17 +304,16 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         return member
 
     def validate(self, attrs: dict) -> dict:
-        full_path = attrs["full_path"]
+        path = attrs["path"]
         object_type = attrs["object_type"]
         if object_type == DIR:
-            storage_object = FinmarsDirectory.objects.filter(path=full_path).first()
+            storage_object = FinmarsDirectory.objects.filter(path=path).first()
         else:
-            path, name = full_path.rsplit("/", 1)
-            storage_object = FinmarsFile.objects.filter(path=path, name=name).first()
+            storage_object = FinmarsFile.objects.filter(path=path).first()
 
         if storage_object is None:
             raise ValidationError(
-                detail=f"Storage object {full_path} of type {object_type} not found",
+                detail=f"Storage object {path} of type {object_type} not found",
                 code="path",
             )
 

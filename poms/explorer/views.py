@@ -20,7 +20,6 @@ from poms.explorer.serializers import (
     AccessPolicySerializer,
     DeletePathSerializer,
     FilePathSerializer,
-    FinmarsFileSerializer,
     FolderPathSerializer,
     MoveSerializer,
     QuerySearchSerializer,
@@ -565,7 +564,6 @@ class FinmarsFileFilter(BaseFilterBackend):
         options = Q()
         for query in queries.split(","):
             query = query.strip("/")
-            options.add(Q(name__icontains=query), Q.OR)
             options.add(Q(path__icontains=query), Q.OR)
 
         return queryset.filter(options)
@@ -588,14 +586,6 @@ class SearchViewSet(AbstractModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-class FinmarsFilesView(AbstractModelViewSet):
-    queryset = FinmarsFile.objects.all()
-    serializer_class = FinmarsFileSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        FinmarsFileFilter,
-    ]
 
 
 class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
