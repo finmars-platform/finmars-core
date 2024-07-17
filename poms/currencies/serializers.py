@@ -100,8 +100,10 @@ class CurrencySerializer(
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
 
+        to_delete = CurrencyPricingPolicy.objects.filter(currency=instance)
         if len(ids):
-            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
+            to_delete = to_delete.exclude(id__in=ids)
+        to_delete.delete()
 
     @staticmethod
     def _update_and_save_pricing_policies(item: dict, obj: CurrencyPricingPolicy):
