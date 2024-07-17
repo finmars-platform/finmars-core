@@ -107,7 +107,7 @@ def add_user_to_storage_obj_policy(obj: StorageObject, user: Member, access: str
 
 def get_member_explorer_policies(member: Member) -> List[AccessPolicy]:
     """
-    Get all AccessPolicy objects for the member from cache or db
+    Get all AccessPolicy objects for StorageObjects for the member from cache or db
     Args:
         member:
     Returns:
@@ -137,6 +137,7 @@ def get_member_explorer_policies(member: Member) -> List[AccessPolicy]:
 
 
 def verify_access_policy(member: Member, obj: StorageObject, access: str):
-    # TODO load all 'explorer' policies for the user
+    access_policies = get_member_explorer_policies(member)
+    resource = obj.resource
     # TODO validate path against policies
     return AccessPolicy.objects.filter(user_code=obj.policy_user_code()).exists()

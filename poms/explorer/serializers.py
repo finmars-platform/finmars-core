@@ -335,4 +335,7 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         storage_object = self.validated_data["storage_object"]
         policy = self.validated_data["policy"]
         member = self.validated_data["username"]
-        return upsert_storage_obj_access_policy(storage_object, member, policy)
+        user_code = f"{storage_object.policy_user_code()}-{policy}"
+        default_policy = AccessPolicy.objects.get(user_code=user_code)
+        default_policy.members.add(member)
+        return default_policy

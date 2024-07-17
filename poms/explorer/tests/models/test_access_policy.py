@@ -23,6 +23,7 @@ class FileAccessPolicyTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.obj = self._create_file()
+        create_default_storage_access_policies()
 
     def _create_file(self) -> FinmarsFile:
         extension = self.random_string(3)
@@ -32,16 +33,12 @@ class FileAccessPolicyTest(BaseTestCase):
         return FinmarsFile.objects.create(path=path, size=size)
 
     def test__created_file_default_policies(self):
-        create_default_storage_access_policies()
-
         for access in [READ, FULL]:
             user_code = f"{self.obj.policy_user_code()}-{access}"
             default_policy = AccessPolicy.objects.get(user_code=user_code)
             self.assertIsNotNone(default_policy)
 
     def test__user_added_to_file_access_policy(self):
-        create_default_storage_access_policies()
-
         for access in [READ, FULL]:
             user_code = f"{self.obj.policy_user_code()}-{access}"
             default_policy = AccessPolicy.objects.get(user_code=user_code)
@@ -54,6 +51,7 @@ class DirectoryAccessPolicyTest(FileAccessPolicyTest):
     def setUp(self):
         super().setUp()
         self.obj = self._create_directory()
+        create_default_storage_access_policies()
 
     def _create_directory(self) -> FinmarsDirectory:
         path = f"/{self.random_string()}/{self.random_string(3)}"

@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import FinmarsFile, FinmarsDirectory, FILE, DIR, READ, FULL
-
+from poms.explorer.policy_handlers import create_default_storage_access_policies
 
 expected_response = {
     "id": 2,
@@ -45,6 +45,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.filepath = f"{self.dirpath}/test.pdf"
         self.directory = FinmarsDirectory.objects.create(path=self.dirpath)
         self.file = FinmarsFile.objects.create(path=self.filepath, size=111)
+        create_default_storage_access_policies()
 
     @BaseTestCase.cases(
         ("read", READ),
@@ -64,7 +65,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json.keys(), expected_response.keys())
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:file:{self.filepath}"
+            f"local.poms.space00000:finmars:explorer:file:{self.filepath}-{policy}"
         )
         self.assertEqual(response_json["user_code"], expected_user_code)
 
@@ -96,7 +97,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json.keys(), expected_response.keys())
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:dir:{self.dirpath}"
+            f"local.poms.space00000:finmars:explorer:dir:{self.dirpath}-{policy}"
         )
         self.assertEqual(response_json["user_code"], expected_user_code)
 
