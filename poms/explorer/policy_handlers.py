@@ -1,6 +1,6 @@
+import logging
 from copy import deepcopy
 from typing import List, Union
-import logging
 
 from django.conf import settings
 from django.core.cache import cache
@@ -81,15 +81,22 @@ def upsert_storage_obj_access_policy(obj: StorageObject, owner: Member, access: 
     )
 
 
+def get_default_owner() -> Member:
+    return Member.objects.get(username="finmars_bot")
+
+
+def create_object_default_policies(obj: StorageObject, owner: Member):
+    upsert_storage_obj_access_policy(obj, owner, FULL)
+    upsert_storage_obj_access_policy(obj, owner, READ)
+
+
 def create_default_storage_access_policies():
-    owner = Member.objects.get(username="finmars_bot")
+    owner = get_default_owner()
     for directory in FinmarsDirectory.objects.all().iterator():
-        upsert_storage_obj_access_policy(directory, owner, FULL)
-        upsert_storage_obj_access_policy(directory, owner, READ)
+        create_object_default_policies(directory, owner)
 
     for file in FinmarsFile.objects.all().iterator():
-        upsert_storage_obj_access_policy(file, owner, FULL)
-        upsert_storage_obj_access_policy(file, owner, READ)
+        create_object_default_policies(file, owner)
 
 
 def add_user_to_storage_obj_policy(obj: StorageObject, user: Member, access: str):

@@ -10,6 +10,10 @@ from django.http import HttpResponse
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.policy_handlers import (
+    get_default_owner,
+    create_object_default_policies,
+)
 
 _l = logging.getLogger("poms.explorer")
 
@@ -275,6 +279,7 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDire
     Returns:
         The total number of files in the start directory and all its subdirectories.
     """
+    owner = get_default_owner()
 
     def sync_files_helper(directory: FinmarsDirectory) -> int:
         dir_paths, file_paths = storage.listdir(directory.path)
@@ -284,10 +289,13 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDire
             sync_file(storage, filepath, directory)
 
         for subdir_path in dir_paths:
-            sub_directory, _ = FinmarsDirectory.objects.get_or_create(
+            sub_directory, created = FinmarsDirectory.objects.get_or_create(
                 path=subdir_path, parent=directory
             )
-            count += sync_files_helper(sub_directory)
+            if created:
+                create_object_default_policies(sub_directory, owner)
+                count += sync_files_helper(sub_directory)
+
         return count
 
     return sync_files_helper(start_directory)

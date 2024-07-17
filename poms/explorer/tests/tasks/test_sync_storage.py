@@ -57,7 +57,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 class SyncFilesTest(BaseTestCase):
     def setUp(self):
         super().setUp()
-        # self.init_test_case()
+        self.init_test_case()
         self.storage_patch = mock.patch(
             "poms.common.storage",
             spec=FinmarsS3Storage,
