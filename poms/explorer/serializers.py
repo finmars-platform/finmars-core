@@ -1,7 +1,6 @@
 import mimetypes
 import os.path
 import re
-from pathlib import Path
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -27,34 +26,39 @@ from poms.users.models import MasterUser, Member
 forbidden_symbols_in_path = r'[:*?"<>|;&]'
 bad_path_regex = re.compile(forbidden_symbols_in_path)
 
+"""
+ Path as String in the DB, should be a valid UNIX style path which has no: 
+ forbidden symbols, two and more adjusted '/' ( like //, /// etc ). 
+ Path should start with '/' and shouldn't have trailing '/'.
+ Path which contains only one '/' is not root, but first directory available for a user.
+ Path should be no longer than 2048 characters.
+"""
+
 
 class BasePathSerializer(serializers.Serializer):
     path = serializers.CharField(
         required=True,
         allow_blank=False,
         allow_null=False,
+        max_length=MAX_PATH_LENGTH,
     )
 
-    def validate_path(self, value: str) -> str:
-        if bad_path_regex.search(value):
-            raise ValidationError(detail=f"Invalid path {value}", code="path")
-
-        path = str(Path(value))
-        # TODO: check if path exists and has policy
-        return path
+    @staticmethod
+    def validate_path(path: str):
+        return path.strip("/") if path else ""
 
 
 class DirectoryPathSerializer(BasePathSerializer):
-    pass
+    path = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
 
 
 class FilePathSerializer(BasePathSerializer):
-    def validate_path(self, value: str) -> str:
-        path = super().validate_path(value)
-        parent = Path(path).parent
-        # TODO: check if parent exists and has policy
-        path = str(str)
-        return path
+    pass
 
 
 class DeletePathSerializer(BasePathSerializer):

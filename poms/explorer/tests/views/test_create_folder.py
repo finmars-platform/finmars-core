@@ -28,8 +28,10 @@ class ExplorerCreateFolderViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 400)
 
     @BaseTestCase.cases(
-        ("test", "test"),
-        ("test_test", "test/test"),
+        ("1_test_test", "test/test"),
+        ("2_test_test", "/test/test"),
+        ("2_test_test", "/test/test/"),
+        ("2_test_test", "test/test/"),
     )
     def test__create_folder_path(self, path):
         response = self.client.post(self.url, {"path": path})
@@ -38,4 +40,4 @@ class ExplorerCreateFolderViewTest(BaseTestCase):
         self.storage_mock.save.assert_called_once()
 
         response_data = response.json()
-        self.assertEqual(response_data["path"], f"{self.space_code}/{path}/.init")
+        self.assertEqual(response_data["path"], f"{self.space_code}/test/test/")

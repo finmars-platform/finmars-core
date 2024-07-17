@@ -93,6 +93,6 @@ def verify_access_policy(
     obj: Union[FinmarsFile, FinmarsDirectory],
     access: str,
 ):
-    # load all 'explorer' policies for the user
-    # validate path against policies
+    # TODO load all 'explorer' policies for the user
+    # TODO validate path against policies
     return AccessPolicy.objects.filter(user_code=obj.policy_user_code()).exists()

@@ -292,7 +292,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
+        path = f"{request.space_code}/{serializer.validated_data['path']}/"
 
         # TODO validate path that either public/import/system or user home directory
 
