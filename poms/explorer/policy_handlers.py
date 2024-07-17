@@ -86,3 +86,13 @@ def create_default_access_policy(
 ) -> AccessPolicy:
     owner = Member.objects.get(username="finmars_bot")
     return upsert_storage_obj_access_policy(obj, owner, FULL)
+
+
+def verify_access_policy(
+    member: Member,
+    obj: Union[FinmarsFile, FinmarsDirectory],
+    access: str,
+):
+    # load all 'explorer' policies for the user
+    # validate path against policies
+    return AccessPolicy.objects.filter(user_code=obj.policy_user_code()).exists()

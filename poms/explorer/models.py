@@ -13,7 +13,6 @@ from poms.users.models import Member
 # from django.utils.crypto import get_random_string
 
 
-
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
