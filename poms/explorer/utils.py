@@ -310,6 +310,6 @@ def sync_file(
     _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
     FinmarsFile.objects.update_or_create(
         path=filepath,
-        directory=directory,
+        parent=directory,
         defaults=dict(size=storage.size(filepath)),
     )

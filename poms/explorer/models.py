@@ -113,15 +113,15 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
         unique=True,
         help_text="Path to the file in the storage system with name and extension",
     )
-    size = models.PositiveBigIntegerField(
-        help_text="Size of the file in bytes",
-    )
-    directory = models.ForeignKey(
+    parent = models.ForeignKey(
         FinmarsDirectory,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
         related_name="files",
+    )
+    size = models.PositiveBigIntegerField(
+        help_text="Size of the file in bytes",
     )
 
     class Meta:

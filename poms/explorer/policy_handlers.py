@@ -91,13 +91,34 @@ def get_or_create_storage_access_policy(
     return access_policy
 
 
-def verify_access_policy(member: Member, obj: StorageObject, access: str):
-    AccessLevel.validate_level(access)
-    object_policies = AccessPolicy.objects.filter(
-        owner=get_default_owner(),
+def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
+    owner = get_default_owner()
+    object_access_policy = AccessPolicy.objects.filter(
+        owner=owner,
         user_code=obj.policy_user_code(access),
         members=member,
     )
-    resource = obj.path
-    # TODO validate path against policies
-    return
+    if object_access_policy:
+        _l.info(f"Member {member.username} has {access} access to {obj.path}")
+        return True
+
+    if not obj.parent:
+        return False
+
+    parent = obj.parent
+    while parent:
+        object_access_policy = AccessPolicy.objects.filter(
+            owner=owner,
+            user_code=parent.policy_user_code(access),
+            members=member,
+        )
+        if object_access_policy:
+            break
+        parent = parent.parent
+
+    if not object_access_policy:
+        return False
+
+    if member in object_access_policy.members.all():
+        _l.info(f"Member {member.username} has {access} access to {obj.path}")
+        return True
