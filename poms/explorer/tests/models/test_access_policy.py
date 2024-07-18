@@ -1,7 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import FULL, READ, FinmarsDirectory, FinmarsFile
-from poms.explorer.policy_handlers import create_default_storage_access_policies
-from poms.iam.models import AccessPolicy
+from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 
 EXPECTED_FULL_POLICY = {
     "Version": "2023-01-01",
@@ -23,7 +22,6 @@ class FileAccessPolicyTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.obj = self._create_file()
-        create_default_storage_access_policies()
 
     def _create_file(self) -> FinmarsFile:
         extension = self.random_string(3)
@@ -32,26 +30,23 @@ class FileAccessPolicyTest(BaseTestCase):
         size = self.random_int()
         return FinmarsFile.objects.create(path=path, size=size)
 
-    def test__created_file_default_policies(self):
-        for access in [READ, FULL]:
-            user_code = f"{self.obj.user_code()}-{access}"
-            default_policy = AccessPolicy.objects.get(user_code=user_code)
-            self.assertIsNotNone(default_policy)
-
-    def test__user_added_to_file_access_policy(self):
-        for access in [READ, FULL]:
-            user_code = f"{self.obj.user_code()}-{access}"
-            default_policy = AccessPolicy.objects.get(user_code=user_code)
-            default_policy.members.add(self.member)
+    @BaseTestCase.cases(
+        ("read", READ),
+        ("full", FULL),
+    )
+    def test__created_obj_access_policies(self, access):
+        access_policy = get_or_create_storage_access_policy(
+            self.obj, self.member, access
+        )
+        self.assertIsNotNone(access_policy)
+        self.assertEqual(access_policy.user_code, f"{self.obj.user_code()}-{access}")
+        self.assertIn(self.member, access_policy.members.all())
 
 
 class DirectoryAccessPolicyTest(FileAccessPolicyTest):
-    databases = "__all__"
-
     def setUp(self):
         super().setUp()
         self.obj = self._create_directory()
-        create_default_storage_access_policies()
 
     def _create_directory(self) -> FinmarsDirectory:
         path = f"/{self.random_string()}/{self.random_string(3)}"

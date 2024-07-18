@@ -1,6 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import FinmarsFile, FinmarsDirectory, FILE, DIR, READ, FULL
-from poms.explorer.policy_handlers import create_default_storage_access_policies
+from poms.explorer.models import FinmarsFile, FinmarsDirectory, READ, FULL
 
 expected_response = {
     "id": 2,
@@ -41,21 +40,19 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.url = (
             f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-access-policy/"
         )
-        self.dirpath = "/test/next"
-        self.filepath = f"{self.dirpath}/test.pdf"
+        self.dirpath = "/test/next/*"
+        self.filepath = "/test/next/test.pdf"
         self.directory = FinmarsDirectory.objects.create(path=self.dirpath)
         self.file = FinmarsFile.objects.create(path=self.filepath, size=111)
-        create_default_storage_access_policies()
 
     @BaseTestCase.cases(
         ("read", READ),
         ("full", FULL),
     )
-    def test__file_access_policy_created(self, policy):
+    def test__file_access_policy_created(self, access):
         data = {
             "path": self.filepath,
-            "object_type": FILE,
-            "policy": policy,
+            "access": access,
             "username": "finmars_bot",
         }
         response = self.client.post(path=self.url, data=data, format="json")
@@ -65,13 +62,13 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json.keys(), expected_response.keys())
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:file:{self.filepath}-{policy}"
+            f"local.poms.space00000:finmars:explorer:{self.filepath}-{access}"
         )
         self.assertEqual(response_json["user_code"], expected_user_code)
 
         actions = response_json["policy"]["Statement"][0]["Action"]
 
-        if policy == READ:
+        if access == READ:
             self.assertEqual(len(actions), 1)
             self.assertIn("finmars:explorer:read", actions)
         else:
@@ -83,11 +80,10 @@ class FinmarsFileViewSetTest(BaseTestCase):
         ("read", READ),
         ("full", FULL),
     )
-    def test__directory_access_policy_created(self, policy):
+    def test__directory_access_policy_created(self, access):
         data = {
             "path": self.dirpath,
-            "object_type": DIR,
-            "policy": policy,
+            "access": access,
             "username": "finmars_bot",
         }
         response = self.client.post(path=self.url, data=data, format="json")
@@ -97,13 +93,13 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json.keys(), expected_response.keys())
         expected_user_code = (
-            f"local.poms.space00000:finmars:explorer:dir:{self.dirpath}-{policy}"
+            f"local.poms.space00000:finmars:explorer:{self.dirpath}-{access}"
         )
         self.assertEqual(response_json["user_code"], expected_user_code)
 
         actions = response_json["policy"]["Statement"][0]["Action"]
 
-        if policy == READ:
+        if access == READ:
             self.assertEqual(len(actions), 1)
             self.assertIn("finmars:explorer:read", actions)
         else:

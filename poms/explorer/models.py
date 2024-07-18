@@ -19,20 +19,19 @@ MAX_TOKEN_LENGTH = 32
 
 READ = "read"
 FULL = "full"
-DIR = "dir"
-FILE = "file"
 
 
 class ObjMixin:
-    @property
-    def resource(self):
-        return self.__str__()
-
     def user_code(self):
         return (
             f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
-            f":explorer:{self.resource}"
+            f":explorer:{self.path}"
         )
+
+    @property
+    def name(self) -> str:
+        path = Path(self.path)
+        return path.name
 
     @staticmethod
     def fix_path(path: str) -> str:
@@ -74,15 +73,11 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         order_insertion_by = ["path"]
 
     def __str__(self):
-        return f"{self.path}/*"
+        return self.path
 
     @property
     def size(self):
         return self.__size
-
-    @property
-    def name(self):
-        return self.path
 
     def save(self, *args, **kwargs):
         """
@@ -121,11 +116,6 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
 
     def __str__(self):
         return self.path
-
-    @property
-    def name(self) -> str:
-        path = Path(self.path)
-        return path.name
 
     @property
     def extension(self) -> str:

@@ -55,7 +55,7 @@ def create_policy(obj: StorageObject, access: str = READ) -> dict:
     if access == FULL:
         policy["Statement"][0]["Action"].append(FULL_ACTION)
 
-    policy["Statement"][0]["Resource"] = RESOURCE.format(resource=obj.resource)
+    policy["Statement"][0]["Resource"] = RESOURCE.format(resource=obj.path)
 
     return policy
 
@@ -71,7 +71,7 @@ def get_or_create_storage_access_policy(
 
     configuration_code = get_default_configuration_code()
     policy_user_code = f"{obj.user_code()}-{access}"
-    name = obj.resource
+    name = obj.path
     policy = create_policy(obj, access)
     description = f"{name} : {access} access policy"
     access_policy, created = AccessPolicy.objects.get_or_create(
@@ -87,7 +87,7 @@ def get_or_create_storage_access_policy(
     access_policy.members.add(member)
 
     _l.info(
-        f"AccessPolicy {access_policy.pk} created, resource={obj.resource} "
+        f"AccessPolicy {access_policy.pk} created, resource={obj.path} "
         f"member={member.username} access={access}"
     )
     return access_policy
@@ -139,6 +139,6 @@ def get_member_explorer_policies(member: Member) -> List[AccessPolicy]:
 
 def verify_access_policy(member: Member, obj: StorageObject, access: str):
     access_policies = get_member_explorer_policies(member)
-    resource = obj.resource
+    resource = obj.path
     # TODO validate path against policies
     return AccessPolicy.objects.filter(user_code=obj.user_code()).exists()
