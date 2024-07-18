@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
-from typing import Union
+from functools import lru_cache
+from typing import Optional, Union
 
 from django.conf import settings
 
@@ -58,6 +59,7 @@ def create_policy(obj: StorageObject, access: str = AccessLevel.READ) -> dict:
     return policy
 
 
+@lru_cache(maxsize=1)
 def get_default_owner() -> Member:
     return Member.objects.get(username="finmars_bot")
 
@@ -91,33 +93,53 @@ def get_or_create_storage_access_policy(
     return access_policy
 
 
-def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
-    owner = get_default_owner()
-    object_access_policy = AccessPolicy.objects.filter(
+def check_obj_access(
+    obj: StorageObject, owner: Member, member: Member, access: str
+) -> Optional[bool]:
+    obj_access_policy = AccessPolicy.objects.filter(
         owner=owner,
         user_code=obj.policy_user_code(access),
         members=member,
-    )
-    if object_access_policy:
+    ).first()
+    if obj_access_policy:
         _l.info(f"{member.username} has {access} access to {obj.path}")
         return True
 
     if not obj.parent:
-        _l.info(f"{member.username} has no {access} access to {obj.path}")
+        _l.info(f"{member.username} has no {access} access to {obj.path} (no parent)")
         return False
 
-    parent = obj.parent
-    while parent:
-        object_access_policy = AccessPolicy.objects.filter(
-            owner=owner,
-            user_code=parent.policy_user_code(access),
-            members=member,
-        )
-        if object_access_policy:
-            break
-        parent = parent.parent
+    return None  # storage object has parent(s)
 
-    if object_access_policy:
+
+def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
+    """
+    A function that determines if a member has access to a specific object
+    or any of his parents based on the access level.
+
+    Parameters:
+        obj (StorageObject): The object for which access needs to be checked.
+        member (Member): The member whose access is being checked.
+        access (str): The level of access to check.
+
+    Returns:
+        bool: True if the member has access, False otherwise.
+    """
+    owner = get_default_owner()
+
+    has_access = check_obj_access(obj, owner, member, access)
+    if has_access is not None:
+        return has_access
+
+    parents = obj.parent.get_ancestors(include_self=True)
+    policy_user_codes = [parent.policy_user_code(access) for parent in parents]
+    obj_access_policy = AccessPolicy.objects.filter(
+        owner=owner,
+        user_code__in=policy_user_codes,
+        members=member,
+    ).first()
+
+    if obj_access_policy:
         _l.info(f"{member.username} has {access} access to parent of {obj.path}")
         return True
 
