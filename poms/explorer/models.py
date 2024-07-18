@@ -17,21 +17,34 @@ MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
-READ = "read"
-FULL = "full"
+
+class AccessLevel:
+    READ = "read"
+    FULL = "full"
+
+    @classmethod
+    def validate_level(cls, access: str):
+        if access not in {cls.READ, cls.FULL}:
+            raise ValueError(f"AccessLevel must be either '{cls.READ}' or '{cls.FULL}'")
 
 
 class ObjMixin:
-    def user_code(self):
+    def policy_user_code(self, access: str = AccessLevel.READ) -> str:
+        AccessLevel.validate_level(access)
         return (
             f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
-            f":explorer:{self.path}"
+            f":explorer:{self.path}-{access}"
         )
 
     @property
     def name(self) -> str:
         path = Path(self.path)
         return path.name
+
+    @property
+    def extension(self) -> str:
+        path = Path(self.path)
+        return path.suffix
 
     @staticmethod
     def fix_path(path: str) -> str:
@@ -116,11 +129,6 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
 
     def __str__(self):
         return self.path
-
-    @property
-    def extension(self) -> str:
-        path = Path(self.path)
-        return path.suffix
 
     def save(self, *args, **kwargs):
         self.path = self.fix_path(self.path)

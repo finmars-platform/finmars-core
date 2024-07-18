@@ -7,10 +7,9 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
 from poms.explorer.models import (
-    FULL,
     MAX_NAME_LENGTH,
     MAX_PATH_LENGTH,
-    READ,
+    AccessLevel,
     FinmarsDirectory,
     FinmarsFile,
 )
@@ -19,7 +18,6 @@ from poms.explorer.utils import check_is_true, path_is_file
 from poms.iam.models import AccessPolicy
 from poms.instruments.models import Instrument
 from poms.users.models import MasterUser, Member
-
 
 forbidden_symbols_in_path = r'[:*?"<>|;&]'
 bad_path_regex = re.compile(forbidden_symbols_in_path)
@@ -283,8 +281,7 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
 
     @staticmethod
     def validate_access(value: str) -> str:
-        if value not in {READ, FULL}:
-            raise ValidationError(detail=f"Invalid access {value}", code="access")
+        AccessLevel.validate_level(value)
         return value
 
     def validate_username(self, value: str) -> str:

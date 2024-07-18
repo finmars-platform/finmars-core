@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import FULL, READ, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 
 EXPECTED_FULL_POLICY = {
@@ -31,15 +31,15 @@ class FileAccessPolicyTest(BaseTestCase):
         return FinmarsFile.objects.create(path=path, size=size)
 
     @BaseTestCase.cases(
-        ("read", READ),
-        ("full", FULL),
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
     )
     def test__created_obj_access_policies(self, access):
         access_policy = get_or_create_storage_access_policy(
             self.obj, self.member, access
         )
         self.assertIsNotNone(access_policy)
-        self.assertEqual(access_policy.user_code, f"{self.obj.user_code()}-{access}")
+        self.assertEqual(access_policy.user_code, self.obj.policy_user_code(access))
         self.assertIn(self.member, access_policy.members.all())
 
 

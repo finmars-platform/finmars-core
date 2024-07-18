@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import FinmarsFile, FinmarsDirectory, READ, FULL
+from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
 
 expected_response = {
     "id": 2,
@@ -46,8 +46,8 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.file = FinmarsFile.objects.create(path=self.filepath, size=111)
 
     @BaseTestCase.cases(
-        ("read", READ),
-        ("full", FULL),
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
     )
     def test__file_access_policy_created(self, access):
         data = {
@@ -68,7 +68,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         actions = response_json["policy"]["Statement"][0]["Action"]
 
-        if access == READ:
+        if access == AccessLevel.READ:
             self.assertEqual(len(actions), 1)
             self.assertIn("finmars:explorer:read", actions)
         else:
@@ -77,8 +77,8 @@ class FinmarsFileViewSetTest(BaseTestCase):
             self.assertIn("finmars:explorer:full", actions)
 
     @BaseTestCase.cases(
-        ("read", READ),
-        ("full", FULL),
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
     )
     def test__directory_access_policy_created(self, access):
         data = {
@@ -99,7 +99,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         actions = response_json["policy"]["Statement"][0]["Action"]
 
-        if access == READ:
+        if access == AccessLevel.READ:
             self.assertEqual(len(actions), 1)
             self.assertIn("finmars:explorer:read", actions)
         else:
