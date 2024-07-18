@@ -99,10 +99,11 @@ def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
         members=member,
     )
     if object_access_policy:
-        _l.info(f"Member {member.username} has {access} access to {obj.path}")
+        _l.info(f"{member.username} has {access} access to {obj.path}")
         return True
 
     if not obj.parent:
+        _l.info(f"{member.username} has no {access} access to {obj.path}")
         return False
 
     parent = obj.parent
@@ -116,9 +117,9 @@ def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
             break
         parent = parent.parent
 
-    if not object_access_policy:
-        return False
-
-    if member in object_access_policy.members.all():
-        _l.info(f"Member {member.username} has {access} access to {obj.path}")
+    if object_access_policy:
+        _l.info(f"{member.username} has {access} access to parent of {obj.path}")
         return True
+
+    _l.info(f"{member.username} has no {access} access to any parent of {obj.path}")
+    return False
