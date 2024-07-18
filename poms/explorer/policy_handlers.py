@@ -96,6 +96,21 @@ def get_or_create_storage_access_policy(
 def check_obj_access(
     obj: StorageObject, owner: Member, member: Member, access: str
 ) -> Optional[bool]:
+    """
+    Check if a member has access to the specific object based on the access level.
+
+    Parameters:
+        obj (StorageObject): The object for which access needs to be checked.
+        owner (Member): The default owner of the object.
+        member (Member): The member whose access is being checked.
+        access (str): The level of access to check.
+
+    Returns:
+        Optional[bool]: True if the member has access, False if the member has
+        no access to the object or its parents,
+        and None if the object has parent(s) access to which has to checked.
+    """
+    AccessLevel.validate_level(access)
     obj_access_policy = AccessPolicy.objects.filter(
         owner=owner,
         user_code=obj.policy_user_code(access),

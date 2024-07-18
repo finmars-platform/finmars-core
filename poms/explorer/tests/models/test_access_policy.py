@@ -26,7 +26,7 @@ class FileAccessPolicyTest(BaseTestCase):
     def _create_file(self) -> FinmarsFile:
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
-        path = f"/{self.random_string()}/{self.random_string(5)}/{name}/"
+        path = f"/{self.random_string()}/{self.random_string(5)}/{name}"
         size = self.random_int()
         return FinmarsFile.objects.create(path=path, size=size)
 
@@ -49,5 +49,5 @@ class DirectoryAccessPolicyTest(FileAccessPolicyTest):
         self.obj = self._create_directory()
 
     def _create_directory(self) -> FinmarsDirectory:
-        path = f"/{self.random_string()}/{self.random_string(3)}"
+        path = f"/{self.random_string()}/{self.random_string(3)}/*"
         return FinmarsDirectory.objects.create(path=path, parent=None)
