@@ -7,8 +7,6 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
 from poms.explorer.models import (
-    DIR,
-    FILE,
     FULL,
     MAX_NAME_LENGTH,
     MAX_PATH_LENGTH,
@@ -16,7 +14,7 @@ from poms.explorer.models import (
     FinmarsDirectory,
     FinmarsFile,
 )
-from poms.explorer.policy_handlers import upsert_storage_obj_access_policy
+from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.explorer.utils import check_is_true, path_is_file
 from poms.iam.models import AccessPolicy
 from poms.instruments.models import Instrument
@@ -29,7 +27,8 @@ bad_path_regex = re.compile(forbidden_symbols_in_path)
 """
  Path as String in the DB, should be a valid UNIX style path which has no: 
  forbidden symbols, two and more adjusted '/' ( like //, /// etc ). 
- Path should start with '/' and shouldn't have trailing '/'.
+ Path should start with '/' and should end with file name (without '/' at the end) or
+ with '/*' for directories.
  Path which contains only one '/' is not root, but first directory available for a user.
  Path should be no longer than 2048 characters.
 """
@@ -215,8 +214,6 @@ class QuerySearchSerializer(serializers.Serializer):
     query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
 
 
-
-
 class InstrumentMicroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instrument
@@ -256,8 +253,7 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
     def validate_path(path: str) -> str:
         if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {path}", code="path")
-        path = path.rstrip("/")
-        return path
+        return path.rstrip("/")
 
     @staticmethod
     def validate_size(size: int) -> int:
@@ -275,26 +271,20 @@ class AccessPolicySerializer(serializers.ModelSerializer):
 
 class StorageObjectAccessPolicySerializer(serializers.Serializer):
     path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
-    object_type = serializers.CharField(allow_blank=False, max_length=10)
-    policy = serializers.CharField(allow_blank=False, max_length=10)
+    access = serializers.CharField(allow_blank=False, max_length=10)
     username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
 
     @staticmethod
     def validate_path(value: str) -> str:
-        if bad_path_regex.search(value):
+        path = value.removesuffix("/*")
+        if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {value}", code="path")
         return value
 
     @staticmethod
-    def validate_object_type(value: str) -> str:
-        if value not in {DIR, FILE}:
-            raise ValidationError(detail=f"Invalid object type {value}", code="object")
-        return value
-
-    @staticmethod
-    def validate_policy(value: str) -> str:
+    def validate_access(value: str) -> str:
         if value not in {READ, FULL}:
-            raise ValidationError(detail=f"Invalid policy {value}", code="policy")
+            raise ValidationError(detail=f"Invalid access {value}", code="access")
         return value
 
     def validate_username(self, value: str) -> str:
@@ -316,26 +306,22 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
 
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
-        object_type = attrs["object_type"]
-        if object_type == DIR:
+        if path.endswith("/*"):
             storage_object = FinmarsDirectory.objects.filter(path=path).first()
         else:
             storage_object = FinmarsFile.objects.filter(path=path).first()
 
-        if storage_object is None:
+        if not storage_object:
             raise ValidationError(
-                detail=f"Storage object {path} of type {object_type} not found",
+                detail=f"Storage object {path} was not found",
                 code="path",
             )
 
         attrs["storage_object"] = storage_object
         return attrs
 
-    def set_access_policy(self):
+    def set_access_policy(self) -> AccessPolicy:
         storage_object = self.validated_data["storage_object"]
-        policy = self.validated_data["policy"]
+        access = self.validated_data["access"]
         member = self.validated_data["username"]
-        user_code = f"{storage_object.policy_user_code()}-{policy}"
-        default_policy = AccessPolicy.objects.get(user_code=user_code)
-        default_policy.members.add(member)
-        return default_policy
+        return get_or_create_storage_access_policy(storage_object, member, access)

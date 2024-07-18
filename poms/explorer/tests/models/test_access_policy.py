@@ -34,13 +34,13 @@ class FileAccessPolicyTest(BaseTestCase):
 
     def test__created_file_default_policies(self):
         for access in [READ, FULL]:
-            user_code = f"{self.obj.policy_user_code()}-{access}"
+            user_code = f"{self.obj.user_code()}-{access}"
             default_policy = AccessPolicy.objects.get(user_code=user_code)
             self.assertIsNotNone(default_policy)
 
     def test__user_added_to_file_access_policy(self):
         for access in [READ, FULL]:
-            user_code = f"{self.obj.policy_user_code()}-{access}"
+            user_code = f"{self.obj.user_code()}-{access}"
             default_policy = AccessPolicy.objects.get(user_code=user_code)
             default_policy.members.add(self.member)
 

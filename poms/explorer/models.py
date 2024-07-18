@@ -28,7 +28,7 @@ class ObjMixin:
     def resource(self):
         return self.__str__()
 
-    def policy_user_code(self):
+    def user_code(self):
         return (
             f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
             f":explorer:{self.resource}"
@@ -74,7 +74,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         order_insertion_by = ["path"]
 
     def __str__(self):
-        return f"{DIR}:{self.path}"
+        return f"{self.path}/*"
 
     @property
     def size(self):
@@ -120,7 +120,7 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
         ordering = ["path"]
 
     def __str__(self):
-        return f"{FILE}:{self.path}"
+        return self.path
 
     @property
     def name(self) -> str:

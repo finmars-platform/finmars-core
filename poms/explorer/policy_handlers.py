@@ -33,9 +33,9 @@ READ_ACCESS_POLICY = {
 }
 
 
-def validate_obj_access(obj: StorageObject, access: str):
+def validate_obj_and_access(obj: StorageObject, access: str):
     if not isinstance(obj, StorageObject):
-        raise ValueError("Object must be a FinmarsFile or FinmarsDirectory")
+        raise ValueError("Object must be FinmarsFile or FinmarsDirectory")
     if access not in {READ, FULL}:
         raise ValueError(f"Access must be either '{READ}' or '{FULL}'")
 
@@ -50,7 +50,6 @@ def create_policy(obj: StorageObject, access: str = READ) -> dict:
     Returns:
         dict: The generated policy based on the object and access level.
     """
-    validate_obj_access(obj, access)
 
     policy = deepcopy(READ_ACCESS_POLICY)
     if access == FULL:
@@ -61,17 +60,23 @@ def create_policy(obj: StorageObject, access: str = READ) -> dict:
     return policy
 
 
-def upsert_storage_obj_access_policy(obj: StorageObject, owner: Member, access: str):
-    validate_obj_access(obj, access)
+def get_default_owner() -> Member:
+    return Member.objects.get(username="finmars_bot")
+
+
+def get_or_create_storage_access_policy(
+    obj: StorageObject, member: Member, access: str
+) -> AccessPolicy:
+    validate_obj_and_access(obj, access)
 
     configuration_code = get_default_configuration_code()
-    user_code = f"{obj.policy_user_code()}-{access}"
+    policy_user_code = f"{obj.user_code()}-{access}"
     name = obj.resource
     policy = create_policy(obj, access)
     description = f"{name} : {access} access policy"
-    AccessPolicy.objects.update_or_create(
-        user_code=user_code,
-        owner=owner,
+    access_policy, created = AccessPolicy.objects.get_or_create(
+        user_code=policy_user_code,
+        owner=get_default_owner(),
         defaults={
             "configuration_code": configuration_code,
             "policy": policy,
@@ -79,29 +84,18 @@ def upsert_storage_obj_access_policy(obj: StorageObject, owner: Member, access: 
             "description": description,
         },
     )
+    access_policy.members.add(member)
 
-
-def get_default_owner() -> Member:
-    return Member.objects.get(username="finmars_bot")
-
-
-def create_object_default_policies(obj: StorageObject, owner: Member):
-    upsert_storage_obj_access_policy(obj, owner, FULL)
-    upsert_storage_obj_access_policy(obj, owner, READ)
-
-
-def create_default_storage_access_policies():
-    owner = get_default_owner()
-    for directory in FinmarsDirectory.objects.all().iterator():
-        create_object_default_policies(directory, owner)
-
-    for file in FinmarsFile.objects.all().iterator():
-        create_object_default_policies(file, owner)
+    _l.info(
+        f"AccessPolicy {access_policy.pk} created, resource={obj.resource} "
+        f"member={member.username} access={access}"
+    )
+    return access_policy
 
 
 def add_user_to_storage_obj_policy(obj: StorageObject, user: Member, access: str):
-    validate_obj_access(obj, access)
-    user_code = f"{obj.policy_user_code()}-{access}"
+    validate_obj_and_access(obj, access)
+    user_code = f"{obj.user_code()}-{access}"
 
     try:
         access_policy = AccessPolicy.objects.filter(user_code=user_code).first()
@@ -147,4 +141,4 @@ def verify_access_policy(member: Member, obj: StorageObject, access: str):
     access_policies = get_member_explorer_policies(member)
     resource = obj.resource
     # TODO validate path against policies
-    return AccessPolicy.objects.filter(user_code=obj.policy_user_code()).exists()
+    return AccessPolicy.objects.filter(user_code=obj.user_code()).exists()

@@ -9,6 +9,7 @@ from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
@@ -593,6 +594,9 @@ class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
     http_method_names = ["post"]
 
     def create(self, request, *args, **kwargs):
+        if not request.user.is_staff or not request.user.is_superuser:
+            raise PermissionDenied("Only privileged users can perform this action")
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         access_policy = serializer.set_access_policy()
