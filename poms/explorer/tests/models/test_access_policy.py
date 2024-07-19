@@ -1,4 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
+from poms.users.models import Member
 from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 
@@ -22,6 +23,18 @@ class FileAccessPolicyTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.obj = self._create_file()
+        self.member_user = self.create_member()
+
+    def create_member(self):
+        member, _ = Member.objects.get_or_create(
+            master_user=self.master_user,
+            username="file_user",
+            defaults=dict(
+                is_admin=True,
+                is_owner=True,
+            ),
+        )
+        return member
 
     def _create_file(self) -> FinmarsFile:
         extension = self.random_string(3)
@@ -36,18 +49,43 @@ class FileAccessPolicyTest(BaseTestCase):
     )
     def test__created_obj_access_policies(self, access):
         access_policy = get_or_create_storage_access_policy(
-            self.obj, self.member, access
+            self.obj, self.member_user, access
         )
         self.assertIsNotNone(access_policy)
         self.assertEqual(access_policy.user_code, self.obj.policy_user_code(access))
-        self.assertIn(self.member, access_policy.members.all())
+        self.assertIn(self.member_user, access_policy.members.all())
 
 
-class DirectoryAccessPolicyTest(FileAccessPolicyTest):
+class DirectoryAccessPolicyTest(BaseTestCase):
     def setUp(self):
         super().setUp()
+        self.init_test_case()
         self.obj = self._create_directory()
+        self.member_user = self.create_member()
+
+    def create_member(self):
+        member, _ = Member.objects.get_or_create(
+            master_user=self.master_user,
+            username="directory_user",
+            defaults=dict(
+                is_admin=True,
+                is_owner=True,
+            ),
+        )
+        return member
 
     def _create_directory(self) -> FinmarsDirectory:
         path = f"/{self.random_string()}/{self.random_string(3)}/*"
         return FinmarsDirectory.objects.create(path=path, parent=None)
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__created_obj_access_policies(self, access):
+        access_policy = get_or_create_storage_access_policy(
+            self.obj, self.member_user, access
+        )
+        self.assertIsNotNone(access_policy)
+        self.assertEqual(access_policy.user_code, self.obj.policy_user_code(access))
+        self.assertIn(self.member_user, access_policy.members.all())

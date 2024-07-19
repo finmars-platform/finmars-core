@@ -1,6 +1,5 @@
 import logging
 from copy import deepcopy
-from functools import lru_cache
 from typing import Optional, Union
 
 from django.conf import settings
@@ -59,7 +58,6 @@ def create_policy(obj: StorageObject, access: str = AccessLevel.READ) -> dict:
     return policy
 
 
-@lru_cache(maxsize=1)
 def get_default_owner() -> Member:
     return Member.objects.get(username="finmars_bot")
 
@@ -67,6 +65,19 @@ def get_default_owner() -> Member:
 def get_or_create_storage_access_policy(
     obj: StorageObject, member: Member, access: str
 ) -> AccessPolicy:
+    """
+    Creates or retrieves a storage access policy for a given object, member,
+    and access level.
+
+    Parameters:
+        obj (StorageObject): The storage object for which the access policy is created.
+        member (Member): The member for whom the access policy is created.
+        access (str): The level of access for the policy.
+
+    Returns:
+        AccessPolicy: The created or retrieved access policy.
+    """
+
     validate_obj_and_access(obj, access)
 
     configuration_code = get_default_configuration_code()
