@@ -126,4 +126,68 @@ class MemberHasAccessTest(BaseTestCase):
 
         self.assertFalse(member_has_access(self.dir_3, self.member, access))
 
-###############################################
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_to_file(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.root, self.member, access)
+
+        file = self._create_file(parent=self.root)
+        self.assertTrue(member_has_access(file, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_to_file_by_root_level_dir_3(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.root, self.member, access)
+
+        file = self._create_file(parent=self.dir_3)
+        self.assertTrue(member_has_access(file, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_to_file_by_root_level_dir_1(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.root, self.member, access)
+
+        file = self._create_file(parent=self.dir_1)
+        self.assertTrue(member_has_access(file, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_to_file_by_root_level_dir_4(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.root, self.member, access)
+
+        file = self._create_file(parent=self.dir_4)
+        self.assertTrue(member_has_access(file, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_to_file_by_dir1_level_dir3(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.dir_1, self.member, access)
+
+        file = self._create_file(parent=self.dir_3)
+        self.assertTrue(member_has_access(file, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_no_access_to_file(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.dir_1, self.member, access)
+
+        file = self._create_file(parent=self.dir_4)
+        self.assertFalse(member_has_access(file, self.member, access))
