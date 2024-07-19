@@ -105,3 +105,25 @@ class MemberHasAccessTest(BaseTestCase):
         get_or_create_storage_access_policy(self.root, self.member, access)
 
         self.assertTrue(member_has_access(self.dir_3, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_access_by_dir1_dir3(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.dir_1, self.member, access)
+
+        self.assertTrue(member_has_access(self.dir_3, self.member, access))
+
+    @BaseTestCase.cases(
+        ("read", AccessLevel.READ),
+        ("full", AccessLevel.FULL),
+    )
+    def test__tree_no_access_by_dir2_to_dir3(self, access):
+        self.create_dir_tree()
+        get_or_create_storage_access_policy(self.dir_2, self.member, access)
+
+        self.assertFalse(member_has_access(self.dir_3, self.member, access))
+
+###############################################
