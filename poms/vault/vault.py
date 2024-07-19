@@ -1,8 +1,10 @@
 import logging
-
+import contextlib
 import requests
 
+from django.core.exceptions import ObjectDoesNotExist
 from poms_app import settings
+from poms.vault.models import VaultRecord
 
 _l = logging.getLogger('poms.vault')
 
@@ -18,7 +20,6 @@ def remove_trailing_slash_from_keys(data):
 class FinmarsVault():
 
     def __init__(self, realm_code=None, space_code=None):
-        from poms.system.models import VaultRecord
 
         self.realm_code = realm_code
         self.space_code = space_code
@@ -28,7 +29,12 @@ class FinmarsVault():
         else:
             self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.space_code + '/vault'
 
-        self.auth_token = VaultRecord.objects.get(user_code='hashicorp-vault-token').data
+        self.auth_token = None
+        try:
+            vault_token = VaultRecord.objects.get(user_code='hashicorp-vault-token')
+            self.auth_token = vault_token.data["token"]
+        except Exception as e:
+            _l.info(f'Failed to get vault token: {e}')
 
     def get_headers(self):
 
