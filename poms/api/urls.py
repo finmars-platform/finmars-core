@@ -60,12 +60,6 @@ router.register(
 )
 
 router.register(
-    r"system/vault/vault-record",
-    system.VaultRecordViewSet,
-    "vaultrecord",
-)
-
-router.register(
     r"reference-tables/reference-table",
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",

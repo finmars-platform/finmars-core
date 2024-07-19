@@ -6,10 +6,12 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from poms.common.views import AbstractViewSet
+from poms.common.views import AbstractViewSet, AbstractModelViewSet
+from poms.vault.models import VaultRecord
+from poms.users.filters import OwnerByMasterUserFilter
 from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
     GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer, UpdateVaultSecretSerializer, \
-    VaultSealSerializer, VaultUnsealSerializer
+    VaultSealSerializer, VaultUnsealSerializer, VaultRecordSerializer
 from poms.vault.vault import FinmarsVault
 from poms_app import settings
 
@@ -113,10 +115,6 @@ class VaultViewSet(AbstractViewSet):
             return Response({"message": "Vault unseal key passed", "data": data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class VaultSecretViewSet(AbstractViewSet):
-    serializer_class = VaultSecretSerializer
 
 
 class VaultEngineViewSet(AbstractViewSet):
@@ -281,3 +279,12 @@ class VaultSecretViewSet(AbstractViewSet):
             return Response({"message": "Vault secret deleted successfully"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VaultRecordViewSet(AbstractModelViewSet):
+    queryset = VaultRecord.objects
+    serializer_class = VaultRecordSerializer
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
