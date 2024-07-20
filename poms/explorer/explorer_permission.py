@@ -2,21 +2,24 @@ import logging
 
 from rest_framework.exceptions import PermissionDenied
 
-from poms.iam.access_policy import AccessPolicy as FinmarsAccessPermission
-from poms.iam.utils import get_statements
+from poms.iam.permissions import FinmarsAccessPolicy as FinmarsAccessPermission
+from poms.iam.access_policy import AccessEnforcement
 
 _l = logging.getLogger("poms.explorer")
 
 
 class ExplorerAccessPermission(FinmarsAccessPermission):
-    def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
-            return True
+    def has_specific_permission(self, view, request):
+        statements = self.get_policy_statements(request, view)
+        if not statements:
+            return False
 
-        if not request.user.member:
-            raise PermissionDenied(f"User {request.user.username} has no member")
+        action = self._get_invoked_action(view)
+        allowed = self._evaluate_statements(statements, request, view, action)
+        if not allowed:
+            return False
 
-        if request.user.member and request.user.member.is_admin:
-            return True
 
-        # check storage path permission
+
+        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
+        return True
