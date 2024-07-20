@@ -19,7 +19,7 @@ class ExplorerAccessPermission(FinmarsAccessPermission):
         if not allowed:
             return False
 
-
+        # TODO get path from request and validate it against request.user.member
 
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
         return True
