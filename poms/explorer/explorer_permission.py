@@ -1,9 +1,8 @@
 import logging
 
-from poms.iam.permissions import FinmarsAccessPolicy as FinmarsAccessPermission
-from poms.iam.access_policy import AccessEnforcement
-from poms.explorer.models import AccessLevel
+from poms.explorer.models import ROOT_PATH, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
+from poms.iam.permissions import FinmarsAccessPolicy as FinmarsAccessPermission
 
 _l = logging.getLogger("poms.explorer")
 
@@ -26,13 +25,10 @@ class ExplorerAccessPermission(FinmarsAccessPermission):
             params = request.data
             required_access = AccessLevel.WRITE
 
-        path_params = {
-            name: value for name, value in params.items() if "path" in name
-        }
+        path_params = {name: value for name, value in params.items() if "path" in name}
 
         # TODO get path from request and validate it against request.user.member
 
-        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
         return True
 
 
@@ -50,4 +46,6 @@ class ExplorerRootAccessPermission(FinmarsAccessPermission):
         if request.method != "GET":
             return False
 
-        return member_has_access_to_path("/*", request.user.member, AccessLevel.READ)
+        return member_has_access_to_path(
+            ROOT_PATH, request.user.member, AccessLevel.READ
+        )

@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, FinmarsFile
 
 expected_response = {
     "id": 2,
@@ -40,7 +40,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.url = (
             f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-access-policy/"
         )
-        self.dirpath = "/test/next/*"
+        self.dirpath = f"/test/next{DIR_SUFFIX}"
         self.filepath = "/test/next/test.pdf"
         self.directory = FinmarsDirectory.objects.create(path=self.dirpath)
         self.file = FinmarsFile.objects.create(path=self.filepath, size=111)

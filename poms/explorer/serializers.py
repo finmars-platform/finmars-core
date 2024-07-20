@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
 from poms.explorer.models import (
+    DIR_SUFFIX,
     MAX_NAME_LENGTH,
     MAX_PATH_LENGTH,
     AccessLevel,
@@ -274,7 +275,7 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
 
     @staticmethod
     def validate_path(value: str) -> str:
-        path = value.removesuffix("/*")
+        path = value.removesuffix(DIR_SUFFIX)
         if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {value}", code="path")
         return value
@@ -303,7 +304,7 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
 
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
-        if path.endswith("/*"):
+        if path.endswith(DIR_SUFFIX):
             storage_object = FinmarsDirectory.objects.filter(path=path).first()
         else:
             storage_object = FinmarsFile.objects.filter(path=path).first()

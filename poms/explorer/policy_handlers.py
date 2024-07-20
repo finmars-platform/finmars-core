@@ -5,7 +5,7 @@ from typing import Optional, Union
 from django.conf import settings
 
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
@@ -102,6 +102,28 @@ def get_or_create_storage_access_policy(
         f"member={member.username} access={access}"
     )
     return access_policy
+
+
+def get_or_create_access_policy_to_path(
+    path: str, member: Member, access: str
+) -> AccessPolicy:
+    """
+    Retrieves or creates an access policy for a given path, member, and access level.
+
+    Parameters:
+        path (str): The path for which the access policy is retrieved or created.
+        member (Member): The member for whom the access policy is created.
+        access (str): The level of access for the policy.
+
+    Returns:
+        AccessPolicy: The retrieved or created access policy.
+    """
+    if path.endswith(DIR_SUFFIX):
+        obj = FinmarsDirectory.objects.get(path=path)
+    else:
+        obj = FinmarsFile.objects.get(path=path)
+
+    return get_or_create_storage_access_policy(obj=obj, member=member, access=access)
 
 
 def check_obj_access(

@@ -1,7 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.users.models import Member
-from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
+from poms.users.models import Member
 
 EXPECTED_FULL_POLICY = {
     "Version": "2023-01-01",
@@ -75,7 +75,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         return member
 
     def _create_directory(self) -> FinmarsDirectory:
-        path = f"/{self.random_string()}/{self.random_string(3)}/*"
+        path = f"/{self.random_string()}/{self.random_string(3)}{DIR_SUFFIX}"
         return FinmarsDirectory.objects.create(path=path, parent=None)
 
     @BaseTestCase.cases(
