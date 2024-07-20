@@ -29,7 +29,7 @@ class MoveTaskTest(BaseTestCase):
         self.addCleanup(self.mock_count_patch.stop)
 
     def test__ok(self):
-        request_data = {"target_directory_path": "test", "items": ["file.txt"]}
+        request_data = {"target_directory_path": "test", "paths": ["file.txt"]}
         context = {"storage": self.storage_mock, "space_code": self.space_code}
         serializer = MoveSerializer(data=request_data, context=context)
         serializer.is_valid(raise_exception=True)

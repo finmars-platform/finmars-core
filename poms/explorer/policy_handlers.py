@@ -171,3 +171,25 @@ def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
 
     _l.info(f"{member.username} has no {access} access to any parent of {obj.path}")
     return False
+
+
+def member_has_access_to_path(path: str, member: Member, access: str) -> bool:
+    """
+    A function that determines if a member has access to a specific path
+    based on the access level.
+
+    Parameters:
+        path (str): The path for which access needs to be checked.
+        member (Member): The member whose access is being checked.
+        access (str): The level of access to check.
+
+    Returns:
+        bool: True if the member has access, False otherwise.
+    """
+    try:
+        obj = StorageObject.objects.get(path=path)
+    except StorageObject.DoesNotExist:
+        _l.info(f"{member.username} has no {access} access to {path} (not found)")
+        return False
+
+    return member_has_access(obj, member, access)

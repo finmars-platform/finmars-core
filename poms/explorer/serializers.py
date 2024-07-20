@@ -84,7 +84,7 @@ class DeletePathSerializer(BasePathSerializer):
 
 class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
-    items = serializers.ListField(
+    paths = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
         required=True,
     )
@@ -100,8 +100,8 @@ class MoveSerializer(serializers.Serializer):
                 f"target directory '{new_target_directory_path}' does not exist"
             )
 
-        updated_items = []
-        for path in attrs["items"]:
+        updated_paths = []
+        for path in attrs["paths"]:
             path = path.strip("/")
 
             directory_path = os.path.dirname(path)
@@ -116,10 +116,10 @@ class MoveSerializer(serializers.Serializer):
                 # this is a directory
                 path = f"{path}/"
 
-            updated_items.append(path)
+            updated_paths.append(path)
 
         attrs["target_directory_path"] = new_target_directory_path
-        attrs["items"] = updated_items
+        attrs["paths"] = updated_paths
         return attrs
 
 

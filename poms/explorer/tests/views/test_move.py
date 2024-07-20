@@ -23,10 +23,10 @@ class MoveViewSetTest(BaseTestCase):
         ("no_data", {}),
         ("no_required_data", {"action": "move"}),
         ("no_items", {"target_directory_path": "test"}),
-        ("empty_items", {"target_directory_path": "test", "items": []}),
-        ("same_dir", {"target_directory_path": "test", "items": ["test/file.txt"]}),
-        ("empty_target", {"target_directory_path": "", "items": ["other/file.txt"]}),
-        ("no_target", {"items": ["test/file.txt"]}),
+        ("empty_items", {"target_directory_path": "test", "paths": []}),
+        ("same_dir", {"target_directory_path": "test", "paths": ["test/file.txt"]}),
+        ("empty_target", {"target_directory_path": "", "paths": ["other/file.txt"]}),
+        ("no_target", {"paths": ["test/file.txt"]}),
     )
     def test__invalid_data(self, request_data):
         self.storage_mock.listdir.return_value = [], []
@@ -34,19 +34,19 @@ class MoveViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400)
 
     def test__path_does_not_exist(self):
-        request_data = {"target_directory_path": "invalid", "items": ["file.txt"]}
+        request_data = {"target_directory_path": "invalid", "paths": ["file.txt"]}
         self.storage_mock.dir_exists.return_value = False
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
 
     @BaseTestCase.cases(
-        ("target_1", {"target_directory_path": "/test", "items": ["file.txt"]}),
-        ("target_2", {"target_directory_path": "test/", "items": ["file.txt"]}),
-        ("target_3", {"target_directory_path": "/test/", "items": ["file.txt"]}),
-        ("item_1", {"target_directory_path": "test", "items": ["/file.txt"]}),
-        ("item_2", {"target_directory_path": "test", "items": ["file.txt/"]}),
-        ("item_3", {"target_directory_path": "test", "items": ["/file.txt/"]}),
-        ("no_slashes", {"target_directory_path": "test", "items": ["file.txt"]}),
+        ("target_1", {"target_directory_path": "/test", "paths": ["file.txt"]}),
+        ("target_2", {"target_directory_path": "test/", "paths": ["file.txt"]}),
+        ("target_3", {"target_directory_path": "/test/", "paths": ["file.txt"]}),
+        ("item_1", {"target_directory_path": "test", "paths": ["/file.txt"]}),
+        ("item_2", {"target_directory_path": "test", "paths": ["file.txt/"]}),
+        ("item_3", {"target_directory_path": "test", "paths": ["/file.txt/"]}),
+        ("no_slashes", {"target_directory_path": "test", "paths": ["file.txt"]}),
     )
     def test__valid_data(self, request_data):
         response = self.client.post(self.url, request_data)

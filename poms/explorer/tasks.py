@@ -33,7 +33,7 @@ def move_directory_in_storage(self, *args, **kwargs):
     validated_data = celery_task.options_object
     directories = []
     files_paths = []
-    items = validated_data["items"]
+    items = validated_data["paths"]
     total_items = len(items)
     for item in items:
         if path_is_file(storage, item):

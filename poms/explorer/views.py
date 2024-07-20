@@ -41,6 +41,7 @@ from poms.explorer.utils import (
     remove_first_dir_from_path,
     response_with_file,
 )
+from poms.explorer.explorer_permission import ExplorerRootAccessPermission
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
@@ -571,6 +572,9 @@ class FinmarsFileFilter(BaseFilterBackend):
 
 
 class SearchViewSet(AbstractModelViewSet):
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        ExplorerRootAccessPermission
+    ]
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]
