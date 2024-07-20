@@ -28,7 +28,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__access_to_file(self, access):
         get_or_create_storage_access_policy(self.file, self.member, access)
@@ -36,7 +36,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__access_to_dir(self, access):
         get_or_create_storage_access_policy(self.dir, self.member, access)
@@ -44,7 +44,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__access_to_dir(self, access):
         get_or_create_storage_access_policy(self.dir, self.member, access)
@@ -68,7 +68,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_dir(self, access):
         self.create_dir_tree()
@@ -78,7 +78,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_by_root_level_dir_4(self, access):
         self.create_dir_tree()
@@ -88,7 +88,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_by_root_level_dir_2(self, access):
         self.create_dir_tree()
@@ -98,7 +98,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_by_root_dir_3(self, access):
         self.create_dir_tree()
@@ -108,7 +108,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_by_dir1_dir3(self, access):
         self.create_dir_tree()
@@ -118,7 +118,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_no_access_by_dir2_to_dir3(self, access):
         self.create_dir_tree()
@@ -128,7 +128,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_file(self, access):
         self.create_dir_tree()
@@ -139,7 +139,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_file_by_root_level_dir_3(self, access):
         self.create_dir_tree()
@@ -150,7 +150,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_file_by_root_level_dir_1(self, access):
         self.create_dir_tree()
@@ -161,7 +161,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_file_by_root_level_dir_4(self, access):
         self.create_dir_tree()
@@ -172,7 +172,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_access_to_file_by_dir1_level_dir3(self, access):
         self.create_dir_tree()
@@ -183,7 +183,7 @@ class MemberHasAccessTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__tree_no_access_to_file(self, access):
         self.create_dir_tree()

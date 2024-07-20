@@ -45,7 +45,7 @@ class FileAccessPolicyTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__created_obj_access_policies(self, access):
         access_policy = get_or_create_storage_access_policy(
@@ -80,7 +80,7 @@ class DirectoryAccessPolicyTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__created_obj_access_policies(self, access):
         access_policy = get_or_create_storage_access_policy(

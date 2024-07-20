@@ -7,7 +7,7 @@ expected_response = {
     "created": "2024-07-15T19:12:50.769611Z",
     "modified": "2024-07-15T19:12:50.769622Z",
     "name": "file:/test/next/test.pdf",
-    "user_code": "local.poms.space00000:finmars:explorer:file:/test/next/test.pdf",
+    "user_code": "local.poms.space00000:finmars:explorer:/test/next/test.pdf",
     "description": "file:/test/next/test.pdf : read access policy",
     "policy": {
         "Version": "2023-01-01",
@@ -15,7 +15,7 @@ expected_response = {
             {
                 "Action": ["finmars:explorer:read"],
                 "Effect": "Allow",
-                "Resource": "frn:finmars:explorer:file:/test/next/test.pdf",
+                "Resource": "frn:finmars:explorer:/test/next/test.pdf",
                 "Principal": "*",
             }
         ],
@@ -47,7 +47,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__file_access_policy_created(self, access):
         data = {
@@ -73,12 +73,12 @@ class FinmarsFileViewSetTest(BaseTestCase):
             self.assertIn("finmars:explorer:read", actions)
         else:
             self.assertEqual(len(actions), 2)
-            self.assertIn("finmars:explorer:read", actions)
-            self.assertIn("finmars:explorer:full", actions)
+            self.assertIn(f"finmars:explorer:{AccessLevel.READ}", actions)
+            self.assertIn(f"finmars:explorer:{AccessLevel.WRITE}", actions)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
-        ("full", AccessLevel.FULL),
+        ("write", AccessLevel.WRITE),
     )
     def test__directory_access_policy_created(self, access):
         data = {
@@ -104,5 +104,5 @@ class FinmarsFileViewSetTest(BaseTestCase):
             self.assertIn("finmars:explorer:read", actions)
         else:
             self.assertEqual(len(actions), 2)
-            self.assertIn("finmars:explorer:read", actions)
-            self.assertIn("finmars:explorer:full", actions)
+            self.assertIn(f"finmars:explorer:{AccessLevel.READ}", actions)
+            self.assertIn(f"finmars:explorer:{AccessLevel.WRITE}", actions)

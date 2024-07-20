@@ -20,12 +20,12 @@ MAX_TOKEN_LENGTH = 32
 
 class AccessLevel:
     READ = "read"
-    FULL = "full"
+    WRITE = "write"
 
     @classmethod
     def validate_level(cls, access: str):
-        if access not in {cls.READ, cls.FULL}:
-            raise ValueError(f"AccessLevel must be either '{cls.READ}' or '{cls.FULL}'")
+        if access not in {cls.READ, cls.WRITE}:
+            raise ValueError(f"AccessLevel must be either '{cls.READ}' or '{cls.WRITE}'")
 
 
 class ObjMixin:

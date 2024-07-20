@@ -15,7 +15,7 @@ _l = logging.getLogger("poms.explorer")
 
 RESOURCE = f"frn:{settings.SERVICE_NAME}:explorer:{{resource}}"
 
-FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{AccessLevel.FULL}"
+FULL_ACTION = f"{settings.SERVICE_NAME}:explorer:{AccessLevel.WRITE}"
 READ_ACCESS_POLICY = {
     "Version": "2023-01-01",
     "Statement": [
@@ -50,7 +50,7 @@ def create_policy(obj: StorageObject, access: str = AccessLevel.READ) -> dict:
     """
 
     policy = deepcopy(READ_ACCESS_POLICY)
-    if access == AccessLevel.FULL:
+    if access == AccessLevel.WRITE:
         policy["Statement"][0]["Action"].append(FULL_ACTION)
 
     policy["Statement"][0]["Resource"] = RESOURCE.format(resource=obj.path)
