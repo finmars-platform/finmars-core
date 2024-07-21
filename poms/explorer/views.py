@@ -11,17 +11,19 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.explorer.explorer_permission import ExplorerRootAccessPermission
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
     AccessPolicySerializer,
     DeletePathSerializer,
-    FilePathSerializer,
     DirectoryPathSerializer,
+    FilePathSerializer,
     MoveSerializer,
     QuerySearchSerializer,
     ResponseSerializer,
@@ -41,7 +43,6 @@ from poms.explorer.utils import (
     remove_first_dir_from_path,
     response_with_file,
 )
-from poms.explorer.explorer_permission import ExplorerRootAccessPermission
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
@@ -572,9 +573,7 @@ class FinmarsFileFilter(BaseFilterBackend):
 
 
 class SearchViewSet(AbstractModelViewSet):
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        ExplorerRootAccessPermission
-    ]
+    permission_classes = [ExplorerRootAccessPermission]
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]

@@ -148,6 +148,7 @@ class SearchFileViewSetTest(BaseTestCase):
             ),
         )
         user.member = member
+        user.save()
         self.client.force_authenticate(user=user)
         return user, member
 

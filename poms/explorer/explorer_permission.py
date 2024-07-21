@@ -1,13 +1,16 @@
 import logging
 
+from rest_framework.exceptions import PermissionDenied
+
 from poms.explorer.models import ROOT_PATH, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
-from poms.iam.permissions import FinmarsAccessPolicy as FinmarsAccessPermission
+from poms.iam.permissions import AccessPolicy
+from poms.iam.utils import get_statements
 
 _l = logging.getLogger("poms.explorer")
 
 
-class ExplorerAccessPermission(FinmarsAccessPermission):
+class ExplorerAccessPermission(AccessPolicy):
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
         if not statements:
@@ -32,16 +35,42 @@ class ExplorerAccessPermission(FinmarsAccessPermission):
         return True
 
 
-class ExplorerRootAccessPermission(FinmarsAccessPermission):
+class ExplorerRootAccessPermission(AccessPolicy):
+    def get_policy_statements(self, request, view=None):
+        if not request.user.member:
+            raise PermissionDenied(f"User {request.user.username} has no member")
+
+        return get_statements(member=request.user.member)
+
+    def has_permission(self, request, view) -> bool:
+
+        if request.user.is_superuser:
+            return True
+
+        if request.user.member and request.user.member.is_admin:
+            return True
+
+        return self.has_specific_permission(view, request)
+
+    def has_object_permission(self, request, view, obj):
+
+        # TODO Member entity itself has no owner, be careful if other entities have no owner
+        if hasattr(obj, 'owner'):
+            # Check if the user is the owner
+            if obj.owner == request.user.member:
+                return True
+
+        return self.has_specific_permission(view, request)
+
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
         if not statements:
             return False
 
-        action = self._get_invoked_action(view)
-        allowed = self._evaluate_statements(statements, request, view, action)
-        if not allowed:
-            return False
+        # action = self._get_invoked_action(view)
+        # allowed = self._evaluate_statements(statements, request, view, action)
+        # if not allowed:
+        #     return False
 
         if request.method != "GET":
             return False
