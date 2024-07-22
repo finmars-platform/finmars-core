@@ -11,7 +11,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
-from rest_framework.permissions import IsAuthenticated
+# from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
@@ -573,7 +573,9 @@ class FinmarsFileFilter(BaseFilterBackend):
 
 
 class SearchViewSet(AbstractModelViewSet):
-    permission_classes = [ExplorerRootAccessPermission]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        ExplorerRootAccessPermission
+    ]
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]

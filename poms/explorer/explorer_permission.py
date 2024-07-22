@@ -36,14 +36,7 @@ class ExplorerAccessPermission(AccessPolicy):
 
 
 class ExplorerRootAccessPermission(AccessPolicy):
-    def get_policy_statements(self, request, view=None):
-        if not request.user.member:
-            raise PermissionDenied(f"User {request.user.username} has no member")
-
-        return get_statements(member=request.user.member)
-
     def has_permission(self, request, view) -> bool:
-
         if request.user.is_superuser:
             return True
 
@@ -53,14 +46,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
         return self.has_specific_permission(view, request)
 
     def has_object_permission(self, request, view, obj):
-
-        # TODO Member entity itself has no owner, be careful if other entities have no owner
-        if hasattr(obj, 'owner'):
-            # Check if the user is the owner
-            if obj.owner == request.user.member:
-                return True
-
-        return self.has_specific_permission(view, request)
+        return True
 
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
