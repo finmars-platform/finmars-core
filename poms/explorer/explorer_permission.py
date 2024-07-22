@@ -4,7 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from poms.explorer.models import ROOT_PATH, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
-from poms.iam.permissions import AccessPolicy
+from poms.iam.access_policy import AccessPolicy
 from poms.iam.utils import get_statements
 
 _l = logging.getLogger("poms.explorer")
@@ -47,6 +47,13 @@ class ExplorerRootAccessPermission(AccessPolicy):
 
     def has_object_permission(self, request, view, obj):
         return True
+
+    def get_policy_statements(self, request, view=None):
+        member = request.user.member
+        if not member:
+            raise PermissionDenied(f"User {request.user.username} has no member")
+
+        return get_statements(member=member)
 
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)

@@ -209,8 +209,11 @@ def member_has_access_to_path(path: str, member: Member, access: str) -> bool:
         bool: True if the member has access, False otherwise.
     """
     try:
-        obj = StorageObject.objects.get(path=path)
-    except StorageObject.DoesNotExist:
+        if path.endswith(DIR_SUFFIX):
+            obj = FinmarsDirectory.objects.get(path=path)
+        else:
+            obj = FinmarsFile.objects.get(path=path)
+    except (FinmarsFile.DoesNotExist, FinmarsDirectory.DoesNotExist):
         _l.info(f"{member.username} has no {access} access to {path} (not found)")
         return False
 

@@ -573,9 +573,7 @@ class FinmarsFileFilter(BaseFilterBackend):
 
 
 class SearchViewSet(AbstractModelViewSet):
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        ExplorerRootAccessPermission
-    ]
+    access_policy = ExplorerRootAccessPermission
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     http_method_names = ["get"]
