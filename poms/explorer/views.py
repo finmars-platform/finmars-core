@@ -11,13 +11,15 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
-# from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
-from poms.explorer.explorer_permission import ExplorerRootAccessPermission
+from poms.explorer.explorer_permission import (
+    ExplorerReadPathAccessPermission,
+    ExplorerRootAccessPermission,
+)
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
     AccessPolicySerializer,
@@ -67,6 +69,7 @@ class ContextMixin:
 
 
 class ExplorerViewSet(AbstractViewSet):
+    permission_classes = [ExplorerReadPathAccessPermission]
     serializer_class = DirectoryPathSerializer
     http_method_names = ["get"]
 

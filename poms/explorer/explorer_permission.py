@@ -10,31 +10,6 @@ from poms.iam.utils import get_statements
 _l = logging.getLogger("poms.explorer")
 
 
-class ExplorerAccessPermission(AccessPolicy):
-    def has_specific_permission(self, view, request):
-        statements = self.get_policy_statements(request, view)
-        if not statements:
-            return False
-
-        action = self._get_invoked_action(view)
-        allowed = self._evaluate_statements(statements, request, view, action)
-        if not allowed:
-            return False
-
-        if request.method == "GET":
-            params = request.guery_parames
-            required_access = AccessLevel.READ
-        else:
-            params = request.data
-            required_access = AccessLevel.WRITE
-
-        path_params = {name: value for name, value in params.items() if "path" in name}
-
-        # TODO get path from request and validate it against request.user.member
-
-        return True
-
-
 class ExplorerRootAccessPermission(AccessPolicy):
     def has_permission(self, request, view) -> bool:
         if request.user.is_superuser:
@@ -60,14 +35,26 @@ class ExplorerRootAccessPermission(AccessPolicy):
         if not statements:
             return False
 
-        # action = self._get_invoked_action(view)
-        # allowed = self._evaluate_statements(statements, request, view, action)
-        # if not allowed:
-        #     return False
-
         if request.method != "GET":
             return False
 
         return member_has_access_to_path(
             ROOT_PATH, request.user.member, AccessLevel.READ
+        )
+
+
+class ExplorerReadPathAccessPermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        statements = self.get_policy_statements(request, view)
+        if not statements:
+            return False
+
+        if request.method != "GET":
+            return False
+
+        paths = [path for name, path in request.guery_parames.items() if "path" in name]
+
+        return all(
+            member_has_access_to_path(path, request.user.member, AccessLevel.READ)
+            for path in paths
         )
