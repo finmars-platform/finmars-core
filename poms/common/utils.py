@@ -7,13 +7,14 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
-import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
+
+import pandas as pd
 
 from poms_app import settings
 
@@ -44,13 +45,9 @@ def db_class_check_data(model, verbosity, using):
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
-            if not obj.name:
-                obj.name = name
-
-            if not obj.short_name:
-                obj.short_name = name
-            if not obj.description:
-                obj.description = name
+            obj.name = name
+            obj.short_name = name
+            obj.description = name
             obj.save()
 
 
@@ -60,6 +57,7 @@ def date_now():
 
 def date_yesterday():
     return timezone_today() - timedelta(days=1)
+
 
 def datetime_now():
     return now()
@@ -236,6 +234,7 @@ def get_content_type_by_name(name):
 
     return ContentType.objects.get(app_label=app_label_title, model=model_title)
 
+
 def convert_name_to_key(name: str) -> str:
     return name.strip().lower().replace(" ", "_")
 
@@ -262,6 +261,7 @@ def get_first_transaction(portfolio_instance) -> object:
     return Transaction.objects.filter(portfolio=portfolio_instance).order_by(
         "accounting_date"
     )[0]
+
 
 def str_to_date(d):
     """
@@ -301,13 +301,13 @@ def finmars_exception_handler(exc, context):
             }
         }
 
-
-        error = error_payload["error"]
         status_code = response.status_code
 
+        error = error_payload["error"]
         error["status_code"] = status_code
         error["message"] = http_code_to_message[status_code]
         error["details"] = response.data
+
         response.data = error_payload
 
     return response
@@ -337,13 +337,15 @@ def get_serializer(content_type_key):
         RoleSerializer,
     )
     from poms.instruments.serializers import (
+        AccrualCalculationScheduleStandaloneSerializer,
+        CurrencyPricingPolicySerializer,
+        InstrumentFactorScheduleStandaloneSerializer,
+        InstrumentPricingPolicySerializer,
         InstrumentSerializer,
+        InstrumentTypePricingPolicySerializer,
         InstrumentTypeSerializer,
         PriceHistorySerializer,
         PricingPolicySerializer,
-        InstrumentTypePricingPolicySerializer,
-        InstrumentPricingPolicySerializer,
-        CurrencyPricingPolicySerializer,
     )
     from poms.integrations.serializers import (
         ComplexTransactionImportSchemeSerializer,
@@ -355,6 +357,7 @@ def get_serializer(content_type_key):
         PortfolioRegisterRecordSerializer,
         PortfolioRegisterSerializer,
         PortfolioSerializer,
+        PortfolioTypeSerializer,
     )
     from poms.procedures.serializers import (
         ExpressionProcedureSerializer,
@@ -362,6 +365,11 @@ def get_serializer(content_type_key):
         RequestDataFileProcedureSerializer,
     )
     from poms.reference_tables.serializers import ReferenceTableSerializer
+    from poms.reports.serializers import (
+        BalanceReportCustomFieldSerializer,
+        PLReportCustomFieldSerializer,
+        TransactionReportCustomFieldSerializer,
+    )
     from poms.schedules.serializers import ScheduleSerializer
     from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer
     from poms.transactions.serializers import (
@@ -379,13 +387,7 @@ def get_serializer(content_type_key):
         MobileLayoutSerializer,
         TransactionUserFieldSerializer,
     )
-    from poms.reports.serializers import BalanceReportCustomFieldSerializer
-    from poms.reports.serializers import PLReportCustomFieldSerializer
-    from poms.reports.serializers import TransactionReportCustomFieldSerializer
 
-    from poms.instruments.serializers import InstrumentFactorScheduleStandaloneSerializer
-    from poms.instruments.serializers import AccrualCalculationScheduleStandaloneSerializer
-    from poms.portfolios.serializers import PortfolioTypeSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -567,7 +569,6 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
-
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(
             date_from, settings.API_DATE_FORMAT
@@ -635,7 +636,6 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
         last_business_day = get_last_business_day_in_month(month.year, month.month)
 
         if month.year == d_date_to.year and month.month == d_date_to.month:
-
             if to_string:
                 end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
             else:
@@ -643,7 +643,9 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
         else:
             if to_string:
-                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
+                end_of_months.append(
+                    last_business_day.strftime(settings.API_DATE_FORMAT)
+                )
             else:
                 end_of_months.append(last_business_day)
 
@@ -699,7 +701,8 @@ def get_last_business_day_of_previous_month(date):
 
 def get_last_business_day_in_previous_quarter(date):
     """
-    Given a date in 'YYYY-MM-DD' format, returns the start date of the Quarter-To-Date (QTD) period.
+    Given a date in 'YYYY-MM-DD' format, returns the start date
+    of the Quarter-To-Date (QTD) period.
     """
 
     if not isinstance(date, datetime.date):
@@ -721,61 +724,66 @@ def get_last_business_day_in_previous_quarter(date):
         last_day_of_previous_quarter -= timedelta(days=1)
 
     return last_day_of_previous_quarter
+
+
 # endregion Dates
 
-def attr_is_relation(content_type_key, attribute_key):
-    """
 
-    :param attribute_key:
-    :type attribute_key: str
-    :return bool: True if attribute is a relation attribute
+def attr_is_relation(content_type_key: str, attribute_key: str) -> bool:
     """
-    if content_type_key == 'transactions.transactiontype' and attribute_key == 'group':
+    Determines if the given attribute key is a relation attribute based
+    on the content type key.
+
+    :param content_type_key: The key representing the content type.
+    :param attribute_key: The key of the attribute to check.
+    :return: True if the attribute is a relation attribute, False otherwise.
+    """
+    if content_type_key == "transactions.transactiontype" and attribute_key == "group":
         # because configuration
         return False
 
-    return attribute_key in [
-        'type',
-        'currency',
-        'instrument',
-        'instrument_type',
-        'group',
-        'pricing_policy',
-        'portfolio',
-        'transaction_type',
-        'transaction_currency',
-        'settlement_currency',
-        'account_cash',
-        'account_interim',
-        'account_position',
-        'accrued_currency',
-        'pricing_currency',
-        'one_off_event',
-        'regular_event',
-        'factor_same',
-        'factor_up',
-        'factor_down',
-        'strategy1_position',
-        'strategy1_cash',
-        'strategy2_position',
-        'strategy2_cash',
-        'strategy3_position',
-        'strategy3_cash',
-        'counterparty',
-        'responsible',
-        'allocation_balance',
-        'allocation_pl',
-        'linked_instrument',
-        'subgroup',
-        'instrument_class',
-        'transaction_class',
-        'daily_pricing_model',
-        'payment_size_detail',
+    return attribute_key in {
+        "type",
+        "currency",
+        "instrument",
+        "instrument_type",
+        "group",
+        "pricing_policy",
+        "portfolio",
+        "transaction_type",
+        "transaction_currency",
+        "settlement_currency",
+        "account_cash",
+        "account_interim",
+        "account_position",
+        "accrued_currency",
+        "pricing_currency",
+        "one_off_event",
+        "regular_event",
+        "factor_same",
+        "factor_up",
+        "factor_down",
+        "strategy1_position",
+        "strategy1_cash",
+        "strategy2_position",
+        "strategy2_cash",
+        "strategy3_position",
+        "strategy3_cash",
+        "counterparty",
+        "responsible",
+        "allocation_balance",
+        "allocation_pl",
+        "linked_instrument",
+        "subgroup",
+        "instrument_class",
+        "transaction_class",
+        "daily_pricing_model",
+        "payment_size_detail",
         # Portfolio register
-        'cash_currency',
-        'portfolio_register',
-        'valuation_currency',
-    ]
+        "cash_currency",
+        "portfolio_register",
+        "valuation_currency",
+    }
 
 
 def set_schema(space_code):
