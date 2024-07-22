@@ -70,10 +70,10 @@ class TransactionClass(AbstractClassModel):
         (CASH_OUTFLOW, "CASH_OUTFLOW", gettext_lazy("Cash-Outflow")),
         (DEFAULT, "-", gettext_lazy("Default")),
         (PLACEHOLDER, "PLACEHOLDER", gettext_lazy("Technical: Placeholder")),
-        (INJECTION, "INJECTION", gettext_lazy("Cash-Injection")),
-        (DISTRIBUTION, "DISTRIBUTION", gettext_lazy("Cash-Distribution")),
-        (INITIAL_POSITION, "INITIAL_POSITION", gettext_lazy("Date Balance: Position")),
-        (INITIAL_CASH, "INITIAL_CASH", gettext_lazy("Date Balance: Cash")),
+        (INJECTION, "CASH_INJECTION", gettext_lazy("Cash-Injection")),
+        (DISTRIBUTION, "CASH_DISTRIBUTION", gettext_lazy("Cash-Distribution")),
+        (INITIAL_POSITION, "DATE_BALANCE_POSITION", gettext_lazy("Date Balance: Position")),
+        (INITIAL_CASH, "DATE_BALANCE_CASH", gettext_lazy("Date Balance: Cash")),
     )
 
     class Meta(AbstractClassModel.Meta):
