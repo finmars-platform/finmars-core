@@ -51,7 +51,7 @@ class DirectoryPathSerializer(BasePathSerializer):
         required=False,
         allow_blank=True,
         allow_null=True,
-        default="",
+        default="/*",
     )
 
 

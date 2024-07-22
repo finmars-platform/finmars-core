@@ -69,7 +69,9 @@ class ContextMixin:
 
 
 class ExplorerViewSet(AbstractViewSet):
-    permission_classes = [ExplorerReadPathAccessPermission]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadPathAccessPermission
+    ]
     serializer_class = DirectoryPathSerializer
     http_method_names = ["get"]
 
@@ -126,6 +128,9 @@ class ExplorerViewSet(AbstractViewSet):
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadPathAccessPermission
+    ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
@@ -152,6 +157,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
 
 class ExplorerServeFileViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadPathAccessPermission
+    ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
