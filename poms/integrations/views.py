@@ -985,6 +985,14 @@ class ComplexTransactionImportSchemeViewSet(
 
         return self.get_paginated_response(serializer.data)
 
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="ev-item",
+        serializer_class=ComplexTransactionImportSchemeLightSerializer)
+    def list_ev_item(self, request, *args, **kwargs):
+        return super().list_ev_item(request, *args, **kwargs)
+
 
 class TransactionImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
