@@ -2565,7 +2565,7 @@ class ComplexTransactionImportSchemeLightSerializer(serializers.ModelSerializer)
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ["id", "master_user", "user_code", "name", "rule_expr"]
+        fields = ["id", "master_user", "user_code", "name", "rule_expr", "configuration_code"]
 
 
 class ComplexTransactionCsvFileImport:

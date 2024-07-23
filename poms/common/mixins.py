@@ -42,19 +42,14 @@ class ListEvModelMixin(ListModelMixin):
 # noinspection PyUnresolvedReferences
 class DestroyModelMixinExt(DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
         try:
-            self.perform_destroy(instance)
+            return super().destroy(request, *args, **kwargs)
         except ProtectedError:
-            return Response(
-                {
-                    api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy(
-                        "Cannot delete instance because they are referenced through a protected foreign key"
-                    ),
-                },
-                status=status.HTTP_409_CONFLICT,
+            raise FinmarsBaseException(
+                error_key=api_settings.NON_FIELD_ERRORS_KEY,
+                message="Cannot delete instance because they are referenced through a protected foreign key",
+                status_code=409
             )
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # noinspection PyUnresolvedReferences
@@ -77,7 +72,7 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
             f"{instance.__class__.__name__}"
         )
 
-        if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete"):
+        if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete") and not instance.is_deleted:
             instance.fake_delete()
         else:
             super().perform_destroy(instance)
