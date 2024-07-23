@@ -14,9 +14,7 @@ class FinmarsFileTest(BaseTestCase):
     def test__file_created(self):
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
-        path = (
-            f"/{self.random_string()}/{self.random_string(7)}/{name}"
-        )
+        path = f"/{self.random_string()}/{self.random_string(7)}/{name}"
         size = self.random_int()
         file = FinmarsFile.objects.create(path=path, size=size)
 
@@ -48,26 +46,9 @@ class FinmarsFileTest(BaseTestCase):
         self.assertEqual(len(instrument.files.all()), 2)
 
     def test__unique_path_and_name(self):
-        kwargs = dict(
-            path="/test/name.pdf",
-            size=1,
-        )
+        kwargs = dict(path="/test/name.pdf", size=1)
         FinmarsFile.objects.create(**kwargs)
 
         kwargs["size"] = 2
         with self.assertRaises(Exception):
             FinmarsFile.objects.create(**kwargs)
-
-    @BaseTestCase.cases(
-        ("0", "/a/b"),
-        ("1", "/a/b/"),
-        ("2", "/a/b//"),
-    )
-    def test__filepath(self, path):
-        kwargs = dict(
-            path=f"{path}/name.pdf",
-            size=self.random_int(10, 10000000),
-        )
-        file = FinmarsFile.objects.create(**kwargs)
-
-        self.assertEqual(file.path, "/a/b/name.pdf")

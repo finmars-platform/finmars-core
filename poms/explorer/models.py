@@ -32,6 +32,9 @@ class AccessLevel:
 
 
 class ObjMixin:
+    def __str__(self):
+        return self.path
+
     def policy_user_code(self, access: str = AccessLevel.READ) -> str:
         AccessLevel.validate_level(access)
         return (
@@ -48,17 +51,6 @@ class ObjMixin:
     def extension(self) -> str:
         path = Path(self.path)
         return path.suffix
-
-    @staticmethod
-    def fix_path(path: str) -> str:
-        if not path:
-            return "/"
-
-        path = str(Path(path))
-        if not path.startswith("/"):
-            path = f"/{path}"
-
-        return path
 
 
 class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
@@ -79,7 +71,6 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         blank=True,
         related_name="children",
     )
-    __size = 0
 
     class Meta:
         ordering = ["path"]
@@ -88,22 +79,9 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         level_attr = "mptt_level"
         order_insertion_by = ["path"]
 
-    def __str__(self):
-        return self.path
-
     @property
     def size(self):
-        return self.__size
-
-    def save(self, *args, **kwargs):
-        """
-        This method overrides the default save method. It removes any trailing slashes
-        from the `path` attribute and sets the `name` attribute to the
-        last part of the `path`.
-        """
-        self.path = self.fix_path(self.path)
-
-        super().save(*args, **kwargs)
+        return 0
 
 
 class FinmarsFile(ObjMixin, DataTimeStampedModel):
@@ -129,14 +107,6 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
 
     class Meta:
         ordering = ["path"]
-
-    def __str__(self):
-        return self.path
-
-    def save(self, *args, **kwargs):
-        self.path = self.fix_path(self.path)
-
-        super().save(*args, **kwargs)
 
 
 # class ShareAccessRecord(models.Model):

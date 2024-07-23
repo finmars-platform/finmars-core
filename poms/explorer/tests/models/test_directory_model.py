@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 
-from poms.explorer.models import FinmarsDirectory
+from poms.explorer.models import FinmarsDirectory, ROOT_PATH
 
 
 class FinmarsDirectoryTest(BaseTestCase):
@@ -11,7 +11,7 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.init_test_case()
 
     def _create_directory(self) -> FinmarsDirectory:
-        self.path = f"/{self.random_string()}/{self.random_string(5)}"
+        self.path = f"/{self.random_string()}/{self.random_string(5)}/*"
 
         return FinmarsDirectory.objects.create(path=self.path)
 
@@ -19,62 +19,39 @@ class FinmarsDirectoryTest(BaseTestCase):
         directory = self._create_directory()
 
         self.assertIsNotNone(directory)
-        self.assertEqual(directory.path, self.path.rstrip("/"))
+        self.assertEqual(directory.path, self.path)
         self.assertIsNone(directory.parent)
         self.assertIsNotNone(directory.created)
         self.assertIsNotNone(directory.modified)
+        self.assertEqual(directory.size, 0)
+        self.assertEqual(directory.extension, "")
 
     @BaseTestCase.cases(
-        ("0", "/test"),
-        ("1", "/test/"),
-        ("2", "test/"),
-        ("3", "test"),
+        ("0", "/test/*"),
+        ("2", "/test/path/*"),
+        ("3", "/test/path/more/*"),
     )
-    def test__unique_path_and_name(self, path):
+    def test__unique_path(self, path):
         kwargs = dict(path=path)
         FinmarsDirectory.objects.create(**kwargs)
 
         with self.assertRaises(Exception):
             FinmarsDirectory.objects.create(**kwargs)
 
-    @BaseTestCase.cases(
-        ("0", "/a/b"),
-        ("1", "/a/b/"),
-        ("2", "/a/b//"),
-        ("3", "a/b//"),
-        ("4", "a/b"),
-    )
-    def test__directory_path(self, path):
-        kwargs = dict(path=path)
-        directory = FinmarsDirectory.objects.create(**kwargs)
-
-        self.assertEqual(directory.path, "/a/b")
-
-    @BaseTestCase.cases(
-        ("3", "///"),
-        ("1", "/"),
-        ("0", ""),
-    )
-    def test__fix_directory_name(self, path):
-        kwargs = dict(path=path)
-        directory = FinmarsDirectory.objects.create(**kwargs)
-
-        self.assertEqual(directory.path, "/")
-
     def test__directory_tree(self):
-        kwargs = dict(path="/root")
+        kwargs = dict(path=ROOT_PATH)
         root = FinmarsDirectory.objects.create(**kwargs)
 
-        kwargs = dict(path=f"/root/path_1")
+        kwargs = dict(path=f"/path_1/*")
         dir_1 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
-        kwargs = dict(path=f"/root/path_2")
+        kwargs = dict(path=f"/path_2/*")
         dir_2 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
-        kwargs = dict(path=f"/root/path_1/path_3")
+        kwargs = dict(path=f"/path_1/path_3/*")
         dir_3 = FinmarsDirectory.objects.create(parent=dir_1, **kwargs)
 
-        kwargs = dict(path=f"/root/path_4")
+        kwargs = dict(path=f"/path_4/*")
         dir_4 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
         self.assertEqual(dir_1.get_root(), root)

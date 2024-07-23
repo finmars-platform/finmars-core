@@ -116,11 +116,14 @@ class ExplorerViewSetTest(BaseTestCase):
 
     def test__has_root_permission(self):
         self.storage_mock.listdir.return_value = [], []
+        user, member = self.create_user_member()
+
         root = FinmarsDirectory.objects.create(path=ROOT_PATH)
+        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+
         dir_name = f"{self.random_string()}/*"
         FinmarsDirectory.objects.create(path=dir_name, parent=root)
-        user, member = self.create_user_member()
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+
         self.client.force_authenticate(user=user)
 
         response = self.client.get(self.url, {"path": dir_name})
