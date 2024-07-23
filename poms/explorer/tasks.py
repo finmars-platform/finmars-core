@@ -3,7 +3,7 @@ import os
 
 from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
-from poms.explorer.settings import ROOT_URL
+from poms.explorer.models import ROOT_PATH
 from poms.explorer.utils import (
     count_files,
     last_dir_name,
@@ -157,7 +157,7 @@ def sync_storage_with_database(self, *args, **kwargs):
     )
 
     root_directory, _ = FinmarsDirectory.objects.get_or_create(
-        path=ROOT_URL, parent=None
+        path=ROOT_PATH, parent=None
     )
     dir_paths, files = storage.listdir(storage_root)
 
