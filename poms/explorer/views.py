@@ -17,8 +17,9 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.explorer_permission import (
-    ExplorerReadPathAccessPermission,
+    ExplorerReadPathPermission,
     ExplorerRootAccessPermission,
+    ExplorerWritePathPermission,
 )
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
@@ -70,7 +71,7 @@ class ContextMixin:
 
 class ExplorerViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
-        ExplorerReadPathAccessPermission
+        ExplorerReadPathPermission
     ]
     serializer_class = DirectoryPathSerializer
     http_method_names = ["get"]
@@ -129,7 +130,7 @@ class ExplorerViewSet(AbstractViewSet):
 
 class ExplorerViewFileViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
-        ExplorerReadPathAccessPermission
+        ExplorerReadPathPermission
     ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
@@ -158,7 +159,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
 class ExplorerServeFileViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
-        ExplorerReadPathAccessPermission
+        ExplorerReadPathPermission
     ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
@@ -186,6 +187,9 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerWritePathPermission
+    ]
     serializer_class = DirectoryPathSerializer
     http_method_names = ["post"]
 
@@ -250,6 +254,9 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerWritePathPermission
+    ]
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 

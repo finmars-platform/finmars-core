@@ -43,7 +43,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
         )
 
 
-class ExplorerReadPathAccessPermission(ExplorerRootAccessPermission):
+class ExplorerReadPathPermission(ExplorerRootAccessPermission):
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
         if not statements:
@@ -55,3 +55,17 @@ class ExplorerReadPathAccessPermission(ExplorerRootAccessPermission):
         path = request.query_params.get("path", ROOT_PATH)
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.READ)
+
+
+class ExplorerWritePathPermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        statements = self.get_policy_statements(request, view)
+        if not statements:
+            return False
+
+        if request.method == "GET":
+            return False
+
+        path = request.data.get("path", ROOT_PATH)
+
+        return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)
