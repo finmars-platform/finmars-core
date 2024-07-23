@@ -131,17 +131,17 @@ def unzip_file_in_storage(self, *args, **kwargs):
 def sync_files_with_database(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
 
-    storage_root = "/"
-    context = kwargs["context"]
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
+    space_code = kwargs["context"]["space_code"]
+    storage_root = f"{space_code}/"
+
     total_files = count_files(storage, storage_root)
 
     _l.info(f"sync_files_with_database: {total_files} files")
-
     celery_task.update_progress(
         {
             "current": 0,
