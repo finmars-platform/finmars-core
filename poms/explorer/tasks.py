@@ -164,7 +164,7 @@ def sync_storage_with_database(self, *args, **kwargs):
     try:
         for dir_path in dir_paths:
             directory, _ = FinmarsDirectory.objects.get_or_create(
-                path=dir_path,
+                path=f"{dir_path.rstrip('/')}/*",
                 parent=root_directory,
             )
             sync_storage_objects(storage, directory)
