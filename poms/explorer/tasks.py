@@ -158,7 +158,7 @@ def sync_files_with_database(self, *args, **kwargs):
             sync_files(storage, directory)
 
         for file_path in files:
-            sync_file_in_database(file_path)
+            sync_file_in_database(storage, file_path)
 
     except Exception as e:
         celery_task.status = CeleryTask.STATUS_ERROR
