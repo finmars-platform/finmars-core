@@ -1,8 +1,13 @@
 from datetime import datetime
 from unittest import mock
 
+from django.contrib.auth.models import User
+
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory
+from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.users.models import Member
 
 
 class ExplorerViewSetTest(BaseTestCase):
@@ -58,7 +63,6 @@ class ExplorerViewSetTest(BaseTestCase):
         ("test_test_1", "/test/test/"),
         ("test_test_2", "/test/test"),
         ("test_test_3", "test/test/"),
-
     )
     def test__path(self, path):
         directories = ["first", "second"]
@@ -78,7 +82,47 @@ class ExplorerViewSetTest(BaseTestCase):
 
         response_data = response.json()
         if path:
-            self.assertEqual(response_data["path"], f"{self.space_code}/{path.strip('/')}/")
+            self.assertEqual(
+                response_data["path"], f"{self.space_code}/{path.strip('/')}/"
+            )
         else:
             self.assertEqual(response_data["path"], f"{self.space_code}/")
         self.assertEqual(len(response_data["results"]), len(directories) + len(files))
+
+    def create_user_member(self):
+        user = User.objects.create_user(username="testuser")
+        member, _ = Member.objects.get_or_create(
+            user=user,
+            master_user=self.master_user,
+            username="testuser",
+            defaults=dict(
+                is_admin=False,
+                is_owner=False,
+            ),
+        )
+        user.member = member
+        user.save()
+        self.client.force_authenticate(user=user)
+        return user, member
+
+    def test__no_permission(self):
+        user, member = self.create_user_member()
+        self.client.force_authenticate(user=user)
+        dir_name = f"{self.random_string()}/*"
+
+        response = self.client.get(self.url, {"path": dir_name})
+
+        self.assertEqual(response.status_code, 403)
+
+    def test__has_root_permission(self):
+        self.storage_mock.listdir.return_value = [], []
+        root = FinmarsDirectory.objects.create(path=ROOT_PATH)
+        dir_name = f"{self.random_string()}/*"
+        FinmarsDirectory.objects.create(path=dir_name, parent=root)
+        user, member = self.create_user_member()
+        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(self.url, {"path": dir_name})
+
+        self.assertEqual(response.status_code, 200)

@@ -52,6 +52,6 @@ class ExplorerReadPathAccessPermission(ExplorerRootAccessPermission):
         if request.method != "GET":
             return False
 
-        path = request.guery_parames.get("path", ROOT_PATH)
+        path = request.query_params.get("path", ROOT_PATH)
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.READ)
