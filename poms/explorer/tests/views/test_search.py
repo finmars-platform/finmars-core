@@ -1,9 +1,7 @@
-from django.contrib.auth.models import User
-
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
-from poms.users.models import Member
+from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 expected_response = {
     "count": 1,
@@ -25,7 +23,7 @@ expected_response = {
 }
 
 
-class SearchFileViewSetTest(BaseTestCase):
+class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -135,22 +133,6 @@ class SearchFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
-
-    def create_user_member(self):
-        user = User.objects.create_user(username="testuser")
-        member, _ = Member.objects.get_or_create(
-            user=user,
-            master_user=self.master_user,
-            username="testuser",
-            defaults=dict(
-                is_admin=False,
-                is_owner=False,
-            ),
-        )
-        user.member = member
-        user.save()
-        self.client.force_authenticate(user=user)
-        return user, member
 
     def test__no_permission(self):
         user, member = self.create_user_member()

@@ -1,16 +1,14 @@
 from datetime import datetime
 from unittest import mock
 
-from django.contrib.auth.models import User
-
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
-from poms.users.models import Member
+from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
-class ExplorerViewSetTest(BaseTestCase):
+class ExplorerViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -88,22 +86,6 @@ class ExplorerViewSetTest(BaseTestCase):
         else:
             self.assertEqual(response_data["path"], f"{self.space_code}/")
         self.assertEqual(len(response_data["results"]), len(directories) + len(files))
-
-    def create_user_member(self):
-        user = User.objects.create_user(username="testuser")
-        member, _ = Member.objects.get_or_create(
-            user=user,
-            master_user=self.master_user,
-            username="testuser",
-            defaults=dict(
-                is_admin=False,
-                is_owner=False,
-            ),
-        )
-        user.member = member
-        user.save()
-        self.client.force_authenticate(user=user)
-        return user, member
 
     def test__no_permission(self):
         user, member = self.create_user_member()
