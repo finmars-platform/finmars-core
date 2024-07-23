@@ -1,4 +1,10 @@
+import json
+
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
+from poms.users.fields import MasterUserField
+from poms.vault.models import VaultRecord
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 class VaultStatusSerializer(serializers.Serializer):
     status = serializers.CharField(max_length=255)
@@ -41,3 +47,24 @@ class VaultUnsealSerializer(serializers.Serializer):
     action = serializers.CharField(max_length=255, default='unseal')
     key = serializers.CharField(max_length=255, required=True)
 
+
+class VaultRecordSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    name = serializers.CharField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = VaultRecord
+        fields = ("id", "user_code", "name", "data", "master_user")
+
+    @staticmethod
+    def validate_data(payload):
+        return json.dumps(payload)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        try:
+            response["data"] = json.loads(response["data"])
+        except Exception as e:
+            pass
+        return response

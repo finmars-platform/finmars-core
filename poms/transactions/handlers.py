@@ -3391,6 +3391,8 @@ class TransactionTypeProcess:
 
         if inp.value_type == TransactionTypeInput.STRING:
             self.values[name] = "Invalid Expression"
+        else:
+            self.values[name] = None
 
         self._set_eval_error(errors, inp.name, inp.value_expr, e)
         self.value_errors.append(errors)

@@ -896,8 +896,10 @@ class InstrumentTypeSerializer(
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
 
+        to_delete = InstrumentTypePricingPolicy.objects.filter(instrument_type=instance)
         if len(ids):
-            InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+            to_delete = to_delete.exclude(id__in=ids)
+        to_delete.delete()
 
     @staticmethod
     def _update_and_save_pricing_policies(item: dict, obj: InstrumentTypePricingPolicy):
@@ -1251,8 +1253,10 @@ class InstrumentSerializer(
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
 
+        to_delete = InstrumentPricingPolicy.objects.filter(instrument=instance)
         if len(ids):
-            InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(id__in=ids).delete()
+            to_delete = to_delete.exclude(id__in=ids)
+        to_delete.delete()
 
     @staticmethod
     def _update_and_save_pricing_policies(item: dict, obj: InstrumentPricingPolicy):

@@ -526,7 +526,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     configuration.is_package = False
     configuration.manifest = remote_configuration_release["manifest"]
     configuration.is_from_marketplace = True
-    configuration.type = remote_configuration_release.get("type", "general")
+    configuration.type = remote_configuration.get("type", "general")
 
     configuration.save()
 

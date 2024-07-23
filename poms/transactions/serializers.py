@@ -5150,8 +5150,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             recalculate_inputs = [
                 (i.name, i.verbose_name) for i in self.instance.inputs
             ]
-            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
-                required=False, allow_null=True, choices=recalculate_inputs
+            self.fields["recalculate_inputs"] = serializers.ListField(
+                required=False, allow_null=True, child=serializers.ChoiceField(choices=recalculate_inputs)
             )
         else:
             self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
@@ -5234,8 +5234,8 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
             recalculate_inputs = [
                 (i.name, i.verbose_name) for i in self.instance.inputs
             ]
-            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
-                required=False, allow_null=True, choices=recalculate_inputs
+            self.fields["recalculate_inputs"] = serializers.ListField(
+                required=False, allow_null=True, child=serializers.ChoiceField(choices=recalculate_inputs)
             )
         else:
             self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
