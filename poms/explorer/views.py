@@ -339,6 +339,9 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerWriteDirectoryPathPermission
+    ]
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
