@@ -32,6 +32,7 @@ CONTENT_TYPES = {
     ".xls": "application/vnd.ms-excel",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
+IGNORED_DIRECTORIES = {".hello-world", ".system"}
 
 
 def define_content_type(file_name: str) -> Optional[str]:
