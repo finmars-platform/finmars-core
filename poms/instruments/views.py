@@ -5,7 +5,7 @@ import logging
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Case, Prefetch, Q, Value, When
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
@@ -87,6 +87,7 @@ from poms.instruments.serializers import (
     InstrumentClassSerializer,
     InstrumentForSelectSerializer,
     InstrumentLightSerializer,
+    InstrumentOnBalanceSerializer,
     InstrumentSerializer,
     InstrumentTypeApplySerializer,
     InstrumentTypeLightSerializer,
@@ -112,8 +113,9 @@ from poms.instruments.tasks import (
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
+from poms.reports.sql_builders.helpers import dictfetchall
 from poms.strategies.models import Strategy3
-from poms.transactions.models import NotificationClass
+from poms.transactions.models import NotificationClass, Transaction
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import EcosystemDefault, MasterUser
@@ -962,6 +964,51 @@ class InstrumentViewSet(AbstractModelViewSet):
         items += get_list_of_entity_attributes("instruments.instrument")
 
         result = {"count": len(items), "next": None, "previous": None, "results": items}
+
+        return Response(result)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="is-on-balance",
+        serializer_class=InstrumentOnBalanceSerializer,
+    )
+    def is_on_balance(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        balance_date = serializer.validated_data["date"]
+        user_codes = serializer.validated_data["user_codes"]
+
+        queryset = self.filter_queryset(self.get_queryset())
+        instruments = queryset.filter(user_code__in=user_codes)
+        instrument_ids = [instrument.id for instrument in instruments]
+
+        query = f"""
+            SELECT instrument_id, SUM(position_size) as position_size
+            FROM (
+                SELECT account_position_id, portfolio_id, instrument_id, 
+                        SUM(position_size_with_sign) as position_size
+                FROM {Transaction._meta.db_table}
+                WHERE transaction_date <= %s AND instrument_id = ANY(%s)
+                GROUP BY account_position_id, portfolio_id, instrument_id
+                HAVING SUM(position_size_with_sign) <> 0
+            ) as t
+            GROUP BY instrument_id
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query, [balance_date, instrument_ids])
+            transactions = dictfetchall(cursor)
+        transactions = {t["instrument_id"]: t["position_size"] for t in transactions}
+
+        items = [{
+            "id": instrument.id,
+            "user_code": instrument.user_code,
+            "name": instrument.name,
+            "position_size": transactions.get(instrument.id, 0),
+            "is_on_balance": bool(transactions.get(instrument.id))
+        } for instrument in instruments]
+
+        result = {"date": balance_date, "instruments": items}
 
         return Response(result)
 
