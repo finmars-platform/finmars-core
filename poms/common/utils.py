@@ -8,8 +8,9 @@ from datetime import timedelta
 from http import HTTPStatus
 
 from django.conf import settings
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.contenttypes.models import ContentType
-from django.db import connection
+from django.db import connection, router
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
@@ -796,3 +797,37 @@ def get_current_schema():
         cursor.execute("SELECT current_schema();")
         current_schema = cursor.fetchone()[0]
         return current_schema
+
+
+class FinmarsNestedObjects(NestedObjects):
+    def __init__(self, instance):
+        using = router.db_for_write(instance._meta.model)
+        super().__init__(using=using, origin=[instance])
+
+    def _nested(self, obj, seen):
+        if obj in seen:
+            return None
+        seen.add(obj)
+        children = []
+        for child in self.edges.get(obj, ()):
+            if nested := self._nested(child, seen):
+                children.append(nested)
+        ret = {
+            "name": obj.__class__.__name__,
+            "content_type": f"{obj._meta.app_label}.{obj._meta.model_name}",
+            "id": obj.id,
+        }
+        if hasattr(obj, "user_code"):
+            ret["user_code"] = obj.user_code
+        if children:
+            ret["related"] = children
+        return ret
+
+    def nested(self):
+        seen = set()
+        roots = []
+        for root in self.edges.get(None, ()):
+            if item := self._nested(root, seen):
+                item["protected"] = root in self.protected
+                roots.append(item)
+        return roots

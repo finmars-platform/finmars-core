@@ -19,6 +19,7 @@ from poms.currencies.constants import DASH
 from poms.common.exceptions import FinmarsBaseException
 
 from poms.common.serializers import BulkSerializer
+from poms.common.utils import FinmarsNestedObjects
 
 _l = logging.getLogger("poms.common.mixins")
 
@@ -76,7 +77,7 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
             instance.fake_delete()
         else:
             super().perform_destroy(instance)
-            
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
@@ -88,6 +89,21 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
                     status=status.HTTP_409_CONFLICT,
                 )
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=["get"], url_path="delete")
+    def delete_preview(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        collector = FinmarsNestedObjects(instance)
+        collector.collect([instance])
+        collector.collect(list(collector.protected))
+
+        results = collector.nested()
+        model_count = {
+            f"{model._meta.app_label}.{model._meta.model_name}": len(objs)
+            for model, objs in collector.model_objs.items()
+        }
+        return Response({"results": results, "counts": model_count})
 
 
 # noinspection PyUnresolvedReferences
@@ -119,7 +135,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
     def bulk_delete(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
         from poms_app import celery_app
-        
+
         serializer = BulkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
