@@ -286,11 +286,11 @@ def sync_storage_objects(
 
         count = len(file_names)
         for file in file_names:
-            sync_file(storage, file, directory)
+            sync_file(storage, os.path.join(directory.path, file), directory)
 
         for subdir in dir_names:
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
-                path=subdir, parent=directory
+                path=os.path.join(directory.path, subdir), parent=directory
             )
             count += sync_files_helper(sub_directory)
 
@@ -311,7 +311,6 @@ def sync_file(
         filepath: path to the file in storage
         directory: directory to which the file belongs
     """
-    _l.info(f"sync_file_in_database: sync filepath {filepath}")
     _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
     FinmarsFile.objects.update_or_create(
         path=filepath,
