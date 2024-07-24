@@ -177,6 +177,7 @@ def sync_files_with_database(self, *args, **kwargs):
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.verbose_result = f"failed, due to {repr(e)}"
         celery_task.save()
+        _l.error(f"sync_files_with_database: failed due to {repr(e)}")
         return
 
     celery_task.update_progress(
