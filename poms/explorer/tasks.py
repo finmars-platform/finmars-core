@@ -4,6 +4,7 @@ import os
 from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.explorer.utils import (
+    IGNORED_DIRECTORIES,
     count_files,
     last_dir_name,
     move_dir,
@@ -64,7 +65,7 @@ def move_directory_in_storage(self, *args, **kwargs):
 
         for file_path in files_paths:
             file_name = os.path.basename(file_path)
-            destination_file_path = os.path.join(destination_directory, file_name)
+            destination_file_path = str(os.path.join(destination_directory, file_name))
             move_file(storage, file_path, destination_file_path)
 
     except Exception as e:
@@ -168,6 +169,8 @@ def sync_files_with_database(self, *args, **kwargs):
 
     try:
         for directory in dirs:
+            if directory in IGNORED_DIRECTORIES:
+                continue
             sync_files(storage, directory)
 
         for file_path in files:
