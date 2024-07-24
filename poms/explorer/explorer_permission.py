@@ -76,7 +76,7 @@ class ExplorerWriteDirectoryPathPermission(ExplorerRootAccessPermission):
 
         path = request.data.get("path", ROOT_PATH)
         if not path.endswith(DIR_SUFFIX):
-            path = f"{path.rstrip('/')}{DIR_SUFFIX}/"
+            path = f"{path.rstrip('/')}{DIR_SUFFIX}"
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)
 
@@ -93,6 +93,6 @@ class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
         is_dir = check_is_true(request.query_params.get("is_dir", "false"))
 
         if is_dir and not path.endswith(DIR_SUFFIX):
-            path = f"{path.rstrip('/')}{DIR_SUFFIX}/"
+            path = f"{path.rstrip('/')}{DIR_SUFFIX}"
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)

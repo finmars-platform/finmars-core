@@ -2,7 +2,13 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory
+from poms.explorer.models import (
+    DIR_SUFFIX,
+    ROOT_PATH,
+    AccessLevel,
+    FinmarsDirectory,
+    FinmarsFile,
+)
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -88,8 +94,7 @@ class ExplorerDeletePathViewTest(CreateUserMemberMixin, BaseTestCase):
         get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.WRITE)
 
         file_name = f"{self.random_string()}.{self.random_string(3)}"
-
-        FinmarsDirectory.objects.create(path=file_name, parent=root)
+        FinmarsFile.objects.create(path=file_name, parent=root, size=555)
 
         self.client.force_authenticate(user=user)
 
@@ -104,7 +109,7 @@ class ExplorerDeletePathViewTest(CreateUserMemberMixin, BaseTestCase):
         get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.WRITE)
 
         dir_name = f"{self.random_string()}/{self.random_string()}"
-        FinmarsDirectory.objects.create(path=dir_name, parent=root)
+        FinmarsDirectory.objects.create(path=f"{dir_name}{DIR_SUFFIX}", parent=root)
 
         self.client.force_authenticate(user=user)
 
