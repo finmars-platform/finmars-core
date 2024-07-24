@@ -33,6 +33,11 @@ CONTENT_TYPES = {
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
 
+IGNORED_DIRECTORIES = {
+    ".hello-world",
+    ".system",
+}
+
 
 def define_content_type(file_name: str) -> Optional[str]:
     return CONTENT_TYPES.get(os.path.splitext(file_name)[-1])
