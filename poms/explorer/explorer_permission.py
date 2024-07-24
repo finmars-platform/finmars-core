@@ -96,3 +96,17 @@ class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
             path = f"{path.rstrip('/')}{DIR_SUFFIX}"
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)
+
+
+class ExplorerRootWritePermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method == "GET":
+            return False
+
+        path = request.data.get("path")
+        if not path:
+            return False
+
+        return member_has_access_to_path(
+            ROOT_PATH, request.user.member, AccessLevel.WRITE
+        )

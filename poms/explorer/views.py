@@ -21,6 +21,7 @@ from poms.explorer.explorer_permission import (
     ExplorerReadDirectoryPathPermission,
     ExplorerReadFilePathPermission,
     ExplorerRootAccessPermission,
+    ExplorerRootWritePermission,
     ExplorerWriteDirectoryPathPermission,
 )
 from poms.explorer.models import FinmarsFile
@@ -301,6 +302,9 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerRootWritePermission,
+    ]
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
 

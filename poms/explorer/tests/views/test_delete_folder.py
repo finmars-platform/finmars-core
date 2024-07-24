@@ -7,7 +7,7 @@ from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
-class ExplorerUploadViewSetTest(CreateUserMemberMixin, BaseTestCase):
+class ExplorerDeleteFolderViewTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
