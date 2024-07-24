@@ -60,6 +60,7 @@ class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
+        # check path in query params & in url kwargs
         path = request.query_params.get("path", view.kwargs.get("filepath"))
         if not path:
             return False
