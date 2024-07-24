@@ -1,5 +1,6 @@
 from unittest import mock
 
+from django.db.models import ProtectedError
 from poms.celery_tasks.models import CeleryTask
 from poms.celery_tasks.tasks import bulk_delete
 from poms.common.common_base_test import BIG, BaseTestCase
@@ -47,13 +48,13 @@ class BulkDeleteTestCase(BaseTestCase):
 
         self.assertIsNone(Transaction.objects.filter(pk=self.transaction.id).first())
 
-    @mock.patch("poms.celery_tasks.models.CeleryTask.update_progress")
-    def test__complex_transaction_bulk_delete_handle_exception(self, update_progress):
-        self.assertEqual(self.celery_task.status, CeleryTask.STATUS_INIT)
+    def test__complex_transaction_bulk_delete_handle_exception(self):
+        self.complex_transaction.is_deleted = True
+        self.complex_transaction.save()
 
-        update_progress.side_effect = [None, ZeroDivisionError]
-
-        with self.assertRaises(RuntimeError):
+        with mock.patch("poms.transactions.models.ComplexTransaction.delete",
+                        ProtectedError("there are protected objects", [])), \
+             self.assertRaises(RuntimeError):
             bulk_delete(
                 task_id=self.celery_task.id,
                 kwargs={
@@ -63,7 +64,3 @@ class BulkDeleteTestCase(BaseTestCase):
                     }
                 },
             )
-
-        self.celery_task.refresh_from_db()
-
-        self.assertEqual(self.celery_task.status, CeleryTask.STATUS_ERROR)

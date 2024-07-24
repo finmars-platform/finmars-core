@@ -2234,3 +2234,8 @@ class AttachmentSerializer(serializers.Serializer):
 
     def update(self, instance, *args):
         instance.files.add(*self.validated_data["files"])
+
+
+class InstrumentOnBalanceSerializer(serializers.Serializer):
+    date = serializers.DateField(write_only=True, default=now().date())
+    user_codes = serializers.ListField(child=serializers.CharField(), write_only=True)

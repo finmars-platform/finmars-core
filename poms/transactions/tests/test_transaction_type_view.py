@@ -6,6 +6,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import (
     TransactionType,
+    TransactionTypeAction,
     TransactionTypeGroup,
     TransactionTypeInput,
     TransactionTypeInputSettings,
@@ -232,6 +233,19 @@ class TransactionTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__delete_preview(self):
+        transaction_type = self.get_transaction_type()
+        action = TransactionTypeAction.objects.create(transaction_type=transaction_type)
+        type_id = transaction_type.id
+
+        response = self.client.get(path=f"{self.url}{type_id}/delete/")
+        self.assertEqual(response.status_code, 200, response.content)
+        results = response.json()["results"]
+        self.assertEqual(results[0]["id"], type_id)
+        self.assertFalse(results[0]['protected'])
+        self.assertEqual(results[1]["id"], action.id)
+        self.assertTrue(results[1]['protected'])
 
     def test__create(self):
         create_data = self.prepare_create_data()

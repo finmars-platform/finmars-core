@@ -5,6 +5,7 @@ from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.explorer.models import ROOT_PATH
 from poms.explorer.utils import (
+    IGNORED_DIRECTORIES,
     count_files,
     last_dir_name,
     move_dir,
@@ -144,8 +145,7 @@ def sync_storage_with_database(self, *args, **kwargs):
     storage_root = f"{space_code}/"
 
     total_files = count_files(storage, storage_root)
-
-    _l.info(f"{task_name}: {total_files} files")
+    _l.info(f"sync_files_with_database: there are total {total_files} files")
 
     celery_task.update_progress(
         {
@@ -163,6 +163,8 @@ def sync_storage_with_database(self, *args, **kwargs):
 
     try:
         for dir_path in dir_paths:
+            if dir_path in IGNORED_DIRECTORIES:
+                continue
             directory, _ = FinmarsDirectory.objects.get_or_create(
                 path=f"{dir_path.rstrip('/')}/*",
                 parent=root_directory,
@@ -176,6 +178,7 @@ def sync_storage_with_database(self, *args, **kwargs):
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.verbose_result = f"failed, due to {repr(e)}"
         celery_task.save()
+        _l.error(f"sync_files_with_database: failed due to {repr(e)}")
         return
 
     celery_task.update_progress(
@@ -188,5 +191,5 @@ def sync_storage_with_database(self, *args, **kwargs):
     )
 
     celery_task.status = CeleryTask.STATUS_DONE
-    celery_task.verbose_result = f"synced {total_files} items"
+    celery_task.verbose_result = f"synced {total_files} files"
     celery_task.save()

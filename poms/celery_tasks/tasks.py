@@ -161,48 +161,29 @@ def bulk_delete(self, task_id, *args, **kwargs):
         id__in=options_object["ids"]
     )
 
-    try:
-        if content_type.model_class()._meta.get_field("is_deleted"):
-            for count, instance in enumerate(to_be_deleted_queryset, start=1):
+    last_exception = None
+    for count, instance in enumerate(to_be_deleted_queryset, start=1):
+        try:
+            if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete") and not instance.is_deleted:
                 instance.fake_delete()
+            else:
+                instance.delete()
+            description = f"Instance {instance.id} was deleted"
+        except Exception as e:
+            last_exception = e
+            description = f"Instance {instance.id} was not deleted"
 
-                celery_task.update_progress(
-                    {
-                        "current": count,
-                        "total": len(options_object["ids"]),
-                        "percent": round(count / (len(options_object["ids"]) / 100)),
-                        "description": f"Instance {instance.id} was deleted",
-                    }
-                )
-
-            celery_task.status = CeleryTask.STATUS_DONE
-            celery_task.mark_task_as_finished()
-
-    except Exception as e:
-        err_msg = f"bulk_delete exception {repr(e)} {traceback.format_exc()}"
+        celery_task.update_progress({
+            "current": count,
+            "total": len(options_object["ids"]),
+            "percent": round(count / (len(options_object["ids"]) / 100)),
+            "description": description,
+        })
+    if last_exception:
+        err_msg = f"bulk_delete exception {repr(last_exception)} {traceback.format_exception(last_exception)}"
         _l.info(err_msg)  # sentry detects it as error, but it maybe not
-
         _l.info(f'options_object["content_type"] {options_object["content_type"]}')
-
-        if options_object["content_type"] in {
-            "instruments.pricehistory",
-            "currencies.currencyhistory",
-            "portfolios.portfoliohistory",
-            "portfolios.portfolioregisterrecord",
-        }:
-            _l.info("Going to permanent delete")
-
-            to_be_deleted_queryset.delete()
-
-            celery_task.status = CeleryTask.STATUS_DONE
-            celery_task.mark_task_as_finished()
-        else:
-            celery_task.status = CeleryTask.STATUS_ERROR
-            celery_task.error_message = err_msg
-            raise RuntimeError(err_msg) from e
-
-    finally:
-        celery_task.save()
+        raise RuntimeError(err_msg) from last_exception
 
 
 @finmars_task(name="celery_tasks.bulk_restore", bind=True)
