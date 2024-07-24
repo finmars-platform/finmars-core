@@ -4,6 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from poms.explorer.models import DIR_SUFFIX, ROOT_PATH, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
+from poms.explorer.utils import check_is_true
 from poms.iam.access_policy import AccessPolicy
 from poms.iam.utils import get_statements
 
@@ -70,15 +71,28 @@ class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
 
 class ExplorerWriteDirectoryPathPermission(ExplorerRootAccessPermission):
     def has_specific_permission(self, view, request):
-        statements = self.get_policy_statements(request, view)
-        if not statements:
-            return False
-
-        if request.method == "GET":
+        if not self.has_statements(view, request) or request.method == "GET":
             return False
 
         path = request.data.get("path", ROOT_PATH)
         if not path.endswith(DIR_SUFFIX):
+            path = f"{path.rstrip('/')}{DIR_SUFFIX}/"
+
+        return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)
+
+
+class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method == "GET":
+            return False
+
+        path = request.query_params.get("path")
+        if not path:
+            return False
+
+        is_dir = check_is_true(request.query_params.get("is_dir", "false"))
+
+        if is_dir and not path.endswith(DIR_SUFFIX):
             path = f"{path.rstrip('/')}{DIR_SUFFIX}/"
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.WRITE)

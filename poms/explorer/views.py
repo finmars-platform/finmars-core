@@ -17,6 +17,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.explorer_permission import (
+    ExplorerDeletePathPermission,
     ExplorerReadDirectoryPathPermission,
     ExplorerReadFilePathPermission,
     ExplorerRootAccessPermission,
@@ -256,7 +257,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 class ExplorerDeleteViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
-        ExplorerWriteDirectoryPathPermission
+        ExplorerDeletePathPermission
     ]
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
