@@ -184,7 +184,7 @@ def move_dir(
     celery_task.update_progress(progres_dict)
 
 
-def count_files(storage: FinmarsS3Storage, source_dir: str):
+def count_files(storage: FinmarsS3Storage, source_dir: str) -> int:
     """
     Recursively count the number of files in a directory and all its subdirectories
     Args:
@@ -200,8 +200,9 @@ def count_files(storage: FinmarsS3Storage, source_dir: str):
         for subdir in dirs:
             count += count_files_helper(os.path.join(dir_path, subdir))
         return count
-
-    return count_files_helper(source_dir)
+    start_dir = str(source_dir)
+    _l.info(f"count_files: from directory {start_dir}")
+    return count_files_helper(start_dir)
 
 
 def unzip_file(
@@ -265,7 +266,7 @@ def unzip_file(
         celery_task.update_progress(progress_dict)
 
 
-def sync_files(storage: FinmarsS3Storage, source_dir: str):
+def sync_files(storage: FinmarsS3Storage, source_dir: str) -> int:
     """
     Recursively syncs files in a directory and all its subdirectories with database file
     objects.
@@ -285,9 +286,9 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str):
             count += sync_files_helper(os.path.join(dir_path, subdir))
         return count
 
-    _l.info(f"sync_files: from directory {source_dir}")
-
-    return sync_files_helper(source_dir)
+    start_dir = str(source_dir)  # to avoid source_dir modification
+    _l.info(f"sync_files: from directory {start_dir}")
+    return sync_files_helper(start_dir)
 
 
 def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
