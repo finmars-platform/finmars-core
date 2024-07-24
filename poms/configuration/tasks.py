@@ -41,6 +41,29 @@ User = get_user_model()
 storage = get_storage()
 
 
+def _run_action(task: CeleryTask, action: dict):
+    workflow = action.get("workflow", None)
+    if workflow:
+        try:
+            _l.info(
+                f"import_configuration.going to execute workflow {workflow}"
+            )
+
+            response_data = run_workflow(workflow, {}, task)
+
+            response_data = wait_workflow_until_end(response_data["id"], task)
+
+            _l.info(
+                f"import_configuration.workflow finished {response_data}"
+            )
+
+        except Exception as e:
+            _l.error(
+                f"Could not execute workflow {e} "
+                f"traceback {traceback.format_exc()}"
+            )
+
+
 @finmars_task(name="configuration.import_configuration", bind=True)
 def import_configuration(self, task_id, *args, **kwargs):
     _l.info("import_configuration")
@@ -260,27 +283,7 @@ def import_configuration(self, task_id, *args, **kwargs):
 
         if manifest.get("actions", None):
             for action in manifest["actions"]:
-                workflow = action.get("workflow", None)
-
-                if workflow:
-                    try:
-                        _l.info(
-                            f"import_configuration.going to execute workflow {workflow}"
-                        )
-
-                        response_data = run_workflow(workflow, {}, task)
-
-                        response_data = wait_workflow_until_end(response_data["id"], task)
-
-                        _l.info(
-                            f"import_configuration.workflow finished {response_data}"
-                        )
-
-                    except Exception as e:
-                        _l.error(
-                            f"Could not execute workflow {e} "
-                            f"traceback {traceback.format_exc()}"
-                        )
+                _run_action(task, action)
 
     _l.info("Workflows uploaded")
 
@@ -798,6 +801,36 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
 
     except Exception as e:
         _l.error(f"install_package_from_marketplace error: {str(e)}")
+
+    manifest_actions = configuration.manifest.get("actions", [])
+    if manifest_actions:
+        total = len(manifest_dependencies) + len(manifest_actions)
+        step = len(manifest_dependencies)
+        percent = int((step / total) * 100)
+        parent_task.update_progress(
+            {
+                "current": step,
+                "total": total,
+                "percent": percent,
+                "description": "Run actions",
+            }
+        )
+
+        for action in manifest_actions:
+            _run_action(parent_task, action)
+
+            step = step + 1
+            percent = int((step / total) * 100)
+            parent_task.update_progress(
+                {
+                    "current": step,
+                    "total": total,
+                    "percent": percent,
+                    "description": "Run actions",
+                }
+            )
+
+        _l.info("Workflows uploaded")
 
     parent_task.status = CeleryTask.STATUS_DONE
     parent_task.verbose_result = "Configuration package installed successfully"
