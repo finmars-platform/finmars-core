@@ -158,7 +158,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         return response_with_file(storage, path)
 
 
-class ExplorerServeFileViewSet(AbstractViewSet):
+class ExplorerServerFileViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
         ExplorerReadFilePathPermission
     ]

@@ -1,5 +1,5 @@
 import logging
-
+from typing import Optional
 from rest_framework.exceptions import PermissionDenied
 
 from poms.explorer.models import DIR_SUFFIX, ROOT_PATH, AccessLevel
@@ -30,12 +30,11 @@ class ExplorerRootAccessPermission(AccessPolicy):
 
         return get_statements(member=member)
 
-    def has_specific_permission(self, view, request):
-        statements = self.get_policy_statements(request, view)
-        if not statements:
-            return False
+    def has_statements(self, view, request) -> Optional[bool]:
+        return bool(self.get_policy_statements(request, view))
 
-        if request.method != "GET":
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method != "GET":
             return False
 
         return member_has_access_to_path(
@@ -45,11 +44,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
 
 class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
     def has_specific_permission(self, view, request):
-        statements = self.get_policy_statements(request, view)
-        if not statements:
-            return False
-
-        if request.method != "GET":
+        if not self.has_statements(view, request) or request.method != "GET":
             return False
 
         path = request.query_params.get("path", ROOT_PATH)
@@ -62,14 +57,10 @@ class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
 
 class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
     def has_specific_permission(self, view, request):
-        statements = self.get_policy_statements(request, view)
-        if not statements:
+        if not self.has_statements(view, request) or request.method != "GET":
             return False
 
-        if request.method != "GET":
-            return False
-
-        path = request.query_params.get("path")
+        path = request.query_params.get("path", view.kwargs.get("filepath"))
         if not path:
             return False
 
