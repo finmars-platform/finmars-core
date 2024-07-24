@@ -140,8 +140,8 @@ def sync_files_with_database(self, *args, **kwargs):
     storage_root = f"{space_code}/"
 
     total_files = count_files(storage, storage_root)
+    _l.info(f"sync_files_with_database: there are total {total_files} files")
 
-    _l.info(f"sync_files_with_database: {total_files} files")
     celery_task.update_progress(
         {
             "current": 0,
@@ -152,6 +152,19 @@ def sync_files_with_database(self, *args, **kwargs):
     )
 
     dirs, files = storage.listdir(storage_root)
+    _l.info(
+        f"sync_files_with_database: storage_root {storage_root} "
+        f"has {dirs} dirs, {files} files"
+    )
+
+    celery_task.update_progress(
+        {
+            "current": 0,
+            "total": total_files,
+            "percent": 0,
+            "description": "sync_files_with_database starting ...",
+        }
+    )
 
     try:
         for directory in dirs:
@@ -164,6 +177,7 @@ def sync_files_with_database(self, *args, **kwargs):
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.verbose_result = f"failed, due to {repr(e)}"
         celery_task.save()
+        _l.error(f"sync_files_with_database: failed due to {repr(e)}")
         return
 
     celery_task.update_progress(
@@ -176,5 +190,5 @@ def sync_files_with_database(self, *args, **kwargs):
     )
 
     celery_task.status = CeleryTask.STATUS_DONE
-    celery_task.verbose_result = f"synced {total_files} items"
+    celery_task.verbose_result = f"synced {total_files} files"
     celery_task.save()
