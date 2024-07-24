@@ -268,7 +268,9 @@ def unzip_file(
         celery_task.update_progress(progress_dict)
 
 
-def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDirectory) -> int:
+def sync_storage_objects(
+    storage: FinmarsS3Storage, start_directory: FinmarsDirectory
+) -> int:
     """
     Recursively syncs files/directories in the root directory and
     all its subdirectories with database file/directory objects.
@@ -280,15 +282,15 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory: FinmarsDire
     """
 
     def sync_files_helper(directory: FinmarsDirectory) -> int:
-        dir_paths, file_paths = storage.listdir(directory.path)
+        dir_names, file_names = storage.listdir(directory.path)
 
-        count = len(file_paths)
-        for filepath in file_paths:
-            sync_file(storage, filepath, directory)
+        count = len(file_names)
+        for file in file_names:
+            sync_file(storage, file, directory)
 
-        for subdir_path in dir_paths:
+        for subdir in dir_names:
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
-                path=subdir_path, parent=directory
+                path=subdir, parent=directory
             )
             count += sync_files_helper(sub_directory)
 

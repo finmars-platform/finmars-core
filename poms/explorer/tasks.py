@@ -3,7 +3,7 @@ import os
 
 from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
-from poms.explorer.models import ROOT_PATH
+from poms.explorer.models import DIR_SUFFIX, ROOT_PATH
 from poms.explorer.utils import (
     IGNORED_DIRECTORIES,
     count_files,
@@ -165,8 +165,9 @@ def sync_storage_with_database(self, *args, **kwargs):
         for dir_path in dir_paths:
             if dir_path in IGNORED_DIRECTORIES:
                 continue
+
             directory, _ = FinmarsDirectory.objects.get_or_create(
-                path=f"{dir_path.rstrip('/')}/*",
+                path=f"{dir_path.rstrip('/')}{DIR_SUFFIX}",
                 parent=root_directory,
             )
             sync_storage_objects(storage, directory)
