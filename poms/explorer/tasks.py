@@ -65,7 +65,7 @@ def move_directory_in_storage(self, *args, **kwargs):
 
         for file_path in files_paths:
             file_name = os.path.basename(file_path)
-            destination_file_path = os.path.join(destination_directory, file_name)
+            destination_file_path = str(os.path.join(destination_directory, file_name))
             move_file(storage, file_path, destination_file_path)
 
     except Exception as e:
