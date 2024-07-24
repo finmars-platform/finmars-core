@@ -32,6 +32,7 @@ CONTENT_TYPES = {
     ".xls": "application/vnd.ms-excel",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
+IGNORED_DIRECTORIES = {".hello-world", ".system"}
 
 
 def define_content_type(file_name: str) -> Optional[str]:
@@ -200,6 +201,7 @@ def count_files(storage: FinmarsS3Storage, source_dir: str) -> int:
         for subdir in dirs:
             count += count_files_helper(os.path.join(dir_path, subdir))
         return count
+
     start_dir = str(source_dir)
     _l.info(f"count_files: from directory {start_dir}")
     return count_files_helper(start_dir)
@@ -279,9 +281,10 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str) -> int:
 
     def sync_files_helper(dir_path: str) -> int:
         dirs, files = storage.listdir(dir_path)
+        _l.info(f"sync_files: dir_path {dir_path} try to sync {files} files")
         count = len(files)
         for file in files:
-            sync_file_in_database(storage, file)
+            sync_file_in_database(storage, os.path.join(dir_path, file))
         for subdir in dirs:
             count += sync_files_helper(os.path.join(dir_path, subdir))
         return count
@@ -298,7 +301,7 @@ def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
         storage: The storage instance to use
         filepath: path to the file in storage
     """
-
+    _l.info(f"sync_file_in_database: sync filepath {filepath}")
     path, name = os.path.split(filepath)
     size = storage.size(filepath)
 
