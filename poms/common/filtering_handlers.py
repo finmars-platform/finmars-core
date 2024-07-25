@@ -54,13 +54,12 @@ class FilterType:
     SELECTOR = "selector"
     DATE_TREE = "date_tree"
 
-def _get_equal_q(field_key, value_type, value, exclude_empty_cells):
+def _get_equal_q(field_key, value_type, value):
     """
 
     :param field_key:
     :param value_type: - values: 10, 20, 30, 40
     :param value:
-    :param exclude_empty_cells:
     :return: Q object for filter type "equal"
     """
     lookup = "iexact"
@@ -70,17 +69,13 @@ def _get_equal_q(field_key, value_type, value, exclude_empty_cells):
 
     q = Q(**{f"{field_key}__{lookup}": value})
 
-    if not exclude_empty_cells:
-        q = q | Q(**{f"{field_key}__isnull": True})
-
     return q
 
-def _get_has_substring_q(field_key, value, exclude_empty_cells):
+def _get_has_substring_q(field_key, value):
     """
 
     :param field_key:
     :param value:
-    :param exclude_empty_cells:
     :return: Q object for filter type "contains_has_substring"
     """
     q = Q()
@@ -92,28 +87,12 @@ def _get_has_substring_q(field_key, value, exclude_empty_cells):
     #     q = q | Q(**{f"{field_key}__icontains": text})
     q = q | Q(**{f"{field_key}__icontains": value})
 
-    if not exclude_empty_cells:
-        q = q | Q(**{f"{field_key}__isnull": True}) | Q(**{f"{field_key}": ""})
-
     return q
-
-def _get_classifier_include_null_q(exclude_empty_cells):
-    if exclude_empty_cells:
-        return Q()
-
-    return (
-        Q(classifier__isnull=True) &
-        Q(value_string__isnull=True) &
-        Q(value_float__isnull=True) &
-        Q(value_date__isnull=True)
-    )
 
 def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     filter_type = filter_config["filter_type"]
     value_type = str(filter_config["value_type"])
     value = None
-
-    exclude_empty_cells = filter_config["exclude_empty_cells"]
 
     source_key = filter_config["key"]
     attribute_type_user_code = source_key.split("attributes.")[1]
@@ -145,10 +124,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             for value in values:
                 clauses.append(Q(classifier__name__icontains=value))
 
-            include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
-
-            clauses.append(include_null_q)
-
             query = reduce(operator.or_, clauses)
 
             attributes_qs = attributes_qs.filter(query)
@@ -160,10 +135,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"classifier__name__icontains": value}
 
-            include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | include_null_q
+                Q(**options)
             )
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
@@ -174,10 +147,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
             options = {"classifier__name__iexact": value}
 
-            include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | include_null_q
+                Q(**options)
             )
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
@@ -187,10 +158,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
 
             q = Q(classifier__name__icontains=value)
-
-            include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
-
-            q = q | include_null_q
 
             attributes_qs = attributes_qs.filter(q)
 
@@ -213,11 +180,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             for text in substrings:
                 q = q & Q(classifier__name__icontains=text)
 
-            include_null_q = _get_classifier_include_null_q(exclude_empty_cells)
-
-            attributes_qs = attributes_qs.filter(
-                q | include_null_q
-            )
+            attributes_qs = attributes_qs.filter(q)
 
     elif (
         filter_type == FilterType.DOES_NOT_CONTAINS
@@ -229,9 +192,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"classifier__name__icontains": value}
 
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_empty_cells_options["classifier__isnull"] = True
+            exclude_empty_cells_options = {"classifier__isnull": True}
 
             attributes_qs = attributes_qs.exclude(
                 Q(**options) | Q(**exclude_empty_cells_options)
@@ -266,15 +227,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             for value in values:
                 clauses.append(Q(value_string__icontains=value))
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_string__isnull"] = True
-                include_empty_string_options["value_string"] = ""
-
-            clauses.append(Q(**include_null_options))
-            clauses.append(Q(**include_empty_string_options))
-
             query = reduce(operator.or_, clauses)
 
             attributes_qs = attributes_qs.filter(query)
@@ -286,16 +238,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__icontains": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_string__isnull"] = True
-                include_empty_string_options["value_string"] = ""
-
             attributes_qs = attributes_qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
@@ -305,16 +249,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__icontains": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_string__isnull"] = True
-                include_empty_string_options["value_string"] = ""
-
             attributes_qs = attributes_qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
@@ -324,11 +260,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__icontains": value}
 
-            exclude_empty_cells_options = {}
-            exclude_null_options = {}
-            if exclude_empty_cells:
-                exclude_null_options["classifier__isnull"] = True
-                exclude_empty_cells_options["value_string"] = ""
+            exclude_null_options = {"classifier__isnull": True}
+            exclude_empty_cells_options = {"value_string": ""}
 
             attributes_qs = attributes_qs.exclude(
                 Q(**options)
@@ -343,16 +276,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__iexact": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_string__isnull"] = True
-                include_empty_string_options["value_string"] = ""
-
             attributes_qs = attributes_qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.STRING:
@@ -365,10 +290,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
             for text in substrings:
                 q = q | Q(value_string__icontains=text)
-
-            if not exclude_empty_cells:
-                # include rows with null and empty string
-                q = q | Q(value_string__isnull=True) | Q(value_string="")
 
             attributes_qs = attributes_qs.filter(q)
 
@@ -391,7 +312,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
         if value:
 
-            q = _get_equal_q("value_float", value_type, value, exclude_empty_cells)
+            q = _get_equal_q("value_float", value_type, value)
 
             attributes_qs = attributes_qs.filter(q)
 
@@ -402,9 +323,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__exact": value}
 
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_empty_cells_options["value_float__isnull"] = True
+            exclude_empty_cells_options = {"value_float__isnull": True}
 
             attributes_qs = attributes_qs.exclude(
                 Q(**options) | Q(**exclude_empty_cells_options)
@@ -417,12 +336,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__gt": value}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
@@ -432,12 +347,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__gte": value}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
@@ -447,13 +358,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__lt": value}
 
-            include_null_options = {}
-
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
@@ -463,13 +369,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__lte": value}
 
-            include_null_options = {}
-
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
@@ -482,12 +383,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 "value_float__lte": max_value,
             }
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
@@ -498,12 +395,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             q_less_than_min = Q(value_float__lt=min_value)
             q_greater_than_max = Q(value_float__gt=max_value)
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_float__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+                q_less_than_min | q_greater_than_max
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
@@ -525,7 +418,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 "value_date",
                 value_type,
                 datetime.strptime(value, DATE_FORMAT).date(),
-                exclude_empty_cells
             )
 
             attributes_qs = attributes_qs.filter(q)
@@ -537,9 +429,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date": datetime.strptime(value, DATE_FORMAT).date()}
 
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_empty_cells_options["value_date__isnull"] = True
+            exclude_empty_cells_options = {"value_date__isnull": True}
 
             attributes_qs = attributes_qs.exclude(
                 Q(**options) | Q(**exclude_empty_cells_options)
@@ -552,12 +442,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__gt": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
@@ -567,12 +453,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__gte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.LESS and value_type == ValueType.DATE:
@@ -582,12 +464,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__lt": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
@@ -597,12 +475,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__lte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
@@ -615,13 +489,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 "value_date__lte": datetime.strptime(max_value, DATE_FORMAT).date(),
             }
 
-            include_null_options = {}
-
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
@@ -632,12 +501,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             q_less_than_min = Q(value_date__lt=datetime.strptime(min_value, DATE_FORMAT).date())
             q_greater_than_max = Q(value_date__gt=datetime.strptime(max_value, DATE_FORMAT).date())
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+                q_less_than_min | q_greater_than_max
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
@@ -655,12 +520,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if len(dates):
             options = {"value_date__in": dates}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options["value_date__isnull"] = True
-
             attributes_qs = attributes_qs.filter(
-                Q(**options) | Q(**include_null_options)
+                Q(**options)
             )
 
     # endregion DATE FILTERS
@@ -682,8 +543,6 @@ def add_filter(qs, filter_config):
     # print('value_type %s' % value_type)
     # print('value_type %s' % type(value_type))
 
-    exclude_empty_cells = filter_config["exclude_empty_cells"]
-
     # region FIELD FILTERS. Uses same filter types as string filter
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
         print(filter_config["value"])
@@ -701,15 +560,6 @@ def add_filter(qs, filter_config):
 
                 clauses.append(Q(**options))
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__user_code__isnull"] = True
-                include_empty_string_options[key + "__user_code"] = ""
-
-            clauses.append(Q(**include_null_options))
-            clauses.append(Q(**include_empty_string_options))
-
             query = reduce(operator.or_, clauses)
 
             qs = qs.filter(query)
@@ -725,19 +575,11 @@ def add_filter(qs, filter_config):
 
             options = {key + "__user_code": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__user_code__isnull"] = True
-                include_empty_string_options[key + "__user_code"] = ""
-
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
             qs = qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.FIELD:
@@ -747,19 +589,11 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__name__icontains": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__name__isnull"] = True
-                include_empty_string_options[key + "__name"] = ""
-
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
             qs = qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.FIELD:
@@ -769,11 +603,8 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__name__icontains": value}
 
-            exclude_nulls_options = {}
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_nulls_options[key + "__name__isnull"] = True
-                exclude_empty_cells_options[key + "__name"] = ""
+            exclude_nulls_options = {key + "__name__isnull": True}
+            exclude_empty_cells_options = {key + "__name": ""}
 
             qs = qs.exclude(
                 Q(**options)
@@ -787,7 +618,7 @@ def add_filter(qs, filter_config):
 
         if value:
 
-            q = _get_equal_q(key + "__name", value_type, value, exclude_empty_cells)
+            q = _get_equal_q(key + "__name", value_type, value)
 
             q = q | Q(**{f"{key}__name": ""})
 
@@ -800,7 +631,7 @@ def add_filter(qs, filter_config):
         if value:
             key_name = key + "__name"
 
-            q = _get_has_substring_q(key_name, value, exclude_empty_cells)
+            q = _get_has_substring_q(key_name, value)
 
             qs = qs.filter(q)
 
@@ -831,15 +662,6 @@ def add_filter(qs, filter_config):
 
                 clauses.append(Q(**options))
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-                include_empty_string_options[key] = ""
-
-            clauses.append(Q(**include_null_options))
-            clauses.append(Q(**include_empty_string_options))
-
             query = reduce(operator.or_, clauses)
 
             qs = qs.filter(query)
@@ -853,19 +675,11 @@ def add_filter(qs, filter_config):
         if value:
             options = {key: value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-                include_empty_string_options[key] = ""
-
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
             qs = qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
@@ -877,19 +691,11 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__icontains": value}
 
-            include_null_options = {}
-            include_empty_string_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-                include_empty_string_options[key] = ""
-
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
             qs = qs.filter(
                 Q(**options)
-                | Q(**include_null_options)
-                | Q(**include_empty_string_options)
             )
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
@@ -899,11 +705,8 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__icontains": value}
 
-            exclude_nulls_options = {}
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_nulls_options[key + "__isnull"] = True
-                exclude_empty_cells_options[key] = ""
+            exclude_nulls_options = {key + "__isnull": True}
+            exclude_empty_cells_options = {key: ""}
 
             qs = qs.exclude(
                 Q(**options)
@@ -917,7 +720,7 @@ def add_filter(qs, filter_config):
 
         if value:
 
-            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
+            q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
 
@@ -926,7 +729,7 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            q = _get_has_substring_q(key, value, exclude_empty_cells)
+            q = _get_has_substring_q(key, value)
 
             qs = qs.filter(q)
 
@@ -949,7 +752,7 @@ def add_filter(qs, filter_config):
 
         if value or value == 0:
 
-            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
+            q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
 
@@ -960,9 +763,7 @@ def add_filter(qs, filter_config):
         if value or value == 0:
             options = {key + "__exact": value}
 
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_empty_cells_options[key + "__isnull"] = True
+            exclude_empty_cells_options = {key + "__isnull": True}
 
             # print('exclude_empty_cells_options %s' % exclude_empty_cells_options)
 
@@ -975,11 +776,7 @@ def add_filter(qs, filter_config):
         if value or value == 0:
             options = {key + "__gt": value}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -988,11 +785,7 @@ def add_filter(qs, filter_config):
         if value or value == 0:
             options = {key + "__gte": value}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -1001,12 +794,7 @@ def add_filter(qs, filter_config):
         if value or value == 0:
             options = {key + "__lt": value}
 
-            include_null_options = {}
-
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -1015,12 +803,7 @@ def add_filter(qs, filter_config):
         if value or value == 0:
             options = {key + "__lte": value}
 
-            include_null_options = {}
-
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
         max_value = filter_config["value"]["max_value"]
@@ -1032,11 +815,7 @@ def add_filter(qs, filter_config):
                 key + "__lte": max_value,
             }
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
         max_value = filter_config["value"]["max_value"]
@@ -1046,12 +825,8 @@ def add_filter(qs, filter_config):
             q_less_than_min = Q(**{key + "__lt": min_value})
             q_greater_than_max = Q(**{key + "__gt": max_value})
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
             qs = qs.filter(
-                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+                q_less_than_min | q_greater_than_max
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
@@ -1074,7 +849,6 @@ def add_filter(qs, filter_config):
                 key,
                 value_type,
                 datetime.strptime(value, DATE_FORMAT).date(),
-                exclude_empty_cells
             )
 
             qs = qs.filter(q)
@@ -1086,9 +860,7 @@ def add_filter(qs, filter_config):
         if value:
             options = {key: datetime.strptime(value, DATE_FORMAT).date()}
 
-            exclude_empty_cells_options = {}
-            if exclude_empty_cells:
-                exclude_empty_cells_options[key + "__isnull"] = True
+            exclude_empty_cells_options = {key + "__isnull": True}
 
             qs = qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
@@ -1101,11 +873,7 @@ def add_filter(qs, filter_config):
 
             print("options", options)
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -1114,11 +882,7 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__gte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -1127,11 +891,7 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__lt": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -1140,11 +900,7 @@ def add_filter(qs, filter_config):
         if value:
             options = {key + "__lte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
         max_value = filter_config["value"]["max_value"]
@@ -1156,11 +912,7 @@ def add_filter(qs, filter_config):
                 key + "__lte": datetime.strptime(max_value, DATE_FORMAT).date(),
             }
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
         max_value = filter_config["value"]["max_value"]
@@ -1170,12 +922,8 @@ def add_filter(qs, filter_config):
             q_less_than_min = Q(**{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()})
             q_greater_than_max = Q(**{key + "__gt": datetime.strptime(max_value, DATE_FORMAT).date()})
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
             qs = qs.filter(
-                q_less_than_min | q_greater_than_max | Q(**include_null_options)
+                q_less_than_min | q_greater_than_max
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
@@ -1195,11 +943,7 @@ def add_filter(qs, filter_config):
         if len(dates):
             options = {key + "__in": dates}
 
-            include_null_options = {}
-            if not exclude_empty_cells:
-                include_null_options[key + "__isnull"] = True
-
-            qs = qs.filter(Q(**options) | Q(**include_null_options))
+            qs = qs.filter(Q(**options))
 
     # DATE FILTERS END
 
@@ -1211,7 +955,7 @@ def add_filter(qs, filter_config):
 
         if value:
 
-            q = _get_equal_q(key, value_type, value, exclude_empty_cells)
+            q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
 
