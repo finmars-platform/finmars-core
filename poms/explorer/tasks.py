@@ -171,10 +171,11 @@ def sync_files_with_database(self, *args, **kwargs):
         for directory in dirs:
             if directory in IGNORED_DIRECTORIES:
                 continue
-            sync_files(storage, directory)
+
+            sync_files(storage, os.path.join(storage_root, directory))
 
         for file_path in files:
-            sync_file_in_database(storage, file_path)
+            sync_file_in_database(storage, os.path.join(storage_root, file_path))
 
     except Exception as e:
         celery_task.status = CeleryTask.STATUS_ERROR
