@@ -10,6 +10,7 @@ from poms.explorer.utils import (
     last_dir_name,
     move_dir,
 )
+from poms.explorer.models import FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):
