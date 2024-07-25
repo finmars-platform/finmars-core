@@ -2252,3 +2252,4 @@ class DayTimeConventionSerializer(serializers.ModelSerializer):
             "user_code",
             "name",
         ]
+        ordering = ["id"]

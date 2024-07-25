@@ -20,21 +20,19 @@ class DayTimeConventionTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        print(response_json)
+        results = response_json["results"]
+        self.assertEqual(len(results), 20)
 
     @BaseTestCase.cases(
-        ("1", 1),
         ("2", 2),
         ("3", 3),
         ("4", 4),
         ("5", 5),
         ("7", 7),
+        ("21", 21),
         ("30", 30),
         ("100", 100),
     )
     def test__test_retrieve(self, item_id):
         response = self.client.get(path=f"{self.url}{item_id}/")
         self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-        print(response_json)
