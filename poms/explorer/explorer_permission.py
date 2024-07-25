@@ -110,3 +110,27 @@ class ExplorerRootWritePermission(ExplorerRootAccessPermission):
         return member_has_access_to_path(
             ROOT_PATH, request.user.member, AccessLevel.WRITE
         )
+
+
+class ExplorerZipPathsReadPermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method == "GET":
+            return False
+
+        paths = request.data.get("paths")
+        if isinstance(paths, str):
+            paths = [paths]
+
+        if not paths:
+            return True
+
+        for path in paths:
+            if path.endswith("/"):
+                path = f"{path.rstrip('/')}{DIR_SUFFIX}"
+
+            if not member_has_access_to_path(
+                path, request.user.member, AccessLevel.READ
+            ):
+                return False
+
+        return True

@@ -23,6 +23,7 @@ from poms.explorer.explorer_permission import (
     ExplorerRootAccessPermission,
     ExplorerRootWritePermission,
     ExplorerWriteDirectoryPathPermission,
+    ExplorerZipPathsReadPermission,
 )
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
@@ -380,6 +381,9 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ZipFilesSerializer
     http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerZipPathsReadPermission
+    ]
 
     @swagger_auto_schema(
         request_body=ZipFilesSerializer(),
