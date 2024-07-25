@@ -890,7 +890,8 @@ class InstrumentTypeSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentTypePricingPolicy.objects.get_or_create(
-                instrument_type=instance, pricing_policy_id=item["pricing_policy_id"]
+                instrument_type=instance,
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -1246,7 +1247,8 @@ class InstrumentSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentPricingPolicy.objects.get_or_create(
-                instrument=instance, pricing_policy_id=item["pricing_policy_id"]
+                instrument=instance,
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
