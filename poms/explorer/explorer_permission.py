@@ -58,11 +58,13 @@ class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
 
 class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
     def has_specific_permission(self, view, request):
-        if not self.has_statements(view, request) or request.method != "GET":
+        if not self.has_statements(view, request):
             return False
 
-        # check path in query params & in url kwargs
-        path = request.query_params.get("path", view.kwargs.get("filepath"))
+        if request.method == "GET":
+            path = request.query_params.get("path", view.kwargs.get("filepath"))
+        else:
+            path = request.data.get("path")
         if not path:
             return False
 

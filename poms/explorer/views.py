@@ -425,6 +425,9 @@ class DownloadAsZipViewSet(AbstractViewSet):
 class DownloadViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadFilePathPermission,
+    ]
 
     @swagger_auto_schema(
         request_body=FilePathSerializer(),
