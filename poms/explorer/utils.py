@@ -315,3 +315,8 @@ def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
         f"sync_file_in_database: {'created' if created else 'updated'} "
         f"for {filepath} with size {size}"
     )
+
+
+def delete_all_file_objects():
+    FinmarsFile.objects.all().delete()
+    _l.warning("deleted all file objects from database!")
