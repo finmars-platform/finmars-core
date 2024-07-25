@@ -166,6 +166,7 @@ def sync_storage_with_database(self, *args, **kwargs):
             if dir_path in IGNORED_DIRECTORIES:
                 continue
 
+            dir_path = os.path.join(storage_root, dir_path)
             directory, _ = FinmarsDirectory.objects.get_or_create(
                 path=f"{dir_path.rstrip('/')}{DIR_SUFFIX}",
                 parent=root_directory,
@@ -173,6 +174,7 @@ def sync_storage_with_database(self, *args, **kwargs):
             sync_storage_objects(storage, directory)
 
         for file_path in files:
+            file_path = os.path.join(storage_root, file_path)
             sync_file(storage, file_path, root_directory)
 
     except Exception as e:
