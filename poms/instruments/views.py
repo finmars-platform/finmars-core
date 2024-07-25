@@ -555,7 +555,8 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
         if serializer.data["fields_to_update"]:
             Instrument.objects.bulk_update(
-                to_update, serializer.data["fields_to_update"]
+                to_update,
+                serializer.data["fields_to_update"],
             )
 
         return Response(
@@ -573,7 +574,8 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         pricing_policy_ids = [pp.pricing_policy_id for pp in pricing_policies]
         # Add missing pricing policies to each instrument
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
-            instrument__in=instruments, pricing_policy_id__in=pricing_policy_ids
+            instrument__in=instruments,
+            pricing_policy_id__in=pricing_policy_ids,
         )
         existing_policies = {
             (ip.pricing_policy_id, ip.instrument_id): ip
@@ -609,7 +611,8 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
         if fill_or_overwrite == "overwrite":
             InstrumentPricingPolicy.objects.bulk_update(
-                to_update, ["target_pricing_schema_user_code", "options"]
+                to_update,
+                ["target_pricing_schema_user_code", "options"],
             )
             # Remove instrument pricing policies that are no longer associated with the given instrument type
             to_delete = InstrumentPricingPolicy.objects.filter(
