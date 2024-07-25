@@ -317,3 +317,8 @@ def sync_file(
         parent=directory,
         defaults=dict(size=storage.size(filepath)),
     )
+
+
+def delete_all_file_objects():
+    FinmarsFile.objects.all().delete()
+    _l.warning("deleted all file objects from database!")
