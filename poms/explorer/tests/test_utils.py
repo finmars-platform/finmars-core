@@ -151,8 +151,8 @@ class DeleteFilesTest(BaseTestCase):
         self.init_test_case()
 
     def test__file_objects_deleted(self):
-        FinmarsFile.objects.create(path="next/", name="1.doc", size=1)
-        FinmarsFile.objects.create(path="next/", name="2.txt", size=2)
+        FinmarsFile.objects.create(path="next/1.doc", size=1)
+        FinmarsFile.objects.create(path="next/2.txt", size=2)
 
         self.assertEqual(FinmarsFile.objects.count(), 2)
 
