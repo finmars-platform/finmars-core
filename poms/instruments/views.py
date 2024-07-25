@@ -5,7 +5,7 @@ import logging
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, connection
+from django.db import connection, transaction
 from django.db.models import Case, Prefetch, Q, Value, When
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
@@ -43,13 +43,13 @@ from poms.common.views import (
 )
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
+from poms.explorer.serializers import FinmarsFileSerializer
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
 )
-from poms.explorer.serializers import FinmarsFileSerializer
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
     DATE_FORMAT,
@@ -80,6 +80,7 @@ from poms.instruments.serializers import (
     CostMethodSerializer,
     CountrySerializer,
     DailyPricingModelSerializer,
+    DayTimeConventionSerializer,
     EventScheduleConfigSerializer,
     ExposureCalculationModelSerializer,
     GeneratedEventSerializer,
@@ -553,7 +554,10 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                     to_update.append(instrument)
 
         if serializer.data["fields_to_update"]:
-            Instrument.objects.bulk_update(to_update, serializer.data["fields_to_update"])
+            Instrument.objects.bulk_update(
+                to_update,
+                serializer.data["fields_to_update"],
+            )
 
         return Response(
             {
@@ -571,9 +575,12 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         # Add missing pricing policies to each instrument
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
             instrument__in=instruments,
-            pricing_policy_id__in=pricing_policy_ids
+            pricing_policy_id__in=pricing_policy_ids,
         )
-        existing_policies = {(ip.pricing_policy_id, ip.instrument_id): ip for ip in instrument_pricing_policies}
+        existing_policies = {
+            (ip.pricing_policy_id, ip.instrument_id): ip
+            for ip in instrument_pricing_policies
+        }
 
         to_create = []
         to_update = []
@@ -583,7 +590,9 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 if key in existing_policies:
                     ip = existing_policies[key]
 
-                    ip.target_pricing_schema_user_code = instrument_type_pricing_policy.target_pricing_schema_user_code
+                    ip.target_pricing_schema_user_code = (
+                        instrument_type_pricing_policy.target_pricing_schema_user_code
+                    )
                     ip.options = instrument_type_pricing_policy.options
 
                     to_update.append(ip)
@@ -601,7 +610,10 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             InstrumentPricingPolicy.objects.bulk_create(to_create)
 
         if fill_or_overwrite == "overwrite":
-            InstrumentPricingPolicy.objects.bulk_update(to_update, ["target_pricing_schema_user_code", "options"])
+            InstrumentPricingPolicy.objects.bulk_update(
+                to_update,
+                ["target_pricing_schema_user_code", "options"],
+            )
             # Remove instrument pricing policies that are no longer associated with the given instrument type
             to_delete = InstrumentPricingPolicy.objects.filter(
                 instrument__in=instruments
@@ -1000,13 +1012,16 @@ class InstrumentViewSet(AbstractModelViewSet):
             transactions = dictfetchall(cursor)
         transactions = {t["instrument_id"]: t["position_size"] for t in transactions}
 
-        items = [{
-            "id": instrument.id,
-            "user_code": instrument.user_code,
-            "name": instrument.name,
-            "position_size": transactions.get(instrument.id, 0),
-            "is_on_balance": bool(transactions.get(instrument.id))
-        } for instrument in instruments]
+        items = [
+            {
+                "id": instrument.id,
+                "user_code": instrument.user_code,
+                "name": instrument.name,
+                "position_size": transactions.get(instrument.id, 0),
+                "is_on_balance": bool(transactions.get(instrument.id)),
+            }
+            for instrument in instruments
+        ]
 
         result = {"date": balance_date, "instruments": items}
 
@@ -2000,3 +2015,9 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
+
+
+class DayTimeConventionViewSet(AbstractModelViewSet):
+    queryset = AccrualCalculationModel.objects.all().order_by("id")
+    serializer_class = DayTimeConventionSerializer
+    http_method_names = ["get"]
