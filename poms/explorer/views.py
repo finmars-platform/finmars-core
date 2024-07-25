@@ -18,6 +18,7 @@ from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.explorer_permission import (
     ExplorerDeletePathPermission,
+    ExplorerMovePermission,
     ExplorerReadDirectoryPathPermission,
     ExplorerReadFilePathPermission,
     ExplorerRootAccessPermission,
@@ -469,6 +470,9 @@ class DownloadViewSet(AbstractViewSet):
 class MoveViewSet(ContextMixin, AbstractViewSet):
     serializer_class = MoveSerializer
     http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
+    ]
 
     @swagger_auto_schema(
         request_body=MoveSerializer(),

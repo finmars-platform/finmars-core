@@ -48,7 +48,9 @@ class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
-        path = request.query_params.get("path", ROOT_PATH)
+        path = request.query_params.get("path")
+        if not path:
+            return True
 
         if not path.endswith(DIR_SUFFIX):
             path = f"{path.rstrip('/')}{DIR_SUFFIX}/"
@@ -66,7 +68,7 @@ class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
         else:
             path = request.data.get("path")
         if not path:
-            return False
+            return True
 
         return member_has_access_to_path(path, request.user.member, AccessLevel.READ)
 
@@ -90,7 +92,7 @@ class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
 
         path = request.query_params.get("path")
         if not path:
-            return False
+            return True
 
         is_dir = check_is_true(request.query_params.get("is_dir", "false"))
 
@@ -107,7 +109,7 @@ class ExplorerRootWritePermission(ExplorerRootAccessPermission):
 
         path = request.data.get("path")
         if not path:
-            return False
+            return True
 
         return member_has_access_to_path(
             ROOT_PATH, request.user.member, AccessLevel.WRITE
@@ -130,6 +132,33 @@ class ExplorerZipPathsReadPermission(ExplorerRootAccessPermission):
             if path.endswith("/"):
                 path = f"{path.rstrip('/')}{DIR_SUFFIX}"
 
+            if not member_has_access_to_path(
+                path, request.user.member, AccessLevel.READ
+            ):
+                return False
+
+        return True
+
+
+class ExplorerMovePermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method == "GET":
+            return False
+
+        to_dir = request.data.get("target_directory_path")
+        from_paths = request.data.get("paths")
+
+        if not to_dir and not from_paths:
+            return True
+
+        if not to_dir.endswith(DIR_SUFFIX):
+            to_dir = f"{to_dir.rstrip('/')}{DIR_SUFFIX}"
+        if not member_has_access_to_path(
+            to_dir, request.user.member, AccessLevel.WRITE
+        ):
+            return False
+
+        for path in from_paths:
             if not member_has_access_to_path(
                 path, request.user.member, AccessLevel.READ
             ):
