@@ -87,10 +87,16 @@ PACKAGE_RESPONSE_JSON = {
                 "version": "1.0.0"
             }
         ],
+        "actions": [
+            {
+                "workflow": "com.finmars.standard-workflow:init"
+            }
+        ],
         "name": "Initial",
         "version": VERSION
     },
     "version": VERSION,
+    "channel": "rc",
     "is_latest": True,
     "changelog": "",
     "created": "2023-06-18T22:45:58.393808Z",
@@ -99,10 +105,10 @@ PACKAGE_RESPONSE_JSON = {
     "file_path": "marketplace/com.finmars.initial/1.0.1/tmp_vu63hqf.zip"
 }
 EXPECTED_PROGRESS_OBJECT = {
-    "current": len(PACKAGE_RESPONSE_JSON["manifest"]["dependencies"]),
-    "total": len(PACKAGE_RESPONSE_JSON["manifest"]["dependencies"]),
+    "current": len(PACKAGE_RESPONSE_JSON["manifest"]["dependencies"]) + len(PACKAGE_RESPONSE_JSON["manifest"]["actions"]),
+    "total": len(PACKAGE_RESPONSE_JSON["manifest"]["dependencies"]) + len(PACKAGE_RESPONSE_JSON["manifest"]["actions"]),
     "percent": 100,
-    "description": "Installation complete",
+    "description": "Run actions",
 }
 
 MODULE_1_RESPONSE_JSON = {

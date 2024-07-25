@@ -891,7 +891,7 @@ class InstrumentTypeSerializer(
         for item in pricing_policies:
             obj, _ = InstrumentTypePricingPolicy.objects.get_or_create(
                 instrument_type=instance,
-                pricing_policy_id=item["pricing_policy_id"]
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -1248,7 +1248,7 @@ class InstrumentSerializer(
         for item in pricing_policies:
             obj, _ = InstrumentPricingPolicy.objects.get_or_create(
                 instrument=instance,
-                pricing_policy_id=item["pricing_policy_id"]
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -2244,3 +2244,13 @@ class AttachmentSerializer(serializers.Serializer):
 class InstrumentOnBalanceSerializer(serializers.Serializer):
     date = serializers.DateField(write_only=True, default=now().date())
     user_codes = serializers.ListField(child=serializers.CharField(), write_only=True)
+
+
+class DayTimeConventionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccrualCalculationModel
+        fields = [
+            "id",
+            "user_code",
+            "name",
+        ]

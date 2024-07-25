@@ -2,10 +2,12 @@ from copy import deepcopy
 from unittest import mock
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BaseTestCase, FINMARS_BOT
 from poms.configuration.tasks import install_package_from_marketplace
 from poms.configuration.models import Configuration
 from poms.configuration.tests.common_test_data import *
+from django.contrib.auth.models import User
+
 
 
 class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
@@ -14,6 +16,7 @@ class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
+        User.objects.get_or_create(username=FINMARS_BOT, is_staff=True, is_superuser=True)
         self.mock_response = mock.Mock()
         self.mock_response.status_code = 200
 
@@ -56,8 +59,9 @@ class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
 
     @mock.patch("poms.configuration.tasks.install_configuration_from_marketplace")
     @mock.patch("poms.configuration.tasks.requests.post")
+    @mock.patch("poms.configuration.utils.get_workflow")
     def test__check_dependencies_handling_no_http_error(
-        self, requests_post, install_config
+        self, get_workflow, requests_post, install_config
     ):
         self.mock_response.json.return_value = deepcopy(PACKAGE_RESPONSE_JSON)
         requests_post.return_value = self.mock_response
@@ -89,3 +93,4 @@ class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
         self.assertEqual(conf.manifest, PACKAGE_RESPONSE_JSON["manifest"])
         self.assertTrue(conf.is_package)
         self.assertTrue(conf.is_from_marketplace)
+        self.assertEqual(get_workflow.call_count, 1)
