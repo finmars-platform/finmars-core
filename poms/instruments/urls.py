@@ -87,6 +87,6 @@ router.register(
     instruments.PriceHistoryViewSet,
 )
 router.register(
-    "generated-event",
-    instruments.GeneratedEventViewSet,
+    "day-time-convention",
+    instruments.DayTimeConventionViewSet,
 )
