@@ -6,6 +6,7 @@ from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import FinmarsFile
 from poms.explorer.utils import (
     define_content_type,
+    delete_all_file_objects,
     join_path,
     last_dir_name,
     move_dir,
@@ -214,3 +215,19 @@ class SyncFilesTest(BaseTestCase):
         files = FinmarsFile.objects.all()
 
         self.assertEqual(files.count(), 2)
+
+
+class DeleteFilesTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+
+    def test__file_objects_deleted(self):
+        FinmarsFile.objects.create(path="next/", name="1.doc", size=1)
+        FinmarsFile.objects.create(path="next/", name="2.txt", size=2)
+
+        self.assertEqual(FinmarsFile.objects.count(), 2)
+
+        delete_all_file_objects()
+
+        self.assertEqual(FinmarsFile.objects.count(), 0)
