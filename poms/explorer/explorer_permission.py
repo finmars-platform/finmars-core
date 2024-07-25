@@ -165,3 +165,29 @@ class ExplorerMovePermission(ExplorerRootAccessPermission):
                 return False
 
         return True
+
+
+class ExplorerUnZipPermission(ExplorerRootAccessPermission):
+    def has_specific_permission(self, view, request):
+        if not self.has_statements(view, request) or request.method == "GET":
+            return False
+
+        to_dir = request.data.get("target_directory_path")
+        file_path = request.data.get("file_path")
+
+        if not to_dir and not file_path:
+            return True
+
+        if not to_dir.endswith(DIR_SUFFIX):
+            to_dir = f"{to_dir.rstrip('/')}{DIR_SUFFIX}"
+        if not member_has_access_to_path(
+            to_dir, request.user.member, AccessLevel.WRITE
+        ):
+            return False
+
+        if not member_has_access_to_path(
+            file_path, request.user.member, AccessLevel.READ
+        ):
+            return False
+
+        return True
