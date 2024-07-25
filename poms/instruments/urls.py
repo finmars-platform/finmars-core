@@ -90,3 +90,7 @@ router.register(
     "generated-event",
     instruments.GeneratedEventViewSet,
 )
+router.register(
+    "day-time-convention",
+    instruments.DayTimeConventionViewSet,
+)
