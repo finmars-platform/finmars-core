@@ -116,6 +116,4 @@ class UnzipViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         response = self.client.post(self.url, data, format="json")
 
-        print(response.json())
-
         self.assertEqual(response.status_code, 200)
