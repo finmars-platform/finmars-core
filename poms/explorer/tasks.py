@@ -6,6 +6,7 @@ from poms.common.storage import get_storage
 from poms.explorer.utils import (
     IGNORED_DIRECTORIES,
     count_files,
+    delete_all_file_objects,
     last_dir_name,
     move_dir,
     move_file,
@@ -136,6 +137,8 @@ def sync_files_with_database(self, *args, **kwargs):
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
+
+    delete_all_file_objects()  # TODO: in future could be removed
 
     space_code = kwargs["context"]["space_code"]
     storage_root = f"{space_code}/"
