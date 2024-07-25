@@ -2015,6 +2015,6 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
 
 class DayTimeConventionViewSet(AbstractModelViewSet):
-    queryset = AccrualCalculationModel.objects.all()
+    queryset = AccrualCalculationModel.objects.all().order_by("id")
     serializer_class = DayTimeConventionSerializer
     http_method_names = ["get"]
