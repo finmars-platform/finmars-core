@@ -113,12 +113,8 @@ class SearchFileViewSetTest(BaseTestCase):
         ("path_2", "etc", None),
         ("path_3", "/system/", None),
     )
-    def test__list_with_filters(
-        self,
-        value,
-        count,
-    ):
-        amount = self.random_int(5, 9)
+    def test__list_with_filters(self, value, count):
+        amount = self.random_int(6, 9)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
                 name=f"name_{i}.pdf",
@@ -134,3 +130,22 @@ class SearchFileViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
+
+    @BaseTestCase.cases(
+        ("10", 10),
+        ("20", 20),
+    )
+    def test__list_all_with_paging(self, page_size):
+        amount = 33
+        for i in range(1, amount + 1):
+            FinmarsFile.objects.create(
+                name=f"name_{i}.pdf",
+                path="/root",
+                size=self.random_int(10, 1000),
+            )
+        response = self.client.get(path=f"{self.url}?page_size={page_size}&page=1")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["count"], amount)
+        self.assertEqual(len(response_json["results"]), page_size)
