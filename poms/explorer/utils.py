@@ -41,7 +41,7 @@ def is_true_value(value: str) -> bool:
 
 
 def is_system_path(path: str) -> bool:
-    return path in SYSTEM_PATHS
+    return path.startswith(".")
 
 
 def define_content_type(file_name: str) -> Optional[str]:
