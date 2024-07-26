@@ -67,5 +67,5 @@ router.register(
 router.register(
     r"files",
     explorer.FinmarsFilesView,
-    "explorer_search",
+    "explorer_files_obj",
 )
