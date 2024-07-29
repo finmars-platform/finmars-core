@@ -1,4 +1,5 @@
 import logging
+import contextlib
 import math
 import os
 import shutil
@@ -151,7 +152,7 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
             content = File(content, name)
 
         name = self.get_available_name(name, max_length=max_length)
-        name = self._save(name, content)
+        name = self._save(name, content)  # FIXME RECURSION
         # Ensure that the name returned from the storage system is still valid.
         # validate_file_name(name, allow_relative_path=True) # TODO Not needed
         return name
@@ -323,10 +324,10 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
         path_obj = Path(path)
         return str(path_obj.parent), path_obj.name
 
-    def save(self, path, content, **kwargs):
+    def _save(self, path, content):
         from poms.explorer.models import FinmarsFile
 
-        _l.info(f"FinmarsStorageFileObjMixin.save {path}/{len(content)}")
+        _l.info(f"FinmarsStorageFileObjMixin._save {path} size {len(content)}")
         parent, name = self.split_path(path)
         size = len(content)
         FinmarsFile.objects.update_or_create(
@@ -334,14 +335,16 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             name=name,
             defaults={"size": size},
         )
-        return super().save(path, content, **kwargs)
+        return super().save(path, content)
 
     def delete(self, path):
         from poms.explorer.models import FinmarsFile
 
         _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
         parent, name = self.split_path(path)
-        FinmarsFile.objects.filter(path=parent, name=name).delete()
+        with contextlib.suppress(Exception):
+            FinmarsFile.objects.filter(path=parent, name=name).delete()
+
         return super().delete(path)
 
 

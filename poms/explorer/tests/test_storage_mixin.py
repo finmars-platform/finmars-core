@@ -24,8 +24,9 @@ class StorageFileObjMixinTest(BaseTestCase):
 
     def test__save_create(self):
         name = self.storage.save(self.full_path, ContentFile("content", self.full_path))
-        print(name)
+        self.assertEqual(name, self.full_path)
         self.assertTrue(self.storage.exists(self.full_path))
+
         file = FinmarsFile.objects.filter(name=self.name).first()
         self.assertIsNotNone(file)
 
