@@ -309,7 +309,22 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
         return output_zip_filename
 
 
-class FinmarsSFTPStorage(FinmarsStorageMixin, SFTPStorage):
+class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
+    """
+    Mixin adds FinmarsFile object support to the FinmarsStorage class.
+    """
+    def save(self, path, content, **kwargs):
+        _l.info(f"FinmarsStorageFileObjMixin.save {path}/{len(content)}")
+        return path
+        # return super().save(path, content, **kwargs)
+
+    def delete(self, path):
+        _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
+        return path
+        # return super().delete(path)
+
+
+class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):
     def delete_directory(self, directory_path):
         for root, _, files in self.sftp_client.walk(directory_path):
             for file in files:
@@ -330,7 +345,7 @@ class FinmarsSFTPStorage(FinmarsStorageMixin, SFTPStorage):
                 self.sftp_client.get(remote_path, local_path)
 
 
-class FinmarsAzureStorage(FinmarsStorageMixin, AzureStorage):
+class FinmarsAzureStorage(FinmarsStorageFileObjMixin, AzureStorage):
     def get_created_time(self, path):
         return self.get_modified_time(path)
 
@@ -399,7 +414,7 @@ class FinmarsAzureStorage(FinmarsStorageMixin, AzureStorage):
         return zip_file_path
 
 
-class FinmarsS3Storage(FinmarsStorageMixin, S3Boto3Storage):
+class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
     def get_created_time(self, path):
         return self.get_modified_time(path)
 
@@ -497,7 +512,7 @@ class FinmarsS3Storage(FinmarsStorageMixin, S3Boto3Storage):
             return False
 
 
-class FinmarsLocalFileSystemStorage(FinmarsStorageMixin, FileSystemStorage):
+class FinmarsLocalFileSystemStorage(FinmarsStorageFileObjMixin, FileSystemStorage):
     def path(self, name):
         if name[0] == "/":
             return settings.MEDIA_ROOT + name
