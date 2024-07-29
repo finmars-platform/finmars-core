@@ -216,6 +216,20 @@ class SyncFilesTest(BaseTestCase):
 
         self.assertEqual(files.count(), 2)
 
+    def test__no_system_files(self):
+        # Mock the listdir return values
+        f1 = ".file_1.doc"
+        f2 = ".file_2.zip"
+        size = self.random_int(10000, 100000000)
+        self.storage.listdir.return_value = ([], [f1, f2])
+        self.storage.size.return_value = size
+
+        sync_files(self.storage, "/test")
+
+        files = FinmarsFile.objects.all()
+
+        self.assertEqual(files.count(), 0)
+
 
 class DeleteFilesTest(BaseTestCase):
     def setUp(self):
