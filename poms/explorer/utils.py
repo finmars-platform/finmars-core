@@ -32,7 +32,16 @@ CONTENT_TYPES = {
     ".xls": "application/vnd.ms-excel",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
-IGNORED_DIRECTORIES = {".hello-world", ".system"}
+SYSTEM_PATHS = {".hello-world", ".system", ".init"}
+TRUTHY_VALUES = {"true", "1", "yes"}
+
+
+def is_true_value(value: str) -> bool:
+    return bool(value and (value.lower() in TRUTHY_VALUES))
+
+
+def is_system_path(path: str) -> bool:
+    return path.startswith(".")
 
 
 def define_content_type(file_name: str) -> Optional[str]:
@@ -99,13 +108,6 @@ def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
     except Exception as e:
         _l.error(f"path_is_file check resulted in {repr(e)}")
         return False
-
-
-TRUTHY_VALUES = {"true", "1", "yes"}
-
-
-def check_is_true(value: str) -> bool:
-    return bool(value and (value.lower() in TRUTHY_VALUES))
 
 
 def last_dir_name(path: str) -> str:
@@ -281,12 +283,18 @@ def sync_files(storage: FinmarsS3Storage, source_dir: str) -> int:
 
     def sync_files_helper(dir_path: str) -> int:
         dirs, files = storage.listdir(dir_path)
-        _l.info(f"sync_files: dir_path {dir_path} try to sync {files} files")
+        _l.info(f"sync_files: dir_path {dir_path} try to sync {len(files)} files")
         count = len(files)
         for file in files:
+            if is_system_path(file):
+                continue
             sync_file_in_database(storage, os.path.join(dir_path, file))
+
         for subdir in dirs:
+            if is_system_path(subdir):
+                continue
             count += sync_files_helper(os.path.join(dir_path, subdir))
+
         return count
 
     start_dir = str(source_dir)  # to avoid source_dir modification

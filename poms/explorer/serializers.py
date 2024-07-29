@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
 from poms.explorer.models import FinmarsFile
-from poms.explorer.utils import check_is_true, path_is_file
+from poms.explorer.utils import is_true_value, path_is_file
 from poms.instruments.models import Instrument
 
 
@@ -45,7 +45,7 @@ class DeletePathSerializer(BasePathSerializer):
 
     @staticmethod
     def validate_is_dir(value) -> bool:
-        return check_is_true(value)
+        return is_true_value(value)
 
     def validate_path(self, value):
         if not value:

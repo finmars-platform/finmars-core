@@ -46,7 +46,7 @@ class NamedBytesIO(BytesIO):
         self.name = name
 
 
-class EncryptedStorage(object):
+class EncryptedStorageMixin:
     def get_symmetric_key(self):
         if settings.ENCRYPTION_KEY:
             self.symmetric_key = bytes.fromhex(settings.ENCRYPTION_KEY)
@@ -130,9 +130,9 @@ class EncryptedStorage(object):
         return super()._save(name, encrypted_content)
 
 
-class FinmarsStorage(EncryptedStorage):
+class FinmarsStorageMixin(EncryptedStorageMixin):
     """
-    To ensure that storage overwrite passed filepath insead of appending a number to it
+    To ensure that storage overwrite passed filepath instead of appending a number to it
     """
 
     def save(self, name, content, max_length=None):
@@ -309,7 +309,7 @@ class FinmarsStorage(EncryptedStorage):
         return output_zip_filename
 
 
-class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
+class FinmarsSFTPStorage(FinmarsStorageMixin, SFTPStorage):
     def delete_directory(self, directory_path):
         for root, _, files in self.sftp_client.walk(directory_path):
             for file in files:
@@ -330,7 +330,7 @@ class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
                 self.sftp_client.get(remote_path, local_path)
 
 
-class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
+class FinmarsAzureStorage(FinmarsStorageMixin, AzureStorage):
     def get_created_time(self, path):
         return self.get_modified_time(path)
 
@@ -399,7 +399,7 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
         return zip_file_path
 
 
-class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
+class FinmarsS3Storage(FinmarsStorageMixin, S3Boto3Storage):
     def get_created_time(self, path):
         return self.get_modified_time(path)
 
@@ -497,7 +497,7 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
             return False
 
 
-class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
+class FinmarsLocalFileSystemStorage(FinmarsStorageMixin, FileSystemStorage):
     def path(self, name):
         if name[0] == "/":
             return settings.MEDIA_ROOT + name

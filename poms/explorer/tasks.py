@@ -4,9 +4,9 @@ import os
 from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.explorer.utils import (
-    IGNORED_DIRECTORIES,
     count_files,
     delete_all_file_objects,
+    is_system_path,
     last_dir_name,
     move_dir,
     move_file,
@@ -138,13 +138,12 @@ def sync_files_with_database(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
-    delete_all_file_objects()  # TODO: in future could be removed
+    delete_all_file_objects()  # this action in future could be removed !
 
     space_code = kwargs["context"]["space_code"]
     storage_root = f"{space_code}/"
 
     total_files = count_files(storage, storage_root)
-    _l.info(f"sync_files_with_database: there are total {total_files} files")
 
     celery_task.update_progress(
         {
@@ -158,7 +157,7 @@ def sync_files_with_database(self, *args, **kwargs):
     dirs, files = storage.listdir(storage_root)
     _l.info(
         f"sync_files_with_database: storage_root {storage_root} "
-        f"has {dirs} dirs, {files} files"
+        f"has {dirs} dirs, {len(files)}/{total_files} files"
     )
 
     celery_task.update_progress(
@@ -172,12 +171,13 @@ def sync_files_with_database(self, *args, **kwargs):
 
     try:
         for directory in dirs:
-            if directory in IGNORED_DIRECTORIES:
+            if is_system_path(directory):
                 continue
-
             sync_files(storage, os.path.join(storage_root, directory))
 
         for file_path in files:
+            if is_system_path(file_path):
+                continue
             sync_file_in_database(storage, os.path.join(storage_root, file_path))
 
     except Exception as e:
