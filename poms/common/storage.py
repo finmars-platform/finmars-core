@@ -4,7 +4,9 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
+from pathlib import Path
 from zipfile import ZipFile
+from typing import Tuple
 
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
@@ -173,9 +175,9 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
             # Check if the folder exists by listing its contents
             dirs, files = self.listdir(folder_path)
 
-            _l.info('folder_path %s' % folder_path)
-            _l.info('files %s' % files)
-            _l.info('folders %s' % dirs)
+            _l.info("folder_path %s" % folder_path)
+            _l.info("files %s" % files)
+            _l.info("folders %s" % dirs)
 
             # Return True if there are any files in the folder
             return bool(files)
@@ -281,7 +283,9 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
                         master_user.space_code + path, local_filename
                     )
                 else:
-                    self.download_directory(f"{master_user.space_code}/{path}", local_filename)
+                    self.download_directory(
+                        f"{master_user.space_code}/{path}", local_filename
+                    )
 
             else:
                 local_filename = f"{local_filename}/" + path.split("/")[-1]
@@ -300,7 +304,7 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
                     )
 
         output_zip_filename = os.path.join(
-            f'{settings.BASE_DIR}/tmp/temp_download/{unique_path_prefix}_archive.zip'
+            f"{settings.BASE_DIR}/tmp/temp_download/{unique_path_prefix}_archive.zip"
         )
 
         self.zip_directory([temp_dir_path], output_zip_filename)
@@ -313,15 +317,32 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     """
     Mixin adds FinmarsFile object support to the FinmarsStorage class.
     """
+
+    @staticmethod
+    def split_path(path: str) -> Tuple[str, str]:
+        path_obj = Path(path)
+        return str(path_obj.parent), path_obj.name
+
     def save(self, path, content, **kwargs):
+        from poms.explorer.models import FinmarsFile
+
         _l.info(f"FinmarsStorageFileObjMixin.save {path}/{len(content)}")
-        return path
-        # return super().save(path, content, **kwargs)
+        parent, name = self.split_path(path)
+        size = len(content)
+        FinmarsFile.objects.update_or_create(
+            path=parent,
+            name=name,
+            defaults={"size": size},
+        )
+        return super().save(path, content, **kwargs)
 
     def delete(self, path):
+        from poms.explorer.models import FinmarsFile
+
         _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
-        return path
-        # return super().delete(path)
+        parent, name = self.split_path(path)
+        FinmarsFile.objects.filter(path=parent, name=name).delete()
+        return super().delete(path)
 
 
 class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):

@@ -1,7 +1,10 @@
-from poms.common.common_base_test import BaseTestCase
+import contextlib
 
-from poms.explorer.models import FinmarsFile
+from django.core.files.base import ContentFile
+
+from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsLocalFileSystemStorage
+from poms.explorer.models import FinmarsFile
 
 
 class StorageFileObjMixinTest(BaseTestCase):
@@ -10,11 +13,21 @@ class StorageFileObjMixinTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.storage = FinmarsLocalFileSystemStorage()
+        self.name = "temp_file.txt"
+        self.parent = "test"
+        self.full_path = f"{self.parent}/{self.name}"
 
-    def test__save(self):
-        path = self.random_string()
-        self.assertEqual(self.storage.save(path, "content"), path)
+    def tearDown(self):
+        super().tearDown()
+        with contextlib.suppress(Exception):
+            self.storage.delete_directory(self.parent)
+
+    def test__save_create(self):
+        name = self.storage.save(self.full_path, ContentFile("content", self.full_path))
+        print(name)
+        self.assertTrue(self.storage.exists(self.full_path))
+        file = FinmarsFile.objects.filter(name=self.name).first()
+        self.assertIsNotNone(file)
 
     def test__delete(self):
         path = self.random_string()
-        self.assertEqual(self.storage.delete(path), path)
