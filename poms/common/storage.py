@@ -324,7 +324,7 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
         path_obj = Path(path)
         return str(path_obj.parent), path_obj.name
 
-    def save(self, path: str, content: Any, **kwargs) -> None:
+    def save(self, path: str, content: Any, **kwargs) -> str:
         from poms.explorer.models import FinmarsFile
 
         size = len(content)

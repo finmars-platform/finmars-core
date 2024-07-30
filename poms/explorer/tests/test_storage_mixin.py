@@ -23,10 +23,15 @@ class StorageFileObjMixinTest(BaseTestCase):
         with contextlib.suppress(Exception):
             self.storage.delete_directory(self.parent)
 
-    def test__save_create(self):
-        name = self.storage.save(self.full_path, ContentFile(self.content, self.full_path))
+    def create_file(self):
+        name = self.storage.save(
+            self.full_path, ContentFile(self.content, self.full_path)
+        )
         self.assertEqual(name, self.full_path)
         self.assertTrue(self.storage.exists(self.full_path))
+
+    def test__save_create(self):
+        self.create_file()
 
         file = FinmarsFile.objects.filter(name=self.name).first()
         self.assertIsNotNone(file)
@@ -36,4 +41,10 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.assertEqual(file.size, len(self.content))
 
     def test__delete(self):
-        path = self.random_string()
+        self.create_file()
+
+        self.storage.delete(self.full_path)
+        self.assertFalse(self.storage.exists(self.full_path))
+
+        file = FinmarsFile.objects.filter(name=self.name).first()
+        self.assertIsNone(file)
