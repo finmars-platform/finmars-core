@@ -7,7 +7,7 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
-from typing import Tuple
+from typing import Any, Tuple
 
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
@@ -152,7 +152,7 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
             content = File(content, name)
 
         name = self.get_available_name(name, max_length=max_length)
-        name = self._save(name, content)  # FIXME RECURSION
+        name = self._save(name, content)
         # Ensure that the name returned from the storage system is still valid.
         # validate_file_name(name, allow_relative_path=True) # TODO Not needed
         return name
@@ -324,28 +324,32 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
         path_obj = Path(path)
         return str(path_obj.parent), path_obj.name
 
-    def _save(self, path, content):
+    def save(self, path: str, content: Any, **kwargs) -> None:
         from poms.explorer.models import FinmarsFile
 
-        _l.info(f"FinmarsStorageFileObjMixin._save {path} size {len(content)}")
-        parent, name = self.split_path(path)
         size = len(content)
-        FinmarsFile.objects.update_or_create(
+        _l.info(f"FinmarsStorageFileObjMixin._save {path} of size {size}")
+
+        super().save(path, content, **kwargs)
+
+        parent, name = self.split_path(path)
+        file = FinmarsFile.objects.update_or_create(
             path=parent,
             name=name,
             defaults={"size": size},
         )
-        return super().save(path, content)
+        return file.file_path
 
-    def delete(self, path):
+    def delete(self, path: str) -> None:
         from poms.explorer.models import FinmarsFile
 
-        _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
         parent, name = self.split_path(path)
+        _l.info(f"FinmarsStorageFileObjMixin.delete {parent}|{name}")
+
+        super().delete(path)
+
         with contextlib.suppress(Exception):
             FinmarsFile.objects.filter(path=parent, name=name).delete()
-
-        return super().delete(path)
 
 
 class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):
