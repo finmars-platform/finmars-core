@@ -1,9 +1,14 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
 from poms.users.models import Member
-from poms.common.models import TimeStampedModel
+
+
+class AccessPoliceManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related("resource_group")
 
 
 class AccessPolicy(ConfigurationModel, TimeStampedModel):
@@ -12,11 +17,6 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("Name"),
-    )
-    user_code = models.CharField(
-        max_length=1024,
-        unique=True,
-        verbose_name=gettext_lazy("User Code"),
     )
     description = models.TextField(blank=True)
     policy = models.JSONField(
@@ -29,8 +29,17 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
         Member,
         related_name="iam_access_policies",
         blank=True,
-        null=True,
     )
+    resource_group = models.ForeignKey(
+        "ResourceGroup",
+        related_name="access_policies",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name=gettext_lazy("Resource Group"),
+    )
+
+    objects = AccessPoliceManager()
 
     class Meta:
         verbose_name = gettext_lazy("Access Policy Template")
@@ -38,6 +47,10 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
 
     def __str__(self):
         return str(self.name)
+
+    @property
+    def user_code(self) -> str:
+        return self.resource_group.user_code if self.resource_group else ""
 
 
 class Role(ConfigurationModel, TimeStampedModel):
@@ -97,6 +110,17 @@ class Group(ConfigurationModel, TimeStampedModel):
     def __str__(self):
         return str(self.name)
 
+
+class ResourceGroup(NamedModel, TimeStampedModel):
+    user_code = models.CharField(
+        max_length=1024,
+        unique=True,
+        verbose_name=gettext_lazy("User Code"),
+        help_text=gettext_lazy("Unique User Code of the Resource Group"),
+    )
+
+    class Meta:
+        ordering = ["user_code"]
 
 # Important, needs for cache clearance after Policy Updated
 from . import signals

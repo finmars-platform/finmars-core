@@ -1,4 +1,7 @@
+import django_filters
+from django_filters.rest_framework import FilterSet
 from drf_yasg.inspectors import SwaggerAutoSchema
+from rest_framework import filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
@@ -7,9 +10,7 @@ from poms.iam.mixins import AccessViewSetMixin
 from poms.iam.models import AccessPolicy, Group, Role
 from poms.iam.permissions import FinmarsAccessPolicy
 from poms.iam.serializers import AccessPolicySerializer, GroupSerializer, RoleSerializer
-from django_filters.rest_framework import FilterSet
-import django_filters
-from rest_framework import filters
+
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
     access_policy = FinmarsAccessPolicy
@@ -55,15 +56,14 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
 
 
 class RoleFilterSet(FilterSet):
-
     name = django_filters.CharFilter()
     user_code = django_filters.CharFilter()
 
     class Meta:
         model = Role
         fields = {
-            'name': ['exact', 'contains', 'icontains'],
-            'user_code': ['exact', 'contains', 'icontains'],
+            "name": ["exact", "contains", "icontains"],
+            "user_code": ["exact", "contains", "icontains"],
         }
 
 
@@ -77,24 +77,18 @@ class RoleViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created'
-    ]
+    ordering_fields = ["id", "name", "user_code", "created"]
 
 
 class GroupFilterSet(FilterSet):
-
     name = django_filters.CharFilter()
     user_code = django_filters.CharFilter()
 
     class Meta:
         model = Group
         fields = {
-            'name': ['exact', 'contains', 'icontains'],
-            'user_code': ['exact', 'contains', 'icontains'],
+            "name": ["exact", "contains", "icontains"],
+            "user_code": ["exact", "contains", "icontains"],
         }
 
 
@@ -108,24 +102,18 @@ class GroupViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created'
-    ]
+    ordering_fields = ["id", "name", "user_code", "created"]
 
 
 class AccessPolicyFilterSet(FilterSet):
-
     name = django_filters.CharFilter()
-    user_code = django_filters.CharFilter()
+    # user_code = django_filters.CharFilter()
 
     class Meta:
         model = AccessPolicy
         fields = {
-            'name': ['exact', 'contains', 'icontains'],
-            'user_code': ['exact', 'contains', 'icontains'],
+            "name": ["exact", "contains", "icontains"],
+            # "user_code": ["exact", "contains", "icontains"],
         }
 
 
@@ -139,8 +127,8 @@ class AccessPolicyViewSet(ModelViewSet):
     swagger_schema = CustomSwaggerAutoSchema
 
     ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created'
+        "id",
+        "name",
+        # "user_code",
+        "created",
     ]
