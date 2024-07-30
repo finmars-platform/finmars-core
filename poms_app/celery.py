@@ -36,8 +36,10 @@ def handle_task_failure(**kwargs):
         task_id = kwargs['task_id']
         args = kwargs['args']
         kwargs = kwargs['kwargs']
-        traceback = kwargs['traceback']
-        einfo = kwargs['einfo']
+        einfo = kwargs.get('einfo')
+
+        if not exception and einfo:
+            exception = einfo.exception
 
         # Handle the exception in any way you want. For example, you could log it:
         # _l.error(f'Task {task_id} raised exception: {einfo.exception} \n {einfo.traceback}')
@@ -45,7 +47,7 @@ def handle_task_failure(**kwargs):
         try:
 
             task = CeleryTask.objects.get(celery_task_id=task_id)
-            task.error_message = einfo.exception
+            task.error_message = exception
             task.status = CeleryTask.STATUS_ERROR
             task.save()
 
