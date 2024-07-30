@@ -36,7 +36,6 @@ def handle_task_failure(**kwargs):
         task_id = kwargs['task_id']
         args = kwargs['args']
         kwargs = kwargs['kwargs']
-        traceback = kwargs['traceback']
         einfo = kwargs['einfo']
 
         # Handle the exception in any way you want. For example, you could log it:

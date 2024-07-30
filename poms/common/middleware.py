@@ -322,6 +322,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
             and getattr(request, "request_id")
             and hasattr(response, "accepted_media_type")
             and response.accepted_media_type == "application/json"
+            and response.content
         )
 
     @staticmethod
