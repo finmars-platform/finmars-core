@@ -24,11 +24,10 @@ forbidden_symbols_in_path = r'[:*?"<>|;&]'
 bad_path_regex = re.compile(forbidden_symbols_in_path)
 
 """
- Path as String in the DB, should be a valid UNIX style path which has no: 
+ Path (a string in the DB), should be a valid UNIX style path which has no: 
  forbidden symbols, two and more adjusted '/' ( like //, /// etc ). 
- Path should start with '/' and should end with file name (without '/' at the end) or
- with '/*' for directories.
- Path which contains only one '/' is not root, but first directory available for a user.
+ Path should end with file name (without '/' at the end) or with '/*' for directories.
+ Root path contains '<space-code>/', it's the first directory available for a user.
  Path should be no longer than 2048 characters.
 """
 
