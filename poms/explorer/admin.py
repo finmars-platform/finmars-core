@@ -12,8 +12,3 @@ class FinmarsFileAdmin(AbstractModelAdmin):
 @admin.register(FinmarsDirectory)
 class FinmarsDirAdmin(AbstractModelAdmin):
     model = FinmarsDirectory
-
-
-# @admin.register(ShareAccessRecord)
-# class FinmarsDirAdmin(AbstractModelAdmin):
-#     model = ShareAccessRecord
