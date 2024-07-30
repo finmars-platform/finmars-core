@@ -333,7 +333,7 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
         super().save(path, content, **kwargs)
 
         parent, name = self.split_path(path)
-        file = FinmarsFile.objects.update_or_create(
+        file, _ = FinmarsFile.objects.update_or_create(
             path=parent,
             name=name,
             defaults={"size": size},
