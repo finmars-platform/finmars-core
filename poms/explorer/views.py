@@ -14,6 +14,7 @@ from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
+from poms.common.pagination import PageNumberPaginationExt
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.explorer.explorer_permission import (
@@ -618,6 +619,7 @@ class SearchViewSet(AbstractModelViewSet):
     access_policy = ExplorerRootAccessPermission
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
+    pagination_class = PageNumberPaginationExt
     http_method_names = ["get"]
     filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]
 

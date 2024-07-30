@@ -17,6 +17,8 @@ from poms.explorer.models import (
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.explorer.utils import check_is_true, path_is_file
 from poms.iam.models import AccessPolicy
+from poms.explorer.models import FinmarsFile
+from poms.explorer.utils import is_true_value, path_is_file
 from poms.instruments.models import Instrument
 from poms.users.models import MasterUser, Member
 
@@ -38,7 +40,6 @@ class BasePathSerializer(serializers.Serializer):
         required=True,
         allow_blank=False,
         allow_null=False,
-        max_length=MAX_PATH_LENGTH,
     )
 
     @staticmethod
@@ -68,7 +69,7 @@ class DeletePathSerializer(BasePathSerializer):
 
     @staticmethod
     def validate_is_dir(value) -> bool:
-        return check_is_true(value)
+        return is_true_value(value)
 
     def validate_path(self, value):
         if not value:

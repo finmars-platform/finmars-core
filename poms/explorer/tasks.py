@@ -5,9 +5,9 @@ from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.explorer.models import DIR_SUFFIX, ROOT_PATH
 from poms.explorer.utils import (
-    IGNORED_DIRECTORIES,
     count_files,
     delete_all_file_objects,
+    is_system_path,
     last_dir_name,
     move_dir,
     move_file,
@@ -142,7 +142,7 @@ def sync_storage_with_database(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
-    delete_all_file_objects()  # TODO: in future could be removed
+    delete_all_file_objects()  # this action in future could be removed !
 
     space_code = kwargs["context"]["space_code"]
     storage_root = f"{space_code}/"
@@ -161,12 +161,18 @@ def sync_storage_with_database(self, *args, **kwargs):
 
     root_directory, _ = FinmarsDirectory.objects.get_or_create(
         path=ROOT_PATH, parent=None
+    dirs, files = storage.listdir(storage_root)
+    _l.info(
+        f"sync_files_with_database: storage_root {storage_root} "
+        f"has {dirs} dirs, {len(files)}/{total_files} files"
     )
     dir_paths, files = storage.listdir(storage_root)
 
     try:
         for dir_path in dir_paths:
             if dir_path in IGNORED_DIRECTORIES:
+        for directory in dirs:
+            if is_system_path(directory):
                 continue
 
             dir_path = os.path.join(storage_root, dir_path)
@@ -175,8 +181,12 @@ def sync_storage_with_database(self, *args, **kwargs):
                 parent=root_directory,
             )
             sync_storage_objects(storage, directory)
+            sync_files(storage, os.path.join(storage_root, directory))
 
         for file_path in files:
+            if is_system_path(file_path):
+                continue
+            sync_file_in_database(storage, os.path.join(storage_root, file_path))
             file_path = os.path.join(storage_root, file_path)
             sync_file(storage, file_path, root_directory)
 

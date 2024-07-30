@@ -453,7 +453,6 @@ class BackendReportHelperService:
                 key_property = filter_["key"]
                 value_type = filter_["value_type"]
                 filter_type = filter_["filter_type"]
-                exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
 
                 if key_property != "ordering":
@@ -505,7 +504,11 @@ class BackendReportHelperService:
                     #         and item["item_type"] != 1
                     # ):
 
-                    elif exclude_empty_cells:
+                    elif filter_type != "empty" and (
+                            not filter_value or isinstance(filter_value, list) and not filter_value[0]
+                    ):
+                        return True
+                    else:
                         return False
             return True
 

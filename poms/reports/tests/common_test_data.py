@@ -265,7 +265,6 @@ REQUEST_PAYLOAD = {
             "name": "Transaction. Entry Item User Code",
             "options": {
                 "enabled": True,
-                "exclude_empty_cells": False,
                 "filter_type": "equal",
                 "filter_values": [],
                 "use_from_above": {
@@ -282,7 +281,6 @@ REQUEST_PAYLOAD = {
             "name": "Portfolio. User code",
             "options": {
                 "enabled": True,
-                "exclude_empty_cells": False,
                 "filter_type": "equal",
                 "filter_values": [],
                 "use_from_above": {
@@ -299,7 +297,6 @@ REQUEST_PAYLOAD = {
             "name": "Transaction. Entry Account. User code",
             "options": {
                 "enabled": True,
-                "exclude_empty_cells": False,
                 "filter_type": "equal",
                 "filter_values": [],
                 "use_from_above": {
@@ -319,7 +316,6 @@ REQUEST_PAYLOAD = {
                 "filter_values": [
                     "2022-01-01"
                 ],
-                "exclude_empty_cells": False,
                 "use_from_above": {},
                 "enabled": True
             }
@@ -472,7 +468,6 @@ REQUEST_PAYLOAD = {
             {
                 "key": "instrument.maturity_date",
                 "filter_type": "equal",
-                "exclude_empty_cells": False,
                 "value_type": 40,
                 "value": [
                     "2022-01-01"
