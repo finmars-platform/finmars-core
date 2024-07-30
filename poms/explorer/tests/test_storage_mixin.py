@@ -16,6 +16,7 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.name = "temp_file.txt"
         self.parent = "test"
         self.full_path = f"{self.parent}/{self.name}"
+        self.content = "content"
 
     def tearDown(self):
         super().tearDown()
@@ -23,12 +24,16 @@ class StorageFileObjMixinTest(BaseTestCase):
             self.storage.delete_directory(self.parent)
 
     def test__save_create(self):
-        name = self.storage.save(self.full_path, ContentFile("content", self.full_path))
+        name = self.storage.save(self.full_path, ContentFile(self.content, self.full_path))
         self.assertEqual(name, self.full_path)
         self.assertTrue(self.storage.exists(self.full_path))
 
         file = FinmarsFile.objects.filter(name=self.name).first()
         self.assertIsNotNone(file)
+        self.assertEqual(file.path, self.parent)
+        self.assertEqual(file.name, self.name)
+        self.assertEqual(file.filepath, self.full_path)
+        self.assertEqual(file.size, len(self.content))
 
     def test__delete(self):
         path = self.random_string()
