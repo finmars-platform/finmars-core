@@ -1093,8 +1093,7 @@ class PerformanceReportBuilder:
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
                     portfolio_register__portfolio=portfolio,
-                    transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
-                    transaction_date__lte=date_to, # 2023-10-31
+                    transaction_date__lte=date_to,  # 2023-12-29
                     transaction_class__in=[
                         TransactionClass.CASH_INFLOW,
                         TransactionClass.CASH_OUTFLOW,
@@ -1102,10 +1101,14 @@ class PerformanceReportBuilder:
                         TransactionClass.DISTRIBUTION,
                     ],
                 ).order_by("transaction_date")
-
+                
                 if not portfolio_records:
                     no_register_records.append(portfolio.user_code)
                     continue
+
+                portfolio_records = portfolio_records.filter(
+                    transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
+                )
 
                 _l.info("portfolio_records count %s " % len(portfolio_records))
 
@@ -1189,14 +1192,14 @@ class PerformanceReportBuilder:
             #         ),
             #     )
 
-            # if no_register_records:
-            #     raise FinmarsBaseException(
-            #         error_key="no_portfolio_register_records_found",
-            #         message=(
-            #             f"No portfolio register records found for the following portfolios "
-            #             f"for the specified period: {', '.join(no_register_records)}"
-            #         ),
-            #     )
+            if no_register_records:
+                raise FinmarsBaseException(
+                    error_key="no_portfolio_register_records",
+                    message=(
+                        f"No portfolio register records found for the following portfolios "
+                        f"for the specified period: {', '.join(no_register_records)}"
+                    ),
+                )
 
             try:
                 cf_adjusted_total_nav = total_nav + grand_cash_flow
