@@ -3,28 +3,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.configuration.models import ConfigurationModel
 from poms.users.models import Member
-
-
-class TimeStampedModel(models.Model):
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
-    modified = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("modified"),
-    )
-
-    class Meta:
-        abstract = True
-        get_latest_by = "modified"
-        ordering = [
-            "created",
-        ]
+from poms.common.models import TimeStampedModel
 
 
 class AccessPolicy(ConfigurationModel, TimeStampedModel):
