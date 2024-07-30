@@ -55,6 +55,12 @@ def join_path(space_code: str, path: Optional[str]) -> str:
         return f"{space_code.rstrip('/')}"
 
 
+def make_dir_path(path: str) -> str:
+    from poms.explorer.models import DIR_SUFFIX
+
+    return f"{path.rstrip('/')}{DIR_SUFFIX}"
+
+
 def remove_first_dir_from_path(path: str) -> str:
     return os.path.sep.join(path.split(os.path.sep)[1:])
 

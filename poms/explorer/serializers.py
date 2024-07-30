@@ -15,10 +15,8 @@ from poms.explorer.models import (
     FinmarsFile,
 )
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
-from poms.explorer.utils import check_is_true, path_is_file
-from poms.iam.models import AccessPolicy
-from poms.explorer.models import FinmarsFile
 from poms.explorer.utils import is_true_value, path_is_file
+from poms.iam.models import AccessPolicy
 from poms.instruments.models import Instrument
 from poms.users.models import MasterUser, Member
 

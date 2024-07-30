@@ -4,7 +4,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from poms.explorer.models import DIR_SUFFIX, ROOT_PATH, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
-from poms.explorer.utils import check_is_true
+from poms.explorer.utils import is_true_value
 from poms.iam.access_policy import AccessPolicy
 from poms.iam.utils import get_statements
 
@@ -94,7 +94,7 @@ class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
         if not path:
             return True
 
-        is_dir = check_is_true(request.query_params.get("is_dir", "false"))
+        is_dir = is_true_value(request.query_params.get("is_dir", "false"))
 
         if is_dir and not path.endswith(DIR_SUFFIX):
             path = f"{path.rstrip('/')}{DIR_SUFFIX}"

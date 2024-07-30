@@ -10,8 +10,6 @@ from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
 
-# from django.utils.crypto import get_random_string
-
 
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
@@ -107,74 +105,3 @@ class FinmarsFile(ObjMixin, DataTimeStampedModel):
 
     class Meta:
         ordering = ["path"]
-
-
-# class ShareAccessRecord(models.Model):
-#     owner = models.ForeignKey(
-#         Member,
-#         on_delete=models.CASCADE,
-#     )
-#     path = models.CharField(
-#         db_index=True,
-#         max_length=MAX_PATH_LENGTH,
-#         help_text="Path to the file/directory in the storage system",
-#     )
-#     shared_with_users = models.ManyToManyField(
-#         Member,
-#         through="MemberShare",
-#         related_name="shared_files",
-#     )
-#     shared_with_groups = models.ManyToManyField(
-#         Group,
-#         through="GroupShare",
-#         related_name="shared_files",
-#     )
-#     public_link_token = models.CharField(
-#         max_length=MAX_TOKEN_LENGTH,
-#         blank=True,
-#         null=True,
-#     )
-#     public_link_expires = models.DateTimeField(
-#         blank=True,
-#         null=True,
-#     )
-#     public_link_policy = models.ForeignKey(
-#         AccessPolicy,
-#         on_delete=models.CASCADE,
-#         null=True,
-#         blank=True,
-#     )
-#
-#     def generate_public_link(self):
-#         self.public_link_token = get_random_string(MAX_TOKEN_LENGTH)
-#         self.save()
-#
-#
-# class MemberShare(models.Model):
-#     share_access_record = models.ForeignKey(
-#         ShareAccessRecord,
-#         on_delete=models.CASCADE,
-#     )
-#     member = models.ForeignKey(
-#         Member,
-#         on_delete=models.CASCADE,
-#     )
-#     policy = models.ForeignKey(
-#         AccessPolicy,
-#         on_delete=models.CASCADE,
-#     )
-#
-#
-# class GroupShare(models.Model):
-#     share_access_record = models.ForeignKey(
-#         ShareAccessRecord,
-#         on_delete=models.CASCADE,
-#     )
-#     group = models.ForeignKey(
-#         Group,
-#         on_delete=models.CASCADE,
-#     )
-#     policy = models.ForeignKey(
-#         AccessPolicy,
-#         on_delete=models.CASCADE,
-#     )
