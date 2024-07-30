@@ -33,11 +33,10 @@ class StorageFileObjMixinTest(BaseTestCase):
     def test__save_create(self):
         self.create_file()
 
-        file = FinmarsFile.objects.filter(name=self.name).first()
+        file = FinmarsFile.objects.filter(path=self.full_path).first()
         self.assertIsNotNone(file)
-        self.assertEqual(file.path, self.parent)
+        self.assertEqual(file.path, self.full_path)
         self.assertEqual(file.name, self.name)
-        self.assertEqual(file.filepath, self.full_path)
         self.assertEqual(file.size, len(self.content))
 
     def test__delete(self):
@@ -46,5 +45,5 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.storage.delete(self.full_path)
         self.assertFalse(self.storage.exists(self.full_path))
 
-        file = FinmarsFile.objects.filter(name=self.name).first()
+        file = FinmarsFile.objects.filter(path=self.full_path).first()
         self.assertIsNone(file)

@@ -160,8 +160,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         amount = 33
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root",
+                path=f"root/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
         response = self.client.get(path=f"{self.url}?page_size={page_size}&page=1")

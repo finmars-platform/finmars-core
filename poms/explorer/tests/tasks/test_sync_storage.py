@@ -1,6 +1,5 @@
 from unittest import mock
 
-# from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import FinmarsDirectory, FinmarsFile
