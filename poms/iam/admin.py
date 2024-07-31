@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from poms.iam.models import Role, Group, AccessPolicy
+from poms.iam.models import AccessPolicy, Group, ResourceGroup, Role
 
 
 @admin.register(Role)
@@ -29,3 +29,8 @@ class AccessPolicyAdmin(admin.ModelAdmin):
     search_fields = ["id", "name", "user_code", "configuration_code"]
 
     actions_on_bottom = True
+
+
+@admin.register(ResourceGroup)
+class ResourceGroupAdmin(admin.ModelAdmin):
+    model = ResourceGroup
