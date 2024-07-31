@@ -337,25 +337,6 @@ def list_json_files(directory):
     return json_files
 
 
-def save_directory_to_storage(local_directory, storage_directory):
-    for root, _, files in os.walk(local_directory):
-        for file in files:
-            local_path = os.path.join(root, file)
-
-            # Calculate the destination path on S3
-            relative_path = os.path.relpath(local_path, local_directory)
-            s3_path = os.path.join(storage_directory, relative_path)
-
-            # Save the file to S3
-            with open(local_path, "rb") as file_obj:
-                storage.save(s3_path, file_obj)
-
-
-def save_file_to_storage(file_path, storage_path):
-    with open(file_path, "rb") as file_obj:
-        storage.save(storage_path, file_obj)
-
-
 def copy_directory(src_dir, dst_dir):
     directories, files = storage.listdir(src_dir)
 
