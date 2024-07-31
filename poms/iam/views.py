@@ -107,13 +107,13 @@ class GroupViewSet(ModelViewSet):
 
 class AccessPolicyFilterSet(FilterSet):
     name = django_filters.CharFilter()
-    # user_code = django_filters.CharFilter()
+    user_code = django_filters.CharFilter()
 
     class Meta:
         model = AccessPolicy
         fields = {
             "name": ["exact", "contains", "icontains"],
-            # "user_code": ["exact", "contains", "icontains"],
+            "user_code": ["exact", "contains", "icontains"],
         }
 
 
@@ -129,6 +129,6 @@ class AccessPolicyViewSet(ModelViewSet):
     ordering_fields = [
         "id",
         "name",
-        # "user_code",
+        "user_code",
         "created",
     ]

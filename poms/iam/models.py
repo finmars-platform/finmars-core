@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
-from poms.users.models import Member
+from poms.users.models import MasterUser, Member
 
 
 class AccessPoliceManager(models.Manager):
@@ -17,6 +17,11 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("Name"),
+    )
+    user_code = models.CharField(
+        max_length=1024,
+        unique=True,
+        verbose_name=gettext_lazy("User Code"),
     )
     description = models.TextField(blank=True)
     policy = models.JSONField(
@@ -47,10 +52,6 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
 
     def __str__(self):
         return str(self.name)
-
-    @property
-    def user_code(self) -> str:
-        return self.resource_group.user_code if self.resource_group else ""
 
 
 class Role(ConfigurationModel, TimeStampedModel):
@@ -112,6 +113,12 @@ class Group(ConfigurationModel, TimeStampedModel):
 
 
 class ResourceGroup(NamedModel, TimeStampedModel):
+    master_user = models.ForeignKey(
+        MasterUser,
+        related_name="resource_groups",
+        verbose_name=gettext_lazy("Master User"),
+        on_delete=models.CASCADE,
+    )
     user_code = models.CharField(
         max_length=1024,
         unique=True,
