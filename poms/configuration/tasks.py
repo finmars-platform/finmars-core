@@ -26,7 +26,6 @@ from poms.configuration.utils import (
     list_json_files,
     read_json_file,
     run_workflow,
-    save_directory_to_storage,
     save_json_to_file,
     unzip_to_directory,
     upload_directory_to_storage,
@@ -357,7 +356,7 @@ def export_configuration(self, task_id, *args, **kwargs):
         else f"{task.master_user.space_code}/configurations/custom/"
         f"{configuration.configuration_code}/{configuration.version}/"
     )
-    save_directory_to_storage(source_directory, storage_directory)
+    upload_directory_to_storage(source_directory, storage_directory)
 
     _l.info("export_configuration. Done")
 

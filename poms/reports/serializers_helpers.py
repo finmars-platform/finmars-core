@@ -534,6 +534,9 @@ def serialize_pl_report_item(item):
     result["position_size"] = item["position_size"]
     result["nominal_position_size"] = item["nominal_position_size"]
 
+    result["period_start_position_size"] = item["period_start_position_size"]
+    result["period_start_nominal_position_size"] = item["period_start_nominal_position_size"]
+
     result["position_return"] = item["position_return"]
     result["position_return_loc"] = item["position_return_loc"]
     result["net_position_return"] = item["net_position_return"]
