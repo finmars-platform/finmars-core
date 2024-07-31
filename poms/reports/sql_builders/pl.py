@@ -3349,6 +3349,9 @@ class PLReportBuilderSql:
                                 (q2.position_size) as position_size, -- ?
                                 (q2.nominal_position_size) as nominal_position_size,
                                 
+                                (q1.position_size) as period_start_position_size, -- ?
+                                (q1.nominal_position_size) as period_start_nominal_position_size,
+                                
                                 (q2.position_return) as position_return,
                                 (q2.position_return_loc) as position_return_loc,
                                 (q2.net_position_return) as net_position_return,
@@ -3406,250 +3409,252 @@ class PLReportBuilderSql:
                                 (q2.item_type_name) as item_type_name,
                                 
                                 case 
-                                    when q1.principal_opened is null then null 
-                                    else q2.principal_opened - q1.principal_opened
+                                    --- 2024-07-31 szhitenev
+                                    --- if we dont have principal_opened value but we have q1.position_size, then probably we miss prices or fxrates
+                                    when q1.principal_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_opened - coalesce(q1.principal_opened, 0)
                                 end as principal_opened,
                                 
                                 case 
-                                    when q1.carry_opened is null then null 
-                                    else q2.carry_opened - q1.carry_opened
+                                    when q1.carry_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_opened - coalesce(q1.carry_opened, 0)
                                 end as carry_opened,
                                 
                                 case 
-                                    when q1.overheads_opened is null then null 
-                                    else q2.overheads_opened - q1.overheads_opened
+                                    when q1.overheads_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_opened - coalesce(q1.overheads_opened, 0)
                                 end as overheads_opened,
                                 
                                 case 
-                                    when q1.total_opened is null then null 
-                                    else q2.total_opened - q1.total_opened
+                                    when q1.total_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_opened - coalesce(q1.total_opened, 0)
                                 end as total_opened,
                                 
                                 case 
-                                    when q1.principal_closed is null then null 
-                                    else q2.principal_closed - q1.principal_closed
+                                    when q1.principal_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_closed - coalesce(q1.principal_closed, 0)
                                 end as principal_closed,
                                 
                                 case 
-                                    when q1.carry_closed is null then null 
-                                    else q2.carry_closed - q1.carry_closed
+                                    when q1.carry_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_closed - coalesce(q1.carry_closed, 0)
                                 end as carry_closed,
                                 
                                 case 
-                                    when q1.overheads_closed is null then null 
-                                    else q2.overheads_closed - q1.overheads_closed
+                                    when q1.overheads_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_closed - coalesce(q1.overheads_closed, 0)
                                 end as overheads_closed,
                                 
                                 case 
-                                    when q1.total_closed is null then null 
-                                    else q2.total_closed - q1.total_closed
+                                    when q1.total_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_closed - coalesce(q1.total_closed, 0)
                                 end as total_closed,
                                 
                                 case 
-                                    when q1.principal_fx_opened is null then null 
-                                    else q2.principal_fx_opened - q1.principal_fx_opened
+                                    when q1.principal_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_opened - coalesce(q1.principal_fx_opened, 0)
                                 end as principal_fx_opened,
                                 
                                 case 
-                                    when q1.carry_fx_opened is null then null 
-                                    else q2.carry_fx_opened - q1.carry_fx_opened
+                                    when q1.carry_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_opened - coalesce(q1.carry_fx_opened, 0)
                                 end as carry_fx_opened,
                                 
                                 case 
-                                    when q1.overheads_fx_opened is null then null 
-                                    else q2.overheads_fx_opened - q1.overheads_fx_opened
+                                    when q1.overheads_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_opened - coalesce(q1.overheads_fx_opened, 0)
                                 end as overheads_fx_opened,
                                 
                                 case 
-                                    when q1.total_fx_opened is null then null 
-                                    else q2.total_fx_opened - q1.total_fx_opened
+                                    when q1.total_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_opened - coalesce(q1.total_fx_opened, 0)
                                 end as total_fx_opened,
                                                            
                                 case 
-                                    when q1.principal_fx_closed is null then null 
-                                    else q2.principal_fx_closed - q1.principal_fx_closed
+                                    when q1.principal_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_closed - coalesce(q1.principal_fx_closed, 0)
                                 end as principal_fx_closed,        
                                 
                                 case 
-                                    when q1.carry_fx_closed is null then null 
-                                    else q2.carry_fx_closed - q1.carry_fx_closed
+                                    when q1.carry_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_closed - coalesce(q1.carry_fx_closed, 0)
                                 end as carry_fx_closed,    
                                 
                                 case 
-                                    when q1.overheads_fx_closed is null then null 
-                                    else q2.overheads_fx_closed - q1.overheads_fx_closed
+                                    when q1.overheads_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_closed - coalesce(q1.overheads_fx_closed, 0)
                                 end as overheads_fx_closed,        
                                 
                                 case 
-                                    when q1.total_fx_closed is null then null 
-                                    else q2.total_fx_closed - q1.total_fx_closed
+                                    when q1.total_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_closed - coalesce(q1.total_fx_closed, 0)
                                 end as total_fx_closed,     
                                 
                                 case 
-                                    when q1.principal_fixed_opened is null then null 
-                                    else q2.principal_fixed_opened - q1.principal_fixed_opened
+                                    when q1.principal_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_opened - coalesce(q1.principal_fixed_opened, 0)
                                 end as principal_fixed_opened,          
 
                                 case 
-                                    when q1.carry_fixed_opened is null then null 
-                                    else q2.carry_fixed_opened - q1.carry_fixed_opened
+                                    when q1.carry_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_opened - coalesce(q1.carry_fixed_opened, 0)
                                 end as carry_fixed_opened,  
                                 
                                 case 
-                                    when q1.overheads_fixed_opened is null then null 
-                                    else q2.overheads_fixed_opened - q1.overheads_fixed_opened
+                                    when q1.overheads_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_opened - coalesce(q1.overheads_fixed_opened, 0)
                                 end as overheads_fixed_opened,  
                                 
                                 case 
-                                    when q1.total_fixed_opened is null then null 
-                                    else q2.total_fixed_opened - q1.total_fixed_opened
+                                    when q1.total_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_opened - coalesce(q1.total_fixed_opened, 0)
                                 end as total_fixed_opened,  
                                 
                                 case 
-                                    when q1.principal_fixed_closed is null then null 
-                                    else q2.principal_fixed_closed - q1.principal_fixed_closed
+                                    when q1.principal_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_closed - coalesce(q1.principal_fixed_closed, 0)
                                 end as principal_fixed_closed,  
                                 
                                 case 
-                                    when q1.carry_fixed_closed is null then null 
-                                    else q2.carry_fixed_closed - q1.carry_fixed_closed
+                                    when q1.carry_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_closed - coalesce(q1.carry_fixed_closed, 0)
                                 end as carry_fixed_closed,  
 
                                 case 
-                                    when q1.overheads_fixed_closed is null then null 
-                                    else q2.overheads_fixed_closed - q1.overheads_fixed_closed
+                                    when q1.overheads_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_closed - coalesce(q1.overheads_fixed_closed, 0)
                                 end as overheads_fixed_closed, 
                                 
                                 case 
-                                    when q1.total_fixed_closed is null then null 
-                                    else q2.total_fixed_closed - q1.total_fixed_closed
+                                    when q1.total_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_closed - coalesce(q1.total_fixed_closed, 0)
                                 end as total_fixed_closed, 
 
                                 -- loc
                                 
                                 case 
-                                    when q1.principal_opened_loc is null then null 
-                                    else q2.principal_opened_loc - q1.principal_opened_loc
+                                    when q1.principal_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_opened_loc - coalesce(q1.principal_opened_loc, 0)
                                 end as principal_opened_loc, 
                                 
                                 case 
-                                    when q1.carry_opened_loc is null then null 
-                                    else q2.carry_opened_loc - q1.carry_opened_loc
+                                    when q1.carry_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_opened_loc - coalesce(q1.carry_opened_loc, 0)
                                 end as carry_opened_loc, 
                                 
                                 case 
-                                    when q1.overheads_opened_loc is null then null 
-                                    else q2.overheads_opened_loc - q1.overheads_opened_loc
+                                    when q1.overheads_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_opened_loc - coalesce(q1.overheads_opened_loc, 0)
                                 end as overheads_opened_loc, 
                                 
                                 case 
-                                    when q1.total_opened_loc is null then null 
-                                    else q2.total_opened_loc - q1.total_opened_loc
+                                    when q1.total_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_opened_loc - coalesce(q1.total_opened_loc, 0)
                                 end as total_opened_loc, 
                                 
                                 case 
-                                    when q1.principal_closed_loc is null then null 
-                                    else q2.principal_closed_loc - q1.principal_closed_loc
+                                    when q1.principal_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_closed_loc - coalesce(q1.principal_closed_loc, 0)
                                 end as principal_closed_loc, 
                                 
                                 case 
-                                    when q1.carry_closed_loc is null then null 
-                                    else q2.carry_closed_loc - q1.carry_closed_loc
+                                    when q1.carry_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_closed_loc - coalesce(q1.carry_closed_loc, 0)
                                 end as carry_closed_loc, 
                                 
                                 case 
-                                    when q1.overheads_closed_loc is null then null 
-                                    else q2.overheads_closed_loc - q1.overheads_closed_loc
+                                    when q1.overheads_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_closed_loc - coalesce(q1.overheads_closed_loc, 0)
                                 end as overheads_closed_loc, 
                                 
                                 case 
-                                    when q1.total_closed_loc is null then null 
-                                    else q2.total_closed_loc - q1.total_closed_loc
+                                    when q1.total_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_closed_loc - coalesce(q1.total_closed_loc, 0)
                                 end as total_closed_loc, 
                                 
                                 case 
-                                    when q1.principal_fx_opened_loc is null then null 
-                                    else q2.principal_fx_opened_loc - q1.principal_fx_opened_loc
+                                    when q1.principal_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_opened_loc - coalesce(q1.principal_fx_opened_loc, 0)
                                 end as principal_fx_opened_loc, 
                                 
                                 case 
-                                    when q1.carry_fx_opened_loc is null then null 
-                                    else q2.carry_fx_opened_loc - q1.carry_fx_opened_loc
+                                    when q1.carry_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_opened_loc - coalesce(q1.carry_fx_opened_loc, 0)
                                 end as carry_fx_opened_loc, 
                                 
                                 case 
-                                    when q1.overheads_fx_opened_loc is null then null 
-                                    else q2.overheads_fx_opened_loc - q1.overheads_fx_opened_loc
+                                    when q1.overheads_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_opened_loc - coalesce(q1.overheads_fx_opened_loc, 0)
                                 end as overheads_fx_opened_loc, 
                                 
                                 case 
-                                    when q1.total_fx_opened_loc is null then null 
-                                    else q2.total_fx_opened_loc - q1.total_fx_opened_loc
+                                    when q1.total_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_opened_loc - coalesce(q1.total_fx_opened_loc, 0)
                                 end as total_fx_opened_loc, 
                                 
                                 case 
-                                    when q1.principal_fx_closed_loc is null then null 
-                                    else q2.principal_fx_closed_loc - q1.principal_fx_closed_loc
+                                    when q1.principal_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_closed_loc - coalesce(q1.principal_fx_closed_loc, 0)
                                 end as principal_fx_closed_loc, 
                                 
                                 case 
-                                    when q1.carry_fx_closed_loc is null then null 
-                                    else q2.carry_fx_closed_loc - q1.carry_fx_closed_loc
+                                    when q1.carry_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_closed_loc - coalesce(q1.carry_fx_closed_loc, 0)
                                 end as carry_fx_closed_loc, 
 
                                 case
-                                    when q1.overheads_fx_closed_loc is null then null 
-                                    else q2.overheads_fx_closed_loc - q1.overheads_fx_closed_loc
+                                    when q1.overheads_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_closed_loc - coalesce(q1.overheads_fx_closed_loc, 0)
                                 end as overheads_fx_closed_loc, 
                                 
                                 case
-                                    when q1.total_fx_closed_loc is null then null 
-                                    else q2.total_fx_closed_loc - q1.total_fx_closed_loc
+                                    when q1.total_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_closed_loc - coalesce(q1.total_fx_closed_loc, 0)
                                 end as total_fx_closed_loc, 
                                 
                                 case
-                                    when q1.principal_fixed_opened_loc is null then null 
-                                    else q2.principal_fixed_opened_loc - q1.principal_fixed_opened_loc
+                                    when q1.principal_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_opened_loc - coalesce(q1.principal_fixed_opened_loc, 0)
                                 end as principal_fixed_opened_loc, 
                                 
                                 case
-                                    when q1.carry_fixed_opened_loc is null then null 
-                                    else q2.carry_fixed_opened_loc - q1.carry_fixed_opened_loc
+                                    when q1.carry_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_opened_loc - coalesce(q1.carry_fixed_opened_loc, 0)
                                 end as carry_fixed_opened_loc, 
                                 
                                 case
-                                    when q1.overheads_fixed_opened_loc is null then null 
-                                    else q2.overheads_fixed_opened_loc - q1.overheads_fixed_opened_loc
+                                    when q1.overheads_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_opened_loc - coalesce(q1.overheads_fixed_opened_loc, 0)
                                 end as overheads_fixed_opened_loc, 
                                 
                                 case
-                                    when q1.total_fixed_opened_loc is null then null 
-                                    else q2.total_fixed_opened_loc - q1.total_fixed_opened_loc
+                                    when q1.total_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_opened_loc - coalesce(q1.total_fixed_opened_loc, 0)
                                 end as total_fixed_opened_loc, 
                                 
                                 case
-                                    when q1.principal_fixed_closed_loc is null then null 
-                                    else q2.principal_fixed_closed_loc - q1.principal_fixed_closed_loc
+                                    when q1.principal_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)
                                 end as principal_fixed_closed_loc, 
 
                                 case
-                                    when q1.carry_fixed_closed_loc is null then null 
-                                    else q2.carry_fixed_closed_loc - q1.carry_fixed_closed_loc
+                                    when q1.carry_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)
                                 end as carry_fixed_closed_loc, 
                                 
                                 case
-                                    when q1.overheads_fixed_closed_loc is null then null 
-                                    else q2.overheads_fixed_closed_loc - q1.overheads_fixed_closed_loc
+                                    when q1.overheads_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)
                                 end as overheads_fixed_closed_loc, 
                                 
                                 case
-                                    when q1.total_fixed_closed_loc is null then null 
-                                    else q2.total_fixed_closed_loc - q1.total_fixed_closed_loc
+                                    when q1.total_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)
                                 end as total_fixed_closed_loc, 
                                 
                                 case
-                                    when q1.mismatch is null then null 
-                                    else q2.mismatch - q1.mismatch
+                                    when q1.mismatch is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.mismatch - coalesce(q1.mismatch, 0)
                                 end as mismatch
             
                                     
@@ -3768,6 +3773,9 @@ class PLReportBuilderSql:
 
                     result_item_opened['position_size'] = item['position_size']
                     result_item_opened['nominal_position_size'] = item['nominal_position_size']
+
+                    result_item_opened['period_start_position_size'] = item['period_start_position_size']
+                    result_item_opened['period_start_nominal_position_size'] = item['period_start_nominal_position_size']
 
                     result_item_opened['mismatch'] = item['mismatch']
 
@@ -3936,7 +3944,7 @@ class PLReportBuilderSql:
                     if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
                         result.append(result_item_opened)
 
-                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and (item["position_size"] != 0 or item["period_start_position_size"] != 0):
                         result.append(result_item_opened)
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
@@ -4000,6 +4008,11 @@ class PLReportBuilderSql:
                         result_item_closed['net_position_return_fixed_loc'] = item['net_position_return_fixed_loc']
 
                         result_item_closed['position_size'] = item['position_size']
+                        result_item_closed['nominal_position_size'] = item['nominal_position_size']
+
+                        result_item_closed['period_start_position_size'] = item['period_start_position_size']
+                        result_item_closed['period_start_nominal_position_size'] = item['period_start_nominal_position_size']
+
                         result_item_closed['mismatch'] = item['mismatch']
 
                         result_item_closed['exposure'] = item['exposure']
