@@ -454,6 +454,7 @@ class BackendReportHelperService:
                 value_type = filter_["value_type"]
                 filter_type = filter_["filter_type"]
                 filter_value = filter_["value"]
+                filter_value_not_empty = self.check_for_empty_regular_filter(filter_value, filter_type)
 
                 if key_property != "ordering":
                     if item.get(key_property) or item.get(key_property) == 0:
@@ -461,9 +462,7 @@ class BackendReportHelperService:
                         if filter_type == 'empty':
                             return False
 
-                        if self.check_for_empty_regular_filter(
-                            filter_value, filter_type
-                        ):
+                        if filter_value_not_empty:
 
                             value_from_table = item[key_property]
                             filter_argument = filter_value
@@ -504,11 +503,7 @@ class BackendReportHelperService:
                     #         and item["item_type"] != 1
                     # ):
 
-                    elif filter_type != "empty" and (
-                            not filter_value or isinstance(filter_value, list) and not filter_value[0]
-                    ):
-                        return True
-                    else:
+                    elif filter_type != "empty" and filter_value_not_empty:
                         return False
             return True
 

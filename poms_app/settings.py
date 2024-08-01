@@ -775,14 +775,16 @@ REDOC_SETTINGS = {
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
 # SENTRY
-sentry_sdk.init(
-    dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
-    integrations=[DjangoIntegration()],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0,
-    # If you wish to associate users to errors (assuming you are using
-    # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True,
-)
+if SERVER_TYPE != "local":
+    sentry_sdk.init(
+        dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
+        integrations=[DjangoIntegration()],
+        environment=SERVER_TYPE,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0,
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True,
+    )
