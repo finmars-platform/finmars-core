@@ -2761,7 +2761,10 @@ class AccrualCalculationSchedule(models.Model):
 
         if not self.accrual_start_date or not self.first_payment_date:
             raise FinmarsBaseException(
-                error_key="invalid accrual_start_date or first_payment_date",
+                error_key=(
+                    "AccrualCalculationSchedule.save: "
+                    "accrual_start or first_payment date are null"
+                ),
                 message="accrual_start_date and first_payment_date shouldn't be null",
             )
 
@@ -2775,7 +2778,25 @@ class AccrualCalculationSchedule(models.Model):
         else:
             self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
 
-        super().save(*args, **kwargs)
+        # Check if the record already exists
+        old_obj = AccrualCalculationSchedule.objects.filter(
+            instrument=self.instrument,
+            accrual_start_date=self.accrual_start_date,
+        ).first()
+
+        if not old_obj:
+            super().save(*args, **kwargs)
+        else:  # Update the existing record
+            old_obj.first_payment_date = self.first_payment_date
+            old_obj.accrual_size = self.accrual_size
+            old_obj.accrual_calculation_model_id = self.accrual_calculation_model_id
+            old_obj.periodicity_id = self.periodicity_id
+            old_obj.periodicity_n = self.periodicity_n
+            old_obj.periodicity_n_value_type = self.periodicity_n_value_type
+            old_obj.notes = self.notes
+            old_obj.eom = self.eom
+
+            old_obj.save(*args, **kwargs)
 
     class Meta:
         verbose_name = gettext_lazy("accrual calculation schedule")
