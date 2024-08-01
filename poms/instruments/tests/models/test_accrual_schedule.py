@@ -104,7 +104,7 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
         ("date", date.today()),
         ("str", date.today().strftime(DATE_FORMAT)),
     )
-    def test_error_duplicated_start_date(self, accrual_start_date):
+    def test__try_to_save_duplicated_start_date(self, accrual_start_date):
         old_accrual = AccrualCalculationSchedule.objects.create(
             instrument=self.instrument,
             accrual_start_date=accrual_start_date,
