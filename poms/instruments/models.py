@@ -2795,7 +2795,7 @@ class AccrualCalculationSchedule(models.Model):
             old_obj.periodicity_n_value_type = self.periodicity_n_value_type
             old_obj.notes = self.notes
             old_obj.eom = self.eom
-
+            #
             old_obj.save(*args, **kwargs)
 
     class Meta:
