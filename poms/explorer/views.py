@@ -4,6 +4,7 @@ import mimetypes
 import os
 from tempfile import NamedTemporaryFile
 
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.http import FileResponse
 from drf_yasg import openapi
@@ -284,10 +285,12 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         # TODO validate path that either public/import/system or user home directory
 
         try:
-            with NamedTemporaryFile() as tmpf:
+            with NamedTemporaryFile(delete=False) as tmpf:
                 tmpf.write(b"init")
                 tmpf.flush()
-                storage.save(path, tmpf)
+
+            with open(tmpf.name, 'rb') as tmpf_read:
+                storage.save(path, ContentFile(tmpf_read.read()))
 
         except Exception as e:
             _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
