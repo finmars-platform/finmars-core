@@ -2778,25 +2778,16 @@ class AccrualCalculationSchedule(models.Model):
         else:
             self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
 
-        # Check if the record already exists
-        old_obj = AccrualCalculationSchedule.objects.filter(
-            instrument=self.instrument,
-            accrual_start_date=self.accrual_start_date,
-        ).first()
+        if not self.id:
+            # Check if the record already exists
+            existing_record = AccrualCalculationSchedule.objects.filter(
+                instrument=self.instrument,
+                accrual_start_date=self.accrual_start_date,
+            ).first()
+            if existing_record:
+                self.id = existing_record.id
 
-        if not old_obj:
-            super().save(*args, **kwargs)
-        else:  # Update the existing record
-            old_obj.first_payment_date = self.first_payment_date
-            old_obj.accrual_size = self.accrual_size
-            old_obj.accrual_calculation_model_id = self.accrual_calculation_model_id
-            old_obj.periodicity_id = self.periodicity_id
-            old_obj.periodicity_n = self.periodicity_n
-            old_obj.periodicity_n_value_type = self.periodicity_n_value_type
-            old_obj.notes = self.notes
-            old_obj.eom = self.eom
-            #
-            old_obj.save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = gettext_lazy("accrual calculation schedule")

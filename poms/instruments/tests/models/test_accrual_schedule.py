@@ -78,7 +78,7 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
                 instrument=self.instrument,
                 accrual_calculation_model_id=self.accrual_model_id,
                 accrual_start_date=self.random_future_date(),
-                first_payment_date=first_payment_date
+                first_payment_date=first_payment_date,
             )
 
     @BaseTestCase.cases(
@@ -90,12 +90,39 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
             instrument=self.instrument,
             accrual_calculation_model_id=self.accrual_model_id,
             accrual_start_date=accrual_start_date,
-            first_payment_date=self.random_future_date()
+            first_payment_date=self.random_future_date(),
         )
         with self.assertRaises(Exception):
             AccrualCalculationSchedule.objects.create(
                 instrument=self.instrument,
                 accrual_calculation_model_id=self.accrual_model_id,
                 accrual_start_date=accrual_start_date,
-                first_payment_date=self.random_future_date()
+                first_payment_date=self.random_future_date(),
             )
+
+    @BaseTestCase.cases(
+        ("date", date.today()),
+        ("str", date.today().strftime(DATE_FORMAT)),
+    )
+    def test_error_duplicated_start_date(self, accrual_start_date):
+        old_accrual = AccrualCalculationSchedule.objects.create(
+            instrument=self.instrument,
+            accrual_start_date=accrual_start_date,
+            accrual_calculation_model_id=self.accrual_model_id,
+            first_payment_date=self.yesterday(),
+        )
+
+        new_first_date = self.random_future_date()
+        new_accrual = AccrualCalculationSchedule(
+            instrument=self.instrument,
+            accrual_start_date=accrual_start_date,
+            accrual_calculation_model_id=self.accrual_model_id,
+            first_payment_date=new_first_date,
+        )
+        new_accrual.save()
+
+        old_accrual.refresh_from_db()
+
+        self.assertEqual(
+            old_accrual.first_payment_date, new_first_date.strftime(DATE_FORMAT)
+        )
