@@ -2779,7 +2779,7 @@ class AccrualCalculationSchedule(models.Model):
             self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
 
         if not self.id:
-            # Check if the record already exists
+            # New object, check if the record already exists
             existing_record = AccrualCalculationSchedule.objects.filter(
                 instrument=self.instrument,
                 accrual_start_date=self.accrual_start_date,
