@@ -2761,7 +2761,10 @@ class AccrualCalculationSchedule(models.Model):
 
         if not self.accrual_start_date or not self.first_payment_date:
             raise FinmarsBaseException(
-                error_key="invalid accrual_start_date or first_payment_date",
+                error_key=(
+                    "AccrualCalculationSchedule.save: "
+                    "accrual_start or first_payment date are null"
+                ),
                 message="accrual_start_date and first_payment_date shouldn't be null",
             )
 
@@ -2774,6 +2777,15 @@ class AccrualCalculationSchedule(models.Model):
             self.first_payment_date = self.first_payment_date.strftime(DATE_FORMAT)
         else:
             self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
+
+        if not self.id:
+            # New object, check if the record already exists
+            existing_record = AccrualCalculationSchedule.objects.filter(
+                instrument=self.instrument,
+                accrual_start_date=self.accrual_start_date,
+            ).first()
+            if existing_record:
+                self.id = existing_record.id
 
         super().save(*args, **kwargs)
 
