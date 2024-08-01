@@ -1326,16 +1326,16 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         data["report_instance_id"] = report_instance.id
 
-        # filter by previous groups
-        full_items = helper_service.filter(
-            full_items, instance.frontend_request_options
-        )
-
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
         )
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "exposure"
+        )
+
+        # filter by previous groups
+        full_items = helper_service.filter(
+            full_items, instance.frontend_request_options
         )
 
         full_items = helper_service.filter_by_groups_filters(
@@ -1468,16 +1468,16 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         data["report_instance_id"] = report_instance.id
 
-        # _l.info('full_items %s' % full_items[0])
-        full_items = helper_service.filter(
-            full_items, instance.frontend_request_options
-        )
-
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
         )
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "exposure"
+        )
+
+        # _l.info('full_items %s' % full_items[0])
+        full_items = helper_service.filter(
+            full_items, instance.frontend_request_options
         )
 
         full_items = helper_service.filter_by_groups_filters(
