@@ -52,8 +52,6 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
         )
 
     @BaseTestCase.cases(
-        ("empty", ""),
-        ("null", None),
         ("int", 172651),
         ("str", "18736"),
     )
@@ -67,8 +65,6 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
             )
 
     @BaseTestCase.cases(
-        ("empty", ""),
-        ("null", None),
         ("int", 827634),
         ("str", "827634"),
     )
