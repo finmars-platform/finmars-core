@@ -311,23 +311,20 @@ def set_defaults_from_instrument_type(
 
         # Set Pricing Policy
 
-        # try:
-        #     instrument_object["pricing_policies"] = []
-        #
-        #     for it_pricing_policy in instrument_type.pricing_policies.all():
-        #         pricing_policy = {
-        #             "pricing_policy": it_pricing_policy.pricing_policy.id,
-        #             "pricing_scheme": it_pricing_policy.pricing_scheme.id,
-        #             "notes": it_pricing_policy.notes,
-        #             "default_value": it_pricing_policy.default_value,
-        #             "attribute_key": it_pricing_policy.attribute_key,
-        #             "json_data": it_pricing_policy.json_data,
-        #         }
-        #
-        #         instrument_object["pricing_policies"].append(pricing_policy)
-        #
-        # except Exception as e:
-        #     _l.info(f"Can't set default pricing policy {e}")
+        try:
+            instrument_object["pricing_policies"] = []
+
+            for it_pricing_policy in instrument_type.pricing_policies.all():
+                pricing_policy = {
+                    "pricing_policy_id": it_pricing_policy.pricing_policy.id,
+                    "target_pricing_schema_user_code": it_pricing_policy.target_pricing_schema_user_code,
+                    "options": it_pricing_policy.options,
+                }
+
+                instrument_object["pricing_policies"].append(pricing_policy)
+
+        except Exception as e:
+            _l.info(f"Can't set default pricing policy {e}")
 
         _l.info(f"instrument_object {instrument_object}")
 

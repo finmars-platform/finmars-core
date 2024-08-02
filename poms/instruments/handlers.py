@@ -393,14 +393,13 @@ class InstrumentTypeProcess(object):
                 f"InstrumentType is not configured correctly {repr(e)}"
             ) from e
 
-    # TODO pricingv2 reanimate with new pricing policies logic?
     def set_pricing_policies(self):
         try:
             self.instrument_object["pricing_policies"] = []
 
             for it_pricing_policy in self.instrument_type.pricing_policies.all():
                 pricing_policy = {
-                    "pricing_policy": it_pricing_policy.pricing_policy.id,
+                    "pricing_policy_id": it_pricing_policy.pricing_policy.id,
                     "target_pricing_schema_user_code": it_pricing_policy.target_pricing_schema_user_code,
                     "options": it_pricing_policy.options,
                 }
