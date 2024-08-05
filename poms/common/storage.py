@@ -327,6 +327,17 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     def save(self, path: str, content: Any, **kwargs) -> str:
         from poms.explorer.models import FinmarsFile
 
+        if path.endswith("/.init"):
+            # creates system directory with empty .init file
+            super().save(path, content, **kwargs)
+            return path
+
+        if not hasattr(content, "__len__"):
+            _l.error(
+                f"FinmarsStorageFileObjMixin.save invalid file content for path={path}"
+            )
+            return ""
+
         size = len(content)
         parent, name = self.split_path(path)
         _l.info(f"FinmarsStorageFileObjMixin._save {parent}|{name} of size {size}")
