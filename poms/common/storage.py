@@ -332,15 +332,9 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             super().save(path, content, **kwargs)
             return path
 
-        if not hasattr(content, "__len__"):
-            _l.error(
-                f"FinmarsStorageFileObjMixin.save invalid file content for path={path}"
-            )
-            return ""
-
-        size = len(content)
+        size = len(content) if hasattr(content, "__len__") else 0
         parent, name = self.split_path(path)
-        _l.info(f"FinmarsStorageFileObjMixin._save {parent}|{name} of size {size}")
+        _l.info(f"FinmarsStorageFileObjMixin.save {parent}|{name} of size {size}")
 
         super().save(path, content, **kwargs)
 
