@@ -5,15 +5,15 @@ import sys
 import time
 import traceback
 
-import psutil
-import requests
 from django.apps import AppConfig
 from django.conf import settings
-from django.db import DEFAULT_DB_ALIAS
-from django.db import connection
+from django.db import DEFAULT_DB_ALIAS, connection
 from django.db.models import Q
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
+
+import psutil
+import requests
 
 from poms.common.exceptions import FinmarsBaseException
 
@@ -43,19 +43,20 @@ class BootstrapConfig(AppConfig):
 
     def get_gunicorn_memory_usage(self):
         total_memory = 0
-        for proc in psutil.process_iter(['cmdline', 'memory_info']):
+        for proc in psutil.process_iter(["cmdline", "memory_info"]):
             try:
                 # Check if this is a Gunicorn worker process
-                name = ' '.join(proc.cmdline())
+                name = " ".join(proc.cmdline())
                 # if 'gunicorn' in name or 'runserver' in name:
-                if 'gunicorn' in name:
-                    total_memory += proc.info['memory_info'].rss
+                if "gunicorn" in name:
+                    total_memory += proc.info["memory_info"].rss
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass  # Process terminated or access denied
-        _l.info(f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024 ** 2:.2f} MB")
+        _l.info(
+            f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024 ** 2:.2f} MB"
+        )
 
     def ready(self):
-
         _l.info("bootstrap: Bootstrapping Finmars Application")
 
         if settings.PROFILER:
@@ -73,15 +74,12 @@ class BootstrapConfig(AppConfig):
 
         self.get_gunicorn_memory_usage()
 
-        gunicorn_start_time = os.environ.get('GUNICORN_START_TIME')
+        gunicorn_start_time = os.environ.get("GUNICORN_START_TIME")
         if gunicorn_start_time:
             gunicorn_start_time = float(gunicorn_start_time)
             ready_time = time.time()
             startup_duration = ready_time - gunicorn_start_time
-            _l.info(
-                "Finmars bootstrap time: %s"
-                % "{:3.3f}".format(startup_duration)
-            )
+            _l.info("Finmars bootstrap time: %s" % "{:3.3f}".format(startup_duration))
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         """
@@ -97,11 +95,10 @@ class BootstrapConfig(AppConfig):
 
         current_space_code = get_current_search_path()
 
-        _l.info("bootstrap: Current search path: %s" % current_space_code)
+        _l.info(f"bootstrap: Current search path: {current_space_code}")
 
         # Do not disable bootstrap code, it's important to be executed on every startup
-        if "test" not in sys.argv and 'public' not in current_space_code:
-
+        if "test" not in sys.argv and "public" not in current_space_code:
             try:
                 self.sync_space_data()
                 self.create_finmars_bot()
@@ -118,6 +115,7 @@ class BootstrapConfig(AppConfig):
     @staticmethod
     def create_finmars_bot():
         from django.contrib.auth.models import User
+
         from poms.users.models import MasterUser, Member
 
         log = "create_finmars_bot"
@@ -142,7 +140,7 @@ class BootstrapConfig(AppConfig):
                 "user": finmars_user,
                 "master_user": master_user,
                 "is_admin": True,
-            }
+            },
         )
         if not created_bot:
             finmars_bot.user = finmars_user
@@ -182,9 +180,9 @@ class BootstrapConfig(AppConfig):
         try:
             old_members = list(
                 Member.objects.exclude(
-                    Q(is_owner=True) |
-                    Q(status=Member.STATUS_DELETED) |
-                    Q(username="finmars_bot")
+                    Q(is_owner=True)
+                    | Q(status=Member.STATUS_DELETED)
+                    | Q(username="finmars_bot")
                 )
             )
             total_count = len(old_members)
@@ -219,20 +217,19 @@ class BootstrapConfig(AppConfig):
 
         # Probably its a Legacy space
         # Remove that in 1.9.0
-        if 'public' in current_space_code:
+        if "public" in current_space_code:
             current_space_code = settings.BASE_API_URL
 
         data = {
-                "base_api_url": current_space_code,
-                "space_code": current_space_code,
-                "realm_code": settings.REALM_CODE
-                }
+            "base_api_url": current_space_code,
+            "space_code": current_space_code,
+            "realm_code": settings.REALM_CODE,
+        }
         # url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
         url = f"{settings.AUTHORIZER_URL}/api/v2/space/sync/"
 
         _l.info(
-            f"{log} started, calling api '/space/sync/' "
-            f"with url={url} data={data}"
+            f"{log} started, calling api '/space/sync/' " f"with url={url} data={data}"
         )
 
         try:
@@ -261,7 +258,7 @@ class BootstrapConfig(AppConfig):
 
             # Probably its a Legacy space
             # Remove that in 1.9.0
-            if 'public' in current_space_code:
+            if "public" in current_space_code:
                 current_space_code = settings.BASE_API_URL
 
             if base_api_url != current_space_code:
@@ -280,9 +277,11 @@ class BootstrapConfig(AppConfig):
                 defaults=dict(
                     email=owner_email,
                     password=generate_random_string(10),
-                )
+                ),
             )
-            _l.info(f"{log} owner {owner_username} {'created' if created else 'exists'}")
+            _l.info(
+                f"{log} owner {owner_username} {'created' if created else 'exists'}"
+            )
 
             user_profile, created = UserProfile.objects.using(
                 settings.DB_DEFAULT
@@ -324,7 +323,7 @@ class BootstrapConfig(AppConfig):
                 master_user = MasterUser.objects.create_master_user(
                     name=master_user_name,
                     space_code=base_api_url,
-                    realm_code=settings.REALM_CODE
+                    realm_code=settings.REALM_CODE,
                 )
 
                 _l.info(
@@ -420,16 +419,21 @@ class BootstrapConfig(AppConfig):
         workers = CeleryWorker.objects.using(settings.DB_DEFAULT).all()
 
         from poms.users.models import MasterUser
+
         master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
 
         for worker in workers:
             try:
-                worker_status = authorizer_service.get_worker_status(worker,
-                                                                     realm_code=master_user.realm_code,
-                                                                     space_code=master_user.space_code)
+                worker_status = authorizer_service.get_worker_status(
+                    worker,
+                    realm_code=master_user.realm_code,
+                )
 
                 if worker_status["status"] == "not_found":
-                    authorizer_service.create_worker(worker, realm_code=master_user.realm_code)
+                    authorizer_service.create_worker(
+                        worker,
+                        realm_code=master_user.realm_code,
+                    )
             except Exception as e:
                 err_msg = f"sync_celery_workers: worker {worker} error {repr(e)}"
                 _l.error(err_msg)
@@ -449,10 +453,9 @@ class BootstrapConfig(AppConfig):
 
         configuration_code = get_default_configuration_code()
 
-        _l.info('create_member_layouts.configuration_code %s' % configuration_code)
+        _l.info(f"create_member_layouts.configuration_code {configuration_code}")
 
         for member in members:
-
             layouts = MemberLayout.objects.using(settings.DB_DEFAULT).filter(
                 member=member,
                 configuration_code=configuration_code,
@@ -476,16 +479,17 @@ class BootstrapConfig(AppConfig):
                     _l.error(err_msg)
                     raise BootstrapError("fatal", message=err_msg) from e
 
-                _l.info(f"create_member_layouts.created_member_layout_for: {member.username}")
+                _l.info(
+                    f"create_member_layouts.created_member_layout_for: {member.username}"
+                )
 
     def create_base_folders(self):
         from tempfile import NamedTemporaryFile
 
         from poms.common.storage import get_storage
-        from poms.users.models import Member
+        from poms.users.models import MasterUser, Member
         from poms_app import settings
 
-        from poms.users.models import MasterUser
         master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
 
         try:
@@ -497,54 +501,47 @@ class BootstrapConfig(AppConfig):
 
             if not storage.exists(f"{master_user.space_code}/.system/.init"):
                 path = f"{master_user.space_code}/.system/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system folder")
 
             if not storage.exists(f"{master_user.space_code}/.system/tmp/.init"):
                 path = f"{master_user.space_code}/.system/tmp/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create .system/tmp folder")
 
             if not storage.exists(f"{master_user.space_code}/.system/log/.init"):
                 path = f"{master_user.space_code}/.system/log/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system log folder")
 
             if not storage.exists(
-                    f"{master_user.space_code}/.system/new-member-setup-configurations/.init"
+                f"{master_user.space_code}/.system/new-member-setup-configurations/.init"
             ):
                 path = (
-                        master_user.space_code
-                        + "/.system/new-member-setup-configurations/.init"
+                    master_user.space_code
+                    + "/.system/new-member-setup-configurations/.init"
                 )
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create system new-member-setup-configurations folder")
 
             if not storage.exists(f"{master_user.space_code}/public/.init"):
                 path = f"{master_user.space_code}/public/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create public folder")
 
             if not storage.exists(f"{master_user.space_code}/configurations/.init"):
                 path = f"{master_user.space_code}/configurations/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create configurations folder")
 
             if not storage.exists(f"{master_user.space_code}/workflows/.init"):
                 path = f"{master_user.space_code}/workflows/.init"
-
                 with NamedTemporaryFile() as tmpf:
                     self._save_tmp_to_storage(tmpf, storage, path)
                     _l.info("create workflows folder")
@@ -553,10 +550,9 @@ class BootstrapConfig(AppConfig):
 
             for member in members:
                 if not storage.exists(
-                        f"{master_user.space_code}/{member.username}/.init"
+                    f"{master_user.space_code}/{member.username}/.init"
                 ):
                     path = f"{master_user.space_code}/{member.username}/.init"
-
                     with NamedTemporaryFile() as tmpf:
                         self._save_tmp_to_storage(tmpf, storage, path)
 
@@ -568,8 +564,8 @@ class BootstrapConfig(AppConfig):
     @staticmethod
     def create_local_configuration():
         from poms.configuration.models import Configuration
-
         from poms.users.models import MasterUser
+
         master_user = MasterUser.objects.using(settings.DB_DEFAULT).all().first()
 
         configuration_code = f"local.poms.{master_user.space_code}"
@@ -581,7 +577,7 @@ class BootstrapConfig(AppConfig):
                 is_primary=True,
                 version="1.0.0",
                 description="Local Configuration",
-            )
+            ),
         )
         _l.info(f"Local Configuration is already {'created' if created else 'exists'}")
 
