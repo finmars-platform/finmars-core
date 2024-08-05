@@ -173,12 +173,12 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
         try:  # TODO maybe wrong implementation
             if not self.listdir:
                 raise NotImplemented("Listdir method not implemented")
+
             # Check if the folder exists by listing its contents
             dirs, files = self.listdir(folder_path)
-
-            _l.info("folder_path %s" % folder_path)
-            _l.info("files %s" % files)
-            _l.info("folders %s" % dirs)
+            _l.info(
+                f"storage.save: folder_path {folder_path} files {files} dirs {dirs}"
+            )
 
             # Return True if there are any files in the folder
             return bool(files)
