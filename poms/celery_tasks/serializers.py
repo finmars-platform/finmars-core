@@ -46,7 +46,8 @@ def _get_result_stats(instance):
         "skip_count": 0,
     }
 
-    if instance.result_object.get("items") is not None:
+    result_object = instance.result_object
+    if result_object.get("items") is not None:
 
         for item in instance.result_object["items"]:
             if item["status"] in ["success", "skip", "error"]:
