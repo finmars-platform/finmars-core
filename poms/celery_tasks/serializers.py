@@ -31,7 +31,7 @@ class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
 
 def _get_result_stats(instance):
 
-    if instance.result_object is None:
+    if not hasattr(instance.result_object, "get"):
         return {
             "total_count": None,
             "error_count": None,
@@ -46,8 +46,7 @@ def _get_result_stats(instance):
         "skip_count": 0,
     }
 
-    result_object = instance.result_object
-    if result_object.get("items") is not None:
+    if instance.result_object.get("items") is not None:
 
         for item in instance.result_object["items"]:
             if item["status"] in ["success", "skip", "error"]:
