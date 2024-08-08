@@ -33,7 +33,7 @@ class FinmarsVault():
         self.auth_token = None
         try:
             vault_token = VaultRecord.objects.get(user_code='hashicorp-vault-token')
-            self.auth_token = json.loads(vault_token.data["token"])
+            self.auth_token = json.loads(vault_token.data)["token"]
         except Exception as e:
             _l.info(f'Failed to get vault token: {e}')
 
