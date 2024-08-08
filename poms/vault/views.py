@@ -63,7 +63,10 @@ class VaultViewSet(AbstractViewSet):
 
         data = {}
 
-        if settings.VAULT_TOKEN:
+        try:
+            # needed to check if token is available
+            vault_token = VaultRecord.objects.get(user_code='hashicorp-vault-token')
+
             data['status'] = 'ok'
             data['text'] = 'Vault is operational for storing secrets'
 
@@ -73,9 +76,12 @@ class VaultViewSet(AbstractViewSet):
 
             data['data'] = status
 
-        else:
+        except Exception as e:
+            _l.info(f'Failed to get vault token: {e}')
+
             data['status'] = 'unknown'
             data['text'] = 'Vault is not configured for this Space'
+
 
         serializer = VaultStatusSerializer(data)
 
