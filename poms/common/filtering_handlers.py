@@ -374,8 +374,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value is not None and min_value is not None:
             options = {
@@ -388,8 +388,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value is not None and min_value is not None:
             q_less_than_min = Q(value_float__lt=min_value)
@@ -480,8 +480,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
             options = {
@@ -494,8 +494,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
             q_less_than_min = Q(value_date__lt=datetime.strptime(min_value, DATE_FORMAT).date())
@@ -806,8 +806,8 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value is not None and min_value is not None:
             options = {
@@ -818,8 +818,8 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value is not None and min_value is not None:
             q_less_than_min = Q(**{key + "__lt": min_value})
@@ -903,8 +903,8 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
             options = {
@@ -915,8 +915,8 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
-        max_value = filter_config["value"]["max_value"]
-        min_value = filter_config["value"]["min_value"]
+        max_value = filter_config["value"].get("max_value")
+        min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
             q_less_than_min = Q(**{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()})

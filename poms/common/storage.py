@@ -173,12 +173,12 @@ class FinmarsStorageMixin(EncryptedStorageMixin):
         try:  # TODO maybe wrong implementation
             if not self.listdir:
                 raise NotImplemented("Listdir method not implemented")
+
             # Check if the folder exists by listing its contents
             dirs, files = self.listdir(folder_path)
-
-            _l.info("folder_path %s" % folder_path)
-            _l.info("files %s" % files)
-            _l.info("folders %s" % dirs)
+            _l.info(
+                f"storage.save: folder_path {folder_path} files {files} dirs {dirs}"
+            )
 
             # Return True if there are any files in the folder
             return bool(files)
@@ -327,9 +327,14 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     def save(self, path: str, content: Any, **kwargs) -> str:
         from poms.explorer.models import FinmarsFile
 
-        size = len(content)
+        if path.endswith("/.init"):
+            # creates system directory with empty .init file
+            super().save(path, content, **kwargs)
+            return path
+
+        size = len(content) if hasattr(content, "__len__") else 0
         parent, name = self.split_path(path)
-        _l.info(f"FinmarsStorageFileObjMixin._save {parent}|{name} of size {size}")
+        _l.info(f"FinmarsStorageFileObjMixin.save {parent}|{name} of size {size}")
 
         super().save(path, content, **kwargs)
 

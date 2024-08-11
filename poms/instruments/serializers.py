@@ -2019,29 +2019,6 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
         )
 
     def get_instrument(self, obj):
-        obj.instrument["pricing_policies"] = []
-
-        # for itype_pp in list(obj.instrument["_instrument_type_pricing_policies"].all()):
-        #     pricing_policy_data = InstrumentTypePricingPolicySerializer(
-        #         instance=itype_pp, context=self.context
-        #     ).data
-        #
-        #     pricing_policy = {
-        #         "pricing_policy": pricing_policy_data["pricing_policy"],
-        #         "pricing_scheme": pricing_policy_data["pricing_scheme"],
-        #         "data": pricing_policy_data["data"],
-        #         "notes": pricing_policy_data["notes"],
-        #         "default_value": pricing_policy_data["default_value"],
-        #         "attribute_key": pricing_policy_data["attribute_key"],
-        #         "pricing_policy_object": pricing_policy_data["pricing_policy_object"],
-        #         "pricing_scheme_object": pricing_policy_data["pricing_scheme_object"],
-        #     }
-        #
-        #     obj.instrument["pricing_policies"].append(pricing_policy)
-
-        # delete data after creating 'pricing_policies'
-        # obj.instrument.pop("_instrument_type_pricing_policies")
-
         return obj.instrument
 
     def validate(self, attrs):
