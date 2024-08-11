@@ -290,6 +290,8 @@ class SimpleEval2(object):
             self.start_time = time.time()
             self.result = self._eval(self.expr_ast.body)
             return self.result
+        except _Return as e:
+            return e.value
         except InvalidExpression:
             # _l.debug('InvalidExpression', exc_info=True)
             raise
@@ -306,15 +308,12 @@ class SimpleEval2(object):
         #     raise InvalidExpression("Execution exceeded time limit, max runtime is %s" % self.max_time)
         self.check_time()
 
-        try:
-            if isinstance(node, (list, tuple)):
-                return self._on_many(node)
+        if isinstance(node, (list, tuple)):
+            return self._on_many(node)
 
-            op = f"_on_ast_{type(node).__name__}"
-            if hasattr(self, op):
-                return getattr(self, op)(node)
-        except _Return as e:
-            return e.value
+        op = f"_on_ast_{type(node).__name__}"
+        if hasattr(self, op):
+            return getattr(self, op)(node)
 
         raise InvalidExpression(
             f"Sorry, {type(node).__name__} is not available in this evaluator"

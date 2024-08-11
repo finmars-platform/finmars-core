@@ -163,6 +163,13 @@ class JWTAuthentication(TokenAuthentication):
 
         auth = get_authorization_header(request).split()
 
+        if not auth:
+
+            for key, value in request.COOKIES.items():
+
+                if 'bearer_token' == key:
+                    auth = ['Bearer'.encode(), value.encode()]
+
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None  # Ensure that if there's no 'Bearer', None is returned.
 

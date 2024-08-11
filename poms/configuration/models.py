@@ -46,13 +46,9 @@ class ConfigurationModel(OwnerModel):
         # _l.info('self.configuration_code %s' % self.configuration_code)
         # _l.info('self.user_code %s' % self.user_code)
 
-        if not self.configuration_code:
+        if not self.configuration_code and hasattr(self, "master_user"):
             # Now new prefix is local.poms.[space_code] e.g. local.poms.space00000
-            try:
-                # We hope that configuration model is must have master_user
-                self.configuration_code = f"local.poms.{self.master_user.space_code}"
-            except Exception as e:
-                _l.error(f"Error in ConfigurationModel.save {e}")
+            self.configuration_code = f"local.poms.{self.master_user.space_code}"
 
         if not self.user_code:
             raise RuntimeError("user_code is required")
