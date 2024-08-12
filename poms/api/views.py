@@ -1013,30 +1013,37 @@ class SystemLogsViewSet(AbstractViewSet):
 
 
 class TablesSizeViewSet(AbstractViewSet):
-    def dictfetchall(self, cursor):
-        "Return all rows from a cursor as a dict"
+
+    @staticmethod
+    def dictfetchall(cursor):
+        """
+        Returns a list of dicts representing the rows in the given database cursor.
+        Each dictionary represents a row in the result set, with keys corresponding
+        to the column names and values corresponding to the column values.
+        Parameters:
+        cursor (database cursor): The database cursor to fetch results from.
+        Returns:
+        list[dict]: A list of dictionaries representing the rows in the result set.
+        """
         columns = [col[0] for col in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     def list(self, request, *args, **kwargs):
         result = {"results": []}
 
-        query = """
+        query = f"""
             select
               table_name,
               pg_size_pretty(pg_total_relation_size(quote_ident(table_name))),
               pg_total_relation_size(quote_ident(table_name))
             from information_schema.tables
-            where table_schema = 'public'
+            where table_schema = '{request.space_code}'
             order by 3 desc;
         """
 
         with connection.cursor() as cursor:
             cursor.execute(query)
-
-            items = self.dictfetchall(cursor)
-
-            result["results"] = items
+            result["results"] = self.dictfetchall(cursor)
 
         return Response(result)
 
@@ -1044,7 +1051,7 @@ class TablesSizeViewSet(AbstractViewSet):
     def view_log(self, request, realm_code=None, space_code=None):
         log_file = request.query_params.get("log_file", "django.log")
 
-        log_file = "/var/log/finmars/backend/" + log_file
+        log_file = f"/var/log/finmars/backend/{log_file}"
 
         file = open(log_file, "r")
 
