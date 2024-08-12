@@ -38,90 +38,93 @@ import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import (
+    AcceptInvite,
     CreateMasterUser,
     CreateUser,
+    DeclineInvite,
     DeleteMember,
     MasterUserChangeOwner,
     ObtainAuthToken,
+    PersonalAccessTokenViewSet,
     RenameMasterUser,
     SetAuthToken,
-    AcceptInvite,
-    DeclineInvite,
-    PersonalAccessTokenViewSet,
 )
 from poms.explorer.views import ExplorerServeFileViewSet
 
 router = routers.DefaultRouter()
 
 router.register(
-    r"system/ecosystem-configuration",
+    "system/ecosystem-configuration",
     system.EcosystemConfigurationViewSet,
     "ecosystemconfiguration",
 )
-
 router.register(
-    r"reference-tables/reference-table",
+    "system/whitelabel",
+    system.WhitelabelViewSet,
+    "system-whitelabel",
+)
+router.register(
+    "reference-tables/reference-table",
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",
 )
-router.register(
+router.register(  # DEPRECATED
     r"active_processes/active_processes",
     celery_tasks.CeleryTaskViewSet,
     "CeleryTask",
-)  # deprecated
+)
 router.register(
     r"tasks/task",
     celery_tasks.CeleryTaskViewSet,
     "CeleryTask",
 )
-
 router.register(
     r"tasks/worker",
     celery_tasks.CeleryWorkerViewSet,
     "CeleryWorker",
 )
-
 router.register(
     r"tasks/stats",
     celery_tasks.CeleryStatsViewSet,
     "CeleryStats",
 )
-
 router.register(
     r"configuration/configuration",
     configuration.ConfigurationViewSet,
-    "configuration"
+    "configuration",
 )
 router.register(
     r"configuration/new-member-setup-configuration",
     configuration.NewMemberSetupConfigurationViewSet,
-    "newmembersetupconfiguration"
+    "newmembersetupconfiguration",
 )
-router.register(
+router.register(  # deprecated?
     r"transactions/bank-file",
     integrations.TransactionFileResultViewSet,
-)  # deprecated?
+)
 router.register(
     r"specific-data/values-for-select",
     common.ValuesForSelectViewSet,
     "valuesforselect",
 )
 router.register(
-    r"notifications/notification",
+    "notifications/notification",
     notifications.NotificationViewSet,
 )
 router.register(
-    r"data-provider/bloomberg/credential",
+    "data-provider/bloomberg/credential",
     integrations.BloombergDataProviderCredentialViewSet,
 )
 router.register(
-    r"utils/expression",
+    "utils/expression",
     api.ExpressionViewSet,
     "expression",
 )
-
-router.register(r"utils/send-email", api.EmailViewSet, basename="email")
-
+router.register(
+    "utils/send-email",
+    api.EmailViewSet,
+    basename="email",
+)
 router.register(
     r"utils/stats",
     api.StatsViewSet,
@@ -157,16 +160,16 @@ router.register(
     api.UniversalInputViewSet,
     "universalInput",
 )
-router.register(
+router.register(  # Probably deprecated
     r"import/complex/scheme",
     complex_import.ComplexImportSchemeViewSet,
     "import_complex_scheme",
-)  # Probably deprecated
-router.register(
+)
+router.register(  # Probably deprecated
     r"import/complex",
     complex_import.ComplexImportViewSet,
     "import_complex",
-)  # Probably deprecated
+)
 router.register(
     r"reconciliation/process-bank-file",
     reconciliation.ProcessBankFileForReconcileViewSet,
@@ -192,7 +195,6 @@ router.register(
     file_reports.FileReportViewSet,
     "file_reports",
 )
-
 router.register(
     r"pricing/run",
     pricing.RunPricingView,
@@ -227,20 +229,20 @@ router.register(
 router.register(
     r"schedules/schedule",
     schedules.ScheduleViewSet,
-    "schedule"
+    "schedule",
 )
 router.register(
     r"system-messages/message",
     system_messages.SystemMessageViewSet,
 )
-router.register(
+router.register(  # Probably deprecated
     r"credentials/credentials",
     credentials.CredentialsViewSet,
-)  # Probably deprecated
-router.register(
+)
+router.register(  # Probably deprecated
     r"integrations/data-provider",
     integrations.DataProviderViewSet,
-)  # Probably deprecated
+)
 router.register(
     r"widgets/history/nav",
     widgets.HistoryNavViewSet,
@@ -276,20 +278,21 @@ router.register(
     widgets.CollectStatsViewSet,
     "widgets_collect_stats",
 )
-router.register(
+router.register(  # DEPRECATED
     r"debug/logs",
     common.DebugLogViewSet,
     "debug_log",
-)  # Deprecated
+)
 router.register(
     r"errors/error",
     ErrorRecordViewSet,
     "error",
 )
 router.register(
-    r"history/historical-record", history.HistoricalRecordViewSet, "historical-record"
+    r"history/historical-record",
+    history.HistoricalRecordViewSet,
+    "historical-record",
 )
-
 router.register(
     r"auth-tokens/personal-access-token",
     PersonalAccessTokenViewSet,
@@ -319,12 +322,16 @@ urlpatterns = [
         instruments.InstrumentDatabaseSearchViewSet.as_view(),
     ),
     # Authorizer, Workflow, Backend Internal API section
-    re_path(r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"),
     re_path(
-        r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
+        r"^internal/accept-invite/",
+        AcceptInvite.as_view(),
+        name="accept-invite",
     ),
-    # re_path(r'internal/data/transactions/callback',
-    #         csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    re_path(
+        r"^internal/decline-invite/",
+        DeclineInvite.as_view(),
+        name="decline-invite",
+    ),
     re_path(
         r"internal/data/transactions/json",
         csrf_exempt(integrations.TransactionImportJson.as_view()),
@@ -342,12 +349,20 @@ urlpatterns = [
         csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view()),
     ),
     re_path(
-        r"^authorizer/token-auth/", ObtainAuthToken.as_view(), name="api-token-auth"
+        r"^authorizer/token-auth/",
+        ObtainAuthToken.as_view(),
+        name="api-token-auth",
     ),
     re_path(
-        r"^authorizer/set-token-auth/", SetAuthToken.as_view(), name="set-token-auth"
+        r"^authorizer/set-token-auth/",
+        SetAuthToken.as_view(),
+        name="set-token-auth",
     ),
-    re_path(r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"),
+    re_path(
+        r"^authorizer/create-user/",
+        CreateUser.as_view(),
+        name="create-user",
+    ),
     re_path(
         r"^authorizer/create-master-user/",
         CreateMasterUser.as_view(),
@@ -359,9 +374,10 @@ urlpatterns = [
         RenameMasterUser.as_view(),
         name="rename-master-user",
     ),
-    # re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'), # Deprecated
     re_path(
-        r"^authorizer/delete-member/", DeleteMember.as_view(), name="delete-member"
+        r"^authorizer/delete-member/",
+        DeleteMember.as_view(),
+        name="delete-member",
     ),
     re_path(
         r"^authorizer/master-user-change-owner/",
@@ -373,11 +389,11 @@ urlpatterns = [
         ExplorerServeFileViewSet.as_view({"get": "retrieve"}),
         name="storage",
     ),
-
-    re_path(r"^authorizer/migrate/",
-            common.RealmMigrateSchemeView.as_view(),
-            name="migrate")
-
+    re_path(
+        r"^authorizer/migrate/",
+        common.RealmMigrateSchemeView.as_view(),
+        name="migrate",
+    ),
 ]
 
 # if 'rest_framework_swagger' in settings.INSTALLED_APPS:
