@@ -1013,7 +1013,6 @@ class SystemLogsViewSet(AbstractViewSet):
 
 
 class TablesSizeViewSet(AbstractViewSet):
-
     @staticmethod
     def dictfetchall(cursor):
         """
