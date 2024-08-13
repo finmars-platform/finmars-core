@@ -1085,14 +1085,15 @@ class PerformanceReportBuilder:
         if date_to > date_from:
             no_first_date = []
             no_register_records = []
-            for portfolio in portfolios:
+            for register in portfolio_registers:
+                portfolio = register.portfolio
                 first_transaction_date = portfolio.first_transaction_date
                 if not first_transaction_date:
                     no_first_date.append(portfolio.user_code)
                     continue
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
-                    portfolio_register__portfolio=portfolio,
+                    portfolio_register=register,
                     transaction_date__lte=date_to,  # 2023-12-29
                     transaction_class__in=[
                         TransactionClass.CASH_INFLOW,
