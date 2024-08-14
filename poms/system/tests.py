@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.utils import is_true_value
 from poms.system.models import WhitelabelModel
 from poms.system.utils import get_image_content
 
@@ -58,15 +59,16 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.addCleanup(self.storage_patch.stop)
         self.image_content = get_image_content("logo_dark.png")
 
-    def create_whitelabel(self):
+    def create_whitelabel(self, is_default=False):
         return WhitelabelModel.objects.create(
-            company_name="Test Company",
+            company_name=self.random_string(),
             theme_code="com.finmars.client-a",
             theme_css_url="https://example.com/theme.css",
             logo_dark_url="https://example.com/logo_dark.png",
             logo_light_url="https://example.com/logo_light.png",
             favicon_url="https://example.com/favicon.png",
             custom_css="body { background-color: #aaa; }",
+            is_default=is_default,
         )
 
     def test__list(self):
@@ -77,7 +79,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0]["id"], model.id)
-        self.assertEqual(response_json[0]["company_name"], "Test Company")
+        self.assertIn("company_name", response_json[0])
         self.assertEqual(response_json[0]["theme_code"], "com.finmars.client-a")
         self.assertEqual(
             response_json[0]["theme_css_url"], "https://example.com/theme.css"
@@ -103,7 +105,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(response_json["id"], model.id)
-        self.assertEqual(response_json["company_name"], "Test Company")
+        self.assertIn("company_name", response_json)
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(
             response_json["theme_css_url"], "https://example.com/theme.css"
@@ -216,3 +218,17 @@ class WhitelabelViewSetTest(BaseTestCase):
         none = WhitelabelModel.objects.filter(id=model.id).first()
 
         self.assertIsNone(none)
+
+    @BaseTestCase.cases(
+        ("true", "true"),
+        ("false", "false"),
+    )
+    def test__is_default_filter(self, value):
+        self.create_whitelabel()
+        self.create_whitelabel(is_default=True)
+
+        response = self.client.get(path=f"{self.url}?is_default={value}")
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0]["is_default"], is_true_value(value))
