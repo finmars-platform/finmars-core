@@ -25,9 +25,16 @@ class EcosystemConfigurationViewSet(AbstractModelViewSet):
     filter_class = SchemeFilterSet
 
 
+class IsDefaultFilterSet(FilterSet):
+    class Meta:
+        model = WhitelabelModel
+        fields = ["is_default"]
+
+
 class WhitelabelViewSet(AbstractModelViewSet):
     queryset = WhitelabelModel.objects
     serializer_class = WhitelabelSerializer
+    filter_class = IsDefaultFilterSet
     pagination_class = None
 
     def get_serializer_context(self, *args, **kwargs):
