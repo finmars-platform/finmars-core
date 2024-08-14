@@ -58,9 +58,6 @@ class WhitelabelModel(models.Model):
     company_name = models.CharField(
         max_length=MAX_NAME_LENGTH,
         verbose_name="Company Name",
-        blank=True,
-        null=True,
-        help_text="Client company name",
     )
     theme_code = models.CharField(
         max_length=MAX_NAME_LENGTH,
@@ -72,25 +69,40 @@ class WhitelabelModel(models.Model):
     theme_css_url = models.URLField(
         max_length=MAX_URL_LENGTH,
         verbose_name="Theme CSS URL",
+        blank=True,
+        null=True,
+        help_text="URI to theme.css file in Storage",
     )
     logo_dark_url = models.URLField(
         max_length=MAX_URL_LENGTH,
         verbose_name="Dark Logo URL",
+        blank=True,
+        null=True,
+        help_text="URI to logo_dark image in Storage",
     )
     logo_light_url = models.URLField(
         max_length=MAX_URL_LENGTH,
         verbose_name="Light Logo URL",
+        blank=True,
+        null=True,
+        help_text="URI to logo_light image in Storage",
     )
     favicon_url = models.URLField(
         max_length=MAX_URL_LENGTH,
         verbose_name="Favicon URL",
         blank=True,
         null=True,
+        help_text="URI to favicon image in Storage",
     )
     custom_css = models.TextField(
         verbose_name="Custom CSS",
         blank=True,
         null=True,
+        help_text="Custom CSS parameters for theme",
+    )
+    is_default = models.BooleanField(
+        verbose_name="Is Default Logo/Schema",
+        default=False,
     )
 
     # Add other potential fields for white-label customization
