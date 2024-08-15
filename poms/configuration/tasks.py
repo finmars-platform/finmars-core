@@ -537,7 +537,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
             task.parent.refresh_from_db()
 
             step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
+            total = len(task.parent.options_object["dependencies"]) + len(task.parent.options_object["actions"])
             percent = int((step / total) * 100)
 
             description = f"Step {step}/{total} is installing {configuration.name}"
@@ -601,7 +601,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
             task.parent.refresh_from_db()
 
             step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
+            total = len(task.parent.options_object["dependencies"]) + len(task.parent.options_object["actions"])
             percent = int((step / total) * 100)
 
             description = f"Step {step}/{total} is installed. {configuration.name}"
@@ -723,8 +723,10 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
         CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
 
         manifest_dependencies = configuration.manifest.get("dependencies", [])
+        manifest_actions = configuration.manifest.get("actions", [])
 
         parent_options_object["dependencies"] = manifest_dependencies
+        parent_options_object["actions"] = manifest_actions
         parent_options_object.pop("access_token", None)
 
         parent_task.options_object = parent_options_object
@@ -764,7 +766,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
         parent_task.update_progress(
             {
                 "current": 0,
-                "total": len(manifest_dependencies),
+                "total": len(manifest_dependencies) + len(manifest_actions),
                 "percent": 0,
                 "description": "Installation started",
             }
@@ -778,13 +780,20 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
             f" child tasks, starting workflow..."
         )
 
-    for celery_task in celery_task_list:
-        install_configuration_from_marketplace(task_id=celery_task.id)
+    for i, celery_task in enumerate(celery_task_list):
+        try:
+            install_configuration_from_marketplace(task_id=celery_task.id)
+        except Exception as e:
+            celery_task_list = celery_task_list[i+1:]
+            for celery_task in celery_task_list:
+                celery_task.status = CeleryTask.STATUS_CANCELED
+            CeleryTask.objects.bulk_update(celery_task_list, ["status"])
+            raise e
 
     parent_task.update_progress(
         {
             "current": len(manifest_dependencies),
-            "total": len(manifest_dependencies),
+            "total": len(manifest_dependencies) + len(manifest_actions),
             "percent": 100,
             "description": "Installation complete",
         }
@@ -801,7 +810,6 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
     except Exception as e:
         _l.error(f"install_package_from_marketplace error: {str(e)}")
 
-    manifest_actions = configuration.manifest.get("actions", [])
     if manifest_actions:
         total = len(manifest_dependencies) + len(manifest_actions)
         step = len(manifest_dependencies)
