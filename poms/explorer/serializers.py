@@ -169,6 +169,7 @@ class UnZipSerializer(serializers.Serializer):
 class SearchResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinmarsFile
+        fields = "__all__"
 
     def to_representation(self, instance: FinmarsFile) -> dict:
         name = instance.name
