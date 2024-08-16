@@ -86,6 +86,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             "logo_light_url",
             "favicon_url",
             "custom_css",
+            "is_default",
             #
             "theme_css_file",
             "logo_dark_image",
