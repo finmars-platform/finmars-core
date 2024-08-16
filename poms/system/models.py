@@ -29,12 +29,12 @@ class EcosystemConfiguration(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter

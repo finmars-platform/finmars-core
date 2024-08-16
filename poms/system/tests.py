@@ -232,3 +232,19 @@ class WhitelabelViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0]["is_default"], is_true_value(value))
+
+    def test__update_is_default_field(self):
+        model = self.create_whitelabel()
+        request_data = {"is_default": True}
+        response = self.client.patch(
+            path=f"{self.url}{model.id}/",
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+
+        response_json = response.json()
+        self.assertTrue(response_json["is_default"])
+
+        model.refresh_from_db()
+        self.assertTrue(model.is_default)
