@@ -290,20 +290,23 @@ def sync_storage_objects(
     """
 
     def sync_files_helper(directory: FinmarsDirectory) -> int:
-        dir_names, file_names = storage.listdir(directory.path)
+        directory_path = directory.path.removesuffix("*")
+
+        dir_names, file_names = storage.listdir(directory_path)
 
         _l.info(
-            f"sync_files: directory.path {directory.path} "
+            f"sync_files: directory_path {directory.path} "
             f"try to sync {len(file_names)} files"
         )
 
         count = len(file_names)
         for file in file_names:
-            sync_file(storage, os.path.join(directory.path, file), directory)
+            sync_file(storage, os.path.join(directory_path, file), directory)
 
         for subdir in dir_names:
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
-                path=os.path.join(directory.path, subdir), parent=directory
+                path=os.path.join(directory_path, subdir),
+                parent=directory
             )
             count += sync_files_helper(sub_directory)
 
