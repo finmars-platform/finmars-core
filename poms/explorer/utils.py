@@ -301,9 +301,15 @@ def sync_storage_objects(
 
         count = len(file_names)
         for file in file_names:
+            if is_system_path(file):
+                continue
+
             sync_file(storage, os.path.join(directory_path, file), directory)
 
         for subdir in dir_names:
+            if is_system_path(subdir):
+                continue
+
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
                 path=os.path.join(directory_path, subdir),
                 parent=directory
