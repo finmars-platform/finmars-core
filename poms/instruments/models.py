@@ -23,6 +23,7 @@ from poms.common.models import (
     DataTimeStampedModel,
     FakeDeletableModel,
     NamedModel,
+    ObjectStateModel,
 )
 from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
@@ -650,7 +651,7 @@ class Country(DataTimeStampedModel):
     )
 
 
-class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
+class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="pricing_policies",
@@ -1361,7 +1362,7 @@ class InstrumentTypePricingPolicy(DataTimeStampedModel):
 
 
 # noinspection PyUnresolvedReferences
-class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3
