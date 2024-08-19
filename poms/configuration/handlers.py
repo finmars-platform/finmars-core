@@ -725,6 +725,30 @@ def export_configuration_to_directory(
             source_directory + "/ui/form-layouts/transaction",
             context,
         )
+        
+        save_serialized_entity_layout(
+            "ui.editlayout",
+            configuration.configuration_code,
+            "portfolios.portfoliotype",
+            source_directory + "/ui/form-layouts/portfolio-type",
+            context,
+        )
+        
+        save_serialized_entity_layout(
+            "ui.editlayout",
+            configuration.configuration_code,
+            "portfolios.portfolioreconcilegroup",
+            source_directory + "/ui/form-layouts/portfolio-reconcile-group",
+            context,
+        )
+        
+        save_serialized_entity_layout(
+            "ui.editlayout",
+            configuration.configuration_code,
+            "portfolios.portfolioreconcilehistory",
+            source_directory + "/ui/form-layouts/portfolio-reconcile-history",
+            context,
+        )
 
         # Aliases
 
