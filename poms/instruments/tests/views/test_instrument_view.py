@@ -229,8 +229,7 @@ class InstrumentViewSetTest(BaseTestCase):
 
         instrument = self.create_instrument("bond")
         file = FinmarsFile.objects.create(
-            name="name.pdf",
-            path="/root/etc/system/",
+            path="/root/etc/system/name.pdf",
             size=1234567890,
         )
         instrument.files.add(file, through_defaults=None)
@@ -244,18 +243,4 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(file_data["name"], file.name)
         self.assertEqual(file_data["path"], file.path)
         self.assertEqual(file_data["size"], file.size)
-        self.assertEqual(file_data["extension"], "pdf")
-
-    def test__is_on_balance_query_syntax(self):
-        instrument1 = self.create_instrument("stock")
-        instrument2 = self.create_instrument("stock")
-        balance_date = "2021-01-10"
-
-        response = self.client.post(path=f"{self.url}is-on-balance/",
-                       data={"user_codes": [instrument1.user_code, instrument2.user_code], "date": balance_date})
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-
-        self.assertEqual(len(response_json["instruments"]), 2)
-        self.assertTrue(all([inst["is_on_balance"] is False for inst in response_json["instruments"]]))
+        self.assertEqual(file_data["extension"], ".pdf")

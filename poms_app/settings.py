@@ -519,7 +519,11 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_RENDERER_CLASSES": ("poms.common.renderers.CustomJSONRenderer",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "poms.common.renderers.CustomJSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.AdminRenderer",
+    ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
     # "DEFAULT_THROTTLE_CLASSES": (
     #     "poms.api.throttling.AnonRateThrottleExt",
@@ -531,10 +535,6 @@ REST_FRAMEWORK = {
     },
 }
 
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] += (
-    "rest_framework.renderers.BrowsableAPIRenderer",
-    "rest_framework.renderers.AdminRenderer",
-)
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 

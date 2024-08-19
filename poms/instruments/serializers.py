@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -890,8 +889,7 @@ class InstrumentTypeSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentTypePricingPolicy.objects.get_or_create(
-                instrument_type=instance,
-                pricing_policy_id=item["pricing_policy_id"],
+                instrument_type=instance, pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -1247,15 +1245,16 @@ class InstrumentSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentPricingPolicy.objects.get_or_create(
-                instrument=instance,
-                pricing_policy_id=item["pricing_policy_id"],
+                instrument=instance, pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
 
         to_delete = InstrumentPricingPolicy.objects.filter(instrument=instance)
         if len(ids):
-            to_delete = to_delete.exclude(id__in=ids)
+            to_delete = to_delete.exclude(
+                id__in=ids
+            )
         to_delete.delete()
 
     @staticmethod
@@ -2201,11 +2200,7 @@ class AttachmentSerializer(serializers.Serializer):
 
         files = []
         for file_path in attrs["attachments"]:
-            directory_path, file_name = os.path.split(file_path)
-            file = FinmarsFile.objects.filter(
-                name=file_name,
-                path=directory_path,
-            ).first()
+            file = FinmarsFile.objects.filter(path=file_path).first()
             if not file:
                 raise ValidationError(f"no such file: {file_path}")
 
