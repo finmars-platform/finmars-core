@@ -1,5 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 expected_response = {
     "count": 1,
@@ -21,7 +23,7 @@ expected_response = {
 }
 
 
-class SearchFileViewSetTest(BaseTestCase):
+class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -63,8 +65,7 @@ class SearchFileViewSetTest(BaseTestCase):
     def test__list_no_query(self):
         size = self.random_int(111, 10000000)
         kwargs = dict(
-            name="name_1.pdf",
-            path="/test/",
+            path="/test/name_1.pdf",
             size=size,
         )
         file = FinmarsFile.objects.create(**kwargs)
@@ -92,8 +93,7 @@ class SearchFileViewSetTest(BaseTestCase):
         amount = self.random_int(5, 10)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root/etc/system/",
+                path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
         response = self.client.get(self.url)
@@ -113,12 +113,15 @@ class SearchFileViewSetTest(BaseTestCase):
         ("path_2", "etc", None),
         ("path_3", "/system/", None),
     )
-    def test__list_with_filters(self, value, count):
-        amount = self.random_int(6, 9)
+    def test__list_with_filters(
+        self,
+        value,
+        count,
+    ):
+        amount = self.random_int(5, 9)
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root/etc/system/",
+                path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
 
@@ -131,6 +134,24 @@ class SearchFileViewSetTest(BaseTestCase):
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
 
+    def test__no_permission(self):
+        user, member = self.create_user_member()
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test__has_root_permission(self):
+        FinmarsDirectory.objects.create(path=ROOT_PATH)
+        user, member = self.create_user_member()
+        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+
     @BaseTestCase.cases(
         ("10", 10),
         ("20", 20),
@@ -139,8 +160,7 @@ class SearchFileViewSetTest(BaseTestCase):
         amount = 33
         for i in range(1, amount + 1):
             FinmarsFile.objects.create(
-                name=f"name_{i}.pdf",
-                path="/root",
+                path=f"root/name_{i}.pdf",
                 size=self.random_int(10, 1000),
             )
         response = self.client.get(path=f"{self.url}?page_size={page_size}&page=1")

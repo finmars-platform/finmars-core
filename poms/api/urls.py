@@ -49,7 +49,7 @@ from poms.auth_tokens.views import (
     RenameMasterUser,
     SetAuthToken,
 )
-from poms.explorer.views import ExplorerServeFileViewSet
+from poms.explorer.views import ExplorerServerFileViewSet
 
 router = routers.DefaultRouter()
 
@@ -386,7 +386,7 @@ urlpatterns = [
     ),
     re_path(
         r"^storage/(?P<filepath>.+)",
-        ExplorerServeFileViewSet.as_view({"get": "retrieve"}),
+        ExplorerServerFileViewSet.as_view({"get": "retrieve"}),
         name="storage",
     ),
     re_path(

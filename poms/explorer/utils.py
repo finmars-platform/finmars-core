@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import FinmarsDirectory, FinmarsFile
 
 _l = logging.getLogger("poms.explorer")
 
@@ -53,6 +53,12 @@ def join_path(space_code: str, path: Optional[str]) -> str:
         return f"{space_code.rstrip('/')}/{path.lstrip('/')}"
     else:
         return f"{space_code.rstrip('/')}"
+
+
+def make_dir_path(path: str) -> str:
+    from poms.explorer.models import DIR_SUFFIX
+
+    return f"{path.rstrip('/')}{DIR_SUFFIX}"
 
 
 def remove_first_dir_from_path(path: str) -> str:
@@ -270,58 +276,68 @@ def unzip_file(
         celery_task.update_progress(progress_dict)
 
 
-def sync_files(storage: FinmarsS3Storage, source_dir: str) -> int:
+def sync_storage_objects(
+    storage: FinmarsS3Storage, start_directory: FinmarsDirectory
+) -> int:
     """
-    Recursively syncs files in a directory and all its subdirectories with database file
-    objects.
+    Recursively syncs files/directories in the root directory and
+    all its subdirectories with database file/directory objects.
     Args:
         storage: The storage instance to use.
-        source_dir: The path of the source directory.
+        start_directory: The directory from which to start syncing.
     Returns:
-        The total number of files in the directory and all its subdirectories.
+        The total number of files in the start directory and all its subdirectories.
     """
 
-    def sync_files_helper(dir_path: str) -> int:
-        dirs, files = storage.listdir(dir_path)
-        _l.info(f"sync_files: dir_path {dir_path} try to sync {len(files)} files")
-        count = len(files)
-        for file in files:
+    def sync_files_helper(directory: FinmarsDirectory) -> int:
+        directory_path = directory.path.removesuffix("*")
+
+        dir_names, file_names = storage.listdir(directory_path)
+
+        _l.info(
+            f"sync_files: directory_path {directory.path} "
+            f"try to sync {len(file_names)} files"
+        )
+
+        count = len(file_names)
+        for file in file_names:
             if is_system_path(file):
                 continue
-            sync_file_in_database(storage, os.path.join(dir_path, file))
 
-        for subdir in dirs:
+            sync_file(storage, os.path.join(directory_path, file), directory)
+
+        for subdir in dir_names:
             if is_system_path(subdir):
                 continue
-            count += sync_files_helper(os.path.join(dir_path, subdir))
+
+            sub_directory, created = FinmarsDirectory.objects.get_or_create(
+                path=os.path.join(directory_path, subdir),
+                parent=directory
+            )
+            count += sync_files_helper(sub_directory)
 
         return count
 
-    start_dir = str(source_dir)  # to avoid source_dir modification
-    _l.info(f"sync_files: from directory {start_dir}")
-    return sync_files_helper(start_dir)
+    return sync_files_helper(start_directory)
 
 
-def sync_file_in_database(storage: FinmarsS3Storage, filepath: str):
+def sync_file(
+    storage: FinmarsS3Storage,
+    filepath: str,
+    directory: FinmarsDirectory,
+):
     """
-    Creates or updates file model in database for the given file path
+    Creates or updates file model in database for the given file path in the storage
     Args:
         storage: The storage instance to use
         filepath: path to the file in storage
+        directory: directory to which the file belongs
     """
-    _l.info(f"sync_file_in_database: sync filepath {filepath}")
-    path, name = os.path.split(filepath)
-    size = storage.size(filepath)
-
-    _, created = FinmarsFile.objects.update_or_create(
-        name=name,
-        path=path,
-        defaults=dict(size=size),
-    )
-
-    _l.info(
-        f"sync_file_in_database: {'created' if created else 'updated'} "
-        f"for {filepath} with size {size}"
+    _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
+    FinmarsFile.objects.update_or_create(
+        path=filepath,
+        parent=directory,
+        defaults=dict(size=storage.size(filepath)),
     )
 
 
