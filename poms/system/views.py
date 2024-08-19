@@ -43,6 +43,7 @@ class WhitelabelViewSet(AbstractModelViewSet):
             {
                 "realm_code": self.request.realm_code,
                 "space_code": self.request.space_code,
+                "host_url": self.request.get_host().split(":")[0],
             }
         )
         return context

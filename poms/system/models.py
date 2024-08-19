@@ -112,3 +112,9 @@ class WhitelabelModel(models.Model):
 
     def __str__(self):
         return f"Whitelabel settings for {self.company_name}"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            WhitelabelModel.objects.exclude(id=self.id).update(is_default=False)
+
+        super().save(*args, **kwargs)

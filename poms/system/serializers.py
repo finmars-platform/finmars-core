@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.core.files.images import get_image_dimensions
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
@@ -18,7 +17,7 @@ FAVICON_IMAGE_PATH = f"{STORAGE_ROOT}favicon.png"
 MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
 
-COMMON_PREFIX = f"{settings.HOST_URL}/{{realm_code}}/{{space_code}}/api/storage/"
+COMMON_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/"
 
 
 class EcosystemConfigurationSerializer(serializers.ModelSerializer):
@@ -110,6 +109,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
               that takes in a file path and a file object.
         """
         prefix = COMMON_PREFIX.format(
+            host_url=self.context["host_url"],
             realm_code=self.context["realm_code"],
             space_code=self.context["space_code"],
         )
