@@ -156,8 +156,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
@@ -179,8 +179,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
 
         # should be old value
@@ -203,8 +203,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
