@@ -29,12 +29,12 @@ class EcosystemConfiguration(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -112,3 +112,9 @@ class WhitelabelModel(models.Model):
 
     def __str__(self):
         return f"Whitelabel settings for {self.company_name}"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            WhitelabelModel.objects.exclude(id=self.id).update(is_default=False)
+
+        super().save(*args, **kwargs)

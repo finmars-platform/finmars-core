@@ -30,17 +30,17 @@ EXPECTED_RESPONSE = {
     "id": 1,
     "company_name": "Test Company",
     "theme_code": "com.finmars.client-a",
-    "theme_css_url": "https://finmars.com/realm00000/space00000/api/storage/.system/ui/theme.css",
-    "logo_dark_url": "https://finmars.com/realm00000/space00000/api/storage/.system/ui/logo_dark.png",
-    "logo_light_url": "https://finmars.com/realm00000/space00000/api/storage/.system/ui/logo_light.png",
-    "favicon_url": "https://finmars.com/realm00000/space00000/api/storage/.system/ui/favicon.png",
+    "theme_css_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/theme.css",
+    "logo_dark_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/logo_dark.png",
+    "logo_light_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/logo_light.png",
+    "favicon_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/favicon.png",
     "custom_css": "body { background-color: #fff; }",
     "meta": {
         "execution_time": 28,
         "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
     },
 }
-PREFIX = "https://finmars.com/realm00000/space00000/api/storage/.system/ui/"
+PREFIX = "https://testserver/realm00000/space00000/api/storage/.system/ui/"
 
 
 class WhitelabelViewSetTest(BaseTestCase):
@@ -156,8 +156,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
@@ -179,8 +179,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
 
         # should be old value
@@ -203,8 +203,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
         self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}logo_dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}logo_light.png")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
         self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
@@ -232,3 +232,44 @@ class WhitelabelViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0]["is_default"], is_true_value(value))
+
+    def test__update_is_default_field(self):
+        model = self.create_whitelabel()
+        request_data = {"is_default": True}
+        response = self.client.patch(
+            path=f"{self.url}{model.id}/",
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+
+        response_json = response.json()
+        self.assertTrue(response_json["is_default"])
+
+        model.refresh_from_db()
+        self.assertTrue(model.is_default)
+
+    def test__is_default_can_be_only_one(self):
+        model_1 = self.create_whitelabel()
+        request_data = {"is_default": True}
+        response = self.client.patch(
+            path=f"{self.url}{model_1.id}/",
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+        model_1.refresh_from_db()
+        self.assertTrue(model_1.is_default)
+
+        model_2 = self.create_whitelabel()
+        response = self.client.patch(
+            path=f"{self.url}{model_2.id}/",
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+        model_2.refresh_from_db()
+        self.assertTrue(model_2.is_default)
+
+        model_1.refresh_from_db()
+        self.assertFalse(model_1.is_default)

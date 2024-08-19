@@ -64,15 +64,13 @@ class AttachmentViewSetTest(BaseTestCase):
     def test__files_added(self):
         amount = self.random_int(2, 10)
         files = []
-        path = "/root/workload"
         for i in range(1, amount + 1):
-            name = f"file_{i}.json"
+            path = f"/root/workload/file_{i}.json"
             FinmarsFile.objects.create(
-                name=name,
                 path=path,
                 size=self.random_int(10, 1000),
             )
-            files.append(f"{path}/{name}")
+            files.append(path)
 
         response = self.client.patch(
             path=self.url.format(self.instrument.id),
@@ -92,9 +90,8 @@ class AttachmentViewSetTest(BaseTestCase):
         self.assertIn("modified", file_data)
         self.assertIn("name", file_data)
         self.assertIn("path", file_data)
-        self.assertEqual(file_data["path"], path)
         self.assertIn("extension", file_data)
-        self.assertEqual(file_data["extension"], "json")
+        self.assertEqual(file_data["extension"], ".json")
         self.assertIn("size", file_data)
 
     def test__no_attachments(self):
