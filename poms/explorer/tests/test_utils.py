@@ -190,7 +190,7 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
         self.assertEqual(FinmarsFile.objects.count(), 1)
         file = FinmarsFile.objects.first()
-        self.assertEqual(file.path, "sapce0000/d1/d2/file.txt")
+        self.assertEqual(file.path, "space0000/d1/d2/file.txt")
         self.assertEqual(file.size, size)
 
         self.assertEqual(FinmarsDirectory.objects.count(), 3)  # root + d1 + d2
@@ -214,7 +214,7 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         directory = FinmarsDirectory.objects.last()
         self.assertEqual(directory.path, "space0000/*")
         self.assertEqual(directory.size, 0)
-        self.assertIsNone(directory.parent.path)
+        self.assertIsNone(directory.parent)
 
         self.assertEqual(file.parent, directory)
 
