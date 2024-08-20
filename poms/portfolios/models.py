@@ -12,6 +12,8 @@ from poms.common.models import (
     DataTimeStampedModel,
     FakeDeletableModel,
     NamedModel,
+    ComputedModel,
+    ObjectStateModel,
 )
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
@@ -132,7 +134,7 @@ class PortfolioType(
 
 
 # noinspection PyUnresolvedReferences
-class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
     """
     Portfolio Entity - Way of grouping transactions in user-defined way.
     """
@@ -327,7 +329,7 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         ]
 
 
-class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
     """
     Portfolio Register
 
@@ -415,7 +417,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         )
 
 
-class PortfolioRegisterRecord(DataTimeStampedModel):
+class PortfolioRegisterRecord(DataTimeStampedModel, ComputedModel):
     """
     Portfolio Register RECORD
 
@@ -574,7 +576,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         )
 
 
-class PortfolioBundle(NamedModel, DataTimeStampedModel):
+class PortfolioBundle(NamedModel, DataTimeStampedModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_bundles",
@@ -595,7 +597,7 @@ class PortfolioBundle(NamedModel, DataTimeStampedModel):
         index_together = [["master_user", "user_code"]]
 
 
-class PortfolioHistory(NamedModel, DataTimeStampedModel):
+class PortfolioHistory(NamedModel, DataTimeStampedModel, ComputedModel):
     PERIOD_DAILY = "daily"
     PERIOD_YTD = "ytd"
     PERIOD_MTD = "mtd"
@@ -1004,7 +1006,7 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedMod
         index_together = [["master_user", "user_code"]]
 
 
-class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel):
+class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel, ComputedModel):
     STATUS_OK = "ok"
     STATUS_ERROR = "error"
 

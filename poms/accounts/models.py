@@ -7,6 +7,7 @@ from poms.common.models import (
     DataTimeStampedModel,
     FakeDeletableModel,
     NamedModel,
+    ObjectStateModel,
 )
 from poms.configuration.models import ConfigurationModel
 from poms.obj_attrs.models import GenericAttribute
@@ -105,7 +106,7 @@ class AccountType(
         ]
 
 
-class Account(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class Account(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
     """
     One of core entities - Account
     Could stand for anything that could hold money in real world e.g. Bank Accounts,

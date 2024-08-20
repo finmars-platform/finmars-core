@@ -174,3 +174,16 @@ class RealmMigrateSchemeSerializer(serializers.Serializer):
 
     realm_code = serializers.CharField(required=True)
     space_code = serializers.CharField(required=True)
+
+
+class ObjectStateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = [
+            "is_active",
+            "actual_at",
+            "source_type",
+            "source_origin",
+            "external_id",
+            "is_manual_locked",
+            "is_locked"
+        ]

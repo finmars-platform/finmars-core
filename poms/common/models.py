@@ -177,6 +177,11 @@ class FakeDeletableModel(models.Model):
         verbose_name=gettext_lazy("is deleted"),
         help_text="Mark object as deleted. Does not actually delete the object.",
     )
+    deleted_at = models.DateTimeField(
+        null=True,
+        editable=False,
+        verbose_name=gettext_lazy("deleted at"),
+    )
     deleted_user_code = models.CharField(
         max_length=255,
         null=True,
@@ -308,6 +313,51 @@ class FakeDeletableModel(models.Model):
         )
 
         self.save(update_fields=fields_to_update)
+
+
+class ComputedModel(models.Model):
+    is_computed = models.BooleanField(
+        default=True,
+    )
+    computed_at = models.DateTimeField(
+        editable=False,
+        auto_now=True,
+        verbose_name=gettext_lazy("computed at"),
+    )
+
+    class Meta:
+        abstract = True
+
+
+class ObjectStateModel(models.Model):
+    is_active = models.BooleanField(
+        default=True,
+    )
+    actual_at = models.DateTimeField(
+        null=True,
+        help_text="Show the Date that object is truth for, e.g. price created_at is 2024-07-10 but actually this price is 2024-01-01"
+    )
+    source_type = models.CharField(
+        default="manual",
+    )
+    source_origin = models.CharField(
+        default="manual",
+    )
+    external_id = models.CharField(
+        null=True,
+        help_text="how object is referenced in external system"
+    )
+    is_manual_locked = models.BooleanField(
+        default=False,
+        help_text="just a flag to disable form on frontend"
+    )
+    is_locked = models.BooleanField(
+        default=True,
+        help_text="blocked to any change (only from finmars frontend change is allowed)"
+    )
+
+    class Meta:
+        abstract = True
 
 
 # These models need to create custom context, that could be passed to serializers
