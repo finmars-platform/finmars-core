@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 
-from poms.explorer.models import FinmarsDirectory, ROOT_PATH
+from poms.explorer.models import FinmarsDirectory, get_root_path
 
 
 class FinmarsDirectoryTest(BaseTestCase):
@@ -39,7 +39,7 @@ class FinmarsDirectoryTest(BaseTestCase):
             FinmarsDirectory.objects.create(**kwargs)
 
     def test__directory_tree(self):
-        kwargs = dict(path=ROOT_PATH)
+        kwargs = dict(path=get_root_path())
         root = FinmarsDirectory.objects.create(**kwargs)
 
         kwargs = dict(path="/path_1/*")
