@@ -4,7 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory
+from poms.explorer.models import get_root_path, AccessLevel, FinmarsDirectory
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -27,17 +27,15 @@ class ExplorerUploadViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
     @staticmethod
     def create_text_file(name: str = "test.txt"):
-        file = SimpleUploadedFile(name, b"This is a test file")
-        return file
+        return SimpleUploadedFile(name, b"This is a test file")
 
     @staticmethod
     def create_json_file(name: str = "test.json"):
-        file = SimpleUploadedFile(
+        return SimpleUploadedFile(
             name,
             b'{"on_create": {"expression_procedure": []}}',
             content_type="application/json",
         )
-        return file
 
     def test__no_path_no_files(self):
         response = self.client.post(self.url)
@@ -92,8 +90,9 @@ class ExplorerUploadViewSetTest(CreateUserMemberMixin, BaseTestCase):
         self.storage_mock.open.return_value = self.create_json_file()
         user, member = self.create_user_member()
 
-        root = FinmarsDirectory.objects.create(path=ROOT_PATH)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.WRITE)
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         dir_name = f"{self.random_string()}/*"
         FinmarsDirectory.objects.create(path=dir_name, parent=root)

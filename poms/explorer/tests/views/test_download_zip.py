@@ -3,7 +3,7 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import get_root_path, AccessLevel, FinmarsDirectory, FinmarsFile
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -64,8 +64,9 @@ class ExplorerViewFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         user, member = self.create_user_member()
 
-        root = FinmarsDirectory.objects.create(path=ROOT_PATH)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
 
         path = f"{self.random_string()}.txt"
         FinmarsFile.objects.create(path=path, size=777, parent=root)

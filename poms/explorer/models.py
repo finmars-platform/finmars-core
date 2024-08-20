@@ -7,16 +7,19 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
+from poms.explorer.utils import get_current_space_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
-
 
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
 DIR_SUFFIX = "/*"
-ROOT_PATH = DIR_SUFFIX
+
+
+def get_root_path():
+    return f"{get_current_space_code()}{DIR_SUFFIX}"
 
 
 class AccessLevel:

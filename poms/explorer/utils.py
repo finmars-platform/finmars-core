@@ -351,7 +351,7 @@ def split_path(path: str) -> list[str]:
     Splits a given path string into a list of directory names,
     excluding the last element (the file name).
     Args:
-        path (str): The path string to be split.
+        path (str): The path string to be split, should not start with '/'
     Returns:
         list[str]: A list of directory names, excluding the last element (the file name).
 
@@ -359,7 +359,6 @@ def split_path(path: str) -> list[str]:
         split_path("/path/to/file.txt")
         ['path', 'path/to']
     """
-    path = path.removesuffix("/")
     dir_list = list(Path(path).parts)[:-1]
     return ["/".join(dir_list[: i + 1]) for i in range(len(dir_list))]
 
