@@ -1,11 +1,10 @@
 import contextlib
-from unittest import skip
 
 from django.core.files.base import ContentFile
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsLocalFileSystemStorage
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, FinmarsFile
 
 
 class StorageFileObjMixinTest(BaseTestCase):
@@ -17,7 +16,7 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.storage = FinmarsLocalFileSystemStorage()
         self.name = "temp_file.txt"
         self.parent = "test"
-        self.full_path = f"{self.parent}/{self.name}"
+        self.full_path = f"space00000/{self.parent}/{self.name}"
         self.content = "content"
 
     def tearDown(self):
@@ -29,7 +28,6 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.storage.save(self.full_path, ContentFile(self.content, self.full_path))
         self.assertTrue(self.storage.exists(self.full_path))
 
-    @skip("till fix the storage.save()")
     def test__save_create(self):
         self.create_file()
 
@@ -38,6 +36,11 @@ class StorageFileObjMixinTest(BaseTestCase):
         self.assertEqual(file.path, self.full_path)
         self.assertEqual(file.name, self.name)
         self.assertEqual(file.size, len(self.content))
+
+        directory = FinmarsDirectory.objects.filter(
+            path=f"space00000/{self.parent}{DIR_SUFFIX}"
+        ).first()
+        self.assertEqual(file.parent, directory)
 
     def test__delete(self):
         self.create_file()

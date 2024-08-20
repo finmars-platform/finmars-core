@@ -3,7 +3,8 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import get_root_path, AccessLevel, FinmarsDirectory
+from poms.explorer.models import DIR_SUFFIX, get_root_path, AccessLevel, \
+    FinmarsDirectory
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -90,7 +91,7 @@ class ExplorerViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def test__no_permission(self):
         user, member = self.create_user_member()
         self.client.force_authenticate(user=user)
-        dir_name = f"{self.random_string()}/*"
+        dir_name = f"{self.random_string()}{DIR_SUFFIX}"
 
         response = self.client.get(self.url, {"path": dir_name})
 
@@ -104,7 +105,7 @@ class ExplorerViewSetTest(CreateUserMemberMixin, BaseTestCase):
         root = FinmarsDirectory.objects.create(path=root_path)
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
 
-        dir_name = f"{self.random_string()}/*"
+        dir_name = f"{self.random_string()}{DIR_SUFFIX}"
         FinmarsDirectory.objects.create(path=dir_name, parent=root)
 
         self.client.force_authenticate(user=user)

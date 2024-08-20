@@ -11,7 +11,7 @@ from poms.explorer.utils import (
     move_dir,
     update_or_create_file_and_parents,
 )
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -178,9 +178,9 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
         self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space00000/d1/*")
+        self.assertEqual(directory.path, f"space00000/d1{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space00000/*")
+        self.assertEqual(directory.parent.path, f"space00000{DIR_SUFFIX}")
 
         self.assertEqual(file.parent, directory)
 
@@ -195,9 +195,9 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
         self.assertEqual(FinmarsDirectory.objects.count(), 3)  # root + d1 + d2
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space00000/d1/d2/*")
+        self.assertEqual(directory.path, f"space00000/d1/d2{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space00000/d1/*")
+        self.assertEqual(directory.parent.path, f"space00000/d1{DIR_SUFFIX}")
 
         self.assertEqual(file.parent, directory)
 
@@ -212,7 +212,7 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
         self.assertEqual(FinmarsDirectory.objects.count(), 1)  # root
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space00000/*")
+        self.assertEqual(directory.path, f"space00000{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
         self.assertIsNone(directory.parent)
 
@@ -233,8 +233,8 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
         self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space00000/d1/*")
+        self.assertEqual(directory.path, f"space00000/d1{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space00000/*")
+        self.assertEqual(directory.parent.path, f"space00000{DIR_SUFFIX}")
 
         self.assertEqual(file.parent, directory)
