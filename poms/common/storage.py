@@ -319,11 +319,6 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     Mixin adds FinmarsFile object support to the FinmarsStorage class.
     """
 
-    @staticmethod
-    def split_path(path: str) -> Tuple[str, str]:
-        path_obj = Path(path)
-        return str(path_obj.parent), path_obj.name
-
     def save(self, path: str, content: Any, **kwargs) -> str:
         from poms.explorer.models import FinmarsFile
 

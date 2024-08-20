@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import zipfile
 from typing import Optional
 
@@ -9,7 +10,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.models import FinmarsDirectory, FinmarsFile, DIR_SUFFIX
 
 _l = logging.getLogger("poms.explorer")
 
@@ -210,7 +211,7 @@ def count_files(storage: FinmarsS3Storage, source_dir: str) -> int:
             count += count_files_helper(os.path.join(dir_path, subdir))
         return count
 
-    start_dir = str(source_dir)
+    start_dir = source_dir
     _l.info(f"count_files: from directory {start_dir}")
     return count_files_helper(start_dir)
 
@@ -311,8 +312,7 @@ def sync_storage_objects(
                 continue
 
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
-                path=os.path.join(directory_path, subdir),
-                parent=directory
+                path=os.path.join(directory_path, subdir), parent=directory
             )
             count += sync_files_helper(sub_directory)
 
@@ -344,3 +344,53 @@ def sync_file(
 def delete_all_file_objects():
     FinmarsFile.objects.all().delete()
     _l.warning("deleted all file objects from database!")
+
+
+def split_path(path: str) -> list[str]:
+    """
+    Splits a given path string into a list of directory names,
+    excluding the last element (the file name).
+    Args:
+        path (str): The path string to be split.
+    Returns:
+        list[str]: A list of directory names, excluding the last element (the file name).
+
+    Example:
+        split_path("/path/to/file.txt")
+        ['path', 'path/to']
+    """
+    path = path.removesuffix("/")
+    dir_list = list(Path(path).parts)[:-1]
+    return ["/".join(dir_list[: i + 1]) for i in range(len(dir_list))]
+
+
+def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
+    """
+    Creates or updates a file model and all its parent directories in the database
+    Args:
+        space (str): The space in which the file is located
+        path (str): The path to the file in the storage
+        size (int): The size of the file in bytes
+
+    Returns:
+        str: The path of the newly created or updated file model
+    """
+    path = path.removeprefix("/")
+    if not path:
+        raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
+
+    parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{space}{DIR_SUFFIX}")
+
+    for dir_path in split_path(path):
+        dir_obj, _ = FinmarsDirectory.objects.update_or_create(
+            path=f"{space}/{dir_path}{DIR_SUFFIX}",
+            defaults={"parent": parent},
+        )
+        parent = dir_obj
+
+    file, _ = FinmarsFile.objects.update_or_create(
+        path=f"{space}/{path}",
+        defaults={"size": size, "parent": parent},
+    )
+
+    return file.path

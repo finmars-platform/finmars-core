@@ -42,16 +42,16 @@ class FinmarsDirectoryTest(BaseTestCase):
         kwargs = dict(path=ROOT_PATH)
         root = FinmarsDirectory.objects.create(**kwargs)
 
-        kwargs = dict(path=f"/path_1/*")
+        kwargs = dict(path="/path_1/*")
         dir_1 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
-        kwargs = dict(path=f"/path_2/*")
+        kwargs = dict(path="/path_2/*")
         dir_2 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
-        kwargs = dict(path=f"/path_1/path_3/*")
+        kwargs = dict(path="/path_1/path_3/*")
         dir_3 = FinmarsDirectory.objects.create(parent=dir_1, **kwargs)
 
-        kwargs = dict(path=f"/path_4/*")
+        kwargs = dict(path="/path_4/*")
         dir_4 = FinmarsDirectory.objects.create(parent=root, **kwargs)
 
         self.assertEqual(dir_1.get_root(), root)
