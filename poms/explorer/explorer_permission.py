@@ -1,8 +1,9 @@
 import logging
 from typing import Optional
+
 from rest_framework.exceptions import PermissionDenied
 
-from poms.explorer.models import DIR_SUFFIX, get_root_path, AccessLevel
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, get_root_path
 from poms.explorer.policy_handlers import member_has_access_to_path
 from poms.explorer.utils import is_true_value
 from poms.iam.access_policy import AccessPolicy
@@ -158,13 +159,10 @@ class ExplorerMovePermission(ExplorerRootAccessPermission):
         ):
             return False
 
-        for path in from_paths:
-            if not member_has_access_to_path(
-                path, request.user.member, AccessLevel.READ
-            ):
-                return False
-
-        return True
+        return all(
+            member_has_access_to_path(path, request.user.member, AccessLevel.READ)
+            for path in from_paths
+        )
 
 
 class ExplorerUnZipPermission(ExplorerRootAccessPermission):
@@ -185,9 +183,6 @@ class ExplorerUnZipPermission(ExplorerRootAccessPermission):
         ):
             return False
 
-        if not member_has_access_to_path(
-            file_path, request.user.member, AccessLevel.READ
-        ):
-            return False
-
-        return True
+        return bool(
+            member_has_access_to_path(file_path, request.user.member, AccessLevel.READ)
+        )

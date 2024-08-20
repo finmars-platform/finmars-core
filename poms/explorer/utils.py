@@ -1,8 +1,8 @@
 import json
 import logging
 import os
-from pathlib import Path
 import zipfile
+from pathlib import Path
 from typing import Optional
 
 from django.core.files.base import ContentFile
@@ -10,7 +10,6 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsDirectory, FinmarsFile, DIR_SUFFIX
 
 _l = logging.getLogger("poms.explorer")
 
@@ -277,9 +276,7 @@ def unzip_file(
         celery_task.update_progress(progress_dict)
 
 
-def sync_storage_objects(
-    storage: FinmarsS3Storage, start_directory: FinmarsDirectory
-) -> int:
+def sync_storage_objects(storage: FinmarsS3Storage, start_directory) -> int:
     """
     Recursively syncs files/directories in the root directory and
     all its subdirectories with database file/directory objects.
@@ -290,7 +287,9 @@ def sync_storage_objects(
         The total number of files in the start directory and all its subdirectories.
     """
 
-    def sync_files_helper(directory: FinmarsDirectory) -> int:
+    def sync_files_helper(directory) -> int:
+        from poms.explorer.models import FinmarsDirectory
+
         directory_path = directory.path.removesuffix("*")
 
         dir_names, file_names = storage.listdir(directory_path)
@@ -305,7 +304,7 @@ def sync_storage_objects(
             if is_system_path(file):
                 continue
 
-            sync_file(storage, os.path.join(directory_path, file), directory)
+            sync_file(storage, str(os.path.join(directory_path, file)), directory)
 
         for subdir in dir_names:
             if is_system_path(subdir):
@@ -324,7 +323,7 @@ def sync_storage_objects(
 def sync_file(
     storage: FinmarsS3Storage,
     filepath: str,
-    directory: FinmarsDirectory,
+    directory,
 ):
     """
     Creates or updates file model in database for the given file path in the storage
@@ -333,6 +332,8 @@ def sync_file(
         filepath: path to the file in storage
         directory: directory to which the file belongs
     """
+    from poms.explorer.models import FinmarsFile
+
     _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
     FinmarsFile.objects.update_or_create(
         path=filepath,
@@ -342,6 +343,8 @@ def sync_file(
 
 
 def delete_all_file_objects():
+    from poms.explorer.models import FinmarsFile
+
     FinmarsFile.objects.all().delete()
     _l.warning("deleted all file objects from database!")
 
@@ -379,13 +382,20 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     Returns:
         str: The path of the newly created or updated file model
     """
+    from poms.explorer.models import (
+        DIR_SUFFIX,
+        FinmarsDirectory,
+        FinmarsFile,
+        get_root_path,
+    )
+
     path = path.removeprefix("/")
     if not path:
         raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
 
     space = get_current_space_code()
 
-    parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{space}{DIR_SUFFIX}")
+    parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{get_root_path()}")
 
     for dir_path in split_path(path):
         dir_obj, _ = FinmarsDirectory.objects.update_or_create(

@@ -25,9 +25,9 @@ from poms.explorer.explorer_permission import (
     ExplorerReadFilePathPermission,
     ExplorerRootAccessPermission,
     ExplorerRootWritePermission,
+    ExplorerUnZipPermission,
     ExplorerWriteDirectoryPathPermission,
     ExplorerZipPathsReadPermission,
-    ExplorerUnZipPermission,
 )
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
@@ -333,7 +333,7 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
                 tmpf.write(b"init")
                 tmpf.flush()
 
-            with open(tmpf.name, 'rb') as tmpf_read:
+            with open(tmpf.name, "rb") as tmpf_read:
                 storage.save(path, ContentFile(tmpf_read.read()))
 
         except Exception as e:
