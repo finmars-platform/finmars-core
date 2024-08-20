@@ -266,6 +266,66 @@ class BackendReportHelperService:
                     "instrument.country.short_name"
                 ]
 
+            if item["item_type"] == 3:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "FX Variations"
+
+                if "currency.country.name" in flattened_item:
+                    flattened_item["instrument.country.name"] = 'FX Variations'
+                    flattened_item["instrument.country.user_code"] = 'FX Variations'
+                    flattened_item["instrument.country.short_name"] = 'FX Variations'
+
+                flattened_item['instrument.instrument_type.name'] = 'FX Variations'
+                flattened_item['instrument.instrument_type.user_code'] = 'FX Variations'
+                flattened_item['instrument.instrument_type.short_name'] = 'FX Variations'
+
+            if item["item_type"] == 4:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "FX Trades"
+
+                if "currency.country.name" in flattened_item:
+                    flattened_item["instrument.country.name"] = 'FX Trades'
+                    flattened_item["instrument.country.user_code"] = 'FX Trades'
+                    flattened_item["instrument.country.short_name"] = 'FX Trades'
+
+                flattened_item['instrument.instrument_type.name'] = 'FX Trades'
+                flattened_item['instrument.instrument_type.user_code'] = 'FX Trades'
+                flattened_item['instrument.instrument_type.short_name'] = 'FX Trades'
+
+            if item["item_type"] == 5:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "Other"
+
+                if "currency.country.name" in flattened_item:
+                    flattened_item["instrument.country.name"] = 'Other'
+                    flattened_item["instrument.country.user_code"] = 'Other'
+                    flattened_item["instrument.country.short_name"] = 'Other'
+
+                flattened_item['instrument.instrument_type.name'] = 'Other'
+                flattened_item['instrument.instrument_type.user_code'] = 'Other'
+                flattened_item['instrument.instrument_type.short_name'] = 'Other'
+
+            if item["item_type"] == 6:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "Mismatch"
+
+                if "currency.country.name" in flattened_item:
+                    flattened_item["instrument.country.name"] = 'Mismatch'
+                    flattened_item["instrument.country.user_code"] = 'Mismatch'
+                    flattened_item["instrument.country.short_name"] = 'Mismatch'
+
+                flattened_item['instrument.instrument_type.name'] = 'Mismatch'
+                flattened_item['instrument.instrument_type.user_code'] = 'Mismatch'
+                flattened_item['instrument.instrument_type.short_name'] = 'Mismatch'
+
         return flattened_item
 
     def convert_report_items_to_full_items(self, data):
