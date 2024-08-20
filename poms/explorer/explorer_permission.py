@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from rest_framework.exceptions import PermissionDenied
 
-from poms.explorer.models import DIR_SUFFIX, ROOT_PATH, AccessLevel
+from poms.explorer.models import DIR_SUFFIX, get_root_path, AccessLevel
 from poms.explorer.policy_handlers import member_has_access_to_path
 from poms.explorer.utils import is_true_value
 from poms.iam.access_policy import AccessPolicy
@@ -39,7 +39,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
             return False
 
         return member_has_access_to_path(
-            ROOT_PATH, request.user.member, AccessLevel.READ
+            get_root_path(), request.user.member, AccessLevel.READ
         )
 
 
@@ -78,7 +78,7 @@ class ExplorerWriteDirectoryPathPermission(ExplorerRootAccessPermission):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
-        path = request.data.get("path", ROOT_PATH)
+        path = request.data.get("path", get_root_path())
         if not path.endswith(DIR_SUFFIX):
             path = f"{path.rstrip('/')}{DIR_SUFFIX}"
 
@@ -112,7 +112,7 @@ class ExplorerRootWritePermission(ExplorerRootAccessPermission):
             return True
 
         return member_has_access_to_path(
-            ROOT_PATH, request.user.member, AccessLevel.WRITE
+            get_root_path(), request.user.member, AccessLevel.WRITE
         )
 
 
