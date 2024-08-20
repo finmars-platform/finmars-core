@@ -4,8 +4,8 @@ from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, Finm
 expected_response = {
     "id": 2,
     "configuration_code": "local.poms.space00000",
-    "created": "2024-07-15T19:12:50.769611Z",
-    "modified": "2024-07-15T19:12:50.769622Z",
+    "created_at": "2024-07-15T19:12:50.769611Z",
+    "modified_at": "2024-07-15T19:12:50.769622Z",
     "name": "file:/test/next/test.pdf",
     "user_code": "local.poms.space00000:finmars:explorer:/test/next/test.pdf",
     "description": "file:/test/next/test.pdf : read access policy",
@@ -49,7 +49,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         ("read", AccessLevel.READ),
         ("write", AccessLevel.WRITE),
     )
-    def test__file_access_policy_created(self, access):
+    def test__file_access_policy_created_at(self, access):
         data = {
             "path": self.filepath,
             "access": access,
@@ -80,7 +80,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         ("read", AccessLevel.READ),
         ("write", AccessLevel.WRITE),
     )
-    def test__directory_access_policy_created(self, access):
+    def test__directory_access_policy_created_at(self, access):
         data = {
             "path": self.dirpath,
             "access": access,

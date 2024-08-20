@@ -31,7 +31,7 @@ class CeleryTaskFilterSet(FilterSet):
     statuses = CharFilter(field_name='status', method='filter_status__in')
     type = CharFilter()
     types = CharFilter(field_name='type', method='filter_type__in')
-    created = CharFilter()
+    created_at = CharFilter()
 
     class Meta:
         model = CeleryTask

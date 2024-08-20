@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import (
     AbstractClassModel,
-    DataTimeStampedModel,
+    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
     ComputedModel,
@@ -56,7 +56,7 @@ class PortfolioClass(AbstractClassModel):
 
 
 class PortfolioType(
-    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
 ):
     """
     Meta Entity, part of Finmars Configuration
@@ -134,7 +134,7 @@ class PortfolioType(
 
 
 # noinspection PyUnresolvedReferences
-class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     Portfolio Entity - Way of grouping transactions in user-defined way.
     """
@@ -329,7 +329,7 @@ class Portfolio(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStat
         ]
 
 
-class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     Portfolio Register
 
@@ -417,7 +417,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel, Ob
         )
 
 
-class PortfolioRegisterRecord(DataTimeStampedModel, ComputedModel):
+class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
     """
     Portfolio Register RECORD
 
@@ -576,7 +576,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel, ComputedModel):
         )
 
 
-class PortfolioBundle(NamedModel, DataTimeStampedModel, ObjectStateModel):
+class PortfolioBundle(NamedModel, TimeStampedModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_bundles",
@@ -597,7 +597,7 @@ class PortfolioBundle(NamedModel, DataTimeStampedModel, ObjectStateModel):
         index_together = [["master_user", "user_code"]]
 
 
-class PortfolioHistory(NamedModel, DataTimeStampedModel, ComputedModel):
+class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
     PERIOD_DAILY = "daily"
     PERIOD_YTD = "ytd"
     PERIOD_MTD = "mtd"
@@ -985,7 +985,7 @@ class PortfolioHistory(NamedModel, DataTimeStampedModel, ComputedModel):
         self.save()
 
 
-class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_reconcile_groups",
@@ -1006,7 +1006,7 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, DataTimeStampedMod
         index_together = [["master_user", "user_code"]]
 
 
-class PortfolioReconcileHistory(NamedModel, DataTimeStampedModel, ComputedModel):
+class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
     STATUS_OK = "ok"
     STATUS_ERROR = "error"
 

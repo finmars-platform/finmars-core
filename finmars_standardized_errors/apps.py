@@ -23,8 +23,8 @@ class StandardizedErrorsConfig(AppConfig):
 
         month_ago = timezone.now() - datetime.timedelta(days=30)
 
-        count = ErrorRecord.objects.using(using).filter(created__lt=month_ago).count()
+        count = ErrorRecord.objects.using(using).filter(created_at__lt=month_ago).count()
 
         _l.info(f"Going to delete {count} ErrorRecord")
 
-        ErrorRecord.objects.using(using).filter(created__lt=month_ago).delete()
+        ErrorRecord.objects.using(using).filter(created_at__lt=month_ago).delete()

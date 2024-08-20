@@ -20,7 +20,7 @@ class ErrorRecordViewSet(ModelViewSet):
         IsAuthenticated
     ]
     filter_backends = []
-    ordering_fields = ['created']
+    ordering_fields = ['created_at']
 
     def list(self, request, *args, **kwargs):
 
@@ -33,7 +33,7 @@ class ErrorRecordViewSet(ModelViewSet):
                 Q(username__icontains=query) | Q(message__icontains=query) | Q(details_data__icontains=query) | Q(
                     url__icontains=query) | Q(
                     status_code__icontains=query) | Q(
-                    created__icontains=query))
+                    created_at__icontains=query))
 
         page = self.paginate_queryset(queryset)
 
@@ -56,7 +56,7 @@ class ErrorRecordViewSet(ModelViewSet):
                 Q(username__icontains=query) | Q(message__icontains=query) | Q(details_data__icontains=query) | Q(
                     url__icontains=query) | Q(
                     status_code__icontains=query) | Q(
-                    created__icontains=query))
+                    created_at__icontains=query))
 
         serializer = self.get_serializer(queryset, many=True)
 

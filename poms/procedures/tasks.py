@@ -177,7 +177,7 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
 def remove_old_data_procedures(*args, **kwargs):
     try:
 
-        tasks = RequestDataFileProcedureInstance.objects.filter(created__lte=now() - timedelta(days=30))
+        tasks = RequestDataFileProcedureInstance.objects.filter(created_at__lte=now() - timedelta(days=30))
 
         count = tasks.count()
 

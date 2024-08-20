@@ -2,7 +2,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
+from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -66,7 +66,7 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Counterparty(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Counterparty(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
 
     """
     One of Core Finmars entities, real world meaning is hold here
@@ -216,7 +216,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Responsible(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Responsible(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     One of Core Finmars entities, real world meaning is to indicate
     who is executing/initiator of Transaction

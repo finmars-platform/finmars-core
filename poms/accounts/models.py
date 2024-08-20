@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
-    DataTimeStampedModel,
+    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
     ObjectStateModel,
@@ -15,7 +15,7 @@ from poms.users.models import MasterUser
 
 
 class AccountType(
-    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
 ):
     """
     Meta Entity, part of Finmars Configuration
@@ -106,7 +106,7 @@ class AccountType(
         ]
 
 
-class Account(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Account(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     One of core entities - Account
     Could stand for anything that could hold money in real world e.g. Bank Accounts,

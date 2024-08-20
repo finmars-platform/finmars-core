@@ -114,8 +114,8 @@ class ExplorerViewSet(AbstractViewSet):
             or path != f"{space_code}/"
         ]
         for file in files:
-            created = storage.get_created_time(f"{path}/{file}")
-            modified = storage.get_modified_time(f"{path}/{file}")
+            created_at = storage.get_created_time(f"{path}/{file}")
+            modified_at = storage.get_modified_time(f"{path}/{file}")
 
             mime_type, encoding = mimetypes.guess_type(file)
 
@@ -123,8 +123,8 @@ class ExplorerViewSet(AbstractViewSet):
                 "type": "file",
                 "mime_type": mime_type,
                 "name": file,
-                "created": created,
-                "modified": modified,
+                "created_at": created_at,
+                "modified_at": modified_at,
                 "file_path": f"/{remove_first_dir_from_path(os.path.join(path, file))}",
                 "size": storage.size(f"{path}/{file}"),
                 "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),

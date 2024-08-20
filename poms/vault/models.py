@@ -3,11 +3,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 from poms.common.encrypted_field import EncryptedTextField
-from poms.common.models import DataTimeStampedModel, NamedModel
+from poms.common.models import TimeStampedModel, NamedModel
 from poms.users.models import MasterUser
 
 
-class VaultRecord(NamedModel, DataTimeStampedModel):
+class VaultRecord(NamedModel, TimeStampedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
