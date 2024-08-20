@@ -6,7 +6,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.models import EXPRESSION_FIELD_LENGTH, TimeStampedModel, NamedModel
 from poms.common.utils import date_now
 from poms.configuration.models import ConfigurationModel
 from poms.procedures.models import PricingProcedureInstance
@@ -25,7 +25,7 @@ class InstrumentPricingScheme(models.Model):
         abstract = True
 
 
-class PriceHistoryError(DataTimeStampedModel):
+class PriceHistoryError(TimeStampedModel):
     STATUS_ERROR = "E"
     STATUS_SKIP = "S"
     STATUS_CREATED = "C"
@@ -83,19 +83,12 @@ class PriceHistoryError(DataTimeStampedModel):
         default="",
         verbose_name=gettext_lazy("error text"),
     )
-    created = models.DateTimeField(
-        db_index=True,
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name=gettext_lazy("created"),
-    )
 
     def __str__(self):
         return f"{self.date}: @{self.error_text}"
 
 
-class CurrencyHistoryError(DataTimeStampedModel):
+class CurrencyHistoryError(TimeStampedModel):
     STATUS_ERROR = "E"
     STATUS_SKIP = "S"
     STATUS_CREATED = "C"
@@ -145,14 +138,6 @@ class CurrencyHistoryError(DataTimeStampedModel):
         default=STATUS_ERROR,
         choices=STATUS_CHOICES,
         verbose_name=gettext_lazy("status"),
-    )
-
-    created = models.DateTimeField(
-        db_index=True,
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name=gettext_lazy("created"),
     )
 
     def __str__(self):

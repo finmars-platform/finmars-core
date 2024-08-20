@@ -12,8 +12,8 @@ expected_response = {
             "type": "file",
             "mime_type": "application/pdf",
             "name": "name_1.pdf",
-            "created": "2024-06-30T11:02:20.655172Z",
-            "modified": "2024-06-30T11:02:20.655180Z",
+            "created_at": "2024-06-30T11:02:20.655172Z",
+            "modified_at": "2024-06-30T11:02:20.655180Z",
             "file_path": "/test/",
             "size": 8567748,
             "size_pretty": "8.17 MB",
@@ -83,8 +83,8 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         self.assertEqual(file_json["type"], "file")
         self.assertEqual(file_json["mime_type"], "application/pdf")
         self.assertEqual(file_json["name"], file.name)
-        self.assertIn("created", file_json)
-        self.assertIn("modified", file_json)
+        self.assertIn("created_at", file_json)
+        self.assertIn("modified_at", file_json)
         self.assertEqual(file_json["file_path"], file.path)
         self.assertEqual(file_json["size"], file.size)
         self.assertIn("size_pretty", file_json)

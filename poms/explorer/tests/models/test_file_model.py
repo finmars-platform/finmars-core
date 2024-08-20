@@ -23,8 +23,8 @@ class FinmarsFileTest(BaseTestCase):
         self.assertEqual(file.path, path.rstrip("/"))
         self.assertEqual(file.size, size)
         self.assertEqual(file.extension, f".{extension}")
-        self.assertIsNotNone(file.created)
-        self.assertIsNotNone(file.modified)
+        self.assertIsNotNone(file.created_at)
+        self.assertIsNotNone(file.modified_at)
 
     def test__add_files_to_instrument(self):
         kwargs_1 = dict(

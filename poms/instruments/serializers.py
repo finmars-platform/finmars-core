@@ -1475,7 +1475,7 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
             "name",
             "short_name",
             "identifier",
-            "modified",
+            "modified_at",
             "instrument_type",
             "instrument_type_object",
             "public_name",
@@ -1803,7 +1803,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
         history_item.accrued_price = instance.accrued_price
         history_item.date = instance.date
         history_item.pricing_policy = instance.pricing_policy
-        history_item.created = now()
         history_item.save()
         return history_item
 
@@ -1844,9 +1843,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        if not instance.created:
-            instance.created = now()
-
         instance = super().update(instance, validated_data)
         instance.procedure_modified_datetime = now()
         instance.save()

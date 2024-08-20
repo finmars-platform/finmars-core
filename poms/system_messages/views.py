@@ -25,7 +25,7 @@ _l = getLogger("poms.system_messages")
 class SystemMessageFilterSet(FilterSet):
     title = CharFilter()
     description = CharFilter()
-    created = django_filters.DateFromToRangeFilter()
+    created_at = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = SystemMessage
@@ -44,7 +44,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
     ordering_fields = [
         "members__is_pinned",
-        "created",
+        "created_at",
         "section",
         "type",
         "action_status",
@@ -98,7 +98,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         if ordering:
             queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by("-created")
+            queryset = queryset.order_by("-created_at")
 
         if page is None or page == "1":
             pinned_queryset = self.get_queryset().filter(
@@ -181,10 +181,10 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 )
 
             if created_before:
-                queryset = queryset.filter(created__lte=created_before)
+                queryset = queryset.filter(created_at__lte=created_before)
 
             if created_after:
-                queryset = queryset.filter(created__gte=created_after)
+                queryset = queryset.filter(created_at__gte=created_after)
 
             if action_status:
                 queryset = queryset.filter(action_status__in=[action_status])

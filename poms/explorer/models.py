@@ -5,7 +5,7 @@ from django.db import models
 
 from mptt.models import MPTTModel, TreeForeignKey
 
-from poms.common.models import DataTimeStampedModel
+from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
@@ -51,7 +51,7 @@ class ObjMixin:
         return path.suffix
 
 
-class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
+class FinmarsDirectory(MPTTModel, ObjMixin, TimeStampedModel):
     """
     Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
@@ -82,7 +82,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         return 0
 
 
-class FinmarsFile(ObjMixin, DataTimeStampedModel):
+class FinmarsFile(ObjMixin, TimeStampedModel):
     """
     Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """

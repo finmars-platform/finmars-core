@@ -200,8 +200,8 @@ class SearchResultSerializer(serializers.ModelSerializer):
             "type": "file",
             "mime_type": mime_type,
             "name": name,
-            "created": instance.created,
-            "modified": instance.modified,
+            "created_at": instance.created_at,
+            "modified_at": instance.modified_at,
             "file_path": instance.path,
             "size": size,
             "size_pretty": pretty_size(size),
@@ -234,8 +234,8 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
             "size",
             "name",
             "extension",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
             "instruments",
         ]
 

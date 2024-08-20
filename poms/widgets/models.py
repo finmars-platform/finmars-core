@@ -1,14 +1,14 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel
+from poms.common.models import TimeStampedModel
 from poms.common.utils import date_now
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy, CostMethod
 from poms.users.models import MasterUser
 
 
-class BalanceReportHistory(DataTimeStampedModel):
+class BalanceReportHistory(TimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='balance_report_histories',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -50,7 +50,7 @@ class BalanceReportHistoryItem(models.Model):
     value = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('value'))
 
 
-class PLReportHistory(DataTimeStampedModel):
+class PLReportHistory(TimeStampedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 

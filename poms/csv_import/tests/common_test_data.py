@@ -2,8 +2,8 @@ SCHEME_20 = {
     # "id": 20,
     # "master_user_id": 1,
     # "owner_id": 1,
-    # "created": "2023-09-21 10:24:23.151372 +00:00",
-    # "modified": "2024-01-16 11:59:51.299484 +00:00",
+    # "created_at": "2023-09-21 10:24:23.151372 +00:00",
+    # "modified_at": "2024-01-16 11:59:51.299484 +00:00",
     # "content_type_id": 73,  instruments - pricehistory
     "user_code": "com.finmars.standard-import-from-file:instruments.pricehistory:price_from_file",
     "filter_expr": "",

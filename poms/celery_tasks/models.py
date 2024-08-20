@@ -170,7 +170,7 @@ class CeleryTask(TimeStampedModel):
     )
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.verbose_name} [{self.pk}] ({self.status})>"
@@ -252,7 +252,7 @@ class CeleryTask(TimeStampedModel):
         super().save(*args, **kwargs)
 
         if self.ttl and not self.expiry_at:
-            self.expiry_at = self.created + timedelta(seconds=self.ttl)
+            self.expiry_at = self.created_at + timedelta(seconds=self.ttl)
 
         if (
             CeleryTask.objects.exclude(

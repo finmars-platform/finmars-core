@@ -6,24 +6,24 @@ from poms.users.models import Member
 
 
 class TimeStampedModel(models.Model):
-    created = models.DateTimeField(
+    created_at = models.DateTimeField(
         auto_now_add=True,
         editable=False,
         db_index=True,
-        verbose_name=gettext_lazy("created"),
+        verbose_name=gettext_lazy("created at"),
     )
-    modified = models.DateTimeField(
+    modified_at = models.DateTimeField(
         auto_now=True,
         editable=False,
         db_index=True,
-        verbose_name=gettext_lazy("modified"),
+        verbose_name=gettext_lazy("modified at"),
     )
 
     class Meta:
         abstract = True
-        get_latest_by = "modified"
+        get_latest_by = "modified_at"
         ordering = [
-            "created",
+            "created_at",
         ]
 
 

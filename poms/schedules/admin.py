@@ -21,7 +21,7 @@ admin.site.register(Schedule, ScheduleAdmin)
 
 class ScheduleInstanceAdmin(admin.ModelAdmin):
     model = ScheduleInstance
-    list_display = ['id', 'master_user', 'schedule', 'status', 'created', 'current_processing_procedure_number']
+    list_display = ['id', 'master_user', 'schedule', 'status', 'created_at', 'current_processing_procedure_number']
     raw_id_fields = ['master_user', 'schedule']
 
 

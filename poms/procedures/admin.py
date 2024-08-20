@@ -15,7 +15,7 @@ admin.site.register(PricingProcedure, PricingProcedureAdmin)
 
 class PricingParentProcedureInstanceAdmin(admin.ModelAdmin):
     model = PricingParentProcedureInstance
-    list_display = ['id', 'master_user', 'procedure', 'created', 'modified']
+    list_display = ['id', 'master_user', 'procedure', 'created_at', 'modified_at']
     raw_id_fields = ['master_user', 'procedure']
 
 
@@ -44,7 +44,7 @@ admin.site.register(RequestDataFileProcedure, RequestDataFileProcedureAdmin)
 
 class RequestDataFileProcedureInstanceAdmin(admin.ModelAdmin):
     model = RequestDataFileProcedureInstance
-    list_display = ['id', 'master_user', 'procedure', 'created', 'modified', 'status']
+    list_display = ['id', 'master_user', 'procedure', 'created_at', 'modified_at', 'status']
     raw_id_fields = ['master_user']
 
 

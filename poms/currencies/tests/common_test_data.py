@@ -33,7 +33,7 @@ EXPECTED_CURRENCY_HISTORY = {
     "date": "2023-07-19",
     "fx_rate": 426.0,
     "procedure_modified_datetime": "2023-07-19T00:00:00Z",
-    "modified": "2023-07-19T17:31:35.274932Z",
+    "modified_at": "2023-07-19T17:31:35.274932Z",
     "meta": {
         "content_type": "currencies.currencyhistory",
         "app_label": "currencies",

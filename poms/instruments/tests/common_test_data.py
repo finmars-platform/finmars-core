@@ -333,7 +333,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "-",
             "name": "-",
             "short_name": "-",
-            "modified": "2023-09-18T17:15:58.872171Z",
+            "modified_at": "2023-09-18T17:15:58.872171Z",
             "instrument_type": 1,
             "instrument_type_object": {
                 "id": 1,
@@ -375,7 +375,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "Apple",
             "name": "Apple",
             "short_name": "Apple",
-            "modified": "2023-09-18T17:15:59.159401Z",
+            "modified_at": "2023-09-18T17:15:59.159401Z",
             "instrument_type": 2,
             "instrument_type_object": {
                 "id": 2,
@@ -417,7 +417,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "Tesla B.",
             "name": "Tesla B.",
             "short_name": "Tesla B.",
-            "modified": "2023-09-18T17:15:59.168410Z",
+            "modified_at": "2023-09-18T17:15:59.168410Z",
             "instrument_type": 3,
             "instrument_type_object": {
                 "id": 3,
