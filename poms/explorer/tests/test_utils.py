@@ -169,50 +169,50 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
     def test__one_dir(self):
         size = self.random_int(0, 1000)
-        update_or_create_file_and_parents("space0000", "d1/file.txt", size)
+        update_or_create_file_and_parents("d1/file.txt", size)
 
         self.assertEqual(FinmarsFile.objects.count(), 1)
         file = FinmarsFile.objects.first()
-        self.assertEqual(file.path, "space0000/d1/file.txt")
+        self.assertEqual(file.path, "space00000/d1/file.txt")
         self.assertEqual(file.size, size)
 
         self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space0000/d1/*")
+        self.assertEqual(directory.path, "space00000/d1/*")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space0000/*")
+        self.assertEqual(directory.parent.path, "space00000/*")
 
         self.assertEqual(file.parent, directory)
 
     def test__two_dir(self):
         size = self.random_int(0, 1000)
-        update_or_create_file_and_parents("space0000", "d1/d2/file.txt", size)
+        update_or_create_file_and_parents("d1/d2/file.txt", size)
 
         self.assertEqual(FinmarsFile.objects.count(), 1)
         file = FinmarsFile.objects.first()
-        self.assertEqual(file.path, "space0000/d1/d2/file.txt")
+        self.assertEqual(file.path, "space00000/d1/d2/file.txt")
         self.assertEqual(file.size, size)
 
         self.assertEqual(FinmarsDirectory.objects.count(), 3)  # root + d1 + d2
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space0000/d1/d2/*")
+        self.assertEqual(directory.path, "space00000/d1/d2/*")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space0000/d1/*")
+        self.assertEqual(directory.parent.path, "space00000/d1/*")
 
         self.assertEqual(file.parent, directory)
 
     def test__no_dir(self):
         size = self.random_int(0, 1000)
-        update_or_create_file_and_parents("space0000", "file.txt", size)
+        update_or_create_file_and_parents("file.txt", size)
 
         self.assertEqual(FinmarsFile.objects.count(), 1)
         file = FinmarsFile.objects.first()
-        self.assertEqual(file.path, "space0000/file.txt")
+        self.assertEqual(file.path, "space00000/file.txt")
         self.assertEqual(file.size, size)
 
         self.assertEqual(FinmarsDirectory.objects.count(), 1)  # root
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space0000/*")
+        self.assertEqual(directory.path, "space00000/*")
         self.assertEqual(directory.size, 0)
         self.assertIsNone(directory.parent)
 
@@ -220,21 +220,21 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
     def test__empty_path(self):
         with self.assertRaises(RuntimeError):
-            update_or_create_file_and_parents("space0000", "", 0)
+            update_or_create_file_and_parents("", 0)
 
     def test__first_slash_one_dir(self):
         size = self.random_int(0, 1000)
-        update_or_create_file_and_parents("space0000", "/d1/file.txt", size)
+        update_or_create_file_and_parents("/d1/file.txt", size)
 
         self.assertEqual(FinmarsFile.objects.count(), 1)
         file = FinmarsFile.objects.first()
-        self.assertEqual(file.path, "space0000/d1/file.txt")
+        self.assertEqual(file.path, "space00000/d1/file.txt")
         self.assertEqual(file.size, size)
 
         self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
         directory = FinmarsDirectory.objects.last()
-        self.assertEqual(directory.path, "space0000/d1/*")
+        self.assertEqual(directory.path, "space00000/d1/*")
         self.assertEqual(directory.size, 0)
-        self.assertEqual(directory.parent.path, "space0000/*")
+        self.assertEqual(directory.parent.path, "space00000/*")
 
         self.assertEqual(file.parent, directory)

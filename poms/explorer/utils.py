@@ -364,11 +364,16 @@ def split_path(path: str) -> list[str]:
     return ["/".join(dir_list[: i + 1]) for i in range(len(dir_list))]
 
 
-def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
+def get_current_space_code() -> str:
+    from poms.users.models import MasterUser
+
+    return MasterUser.objects.first().space_code or "space00000"
+
+
+def update_or_create_file_and_parents(path: str, size: int) -> str:
     """
     Creates or updates a file model and all its parent directories in the database
     Args:
-        space (str): The space in which the file is located
         path (str): The path to the file in the storage
         size (int): The size of the file in bytes
 
@@ -378,6 +383,8 @@ def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
     path = path.removeprefix("/")
     if not path:
         raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
+
+    space = get_current_space_code()
 
     parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{space}{DIR_SUFFIX}")
 
