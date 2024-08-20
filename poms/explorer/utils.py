@@ -312,8 +312,7 @@ def sync_storage_objects(
                 continue
 
             sub_directory, created = FinmarsDirectory.objects.get_or_create(
-                path=os.path.join(directory_path, subdir),
-                parent=directory
+                path=os.path.join(directory_path, subdir), parent=directory
             )
             count += sync_files_helper(sub_directory)
 
@@ -362,7 +361,7 @@ def split_path(path: str) -> list[str]:
     """
     path = path.removesuffix("/")
     dir_list = list(Path(path).parts)[:-1]
-    return ["/".join(dir_list[:i+1]) for i in range(len(dir_list))]
+    return ["/".join(dir_list[: i + 1]) for i in range(len(dir_list))]
 
 
 def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
@@ -376,8 +375,9 @@ def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
     Returns:
         str: The path of the newly created or updated file model
     """
+    path = path.removeprefix("/")
     if not path:
-        raise RuntimeError("update_or_create_file_and_parents: empty path")
+        raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
 
     parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{space}{DIR_SUFFIX}")
 
@@ -389,7 +389,7 @@ def update_or_create_file_and_parents(space: str, path: str, size: int) -> str:
         parent = dir_obj
 
     file, _ = FinmarsFile.objects.update_or_create(
-        path=path,
+        path=f"{space}/{path}",
         defaults={"size": size, "parent": parent},
     )
 
