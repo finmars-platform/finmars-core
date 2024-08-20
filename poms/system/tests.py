@@ -40,7 +40,7 @@ EXPECTED_RESPONSE = {
         "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
     },
 }
-PREFIX = "https://testserver/realm00000/space00000/api/storage/.system/ui/"
+PREFIX = "https://finmars.com/realm00000/space00000/api/storage/.system/ui/"
 
 
 class WhitelabelViewSetTest(BaseTestCase):

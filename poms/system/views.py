@@ -1,13 +1,14 @@
 from logging import getLogger
 
+from django.conf import settings
 from django_filters.rest_framework import FilterSet
 
 from poms.common.views import AbstractModelViewSet
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 from poms.system.serializers import (
     EcosystemConfigurationSerializer,
-    WhitelabelSerializer,
     WhitelabelListSerializer,
+    WhitelabelSerializer,
 )
 
 _l = getLogger("poms.system")
@@ -43,7 +44,7 @@ class WhitelabelViewSet(AbstractModelViewSet):
             {
                 "realm_code": self.request.realm_code,
                 "space_code": self.request.space_code,
-                "host_url": self.request.get_host().split(":")[0],
+                "host_url": settings.DOMAIN_NAME,
             }
         )
         return context
