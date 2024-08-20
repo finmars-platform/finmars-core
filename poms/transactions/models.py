@@ -16,7 +16,7 @@ from poms.common.formula_accruals import f_xirr
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
-    DataTimeStampedModel,
+    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
 )
@@ -363,7 +363,7 @@ class PeriodicityGroup(AbstractClassModel):
 
 
 class TransactionTypeGroup(
-    NamedModel, FakeDeletableModel, ConfigurationModel, DataTimeStampedModel
+    NamedModel, FakeDeletableModel, ConfigurationModel, TimeStampedModel
 ):
     master_user = models.ForeignKey(
         MasterUser,
@@ -438,7 +438,7 @@ class TransactionTypeGroup(
 class TransactionType(
     NamedModel,
     FakeDeletableModel,
-    DataTimeStampedModel,
+    TimeStampedModel,
     ConfigurationModel,
 ):
     SHOW_PARAMETERS = 1
@@ -2356,7 +2356,7 @@ class EventToHandle(NamedModel):
         verbose_name_plural = gettext_lazy("events to handle")
 
 
-class ComplexTransaction(DataTimeStampedModel):
+class ComplexTransaction(TimeStampedModel):
     PRODUCTION = 1
     PENDING = 2
     IGNORE = 3
@@ -2818,7 +2818,7 @@ class ComplexTransaction(DataTimeStampedModel):
 
         with transaction.atomic():
             self.is_deleted = True
-            fields_to_update = ["is_deleted", "modified"]
+            fields_to_update = ["is_deleted", "modified_at"]
             if hasattr(self, "transaction_unique_code"):
                 # self.deleted_transaction_unique_code = self.transaction_unique_code
                 # TODO possibly do not remove

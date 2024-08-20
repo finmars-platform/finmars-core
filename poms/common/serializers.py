@@ -64,7 +64,7 @@ class ModelMetaSerializer(serializers.ModelSerializer):
 
 
 class ModelWithTimeStampSerializer(serializers.ModelSerializer):
-    modified = serializers.ReadOnlyField()
+    modified_at = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,8 +72,8 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if (
             self.instance
-            and "modified" in data
-            and data["modified"] != self.instance.modified
+            and "modified_at" in data
+            and data["modified_at"] != self.instance.modified_at
         ):
             raise serializers.ValidationError("Synchronization error")
 

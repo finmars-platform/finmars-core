@@ -493,7 +493,7 @@ class SummaryViewSet(AbstractViewSet):
             result = report_summary_record.data
 
         result["report_summary_id"] = report_summary_record.id
-        result["created"] = report_summary_record.created
+        result["created_at"] = report_summary_record.created_at
 
         return Response(result)
 

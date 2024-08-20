@@ -451,7 +451,7 @@ class ComplexTransactionAdmin(AbstractModelAdmin):
         "transaction_unique_code",
         "status",
         "is_deleted",
-        "modified",
+        "modified_at",
     ]
     list_select_related = ["transaction_type", "transaction_type__master_user"]
     list_filter = [

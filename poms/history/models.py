@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
-from poms_app import settings
+from poms.common.models import TimeStampedModel
 
 _l = logging.getLogger("poms.history")
 
@@ -93,7 +93,7 @@ excluded_to_track_history_models = [
 ]
 
 
-class HistoricalRecord(models.Model):
+class HistoricalRecord(TimeStampedModel):
     ACTION_CREATE = "create"
     ACTION_CHANGE = "change"
     ACTION_DELETE = "delete"
@@ -159,13 +159,6 @@ class HistoricalRecord(models.Model):
         blank=True,
         verbose_name=gettext_lazy("diff"),
     )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        null=True,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
     json_data = models.TextField(
         null=True,
         blank=True,
@@ -192,7 +185,7 @@ class HistoricalRecord(models.Model):
     def __str__(self):
         return (
             f"{self.member.username} changed {self.user_code} ({self.content_type}) "
-            f"at {self.created.strftime(DATETIME_FORMAT)}"
+            f"at {self.created_at.strftime(DATETIME_FORMAT)}"
         )
 
     @property
@@ -205,7 +198,7 @@ class HistoricalRecord(models.Model):
             "content_type": str(self.content_type),
             "context_url": self.context_url,
             "notes": self.notes,
-            "created": self.created.strftime(DATETIME_FORMAT),
+            "created_at": self.created_at.strftime(DATETIME_FORMAT),
             "json_data": self.json_data,
         }
 
@@ -213,7 +206,7 @@ class HistoricalRecord(models.Model):
         verbose_name = gettext_lazy("history record")
         verbose_name_plural = gettext_lazy("history records")
         index_together = [["user_code", "content_type"]]
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
 
 def get_user_code_from_instance(instance, content_type_key):
@@ -376,7 +369,7 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
                 HistoricalRecord.ACTION_DELETE,
                 HistoricalRecord.ACTION_DANGER,
             ],
-        ).order_by("-created")[0]
+        ).order_by("-created_at")[0]
 
         everything_is_dict = json.loads(
             json.dumps(serialized_data)
@@ -478,7 +471,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 last_record = HistoricalRecord.objects.filter(
                     user_code=master_user.name,
                     content_type=content_type,
-                ).order_by("-created")[0]
+                ).order_by("-created_at")[0]
 
                 _l.info(f"last_record {last_record.data}")
 

@@ -2,7 +2,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
+from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -122,7 +122,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         )
 
 
-class Strategy1(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Strategy1(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="strategies1",
@@ -224,7 +224,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         )
 
 
-class Strategy2(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Strategy2(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="strategies2",
@@ -325,7 +325,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         )
 
 
-class Strategy3(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Strategy3(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="strategies3",

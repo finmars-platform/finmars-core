@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
-    DataTimeStampedModel,
+    TimeStampedModel,
     NamedModel,
     TimeStampedModel, FakeDeletableModel,
 )
@@ -215,7 +215,7 @@ class ImportConfig(models.Model):
         )
 
 
-class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
+class InstrumentDownloadScheme(NamedModel, TimeStampedModel, ConfigurationModel):
     MODE_CHOICES = [
         ["skip", "Skip if exists"],
         ["overwrite_empty_values", "Overwrite only empty values"],
@@ -1197,7 +1197,7 @@ COLUMN_MATCHER_CHOICES = [["index", "Index"], ["name", "Name"]]
 
 
 class ComplexTransactionImportScheme(
-    NamedModel, DataTimeStampedModel, ConfigurationModel, FakeDeletableModel
+    NamedModel, TimeStampedModel, ConfigurationModel, FakeDeletableModel
 ):
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
@@ -1566,7 +1566,7 @@ class DataProvider(models.Model):
         return self.name
 
 
-class TransactionFileResult(DataTimeStampedModel):
+class TransactionFileResult(TimeStampedModel):
     procedure_instance = models.ForeignKey(
         "procedures.RequestDataFileProcedureInstance",
         on_delete=models.CASCADE,

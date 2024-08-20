@@ -82,44 +82,25 @@ class NamedModel(OwnerModel):
         super(NamedModel, self).save(*args, **kwargs)
 
 
-class DataTimeStampedModel(models.Model):
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        null=True,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
-    modified = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("modified"),
-    )
-
-    class Meta:
-        abstract = True
-
-
 class TimeStampedModel(models.Model):
-    created = models.DateTimeField(
+    created_at = models.DateTimeField(
         auto_now_add=True,
         editable=False,
         db_index=True,
-        verbose_name=gettext_lazy("created"),
+        verbose_name=gettext_lazy("created at"),
     )
-    modified = models.DateTimeField(
+    modified_at = models.DateTimeField(
         auto_now=True,
         editable=False,
         db_index=True,
-        verbose_name=gettext_lazy("modified"),
+        verbose_name=gettext_lazy("modified at"),
     )
 
     class Meta:
         abstract = True
-        get_latest_by = "modified"
+        get_latest_by = "modified_at"
         ordering = [
-            "created",
+            "created_at",
         ]
 
 
@@ -204,7 +185,7 @@ class FakeDeletableModel(models.Model):
 
         self.is_deleted = True
 
-        fields_to_update = ["is_deleted", "modified"]
+        fields_to_update = ["is_deleted", "modified_at"]
         try:
             # fake_delete called by REST API
             member = get_request().user.member
@@ -272,7 +253,7 @@ class FakeDeletableModel(models.Model):
 
         self.is_deleted = False
 
-        fields_to_update = ["is_deleted", "modified"]
+        fields_to_update = ["is_deleted", "modified_at"]
 
         try:
             # restore called by REST API

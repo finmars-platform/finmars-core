@@ -35,6 +35,6 @@ class MemberLayoutViewSetTest(BaseTestCase):
         self.assertEqual(response_json["id"], layout.id)
         self.assertTrue(response_json["is_default"])
         self.assertEqual(
-            response_json["modified"],
-            layout.modified.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            response_json["modified_at"],
+            layout.modified_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         )

@@ -21,8 +21,8 @@ class FinmarsDirectoryTest(BaseTestCase):
         self.assertIsNotNone(directory)
         self.assertEqual(directory.path, self.path)
         self.assertIsNone(directory.parent)
-        self.assertIsNotNone(directory.created)
-        self.assertIsNotNone(directory.modified)
+        self.assertIsNotNone(directory.created_at)
+        self.assertIsNotNone(directory.modified_at)
         self.assertEqual(directory.size, 0)
         self.assertEqual(directory.extension, "")
 

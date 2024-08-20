@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy
 
 from croniter import croniter
 
-from poms.common.models import DataTimeStampedModel, NamedModel
+from poms.common.models import TimeStampedModel, NamedModel
 from poms.configuration.models import ConfigurationModel
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -185,7 +185,7 @@ class ScheduleProcedure(models.Model):
         ]
 
 
-class ScheduleInstance(DataTimeStampedModel):
+class ScheduleInstance(TimeStampedModel):
     """
     Actual Instance of schedule
     Needs just to be control of Schedule Status

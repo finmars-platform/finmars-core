@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
-    modified = serializers.ReadOnlyField()
+    modified_at = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,8 +20,8 @@ class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if (
             self.instance
-            and "modified" in data
-            and data["modified"] != self.instance.modified
+            and "modified_at" in data
+            and data["modified_at"] != self.instance.modified_at
         ):
             raise serializers.ValidationError("Synchronization error")
 
@@ -198,8 +198,8 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
 
     class Meta:
         model = Role
@@ -215,8 +215,8 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
             "groups_object",
             "access_policies",
             "access_policies_object",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
         ]
 
     def create(self, validated_data):
@@ -276,8 +276,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
 
     class Meta:
         model = Group
@@ -294,8 +294,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
             "roles_object",
             "access_policies",
             "access_policies_object",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -342,8 +342,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
 class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
-    created = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
 
     class Meta:
         model = AccessPolicy
@@ -354,6 +354,6 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
             "configuration_code",
             "policy",
             "description",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
         ]

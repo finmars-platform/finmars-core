@@ -1,11 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, NamedModel
+from poms.common.models import TimeStampedModel, NamedModel
 from poms.users.models import MasterUser
 
 
-class ComplexImportScheme(NamedModel, DataTimeStampedModel):
+class ComplexImportScheme(NamedModel, TimeStampedModel):
     '''
     Probably Deprecated
     Synthetic Entity which idea was is to mix SimpleImport and TransactionImport into one process

@@ -173,7 +173,7 @@ def change_created_time(instance: models.Model, new_time: datetime):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            f"UPDATE {instance._meta.db_table} SET created='{new_time.isoformat()}' "
+            f"UPDATE {instance._meta.db_table} SET created_at='{new_time.isoformat()}' "
             f"WHERE id={instance.id}",
         )
 

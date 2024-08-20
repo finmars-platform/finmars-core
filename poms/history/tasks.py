@@ -73,9 +73,9 @@ def clear_old_journal_records(*args, **kwargs):
     date_from = delete_time.strftime(DATE_FORMAT)
 
     old_records = HistoricalRecord.objects.filter(
-        created__lt=delete_time,
+        created_at__lt=delete_time,
     ).order_by(
-        "created",
+        "created_at",
     )
 
     total_count = old_records.count()
@@ -152,7 +152,7 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
 
     storage = get_storage()
 
-    total = HistoricalRecord.objects.filter(created__range=[date_from, date_to]).count()
+    total = HistoricalRecord.objects.filter(created_at__range=[date_from, date_to]).count()
 
     count = 0
 
@@ -163,7 +163,7 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
         year, month, day = single_date.year, single_date.month, single_date.day
 
 
-        records = HistoricalRecord.objects.filter(created__date=single_date)
+        records = HistoricalRecord.objects.filter(created_at__date=single_date)
 
         _l.info('records count %s' % records.count())
 

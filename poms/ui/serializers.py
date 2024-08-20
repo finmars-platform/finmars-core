@@ -548,8 +548,8 @@ class DraftSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
             "id",
             "member",
             "name",
-            "modified",
-            "created",
+            "modified_at",
+            "created_at",
             "user_code",
             "data",
         ]

@@ -20,7 +20,7 @@ from poms.common.formula_accruals import get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
-    DataTimeStampedModel,
+    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
     ObjectStateModel,
@@ -567,7 +567,7 @@ class CostMethod(AbstractClassModel):
         verbose_name_plural = gettext_lazy("cost methods")
 
 
-class Country(DataTimeStampedModel):
+class Country(TimeStampedModel):
     name = models.CharField(
         max_length=255,
         verbose_name=gettext_lazy("name"),
@@ -651,7 +651,7 @@ class Country(DataTimeStampedModel):
     )
 
 
-class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel, ObjectStateModel):
+class PricingPolicy(NamedModel, TimeStampedModel, ConfigurationModel, ObjectStateModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="pricing_policies",
@@ -676,7 +676,7 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel, Object
 
 
 class InstrumentType(
-    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
 ):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
@@ -1348,7 +1348,7 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         return str(self.effective_date)
 
 
-class InstrumentTypePricingPolicy(DataTimeStampedModel):
+class InstrumentTypePricingPolicy(TimeStampedModel):
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE, related_name="pricing_policies")
     target_pricing_schema_user_code = models.CharField(
@@ -1362,7 +1362,7 @@ class InstrumentTypePricingPolicy(DataTimeStampedModel):
 
 
 # noinspection PyUnresolvedReferences
-class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectStateModel):
+class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3
@@ -2627,7 +2627,7 @@ class Instrument(NamedModel, FakeDeletableModel, DataTimeStampedModel, ObjectSta
             _l.error(f"Instrument save error {error}\n {traceback.format_exc()}")
 
 
-class InstrumentPricingPolicy(DataTimeStampedModel):
+class InstrumentPricingPolicy(TimeStampedModel):
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
     instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, related_name="pricing_policies")
     target_pricing_schema_user_code = models.CharField(
@@ -2804,7 +2804,7 @@ class AccrualCalculationSchedule(models.Model):
         return str(self.accrual_start_date)
 
 
-class PriceHistory(DataTimeStampedModel):
+class PriceHistory(TimeStampedModel):
     instrument = models.ForeignKey(
         Instrument,
         related_name="prices",
@@ -3007,9 +3007,6 @@ class PriceHistory(DataTimeStampedModel):
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
-
-        if not self.created:
-            self.created = date_now()
 
         ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.instrument.master_user

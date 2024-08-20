@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import NamedModel, DataTimeStampedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
 
 
-class ReferenceTable(NamedModel, DataTimeStampedModel, ConfigurationModel):
+class ReferenceTable(NamedModel, TimeStampedModel, ConfigurationModel):
     '''
 
     When users configures Transaction Type he could pick ReferenceTable as value_type for input

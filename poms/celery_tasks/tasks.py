@@ -22,7 +22,7 @@ _l = logging.getLogger("poms.celery_tasks")
 @finmars_task(name="celery_tasks.remove_old_tasks", bind=True)
 def remove_old_tasks(self, *args, **kwargs):
     try:
-        tasks = CeleryTask.objects.filter(created__lte=now() - timedelta(days=30))
+        tasks = CeleryTask.objects.filter(created_at__lte=now() - timedelta(days=30))
 
         count = tasks.count()
 
@@ -117,7 +117,7 @@ def check_for_died_workers(*args, **kwargs):
         worker_start_time = datetime.now(timezone.utc) - timedelta(seconds=uptime)
 
         # Compare worker start time with task's created time
-        if task.modified > worker_start_time:
+        if task.modified_at > worker_start_time:
             # The task was created before the worker started (worker restarted after picking the task)
             task.error_message = "Worker probably died after picking the task"
             task.status = CeleryTask.STATUS_CANCELED
