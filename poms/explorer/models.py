@@ -16,7 +16,7 @@ MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
 DIR_SUFFIX = "/*"
-ROOT_PATH = f"{{}}/{DIR_SUFFIX}"
+ROOT_PATH = DIR_SUFFIX
 
 
 class AccessLevel:
