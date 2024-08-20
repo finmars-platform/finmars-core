@@ -9,8 +9,9 @@ from poms.explorer.utils import (
     join_path,
     last_dir_name,
     move_dir,
+    update_or_create_file_and_parents,
 )
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import FinmarsDirectory, FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -159,3 +160,26 @@ class DeleteFilesTest(BaseTestCase):
         delete_all_file_objects()
 
         self.assertEqual(FinmarsFile.objects.count(), 0)
+
+
+class CreateUpdateFileParentsTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+
+    def test__one_dir(self):
+        size = self.random_int(0, 1000)
+        update_or_create_file_and_parents("space0000", "d1/file.txt", size)
+
+        self.assertEqual(FinmarsFile.objects.count(), 1)
+        file = FinmarsFile.objects.first()
+        self.assertEqual(file.path, "d1/file.txt")
+        self.assertEqual(file.size, size)
+
+        self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
+        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(directory.path, "space0000/d1/*")
+        self.assertEqual(directory.size, 0)
+        self.assertEqual(directory.parent.path, "space0000/*")
+
+        self.assertEqual(file.parent, directory)
