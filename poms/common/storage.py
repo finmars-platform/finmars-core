@@ -337,12 +337,14 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
 
         super().save(path, content, **kwargs)
 
-        # TODO: create parent(s) for the file
-        file, _ = FinmarsFile.objects.update_or_create(
-            path=path,
-            defaults={"size": size},
-        )
-        return file.path
+        return path
+
+        # # TODO: create parent(s) for the file
+        # file, _ = FinmarsFile.objects.update_or_create(
+        #     path=path,
+        #     defaults={"size": size},
+        # )
+        # return file.path
 
     def delete(self, path: str) -> None:
         from poms.explorer.models import FinmarsFile
