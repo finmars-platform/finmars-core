@@ -320,11 +320,7 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory) -> int:
     return sync_files_helper(start_directory)
 
 
-def sync_file(
-    storage: FinmarsS3Storage,
-    filepath: str,
-    directory,
-):
+def sync_file(storage: FinmarsS3Storage, filepath: str, directory):
     """
     Creates or updates file model in database for the given file path in the storage
     Args:
@@ -398,15 +394,23 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{get_root_path()}")
 
     for dir_path in split_path(path):
-        dir_obj, _ = FinmarsDirectory.objects.update_or_create(
+        dir_obj, created = FinmarsDirectory.objects.update_or_create(
             path=f"{space}/{dir_path}{DIR_SUFFIX}",
             defaults={"parent": parent},
         )
+        if created:
+            _l.info(
+                f"update_or_create_file_and_parents: created directory {dir_obj.path}"
+            )
         parent = dir_obj
 
-    file, _ = FinmarsFile.objects.update_or_create(
+    file, created = FinmarsFile.objects.update_or_create(
         path=f"{space}/{path}",
         defaults={"size": size, "parent": parent},
     )
+    if created:
+        _l.info(
+            f"update_or_create_file_and_parents: created file {file.path}"
+        )
 
     return file.path
