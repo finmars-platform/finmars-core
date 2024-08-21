@@ -156,7 +156,7 @@ class WhitelabelViewSetTest(BaseTestCase):
             data=request_data,
             format="multipart",
         )
-        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(response.status_code, 201)
 
         response_json = response.json()
 
@@ -211,6 +211,15 @@ class WhitelabelViewSetTest(BaseTestCase):
         none = WhitelabelModel.objects.filter(id=model.id).first()
 
         self.assertIsNone(none)
+
+    def test__try_delete_default(self):
+        model = self.create_whitelabel(is_default=True)
+        response = self.client.delete(path=f"{self.url}{model.id}/")
+        self.assertEqual(response.status_code, 400)
+
+        obj = WhitelabelModel.objects.filter(id=model.id).first()
+
+        self.assertIsNotNone(obj)
 
     @BaseTestCase.cases(
         ("true", "true"),
