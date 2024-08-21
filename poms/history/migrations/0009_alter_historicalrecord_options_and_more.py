@@ -15,15 +15,10 @@ class Migration(migrations.Migration):
             name='historicalrecord',
             options={'ordering': ['-created_at'], 'verbose_name': 'history record', 'verbose_name_plural': 'history records'},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='historicalrecord',
-            name='created',
-        ),
-        migrations.AddField(
-            model_name='historicalrecord',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
+            old_name='created',
+            new_name='created_at',
         ),
         migrations.AddField(
             model_name='historicalrecord',

@@ -11,156 +11,84 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolio',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolio',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliobundle',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliobundle',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliohistory',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliohistory',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioreconcilegroup',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioreconcilegroup',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioreconcilehistory',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioreconcilehistory',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioregister',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioregister',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioregisterrecord',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfolioregisterrecord',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliotype',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='portfoliotype',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='portfolio',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfolio',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfoliobundle',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfoliobundle',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfoliohistory',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfoliohistory',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfolioreconcilegroup',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfolioreconcilegroup',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfolioreconcilehistory',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfolioreconcilehistory',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfolioregister',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfolioregister',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfolioregisterrecord',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfolioregisterrecord',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='portfoliotype',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='portfoliotype',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]

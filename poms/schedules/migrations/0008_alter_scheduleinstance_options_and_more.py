@@ -15,23 +15,14 @@ class Migration(migrations.Migration):
             name='scheduleinstance',
             options={'get_latest_by': 'modified_at', 'ordering': ['created_at']},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='scheduleinstance',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='scheduleinstance',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='scheduleinstance',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='scheduleinstance',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]

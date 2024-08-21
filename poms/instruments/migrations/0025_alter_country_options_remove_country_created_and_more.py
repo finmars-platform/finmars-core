@@ -15,137 +15,74 @@ class Migration(migrations.Migration):
             name='country',
             options={'get_latest_by': 'modified_at', 'ordering': ['created_at']},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='country',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='country',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrument',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrument',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumentpricingpolicy',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumentpricingpolicy',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumenttype',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumenttype',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumenttypepricingpolicy',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumenttypepricingpolicy',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricehistory',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricehistory',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingpolicy',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingpolicy',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='country',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='country',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='instrument',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='instrument',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='instrumentpricingpolicy',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='instrumentpricingpolicy',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='instrumenttype',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='instrumenttype',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='instrumenttypepricingpolicy',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='instrumenttypepricingpolicy',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='pricehistory',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='pricehistory',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='pricingpolicy',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='pricingpolicy',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]
