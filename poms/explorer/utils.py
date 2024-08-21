@@ -409,3 +409,39 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
         _l.info(f"update_or_create_file_and_parents: created file {file.path}")
 
     return file.path
+
+
+def paginate(items: list, page_size: int, page_number: int, base_url: str) -> dict:
+    """
+    Returns a slice of items for the given page number, plus URLs for previous and next pages.
+
+    :param items: The list of items to paginate
+    :param page_size: The number of items per page
+    :param page_number: The page number to return (1-indexed)
+    :param base_url: The base URL for the pagination links
+    :return: A dict containing the paginated items, previous page URL, and next page URL
+    """
+    start = (page_number - 1) * page_size
+    end = start + page_size
+    paginated_items = items[start:end]
+    delimiter = "&" if "?" in base_url else "?"
+    previous_page_number = page_number - 1
+
+    previous_page_url = (
+        f"{base_url}{delimiter}page={previous_page_number}&page_size={page_size}"
+        if previous_page_number > 0
+        else None
+    )
+
+    next_page_number = page_number + 1
+    next_page_url = (
+        f"{base_url}{delimiter}page={next_page_number}&page_size={page_size}"
+        if next_page_number <= (len(items) // page_size) + 1
+        else None
+    )
+
+    return {
+        "items": paginated_items,
+        "previous_url": previous_page_url,
+        "next_url": next_page_url,
+    }
