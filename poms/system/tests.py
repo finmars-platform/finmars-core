@@ -156,15 +156,23 @@ class WhitelabelViewSetTest(BaseTestCase):
             data=request_data,
             format="multipart",
         )
+
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.storage_mock.save.call_count, 4)
+        storage_call_args = self.storage_mock.save.call_args_list[0]
+        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/theme.css")
+        storage_call_args = self.storage_mock.save.call_args_list[1]
+        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/dark.png")
+        storage_call_args = self.storage_mock.save.call_args_list[2]
+        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/light.png")
+        storage_call_args = self.storage_mock.save.call_args_list[3]
+        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/favicon.png")
 
         response_json = response.json()
-
         self.validate_response(response_json)
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
-        self.assertEqual(self.storage_mock.save.call_count, 4)
 
     def test__update_patch(self):
         model = self.create_whitelabel()
@@ -180,7 +188,6 @@ class WhitelabelViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.validate_response(response_json)
-
         # should be old value
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #aaa; }"
@@ -197,7 +204,6 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.json())
 
         response_json = response.json()
-
         self.validate_response(response_json)
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
