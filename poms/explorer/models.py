@@ -7,7 +7,6 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.utils import get_current_space_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
 
@@ -19,7 +18,10 @@ DIR_SUFFIX = "/*"
 
 
 def get_root_path():
-    return f"{get_current_space_code()}{DIR_SUFFIX}"
+    from poms.users.models import MasterUser
+
+    space_code = MasterUser.objects.first().space_code or "space00000"
+    return f"{space_code}{DIR_SUFFIX}"
 
 
 class AccessLevel:

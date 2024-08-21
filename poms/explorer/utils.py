@@ -362,12 +362,6 @@ def split_path(path: str) -> list[str]:
     return ["/".join(dir_list[: i + 1]) for i in range(len(dir_list))]
 
 
-def get_current_space_code() -> str:
-    from poms.users.models import MasterUser
-
-    return MasterUser.objects.first().space_code or "space00000"
-
-
 def update_or_create_file_and_parents(path: str, size: int) -> str:
     """
     Creates or updates a file model and all its parent directories in the database
@@ -382,20 +376,18 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
         DIR_SUFFIX,
         FinmarsDirectory,
         FinmarsFile,
-        get_root_path,
     )
+
+    _l.info(f"update_or_create_file_and_parents: starts with {path}")
 
     path = path.removeprefix("/")
     if not path:
         raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
 
-    space = get_current_space_code()
-
-    parent, _ = FinmarsDirectory.objects.update_or_create(path=f"{get_root_path()}")
-
+    parent = None
     for dir_path in split_path(path):
         dir_obj, created = FinmarsDirectory.objects.update_or_create(
-            path=f"{space}/{dir_path}{DIR_SUFFIX}",
+            path=f"{dir_path}{DIR_SUFFIX}",
             defaults={"parent": parent},
         )
         if created:
@@ -405,12 +397,10 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
         parent = dir_obj
 
     file, created = FinmarsFile.objects.update_or_create(
-        path=f"{space}/{path}",
+        path=path,
         defaults={"size": size, "parent": parent},
     )
     if created:
-        _l.info(
-            f"update_or_create_file_and_parents: created file {file.path}"
-        )
+        _l.info(f"update_or_create_file_and_parents: created file {file.path}")
 
     return file.path
