@@ -39,7 +39,8 @@ EXPECTED_RESPONSE = {
         "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
     },
 }
-PREFIX = "https://finmars.com/realm00000/space00000/api/storage/.system/ui/"
+API_PREFIX = "https://finmars.com/realm00000/space00000/api/storage/.system/ui/"
+STORAGE_PREFIX = "space00000/.system/ui/"
 
 
 class WhitelabelViewSetTest(BaseTestCase):
@@ -144,10 +145,10 @@ class WhitelabelViewSetTest(BaseTestCase):
     def validate_response(self, response_json):
         self.assertEqual(response_json["company_name"], "Test Company")
         self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
-        self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
-        self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
+        self.assertEqual(response_json["theme_css_url"], f"{API_PREFIX}theme.css")
+        self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}light.png")
+        self.assertEqual(response_json["favicon_url"], f"{API_PREFIX}favicon.png")
 
     def test__create(self):
         request_data = self.create_request_data()
@@ -160,13 +161,13 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(self.storage_mock.save.call_count, 4)
         storage_call_args = self.storage_mock.save.call_args_list[0]
-        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/theme.css")
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}theme.css")
         storage_call_args = self.storage_mock.save.call_args_list[1]
-        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/dark.png")
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}dark.png")
         storage_call_args = self.storage_mock.save.call_args_list[2]
-        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/light.png")
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}light.png")
         storage_call_args = self.storage_mock.save.call_args_list[3]
-        self.assertEqual(storage_call_args[0][0], "space00000/.system/ui/favicon.png")
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}favicon.png")
 
         response_json = response.json()
         self.validate_response(response_json)
