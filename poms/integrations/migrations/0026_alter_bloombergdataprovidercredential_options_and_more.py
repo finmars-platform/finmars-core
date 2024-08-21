@@ -19,80 +19,44 @@ class Migration(migrations.Migration):
             name='transactionfileresult',
             options={'get_latest_by': 'modified_at', 'ordering': ['created_at']},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='bloombergdataprovidercredential',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='bloombergdataprovidercredential',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='complextransactionimportscheme',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='complextransactionimportscheme',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumentdownloadscheme',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='instrumentdownloadscheme',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='transactionfileresult',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='transactionfileresult',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='bloombergdataprovidercredential',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='bloombergdataprovidercredential',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='complextransactionimportscheme',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='complextransactionimportscheme',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='instrumentdownloadscheme',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='instrumentdownloadscheme',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='transactionfileresult',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='transactionfileresult',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]

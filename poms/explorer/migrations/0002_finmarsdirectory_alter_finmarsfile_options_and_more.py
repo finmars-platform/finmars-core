@@ -58,6 +58,7 @@ class Migration(migrations.Migration):
             },
             bases=(poms.explorer.models.ObjMixin, models.Model),
         ),
+        migrations.RunSQL("TRUNCATE TABLE explorer_finmarsfile CASCADE; COMMIT;"),
         migrations.AlterModelOptions(
             name="finmarsfile",
             options={"ordering": ["path"]},
