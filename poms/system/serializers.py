@@ -14,9 +14,9 @@ storage = get_storage()
 MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
 
-STORAGE_ROOT = ".system/ui/"
-COMMON_PREFIX = (
-    f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{STORAGE_ROOT}"
+UI_ROOT = ".system/ui/"
+URL_PREFIX = (
+    f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
 )
 
 
@@ -93,12 +93,12 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             "favicon_image",
         ]
 
-    def change_files_to_urls(self, data: dict) -> dict:
+    def change_files_to_urls(self, validated_data: dict) -> dict:
         """
         Change files to URLs in the validated data. Files will be saved, and their URLs
         in the Django storage will be inserted in the validated data.
         Args:
-            data (dict): The validated data containing
+            validated_data (dict): The validated data containing
             the files to be converted to URLs.
         Returns:
             dict: The updated validated data with URLs.
@@ -108,43 +108,45 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             - The function assumes that the storage module has a save method
               that takes in a file path and a file object.
         """
-        prefix = COMMON_PREFIX.format(
+        api_prefix = URL_PREFIX.format(
             host_url=self.context["host_url"],
             realm_code=self.context["realm_code"],
             space_code=self.context["space_code"],
         )
+        storage_prefix = f"{self.context['space_code']}/{UI_ROOT}"
 
-        theme_css_file: Optional[File] = data.pop("theme_css_file", None)
-        if theme_css_file:
-            self.save_to_storage(prefix, theme_css_file, data, "theme_css_url")
+        params_fields = [
+            ("theme_css_file", "theme_css_url"),
+            ("logo_dark_image", "logo_dark_url"),
+            ("logo_light_image", "logo_light_url"),
+            ("favicon_image", "favicon_url"),
+        ]
 
-        logo_dark_image: Optional[File] = data.pop("logo_dark_image", None)
-        if logo_dark_image:
-            self.save_to_storage(prefix, logo_dark_image, data, "logo_dark_url")
+        for param_name, model_field in params_fields:
+            file: Optional[File] = validated_data.pop(param_name, None)
+            if file:
+                self.save_to_storage(
+                    api_prefix, storage_prefix, validated_data, file, model_field
+                )
 
-        logo_light_image: Optional[File] = data.pop("logo_light_image", None)
-        if logo_light_image:
-            self.save_to_storage(prefix, logo_light_image, data, "logo_light_url")
-
-        favicon_image: Optional[File] = data.pop("favicon_image", None)
-        if favicon_image:
-            self.save_to_storage(prefix, favicon_image, data, "favicon_url")
-
-        return data
+        return validated_data
 
     @staticmethod
-    def save_to_storage(prefix: str, file: File, data: dict, field: str):
-        file_path = f"{prefix}{file.name}"
-        storage.save(file_path, file)
-        data[field] = file_path
+    def save_to_storage(
+        api_prefix: str,
+        storage_prefix: str,
+        validated_data: dict,
+        file: File,
+        field: str,
+    ):
+        storage.save(f"{storage_prefix}{file.name}", file)
+        validated_data[field] = f"{api_prefix}{file.name}"
 
-    def create(self, validated_data: dict) -> WhitelabelModel:
+    def create(self, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
         return WhitelabelModel.objects.create(**validated_data)
 
-    def update(
-        self, instance: WhitelabelModel, validated_data: dict
-    ) -> WhitelabelModel:
+    def update(self, instance: WhitelabelModel, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
         return super().update(instance, validated_data)
 

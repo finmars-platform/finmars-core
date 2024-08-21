@@ -8,7 +8,6 @@ from poms.explorer.utils import is_true_value
 from poms.system.models import WhitelabelModel
 from poms.system.utils import get_image_content
 
-
 css_content = """
 .file-upload-form {
     display: flex;
@@ -142,6 +141,14 @@ class WhitelabelViewSetTest(BaseTestCase):
             "custom_css": "body { background-color: #fff; }",
         }
 
+    def validate_response(self, response_json):
+        self.assertEqual(response_json["company_name"], "Test Company")
+        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
+        self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
+        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
+        self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
+
     def test__create(self):
         request_data = self.create_request_data()
         response = self.client.post(
@@ -153,15 +160,11 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["company_name"], "Test Company")
-        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
-        self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
-        self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
+        self.validate_response(response_json)
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
+        self.assertEqual(self.storage_mock.save.call_count, 4)
 
     def test__update_patch(self):
         model = self.create_whitelabel()
@@ -176,12 +179,7 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["company_name"], "Test Company")
-        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
-        self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
-        self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
+        self.validate_response(response_json)
 
         # should be old value
         self.assertEqual(
@@ -200,12 +198,7 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["company_name"], "Test Company")
-        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
-        self.assertEqual(response_json["theme_css_url"], f"{PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{PREFIX}dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{PREFIX}light.png")
-        self.assertEqual(response_json["favicon_url"], f"{PREFIX}favicon.png")
+        self.validate_response(response_json)
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
