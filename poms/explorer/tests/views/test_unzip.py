@@ -4,10 +4,10 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import (
     DIR_SUFFIX,
-    ROOT_PATH,
     AccessLevel,
     FinmarsDirectory,
     FinmarsFile,
+    get_root_path,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
@@ -48,10 +48,16 @@ class UnzipViewSetTest(CreateUserMemberMixin, BaseTestCase):
     @BaseTestCase.cases(
         ("short_target", {"target_directory_path": "target", "file_path": "file.zip"}),
         ("short_target", {"target_directory_path": "target", "file_path": "/file.zip"}),
-        ("short_target", {"target_directory_path": "target", "file_path": "/abc/file.zip"}),
+        (
+            "short_target",
+            {"target_directory_path": "target", "file_path": "/abc/file.zip"},
+        ),
         ("long_target_1", {"target_directory_path": "/a/b/c", "file_path": "file.zip"}),
         ("long_target_2", {"target_directory_path": "a/b/c/", "file_path": "file.zip"}),
-        ("long_target_3", {"target_directory_path": "/a/b/c/", "file_path": "file.zip"}),
+        (
+            "long_target_3",
+            {"target_directory_path": "/a/b/c/", "file_path": "file.zip"},
+        ),
         ("long_target_4", {"target_directory_path": "a/b/c", "file_path": "file.zip"}),
     )
     @mock.patch("poms.explorer.serializers.path_is_file")
@@ -105,9 +111,10 @@ class UnzipViewSetTest(CreateUserMemberMixin, BaseTestCase):
         file_name = "file.zip"
         data = {"target_directory_path": to_dir, "file_path": file_name}
 
-        root = FinmarsDirectory.objects.create(path=ROOT_PATH)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.WRITE)
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         FinmarsDirectory.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
         FinmarsFile.objects.create(path=file_name, size=444, parent=root)

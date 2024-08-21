@@ -4,7 +4,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.models import (
     DIR_SUFFIX,
-    ROOT_PATH,
+    get_root_path,
     AccessLevel,
     FinmarsDirectory,
     FinmarsFile,
@@ -81,9 +81,10 @@ class MoveViewSetTest(CreateUserMemberMixin, BaseTestCase):
         paths = [file_name]
         data = {"target_directory_path": to_dir, "paths": paths}
 
-        root = FinmarsDirectory.objects.create(path=ROOT_PATH)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.WRITE)
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         FinmarsDirectory.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
         FinmarsFile.objects.create(path=file_name, size=333, parent=root)

@@ -1,5 +1,10 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import ROOT_PATH, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import (
+    AccessLevel,
+    FinmarsDirectory,
+    FinmarsFile,
+    get_root_path,
+)
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -143,9 +148,10 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         self.assertEqual(response.status_code, 403)
 
     def test__has_root_permission(self):
-        FinmarsDirectory.objects.create(path=ROOT_PATH)
+        root_path = get_root_path()
+        FinmarsDirectory.objects.create(path=root_path)
         user, member = self.create_user_member()
-        get_or_create_access_policy_to_path(ROOT_PATH, member, AccessLevel.READ)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
         self.client.force_authenticate(user=user)
 
         response = self.client.get(self.url)
