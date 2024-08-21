@@ -19,118 +19,64 @@ class Migration(migrations.Migration):
             name='requestdatafileprocedureinstance',
             options={'ordering': ['-created_at']},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='expressionprocedure',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='expressionprocedure',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingparentprocedureinstance',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingparentprocedureinstance',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingprocedure',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingprocedure',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingprocedureinstance',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='pricingprocedureinstance',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='requestdatafileprocedure',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='requestdatafileprocedure',
-            name='modified',
+            old_name='modified',
+            new_name='modified_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='requestdatafileprocedureinstance',
-            name='created',
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='requestdatafileprocedureinstance',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='expressionprocedure',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='expressionprocedure',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='pricingparentprocedureinstance',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='pricingparentprocedureinstance',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='pricingprocedure',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='pricingprocedure',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='pricingprocedureinstance',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='pricingprocedureinstance',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='requestdatafileprocedure',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='requestdatafileprocedure',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
-        ),
-        migrations.AddField(
-            model_name='requestdatafileprocedureinstance',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='requestdatafileprocedureinstance',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]

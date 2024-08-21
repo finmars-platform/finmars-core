@@ -19,38 +19,24 @@ class Migration(migrations.Migration):
             name='systemmessagecomment',
             options={'get_latest_by': 'modified_at', 'ordering': ['created_at']},
         ),
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='systemmessage',
-            name='created',
-        ),
-        migrations.RemoveField(
-            model_name='systemmessagecomment',
-            name='created',
-        ),
-        migrations.RemoveField(
-            model_name='systemmessagecomment',
-            name='modified',
-        ),
-        migrations.AddField(
-            model_name='systemmessage',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
+            old_name='created',
+            new_name='created_at',
         ),
         migrations.AddField(
             model_name='systemmessage',
             name='modified_at',
             field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
-        migrations.AddField(
+        migrations.RenameField(
             model_name='systemmessagecomment',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, default=django.utils.timezone.now, verbose_name='created at'),
-            preserve_default=False,
+            old_name='created',
+            new_name='created_at',
         ),
-        migrations.AddField(
+        migrations.RenameField(
             model_name='systemmessagecomment',
-            name='modified_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+            old_name='modified',
+            new_name='modified_at',
         ),
     ]
