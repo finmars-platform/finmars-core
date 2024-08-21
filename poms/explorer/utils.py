@@ -396,6 +396,11 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
             )
         parent = dir_obj
 
+    if parent is None:
+        raise RuntimeError(
+            f"update_or_create_file_and_parents: no parent path '{path}'"
+        )
+
     file, created = FinmarsFile.objects.update_or_create(
         path=path,
         defaults={"size": size, "parent": parent},
