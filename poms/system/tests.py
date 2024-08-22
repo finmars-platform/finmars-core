@@ -282,3 +282,38 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         model_1.refresh_from_db()
         self.assertFalse(model_1.is_default)
+
+    def create_request_with_bad_names(self):
+        return {
+            "company_name": "Bad names",
+            "theme_css_file": SimpleUploadedFile(
+                "theme 1.css", css_content, content_type="text/css"
+            ),
+            "logo_dark_image": SimpleUploadedFile(
+                "dark 2.png", self.image_content, content_type="image/png"
+            ),
+            "logo_light_image": SimpleUploadedFile(
+                "пыжый 3.png", self.image_content, content_type="image/png"
+            ),
+            "favicon_image": SimpleUploadedFile(
+                "зюфьянка 4.png", self.image_content, content_type="image/png"
+            ),
+        }
+    def test__bad_names(self):
+        request_data = self.create_request_with_bad_names()
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.storage_mock.save.call_count, 4)
+        storage_call_args = self.storage_mock.save.call_args_list[0]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}theme 1.css")
+        storage_call_args = self.storage_mock.save.call_args_list[1]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}dark 2.png")
+        storage_call_args = self.storage_mock.save.call_args_list[2]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}пыжый 3.png")
+        storage_call_args = self.storage_mock.save.call_args_list[3]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}зюфьянка 4.png")
