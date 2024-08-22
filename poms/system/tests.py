@@ -1,4 +1,5 @@
 from unittest import mock
+from urllib.parse import quote
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -8,7 +9,7 @@ from poms.explorer.utils import is_true_value
 from poms.system.models import WhitelabelModel
 from poms.system.utils import get_image_content
 
-css_content = """
+CSS_CONTENT = """
 .file-upload-form {
     display: flex;
     flex-direction: column;
@@ -128,7 +129,7 @@ class WhitelabelViewSetTest(BaseTestCase):
             "company_name": "Test Company",
             "theme_code": "com.finmars.client-a",
             "theme_css_file": SimpleUploadedFile(
-                "theme.css", css_content, content_type="text/css"
+                "theme.css", CSS_CONTENT, content_type="text/css"
             ),
             "logo_dark_image": SimpleUploadedFile(
                 "dark.png", self.image_content, content_type="image/png"
@@ -158,7 +159,7 @@ class WhitelabelViewSetTest(BaseTestCase):
             format="multipart",
         )
 
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 201, response.json())
         self.assertEqual(self.storage_mock.save.call_count, 4)
         storage_call_args = self.storage_mock.save.call_args_list[0]
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}theme.css")
@@ -282,3 +283,124 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         model_1.refresh_from_db()
         self.assertFalse(model_1.is_default)
+
+    def create_request_with_utf8_names(self):
+        return {
+            "company_name": "UTF8 names",
+            "theme_css_file": SimpleUploadedFile(
+                "theme 1.css", CSS_CONTENT, content_type="text/css"
+            ),
+            "logo_dark_image": SimpleUploadedFile(
+                "dark 2.png", self.image_content, content_type="image/png"
+            ),
+            "logo_light_image": SimpleUploadedFile(
+                "пыжый 3.png", self.image_content, content_type="image/png"
+            ),
+            "favicon_image": SimpleUploadedFile(
+                "зюфьянка 4.png", self.image_content, content_type="image/png"
+            ),
+        }
+
+    def test__utf8_names(self):
+        request_data = self.create_request_with_utf8_names()
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 201, response.json())
+
+        self.assertEqual(self.storage_mock.save.call_count, 4)
+        storage_call_args = self.storage_mock.save.call_args_list[0]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}theme 1.css")
+        storage_call_args = self.storage_mock.save.call_args_list[1]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}dark 2.png")
+        storage_call_args = self.storage_mock.save.call_args_list[2]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}пыжый 3.png")
+        storage_call_args = self.storage_mock.save.call_args_list[3]
+        self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}зюфьянка 4.png")
+
+        response_json = response.json()
+        self.assertEqual(
+            response_json["theme_css_url"], f"{API_PREFIX}{quote('theme 1.css')}"
+        )
+        self.assertEqual(
+            response_json["logo_dark_url"], f"{API_PREFIX}{quote('dark 2.png')}"
+        )
+        self.assertEqual(
+            response_json["logo_light_url"], f"{API_PREFIX}{quote('пыжый 3.png')}"
+        )
+        self.assertEqual(
+            response_json["favicon_url"], f"{API_PREFIX}{quote('зюфьянка 4.png')}"
+        )
+
+    @BaseTestCase.cases(
+        ("0", "&"),
+        ("1", "$"),
+        ("2", "@"),
+        ("3", "="),
+        ("4", ";"),
+        ("5", "/"),
+        ("6", ":"),
+        ("7", ","),
+        ("8", "?"),
+        ("9", "\\"),
+        ("10", "^"),
+        ("11", "%"),
+        ("12", "]"),
+        ("13", "<"),
+        ("14", "["),
+        ("15", "'"),
+        ("16", '"'),
+        ("17", "~"),
+        ("18", "#"),
+        ("19", "|"),
+        ("20", "{"),
+        ("21", "}"),
+        ("22", "^"),
+    )
+    def test__bad_name(self, symbol):
+        request_data = {
+            "company_name": "BAD name",
+            "theme_css_file": SimpleUploadedFile(
+                f"theme_{symbol}.css",
+                CSS_CONTENT,
+                content_type="text/css",
+            ),
+        }
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test__bad_extension_css(self):
+        request_data = {
+            "company_name": "BAD extension",
+            "theme_css_file": SimpleUploadedFile(
+                "theme.png", CSS_CONTENT, content_type="text/css"
+            ),
+        }
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test__bad_extension_image(self):
+        request_data = {
+            "company_name": "BAD extension",
+            "logo_dark_image": SimpleUploadedFile(
+                "dark 2.txt", self.image_content,
+                content_type="image/png",
+            ),
+        }
+        response = self.client.post(
+            path=self.url,
+            data=request_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 400)
