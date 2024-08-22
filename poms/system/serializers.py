@@ -1,4 +1,3 @@
-import re
 from typing import Optional
 from urllib.parse import quote
 
@@ -17,8 +16,7 @@ MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
 MAX_FILENAME_LENGTH = 1024
 
-CHARS_TO_AVOID = r"[&$@=;/:+,?\\{^}%`]><['\"~#|]"
-bad_symbols = re.compile(CHARS_TO_AVOID)
+CHARS_TO_AVOID = "&$@=;/:+,?\\{^}%`]><['\"~#|"
 
 UI_ROOT = ".system/ui/"
 URL_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
@@ -45,22 +43,27 @@ def validate_image_dimensions(image):
             f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels"
         )
 
+def has_bad_symbols(file_name: str) -> bool:
+    return any(c in CHARS_TO_AVOID for c in file_name)
 
-def validate_file_name_utf8(file: File):
+
+def validate_file_name(file: File):
+    file_name = file.name
     try:
-        file.name.encode("utf-8")
+        file_name.encode("utf-8")
     except UnicodeEncodeError as e:
         raise ValidationError("Filename is not a valid UTF-8 string") from e
 
-    if len(file.name) > MAX_FILENAME_LENGTH:
+    if len(file_name) > MAX_FILENAME_LENGTH:
         raise ValidationError(
-            f"Filename '{file.name}' is too long, max length is {MAX_FILENAME_LENGTH}"
+            f"Filename '{file_name}' is too long, max length is {MAX_FILENAME_LENGTH}"
         )
 
-    if bool(bad_symbols.match(file.name)):
+    if has_bad_symbols(file_name):
         raise ValidationError(
-            f"Filename '{file.name}' contains invalid symbols: {CHARS_TO_AVOID}"
+            f"Filename '{file_name}' contains invalid symbols: {CHARS_TO_AVOID}"
         )
+
     return file
 
 
@@ -74,14 +77,14 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             FileExtensionValidator(["css"]),
-            validate_file_name_utf8,
+            validate_file_name,
         ],
     )
     logo_dark_image = serializers.ImageField(
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
-            validate_file_name_utf8,
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
@@ -89,7 +92,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
-            validate_file_name_utf8,
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
@@ -97,7 +100,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
-            validate_file_name_utf8,
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
