@@ -36,6 +36,7 @@ from poms.explorer.serializers import (
     DirectoryPathSerializer,
     FilePathSerializer,
     MoveSerializer,
+    PaginatedResponseSerializer,
     QuerySearchSerializer,
     ResponseSerializer,
     SearchResultSerializer,
@@ -51,6 +52,7 @@ from poms.explorer.tasks import (
 )
 from poms.explorer.utils import (
     join_path,
+    paginate,
     remove_first_dir_from_path,
     response_with_file,
 )
@@ -95,12 +97,15 @@ class ExplorerViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
 
         space_code = request.space_code
-        path = f"{join_path(space_code, serializer.validated_data['path'])}/"
+        original_path = serializer.validated_data["path"]
+        path = f"{join_path(space_code, original_path)}/"
 
         directories, files = storage.listdir(path)
 
-        members_usernames = Member.objects.exclude(user=request.user).values_list(
-            "user__username", flat=True
+        members_usernames = set(
+            Member.objects.exclude(user=request.user).values_list(
+                "user__username", flat=True
+            )
         )
 
         results = [
@@ -116,7 +121,6 @@ class ExplorerViewSet(AbstractViewSet):
         for file in files:
             created_at = storage.get_created_time(f"{path}/{file}")
             modified_at = storage.get_modified_time(f"{path}/{file}")
-
             mime_type, encoding = mimetypes.guess_type(file)
 
             item = {
@@ -132,8 +136,23 @@ class ExplorerViewSet(AbstractViewSet):
 
             results.append(item)
 
-        result = {"status": "ok", "path": path, "results": results}
-        return Response(ResponseSerializer(result).data)
+        page = serializer.validated_data["page"]
+        page_size = serializer.validated_data["page_size"]
+        api_url = f"{request.build_absolute_uri(location='')}?path={original_path}"
+        page_dict = paginate(results, page_size, page, api_url)
+        previous_url = page_dict["previous_url"]
+        next_url = page_dict["next_url"]
+        results_to_show = page_dict["items"]
+
+        result = {
+            "status": "ok",
+            "path": path,
+            "results": results_to_show,
+            "count": len(results_to_show),
+            "previous": previous_url,
+            "next": next_url,
+        }
+        return Response(PaginatedResponseSerializer(result).data)
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
