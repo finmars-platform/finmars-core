@@ -285,7 +285,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         model_1.refresh_from_db()
         self.assertFalse(model_1.is_default)
 
-    def create_request_with_bad_names(self):
+    def create_request_with_utf8_names(self):
         return {
             "company_name": "Bad names",
             "theme_css_file": SimpleUploadedFile(
@@ -301,8 +301,8 @@ class WhitelabelViewSetTest(BaseTestCase):
                 "зюфьянка 4.png", self.image_content, content_type="image/png"
             ),
         }
-    def test__bad_names(self):
-        request_data = self.create_request_with_bad_names()
+    def test__utf8_names(self):
+        request_data = self.create_request_with_utf8_names()
         response = self.client.post(
             path=self.url,
             data=request_data,

@@ -1,12 +1,12 @@
+import re
 from typing import Optional
+from urllib.parse import quote
 
 from django.core.files.base import File
 from django.core.files.images import get_image_dimensions
 from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
-from  urllib.parse import quote
 
 from poms.common.storage import get_storage
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
@@ -16,6 +16,9 @@ storage = get_storage()
 MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
 MAX_FILENAME_LENGTH = 1024
+
+CHARS_TO_AVOID = r"[&$@=;/:+,?\\{^}%`]><['\"~#|]"
+bad_symbols = re.compile(CHARS_TO_AVOID)
 
 UI_ROOT = ".system/ui/"
 URL_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
@@ -52,6 +55,11 @@ def validate_file_name_utf8(file: File):
     if len(file.name) > MAX_FILENAME_LENGTH:
         raise ValidationError(
             f"Filename '{file.name}' is too long, max length is {MAX_FILENAME_LENGTH}"
+        )
+
+    if bool(bad_symbols.match(file.name)):
+        raise ValidationError(
+            f"Filename '{file.name}' contains invalid symbols: {CHARS_TO_AVOID}"
         )
     return file
 
