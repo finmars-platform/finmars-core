@@ -6,6 +6,8 @@ from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from  urllib.parse import quote
+
 from poms.common.storage import get_storage
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 
@@ -13,6 +15,7 @@ storage = get_storage()
 
 MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
+MAX_FILENAME_LENGTH = 1024
 
 UI_ROOT = ".system/ui/"
 URL_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
@@ -36,7 +39,7 @@ def validate_image_dimensions(image):
     if width < MIN_IMAGE_WIDTH or height < MIN_IMAGE_HEIGHT:
         raise ValidationError(
             f"Image dimensions {width}x{height} are too small. Image must be"
-            f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels."
+            f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels"
         )
 
 
@@ -45,6 +48,11 @@ def validate_file_name_utf8(file: File):
         file.name.encode("utf-8")
     except UnicodeEncodeError as e:
         raise ValidationError("Filename is not a valid UTF-8 string") from e
+
+    if len(file.name) > MAX_FILENAME_LENGTH:
+        raise ValidationError(
+            f"Filename '{file.name}' is too long, max length is {MAX_FILENAME_LENGTH}"
+        )
     return file
 
 
@@ -152,7 +160,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         field: str,
     ):
         storage.save(f"{storage_prefix}{file.name}", file)
-        validated_data[field] = f"{api_prefix}{file.name}"
+        validated_data[field] = f"{api_prefix}{quote(file.name)}"  # urlencoded filename
 
     def create(self, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)

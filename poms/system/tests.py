@@ -2,6 +2,8 @@ from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from  urllib.parse import quote
+
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
 from poms.explorer.utils import is_true_value
@@ -308,6 +310,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, 201)
+
         self.assertEqual(self.storage_mock.save.call_count, 4)
         storage_call_args = self.storage_mock.save.call_args_list[0]
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}theme 1.css")
@@ -317,3 +320,17 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}пыжый 3.png")
         storage_call_args = self.storage_mock.save.call_args_list[3]
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}зюфьянка 4.png")
+
+        response_json = response.json()
+        self.assertEqual(
+            response_json["theme_css_url"], f"{API_PREFIX}{quote('theme 1.css')}"
+        )
+        self.assertEqual(
+            response_json["logo_dark_url"], f"{API_PREFIX}{quote('dark 2.png')}"
+        )
+        self.assertEqual(
+            response_json["logo_light_url"], f"{API_PREFIX}{quote('пыжый 3.png')}"
+        )
+        self.assertEqual(
+            response_json["favicon_url"], f"{API_PREFIX}{quote('зюфьянка 4.png')}"
+        )
