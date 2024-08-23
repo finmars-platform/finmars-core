@@ -40,6 +40,7 @@ EXPECTED_CURRENCY_HISTORY = {
         "model_name": "currencyhistory",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
 }
 
 CREATE_DATA = {

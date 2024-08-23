@@ -228,6 +228,15 @@ EXPECTED_INSTRUMENT = {
         "space_code": "space00000",
     },
     "identifier": {},
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
+    "actual_at": None,
+    "source_type": "manual",
+    "source_origin": None,
+    "external_id": None,
+    "is_manual_locked": False,
+    "is_locked": True,
 }
 
 INSTRUMENT_CREATE_DATA = {
@@ -321,6 +330,9 @@ EXPECTED_INSTRUMENT_TYPE = {
         "model_name": "instrumenttype",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
 }
 
 INSTRUMENT_FOR_SELECT = {
