@@ -14,6 +14,7 @@ from poms.common.serializers import (
     ModelMetaSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
+    ModelWithObjectStateSerializer,
     PomsClassSerializer,
 )
 from poms.common.utils import date_now
@@ -954,6 +955,7 @@ class InstrumentSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 

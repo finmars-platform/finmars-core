@@ -68,6 +68,9 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["created_at"] = serializers.DateTimeField(read_only=True)
+        self.fields["modified_at"] = serializers.DateTimeField(read_only=True)
+        self.fields["deleted_at"] = serializers.DateTimeField(read_only=True)
 
     def validate(self, data):
         if (
@@ -176,14 +179,21 @@ class RealmMigrateSchemeSerializer(serializers.Serializer):
     space_code = serializers.CharField(required=True)
 
 
-class ObjectStateSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = [
-            "is_active",
-            "actual_at",
-            "source_type",
-            "source_origin",
-            "external_id",
-            "is_manual_locked",
-            "is_locked"
-        ]
+class ModelWithObjectStateSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"] = serializers.BooleanField(default=True, required=False)
+        self.fields["actual_at"] = serializers.DateTimeField(allow_null=True, required=False)
+        self.fields["source_type"] = serializers.ChoiceField(choices=("manual", "external"), default="manual", required=False)
+        self.fields["source_origin"] = serializers.CharField(default="manual", required=False)
+        self.fields["external_id"] = serializers.CharField(allow_null=True, required=False)
+        self.fields["is_manual_locked"] = serializers.BooleanField(default=False, required=False)
+        self.fields["is_locked"] = serializers.BooleanField(default=True, required=False)
+
+    def validate(self, data):
+        if data.get("source_type", "manual") == "manual" and (
+                data.get("source_origin") and data["source_origin"] != "manual"
+        ):
+            raise serializers.ValidationError("Object is protected from external changes")
+
+        return data
