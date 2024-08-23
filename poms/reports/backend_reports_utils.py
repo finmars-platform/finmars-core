@@ -92,14 +92,14 @@ class BackendReportHelperService:
                 try:
                     total_value = sum(map(lambda item: item["market_value_percent"], group_items)) or None
                     # None is to raise an exception if sum is 0
-                    result_group["subtotal"]["market_value_percent"] = round(total_value * 100, 2)
+                    result_group["subtotal"]["market_value_percent"] = total_value
                 except Exception as e:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
             if result_group["subtotal"].get("exposure"):
                 try:
                     total_value = sum(map(lambda item: item["exposure_percent"], group_items)) or None
-                    result_group["subtotal"]["exposure_percent"] = round(total_value * 100, 2)
+                    result_group["subtotal"]["exposure_percent"] = total_value
                 except Exception as e:
                     result_group["subtotal"]["exposure_percent"] = "No Data"
 
@@ -756,18 +756,6 @@ class BackendReportHelperService:
 
         return items
 
-    def format_value_percent(self, items, field_name):
-        for item in items:
-            item[field_name] = round(item[field_name] * 100, 2) \
-                if item.get(field_name) else None
-        return items
-
-    def calculate_total_percent(self, items, total_total_value):
-        for item in items:
-            item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
-
-        return items
-
     def paginate_items(self, items, options):
         page_size = options.get("page_size", 40)
 
@@ -836,50 +824,48 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def resolve_subtotal_function(items, column):
-        return BackendReportSubtotalService.sum(items, column)
-        # TODO
         # szhitenev 2023-12-21
         # implement other formulas
-        # if (
-        #     "report_settings" in column
-        #     and "subtotal_formula_id" in column["report_settings"]
-        # ):
+        if (
+            "report_settings" in column
+            and "subtotal_formula_id" in column["report_settings"]
+        ):
 
-            # formula_id = column["report_settings"]["subtotal_formula_id"]
-            # if formula_id == 1:
-            #     return BackendReportSubtotalService.sum(items, column)
-            # elif formula_id == 2:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 3:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 4:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 5:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
-            # elif formula_id == 6:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 7:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 8:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 9:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
+            formula_id = column["report_settings"]["subtotal_formula_id"]
+            if formula_id == 1:
+                return BackendReportSubtotalService.sum(items, column)
+            elif formula_id == 2:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value"
+                )
+            elif formula_id == 3:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 4:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure"
+                )
+            elif formula_id == 5:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure_percent"
+                )
+            elif formula_id == 6:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value"
+                )
+            elif formula_id == 7:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 8:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure"
+                )
+            elif formula_id == 9:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure_percent"
+                )
 
     @staticmethod
     def calculate(items, columns):
