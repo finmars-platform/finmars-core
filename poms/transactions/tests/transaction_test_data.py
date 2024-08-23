@@ -139,6 +139,9 @@ TRANSACTION_TYPE_DICT = {
             "space_code": "space00000",
         },
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
 }
 
 TRANSACTION_TYPE_WITH_INPUTS_DICT = {
@@ -814,4 +817,6 @@ EXPECTED_COMPLEX_TRANSACTION = {
         "model_name": "complextransaction",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
 }

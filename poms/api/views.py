@@ -1081,7 +1081,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
             )
 
         qs = ComplexTransaction.objects.filter(
-            is_deleted=True, modified__gte=date_from, modified__lte=date_to
+            is_deleted=True, modified_at__gte=date_from, modified_at__lte=date_to
         )
 
         if query:
@@ -1140,7 +1140,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         from poms.transactions.models import ComplexTransaction
 
         ids = ComplexTransaction.objects.filter(
-            is_deleted=True, modified__gte=date_from, modified__lte=date_to
+            is_deleted=True, modified_at__gte=date_from, modified_at__lte=date_to
         ).values_list("id", flat=True)
 
         content_type = ContentType.objects.get(
@@ -1305,11 +1305,11 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if "schedule_instance" in filter:
             schedule_instances = ScheduleInstance.objects.filter(
-                created__gte=date_from, created__lte=date_to
+                created_at__gte=date_from, created_at__lte=date_to
             )
             for instance in schedule_instances:
                 item = {
-                    "start": instance.created,
+                    "start": instance.created_at,
                     "classNames": ["user"],
                     "extendedProps": {
                         "type": "schedule_instance",
@@ -1343,11 +1343,11 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if "data_procedure" in filter:
             data_procedure_instances = RequestDataFileProcedureInstance.objects.filter(
-                created__gte=date_from, created__lte=date_to
+                created_at__gte=date_from, created_at__lte=date_to
             )
             for instance in data_procedure_instances:
                 item = {
-                    "start": instance.created,
+                    "start": instance.created_at,
                     "classNames": ["user"],
                     "extendedProps": {
                         "type": "data_procedure",
@@ -1395,12 +1395,12 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if "pricing_procedure" in filter:
             pricing_procedure_instances = PricingProcedureInstance.objects.filter(
-                created__gte=date_from, created__lte=date_to
+                created_at__gte=date_from, created_at__lte=date_to
             )
 
             for instance in pricing_procedure_instances:
                 item = {
-                    "start": instance.created,
+                    "start": instance.created_at,
                     "classNames": ["user"],
                     "extendedProps": {
                         "type": "pricing_procedure",
@@ -1448,12 +1448,12 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if "celery_task" in filter:
             tasks = CeleryTask.objects.filter(
-                created__gte=date_from, created__lte=date_to
+                created_at__gte=date_from, created_at__lte=date_to
             )
 
             for task in tasks:
                 item = {
-                    "start": task.created,
+                    "start": task.created_at,
                     "finished_at": task.finished_at,
                     "classNames": ["user"],
                     "extendedProps": {

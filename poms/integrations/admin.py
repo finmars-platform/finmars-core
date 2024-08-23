@@ -57,7 +57,7 @@ class BloombergDataProviderCredentialAdmin(AbstractModelAdmin):
     model = BloombergDataProviderCredential
     form = BloombergDataProviderCredentialForm
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'created', 'modified', 'is_valid']
+    list_display = ['id', 'master_user', 'created_at', 'modified_at', 'is_valid']
 
 
 admin.site.register(BloombergDataProviderCredential, BloombergDataProviderCredentialAdmin)

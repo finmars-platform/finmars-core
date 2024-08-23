@@ -66,6 +66,9 @@ EXPECTED_RESPONSIBLE = {
         "model_name": "responsible",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
 }
 
 CREATE_DATA = {

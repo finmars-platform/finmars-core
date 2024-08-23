@@ -1,4 +1,5 @@
 from typing import Optional
+from urllib.parse import quote
 
 from django.core.files.base import File
 from django.core.files.images import get_image_dimensions
@@ -13,11 +14,12 @@ storage = get_storage()
 
 MIN_IMAGE_WIDTH = 100
 MIN_IMAGE_HEIGHT = 100
+MAX_FILENAME_LENGTH = 1024
 
-STORAGE_ROOT = ".system/ui/"
-COMMON_PREFIX = (
-    f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{STORAGE_ROOT}"
-)
+CHARS_TO_AVOID = "&$@=;/:+,?\\{^}%`]><['\"~#|"
+
+UI_ROOT = ".system/ui/"
+URL_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
 
 
 class EcosystemConfigurationSerializer(serializers.ModelSerializer):
@@ -33,13 +35,36 @@ class EcosystemConfigurationSerializer(serializers.ModelSerializer):
         ]
 
 
-def validate_image_dimensions(value):
-    width, height = get_image_dimensions(value)
+def validate_image_dimensions(image):
+    width, height = get_image_dimensions(image)
     if width < MIN_IMAGE_WIDTH or height < MIN_IMAGE_HEIGHT:
         raise ValidationError(
             f"Image dimensions {width}x{height} are too small. Image must be"
-            f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels."
+            f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels"
         )
+
+def has_bad_symbols(file_name: str) -> bool:
+    return any(c in CHARS_TO_AVOID for c in file_name)
+
+
+def validate_file_name(file: File):
+    file_name = file.name
+    try:
+        file_name.encode("utf-8")
+    except UnicodeEncodeError as e:
+        raise ValidationError("Filename is not a valid UTF-8 string") from e
+
+    if len(file_name) > MAX_FILENAME_LENGTH:
+        raise ValidationError(
+            f"Filename '{file_name}' is too long, max length is {MAX_FILENAME_LENGTH}"
+        )
+
+    if has_bad_symbols(file_name):
+        raise ValidationError(
+            f"Filename '{file_name}' contains invalid symbols: {CHARS_TO_AVOID}"
+        )
+
+    return file
 
 
 class WhitelabelSerializer(serializers.ModelSerializer):
@@ -50,12 +75,16 @@ class WhitelabelSerializer(serializers.ModelSerializer):
     #
     theme_css_file = serializers.FileField(
         required=False,
-        validators=[FileExtensionValidator(["css"])],
+        validators=[
+            FileExtensionValidator(["css"]),
+            validate_file_name,
+        ],
     )
     logo_dark_image = serializers.ImageField(
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
@@ -63,6 +92,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
@@ -70,6 +100,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             FileExtensionValidator(["png", "jpg", "jpeg"]),
+            validate_file_name,
             validate_image_dimensions,
         ],
     )
@@ -93,12 +124,12 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             "favicon_image",
         ]
 
-    def change_files_to_urls(self, data: dict) -> dict:
+    def change_files_to_urls(self, validated_data: dict) -> dict:
         """
         Change files to URLs in the validated data. Files will be saved, and their URLs
         in the Django storage will be inserted in the validated data.
         Args:
-            data (dict): The validated data containing
+            validated_data (dict): The validated data containing
             the files to be converted to URLs.
         Returns:
             dict: The updated validated data with URLs.
@@ -108,43 +139,45 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             - The function assumes that the storage module has a save method
               that takes in a file path and a file object.
         """
-        prefix = COMMON_PREFIX.format(
+        api_prefix = URL_PREFIX.format(
             host_url=self.context["host_url"],
             realm_code=self.context["realm_code"],
             space_code=self.context["space_code"],
         )
+        storage_prefix = f"{self.context['space_code']}/{UI_ROOT}"
 
-        theme_css_file: Optional[File] = data.pop("theme_css_file", None)
-        if theme_css_file:
-            self.save_to_storage(prefix, theme_css_file, data, "theme_css_url")
+        params_fields = [
+            ("theme_css_file", "theme_css_url"),
+            ("logo_dark_image", "logo_dark_url"),
+            ("logo_light_image", "logo_light_url"),
+            ("favicon_image", "favicon_url"),
+        ]
 
-        logo_dark_image: Optional[File] = data.pop("logo_dark_image", None)
-        if logo_dark_image:
-            self.save_to_storage(prefix, logo_dark_image, data, "logo_dark_url")
+        for param_name, model_field in params_fields:
+            file: Optional[File] = validated_data.pop(param_name, None)
+            if file:
+                self.save_to_storage(
+                    api_prefix, storage_prefix, validated_data, file, model_field
+                )
 
-        logo_light_image: Optional[File] = data.pop("logo_light_image", None)
-        if logo_light_image:
-            self.save_to_storage(prefix, logo_light_image, data, "logo_light_url")
-
-        favicon_image: Optional[File] = data.pop("favicon_image", None)
-        if favicon_image:
-            self.save_to_storage(prefix, favicon_image, data, "favicon_url")
-
-        return data
+        return validated_data
 
     @staticmethod
-    def save_to_storage(prefix: str, file: File, data: dict, field: str):
-        file_path = f"{prefix}{file.name}"
-        storage.save(file_path, file)
-        data[field] = file_path
+    def save_to_storage(
+        api_prefix: str,
+        storage_prefix: str,
+        validated_data: dict,
+        file: File,
+        field: str,
+    ):
+        storage.save(f"{storage_prefix}{file.name}", file)
+        validated_data[field] = f"{api_prefix}{quote(file.name)}"  # urlencoded filename
 
-    def create(self, validated_data: dict) -> WhitelabelModel:
+    def create(self, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
         return WhitelabelModel.objects.create(**validated_data)
 
-    def update(
-        self, instance: WhitelabelModel, validated_data: dict
-    ) -> WhitelabelModel:
+    def update(self, instance: WhitelabelModel, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
         return super().update(instance, validated_data)
 

@@ -35,10 +35,10 @@ class ErrorRecord(models.Model):
         blank=True,
         verbose_name=gettext_lazy("details data"),
     )
-    created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     @property
     def details(self):

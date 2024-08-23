@@ -11,7 +11,7 @@ from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy
 
 from poms.common.exceptions import FinmarsBaseException
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
+from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
 from poms.common.utils import date_now
 from poms.currencies.constants import MAIN_CURRENCIES
 from poms.obj_attrs.models import GenericAttribute
@@ -34,7 +34,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class Currency(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     Entity for Currency itself, e.g. USD, EUR, CHF
     Used in Transactions, in Reports, in Pricing,
@@ -139,7 +139,7 @@ class Currency(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             return super().fake_delete()
 
 
-class CurrencyPricingPolicy(DataTimeStampedModel):
+class CurrencyPricingPolicy(TimeStampedModel):
     pricing_policy = models.ForeignKey("instruments.PricingPolicy", on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name="pricing_policies")
     target_pricing_schema_user_code = models.CharField(
@@ -177,7 +177,7 @@ class CurrencyHistoryManager(models.Manager):
         return history.fx_rate
 
 
-class CurrencyHistory(DataTimeStampedModel):
+class CurrencyHistory(TimeStampedModel):
     """
     FX rate of Currencies for specific date
     Finmars is not bound to USD as base currency (Base Currency could be set in poms.users.EcosystemDefault)
@@ -235,9 +235,6 @@ class CurrencyHistory(DataTimeStampedModel):
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
-
-        if not self.created:
-            self.created = date_now()
 
         super(CurrencyHistory, self).save(*args, **kwargs)
 

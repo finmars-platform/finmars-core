@@ -9,8 +9,9 @@ from poms.explorer.utils import (
     join_path,
     last_dir_name,
     move_dir,
+    update_or_create_file_and_parents,
 )
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, FinmarsFile
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -159,3 +160,69 @@ class DeleteFilesTest(BaseTestCase):
         delete_all_file_objects()
 
         self.assertEqual(FinmarsFile.objects.count(), 0)
+
+
+class CreateUpdateFileParentsTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.space = "space00000"
+
+    def test__one_dir(self):
+        size = self.random_int(0, 1000)
+        update_or_create_file_and_parents(f"{self.space}/d1/file.txt", size)
+
+        self.assertEqual(FinmarsFile.objects.count(), 1)
+        file = FinmarsFile.objects.first()
+        self.assertEqual(file.path, f"{self.space}/d1/file.txt")
+        self.assertEqual(file.size, size)
+
+        self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
+        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
+        self.assertEqual(directory.size, 0)
+        self.assertEqual(directory.parent.path, f"{self.space}{DIR_SUFFIX}")
+
+        self.assertEqual(file.parent, directory)
+
+    def test__two_dir(self):
+        size = self.random_int(0, 1000)
+        update_or_create_file_and_parents(f"{self.space}/d1/d2/file.txt", size)
+
+        self.assertEqual(FinmarsFile.objects.count(), 1)
+        file = FinmarsFile.objects.first()
+        self.assertEqual(file.path, f"{self.space}/d1/d2/file.txt")
+        self.assertEqual(file.size, size)
+
+        self.assertEqual(FinmarsDirectory.objects.count(), 3)  # root + d1 + d2
+        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(directory.path, f"{self.space}/d1/d2{DIR_SUFFIX}")
+        self.assertEqual(directory.size, 0)
+        self.assertEqual(directory.parent.path, f"{self.space}/d1{DIR_SUFFIX}")
+
+        self.assertEqual(file.parent, directory)
+
+    def test__no_dir(self):
+        with self.assertRaises(RuntimeError):
+            update_or_create_file_and_parents("file.txt", 11111)
+
+    def test__empty_path(self):
+        with self.assertRaises(RuntimeError):
+            update_or_create_file_and_parents("", 0)
+
+    def test__first_slash_one_dir(self):
+        size = self.random_int(0, 1000)
+        update_or_create_file_and_parents(f"/{self.space}/d1/file.txt", size)
+
+        self.assertEqual(FinmarsFile.objects.count(), 1)
+        file = FinmarsFile.objects.first()
+        self.assertEqual(file.path, f"{self.space}/d1/file.txt")
+        self.assertEqual(file.size, size)
+
+        self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
+        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
+        self.assertEqual(directory.size, 0)
+        self.assertEqual(directory.parent.path, f"{self.space}{DIR_SUFFIX}")
+
+        self.assertEqual(file.parent, directory)

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.models import EXPRESSION_FIELD_LENGTH, TimeStampedModel, NamedModel
 from poms.common.utils import get_last_business_day
 from poms.configuration.models import ConfigurationModel
 from poms.instruments.models import CostMethod, PricingPolicy
@@ -967,7 +967,7 @@ class TransactionReport(models.Model):
         ]
 
 
-class BalanceReportInstance(DataTimeStampedModel, NamedModel):
+class BalanceReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1030,7 +1030,7 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
             BalanceReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class PLReportInstance(DataTimeStampedModel, NamedModel):
+class PLReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1095,7 +1095,7 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
             PLReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class TransactionReportInstance(DataTimeStampedModel, NamedModel):
+class TransactionReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1144,7 +1144,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
             TransactionReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
+class PerformanceReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1933,7 +1933,7 @@ class ReportInstanceModel:
         self.master_user = kwargs["master_user"]
 
 
-class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
+class ReportSummaryInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),

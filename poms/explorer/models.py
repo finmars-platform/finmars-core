@@ -5,18 +5,23 @@ from django.db import models
 
 from mptt.models import MPTTModel, TreeForeignKey
 
-from poms.common.models import DataTimeStampedModel
+from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
 from poms.users.models import Member
-
 
 MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
 DIR_SUFFIX = "/*"
-ROOT_PATH = DIR_SUFFIX
+
+
+def get_root_path():
+    from poms.users.models import MasterUser
+
+    space_code = MasterUser.objects.first().space_code or "space00000"
+    return f"{space_code}{DIR_SUFFIX}"
 
 
 class AccessLevel:
@@ -26,7 +31,9 @@ class AccessLevel:
     @classmethod
     def validate_level(cls, access: str):
         if access not in {cls.READ, cls.WRITE}:
-            raise ValueError(f"AccessLevel must be either '{cls.READ}' or '{cls.WRITE}'")
+            raise ValueError(
+                f"AccessLevel must be either '{cls.READ}' or '{cls.WRITE}'"
+            )
 
 
 class ObjMixin:
@@ -51,7 +58,7 @@ class ObjMixin:
         return path.suffix
 
 
-class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
+class FinmarsDirectory(MPTTModel, ObjMixin, TimeStampedModel):
     """
     Model represents a directory in the Finmars storage (File system, AWS, Azure...).
     """
@@ -82,7 +89,7 @@ class FinmarsDirectory(MPTTModel, ObjMixin, DataTimeStampedModel):
         return 0
 
 
-class FinmarsFile(ObjMixin, DataTimeStampedModel):
+class FinmarsFile(ObjMixin, TimeStampedModel):
     """
     Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """

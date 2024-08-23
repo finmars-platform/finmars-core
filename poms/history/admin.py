@@ -12,12 +12,12 @@ from poms.history.models import HistoricalRecord
 
 class HistoricalRecordAdmin(AbstractModelAdmin):
     model = HistoricalRecord
-    list_display = ['id', 'created', 'member', 'action', 'user_code', 'content_type', 'notes']
+    list_display = ['id', 'created_at', 'member', 'action', 'user_code', 'content_type', 'notes']
     list_select_related = ['master_user', 'content_type']
-    search_fields = ['id', 'created', 'user_code', 'content_type']
+    search_fields = ['id', 'created_at', 'user_code', 'content_type']
     raw_id_fields = ['master_user', 'member', 'content_type']
 
-    readonly_fields = ['id', 'master_user', 'member', 'created', 'user_code', 'content_type', 'data_pretty']
+    readonly_fields = ['id', 'master_user', 'member', 'created_at', 'user_code', 'content_type', 'data_pretty']
     exclude = ['json_data']
 
     def data_pretty(self, instance):

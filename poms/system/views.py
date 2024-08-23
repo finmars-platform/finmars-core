@@ -1,13 +1,15 @@
 from logging import getLogger
 
+from django.conf import settings
 from django_filters.rest_framework import FilterSet
+from rest_framework.exceptions import ValidationError
 
 from poms.common.views import AbstractModelViewSet
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 from poms.system.serializers import (
     EcosystemConfigurationSerializer,
-    WhitelabelSerializer,
     WhitelabelListSerializer,
+    WhitelabelSerializer,
 )
 
 _l = getLogger("poms.system")
@@ -34,8 +36,8 @@ class IsDefaultFilterSet(FilterSet):
 class WhitelabelViewSet(AbstractModelViewSet):
     queryset = WhitelabelModel.objects
     serializer_class = WhitelabelSerializer
-    filter_class = IsDefaultFilterSet
     pagination_class = None
+    filter_class = IsDefaultFilterSet
 
     def get_serializer_context(self, *args, **kwargs):
         context = super().get_serializer_context()
@@ -43,7 +45,7 @@ class WhitelabelViewSet(AbstractModelViewSet):
             {
                 "realm_code": self.request.realm_code,
                 "space_code": self.request.space_code,
-                "host_url": self.request.get_host().split(":")[0],
+                "host_url": settings.DOMAIN_NAME,
             }
         )
         return context
@@ -58,3 +60,10 @@ class WhitelabelViewSet(AbstractModelViewSet):
         serializer_class = self.get_serializer_class()
         kwargs["context"] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.is_default:
+            raise ValidationError("Can't delete default whitelabel")
+
+        return super().destroy(request, *args, **kwargs)

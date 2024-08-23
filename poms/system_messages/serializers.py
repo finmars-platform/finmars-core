@@ -40,8 +40,8 @@ class SystemMessageCommentSerializer(serializers.ModelSerializer):
             "member",
             "member_object",
             "comment",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
         )
 
     def get_member_object(self, instance):
@@ -63,10 +63,9 @@ class SystemMessageSerializer(serializers.ModelSerializer):
             "action_status",
             "title",
             "description",
-            "created",
+            "created_at",
             "linked_event",
             "performed_by",
-            "created",
             "comments",
             "attachments",
         )

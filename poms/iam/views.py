@@ -77,7 +77,12 @@ class RoleViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = ["id", "name", "user_code", "created"]
+    ordering_fields = [
+        'id',
+        'name',
+        'user_code',
+        'created_at'
+    ]
 
 
 class GroupFilterSet(FilterSet):
@@ -102,7 +107,12 @@ class GroupViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = ["id", "name", "user_code", "created"]
+    ordering_fields = [
+        'id',
+        'name',
+        'user_code',
+        'created_at'
+    ]
 
 
 class AccessPolicyFilterSet(FilterSet):
@@ -127,8 +137,8 @@ class AccessPolicyViewSet(ModelViewSet):
     swagger_schema = CustomSwaggerAutoSchema
 
     ordering_fields = [
-        "id",
-        "name",
-        "user_code",
-        "created",
+        'id',
+        'name',
+        'user_code',
+        'created_at'
     ]

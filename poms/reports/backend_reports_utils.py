@@ -92,14 +92,14 @@ class BackendReportHelperService:
                 try:
                     total_value = sum(map(lambda item: item["market_value_percent"], group_items)) or None
                     # None is to raise an exception if sum is 0
-                    result_group["subtotal"]["market_value_percent"] = round(total_value * 100, 2)
+                    result_group["subtotal"]["market_value_percent"] = total_value
                 except Exception as e:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
 
             if result_group["subtotal"].get("exposure"):
                 try:
                     total_value = sum(map(lambda item: item["exposure_percent"], group_items)) or None
-                    result_group["subtotal"]["exposure_percent"] = round(total_value * 100, 2)
+                    result_group["subtotal"]["exposure_percent"] = total_value
                 except Exception as e:
                     result_group["subtotal"]["exposure_percent"] = "No Data"
 
@@ -265,6 +265,80 @@ class BackendReportHelperService:
                 flattened_item["currency.country.short_name"] = flattened_item[
                     "instrument.country.short_name"
                 ]
+
+            if item["item_type"] == 3:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "FX Variations"
+
+
+                flattened_item["instrument.country.name"] = 'FX Variations'
+                flattened_item["instrument.country.user_code"] = 'FX Variations'
+                flattened_item["instrument.country.short_name"] = 'FX Variations'
+
+                flattened_item['instrument.instrument_type.name'] = 'FX Variations'
+                flattened_item['instrument.instrument_type.user_code'] = 'FX Variations'
+                flattened_item['instrument.instrument_type.short_name'] = 'FX Variations'
+
+                flattened_item["currency.country.name"] = 'FX Variations'
+                flattened_item["currency.country.user_code"] = 'FX Variations'
+                flattened_item["currency.country.short_name"] = 'FX Variations'
+
+
+            if item["item_type"] == 4:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "FX Trades"
+
+                flattened_item["instrument.country.name"] = 'FX Trades'
+                flattened_item["instrument.country.user_code"] = 'FX Trades'
+                flattened_item["instrument.country.short_name"] = 'FX Trades'
+
+                flattened_item['instrument.instrument_type.name'] = 'FX Trades'
+                flattened_item['instrument.instrument_type.user_code'] = 'FX Trades'
+                flattened_item['instrument.instrument_type.short_name'] = 'FX Trades'
+
+                flattened_item["currency.country.name"] = 'FX Trades'
+                flattened_item["currency.country.user_code"] = 'FX Trades'
+                flattened_item["currency.country.short_name"] = 'FX Trades'
+
+            if item["item_type"] == 5:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "Other"
+
+                flattened_item["instrument.country.name"] = 'Other'
+                flattened_item["instrument.country.user_code"] = 'Other'
+                flattened_item["instrument.country.short_name"] = 'Other'
+
+                flattened_item['instrument.instrument_type.name'] = 'Other'
+                flattened_item['instrument.instrument_type.user_code'] = 'Other'
+                flattened_item['instrument.instrument_type.short_name'] = 'Other'
+
+                flattened_item["currency.country.name"] = 'Other'
+                flattened_item["currency.country.user_code"] = 'Other'
+                flattened_item["currency.country.short_name"] = 'Other'
+
+            if item["item_type"] == 6:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[
+                        f"instrument.attributes.{attribute_type.user_code}"
+                    ] = "Mismatch"
+
+                flattened_item["instrument.country.name"] = 'Mismatch'
+                flattened_item["instrument.country.user_code"] = 'Mismatch'
+                flattened_item["instrument.country.short_name"] = 'Mismatch'
+
+                flattened_item['instrument.instrument_type.name'] = 'Mismatch'
+                flattened_item['instrument.instrument_type.user_code'] = 'Mismatch'
+                flattened_item['instrument.instrument_type.short_name'] = 'Mismatch'
+
+                flattened_item["currency.country.name"] = 'Mismatch'
+                flattened_item["currency.country.user_code"] = 'Mismatch'
+                flattened_item["currency.country.short_name"] = 'Mismatch'
 
         return flattened_item
 
@@ -682,18 +756,6 @@ class BackendReportHelperService:
 
         return items
 
-    def format_value_percent(self, items, field_name):
-        for item in items:
-            item[field_name] = round(item[field_name] * 100, 2) \
-                if item.get(field_name) else None
-        return items
-
-    def calculate_total_percent(self, items, total_total_value):
-        for item in items:
-            item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
-
-        return items
-
     def paginate_items(self, items, options):
         page_size = options.get("page_size", 40)
 
@@ -762,50 +824,48 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def resolve_subtotal_function(items, column):
-        return BackendReportSubtotalService.sum(items, column)
-        # TODO
         # szhitenev 2023-12-21
         # implement other formulas
-        # if (
-        #     "report_settings" in column
-        #     and "subtotal_formula_id" in column["report_settings"]
-        # ):
+        if (
+            "report_settings" in column
+            and "subtotal_formula_id" in column["report_settings"]
+        ):
 
-            # formula_id = column["report_settings"]["subtotal_formula_id"]
-            # if formula_id == 1:
-            #     return BackendReportSubtotalService.sum(items, column)
-            # elif formula_id == 2:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 3:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 4:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 5:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
-            # elif formula_id == 6:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 7:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 8:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 9:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
+            formula_id = column["report_settings"]["subtotal_formula_id"]
+            if formula_id == 1:
+                return BackendReportSubtotalService.sum(items, column)
+            elif formula_id == 2:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value"
+                )
+            elif formula_id == 3:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 4:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure"
+                )
+            elif formula_id == 5:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure_percent"
+                )
+            elif formula_id == 6:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value"
+                )
+            elif formula_id == 7:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 8:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure"
+                )
+            elif formula_id == 9:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure_percent"
+                )
 
     @staticmethod
     def calculate(items, columns):

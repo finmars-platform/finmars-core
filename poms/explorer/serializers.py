@@ -2,6 +2,7 @@ import mimetypes
 import os.path
 import re
 
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -49,7 +50,17 @@ class DirectoryPathSerializer(BasePathSerializer):
         required=False,
         allow_blank=True,
         allow_null=True,
-        default="/*",
+        default=DIR_SUFFIX,
+    )
+    page = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        default=1,
+    )
+    page_size = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        default=settings.REST_FRAMEWORK.get("PAGE_SIZE", 40),
     )
 
 
@@ -147,6 +158,11 @@ class ResponseSerializer(serializers.Serializer):
         child=serializers.DictField(),
     )
 
+class PaginatedResponseSerializer(ResponseSerializer):
+    previous = serializers.CharField(required=False)
+    next = serializers.CharField(required=False)
+    count = serializers.IntegerField(required=False)
+
 
 class TaskResponseSerializer(serializers.Serializer):
     status = serializers.CharField(required=True)
@@ -200,8 +216,8 @@ class SearchResultSerializer(serializers.ModelSerializer):
             "type": "file",
             "mime_type": mime_type,
             "name": name,
-            "created": instance.created,
-            "modified": instance.modified,
+            "created_at": instance.created_at,
+            "modified_at": instance.modified_at,
             "file_path": instance.path,
             "size": size,
             "size_pretty": pretty_size(size),
@@ -234,8 +250,8 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
             "size",
             "name",
             "extension",
-            "created",
-            "modified",
+            "created_at",
+            "modified_at",
             "instruments",
         ]
 

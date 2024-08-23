@@ -14,8 +14,8 @@ class CeleryTaskAdmin(admin.ModelAdmin):
         "type",
         "celery_task_id",
         "parent",
-        "created",
-        "modified",
+        "created_at",
+        "modified_at",
     ]
     search_fields = [
         "id",

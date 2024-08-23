@@ -350,7 +350,7 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )
@@ -411,7 +411,7 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroyModelMixinExt):
             return Response(
                 {
                     "id": layout.id,
-                    "modified": layout.modified,
+                    "modified_at": layout.modified_at,
                     "is_default": layout.is_default,
                 }
             )
@@ -458,7 +458,7 @@ class DashboardLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )
@@ -501,7 +501,7 @@ class MobileLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )
@@ -534,7 +534,7 @@ class MemberLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )
@@ -566,7 +566,7 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )
@@ -603,7 +603,7 @@ class EditLayoutViewSet(AbstractModelViewSet):
         return Response(
             {
                 "id": layout.id,
-                "modified": layout.modified,
+                "modified_at": layout.modified_at,
                 "is_default": layout.is_default,
             }
         )

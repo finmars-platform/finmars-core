@@ -5,7 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.models import EXPRESSION_FIELD_LENGTH, TimeStampedModel, NamedModel
 from poms.common.utils import date_now
 from poms.configuration.models import ConfigurationModel
 from poms.integrations.models import DataProvider
@@ -15,7 +15,7 @@ from poms.users.models import Member
 _l = logging.getLogger("poms.procedures")
 
 
-class BaseProcedure(NamedModel, DataTimeStampedModel, ConfigurationModel):
+class BaseProcedure(NamedModel, TimeStampedModel, ConfigurationModel):
     master_user = models.ForeignKey(
         "users.MasterUser",
         verbose_name=gettext_lazy("master user"),
@@ -34,7 +34,7 @@ class BaseProcedure(NamedModel, DataTimeStampedModel, ConfigurationModel):
         ordering = ["user_code"]
 
 
-class BaseProcedureInstance(DataTimeStampedModel):
+class BaseProcedureInstance(TimeStampedModel):
     STATUS_INIT = "I"
     STATUS_PENDING = "P"
     STATUS_DONE = "D"
@@ -331,12 +331,7 @@ class PricingProcedure(BaseProcedure):
         return self.name
 
 
-class PricingParentProcedureInstance(models.Model):
-    created = models.DateTimeField(
-        auto_now_add=True, editable=False, db_index=True, verbose_name="created"
-    )
-    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
-
+class PricingParentProcedureInstance(TimeStampedModel):
     master_user = models.ForeignKey(
         "users.MasterUser",
         verbose_name=gettext_lazy("master user"),
@@ -350,7 +345,7 @@ class PricingParentProcedureInstance(models.Model):
     )
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.procedure.user_code} [{str(self.id)}]"
@@ -543,7 +538,7 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
     )
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     @property
     def request_data(self):
