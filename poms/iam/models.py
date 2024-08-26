@@ -61,7 +61,7 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
         verbose_name=gettext_lazy("Resource Group"),
     )
 
-    objects = AccessPoliceManager()
+    # objects = AccessPoliceManager()
 
     class Meta:
         verbose_name = gettext_lazy("Access Policy Template")
