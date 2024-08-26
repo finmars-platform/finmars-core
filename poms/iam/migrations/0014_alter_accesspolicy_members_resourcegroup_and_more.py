@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("users", "0013_remove_ecosystemdefault_currency_pricing_scheme_and_more"),
-        ("iam", "0012_accesspolicy_created_accesspolicy_modified_and_more"),
+        ("iam", "0013_remove_accesspolicy_created_and_more"),
     ]
 
     operations = [
