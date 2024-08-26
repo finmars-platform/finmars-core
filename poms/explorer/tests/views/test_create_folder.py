@@ -2,7 +2,7 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import get_root_path, AccessLevel, FinmarsDirectory
+from poms.explorer.models import AccessLevel, FinmarsDirectory, get_root_path
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -32,8 +32,8 @@ class ExplorerCreateFolderViewTest(CreateUserMemberMixin, BaseTestCase):
     @BaseTestCase.cases(
         ("1_test_test", "test/test"),
         ("2_test_test", "/test/test"),
-        ("2_test_test", "/test/test/"),
-        ("2_test_test", "test/test/"),
+        ("3_test_test", "/test/test/"),
+        ("4_test_test", "test/test/"),
     )
     def test__create_folder_path(self, path):
         response = self.client.post(self.url, {"path": path})
@@ -43,6 +43,10 @@ class ExplorerCreateFolderViewTest(CreateUserMemberMixin, BaseTestCase):
 
         response_data = response.json()
         self.assertEqual(response_data["path"], f"{self.space_code}/test/test/")
+        self.storage_mock.save.assert_called_with(
+            f"{self.space_code}/test/test/.init",
+            mock.ANY,
+        )
 
     def test__no_permission(self):
         user, member = self.create_user_member()

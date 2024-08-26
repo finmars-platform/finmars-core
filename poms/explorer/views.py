@@ -2,7 +2,6 @@ import json
 import logging
 import mimetypes
 import os
-from tempfile import NamedTemporaryFile
 
 from django.core.files.base import ContentFile
 from django.db.models import Q
@@ -32,6 +31,7 @@ from poms.explorer.explorer_permission import (
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
     AccessPolicySerializer,
+    BasePathSerializer,
     DeletePathSerializer,
     DirectoryPathSerializer,
     FilePathSerializer,
@@ -329,11 +329,11 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + [
         ExplorerRootWritePermission,
     ]
-    serializer_class = FilePathSerializer
+    serializer_class = BasePathSerializer
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer(),
+        request_body=BasePathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -348,12 +348,10 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         # TODO validate path that either public/import/system or user home directory
 
         try:
-            with NamedTemporaryFile(delete=False) as tmpf:
-                tmpf.write(b"init")
-                tmpf.flush()
-
-            with open(tmpf.name, "rb") as tmpf_read:
-                storage.save(path, ContentFile(tmpf_read.read()))
+            # to create folder we have to create system .init file
+            init_file_storage_path = f"{path}.init"
+            init_file = ContentFile(b"init", name=".init")
+            storage.save(init_file_storage_path, init_file)
 
         except Exception as e:
             _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
