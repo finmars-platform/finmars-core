@@ -6,28 +6,6 @@ from poms.configuration.models import ConfigurationModel
 from poms.users.models import MasterUser, Member
 
 
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("created at"),
-    )
-    modified_at = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("modified at"),
-    )
-
-    class Meta:
-        abstract = True
-        get_latest_by = "modified_at"
-        ordering = [
-            "created_at",
-        ]
-
-
 class AccessPolicy(ConfigurationModel, TimeStampedModel):
     name = models.CharField(
         max_length=255,

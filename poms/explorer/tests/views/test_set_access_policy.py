@@ -22,6 +22,7 @@ expected_response = {
     },
     "owner": 2,
     "members": [],
+    "resource_group": None,
     "meta": {
         "execution_time": 10,
         "request_id": "33e86689-5ed9-4422-908e-9cd45a008451",
@@ -31,6 +32,7 @@ expected_response = {
 
 class FinmarsFileViewSetTest(BaseTestCase):
     databases = "__all__"
+    maxDiff = None
 
     def setUp(self):
         super().setUp()
@@ -60,7 +62,9 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), expected_response.keys())
+        self.assertEqual(
+            response_json.keys(), expected_response.keys(), response_json.keys()
+        )
         expected_user_code = (
             f"local.poms.space00000:finmars:explorer:{self.filepath}-{access}"
         )
@@ -91,7 +95,9 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), expected_response.keys())
+        self.assertEqual(
+            response_json.keys(), expected_response.keys(), response_json.keys()
+        )
         expected_user_code = (
             f"local.poms.space00000:finmars:explorer:{self.dirpath}-{access}"
         )
