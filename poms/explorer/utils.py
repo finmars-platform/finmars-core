@@ -445,3 +445,62 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
         "previous_url": previous_page_url,
         "next_url": next_page_url,
     }
+
+
+def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
+    """
+    Rename a file from the source path to the destination path within the storage.
+
+    Args:
+        storage (Storage): The storage instance to use.
+        source_file_path (str): The path of the source file.
+        destin_file_path (str): The path of the destination file.
+    Returns:
+        None
+    """
+    file_name = os.path.basename(destin_file_path)
+    _l.info(
+        f"rename_file: rename {source_file_path} to {destin_file_path}"
+    )
+
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"rename_file: with content len={len(content)} "
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    _l.info(f"rename_file: content saved to {destin_file_path}")
+
+    storage.delete(source_file_path)
+    _l.info(f"rename_file: source file {source_file_path} deleted")
+
+
+def rename_dir(
+    storage: FinmarsS3Storage,
+    source_dir: str,
+    destin_dir: str,
+):
+    """
+    Rename a directory recursively within the storage and update the celery task progress.
+    Empty directories will not be moved/created in the storage!
+    Args:
+        storage (Storage): The storage instance to use.
+        source_dir (str): The path of the source directory.
+        destin_dir (str): The path of the destination directory.
+    Returns:
+        None
+    """
+    _l.info(f"rename_dir: move content of directory '{source_dir}' to '{destin_dir}'")
+
+    dirs, files = storage.listdir(source_dir)
+
+    for dir_name in dirs:
+        s_dir = os.path.join(source_dir, dir_name)
+        d_dir = os.path.join(destin_dir, dir_name)
+        rename_dir(storage, s_dir, d_dir)
+
+    for file_name in files:
+        s_file = os.path.join(source_dir, file_name)
+        d_file = os.path.join(destin_dir, file_name)
+        rename_file(storage, s_file, d_file)
