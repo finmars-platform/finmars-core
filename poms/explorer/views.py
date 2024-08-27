@@ -44,11 +44,13 @@ from poms.explorer.serializers import (
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
+    RenameSerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
     sync_storage_with_database,
     unzip_file_in_storage,
+    rename_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
@@ -670,5 +672,52 @@ class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
 
         return Response(
             AccessPolicySerializer(access_policy).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class RenameViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = RenameSerializer
+    http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
+    ]
+
+    @swagger_auto_schema(
+        request_body=RenameSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Rename directory in storage",
+            type="rename_directory_in_storage",
+            options_object=serializer.validated_data,
+        )
+
+        rename_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
             status=status.HTTP_200_OK,
         )

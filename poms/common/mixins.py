@@ -1,4 +1,5 @@
 import logging
+import itertools
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist, ValidationError, ObjectDoesNotExist, PermissionDenied
@@ -96,7 +97,15 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
 
         collector = FinmarsNestedObjects(instance)
         collector.collect([instance])
-        collector.collect(list(collector.protected))
+
+        # need to sort items by class name because collect() gets model name from 1st list item
+        protected = sorted(list(collector.protected), key=lambda instance: str(instance.__class__))
+        protected_groups = [list(items_group) for _, items_group in itertools.groupby(
+            protected,
+            lambda item: str(item.__class__)
+        )]
+        for protected_items in protected_groups:
+            collector.collect(protected_items)
 
         results = collector.nested()
         model_count = {

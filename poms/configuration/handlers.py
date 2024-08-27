@@ -525,6 +525,30 @@ def export_configuration_to_directory(
             context,
         )
 
+        save_serialized_entity_layout(
+            "ui.listlayout",
+            configuration.configuration_code,
+            "portfolios.portfoliotype",
+            source_directory + "/ui/layouts/portfolio-type",
+            context,
+        )
+        
+        save_serialized_entity_layout(
+            "ui.listlayout",
+            configuration.configuration_code,
+            "portfolios.portfolioreconcilegroup",
+            source_directory + "/ui/layouts/portfolio-reconcile-group",
+            context,
+        )
+        
+        save_serialized_entity_layout(
+            "ui.listlayout",
+            configuration.configuration_code,
+            "portfolios.portfolioreconcilehistory",
+            source_directory + "/ui/layouts/portfolio-reconcile-history",
+            context,
+        )
+
         # Form Layouts
 
         save_serialized_entity_layout(
