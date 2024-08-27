@@ -16,99 +16,199 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='configurationexportlayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='configurationexportlayout',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='configurationexportlayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='contextmenulayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='contextmenulayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='contextmenulayout',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='contextmenulayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='dashboardlayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='dashboardlayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='dashboardlayout',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='dashboardlayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='draft',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='draft',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='draft',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='draft',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='editlayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='editlayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='editlayout',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='editlayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='instrumentuserfield',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='instrumentuserfield',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='instrumentuserfield',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='instrumentuserfield',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='listlayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='listlayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='listlayout',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='listlayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='memberlayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='memberlayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='memberlayout',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='memberlayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='mobilelayout',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='mobilelayout',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='mobilelayout',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='mobilelayout',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='transactionuserfield',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='transactionuserfield',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='transactionuserfield',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='transactionuserfield',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]
