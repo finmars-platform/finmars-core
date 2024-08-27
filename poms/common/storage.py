@@ -534,6 +534,13 @@ class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
             return False
 
 
+    def exists(self, path: str) -> bool:
+        if path.endswith("/"):
+            return self.dir_exists(path)
+
+        return super().exists(path)
+
+
 class FinmarsLocalFileSystemStorage(FinmarsStorageFileObjMixin, FileSystemStorage):
     def path(self, name):
         if name[0] == "/":

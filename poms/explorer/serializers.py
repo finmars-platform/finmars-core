@@ -338,3 +338,31 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         access = self.validated_data["access"]
         member = self.validated_data["username"]
         return get_or_create_storage_access_policy(storage_object, member, access)
+
+
+class RenameSerializer(serializers.Serializer):
+    path = serializers.CharField(required=True, allow_blank=False)
+    new_name = serializers.CharField(required=True, allow_blank=False)
+
+    def validate(self, attrs):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+        path = attrs["path"].strip("/")
+  
+        if path == "/":
+            raise serializers.ValidationError(
+                f"target directory '{path}' is system root"
+            )
+
+        path = f"{space_code}/{path}"
+        dir_path = f"{path}/"
+        if storage.dir_exists(dir_path):
+            path = dir_path
+            
+        if not storage.exists(path):
+            raise serializers.ValidationError(
+                f"target directory '{path}' does not exist"
+            )
+
+        attrs["path"] = path
+        return attrs

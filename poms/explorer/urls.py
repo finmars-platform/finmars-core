@@ -69,3 +69,8 @@ router.register(
     explorer.StorageObjectAccessPolicyViewSet,
     "explorer_set_access_policy",
 )
+router.register(
+    "rename",
+    explorer.RenameViewSet,
+    "explorer_rename",
+)

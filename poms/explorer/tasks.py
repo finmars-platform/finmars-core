@@ -15,6 +15,8 @@ from poms.explorer.utils import (
     sync_file,
     sync_storage_objects,
     unzip_file,
+    rename_file,
+    rename_dir,
 )
 
 storage = get_storage()
@@ -208,3 +210,45 @@ def sync_storage_with_database(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"synced {total_files} files"
     celery_task.save()
+
+
+@finmars_task(name="explorer.tasks.rename_directory_in_storage", bind=True)
+def rename_directory_in_storage(self, *args, **kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    validated_data = celery_task.options_object
+    path = validated_data["path"]
+    new_name = validated_data["new_name"]
+
+    _l.info(
+        f"rename_directory_in_storage: rename {path} to new name {new_name}"
+    )
+    celery_task.update_progress(
+        {
+            "description": "rename_directory_in_storage starting ...",
+        }
+    )
+
+    if path_is_file(storage, path):
+        destination_file_path =  str(os.path.join(os.path.dirname(path), new_name))
+        rename_file(storage, path, destination_file_path)
+
+    else:
+        destination_dir_path = os.path.join(os.path.dirname(os.path.normpath(path)), new_name)
+        rename_dir(storage, path, destination_dir_path)     
+
+    celery_task.update_progress(
+        {
+            "description": "rename_directory_in_storage finished",
+        }
+    )
+    
+    celery_task.status = CeleryTask.STATUS_DONE
+    celery_task.verbose_result = f"renamed file"
+    celery_task.save()
+    
