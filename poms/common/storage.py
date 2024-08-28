@@ -16,7 +16,6 @@ from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.sftpstorage import SFTPStorage
 
-from poms.explorer.models import FinmarsDirectory
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -336,6 +335,8 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             update_or_create_file_and_parents(path, size)
 
     def delete(self, path: str) -> None:
+        from poms.explorer.models import FinmarsDirectory
+
         _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
 
         super().delete(path)
