@@ -91,7 +91,7 @@ class FinmarsDirectory(MPTTModel, TimeStampedModel):
         return path.suffix
 
 
-# DEPRECATED
+# DEPRECATED BUT LEFT TO AVOID ERRORS IN MIGRATIONS
 class ObjMixin:
     def __str__(self):
         return self.path
@@ -114,7 +114,7 @@ class ObjMixin:
         return path.suffix
 
 
-# DEPRECATED
+# DEPRECATED BUT LEFT TO AVOID ERRORS IN MIGRATIONS
 class FinmarsFile(ObjMixin, TimeStampedModel):
     """
     Model represents a file in the Finmars storage (File system, AWS, Azure...).

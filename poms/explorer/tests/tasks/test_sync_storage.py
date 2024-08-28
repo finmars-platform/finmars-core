@@ -2,7 +2,7 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.models import FinmarsDirectory
 from poms.explorer.utils import sync_file, sync_storage_objects
 
 
@@ -26,7 +26,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(path=filepath).first()
+        file = FinmarsDirectory.objects.filter(path=filepath, is_file=True).first()
         self.assertIsNotNone(file)
         self.assertEqual(file.size, size)
         self.assertEqual(file.path, filepath)
@@ -40,7 +40,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(path=filepath).first()
+        file = FinmarsDirectory.objects.filter(path=filepath, is_file=True).first()
         self.assertEqual(file.size, old_size)
 
         # test that new size will be used in existing File
@@ -49,7 +49,7 @@ class SyncFileInDatabaseTest(BaseTestCase):
 
         sync_file(self.storage, filepath, self.directory)
 
-        file = FinmarsFile.objects.filter(path=filepath).first()
+        file = FinmarsDirectory.objects.filter(path=filepath, is_file=True).first()
         self.assertEqual(file.size, new_size)
 
 
@@ -77,7 +77,7 @@ class SyncFilesTest(BaseTestCase):
 
         sync_storage_objects(self.storage, self.directory)
 
-        files = FinmarsFile.objects.all()
+        files = FinmarsDirectory.objects.filter(is_file=True).all()
 
         self.assertEqual(files.count(), 2)
 

@@ -373,7 +373,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     Returns:
         str: The path of the newly created or updated file model
     """
-    from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, FinmarsFile
+    from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory
 
     _l.info(f"update_or_create_file_and_parents: starts with {path}")
 
