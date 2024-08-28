@@ -3,6 +3,7 @@ from unittest import mock
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory
 from poms.explorer.utils import (
     define_content_type,
     delete_all_file_objects,
@@ -11,7 +12,6 @@ from poms.explorer.utils import (
     move_dir,
     update_or_create_file_and_parents,
 )
-from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory
 
 
 class DefineContentTypeTest(BaseTestCase):
@@ -177,8 +177,10 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(file.path, f"{self.space}/d1/file.txt")
         self.assertEqual(file.size, size)
 
-        self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
-        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(
+            FinmarsDirectory.objects.filter(is_file=False).count(), 2  # root + d1
+        )
+        directory = FinmarsDirectory.objects.filter(is_file=False).last()
         self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
         self.assertEqual(directory.parent.path, f"{self.space}{DIR_SUFFIX}")
@@ -194,7 +196,9 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(file.path, f"{self.space}/d1/d2/file.txt")
         self.assertEqual(file.size, size)
 
-        self.assertEqual(FinmarsDirectory.objects.filter(is_file=False).count(), 3)  # root + d1 + d2
+        self.assertEqual(
+            FinmarsDirectory.objects.filter(is_file=False).count(), 3
+        )  # root + d1 + d2
         directory = FinmarsDirectory.objects.filter(is_file=False).last()
         self.assertEqual(directory.path, f"{self.space}/d1/d2{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
@@ -219,8 +223,10 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(file.path, f"{self.space}/d1/file.txt")
         self.assertEqual(file.size, size)
 
-        self.assertEqual(FinmarsDirectory.objects.count(), 2)  # root + d1
-        directory = FinmarsDirectory.objects.last()
+        self.assertEqual(
+            FinmarsDirectory.objects.filter(is_file=False).count(), 2  # root + d1
+        )
+        directory = FinmarsDirectory.objects.filter(is_file=False).last()
         self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
         self.assertEqual(directory.size, 0)
         self.assertEqual(directory.parent.path, f"{self.space}{DIR_SUFFIX}")

@@ -157,6 +157,7 @@ class ResponseSerializer(serializers.Serializer):
         child=serializers.DictField(),
     )
 
+
 class PaginatedResponseSerializer(ResponseSerializer):
     previous = serializers.CharField(required=False)
     next = serializers.CharField(required=False)
@@ -320,9 +321,13 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
         if path.endswith(DIR_SUFFIX):
-            storage_object = FinmarsDirectory.objects.filter(path=path, is_file=False).first()
+            storage_object = FinmarsDirectory.objects.filter(
+                path=path, is_file=False
+            ).first()
         else:
-            storage_object = FinmarsDirectory.objects.filter(path=path, is_file=True).first()
+            storage_object = FinmarsDirectory.objects.filter(
+                path=path, is_file=True
+            ).first()
 
         if not storage_object:
             raise ValidationError(

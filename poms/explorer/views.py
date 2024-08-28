@@ -38,19 +38,19 @@ from poms.explorer.serializers import (
     MoveSerializer,
     PaginatedResponseSerializer,
     QuerySearchSerializer,
+    RenameSerializer,
     ResponseSerializer,
     SearchResultSerializer,
     StorageObjectAccessPolicySerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
-    RenameSerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
+    rename_directory_in_storage,
     sync_storage_with_database,
     unzip_file_in_storage,
-    rename_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
@@ -90,9 +90,7 @@ class ExplorerViewSet(AbstractViewSet):
 
     @swagger_auto_schema(
         query_serializer=DirectoryPathSerializer(),
-        responses={
-            status.HTTP_200_OK: ResponseSerializer(),
-        },
+        responses={status.HTTP_200_OK: ResponseSerializer()},
     )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
