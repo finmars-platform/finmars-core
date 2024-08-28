@@ -7,7 +7,6 @@ from poms.explorer.models import (
     get_root_path,
     AccessLevel,
     FinmarsDirectory,
-    FinmarsFile,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
@@ -85,7 +84,7 @@ class RenameViewSetTest(CreateUserMemberMixin, BaseTestCase):
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         FinmarsDirectory.objects.create(path=f"{path}{DIR_SUFFIX}", parent=root)
-        FinmarsFile.objects.create(path=file_name, size=333, parent=root)
+        FinmarsDirectory.objects.create(path=file_name, size=333, parent=root, is_file=True)
 
         self.client.force_authenticate(user=user)
 

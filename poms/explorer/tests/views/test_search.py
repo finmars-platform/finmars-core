@@ -2,7 +2,6 @@ from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import (
     AccessLevel,
     FinmarsDirectory,
-    FinmarsFile,
     get_root_path,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
@@ -72,8 +71,9 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         kwargs = dict(
             path="/test/name_1.pdf",
             size=size,
+            is_file=True,
         )
-        file = FinmarsFile.objects.create(**kwargs)
+        file = FinmarsDirectory.objects.create(**kwargs)
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -97,9 +97,10 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def test__list_many(self):
         amount = self.random_int(5, 10)
         for i in range(1, amount + 1):
-            FinmarsFile.objects.create(
+            FinmarsDirectory.objects.create(
                 path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
+                is_file=True,
             )
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -125,9 +126,10 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     ):
         amount = self.random_int(5, 9)
         for i in range(1, amount + 1):
-            FinmarsFile.objects.create(
+            FinmarsDirectory.objects.create(
                 path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
+                is_file=True,
             )
 
         count = count or amount
@@ -165,9 +167,10 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def test__list_all_with_paging(self, page_size):
         amount = 33
         for i in range(1, amount + 1):
-            FinmarsFile.objects.create(
+            FinmarsDirectory.objects.create(
                 path=f"root/name_{i}.pdf",
                 size=self.random_int(10, 1000),
+                is_file=True,
             )
         response = self.client.get(path=f"{self.url}?page_size={page_size}&page=1")
         self.assertEqual(response.status_code, 200, response.content)
