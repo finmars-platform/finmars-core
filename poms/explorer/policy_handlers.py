@@ -42,7 +42,7 @@ def create_policy(obj: FinmarsDirectory, access: str = AccessLevel.READ) -> dict
     A function that creates a policy dict based on the type of
     object (file or directory) and the access level.
     Parameters:
-        obj FinmarsDirectory: The object to create the policy for.
+        obj (FinmarsDirectory): The object to create the policy for.
         access (str): The level of access, either 'full' or another value.
     Returns:
         dict: The generated policy based on the object and access level.
