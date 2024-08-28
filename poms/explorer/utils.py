@@ -447,10 +447,130 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
     }
 
 
+def gen_path_copy(storage: FinmarsS3Storage, path: str) -> str:
+    """
+    Generate new path startswith _copy(number) for file (or directory).
+    Args:
+        storage (FinmarsS3Storage): The storage object to use.
+        path (str): The path of the object (file system).
+    Returns:
+        str: new path (name of object (file system) end startswith _copy(number)).
+    """
+    base_name = os.path.basename(path)
+    if base_name.startswith("."):
+        # for .init
+            return path
+
+    extension = ""
+    dase_dir = ""
+    name_parts = base_name.split(".")
+    if len(name_parts) > 1:
+    # For file
+        base_name = name_parts[0]
+        dase_dir = os.path.dirname(path)
+        extension = "." + ".".join(name_parts[1:])
+
+    else:
+    # For directory
+        base_name = last_dir_name(path).removesuffix("/")
+        dase_dir = os.path.dirname(os.path.normpath(path))
+        extension = "/"
+
+    pref: int = 0
+    while True:
+        pref += 1
+        new_name = f"{base_name}_copy({pref}){extension}"
+        new_path = os.path.join(dase_dir, new_name)
+
+        if not storage.exists(new_path):
+            return new_path
+
+
+def copy_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str) -> None:
+    """
+    Copy a file from the source path to the destination path within the storage.
+    If file name exists in destiny_file_path that name will change to file name + copy(copy number).
+    Args:
+        storage (Storage): The storage instance to use.
+        source_file_path (str): The path of the source file.
+        destin_file_path (str): The path of the destination file.
+    Returns:
+        None
+    """
+
+    if storage.exists(destin_file_path):
+        destin_file_path = gen_path_copy(storage=storage, path=destin_file_path)
+        _l.info(
+            f"copy_file: file from {source_file_path} "
+            f"already exists in target path, path has updated to {destin_file_path}"
+        )
+    file_name = os.path.basename(destin_file_path)
+
+    _l.info(
+        f"copy_file: copy file {file_name} from {source_file_path} "
+        f"to {destin_file_path}"
+    )
+
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"copy_file: with content len={len(content)} "
+
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    _l.info(f"copy_file: content saved to {destin_file_path}")
+
+
+def copy_dir(
+    storage: FinmarsS3Storage,
+    source_dir: str,
+    destin_dir: str,
+    celery_task: CeleryTask,
+) -> None:
+    """
+    Copy a directory and its contents recursively within the storage and update the
+    celery task progress. Empty directories will not be copy/created in the storage!
+    If directory name exists in destin_dir that name will change to directory name + copy(copy number).
+    Args:
+        storage (Storage): The storage instance to use.
+        source_dir (str): The path of the source directory.
+        destin_dir (str): The path of the destination directory.
+        celery_task (CeleryTask): The celery task to update.
+    Returns:
+        None
+    """
+    _l.info(f"copy_dir: copy content of directory '{source_dir}' to '{destin_dir}'")
+
+    dirs, files = storage.listdir(source_dir)
+
+    if storage.exists(destin_dir):
+        destin_dir = gen_path_copy(storage=storage, path=destin_dir)
+        _l.info(
+            f"copy_dir: directory from {source_dir} "
+            f"already exists in target path, path has updated to {destin_dir}"
+        )
+
+    for dir_name in dirs:
+        s_dir = os.path.join(source_dir, dir_name)
+        d_dir = os.path.join(destin_dir, dir_name)
+        copy_dir(storage, s_dir, d_dir, celery_task)
+
+    for file_name in files:
+        s_file = os.path.join(source_dir, file_name)
+        d_file = os.path.join(destin_dir, file_name)
+        copy_file(storage, s_file, d_file)
+
+    celery_task.refresh_from_db()
+    progres_dict = celery_task.progress_object
+    progres_dict["current"] += len(files)
+    progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
+    celery_task.update_progress(progres_dict)
+
+
 def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
     """
     Rename a file from the source path to the destination path within the storage.
-
     Args:
         storage (Storage): The storage instance to use.
         source_file_path (str): The path of the source file.
@@ -488,6 +608,7 @@ def rename_dir(
         storage (Storage): The storage instance to use.
         source_dir (str): The path of the source directory.
         destin_dir (str): The path of the destination directory.
+
     Returns:
         None
     """

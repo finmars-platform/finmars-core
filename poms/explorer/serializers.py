@@ -366,3 +366,38 @@ class RenameSerializer(serializers.Serializer):
 
         attrs["path"] = path
         return attrs
+
+
+class CopySerializer(serializers.Serializer):
+    target_directory_path = serializers.CharField(required=True, allow_blank=False)
+    paths = serializers.ListField(
+        child=serializers.CharField(allow_blank=False),
+        required=True,
+    )
+
+    def validate(self, attrs):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+        target_directory_path = attrs["target_directory_path"].strip("/")
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        
+        if not storage.dir_exists(new_target_directory_path):
+            raise serializers.ValidationError(
+                f"target directory '{new_target_directory_path}' does not exist"
+            )
+
+        updated_paths = []
+        for path in attrs["paths"]:
+            path = path.strip("/")
+            path = f"{space_code}/{path}"
+            dir_path = f"{path}/"
+            
+            if storage.dir_exists(dir_path):
+                # this is a directory
+                path = f"{path}/"
+
+            updated_paths.append(path)
+
+        attrs["target_directory_path"] = new_target_directory_path
+        attrs["paths"] = updated_paths
+        return attrs
