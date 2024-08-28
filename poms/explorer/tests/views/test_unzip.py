@@ -6,7 +6,6 @@ from poms.explorer.models import (
     DIR_SUFFIX,
     AccessLevel,
     FinmarsDirectory,
-    FinmarsFile,
     get_root_path,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
@@ -117,7 +116,7 @@ class UnzipViewSetTest(CreateUserMemberMixin, BaseTestCase):
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         FinmarsDirectory.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
-        FinmarsFile.objects.create(path=file_name, size=444, parent=root)
+        FinmarsDirectory.objects.create(path=file_name, size=444, parent=root, is_file=True)
 
         self.client.force_authenticate(user=user)
 
