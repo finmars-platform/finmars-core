@@ -14,7 +14,7 @@ MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
-DIR_SUFFIX = "/*"
+DIR_SUFFIX = "/"
 
 
 def get_root_path():
@@ -31,9 +31,7 @@ class AccessLevel:
     @classmethod
     def validate_level(cls, access: str):
         if access not in {cls.READ, cls.WRITE}:
-            raise ValueError(
-                f"AccessLevel must be either '{cls.READ}' or '{cls.WRITE}'"
-            )
+            raise ValueError(f"AccessLevel can be '{cls.READ}' or '{cls.WRITE}'")
 
 
 class FinmarsDirectory(MPTTModel, TimeStampedModel):
