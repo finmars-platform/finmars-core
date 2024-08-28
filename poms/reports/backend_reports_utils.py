@@ -815,8 +815,9 @@ class BackendReportSubtotalService:
                     value = BackendReportSubtotalService.get_item_value(
                         item, weighted_average_key
                     )
-                    average = float(value) / total
-                    result += float(item_val) * average
+                    if isinstance(value, (int, float)):
+                        average = float(value) / total
+                        result += float(item_val) * average
         else:
             print(f"{weighted_average_key} totals is", total, column_key)
             result = "No Data"

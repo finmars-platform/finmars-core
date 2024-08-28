@@ -16,6 +16,11 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='authtoken',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.AddField(
             model_name='authtoken',
             name='modified_at',

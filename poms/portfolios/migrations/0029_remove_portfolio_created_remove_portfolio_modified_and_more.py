@@ -16,79 +16,159 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfolio',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfolio',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='portfolio',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='portfoliobundle',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfoliobundle',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfoliobundle',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='portfoliobundle',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='portfoliohistory',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfoliohistory',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfoliohistory',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='portfoliohistory',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='portfolioreconcilegroup',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfolioreconcilegroup',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfolioreconcilegroup',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='portfolioreconcilegroup',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='portfolioreconcilehistory',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfolioreconcilehistory',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfolioreconcilehistory',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='portfolioreconcilehistory',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='portfolioregister',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfolioregister',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfolioregister',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='portfolioregister',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='portfolioregisterrecord',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfolioregisterrecord',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfolioregisterrecord',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='portfolioregisterrecord',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='portfoliotype',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='portfoliotype',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='portfoliotype',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='portfoliotype',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]

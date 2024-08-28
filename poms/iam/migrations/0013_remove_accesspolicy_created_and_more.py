@@ -16,29 +16,59 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='accesspolicy',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='accesspolicy',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='accesspolicy',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='group',
             old_name='created',
             new_name='created_at',
+        ),
+        migrations.AlterField(
+            model_name='group',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
         ),
         migrations.RenameField(
             model_name='group',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='group',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='role',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='role',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='role',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='role',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]

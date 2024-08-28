@@ -24,59 +24,119 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='expressionprocedure',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='expressionprocedure',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='expressionprocedure',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='pricingparentprocedureinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='pricingparentprocedureinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='pricingparentprocedureinstance',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='pricingparentprocedureinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='pricingprocedure',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='pricingprocedure',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='pricingprocedure',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='pricingprocedure',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='pricingprocedureinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='pricingprocedureinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='pricingprocedureinstance',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='pricingprocedureinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='requestdatafileprocedure',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='requestdatafileprocedure',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='requestdatafileprocedure',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='requestdatafileprocedure',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='requestdatafileprocedureinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='requestdatafileprocedureinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='requestdatafileprocedureinstance',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='requestdatafileprocedureinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]
