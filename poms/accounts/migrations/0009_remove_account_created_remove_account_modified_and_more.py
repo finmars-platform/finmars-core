@@ -16,19 +16,39 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='account',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='account',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='account',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='accounttype',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='accounttype',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='accounttype',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='accounttype',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]

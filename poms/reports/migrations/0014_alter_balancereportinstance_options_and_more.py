@@ -36,49 +36,99 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='balancereportinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='balancereportinstance',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='balancereportinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='performancereportinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='performancereportinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='performancereportinstance',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='performancereportinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
         migrations.RenameField(
             model_name='plreportinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='plreportinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='plreportinstance',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='plreportinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='reportsummaryinstance',
             old_name='created',
             new_name='created_at',
+        ),
+        migrations.AlterField(
+            model_name='reportsummaryinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
         ),
         migrations.RenameField(
             model_name='reportsummaryinstance',
             old_name='modified',
             new_name='modified_at',
         ),
+        migrations.AlterField(
+            model_name='reportsummaryinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
+        ),
         migrations.RenameField(
             model_name='transactionreportinstance',
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='transactionreportinstance',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='transactionreportinstance',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='transactionreportinstance',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]

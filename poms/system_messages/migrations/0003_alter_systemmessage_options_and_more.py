@@ -24,6 +24,11 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='systemmessage',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.AddField(
             model_name='systemmessage',
             name='modified_at',
@@ -34,9 +39,19 @@ class Migration(migrations.Migration):
             old_name='created',
             new_name='created_at',
         ),
+        migrations.AlterField(
+            model_name='systemmessagecomment',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created at'),
+        ),
         migrations.RenameField(
             model_name='systemmessagecomment',
             old_name='modified',
             new_name='modified_at',
+        ),
+        migrations.AlterField(
+            model_name='systemmessagecomment',
+            name='modified_at',
+            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified at'),
         ),
     ]
