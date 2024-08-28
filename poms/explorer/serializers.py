@@ -13,7 +13,6 @@ from poms.explorer.models import (
     MAX_PATH_LENGTH,
     AccessLevel,
     FinmarsDirectory,
-    FinmarsFile,
 )
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.explorer.utils import is_true_value, path_is_file
@@ -205,16 +204,16 @@ class UnZipSerializer(serializers.Serializer):
 
 class SearchResultSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FinmarsFile
+        model = FinmarsDirectory
         fields = "__all__"
 
-    def to_representation(self, instance: FinmarsFile) -> dict:
+    def to_representation(self, instance: FinmarsDirectory) -> dict:
         name = instance.name
         size = instance.size
         mime_type, _ = mimetypes.guess_type(name)
         return {
-            "type": "file",
-            "mime_type": mime_type,
+            "type": "file" if instance.is_file else "dir",
+            "mime_type": mime_type if instance.is_file else "-",
             "name": name,
             "created_at": instance.created_at,
             "modified_at": instance.modified_at,
@@ -243,24 +242,25 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
     extension = serializers.SerializerMethodField()
 
     class Meta:
-        model = FinmarsFile
+        model = FinmarsDirectory
         fields = [
             "id",
             "path",
             "size",
             "name",
             "extension",
+            "is_file",
             "created_at",
             "modified_at",
             "instruments",
         ]
 
     @staticmethod
-    def get_name(obj: FinmarsFile) -> str:
+    def get_name(obj: FinmarsDirectory) -> str:
         return obj.name
 
     @staticmethod
-    def get_extension(obj: FinmarsFile) -> str:
+    def get_extension(obj: FinmarsDirectory) -> str:
         return obj.extension
 
     @staticmethod
@@ -320,9 +320,9 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
         if path.endswith(DIR_SUFFIX):
-            storage_object = FinmarsDirectory.objects.filter(path=path).first()
+            storage_object = FinmarsDirectory.objects.filter(path=path, is_file=False).first()
         else:
-            storage_object = FinmarsFile.objects.filter(path=path).first()
+            storage_object = FinmarsDirectory.objects.filter(path=path, is_file=True).first()
 
         if not storage_object:
             raise ValidationError(
@@ -348,7 +348,7 @@ class RenameSerializer(serializers.Serializer):
         storage = self.context["storage"]
         space_code = self.context["space_code"]
         path = attrs["path"].strip("/")
-  
+
         if path == "/":
             raise serializers.ValidationError(
                 f"target directory '{path}' is system root"
@@ -358,7 +358,7 @@ class RenameSerializer(serializers.Serializer):
         dir_path = f"{path}/"
         if storage.dir_exists(dir_path):
             path = dir_path
-            
+
         if not storage.exists(path):
             raise serializers.ValidationError(
                 f"target directory '{path}' does not exist"

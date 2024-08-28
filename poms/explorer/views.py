@@ -28,7 +28,7 @@ from poms.explorer.explorer_permission import (
     ExplorerWriteDirectoryPathPermission,
     ExplorerZipPathsReadPermission,
 )
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import FinmarsDirectory
 from poms.explorer.serializers import (
     AccessPolicySerializer,
     BasePathSerializer,
@@ -640,7 +640,7 @@ class FinmarsFileFilter(BaseFilterBackend):
 class SearchViewSet(AbstractModelViewSet):
     access_policy = ExplorerRootAccessPermission
     serializer_class = SearchResultSerializer
-    queryset = FinmarsFile.objects.all()
+    queryset = FinmarsDirectory.objects.filter(is_file=True)
     pagination_class = PageNumberPaginationExt
     http_method_names = ["get"]
     filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]

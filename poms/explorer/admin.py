@@ -1,12 +1,12 @@
 from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
-from poms.explorer.models import FinmarsDirectory, FinmarsFile
+from poms.explorer.models import FinmarsDirectory
 
 
-@admin.register(FinmarsFile)
-class FinmarsFileAdmin(AbstractModelAdmin):
-    model = FinmarsFile
+# @admin.register(FinmarsFile)
+# class FinmarsFileAdmin(AbstractModelAdmin):
+#     model = FinmarsFile
 
 
 @admin.register(FinmarsDirectory)

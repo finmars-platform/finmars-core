@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import AccessLevel, FinmarsDirectory
 from poms.explorer.policy_handlers import (
     get_or_create_storage_access_policy,
     member_has_access,
@@ -15,12 +15,12 @@ class MemberHasAccessTest(BaseTestCase):
         self.file = self._create_file()
         self.dir = self._create_directory()
 
-    def _create_file(self, parent: FinmarsDirectory = None) -> FinmarsFile:
+    def _create_file(self, parent: FinmarsDirectory = None) -> FinmarsDirectory:
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
         path = f"/{self.random_string()}/{self.random_string(5)}/{name}/"
         size = self.random_int()
-        return FinmarsFile.objects.create(path=path, size=size, parent=parent)
+        return FinmarsDirectory.objects.create(path=path, size=size, parent=parent, is_file=True)
 
     def _create_directory(self, parent: FinmarsDirectory = None) -> FinmarsDirectory:
         path = f"/{self.random_string()}/{self.random_string(3)}"

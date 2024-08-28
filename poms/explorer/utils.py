@@ -10,6 +10,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import FinmarsDirectory
 
 _l = logging.getLogger("poms.explorer")
 
@@ -328,20 +329,20 @@ def sync_file(storage: FinmarsS3Storage, filepath: str, directory):
         filepath: path to the file in storage
         directory: directory to which the file belongs
     """
-    from poms.explorer.models import FinmarsFile
 
     _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
-    FinmarsFile.objects.update_or_create(
+    FinmarsDirectory.objects.update_or_create(
         path=filepath,
-        parent=directory,
-        defaults=dict(size=storage.size(filepath)),
+        defaults=dict(
+            size=storage.size(filepath),
+            parent=directory,
+            is_file=True,
+        ),
     )
 
 
 def delete_all_file_objects():
-    from poms.explorer.models import FinmarsFile
-
-    FinmarsFile.objects.all().delete()
+    FinmarsDirectory.objects.all().delete()
     _l.warning("deleted all file objects from database!")
 
 
@@ -372,11 +373,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     Returns:
         str: The path of the newly created or updated file model
     """
-    from poms.explorer.models import (
-        DIR_SUFFIX,
-        FinmarsDirectory,
-        FinmarsFile,
-    )
+    from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, FinmarsFile
 
     _l.info(f"update_or_create_file_and_parents: starts with {path}")
 
@@ -401,9 +398,9 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
             f"update_or_create_file_and_parents: no parent path '{path}'"
         )
 
-    file, created = FinmarsFile.objects.update_or_create(
+    file, created = FinmarsDirectory.objects.update_or_create(
         path=path,
-        defaults={"size": size, "parent": parent},
+        defaults={"parent": parent, "size": size, "is_file": True},
     )
     if created:
         _l.info(f"update_or_create_file_and_parents: created file {file.path}")
@@ -447,7 +444,9 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
     }
 
 
-def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
+def rename_file(
+    storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str
+):
     """
     Rename a file from the source path to the destination path within the storage.
 
@@ -459,9 +458,7 @@ def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_pa
         None
     """
     file_name = os.path.basename(destin_file_path)
-    _l.info(
-        f"rename_file: rename {source_file_path} to {destin_file_path}"
-    )
+    _l.info(f"rename_file: rename {source_file_path} to {destin_file_path}")
 
     content = storage.open(source_file_path).read()
     _l.info(
