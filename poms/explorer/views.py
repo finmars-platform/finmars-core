@@ -45,12 +45,14 @@ from poms.explorer.serializers import (
     UnZipSerializer,
     ZipFilesSerializer,
     RenameSerializer,
+    CopySerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
     sync_storage_with_database,
     unzip_file_in_storage,
     rename_directory_in_storage,
+    copy_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
@@ -703,6 +705,53 @@ class RenameViewSet(ContextMixin, AbstractViewSet):
         )
 
         rename_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class CopyViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = CopySerializer
+    http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
+    ]
+
+    @swagger_auto_schema(
+        request_body=CopySerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Copy directory in storage",
+            type="copy_directory_in_storage",
+            options_object=serializer.validated_data,
+        )
+
+        copy_directory_in_storage.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {

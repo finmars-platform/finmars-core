@@ -533,7 +533,6 @@ class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
             _l.error(f"dir_exists: check resulted in {repr(e)}")
             return False
 
-
     def exists(self, path: str) -> bool:
         if path.endswith("/"):
             return self.dir_exists(path)
