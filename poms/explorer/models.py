@@ -36,7 +36,8 @@ class AccessLevel:
 
 class FinmarsDirectory(MPTTModel, TimeStampedModel):
     """
-    Model represents a directory in the Finmars storage (File system, AWS, Azure...).
+    Model represents an object (directory or file)
+    in the Finmars storage (Filesystem, AWS, Azure...).
     """
 
     path = models.CharField(
@@ -90,30 +91,7 @@ class FinmarsDirectory(MPTTModel, TimeStampedModel):
 
 
 # DEPRECATED BUT LEFT TO AVOID ERRORS IN MIGRATIONS
-class ObjMixin:
-    def __str__(self):
-        return self.path
-
-    def policy_user_code(self, access: str = AccessLevel.READ) -> str:
-        AccessLevel.validate_level(access)
-        return (
-            f"{get_default_configuration_code()}:{settings.SERVICE_NAME}"
-            f":explorer:{self.path}-{access}"
-        )
-
-    @property
-    def name(self) -> str:
-        path = Path(self.path)
-        return path.name
-
-    @property
-    def extension(self) -> str:
-        path = Path(self.path)
-        return path.suffix
-
-
-# DEPRECATED BUT LEFT TO AVOID ERRORS IN MIGRATIONS
-class FinmarsFile(ObjMixin, TimeStampedModel):
+class FinmarsFile(TimeStampedModel):
     """
     Model represents a file in the Finmars storage (File system, AWS, Azure...).
     """

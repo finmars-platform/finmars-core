@@ -3,7 +3,6 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import mptt.fields
-import poms.explorer.models
 
 
 class Migration(migrations.Migration):
@@ -56,7 +55,7 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["path"],
             },
-            bases=(poms.explorer.models.ObjMixin, models.Model),
+            bases=(models.Model,),
         ),
         migrations.RunSQL("TRUNCATE TABLE explorer_finmarsfile CASCADE; COMMIT;"),
         migrations.AlterModelOptions(
