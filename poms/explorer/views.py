@@ -32,6 +32,7 @@ from poms.explorer.models import FinmarsDirectory
 from poms.explorer.serializers import (
     AccessPolicySerializer,
     BasePathSerializer,
+    CopySerializer,
     DeletePathSerializer,
     DirectoryPathSerializer,
     FilePathSerializer,
@@ -45,15 +46,13 @@ from poms.explorer.serializers import (
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
-    RenameSerializer,
-    CopySerializer,
 )
 from poms.explorer.tasks import (
+    copy_directory_in_storage,
     move_directory_in_storage,
+    rename_directory_in_storage,
     sync_storage_with_database,
     unzip_file_in_storage,
-    rename_directory_in_storage,
-    copy_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
@@ -624,7 +623,7 @@ class SyncViewSet(AbstractViewSet):
         )
 
 
-class FinmarsFileFilter(BaseFilterBackend):
+class StorageObjectFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         queries = request.query_params.get("query")
         if not queries:
@@ -644,7 +643,7 @@ class SearchViewSet(AbstractModelViewSet):
     queryset = FinmarsDirectory.objects.filter(is_file=True)
     pagination_class = PageNumberPaginationExt
     http_method_names = ["get"]
-    filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [StorageObjectFilter]
 
     @swagger_auto_schema(
         query_serializer=QuerySearchSerializer(),

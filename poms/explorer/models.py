@@ -88,28 +88,3 @@ class FinmarsDirectory(MPTTModel, TimeStampedModel):
     def extension(self) -> str:
         path = Path(self.path)
         return path.suffix
-
-
-# DEPRECATED BUT LEFT TO AVOID ERRORS IN MIGRATIONS
-class FinmarsFile(TimeStampedModel):
-    """
-    Model represents a file in the Finmars storage (File system, AWS, Azure...).
-    """
-
-    path = models.CharField(
-        max_length=MAX_PATH_LENGTH,
-        unique=True,
-        help_text="Path to the file in the storage system with name and extension",
-    )
-    parent = models.ForeignKey(
-        FinmarsDirectory,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-    )
-    size = models.PositiveBigIntegerField(
-        help_text="Size of the file in bytes",
-    )
-
-    class Meta:
-        ordering = ["path"]
