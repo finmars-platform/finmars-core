@@ -12,7 +12,7 @@ from poms.explorer.models import (
     MAX_NAME_LENGTH,
     MAX_PATH_LENGTH,
     AccessLevel,
-    FinmarsDirectory,
+    StorageObject,
 )
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.explorer.utils import is_true_value, path_is_file
@@ -205,10 +205,10 @@ class UnZipSerializer(serializers.Serializer):
 
 class SearchResultSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FinmarsDirectory
+        model = StorageObject
         fields = "__all__"
 
-    def to_representation(self, instance: FinmarsDirectory) -> dict:
+    def to_representation(self, instance: StorageObject) -> dict:
         name = instance.name
         size = instance.size
         mime_type, _ = mimetypes.guess_type(name)
@@ -243,7 +243,7 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
     extension = serializers.SerializerMethodField()
 
     class Meta:
-        model = FinmarsDirectory
+        model = StorageObject
         fields = [
             "id",
             "path",
@@ -257,11 +257,11 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
         ]
 
     @staticmethod
-    def get_name(obj: FinmarsDirectory) -> str:
+    def get_name(obj: StorageObject) -> str:
         return obj.name
 
     @staticmethod
-    def get_extension(obj: FinmarsDirectory) -> str:
+    def get_extension(obj: StorageObject) -> str:
         return obj.extension
 
     @staticmethod
@@ -321,11 +321,11 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]
         if path.endswith(DIR_SUFFIX):
-            storage_object = FinmarsDirectory.objects.filter(
+            storage_object = StorageObject.objects.filter(
                 path=path, is_file=False
             ).first()
         else:
-            storage_object = FinmarsDirectory.objects.filter(
+            storage_object = StorageObject.objects.filter(
                 path=path, is_file=True
             ).first()
 

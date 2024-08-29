@@ -34,7 +34,7 @@ class AccessLevel:
             raise ValueError(f"AccessLevel can be '{cls.READ}' or '{cls.WRITE}'")
 
 
-class FinmarsDirectory(MPTTModel, TimeStampedModel):
+class StorageObject(MPTTModel, TimeStampedModel):
     """
     Model represents an object (directory or file)
     in the Finmars storage (Filesystem, AWS, Azure...).

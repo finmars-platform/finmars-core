@@ -7,7 +7,7 @@ from poms.explorer.models import (
     DIR_SUFFIX,
     get_root_path,
     AccessLevel,
-    FinmarsDirectory,
+    StorageObject,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin

@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import Instrument
-from poms.explorer.models import FinmarsDirectory
+from poms.explorer.models import StorageObject
 
 
 expected_response = [
@@ -66,7 +66,7 @@ class AttachmentViewSetTest(BaseTestCase):
         files = []
         for i in range(1, amount + 1):
             path = f"/root/workload/file_{i}.json"
-            FinmarsDirectory.objects.create(
+            StorageObject.objects.create(
                 path=path,
                 size=self.random_int(10, 1000),
                 is_file=True,

@@ -2194,11 +2194,11 @@ class AttachmentSerializer(serializers.Serializer):
     attachments = serializers.ListSerializer(child=serializers.CharField())
 
     def validate(self, attrs: dict) -> dict:
-        from poms.explorer.models import FinmarsDirectory
+        from poms.explorer.models import StorageObject
 
         files = []
         for file_path in attrs["attachments"]:
-            file = FinmarsDirectory.objects.filter(path=file_path, is_file=True).first()
+            file = StorageObject.objects.filter(path=file_path, is_file=True).first()
             if not file:
                 raise ValidationError(f"no such file: {file_path}")
 

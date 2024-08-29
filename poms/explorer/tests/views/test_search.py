@@ -1,7 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import (
     AccessLevel,
-    FinmarsDirectory,
+    StorageObject,
     get_root_path,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
@@ -73,7 +73,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
             size=size,
             is_file=True,
         )
-        file = FinmarsDirectory.objects.create(**kwargs)
+        file = StorageObject.objects.create(**kwargs)
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -97,7 +97,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def test__list_many(self):
         amount = self.random_int(5, 10)
         for i in range(1, amount + 1):
-            FinmarsDirectory.objects.create(
+            StorageObject.objects.create(
                 path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
                 is_file=True,
@@ -126,7 +126,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     ):
         amount = self.random_int(5, 9)
         for i in range(1, amount + 1):
-            FinmarsDirectory.objects.create(
+            StorageObject.objects.create(
                 path=f"/root/etc/system/name_{i}.pdf",
                 size=self.random_int(10, 1000),
                 is_file=True,
@@ -151,7 +151,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
     def test__has_root_permission(self):
         root_path = get_root_path()
-        FinmarsDirectory.objects.create(path=root_path)
+        StorageObject.objects.create(path=root_path)
         user, member = self.create_user_member()
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
         self.client.force_authenticate(user=user)
@@ -167,7 +167,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def test__list_all_with_paging(self, page_size):
         amount = 33
         for i in range(1, amount + 1):
-            FinmarsDirectory.objects.create(
+            StorageObject.objects.create(
                 path=f"root/name_{i}.pdf",
                 size=self.random_int(10, 1000),
                 is_file=True,

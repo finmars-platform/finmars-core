@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
-from poms.explorer.models import FinmarsDirectory
+from poms.explorer.models import StorageObject
 
 
-@admin.register(FinmarsDirectory)
+@admin.register(StorageObject)
 class FinmarsDirAdmin(AbstractModelAdmin):
-    model = FinmarsDirectory
+    model = StorageObject

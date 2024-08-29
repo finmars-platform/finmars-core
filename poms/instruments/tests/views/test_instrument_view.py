@@ -225,10 +225,10 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(accrual_data["first_payment_date"], payment_date)
 
     def test__retrieve_with_file(self):
-        from poms.explorer.models import FinmarsDirectory
+        from poms.explorer.models import StorageObject
 
         instrument = self.create_instrument("bond")
-        file = FinmarsDirectory.objects.create(
+        file = StorageObject.objects.create(
             path="/root/etc/system/name.pdf",
             size=1234567890,
             is_file=True,

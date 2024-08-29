@@ -6,7 +6,7 @@ from poms.explorer.models import (
     DIR_SUFFIX,
     get_root_path,
     AccessLevel,
-    FinmarsDirectory,
+    StorageObject,
 )
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
@@ -81,12 +81,12 @@ class CopyViewSetTest(CreateUserMemberMixin, BaseTestCase):
         data = {"target_directory_path": to_dir, "paths": paths}
 
         root_path = get_root_path()
-        root = FinmarsDirectory.objects.create(path=root_path)
+        root = StorageObject.objects.create(path=root_path)
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
-        FinmarsDirectory.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
-        FinmarsDirectory.objects.create(path=file_name, size=333, parent=root, is_file=True)
+        StorageObject.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
+        StorageObject.objects.create(path=file_name, size=333, parent=root, is_file=True)
 
         self.client.force_authenticate(user=user)
 

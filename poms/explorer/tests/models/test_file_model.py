@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 
-from poms.explorer.models import FinmarsDirectory
+from poms.explorer.models import StorageObject
 from poms.instruments.models import Instrument
 
 
@@ -16,7 +16,7 @@ class FinmarsFileTest(BaseTestCase):
         name = f"{self.random_string()}.{extension}"
         path = f"/{self.random_string()}/{self.random_string(7)}/{name}"
         size = self.random_int()
-        file = FinmarsDirectory.objects.create(path=path, size=size, is_file=True)
+        file = StorageObject.objects.create(path=path, size=size, is_file=True)
 
         self.assertIsNotNone(file)
         self.assertEqual(file.name, name)
@@ -49,8 +49,8 @@ class FinmarsFileTest(BaseTestCase):
 
     def test__unique_path_and_name(self):
         kwargs = dict(path="/test/name.pdf", size=1, is_file=True)
-        FinmarsDirectory.objects.create(**kwargs)
+        StorageObject.objects.create(**kwargs)
 
         kwargs["size"] = 2
         with self.assertRaises(Exception):
-            FinmarsDirectory.objects.create(**kwargs)
+            StorageObject.objects.create(**kwargs)

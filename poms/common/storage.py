@@ -335,14 +335,14 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             update_or_create_file_and_parents(path, size)
 
     def delete(self, path: str) -> None:
-        from poms.explorer.models import FinmarsDirectory
+        from poms.explorer.models import StorageObject
 
         _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
 
         super().delete(path)
 
         with contextlib.suppress(Exception):
-            FinmarsDirectory.objects.filter(path=path).delete()
+            StorageObject.objects.filter(path=path).delete()
 
 
 class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):

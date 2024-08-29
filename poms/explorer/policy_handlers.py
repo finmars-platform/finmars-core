@@ -5,7 +5,7 @@ from typing import Optional
 from django.conf import settings
 
 from poms.configuration.utils import get_default_configuration_code
-from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, StorageObject
 from poms.iam.models import AccessPolicy
 from poms.users.models import Member
 
@@ -30,19 +30,19 @@ READ_ACCESS_POLICY = {
 }
 
 
-def validate_obj_and_access(obj: FinmarsDirectory, access: str):
-    if not isinstance(obj, FinmarsDirectory):
+def validate_obj_and_access(obj: StorageObject, access: str):
+    if not isinstance(obj, StorageObject):
         raise ValueError("Object must be FinmarsDirectory instance")
 
     AccessLevel.validate_level(access)
 
 
-def create_policy(obj: FinmarsDirectory, access: str = AccessLevel.READ) -> dict:
+def create_policy(obj: StorageObject, access: str = AccessLevel.READ) -> dict:
     """
     A function that creates a policy dict based on the type of
     object (file or directory) and the access level.
     Parameters:
-        obj (FinmarsDirectory): The object to create the policy for.
+        obj (StorageObject): The object to create the policy for.
         access (str): The level of access, either 'full' or another value.
     Returns:
         dict: The generated policy based on the object and access level.
@@ -62,7 +62,7 @@ def get_default_owner() -> Member:
 
 
 def get_or_create_storage_access_policy(
-    obj: FinmarsDirectory, member: Member, access: str
+    obj: StorageObject, member: Member, access: str
 ) -> AccessPolicy:
     """
     Creates or retrieves a storage access policy for a given object, member,
@@ -118,15 +118,15 @@ def get_or_create_access_policy_to_path(
         AccessPolicy: The retrieved or created access policy.
     """
     if path.endswith(DIR_SUFFIX):
-        obj = FinmarsDirectory.objects.get(path=path, is_file=False)
+        obj = StorageObject.objects.get(path=path, is_file=False)
     else:
-        obj = FinmarsDirectory.objects.get(path=path, is_file=True)
+        obj = StorageObject.objects.get(path=path, is_file=True)
 
     return get_or_create_storage_access_policy(obj=obj, member=member, access=access)
 
 
 def check_obj_access(
-    obj: FinmarsDirectory, owner: Member, member: Member, access: str
+    obj: StorageObject, owner: Member, member: Member, access: str
 ) -> Optional[bool]:
     """
     Check if a member has access to the specific object based on the access level.
@@ -159,7 +159,7 @@ def check_obj_access(
     return None  # storage object has parent(s)
 
 
-def member_has_access(obj: FinmarsDirectory, member: Member, access: str) -> bool:
+def member_has_access(obj: StorageObject, member: Member, access: str) -> bool:
     """
     A function that determines if a member has access to a specific object
     or any of his parents based on the access level.
@@ -209,10 +209,10 @@ def member_has_access_to_path(path: str, member: Member, access: str) -> bool:
     """
     try:
         if path.endswith(DIR_SUFFIX):
-            obj = FinmarsDirectory.objects.get(path=path, is_file=False)
+            obj = StorageObject.objects.get(path=path, is_file=False)
         else:
-            obj = FinmarsDirectory.objects.get(path=path, is_file=True)
-    except FinmarsDirectory.DoesNotExist:
+            obj = StorageObject.objects.get(path=path, is_file=True)
+    except StorageObject.DoesNotExist:
         _l.info(f"{member.username} has no {access} access to {path} (not found)")
         return False
 

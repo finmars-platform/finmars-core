@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, StorageObject
 
 expected_response = {
     "id": 2,
@@ -44,8 +44,8 @@ class FinmarsFileViewSetTest(BaseTestCase):
         )
         self.dirpath = f"/test/next{DIR_SUFFIX}"
         self.filepath = "/test/next/test.pdf"
-        self.directory = FinmarsDirectory.objects.create(path=self.dirpath)
-        self.file = FinmarsDirectory.objects.create(path=self.filepath, size=111, is_file=True)
+        self.directory = StorageObject.objects.create(path=self.dirpath)
+        self.file = StorageObject.objects.create(path=self.filepath, size=111, is_file=True)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),

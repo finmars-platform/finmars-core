@@ -10,7 +10,7 @@ from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import FinmarsDirectory
+from poms.explorer.models import StorageObject
 
 _l = logging.getLogger("poms.explorer")
 
@@ -289,7 +289,7 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory) -> int:
     """
 
     def sync_files_helper(directory) -> int:
-        from poms.explorer.models import FinmarsDirectory
+        from poms.explorer.models import StorageObject
 
         directory_path = directory.path.removesuffix("*")
 
@@ -311,7 +311,7 @@ def sync_storage_objects(storage: FinmarsS3Storage, start_directory) -> int:
             if is_system_path(subdir):
                 continue
 
-            sub_directory, created = FinmarsDirectory.objects.get_or_create(
+            sub_directory, created = StorageObject.objects.get_or_create(
                 path=os.path.join(directory_path, subdir), parent=directory
             )
             count += sync_files_helper(sub_directory)
@@ -331,7 +331,7 @@ def sync_file(storage: FinmarsS3Storage, filepath: str, directory):
     """
 
     _l.info(f"sync_file: filepath {filepath} directory {directory.path}")
-    FinmarsDirectory.objects.update_or_create(
+    StorageObject.objects.update_or_create(
         path=filepath,
         defaults=dict(
             size=storage.size(filepath),
@@ -342,7 +342,7 @@ def sync_file(storage: FinmarsS3Storage, filepath: str, directory):
 
 
 def delete_all_file_objects():
-    FinmarsDirectory.objects.all().delete()
+    StorageObject.objects.all().delete()
     _l.warning("deleted all file objects from database!")
 
 
@@ -373,7 +373,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     Returns:
         str: The path of the newly created or updated file model
     """
-    from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory
+    from poms.explorer.models import DIR_SUFFIX, StorageObject
 
     _l.info(f"update_or_create_file_and_parents: starts with {path}")
 
@@ -383,7 +383,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
 
     parent = None
     for dir_path in split_path(path):
-        dir_obj, created = FinmarsDirectory.objects.update_or_create(
+        dir_obj, created = StorageObject.objects.update_or_create(
             path=f"{dir_path}{DIR_SUFFIX}",
             defaults={"parent": parent},
         )
@@ -398,7 +398,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
             f"update_or_create_file_and_parents: no parent path '{path}'"
         )
 
-    file, created = FinmarsDirectory.objects.update_or_create(
+    file, created = StorageObject.objects.update_or_create(
         path=path,
         defaults={"parent": parent, "size": size, "is_file": True},
     )
