@@ -32,7 +32,7 @@ READ_ACCESS_POLICY = {
 
 def validate_obj_and_access(obj: FinmarsDirectory, access: str):
     if not isinstance(obj, FinmarsDirectory):
-        raise ValueError("Object must be FinmarsFile or FinmarsDirectory")
+        raise ValueError("Object must be FinmarsDirectory instance")
 
     AccessLevel.validate_level(access)
 

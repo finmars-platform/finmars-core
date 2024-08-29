@@ -106,7 +106,6 @@ class FinmarsFile(TimeStampedModel):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name="files",
     )
     size = models.PositiveBigIntegerField(
         help_text="Size of the file in bytes",
