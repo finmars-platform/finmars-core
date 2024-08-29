@@ -124,5 +124,42 @@ class ResourceGroup(NamedModel, TimeStampedModel):
     class Meta:
         ordering = ["user_code"]
 
+
+# class ResourceAccessPolicy(TimeStampedModel):
+#     ACCESS_CHOICES = [
+#         ("read", "Read"),
+#         ("write", "Write"),
+#     ]
+#     RESOURCE_TYPES = [
+#         ("api", "API"),
+#         ("file", "File"),
+#         ("db", "DB"),
+#     ]
+#     resource_group = models.ForeignKey(
+#         ResourceGroup,
+#         related_name="access_policies",
+#         on_delete=models.CASCADE,
+#     )
+#     resource_type = models.CharField(
+#         max_length=5,
+#         db_index=True,
+#         choices=RESOURCE_TYPES,
+#     )
+#     resource_name = models.CharField(
+#         max_length=255,
+#         db_index=True,
+#     )
+#     allowed_access = models.CharField(
+#         max_length=5,
+#         choices=ACCESS_CHOICES,
+#     )
+#
+#     def __str__(self):
+#         return f"{self.resource_type}:{self.resource_name}:{self.allowed_access}"
+#
+#     class Meta:
+#         unique_together = ["resource_group", "resource_type", "resource_name"]
+
+
 # Important, needs for cache clearance after Policy Updated
 from . import signals
