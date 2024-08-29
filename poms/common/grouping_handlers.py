@@ -256,18 +256,8 @@ def is_root_groups_configuration(groups_types, groups_values):
 
 def format_groups(group_type, master_user, content_type):
     if 'attributes.' in group_type:
-        user_code = group_type.split('attributes.')[1]
-        attribute_type = GenericAttributeType.objects.filter(user_code__exact=user_code,
-                            master_user=master_user, content_type=content_type).first()
-        if not attribute_type:
-            all_types = [gat.user_code for gat in GenericAttributeType.objects.all()]
-            content_type_id = content_type.id
-            _l.warning('Content type: %s %s', content_type_id, str(content_type.model))
-            _l.warning('Unable to get attribute type. User_code: %s, master_user: %s, content_type: %s, All types %s',
-                       user_code, master_user.id, content_type.id, all_types)
-            raise GenericAttributeType.DoesNotExist(
-                "%s matching query does not exist." % GenericAttributeType._meta.object_name
-            )
+        attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1],
+                                                          master_user=master_user, content_type=content_type)
 
         return str(attribute_type.id)
 

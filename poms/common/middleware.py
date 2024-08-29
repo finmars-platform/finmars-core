@@ -402,6 +402,10 @@ class RealmAndSpaceMiddleware:
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO {request.space_code};")
 
+            # fix PLAT-1001: cache might return data from another schema, clear it
+            from django.contrib.contenttypes.models import ContentType
+            ContentType.objects.clear_cache()
+
         else:
             # If we do not have realm_code, we suppose its legacy Space which do not need scheme changing
             request.space_code = path_parts[1]
