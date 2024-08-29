@@ -26,26 +26,26 @@ class FinmarsFileTest(BaseTestCase):
         self.assertIsNotNone(file.created_at)
         self.assertIsNotNone(file.modified_at)
 
-    # def test__add_files_to_instrument(self):
-    #     kwargs_1 = dict(
-    #         path="/test/name_1.pdf",
-    #         size=self.random_int(1, 10000000),
-    #         is_file=True,
-    #     )
-    #     file_1 = FinmarsDirectory.objects.create(**kwargs_1)
-    #
-    #     kwargs_2 = dict(
-    #         path="/test/name_2.pdf",
-    #         size=self.random_int(1, 10000000),
-    #         is_file=True,
-    #     )
-    #     file_2 = FinmarsDirectory.objects.create(**kwargs_2)
-    #
-    #     instrument = Instrument.objects.last()
-    #     self.assertEqual(len(instrument.files.all()), 0)
-    #
-    #     instrument.files.add(file_1, file_2)
-    #     self.assertEqual(len(instrument.files.all()), 2)
+    def test__add_files_to_instrument(self):
+        kwargs_1 = dict(
+            path="/test/name_1.pdf",
+            size=self.random_int(1, 10000000),
+            is_file=True,
+        )
+        file_1 = StorageObject.objects.create(**kwargs_1)
+
+        kwargs_2 = dict(
+            path="/test/name_2.pdf",
+            size=self.random_int(1, 10000000),
+            is_file=True,
+        )
+        file_2 = StorageObject.objects.create(**kwargs_2)
+
+        instrument = Instrument.objects.last()
+        self.assertEqual(len(instrument.files.all()), 0)
+
+        instrument.files.add(file_1, file_2)
+        self.assertEqual(len(instrument.files.all()), 2)
 
     def test__unique_path_and_name(self):
         kwargs = dict(path="/test/name.pdf", size=1, is_file=True)
