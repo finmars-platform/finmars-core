@@ -74,3 +74,8 @@ router.register(
     explorer.RenameViewSet,
     "explorer_rename",
 )
+router.register(
+    "copy",
+    explorer.CopyViewSet,
+    "explorer_copy",
+)

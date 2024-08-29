@@ -17,6 +17,8 @@ from poms.explorer.utils import (
     unzip_file,
     rename_file,
     rename_dir,
+    copy_dir,
+    copy_file,
 )
 
 storage = get_storage()
@@ -215,7 +217,6 @@ def sync_storage_with_database(self, *args, **kwargs):
 @finmars_task(name="explorer.tasks.rename_directory_in_storage", bind=True)
 def rename_directory_in_storage(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
-
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -225,9 +226,7 @@ def rename_directory_in_storage(self, *args, **kwargs):
     path = validated_data["path"]
     new_name = validated_data["new_name"]
 
-    _l.info(
-        f"rename_directory_in_storage: rename {path} to new name {new_name}"
-    )
+    _l.info(f"rename_directory_in_storage: rename {path} to new name {new_name}")
     celery_task.update_progress(
         {
             "description": "rename_directory_in_storage starting ...",
@@ -237,7 +236,6 @@ def rename_directory_in_storage(self, *args, **kwargs):
     if path_is_file(storage, path):
         destination_file_path =  str(os.path.join(os.path.dirname(path), new_name))
         rename_file(storage, path, destination_file_path)
-
     else:
         destination_dir_path = os.path.join(os.path.dirname(os.path.normpath(path)), new_name)
         rename_dir(storage, path, destination_dir_path)     
@@ -252,3 +250,62 @@ def rename_directory_in_storage(self, *args, **kwargs):
     celery_task.verbose_result = f"renamed file"
     celery_task.save()
     
+
+@finmars_task(name="explorer.tasks.copy_directory_in_storage", bind=True)
+def copy_directory_in_storage(self, *args, **kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    validated_data = celery_task.options_object
+
+    directories = []
+    files_paths = []
+    items = validated_data["paths"]
+    total_items = len(items)
+    for item in items:
+        if path_is_file(storage, item):
+            files_paths.append(item)
+        else:
+            directories.append(item)
+
+    destination_directory = validated_data["target_directory_path"]
+
+    _l.info(
+        f"copy_directory_in_storage: copy {len(directories)} dirs, {len(files_paths)} "
+        f"files, total {total_items} items"
+    )
+    celery_task.update_progress(
+        {
+            "current": 0,
+            "total": total_items,
+            "percent": 0,
+            "description": "copy_directory_in_storage starting ...",
+        }
+    )
+
+    for directory in directories:
+        last_dir = last_dir_name(directory)
+        new_destination_directory = os.path.join(destination_directory, last_dir)
+        copy_dir(storage, directory, new_destination_directory, celery_task)
+
+    for file_path in files_paths:
+        file_name = os.path.basename(file_path)
+        destination_file_path = str(os.path.join(destination_directory, file_name))
+        copy_file(storage, file_path, destination_file_path)
+
+    celery_task.update_progress(
+        {
+            "current": total_items,
+            "total": total_items,
+            "percent": 100,
+            "description": "copy_directory_in_storage finished",
+        }
+    )
+
+    celery_task.status = CeleryTask.STATUS_DONE
+    celery_task.verbose_result = f"copied {total_items} items"
+    celery_task.save()
