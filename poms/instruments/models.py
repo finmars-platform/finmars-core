@@ -1570,6 +1570,11 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         help_text="Files in the storage related to the instrument",
     )
 
+    first_transaction_date = models.DateField(
+        null=True,
+        verbose_name=gettext_lazy("first transaction date"),
+    )
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("instrument")
         verbose_name_plural = gettext_lazy("instruments")
@@ -2617,7 +2622,28 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         _l.info("generate_instrument_system_attributes done")
 
+    def calculate_first_transactions_dates(self):
+        from poms.transactions.models import Transaction
+
+        first_transaction = (
+            Transaction.objects.filter(instrument=self, is_deleted=False)
+            .order_by(
+                "accounting_date",
+            )
+            .first()
+        )
+        self.first_transaction_date = (
+            first_transaction.accounting_date if first_transaction else None
+        )
+
+        _l.info(
+            f"Instrument.calculate_first_transactions_dates succeed: "
+            f"first_transaction_date={self.first_transaction_date} "
+        )
+
     def save(self, *args, **kwargs):
+        self.calculate_first_transactions_dates()
+
         super().save(*args, **kwargs)
 
         try:
