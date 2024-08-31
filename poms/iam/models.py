@@ -107,22 +107,30 @@ class Group(ConfigurationModel, TimeStampedModel):
         return str(self.name)
 
 
-class ResourceGroup(NamedModel, TimeStampedModel):
-    master_user = models.ForeignKey(
-        MasterUser,
-        related_name="resource_groups",
-        verbose_name=gettext_lazy("Master User"),
-        on_delete=models.CASCADE,
-    )
-    user_code = models.CharField(
-        max_length=1024,
-        unique=True,
-        verbose_name=gettext_lazy("User Code"),
-        help_text=gettext_lazy("Unique User Code of the Resource Group"),
-    )
-
-    class Meta:
-        ordering = ["user_code"]
+# from django.contrib.auth.models import Group as UserGroup
+#
+# class ResourceGroup(NamedModel, TimeStampedModel):
+#     master_user = models.ForeignKey(
+#         MasterUser,
+#         related_name="resource_groups",
+#         verbose_name=gettext_lazy("Master User"),
+#         on_delete=models.CASCADE,
+#     )
+#     user_code = models.CharField(
+#         max_length=1024,
+#         unique=True,
+#         verbose_name=gettext_lazy("User Code"),
+#         help_text=gettext_lazy("Unique User Code of the Resource Group"),
+#     )
+#     group = models.OneToOneField(
+#         UserGroup,
+#         related_name="resource_group",
+#         verbose_name=gettext_lazy("Django User Group"),
+#         on_delete=models.CASCADE,
+#     )
+#
+#     class Meta:
+#         ordering = ["user_code"]
 
 
 # class ResourceAccessPolicy(TimeStampedModel):
