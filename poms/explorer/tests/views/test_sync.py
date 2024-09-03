@@ -1,3 +1,5 @@
+from django.test import override_settings
+
 from poms.common.common_base_test import BaseTestCase
 
 
@@ -11,6 +13,7 @@ expected_response = {
 }
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class SyncViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()

@@ -1,12 +1,12 @@
 import json
-from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest import mock
 
-from poms.common.common_base_test import BaseTestCase
-from poms.celery_tasks.models import CeleryTask
-from poms.integrations.models import ComplexTransactionImportScheme
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 
+from poms.celery_tasks.models import CeleryTask
+from poms.common.common_base_test import BaseTestCase
+from poms.integrations.models import ComplexTransactionImportScheme
 
 JSON_DATA = [
     {
@@ -36,14 +36,15 @@ class DummyStorage:
         return
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class ComplexTransactionCsvFileImportViewSetTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/complex-transaction-csv-file-import/"
         self.scheme = ComplexTransactionImportScheme.objects.create(
             user_code=self.random_string(length=5),
