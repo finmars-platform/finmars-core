@@ -144,17 +144,14 @@ class ExplorerViewSet(AbstractViewSet):
         page_size = serializer.validated_data["page_size"]
         api_url = f"{request.build_absolute_uri(location='')}?path={original_path}"
         page_dict = paginate(results, page_size, page, api_url)
-        previous_url = page_dict["previous_url"]
-        next_url = page_dict["next_url"]
-        results_to_show = page_dict["items"]
 
         result = {
             "status": "ok",
             "path": path,
-            "results": results_to_show,
-            "count": len(results_to_show),
-            "previous": previous_url,
-            "next": next_url,
+            "results": page_dict["items"],
+            "count": page_dict["count"],
+            "previous": page_dict["previous_url"],
+            "next": page_dict["next_url"],
         }
         return Response(PaginatedResponseSerializer(result).data)
 
