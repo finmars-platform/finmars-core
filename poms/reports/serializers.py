@@ -1407,8 +1407,8 @@ class PriceHistoryCheckSerializer(ReportSerializerWithLogs):
 
     items = serializers.SerializerMethodField()
 
-    item_currencies = ReportCurrencySerializer(many=True, read_only=True)
-    item_instruments = serializers.SerializerMethodField()
+    # item_currencies = ReportCurrencySerializer(many=True, read_only=True)
+    # item_instruments = serializers.SerializerMethodField()
 
     def get_items(self, obj):
         return [serialize_price_checker_item(item) for item in obj.items]

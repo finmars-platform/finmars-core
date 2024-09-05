@@ -328,13 +328,16 @@ class ResponseTimeMiddleware(MiddlewareMixin):
     @staticmethod
     def update_response_content(data_dict: dict, request, response):
         execution_time = int((time.time() - request.start_time) * 1000)
-        data_dict["meta"] = {
-            "execution_time": execution_time,
-            "request_id": request.request_id,
-        }
-        response.content = json.dumps(data_dict).encode()
+        # TODO szhitenev probably extra json convert too heavy for performance
+        # data_dict["meta"] = {
+        #     "execution_time": execution_time,
+        #     "request_id": request.request_id,
+        # }
+        # response.content = json.dumps(data_dict).encode()
 
         # Update the content length
+        response["X-Execution-Time"] = execution_time
+        response["X-Request-Id"] = request.request_id
         response["Content-Length"] = len(response.content)
 
     def process_request(self, request):

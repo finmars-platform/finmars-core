@@ -33,7 +33,7 @@ class SystemMessageFilterSet(FilterSet):
 
 
 class SystemMessageViewSet(AbstractModelViewSet):
-    queryset = SystemMessage.objects
+    queryset = SystemMessage.objects.select_related('master_user', 'linked_event').prefetch_related('comments', 'attachments')
     serializer_class = SystemMessageSerializer
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [

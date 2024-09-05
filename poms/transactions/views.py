@@ -220,7 +220,9 @@ class TransactionTypeEvFilterSet(FilterSet):
 
 
 class TransactionTypeViewSet(AbstractModelViewSet):
-    queryset = TransactionType.objects
+    queryset = TransactionType.objects.select_related('master_user','owner',
+                                                      ).prefetch_related('instrument_types',
+                                                                                      'attributes', 'portfolios')
     serializer_class = TransactionTypeSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
