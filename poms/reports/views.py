@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.utils import get_closest_bday_of_yesterday
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.reports.light_builders.balance import BalanceReportLightBuilderSql
 from poms.reports.models import (
     BalanceReportCustomField,
     PLReportCustomField,
@@ -34,7 +35,7 @@ from poms.reports.serializers import (
     PriceHistoryCheckSerializer,
     SummarySerializer,
     TransactionReportCustomFieldSerializer,
-    TransactionReportSerializer,
+    TransactionReportSerializer, BalanceReportLightSerializer,
 )
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
@@ -368,7 +369,272 @@ class BalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class BalanceReportLightViewSet(AbstractViewSet):
+    serializer_class = BalanceReportLightSerializer
+
+    @action(detail=False, methods=["get"], url_path="attributes")
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "item_type_name",
+                "name": "Item Type",
+                "value_type": 10,
+            },
+            {
+                "key": "fx_rate",
+                "name": "FX Rate",
+                "value_type": 20,
+            },
+            {
+                "key": "position_size",
+                "name": "Position size",
+                "value_type": 20,
+            },
+            {
+                "key": "nominal_position_size",
+                "name": "Nominal Position size",
+                "value_type": 20,
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing Currency",
+                "value_type": "field",
+                "value_entity": "currency",
+                "value_content_type": "currencies.currency",
+                "code": "user_code",
+            },
+            {
+                "key": "instrument_pricing_currency_fx_rate",
+                "name": "Pricing currency fx rate",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_accrued_currency_fx_rate",
+                "name": "Accrued currency fx rate",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_accrual_object_accrual_size",
+                "name": "Current Payment Size",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_object_name",
+                "name": "Current Payment Frequency",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_n",
+                "name": "Current Payment Periodicity N",
+                "value_type": 20,
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40,
+            },
+            {
+                "key": "ytm",
+                "name": "YTM",
+                "value_type": 20,
+            },
+            {
+                "key": "modified_duration",
+                "name": "Modified duration",
+                "value_type": 20,
+            },
+            {
+                "key": "last_notes",
+                "name": "Last notes",
+                "value_type": 10,
+            },
+            {
+                "key": "gross_cost_price_loc",
+                "name": "Gross cost price (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "ytm_at_cost",
+                "name": "YTM at cost",
+                "value_type": 20,
+            },
+            {
+                "key": "time_invested",
+                "name": "Time invested",
+                "value_type": 20,
+            },
+            {
+                "key": "return_annually",
+                "name": "Return annually",
+                "value_type": 20,
+            },
+            {
+                "key": "return_annually_fixed",
+                "name": "Return Annually Fixed",
+                "value_type": 20,
+            },
+            {
+                "key": "net_cost_price_loc",
+                "name": "Net cost price (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "currency",
+                "name": "Currency",
+                "value_type": "field",
+                "value_entity": "currency",
+                "value_content_type": "currencies.currency",
+                "code": "user_code",
+            },
+            {
+                "key": "exposure_currency",
+                "name": " Exposure Currency",
+                "value_type": "field",
+                "value_entity": "currency",
+                "value_content_type": "currencies.currency",
+                "code": "user_code",
+            },
+            {
+                "key": "principal_invested",
+                "name": "Principal invested",
+                "value_type": 20,
+            },
+            {
+                "key": "principal_invested_loc",
+                "name": "Principal invested (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "amount_invested",
+                "name": "Amount invested",
+                "value_type": 20,
+            },
+            {
+                "key": "amount_invested_loc",
+                "name": "Amount invested (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "principal_invested_fixed",
+                "name": "Principal invested Fixed",
+                "value_type": 20,
+            },
+            {
+                "key": "principal_invested_fixed_loc",
+                "name": "Principal invested Fixed (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "amount_invested_fixed",
+                "name": "Amount invested Fixed",
+                "value_type": 20,
+            },
+            {
+                "key": "amount_invested_fixed_loc",
+                "name": "Amount invested Fixed (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "market_value",
+                "name": "Market value",
+                "value_type": 20,
+            },
+            {
+                "key": "market_value_loc",
+                "name": "Market value (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "market_value_percent",
+                "name": "Market value %",
+                "value_type": 20,
+            },
+            {
+                "key": "exposure",
+                "name": "Exposure",
+                "value_type": 20,
+            },
+            {
+                "key": "exposure_percent",
+                "name": "Exposure %",
+                "value_type": 20,
+            },
+            {
+                "key": "exposure_loc",
+                "name": "Exposure (Pricing Currency)",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_principal_price",
+                "name": "Current Price",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_accrued_price",
+                "name": "Current Accrued",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_factor",
+                "name": "Factor",
+                "value_type": 20,
+            },
+            {
+                "key": "instrument_ytm",
+                "name": "Current YTM",
+                "value_type": 20,
+            },
+            {
+                "key": "detail",
+                "name": "Transaction Detail",
+                "value_type": 10,
+            },
+        ]
+
+        result = {"count": len(items), "next": None, "previous": None, "results": items}
+
+        return Response(result)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        instance.auth_time = self.auth_time
+
+        builder = BalanceReportLightBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
+
+        serialize_report_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance, many=False)
+
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -385,7 +651,7 @@ class SummaryViewSet(AbstractViewSet):
 
         validated_data = serializer.validated_data
 
-        _l.info(f"Validated_data {validated_data} ")
+        _l.debug(f"Validated_data {validated_data} ")
 
         calculate_new = validated_data["calculate_new"]
 
@@ -402,7 +668,7 @@ class SummaryViewSet(AbstractViewSet):
         if date_from >= date_to:
             date_from = date_to - timedelta(days=1)
 
-        _l.info(f"SummaryViewSet.list.date_from {date_from} date_to {date_to}")
+        _l.debug(f"SummaryViewSet.list.date_from {date_from} date_to {date_to}")
 
         summary_record_count = ReportSummaryInstance.objects.filter(
             member=request.user.member,
@@ -415,7 +681,7 @@ class SummaryViewSet(AbstractViewSet):
             allocation_mode=allocation_mode,
         ).count()
 
-        _l.info(f"summary_record_count {summary_record_count}")
+        _l.debug(f"summary_record_count {summary_record_count}")
 
         if calculate_new or summary_record_count == 0:
             bundles = []
@@ -504,7 +770,7 @@ class SummaryViewSet(AbstractViewSet):
 
         validated_data = serializer.validated_data
 
-        _l.info(f"Validated_data {validated_data} ")
+        _l.debug(f"Validated_data {validated_data} ")
 
         date_from = validated_data["date_from"]
         date_to = validated_data["date_to"]
@@ -886,7 +1152,7 @@ class PerformanceReportViewSet(AbstractViewSet):
         # cached_data = cache.get(key)
         #
         # if not cached_data:
-        #     _l.info("Could not find in cache")
+        #     _l.debug("Could not find in cache")
         #
         #     serializer = self.get_serializer(data=request.data)
         #     serializer.is_valid(raise_exception=True)
@@ -937,7 +1203,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -969,7 +1235,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -1003,7 +1269,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -1035,7 +1301,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -1068,7 +1334,7 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
@@ -1099,7 +1365,7 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info(
+        _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )

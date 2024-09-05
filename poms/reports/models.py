@@ -1435,7 +1435,7 @@ class ReportSummary:
 
         self.balance_report = BalanceReportBuilderSql(instance=instance).build_balance()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_balance done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1465,7 +1465,7 @@ class ReportSummary:
 
         self.pl_report_range = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1477,7 +1477,7 @@ class ReportSummary:
 
         pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
 
-        _l.info('build_pl_daily %s' % pl_first_date)
+        _l.debug('build_pl_daily %s' % pl_first_date)
 
         serializer = PLReportSerializer(
             data={
@@ -1499,7 +1499,7 @@ class ReportSummary:
 
         self.pl_report_daily = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1525,7 +1525,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.info('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.debug('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
 
 
         serializer = PLReportSerializer(
@@ -1544,7 +1544,7 @@ class ReportSummary:
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        _l.info(
+        _l.debug(
             f"build_pl_mtd.instance.pl_first_date {instance.pl_first_date} "
             f"report_date {instance.report_date}"
         )
@@ -1553,7 +1553,7 @@ class ReportSummary:
 
         self.pl_report_mtd = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_mtd done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1579,7 +1579,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.info('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
+        _l.debug('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
 
         serializer = PLReportSerializer(
             data={
@@ -1601,7 +1601,7 @@ class ReportSummary:
 
         self.pl_report_ytd = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_ytd done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1632,7 +1632,7 @@ class ReportSummary:
             instance=instance
         ).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_inception_to_date done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1848,7 +1848,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PerformanceReportSerializer
 
-        _l.info('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.debug('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
 
         serializer = PerformanceReportSerializer(data={
             "begin_date": self.pl_first_date_for_mtd,
@@ -1897,7 +1897,7 @@ class ReportInstanceModel:
         from poms.portfolios.models import Portfolio
         from poms.strategies.models import Strategy1, Strategy2, Strategy3
 
-        # _l.info('ReportInstanceModel.kwargs %s' % kwargs)
+        # _l.debug('ReportInstanceModel.kwargs %s' % kwargs)
 
         self.report_date = datetime.strptime(kwargs["report_date"], "%Y-%m-%d")
 

@@ -764,8 +764,8 @@ class PriceHistoryCheckerSql:
                     elif 'settlement_currency_user_code' in item:
                         unique_items_dict[item['type'] + '_' + item['settlement_currency_user_code']] = item
                 except Exception as e:
-                    _l.info('error %s' % e)
-                    _l.info(item)
+                    _l.debug('error %s' % e)
+                    _l.debug(item)
 
             for key, value in unique_items_dict.items():
                 unique_items.append(unique_items_dict[key])
@@ -787,6 +787,7 @@ class PriceHistoryCheckerSql:
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
+            'country',
             # 'price_download_scheme',
             # 'price_download_scheme__provider',
         ).prefetch_related(
@@ -800,6 +801,7 @@ class PriceHistoryCheckerSql:
 
         self.instance.item_currencies = Currency.objects.prefetch_related(
             'attributes',
+            'country',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)

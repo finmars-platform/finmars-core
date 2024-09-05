@@ -19,6 +19,14 @@ router.register(
     reports.BalanceReportViewSet,
     "BalanceReport",
 )
+
+router.register(
+    r"balance-report-light",
+    reports.BalanceReportLightViewSet,
+    "BalanceReportLight",
+)
+
+
 router.register(
     r"balance-report-sql",
     reports.BalanceReportViewSet,

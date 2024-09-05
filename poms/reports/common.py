@@ -327,8 +327,8 @@ class TransactionReport(BaseReport):
 
         self.date_field = date_field or "date"
 
-        _l.info(f"====depth_level {depth_level}")
-        _l.info(f"====filters {filters}")
+        _l.debug(f"====depth_level {depth_level}")
+        _l.debug(f"====filters {filters}")
 
         self.depth_level = depth_level or "base_transaction"
 
@@ -337,7 +337,7 @@ class TransactionReport(BaseReport):
         self.frontend_request_options = frontend_request_options
         self.report_instance_id = report_instance_id
 
-        _l.info('TransactionReport.page %s' % page)
+        _l.debug('TransactionReport.page %s' % page)
 
         self.page = page
         self.page_size = page_size

@@ -48,12 +48,12 @@ class PLReportBuilderSql:
         self.transform_to_allowed_accounts()
 
         if not self.instance.pl_first_date and not self.instance.period_type:
-            _l.info("No pl_first_date, no period_type settings to ytd")
+            _l.debug("No pl_first_date, no period_type settings to ytd")
             self.instance.period_type = 'ytd'
 
         if not self.instance.pl_first_date and self.instance.period_type:
 
-            _l.info("No pl_first_date, calculating by period_type...")
+            _l.debug("No pl_first_date, calculating by period_type...")
 
             if self.instance.period_type == 'inception':
                 # TODO wtf is first transaction when multi portfolios?
@@ -120,8 +120,8 @@ class PLReportBuilderSql:
         if not pl_first_date or pl_first_date == date.min:
             self.instance.pl_first_date = self.instance.first_transaction_date
 
-        _l.info('self.instance.report_date %s' % self.instance.report_date)
-        _l.info('self.instance.pl_first_date %s' % self.instance.pl_first_date)
+        _l.debug('self.instance.report_date %s' % self.instance.report_date)
+        _l.debug('self.instance.pl_first_date %s' % self.instance.pl_first_date)
 
         self.parallel_build()
 
@@ -3712,14 +3712,14 @@ class PLReportBuilderSql:
                     else:
                         result_tmp.append(item)
 
-                # _l.info("WTF??")
+                # _l.debug("WTF??")
 
                 # index = 0
 
                 for item in result_tmp:
 
                     # if 'Pfizer' in item['user_code']:
-                    #     _l.info("WTF??? item %s ______  %s" %  (index, item))
+                    #     _l.debug("WTF??? item %s ______  %s" %  (index, item))
                     #     index = index + 1
                     # result_item_opened = item.copy()
                     result_item_opened = {}
@@ -3949,7 +3949,7 @@ class PLReportBuilderSql:
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
 
-                        _l.info("PL opened position has closed value")
+                        _l.debug("PL opened position has closed value")
 
                         # result_item_closed = item.copy()
                         # result_item_closed = copy.deepcopy(item)
@@ -4173,7 +4173,7 @@ class PLReportBuilderSql:
 
                 _l.debug('build position result %s ' % len(result))
 
-                _l.info('single build done: %s' % (time.perf_counter() - st))
+                _l.debug('single build done: %s' % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
@@ -4272,7 +4272,7 @@ class PLReportBuilderSql:
 
             tasks.append(task)
 
-        _l.info("Going to run %s tasks" % len(tasks))
+        _l.debug("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
         job = group(self.build.s(task_id=task.id, context={
@@ -4301,7 +4301,7 @@ class PLReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
 
-        _l.info('parallel_build done: %s',
+        _l.debug('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
 
     def build_pl_sync(self):
@@ -4364,7 +4364,7 @@ class PLReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = result
 
-        _l.info('parallel_build done: %s',
+        _l.debug('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
 
     def get_cash_consolidation_for_select(self):
@@ -4533,7 +4533,7 @@ class PLReportBuilderSql:
                 try:
                     instrument_ids.append(item['allocation_pl_id'])
                 except Exception as e:
-                    _l.info('no allocation_pl_id %s' % item)
+                    _l.debug('no allocation_pl_id %s' % item)
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])
