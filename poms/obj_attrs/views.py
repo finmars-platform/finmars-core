@@ -136,7 +136,7 @@ class GenericAttributeTypeFilterSet(FilterSet):
 # class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 class GenericAttributeTypeViewSet(AbstractModelViewSet):
     queryset = GenericAttributeType.objects.select_related(
-        "master_user", "content_type"
+        "master_user", "content_type", "owner"
     ).prefetch_related(
         "options",
         "classifiers",
