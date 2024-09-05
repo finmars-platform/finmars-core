@@ -201,7 +201,7 @@ class ReportSerializer(ReportSerializerWithLogs):
         allow_null=True, allow_blank=True, required=False
     )  # something depreacted
     report_instance_id = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False
+        read_only=True
     )  # needs for backend reports
     task_status = serializers.ReadOnlyField()
 
@@ -629,9 +629,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
 class BalanceReportLightSerializer(ReportSerializerWithLogs):
 
-    report_instance_id = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False
-    )  # needs for backend reports
+    report_instance_id = serializers.CharField(read_only=True)
     task_status = serializers.ReadOnlyField()
 
     master_user = MasterUserField()
@@ -1541,6 +1539,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             },
         )
 
+        data["report_instance_id"] = report_instance.id
         data["items"] = groups
         data.pop("item_currencies", [])
         data.pop("item_portfolios", [])
@@ -1641,6 +1640,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             report_instance.save()
 
+
+
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
         )
@@ -1678,6 +1679,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         data["count"] = len(full_items)
 
+        data["report_instance_id"] = report_instance.id
         data["items"] = helper_service.paginate_items(
             full_items,
             {
