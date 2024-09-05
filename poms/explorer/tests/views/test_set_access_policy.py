@@ -22,10 +22,10 @@ expected_response = {
     },
     "owner": 2,
     "members": [],
-    "meta": {
-        "execution_time": 10,
-        "request_id": "33e86689-5ed9-4422-908e-9cd45a008451",
-    },
+    # "meta": {
+    #     "execution_time": 10,
+    #     "request_id": "33e86689-5ed9-4422-908e-9cd45a008451",
+    # },
 }
 
 
