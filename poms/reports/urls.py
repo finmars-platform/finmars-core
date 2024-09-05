@@ -92,3 +92,16 @@ router.register(
     reports.PriceHistoryCheckViewSet,
     "priceHistoryCheck",
 )
+
+
+router.register(
+    r"balance-report-instance",
+    reports.BalanceReportInstanceViewSet,
+    "balanceReportInstance",
+)
+
+router.register(
+    r"pl-report-instance",
+    reports.PLReportInstanceViewSet,
+    "plReportInstance",
+)

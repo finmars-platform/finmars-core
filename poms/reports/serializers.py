@@ -13,13 +13,18 @@ from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from poms.reports.utils import generate_unique_key
 from poms_app import settings
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import (
+    ModelWithUserCodeSerializer,
+    ModelMetaSerializer,
+    ModelWithTimeStampSerializer,
+)
 from poms.common.utils import date_now, date_yesterday
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
@@ -422,6 +427,8 @@ class ReportSerializer(ReportSerializerWithLogs):
         default=40, initial=40, min_value=1, required=False
     )
 
+    created_at = serializers.DateTimeField(read_only=True)
+
     def __init__(self, *args, **kwargs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
@@ -738,7 +745,6 @@ class BalanceReportLightSerializer(ReportSerializerWithLogs):
         return data
 
 
-
 class BalanceReportSerializer(ReportSerializer):
     calculate_pl = serializers.BooleanField(default=True, initial=True)
 
@@ -803,10 +809,12 @@ class PLReportSerializer(ReportSerializer):
 
     item_instruments = serializers.SerializerMethodField()
 
-
-    period_type = serializers.ChoiceField(allow_null=True,
-                                          choices=Report.PERIOD_TYPE_CHOICES, allow_blank=True,
-                                          required=False)
+    period_type = serializers.ChoiceField(
+        allow_null=True,
+        choices=Report.PERIOD_TYPE_CHOICES,
+        allow_blank=True,
+        required=False,
+    )
 
     def get_items(self, obj):
         return [serialize_pl_report_item(item) for item in obj.items]
@@ -1199,7 +1207,6 @@ class PerformanceReportSerializer(serializers.Serializer):
         required=False,
     )
 
-
     segmentation_type = serializers.ChoiceField(
         allow_null=True,
         initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
@@ -1365,6 +1372,7 @@ class PerformanceReportSerializer(serializers.Serializer):
 
         return data
 
+
 class PriceHistoryCheckSerializer(ReportSerializerWithLogs):
 
     master_user = MasterUserField()
@@ -1423,7 +1431,6 @@ class PriceHistoryCheckSerializer(ReportSerializerWithLogs):
         return Report(**validated_data)
 
 
-
 class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
     def to_representation(self, instance):
         if not instance.frontend_request_options:
@@ -1435,7 +1442,18 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
-        if not instance.report_instance_id:
+        unique_key = generate_unique_key(instance, "balance")
+
+        try:
+
+            report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
+
+            data = report_instance.data
+
+            full_items = report_instance.data["items"]
+
+        except BalanceReportInstance.DoesNotExist:
+
             data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
                 instance
             )
@@ -1449,6 +1467,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
                 report_instance_name = report_uuid
 
             report_instance = BalanceReportInstance.objects.create(
+                unique_key=unique_key,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1477,17 +1496,6 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
-
-        else:
-            report_instance = BalanceReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-
-            data = report_instance.data
-
-            full_items = report_instance.data["items"]
-
-        data["report_instance_id"] = report_instance.id
 
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
@@ -1545,6 +1553,8 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
 
+        data["created_at"] = report_instance.created_at
+
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
         data["serialization_time"] = float(
@@ -1575,7 +1585,17 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         # Idea is that we put calculated report and to_representation result to BalanceReportInstance.data
         # And if user just applies filters or regroups there is no need for calculating whole report again
 
-        if not instance.report_instance_id:
+        unique_key = generate_unique_key(instance, "balance")
+
+        try:
+
+            report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
+
+            data = report_instance.data
+
+            full_items = report_instance.data["items"]
+
+        except BalanceReportInstance.DoesNotExist:
             data = super(BackendBalanceReportItemsSerializer, self).to_representation(
                 instance
             )
@@ -1589,6 +1609,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
                 report_instance_name = report_uuid
 
             report_instance = BalanceReportInstance.objects.create(
+                unique_key=unique_key,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1619,17 +1640,6 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
-
-        else:
-            report_instance = BalanceReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-
-            data = report_instance.data
-
-            full_items = report_instance.data["items"]
-
-        data["report_instance_id"] = report_instance.id
 
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
@@ -1690,6 +1700,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
 
+        data["created_at"] = report_instance.created_at
+
         # _l.debug("after filter items len %s" % len(data['items']))
 
         # original_items = helper_service.filterByGlobalTableSearch(original_items, globalTableSearch)
@@ -1710,7 +1722,17 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        if not instance.report_instance_id:
+        unique_key = generate_unique_key(instance, "pnl")
+
+        try:
+
+            report_instance = PLReportInstance.objects.get(unique_key=unique_key)
+
+            data = report_instance.data
+
+            full_items = report_instance.data["items"]
+
+        except PLReportInstance.DoesNotExist:
             data = super(BackendPLReportGroupsSerializer, self).to_representation(
                 instance
             )
@@ -1724,6 +1746,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
                 report_instance_name = report_uuid
 
             report_instance = PLReportInstance.objects.create(
+                unique_key=unique_key,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1757,15 +1780,6 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
-
-        else:
-            report_instance = PLReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-
-            data = report_instance.data
-
-            full_items = report_instance.data["items"]
 
         data["report_instance_id"] = report_instance.id
 
@@ -1813,6 +1827,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
             },
         )
 
+        data["created_at"] = report_instance.created_at
+
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
         data["serialization_time"] = float(
@@ -1833,7 +1849,17 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        if not instance.report_instance_id:
+        unique_key = generate_unique_key(instance, "pnl")
+
+        try:
+
+            report_instance = PLReportInstance.objects.get(unique_key=unique_key)
+
+            data = report_instance.data
+
+            full_items = report_instance.data["items"]
+
+        except PLReportInstance.DoesNotExist:
             data = super(BackendPLReportItemsSerializer, self).to_representation(
                 instance
             )
@@ -1847,6 +1873,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
                 report_instance_name = report_uuid
 
             report_instance = PLReportInstance.objects.create(
+                unique_key=unique_key,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1880,15 +1907,6 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
-
-        else:
-            report_instance = PLReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-
-            data = report_instance.data
-
-            full_items = report_instance.data["items"]
 
         data["report_instance_id"] = report_instance.id
 
@@ -1933,6 +1951,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         data.pop("item_strategies1", [])
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
+
+        data["created_at"] = report_instance.created_at
 
         data["serialization_time"] = float(
             "{:3.3f}".format(time.perf_counter() - to_representation_st)
@@ -1985,9 +2005,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
-            )
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
@@ -2156,3 +2174,66 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         )
 
         return data
+
+
+class BalanceReportInstanceSerializer(
+    ModelWithUserCodeSerializer,
+    ModelWithTimeStampSerializer,
+    ModelMetaSerializer,
+):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = BalanceReportInstance
+        fields = [
+            "id",
+            "master_user",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "unique_key",
+
+            "report_date",
+            "report_currency",
+            "pricing_policy",
+            "cost_method"
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(BalanceReportInstanceSerializer, self).__init__(*args, **kwargs)
+
+
+
+
+class PLReportInstanceSerializer(
+    ModelWithUserCodeSerializer,
+    ModelWithTimeStampSerializer,
+    ModelMetaSerializer,
+):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PLReportInstance
+        fields = [
+            "id",
+            "master_user",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "unique_key"
+            
+            "report_date",
+            "pl_first_date",
+            "report_currency",
+            "pricing_policy",
+            "cost_method"
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PLReportInstanceSerializer, self).__init__(*args, **kwargs)
+
+

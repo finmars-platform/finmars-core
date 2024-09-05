@@ -18,6 +18,8 @@ from poms.reports.models import (
     ReportSummary,
     ReportSummaryInstance,
     TransactionReportCustomField,
+    BalanceReportInstance,
+    PLReportInstance,
 )
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import (
@@ -35,13 +37,16 @@ from poms.reports.serializers import (
     PriceHistoryCheckSerializer,
     SummarySerializer,
     TransactionReportCustomFieldSerializer,
-    TransactionReportSerializer, BalanceReportLightSerializer,
+    TransactionReportSerializer,
+    BalanceReportLightSerializer,
+    BalanceReportInstanceSerializer,
+    PLReportInstanceSerializer,
 )
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
-from poms.reports.utils import generate_report_unique_hash
+from poms.reports.utils import generate_report_unique_hash, generate_unique_key
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -1192,13 +1197,21 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if not instance.report_instance_id:
+        unique_key = generate_unique_key(instance, "balance")
+
+        _l.info("unique_key %s" % unique_key)
+
+        try:
+
+            balance_report_instance = BalanceReportInstance.objects.get(
+                unique_key=unique_key
+            )
+
+        except BalanceReportInstance.DoesNotExist:
+
             # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
-
-            instance.task_id = 1  # deprecated, but not to remove
-            instance.task_status = "SUCCESS"  # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1223,14 +1236,21 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        unique_key = generate_unique_key(instance, "balance")
+
+        _l.info("unique_key %s" % unique_key)
+
+        try:
+
+            balance_report_instance = BalanceReportInstance.objects.get(
+                unique_key=unique_key
+            )
+
+        except BalanceReportInstance.DoesNotExist:
+
+            # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
-
-            instance.task_id = 1  # deprecated, but not to remove
-            instance.task_status = "SUCCESS"  # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1257,14 +1277,16 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        unique_key = generate_unique_key(instance, "pnl")
+
+        try:
+
+            pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
+
+        except PLReportInstance.DoesNotExist:
+
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
-
-            instance.task_id = 1  # deprecated, but not to remove
-            instance.task_status = "SUCCESS"  # deprecated, but not to remove
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1289,14 +1311,16 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        if (
-            not instance.report_instance_id
-        ):  # Check to_representation comments to find why is that
+        unique_key = generate_unique_key(instance, "pnl")
+
+        try:
+
+            pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
+
+        except PLReportInstance.DoesNotExist:
+
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
-
-            instance.task_id = 1
-            instance.task_status = "SUCCESS"
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1371,3 +1395,63 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class BalanceReportInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = BalanceReportInstance
+        fields = []
+
+
+class BalanceReportInstanceViewSet(AbstractModelViewSet):
+    queryset = BalanceReportInstance.objects.select_related(
+        "master_user",
+        "owner",
+    )
+    serializer_class = BalanceReportInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = BalanceReportInstanceFilterSet
+    ordering_fields = [
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+    ]
+
+
+class PLReportInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = PLReportInstance
+        fields = []
+
+
+class PLReportInstanceViewSet(AbstractModelViewSet):
+    queryset = PLReportInstance.objects.select_related(
+        "master_user",
+        "owner",
+    )
+    serializer_class = PLReportInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PLReportInstanceFilterSet
+    ordering_fields = [
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+    ]

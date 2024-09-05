@@ -123,3 +123,37 @@ def generate_report_unique_hash(app, action, data, master_user, member):
         json.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()
 
     return result
+
+
+def generate_unique_key(instance, report_type):
+
+    portfolio_user_codes = [portfolio.user_code for portfolio in instance.portfolios]
+    account_user_codes = [account.user_code for account in instance.accounts]
+    strategy1_user_codes = [strategy.user_code for strategy in instance.strategies1]
+    strategy2_user_codes = [strategy.user_code for strategy in instance.strategies2]
+    strategy3_user_codes = [strategy.user_code for strategy in instance.strategies3]
+
+    report_data = {
+        "report_type": report_type,
+        "report_date": str(instance.report_date),
+        "pl_first_date": str(instance.pl_first_date),
+        "report_currency": instance.report_currency.user_code,
+        "cost_method": instance.cost_method.user_code,
+        "pricing_policy": instance.pricing_policy.user_code,
+        "portfolio_mode": instance.portfolio_mode,
+        "account_mode": instance.account_mode,
+        "strategy1_mode": instance.strategy1_mode,
+        "strategy2_mode": instance.strategy2_mode,
+        "strategy3_mode": instance.strategy3_mode,
+        "allocation_mode": instance.allocation_mode,
+        "portfolios": portfolio_user_codes,
+        "accounts": account_user_codes,
+        "strategies1": strategy1_user_codes,
+        "strategies2": strategy2_user_codes,
+        "strategies3": strategy3_user_codes,
+        "custom_fields_to_calculate": instance.custom_fields_to_calculate
+    }
+
+    unique_key = json.dumps(report_data, sort_keys=True)
+
+    return unique_key

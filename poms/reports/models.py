@@ -968,6 +968,15 @@ class TransactionReport(models.Model):
 
 
 class BalanceReportInstance(TimeStampedModel, NamedModel):
+
+    unique_key = models.TextField(
+        unique=True,
+        verbose_name=gettext_lazy("unique key"),
+        help_text=gettext_lazy(
+            "Unique Key. Used for getting Report by its Report Settings"
+        ),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1031,6 +1040,15 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
 
 
 class PLReportInstance(TimeStampedModel, NamedModel):
+
+    unique_key = models.TextField(
+        unique=True,
+        verbose_name=gettext_lazy("unique key"),
+        help_text=gettext_lazy(
+            "Unique Key. Used for getting Report by its Report Settings"
+        ),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
