@@ -444,6 +444,7 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
         "items": paginated_items,
         "previous_url": previous_page_url,
         "next_url": next_page_url,
+        "count": len(items),
     }
 
 
@@ -459,19 +460,17 @@ def gen_path_copy(storage: FinmarsS3Storage, path: str) -> str:
     base_name = os.path.basename(path)
     if base_name.startswith("."):
         # for .init
-            return path
+        return path
 
-    extension = ""
-    dase_dir = ""
     name_parts = base_name.split(".")
     if len(name_parts) > 1:
-    # For file
+        # For file
         base_name = name_parts[0]
         dase_dir = os.path.dirname(path)
         extension = "." + ".".join(name_parts[1:])
 
     else:
-    # For directory
+        # For directory
         base_name = last_dir_name(path).removesuffix("/")
         dase_dir = os.path.dirname(os.path.normpath(path))
         extension = "/"
@@ -486,7 +485,9 @@ def gen_path_copy(storage: FinmarsS3Storage, path: str) -> str:
             return new_path
 
 
-def copy_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str) -> None:
+def copy_file(
+    storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str
+) -> None:
     """
     Copy a file from the source path to the destination path within the storage.
     If file name exists in destiny_file_path that name will change to file name + copy(copy number).
@@ -514,7 +515,6 @@ def copy_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
     content = storage.open(source_file_path).read()
     _l.info(
         f"copy_file: with content len={len(content)} "
-
         f"from {source_file_path} to {destin_file_path}"
     )
 
@@ -568,7 +568,9 @@ def copy_dir(
     celery_task.update_progress(progres_dict)
 
 
-def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
+def rename_file(
+    storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str
+):
     """
     Rename a file from the source path to the destination path within the storage.
     Args:
@@ -579,9 +581,7 @@ def rename_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_pa
         None
     """
     file_name = os.path.basename(destin_file_path)
-    _l.info(
-        f"rename_file: rename {source_file_path} to {destin_file_path}"
-    )
+    _l.info(f"rename_file: rename {source_file_path} to {destin_file_path}")
 
     content = storage.open(source_file_path).read()
     _l.info(

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.test import override_settings
 
 from poms.common.common_base_test import BIG, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
@@ -20,6 +21,7 @@ EXPECTED_RESPONSE_RECORD = {
 }
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class PortfolioRegisterViewSetTest(BaseTestCase):
     databases = "__all__"
     def setUp(self):
@@ -77,6 +79,7 @@ class PortfolioRegisterViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
     databases = "__all__"
 
@@ -109,6 +112,7 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
         self.assertEqual(response_json["task_options"], request_data)
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
     databases = "__all__"
 

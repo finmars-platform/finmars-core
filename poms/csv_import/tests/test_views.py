@@ -1,7 +1,7 @@
 import json
 from unittest import mock
 
-from django.conf import settings
+from django.test import override_settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -19,6 +19,7 @@ class DummyStorage:
         return
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class CsvDataImportViewSetTest(BaseTestCase):
     databases = "__all__"
 
