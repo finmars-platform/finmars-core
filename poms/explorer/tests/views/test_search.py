@@ -24,7 +24,7 @@ expected_response = {
             "size_pretty": "8.17 MB",
         }
     ],
-    "meta": {"execution_time": 3, "request_id": "b212f36e-9144-4f13-aaed-d9a16b54133d"},
+    # "meta": {"execution_time": 3, "request_id": "b212f36e-9144-4f13-aaed-d9a16b54133d"},
 }
 
 
