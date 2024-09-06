@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import json
+import orjson
 import logging
 import time
 import traceback
@@ -1495,7 +1496,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(json.dumps(data, default=str))
+            report_instance.data = orjson.loads(orjson.dumps(data))
 
             report_instance.save()
 
@@ -1646,8 +1647,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
+            report_instance.data = orjson.loads(
+                orjson.dumps(data)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
@@ -1801,8 +1802,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
+            report_instance.data = orjson.loads(
+                orjson.dumps(data)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
@@ -1938,8 +1939,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(
-                json.dumps(data, default=str)
+            report_instance.data = orjson.loads(
+                orjson.dumps(data)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
@@ -2041,7 +2042,7 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = json.loads(json.dumps(data, default=str))
+            report_instance.data = orjson.loads(orjson.dumps(data))
 
             report_instance.save()
 
@@ -2155,7 +2156,7 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
             data["items"] = full_items
 
             # TODO consider something more logical, we got here date conversion error
-            report_instance.data = json.loads(json.dumps(data, default=str))
+            report_instance.data = orjson.loads(orjson.dumps(data))
 
             report_instance.save()
 
