@@ -50,6 +50,8 @@ from poms.reports.utils import (
     generate_report_unique_hash,
     generate_unique_key,
     get_pl_first_date,
+    transform_to_allowed_portfolios,
+    transform_to_allowed_accounts,
 )
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
@@ -1201,6 +1203,9 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
+        instance.portfolios = transform_to_allowed_portfolios(instance)
+        instance.accounts = transform_to_allowed_accounts(instance)
+
         settings, unique_key = generate_unique_key(instance, "balance")
 
         _l.info("unique_key %s" % unique_key)
@@ -1239,6 +1244,9 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         instance = serializer.save()
 
         instance.auth_time = self.auth_time
+
+        instance.portfolios = transform_to_allowed_portfolios(instance)
+        instance.accounts = transform_to_allowed_accounts(instance)
 
         settings, unique_key = generate_unique_key(instance, "balance")
 
@@ -1282,6 +1290,9 @@ class BackendPLReportViewSet(AbstractViewSet):
         instance.auth_time = self.auth_time
 
         instance.pl_first_date = get_pl_first_date(instance)
+
+        instance.portfolios = transform_to_allowed_portfolios(instance)
+        instance.accounts = transform_to_allowed_accounts(instance)
 
         settings, unique_key = generate_unique_key(instance, "pnl")
 
@@ -1328,6 +1339,9 @@ class BackendPLReportViewSet(AbstractViewSet):
         instance.auth_time = self.auth_time
 
         instance.pl_first_date = get_pl_first_date(instance)
+
+        instance.portfolios = transform_to_allowed_portfolios(instance)
+        instance.accounts = transform_to_allowed_accounts(instance)
 
         settings, unique_key = generate_unique_key(instance, "pnl")
 

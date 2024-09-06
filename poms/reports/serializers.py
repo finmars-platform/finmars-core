@@ -161,12 +161,14 @@ class ReportSerializerWithLogs(serializers.Serializer):
     #     """
     #     Object instance -> Dict of primitive datatypes.
     #     """
+    #     from collections import OrderedDict
     #     ret = OrderedDict()
     #     fields = self._readable_fields
     #
     #     st = time.perf_counter()
     #
     #     for field in fields:
+    #         from rest_framework.fields import SkipField
     #         try:
     #             attribute = field.get_attribute(instance)
     #         except SkipField:
@@ -179,20 +181,21 @@ class ReportSerializerWithLogs(serializers.Serializer):
     #         #
     #         # For related fields with `use_pk_only_optimization` we need to
     #         # resolve the pk value.
+    #         from rest_framework.relations import PKOnlyObject
     #         check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
     #         if check_for_none is None:
     #             ret[field.field_name] = None
     #         else:
     #             ret[field.field_name] = field.to_representation(attribute)
     #
-    #         if 'item_' in field.field_name:
-    #             if hasattr(instance, 'is_report'):
-    #                 result_time = "{:3.3f}".format(time.perf_counter() - field_st)
+    #         # if 'item_' in field.field_name:
+    #         # if hasattr(instance, 'is_report'):
+    #         result_time = "{:3.3f}".format(time.perf_counter() - field_st)
     #
-    #                 _l.debug('field %s to representation done %s' % (field.field_name, result_time))
+    #         _l.debug('field %s to representation done %s' % (field.field_name, result_time))
     #
-    #     if hasattr(instance, 'is_report'):
-    #         _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
+    #     # if hasattr(instance, 'is_report'):
+    #     _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
     #
     #     return ret
 

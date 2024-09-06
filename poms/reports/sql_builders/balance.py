@@ -67,8 +67,8 @@ class BalanceReportBuilderSql:
         """
 
         """Important security methods"""
-        self.transform_to_allowed_portfolios()
-        self.transform_to_allowed_accounts()
+        # self.transform_to_allowed_portfolios()
+        # self.transform_to_allowed_accounts()
 
     def transform_to_allowed_portfolios(self):
         if not len(self.instance.portfolios):

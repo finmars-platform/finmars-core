@@ -1,13 +1,29 @@
 import hashlib
 import json
-import orjson
 import logging
-import hashlib
-
 from datetime import date, timedelta
 
-from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day, \
-    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month
+import orjson
+
+from poms.accounts.models import Account
+from poms.common.utils import get_last_business_day, \
+    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, \
+    get_last_business_day_of_previous_month
+from poms.iam.utils import get_allowed_queryset
+from poms.portfolios.models import Portfolio
+import hashlib
+import json
+import logging
+from datetime import date, timedelta
+
+import orjson
+
+from poms.accounts.models import Account
+from poms.common.utils import get_last_business_day, \
+    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, \
+    get_last_business_day_of_previous_month
+from poms.iam.utils import get_allowed_queryset
+from poms.portfolios.models import Portfolio
 
 _l = logging.getLogger('poms.reports')
 
@@ -184,6 +200,21 @@ def get_pl_first_date(instance):
         instance.pl_first_date = instance.first_transaction_date
 
     return instance.pl_first_date
+
+
+def transform_to_allowed_portfolios(instance):
+    if not len(instance.portfolios):
+        return get_allowed_queryset(
+            instance.member, Portfolio.objects.filter(is_deleted=False)
+        )
+    return instance.portfolios
+
+def transform_to_allowed_accounts(instance):
+    if not len(instance.accounts):
+        return get_allowed_queryset(
+            instance.member, Account.objects.filter(is_deleted=False)
+        )
+    return instance.accounts
 
 
 def generate_unique_key(instance, report_type):

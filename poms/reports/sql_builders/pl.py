@@ -44,8 +44,8 @@ class PLReportBuilderSql:
         '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
 
         '''Important security methods'''
-        self.transform_to_allowed_portfolios()
-        self.transform_to_allowed_accounts()
+        # self.transform_to_allowed_portfolios()
+        # self.transform_to_allowed_accounts()
 
         if not self.instance.pl_first_date and not self.instance.period_type:
             _l.debug("No pl_first_date, no period_type settings to ytd")
