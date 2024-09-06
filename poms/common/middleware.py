@@ -20,6 +20,7 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     PermissionDenied,
 )
+import socket
 
 from geoip2.errors import AddressNotFoundError
 from memory_profiler import profile
@@ -338,6 +339,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         # Update the content length
         response["X-Execution-Time"] = execution_time
         response["X-Request-Id"] = request.request_id
+        response["X-Worker"] = socket.gethostname()
         response["Content-Length"] = len(response.content)
 
     def process_request(self, request):
