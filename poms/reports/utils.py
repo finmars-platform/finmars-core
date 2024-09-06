@@ -2,6 +2,12 @@ import hashlib
 import json
 import orjson
 import logging
+import hashlib
+
+from datetime import date, timedelta
+
+from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day, \
+    get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, get_last_business_day_of_previous_month
 
 _l = logging.getLogger('poms.reports')
 
@@ -126,6 +132,60 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     return result
 
 
+def get_first_transaction():
+
+    try:
+
+        portfolios = []
+
+        from poms.transactions.models import Transaction
+        transaction = Transaction.objects.all().first()
+
+        return transaction.transaction_date
+
+    except Exception as e:
+        _l.error("Could not find first transaction date")
+        return None
+
+
+def get_pl_first_date(instance):
+
+    if not instance.pl_first_date and instance.period_type:
+
+        _l.debug("No pl_first_date, calculating by period_type...")
+
+        if instance.period_type == 'inception':
+            # TODO wtf is first transaction when multi portfolios?
+            # TODO ask oleg what to do with inception
+            # szhitenev 2023-12-04
+
+            first_portfolio = instance.portfolios.first()
+
+            instance.pl_first_date = get_last_business_day(
+                first_portfolio.first_transaction_date - timedelta(days=1),
+                )
+        elif instance.period_type == 'ytd':
+            instance.pl_first_date = get_last_business_day_of_previous_year(instance.report_date)
+
+        elif instance.period_type == 'qtd':
+            instance.pl_first_date = get_last_business_day_in_previous_quarter(instance.report_date)
+
+        elif instance.period_type == 'mtd':
+            instance.pl_first_date = get_last_business_day_of_previous_month(instance.report_date)
+
+        elif instance.period_type == 'daily':
+            instance.pl_first_date = get_last_business_day(instance.report_date - timedelta(days=1))
+
+    instance.first_transaction_date = get_first_transaction()
+
+    pl_first_date = instance.pl_first_date
+
+    if not pl_first_date or pl_first_date == date.min:
+        instance.pl_first_date = instance.first_transaction_date
+
+    return instance.pl_first_date
+
+
 def generate_unique_key(instance, report_type):
 
     portfolio_user_codes = sorted([portfolio.user_code for portfolio in instance.portfolios])
@@ -155,6 +215,7 @@ def generate_unique_key(instance, report_type):
         "custom_fields_to_calculate": instance.custom_fields_to_calculate
     }
 
-    unique_key = json.dumps(report_data, sort_keys=True)
+    settings = json.dumps(report_data, sort_keys=True)
+    unique_key = hashlib.md5(settings.encode('utf-8')).hexdigest()
 
-    return unique_key
+    return settings, unique_key

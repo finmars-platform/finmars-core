@@ -284,15 +284,15 @@ class ReportSerializer(ReportSerializerWithLogs):
     )
 
     only_numbers = serializers.BooleanField(default=False, initial=False)
-    show_transaction_details = serializers.BooleanField(default=False, initial=False)
-    show_balance_exposure_details = serializers.BooleanField(
-        default=False, initial=False
-    )
-    approach_multiplier = serializers.FloatField(
-        default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False
-    )
-    allocation_detailing = serializers.BooleanField(default=True, initial=True)
-    pl_include_zero = serializers.BooleanField(default=False, initial=False)
+    # show_transaction_details = serializers.BooleanField(default=False, initial=False)
+    # show_balance_exposure_details = serializers.BooleanField(
+    #     default=False, initial=False
+    # )
+    # approach_multiplier = serializers.FloatField(
+    #     default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False
+    # )
+    # allocation_detailing = serializers.BooleanField(default=True, initial=True)
+    # pl_include_zero = serializers.BooleanField(default=False, initial=False)
     custom_fields_to_calculate = serializers.CharField(
         allow_null=True, allow_blank=True, required=False
     )
@@ -336,13 +336,13 @@ class ReportSerializer(ReportSerializerWithLogs):
     strategies3 = Strategy3Field(
         many=True, required=False, allow_null=True, allow_empty=True
     )
-    transaction_classes = serializers.PrimaryKeyRelatedField(
-        queryset=TransactionClass.objects.all(),
-        many=True,
-        required=False,
-        allow_null=True,
-        allow_empty=True,
-    )
+    # transaction_classes = serializers.PrimaryKeyRelatedField(
+    #     queryset=TransactionClass.objects.all(),
+    #     many=True,
+    #     required=False,
+    #     allow_null=True,
+    #     allow_empty=True,
+    # )
     date_field = serializers.ChoiceField(
         required=False,
         allow_null=True,
@@ -395,9 +395,9 @@ class ReportSerializer(ReportSerializerWithLogs):
     custom_fields_object = BalanceReportCustomFieldSerializer(
         source="custom_fields", read_only=True, many=True
     )
-    transaction_classes_object = TransactionClassSerializer(
-        source="transaction_classes", read_only=True, many=True
-    )
+    # transaction_classes_object = TransactionClassSerializer(
+    #     source="transaction_classes", read_only=True, many=True
+    # )
 
     # transactions = ReportTransactionSerializer(many=True, read_only=True)
     # items = ReportItemSerializer(many=True, read_only=True)
@@ -1441,7 +1441,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
-        unique_key = generate_unique_key(instance, "balance")
+        settings, unique_key = generate_unique_key(instance, "balance")
 
         try:
 
@@ -1471,6 +1471,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             report_instance = BalanceReportInstance.objects.create(
                 unique_key=unique_key,
+                settings=settings,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1593,7 +1594,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         # Idea is that we put calculated report and to_representation result to BalanceReportInstance.data
         # And if user just applies filters or regroups there is no need for calculating whole report again
 
-        unique_key = generate_unique_key(instance, "balance")
+        settings, unique_key = generate_unique_key(instance, "balance")
 
         try:
 
@@ -1622,6 +1623,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             report_instance = BalanceReportInstance.objects.create(
                 unique_key=unique_key,
+                settings=settings,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1741,7 +1743,9 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        unique_key = generate_unique_key(instance, "pnl")
+        settings, unique_key = generate_unique_key(instance, "pnl")
+
+        _l.info("pnl.serializer %s" % instance.pl_first_date)
 
         try:
 
@@ -1770,6 +1774,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             report_instance = PLReportInstance.objects.create(
                 unique_key=unique_key,
+                settings=settings,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -1886,7 +1891,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        unique_key = generate_unique_key(instance, "pnl")
+        settings, unique_key = generate_unique_key(instance, "pnl")
 
         try:
 
@@ -1911,6 +1916,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
             report_instance = PLReportInstance.objects.create(
                 unique_key=unique_key,
+                settings=settings,
                 master_user=instance.master_user,
                 member=instance.member,
                 owner=instance.member,
@@ -2231,6 +2237,7 @@ class BalanceReportInstanceSerializer(
             "public_name",
             "notes",
             "unique_key",
+            "settings",
 
             "report_date",
             "report_currency",
@@ -2262,6 +2269,7 @@ class PLReportInstanceSerializer(
             "public_name",
             "notes",
             "unique_key",
+            "settings",
             
             "report_date",
             "pl_first_date",

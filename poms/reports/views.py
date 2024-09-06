@@ -46,7 +46,11 @@ from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
-from poms.reports.utils import generate_report_unique_hash, generate_unique_key
+from poms.reports.utils import (
+    generate_report_unique_hash,
+    generate_unique_key,
+    get_pl_first_date,
+)
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -1197,7 +1201,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        unique_key = generate_unique_key(instance, "balance")
+        settings, unique_key = generate_unique_key(instance, "balance")
 
         _l.info("unique_key %s" % unique_key)
 
@@ -1236,7 +1240,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        unique_key = generate_unique_key(instance, "balance")
+        settings, unique_key = generate_unique_key(instance, "balance")
 
         _l.info("unique_key %s" % unique_key)
 
@@ -1277,9 +1281,13 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        unique_key = generate_unique_key(instance, "pnl")
+        instance.pl_first_date = get_pl_first_date(instance)
 
-        _l.info('BackendPLReportViewSet.groups.unique_key %s' % unique_key)
+        settings, unique_key = generate_unique_key(instance, "pnl")
+
+        _l.info("BackendPLReportViewSet.groups.unique_key %s" % unique_key)
+
+        _l.info("pnl.viewset %s" % instance.pl_first_date)
 
         try:
 
@@ -1289,7 +1297,7 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         except PLReportInstance.DoesNotExist as e:
 
-            _l.info('e %s' % e)
+            _l.info("e %s" % e)
 
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
@@ -1319,7 +1327,9 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         instance.auth_time = self.auth_time
 
-        unique_key = generate_unique_key(instance, "pnl")
+        instance.pl_first_date = get_pl_first_date(instance)
+
+        settings, unique_key = generate_unique_key(instance, "pnl")
 
         try:
 
@@ -1450,9 +1460,7 @@ class PLReportInstanceFilterSet(FilterSet):
     def data(self, request, pk=None, realm_code=None, space_code=None):
         item = self.get_object()
 
-        return Response(
-            item.data
-        )
+        return Response(item.data)
 
 
 class PLReportInstanceViewSet(AbstractModelViewSet):
@@ -1476,6 +1484,4 @@ class PLReportInstanceViewSet(AbstractModelViewSet):
     def data(self, request, pk=None, realm_code=None, space_code=None):
         item = self.get_object()
 
-        return Response(
-            item.data
-        )
+        return Response(item.data)

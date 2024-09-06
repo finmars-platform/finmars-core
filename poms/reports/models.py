@@ -977,6 +977,13 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
         ),
     )
 
+    settings = models.TextField(
+        verbose_name=gettext_lazy("settings"),
+        help_text=gettext_lazy(
+            "Settings"
+        ),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -1046,6 +1053,13 @@ class PLReportInstance(TimeStampedModel, NamedModel):
         verbose_name=gettext_lazy("unique key"),
         help_text=gettext_lazy(
             "Unique Key. Used for getting Report by its Report Settings"
+        ),
+    )
+
+    settings = models.TextField(
+        verbose_name=gettext_lazy("settings"),
+        help_text=gettext_lazy(
+            "Settings"
         ),
     )
 
