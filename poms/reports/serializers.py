@@ -1450,6 +1450,10 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             full_items = report_instance.data["items"]
 
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
+
         except BalanceReportInstance.DoesNotExist:
 
             data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
@@ -1494,6 +1498,10 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
+
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
 
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
@@ -1594,6 +1602,10 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             full_items = report_instance.data["items"]
 
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
+
         except BalanceReportInstance.DoesNotExist:
             data = super(BackendBalanceReportItemsSerializer, self).to_representation(
                 instance
@@ -1639,6 +1651,10 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
+
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
 
 
 
@@ -1734,6 +1750,10 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             full_items = report_instance.data["items"]
 
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
+
         except PLReportInstance.DoesNotExist:
             data = super(BackendPLReportGroupsSerializer, self).to_representation(
                 instance
@@ -1774,6 +1794,10 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
             data["report_uuid"] = report_uuid
 
             full_items = helper_service.convert_report_items_to_full_items(data)
+
+            data["execution_time"] = float(
+                "{:3.3f}".format(time.perf_counter() - to_representation_st)
+            )
 
             data["items"] = full_items
 
@@ -1830,6 +1854,16 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         )
 
         data["created_at"] = report_instance.created_at
+        data.pop("item_currencies", [])
+        data.pop("item_portfolios", [])
+        data.pop("item_instruments", [])
+        data.pop("item_instrument_types", [])
+        data.pop("item_accounts", [])
+        data.pop("item_countries", [])
+        data.pop("item_account_types", [])
+        data.pop("item_strategies1", [])
+        data.pop("item_strategies2", [])
+        data.pop("item_strategies3", [])
 
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
