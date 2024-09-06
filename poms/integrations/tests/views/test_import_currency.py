@@ -1,8 +1,5 @@
 from unittest import mock
 
-# from django import urls
-from django.conf import settings
-
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.database_client import get_backend_callback_url

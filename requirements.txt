@@ -125,3 +125,4 @@ memory-profiler==0.61.0
 pympler==1.0.1
 QuantLib==1.31.1
 pillow==10.4.0
+orjson==3.10.7

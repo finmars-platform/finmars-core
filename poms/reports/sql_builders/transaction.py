@@ -102,7 +102,7 @@ class TransactionReportBuilderSql:
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
-        _l.info(f"add_user_filters.instruments count {len(instruments)}")
+        _l.debug(f"add_user_filters.instruments count {len(instruments)}")
 
         result = ""
         try:
@@ -124,7 +124,7 @@ class TransactionReportBuilderSql:
                                 for value in filter['options']['filter_values']
                                 if value == portfolio[field_key]
                             )
-                        _l.info(f'portfolio_ids {portfolio_ids}')
+                        _l.debug(f'portfolio_ids {portfolio_ids}')
 
                         if portfolio_ids:
                             res = "'" + "\',\'".join(portfolio_ids)
@@ -166,7 +166,7 @@ class TransactionReportBuilderSql:
                                 for value in filter['options']['filter_values']
                                 if value == instrument['user_code']
                             )
-                        _l.info(f'instrument_ids {instrument_ids}')
+                        _l.debug(f'instrument_ids {instrument_ids}')
 
                         instrument_expression = ''
 
@@ -185,7 +185,7 @@ class TransactionReportBuilderSql:
                                 for value in filter['options']['filter_values']
                                 if value == currency['user_code']
                             )
-                        _l.info(f'currencies_ids {currencies_ids}')
+                        _l.debug(f'currencies_ids {currencies_ids}')
 
                         settlement_currency_expression = ''
                         transaction_currency_expression = ''
@@ -199,7 +199,7 @@ class TransactionReportBuilderSql:
                             res = f"{res}'"
 
                             transaction_currency_expression = f't.transaction_currency_id IN ({res})'
-                        # _l.info('result %s' % result)
+                        # _l.debug('result %s' % result)
 
                         if instrument_expression and (
                                 settlement_currency_expression and transaction_currency_expression):
@@ -224,7 +224,7 @@ class TransactionReportBuilderSql:
 
     def build_complex_transaction_level_items(self):
 
-        _l.info("build_complex_transaction_level_items")
+        _l.debug("build_complex_transaction_level_items")
 
         with connection.cursor() as cursor:
 
@@ -321,7 +321,7 @@ class TransactionReportBuilderSql:
             # statuses = ['1', '3']
             statuses = ['1']  # FN-1327
 
-            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+            _l.debug('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
             if self.instance.complex_transaction_statuses_filter:
 
@@ -371,7 +371,7 @@ class TransactionReportBuilderSql:
 
     def build_base_transaction_level_items(self):
 
-        _l.info("build_base_transaction_level_items")
+        _l.debug("build_base_transaction_level_items")
 
         with connection.cursor() as cursor:
 
@@ -483,7 +483,7 @@ class TransactionReportBuilderSql:
             # statuses = ['1', '3']
             statuses = ['1']  # FN-1327
 
-            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+            _l.debug('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
             if self.instance.complex_transaction_statuses_filter:
 
@@ -532,7 +532,7 @@ class TransactionReportBuilderSql:
 
     def build_entry_level_items(self):
 
-        _l.info("build_entry_level_items")
+        _l.debug("build_entry_level_items")
 
         with connection.cursor() as cursor:
 
@@ -648,7 +648,7 @@ class TransactionReportBuilderSql:
             # statuses = ['1', '3']
             statuses = ['1']  # FN-1327
 
-            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+            _l.debug('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
             if self.instance.complex_transaction_statuses_filter:
 
@@ -689,7 +689,7 @@ class TransactionReportBuilderSql:
             ITEM_TYPE_MISMATCH = 6
             ITEM_TYPE_EXPOSURE_COPY = 7
 
-            _l.info('transaction_report.raw_results.count %s' % len(raw_results))
+            _l.debug('transaction_report.raw_results.count %s' % len(raw_results))
 
             for raw_item in raw_results:
 
@@ -1159,7 +1159,7 @@ class TransactionReportBuilderSql:
 
     def build_items(self):
 
-        _l.info('TransactionReportBuilderSql.build_items: depth_level %s' % self.instance.depth_level)
+        _l.debug('TransactionReportBuilderSql.build_items: depth_level %s' % self.instance.depth_level)
 
         if self.instance.depth_level == 'complex_transaction':
             self.build_complex_transaction_level_items()

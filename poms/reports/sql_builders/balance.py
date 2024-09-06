@@ -67,8 +67,8 @@ class BalanceReportBuilderSql:
         """
 
         """Important security methods"""
-        self.transform_to_allowed_portfolios()
-        self.transform_to_allowed_accounts()
+        # self.transform_to_allowed_portfolios()
+        # self.transform_to_allowed_accounts()
 
     def transform_to_allowed_portfolios(self):
         if not len(self.instance.portfolios):
@@ -144,7 +144,7 @@ class BalanceReportBuilderSql:
                 **report_settings, master_user=celery_task.master_user
             )
 
-            # _l.info('report_settings %s' % report_settings)
+            # _l.debug('report_settings %s' % report_settings)
 
             with connection.cursor() as cursor:
                 st = time.perf_counter()
@@ -1886,11 +1886,11 @@ class BalanceReportBuilderSql:
 
                     result_item["fx_rate"] = item["fx_rate"]
 
-                    # _l.info('item %s' % item)
+                    # _l.debug('item %s' % item)
                     result_item["position_size"] = round(
                         item["position_size"], settings.ROUND_NDIGITS
                     )
-                    # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                    # _l.debug('item["nominal_position_size"] %s' % item["nominal_position_size"])
                     if item["nominal_position_size"] is not None:
                         result_item["nominal_position_size"] = round(
                             item["nominal_position_size"], settings.ROUND_NDIGITS
@@ -2195,7 +2195,7 @@ class BalanceReportBuilderSql:
 
                 _l.debug("build balance result %s " % len(result))
 
-                _l.info("single build done: %s" % (time.perf_counter() - st))
+                _l.debug("single build done: %s" % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
@@ -2287,7 +2287,7 @@ class BalanceReportBuilderSql:
 
             tasks.append(task)
 
-        _l.info("Going to run %s tasks" % len(tasks))
+        _l.debug("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
         job = group(build.s(task_id=task.id, context={
@@ -2316,7 +2316,7 @@ class BalanceReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
 
-        _l.info("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
     def serial_build(self):
         st = time.perf_counter()
@@ -2359,7 +2359,7 @@ class BalanceReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = result
 
-        _l.info("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
     def add_data_items_instruments(self, ids):
         self.instance.item_instruments = (
@@ -2561,7 +2561,7 @@ class BalanceReportBuilderSql:
         strategies2_ids = list(set(strategies2_ids))
         strategies3_ids = list(set(strategies3_ids))
 
-        _l.info("strategies1_ids %s" % strategies1_ids)
+        _l.debug("strategies1_ids %s" % strategies1_ids)
 
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
@@ -2571,7 +2571,7 @@ class BalanceReportBuilderSql:
         self.add_data_items_strategies2(strategies2_ids)
         self.add_data_items_strategies3(strategies3_ids)
 
-        _l.info("add_data_items_strategies1 %s " % self.instance.item_strategies1)
+        _l.debug("add_data_items_strategies1 %s " % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
         self.add_data_items_countries(self.instance.item_instruments)
@@ -2581,7 +2581,7 @@ class BalanceReportBuilderSql:
             master_user=self.instance.master_user
         )
 
-        _l.info(
+        _l.debug(
             "_refresh_with_perms_optimized item relations done: %s",
             "{:3.3f}".format(time.perf_counter() - item_relations_st),
         )
@@ -2615,7 +2615,7 @@ def build(self, task_id, *args, **kwargs):
             **report_settings, master_user=celery_task.master_user
         )
 
-        # _l.info('report_settings %s' % report_settings)
+        # _l.debug('report_settings %s' % report_settings)
 
         with connection.cursor() as cursor:
             st = time.perf_counter()
@@ -4337,11 +4337,11 @@ def build(self, task_id, *args, **kwargs):
 
                 result_item["fx_rate"] = item["fx_rate"]
 
-                # _l.info('item %s' % item)
+                # _l.debug('item %s' % item)
                 result_item["position_size"] = round(
                     item["position_size"], settings.ROUND_NDIGITS
                 )
-                # _l.info('item["nominal_position_size"] %s' % item["nominal_position_size"])
+                # _l.debug('item["nominal_position_size"] %s' % item["nominal_position_size"])
                 if item["nominal_position_size"] is not None:
                     result_item["nominal_position_size"] = round(
                         item["nominal_position_size"], settings.ROUND_NDIGITS
@@ -4632,7 +4632,7 @@ def build(self, task_id, *args, **kwargs):
 
             _l.debug("build balance result %s " % len(result))
 
-            _l.info("single build done: %s" % (time.perf_counter() - st))
+            _l.debug("single build done: %s" % (time.perf_counter() - st))
 
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.save()

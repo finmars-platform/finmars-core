@@ -216,7 +216,7 @@ class ReportsConfig(AppConfig):
                 cursor.execute(query)
 
         except Exception as e:
-            _l.info("create_view_for_positions %s" % e)
+            _l.debug("create_view_for_positions %s" % e)
 
     def create_view_for_cash_fx_trades(self):
 
