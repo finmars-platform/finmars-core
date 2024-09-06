@@ -128,11 +128,11 @@ def generate_report_unique_hash(app, action, data, master_user, member):
 
 def generate_unique_key(instance, report_type):
 
-    portfolio_user_codes = [portfolio.user_code for portfolio in instance.portfolios]
-    account_user_codes = [account.user_code for account in instance.accounts]
-    strategy1_user_codes = [strategy.user_code for strategy in instance.strategies1]
-    strategy2_user_codes = [strategy.user_code for strategy in instance.strategies2]
-    strategy3_user_codes = [strategy.user_code for strategy in instance.strategies3]
+    portfolio_user_codes = sorted([portfolio.user_code for portfolio in instance.portfolios])
+    account_user_codes = sorted([account.user_code for account in instance.accounts])
+    strategy1_user_codes = sorted([strategy.user_code for strategy in instance.strategies1])
+    strategy2_user_codes = sorted([strategy.user_code for strategy in instance.strategies2])
+    strategy3_user_codes = sorted([strategy.user_code for strategy in instance.strategies3])
 
     report_data = {
         "report_type": report_type,
