@@ -778,7 +778,7 @@ class BackendReportSubtotalService:
             item_val = BackendReportSubtotalService.get_item_value(item, column["key"])
             if not isinstance(item_val, (int, float)):
                 result = "No Data"
-                print(f"{column['key']} with not a number", item, item[column["key"]])
+                # print(f"{column['key']} with not a number", item, item[column["key"]])
                 break
             else:
                 result += float(item_val)

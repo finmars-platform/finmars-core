@@ -1279,14 +1279,22 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         unique_key = generate_unique_key(instance, "pnl")
 
+        _l.info('BackendPLReportViewSet.groups.unique_key %s' % unique_key)
+
         try:
 
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
-        except PLReportInstance.DoesNotExist:
+            _l.debug("PL report if found, take from cache")
+
+        except PLReportInstance.DoesNotExist as e:
+
+            _l.info('e %s' % e)
 
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
+
+            _l.debug("PL report if not found, calculating new")
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1438,6 +1446,14 @@ class PLReportInstanceFilterSet(FilterSet):
         model = PLReportInstance
         fields = []
 
+    @action(detail=True, methods=["get"], url_path="data")
+    def data(self, request, pk=None, realm_code=None, space_code=None):
+        item = self.get_object()
+
+        return Response(
+            item.data
+        )
+
 
 class PLReportInstanceViewSet(AbstractModelViewSet):
     queryset = PLReportInstance.objects.select_related(
@@ -1455,3 +1471,11 @@ class PLReportInstanceViewSet(AbstractModelViewSet):
         "short_name",
         "public_name",
     ]
+
+    @action(detail=True, methods=["get"], url_path="data")
+    def data(self, request, pk=None, realm_code=None, space_code=None):
+        item = self.get_object()
+
+        return Response(
+            item.data
+        )

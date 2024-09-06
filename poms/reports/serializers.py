@@ -2261,13 +2261,13 @@ class PLReportInstanceSerializer(
             "short_name",
             "public_name",
             "notes",
-            "unique_key"
+            "unique_key",
             
             "report_date",
             "pl_first_date",
             "report_currency",
             "pricing_policy",
-            "cost_method"
+            "cost_method",
         ]
 
     def __init__(self, *args, **kwargs):
