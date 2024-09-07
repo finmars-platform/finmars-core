@@ -2016,55 +2016,18 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        if not instance.report_instance_id:
-            data = super(
-                BackendTransactionReportGroupsSerializer, self
-            ).to_representation(instance)
+        data = super(
+            BackendTransactionReportGroupsSerializer, self
+        ).to_representation(instance)
 
-            report_uuid = str(uuid.uuid4())
+        report_uuid = str(uuid.uuid4())
 
-            if self.instance.report_instance_name:
-                report_instance_name = self.instance.report_instance_name
-            else:
-                report_instance_name = report_uuid
 
-            report_instance = TransactionReportInstance.objects.create(
-                master_user=instance.master_user,
-                member=instance.member,
-                owner=instance.member,
-                user_code=report_instance_name,
-                name=report_instance_name,
-                short_name=report_instance_name,
-                begin_date=instance.begin_date,
-                end_date=instance.end_date,
-            )
+        data["report_uuid"] = report_uuid
 
-            report_instance.report_uuid = report_uuid
-            report_instance.begin_date = instance.begin_date
-            report_instance.end_date = instance.end_date
+        full_items = helper_service.convert_report_items_to_full_items(data)
 
-            report_instance.report_uuid = report_uuid
-
-            data["report_uuid"] = report_uuid
-
-            full_items = helper_service.convert_report_items_to_full_items(data)
-
-            data["items"] = full_items
-
-            report_instance.data = orjson.loads(orjson.dumps(data))
-
-            report_instance.save()
-
-        else:
-            report_instance = TransactionReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-
-            data = report_instance.data
-
-            full_items = report_instance.data["items"]
-
-        data["report_instance_id"] = report_instance.id
+        data["items"] = full_items
 
         _l.debug("BackendTransactionReportGroupsSerializer.to_representation")
 
@@ -2139,44 +2102,12 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
 
         helper_service = BackendReportHelperService()
 
-        if not instance.report_instance_id:
-            data = super().to_representation(instance)
-            report_uuid = str(uuid.uuid4())
+        data = super().to_representation(instance)
+        report_uuid = str(uuid.uuid4())
 
-            if self.instance.report_instance_name:
-                report_instance_name = self.instance.report_instance_name
-            else:
-                report_instance_name = report_uuid
-
-            report_instance = TransactionReportInstance.objects.create(
-                master_user=instance.master_user,
-                member=instance.member,
-                owner=instance.member,
-                user_code=report_instance_name,
-                name=report_instance_name,
-                short_name=report_instance_name,
-                begin_date=instance.begin_date,
-                end_date=instance.end_date,
-                report_uuid=report_uuid,
-            )
-
-            data["report_uuid"] = report_uuid
-            full_items = helper_service.convert_report_items_to_full_items(data)
-            data["items"] = full_items
-
-            # TODO consider something more logical, we got here date conversion error
-            report_instance.data = orjson.loads(orjson.dumps(data))
-
-            report_instance.save()
-
-        else:
-            report_instance = TransactionReportInstance.objects.get(
-                id=instance.report_instance_id
-            )
-            data = report_instance.data
-            full_items = report_instance.data["items"]
-
-        data["report_instance_id"] = report_instance.id
+        data["report_uuid"] = report_uuid
+        full_items = helper_service.convert_report_items_to_full_items(data)
+        data["items"] = full_items
 
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
