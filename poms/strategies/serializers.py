@@ -59,7 +59,7 @@ class Strategy1Serializer(ModelWithUserCodeSerializer,
                           ModelWithAttributesSerializer,
                           ModelWithTimeStampSerializer,
                           ModelWithObjectStateSerializer,
-                        ):
+):
     master_user = MasterUserField()
     subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
     subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
