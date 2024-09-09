@@ -9,6 +9,7 @@ from poms.common.serializers import (
     ModelMetaSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
+    ModelWithObjectStateSerializer,
 )
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory, CurrencyPricingPolicy
@@ -37,6 +38,7 @@ class CurrencySerializer(
     ModelWithUserCodeSerializer,
     ModelWithAttributesSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 

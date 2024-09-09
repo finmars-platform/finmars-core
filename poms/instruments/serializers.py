@@ -215,7 +215,9 @@ def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class PricingPolicySerializer(
-    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+    ModelWithUserCodeSerializer,
+    ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
