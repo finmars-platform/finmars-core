@@ -298,9 +298,6 @@ class PriceDownloadSchemeFilterSet(FilterSet):
 class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     queryset = PriceDownloadScheme.objects.select_related("provider")
     serializer_class = PriceDownloadSchemeSerializer
-    # permission_classes = AbstractModelViewSet.permission_classes + [
-    #     SuperUserOrReadOnly,
-    # ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -939,9 +936,6 @@ class ImportCompanyDatabaseViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.create_task(serializer.validated_data))
-
-
-# ----------------------------------------
 
 
 class ComplexTransactionImportSchemeFilterSet(FilterSet):
