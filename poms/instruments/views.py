@@ -49,6 +49,7 @@ from poms.instruments.filters import (
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
+    IdentifierKeysValuesFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -771,6 +772,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
         EntitySpecificFilter,
+        IdentifierKeysValuesFilter,
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [
@@ -784,6 +786,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         "instrument_type__name",
         "instrument_type__short_name",
         "instrument_type__public_name",
+        "identifier",
         "pricing_currency",
         "pricing_currency__user_code",
         "pricing_currency__name",
