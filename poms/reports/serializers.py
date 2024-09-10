@@ -1500,7 +1500,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = orjson.loads(orjson.dumps(data))
+            report_instance.data = json.loads(json.dumps(data, default=str))
 
             report_instance.save()
 
@@ -1652,8 +1652,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = orjson.loads(
-                orjson.dumps(data)
+            report_instance.data = json.loads(
+                json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
@@ -1810,8 +1810,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = orjson.loads(
-                orjson.dumps(data)
+            report_instance.data = json.loads(
+                json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()
@@ -1948,8 +1948,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
             data["items"] = full_items
 
-            report_instance.data = orjson.loads(
-                orjson.dumps(data)
+            report_instance.data = json.loads(
+                json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
             report_instance.save()

@@ -12,6 +12,7 @@ from poms.common.serializers import (
     ModelWithUserCodeSerializer,
     ModelMetaSerializer,
     PomsClassSerializer,
+    ModelWithObjectStateSerializer,
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.file_reports.serializers import FileReportSerializer
@@ -103,6 +104,7 @@ class PortfolioPortfolioRegisterSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -160,6 +162,7 @@ class PortfolioSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
     registers = PortfolioPortfolioRegisterSerializer(
@@ -379,6 +382,7 @@ class PortfolioRegisterSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -592,7 +596,9 @@ class CalculateRecordsSerializer(serializers.Serializer):
 
 
 class PortfolioBundleSerializer(
-    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+    ModelWithUserCodeSerializer, 
+    ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 

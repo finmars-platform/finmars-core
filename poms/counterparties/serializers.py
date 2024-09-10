@@ -3,6 +3,7 @@ from rest_framework import serializers
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
+    ModelWithObjectStateSerializer,
 )
 from poms.counterparties.fields import CounterpartyGroupField, ResponsibleGroupField
 from poms.counterparties.models import (
@@ -51,6 +52,7 @@ class CounterpartySerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
     group = CounterpartyGroupField()
@@ -161,6 +163,7 @@ class ResponsibleSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
     group = ResponsibleGroupField()

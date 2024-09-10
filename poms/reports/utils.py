@@ -143,7 +143,7 @@ def generate_report_unique_hash(app, action, data, master_user, member):
         report_options['expression_iterations_count'] = _data['expression_iterations_count']
 
     result = app + '_' + action + '_' + str(master_user.id) + '_' + str(member.id) + '_' + hashlib.md5(
-        orjson.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()
+        json.dumps(report_options, sort_keys=True, default=str).encode('utf-8')).hexdigest()
 
     return result
 
@@ -246,7 +246,7 @@ def generate_unique_key(instance, report_type):
         "custom_fields_to_calculate": instance.custom_fields_to_calculate
     }
 
-    settings = json.dumps(report_data, sort_keys=True)
+    settings = json.dumps(report_data, sort_keys=True, default=str)
     unique_key = hashlib.md5(settings.encode('utf-8')).hexdigest()
 
     return settings, unique_key
