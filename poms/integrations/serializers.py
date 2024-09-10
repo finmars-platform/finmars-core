@@ -1338,7 +1338,6 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     user_code = serializers.CharField(required=True)
-    name = serializers.CharField(required=False, allow_null=True)
     instrument_type_user_code = serializers.CharField(
         required=True,
         validators=[check_instrument_type],
@@ -1364,7 +1363,6 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         )
         task.options_object = {  # params expected in finmars-database view
             "user_code": validated_data["user_code"],
-            "name": validated_data["name"],
             "type_user_code": validated_data["instrument_type_user_code"],
         }
         task.result_object = {"task": task.id}
