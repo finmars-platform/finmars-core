@@ -76,6 +76,8 @@ from poms.integrations.models import (
     InstrumentDownloadSchemeInput,
     InstrumentMapping,
     InstrumentTypeMapping,
+    MappingTable,
+    MappingTableKeyValue,
     PaymentSizeDetailMapping,
     PeriodicityMapping,
     PortfolioClassifierMapping,
@@ -90,10 +92,9 @@ from poms.integrations.models import (
     Strategy1Mapping,
     Strategy2Mapping,
     Strategy3Mapping,
-    TransactionFileResult, MappingTable, MappingTableKeyValue,
+    TransactionFileResult,
 )
 from poms.integrations.providers.base import ProviderException, get_provider
-
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import (
     GenericAttributeTypeSerializer,
@@ -155,7 +156,7 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
 
         space_code = get_space_code_from_context(self.context)
 
-        cert_file_path = space_code + "/brokers/bloomberg/%s" % p12cert.name
+        cert_file_path = f"{space_code}/brokers/bloomberg/{p12cert.name}"
 
         storage.save(cert_file_path, p12cert)
 
@@ -173,7 +174,7 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
 
         space_code = get_space_code_from_context(self.context)
 
-        cert_file_path = space_code + "/brokers/bloomberg/%s" % p12cert.name
+        cert_file_path = f"{space_code}/brokers/bloomberg/{p12cert.name}"
 
         storage.save(cert_file_path, p12cert)
 
@@ -228,9 +229,7 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         fields = ["id", "attribute_type", "attribute_type_object", "value"]
 
     def __init__(self, *args, **kwargs):
-        super(InstrumentDownloadSchemeAttributeSerializer, self).__init__(
-            *args, **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
         from poms.obj_attrs.serializers import GenericAttributeTypeViewSerializer
 
@@ -240,14 +239,13 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         attribute_type = attrs.get("attribute_type", None)
-        if attribute_type:
-            if (
-                    attribute_type.content_type_id
-                    != ContentType.objects.get(app_label='instruments', model="instrument").id
-            ):
-                self.fields["attribute_type"].fail(
-                    "does_not_exist", pk_value=attribute_type.id
-                )
+        if attribute_type and (
+            attribute_type.content_type_id
+            != ContentType.objects.get(app_label="instruments", model="instrument").id
+        ):
+            self.fields["attribute_type"].fail(
+                "does_not_exist", pk_value=attribute_type.id
+            )
         return attrs
 
 
@@ -519,28 +517,36 @@ class MappingTableSerializer(ModelMetaSerializer):
     class Meta:
         model = MappingTable
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'short_name', 'notes', 'configuration_code',
-            'items'
+            "id",
+            "master_user",
+            "name",
+            "user_code",
+            "short_name",
+            "notes",
+            "configuration_code",
+            "items",
         ]
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items')
+        items_data = validated_data.pop("items")
         mapping_table = MappingTable.objects.create(**validated_data)
 
         for item_data in items_data:
-            MappingTableKeyValue.objects.create(mapping_table=mapping_table, **item_data)
+            MappingTableKeyValue.objects.create(
+                mapping_table=mapping_table, **item_data
+            )
 
         return mapping_table
 
     def update(self, instance, validated_data):
-        items_data = validated_data.pop('items')
-        instance.name = validated_data.get('name', instance.name)
-        instance.short_name = validated_data.get('short_name', instance.short_name)
-        instance.notes = validated_data.get('notes', instance.notes)
+        items_data = validated_data.pop("items")
+        instance.name = validated_data.get("name", instance.name)
+        instance.short_name = validated_data.get("short_name", instance.short_name)
+        instance.notes = validated_data.get("notes", instance.notes)
 
         instance.save()
 
-        _l.info('items_data %s' % items_data)
+        _l.info(f"items_data {items_data}")
 
         MappingTableKeyValue.objects.filter(mapping_table=instance).delete()
 
@@ -550,161 +556,8 @@ class MappingTableSerializer(ModelMetaSerializer):
         return MappingTable.objects.get(pk=instance.pk)
 
 
-# class CurrencyMappingSerializer(serializers.ModelSerializer):
-#     master_user = MasterUserField()
-#     provider_object = ProviderClassSerializer(source='provider', read_only=True)
-#     currency = CurrencyField()
-#     currency_object = serializers.PrimaryKeyRelatedField(source='currency', read_only=True)
-#
-#     class Meta:
-#         model = CurrencyMapping
-#         fields = [
-#             'id', 'master_user', 'provider', 'provider_object', 'value', 'currency', 'currency_object',
-#         ]
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=CurrencyMapping.objects.all(),
-#                 fields=('master_user', 'provider', 'value'),
-#                 message=gettext_lazy('The fields provider and value must make a unique set.')
-#             )
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(CurrencyMappingSerializer, self).__init__(*args, **kwargs)
-#
-#         from poms.currencies.serializers import CurrencyViewSerializer
-#         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
-
-
-# class InstrumentTypeMappingSerializer(serializers.ModelSerializer):
-#     master_user = MasterUserField()
-#     provider_object = ProviderClassSerializer(source='provider', read_only=True)
-#     instrument_type = InstrumentTypeField()
-#     instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
-#
-#     class Meta:
-#         model = InstrumentTypeMapping
-#         fields = [
-#             'id', 'master_user', 'provider', 'provider_object', 'value', 'instrument_type',
-#             'instrument_type_object',
-#         ]
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=InstrumentTypeMapping.objects.all(),
-#                 fields=('master_user', 'provider', 'value'),
-#                 message=gettext_lazy('The fields provider and value must make a unique set.')
-#             )
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(InstrumentTypeMappingSerializer, self).__init__(*args, **kwargs)
-#
-#         from poms.instruments.serializers import InstrumentTypeViewSerializer
-#         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-
-
-# class InstrumentAttributeValueMappingSerializer(serializers.ModelSerializer):
-#     master_user = MasterUserField()
-#     provider_object = ProviderClassSerializer(source='provider', read_only=True)
-#     attribute_type = GenericAttributeTypeField()
-#     attribute_type_object = serializers.PrimaryKeyRelatedField(source='attribute_type', read_only=True)
-#     classifier = GenericClassifierField(allow_empty=True, allow_null=True)
-#     classifier_object = serializers.PrimaryKeyRelatedField(source='classifier', read_only=True)
-#
-#     class Meta:
-#         model = InstrumentAttributeValueMapping
-#         fields = [
-#             'id', 'master_user', 'provider', 'provider_object', 'value',
-#             'attribute_type', 'attribute_type_object', 'value_string', 'value_float', 'value_date',
-#             'classifier', 'classifier_object',
-#         ]
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=InstrumentAttributeValueMapping.objects.all(),
-#                 fields=('master_user', 'provider', 'value'),
-#                 message=gettext_lazy('The fields provider and value must make a unique set.')
-#             )
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(InstrumentAttributeValueMappingSerializer, self).__init__(*args, **kwargs)
-#
-#         from poms.obj_attrs.serializers import GenericAttributeTypeViewSerializer, GenericClassifierViewSerializer
-#         self.fields['attribute_type_object'] = GenericAttributeTypeViewSerializer(source='attribute_type',
-#                                                                                   read_only=True)
-#         self.fields['classifier_object'] = GenericClassifierViewSerializer(source='classifier', read_only=True)
-#
-#     def validate(self, attrs):
-#         attribute_type = attrs.get('attribute_type', None)
-#         if attribute_type:
-#             if attribute_type.content_type_id != ContentType.objects.get_for_model(Instrument).id:
-#                 self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
-#
-#         classifier = attrs.get('classifier', None)
-#         if classifier:
-#             if classifier.attribute_type_id != attribute_type.id:
-#                 raise serializers.ValidationError({'classifier': 'Invalid classifier'})
-#         return attrs
-
-
-# class AccrualCalculationModelMappingSerializer(serializers.ModelSerializer):
-#     master_user = MasterUserField()
-#     provider_object = ProviderClassSerializer(source='provider', read_only=True)
-#     accrual_calculation_model_object = serializers.PrimaryKeyRelatedField(source='accrual_calculation_model',
-#                                                                           read_only=True)
-#
-#     class Meta:
-#         model = AccrualCalculationModelMapping
-#         fields = [
-#             'id', 'master_user', 'provider', 'provider_object', 'value', 'accrual_calculation_model',
-#             'accrual_calculation_model_object',
-#         ]
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=AccrualCalculationModelMapping.objects.all(),
-#                 fields=('master_user', 'provider', 'value'),
-#                 message=gettext_lazy('The fields provider and value must make a unique set.')
-#             )
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(AccrualCalculationModelMappingSerializer, self).__init__(*args, **kwargs)
-#
-#         from poms.instruments.serializers import AccrualCalculationModelSerializer
-#         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
-#             source='accrual_calculation_model', read_only=True)
-#
-#
-# class PeriodicityMappingSerializer(serializers.ModelSerializer):
-#     master_user = MasterUserField()
-#     provider_object = ProviderClassSerializer(source='provider', read_only=True)
-#     periodicity_object = serializers.PrimaryKeyRelatedField(source='periodicity', read_only=True)
-#
-#     class Meta:
-#         model = PeriodicityMapping
-#         fields = [
-#             'id', 'master_user', 'provider', 'provider_object', 'value', 'periodicity', 'periodicity_object',
-#         ]
-#         validators = [
-#             UniqueTogetherValidator(
-#                 queryset=PeriodicityMapping.objects.all(),
-#                 fields=('master_user', 'provider', 'value'),
-#                 message=gettext_lazy('The fields provider and value must make a unique set.')
-#             )
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(PeriodicityMappingSerializer, self).__init__(*args, **kwargs)
-#
-#         from poms.instruments.serializers import PeriodicitySerializer
-#         self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
-
-
 class AbstractMappingSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
-
-    # currency = CurrencyField()
-    # currency_object = serializers.PrimaryKeyRelatedField(source='currency', read_only=True)
 
     class Meta:
         model = AbstractMapping
@@ -714,15 +567,7 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
             "provider",
             "value",
             "content_object",
-            # 'provider_object', 'content_object_object',
         ]
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=CurrencyMapping.objects.all(),
-        #         fields=('master_user', 'provider', 'value'),
-        #         message=gettext_lazy('The fields provider and value must make a unique set.')
-        #     )
-        # ]
 
     def __init__(self, *args, **kwargs):
         super(AbstractMappingSerializer, self).__init__(*args, **kwargs)
@@ -766,15 +611,7 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
             "value",
             "attribute_type",
             "content_object",
-            # 'provider_object', 'content_object_object',
         ]
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=CurrencyMapping.objects.all(),
-        #         fields=('master_user', 'provider', 'value'),
-        #         message=gettext_lazy('The fields provider and value must make a unique set.')
-        #     )
-        # ]
 
     def __init__(self, *args, **kwargs):
         super(AbstractClassifierMappingSerializer, self).__init__(*args, **kwargs)
@@ -811,9 +648,6 @@ class CurrencyMappingSerializer(AbstractMappingSerializer):
 
     def __init__(self, *args, **kwargs):
         super(CurrencyMappingSerializer, self).__init__(*args, **kwargs)
-
-        # from poms.currencies.serializers import CurrencyViewSerializer
-        # self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
 
     def get_content_object_view_serializer(self):
         from poms.currencies.serializers import CurrencyViewSerializer
@@ -895,19 +729,18 @@ class InstrumentAttributeValueMappingSerializer(AbstractMappingSerializer):
 
     def validate(self, attrs):
         content_object = attrs.get("content_object", None)
-        if content_object:
-            if (
-                    content_object.content_type_id
-                    != ContentType.objects.get(app_label="instruments", model="instrument").id
-            ):
-                self.fields["content_object"].fail(
-                    "does_not_exist", pk_value=content_object.id
-                )
+        if content_object and (
+            content_object.content_type_id
+            != ContentType.objects.get(app_label="instruments", model="instrument").id
+        ):
+            self.fields["content_object"].fail(
+                "does_not_exist", pk_value=content_object.id
+            )
 
         classifier = attrs.get("classifier", None)
-        if classifier:
-            if classifier.attribute_type_id != content_object.id:
-                raise serializers.ValidationError({"classifier": "Invalid classifier"})
+        if classifier and classifier.attribute_type_id != content_object.id:
+            raise serializers.ValidationError({"classifier": "Invalid classifier"})
+
         return attrs
 
 
@@ -1184,9 +1017,6 @@ class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):
         return PriceDownloadSchemeViewSerializer
 
 
-# ----
-
-
 class ImportInstrumentViewSerializer(
     ModelWithAttributesSerializer, ModelWithUserCodeSerializer
 ):
@@ -1211,8 +1041,6 @@ class ImportInstrumentViewSerializer(
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
     pricing_condition = PricingConditionField()
-
-    # attributes = serializers.SerializerMethodField()
 
     class Meta:
         model = Instrument
@@ -1315,10 +1143,9 @@ class ImportInstrumentViewSerializer(
         from poms.obj_attrs.serializers import GenericAttributeSerializer
 
         _l.warning("get_attributes: _attributes=%s", hasattr(obj, "_attributes"))
-        if hasattr(obj, "_attributes"):
-            l = obj._attributes
-        else:
-            l = obj.attributes.all()
+
+        l = obj._attributes if hasattr(obj, "_attributes") else obj.attributes.all()
+
         return GenericAttributeSerializer(
             instance=l, many=True, read_only=True, context=self.context
         ).data
@@ -1326,17 +1153,17 @@ class ImportInstrumentViewSerializer(
 
 class ImportInstrumentEntry(object):
     def __init__(
-            self,
-            master_user=None,
-            member=None,
-            instrument_code=None,
-            instrument_name=None,
-            instrument_type_code=None,
-            instrument_download_scheme=None,
-            task=None,
-            task_result_overrides=None,
-            instrument=None,
-            errors=None,
+        self,
+        master_user=None,
+        member=None,
+        instrument_code=None,
+        instrument_name=None,
+        instrument_type_code=None,
+        instrument_download_scheme=None,
+        task=None,
+        task_result_overrides=None,
+        instrument=None,
+        errors=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -1364,14 +1191,14 @@ class ImportInstrumentEntry(object):
 
 class UnifiedDataEntry(object):
     def __init__(
-            self,
-            master_user=None,
-            member=None,
-            id=None,
-            entity_type=None,
-            task=None,
-            task_result_overrides=None,
-            errors=None,
+        self,
+        master_user=None,
+        member=None,
+        id=None,
+        entity_type=None,
+        task=None,
+        task_result_overrides=None,
+        errors=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -1427,7 +1254,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
                     "instrument_download_scheme": gettext_lazy(
                         'Check "%(provider)s" provider configuration.'
                     )
-                                                  % {"provider": instrument_download_scheme.provider}
+                    % {"provider": instrument_download_scheme.provider}
                 }
             )
 
@@ -1437,10 +1264,10 @@ class ImportInstrumentSerializer(serializers.Serializer):
                     "instrument_code": gettext_lazy(
                         'Invalid value for "%(provider)s" provider.'
                     )
-                                       % {
-                                           "reference": instrument_code,
-                                           "provider": instrument_download_scheme.provider,
-                                       }
+                    % {
+                        "reference": instrument_code,
+                        "provider": instrument_download_scheme.provider,
+                    }
                 }
             )
 
@@ -1472,16 +1299,9 @@ class ImportInstrumentSerializer(serializers.Serializer):
         instance = ImportInstrumentEntry(**validated_data)
         if instance.task:
             task, instrument, errors = download_instrument(
-                # instrument_code=instance.instrument_code,
-                # instrument_download_scheme=instance.instrument_download_scheme,
-                # master_user=instance.master_user,
-                # member=instance.member,
                 task=instance.task_object,
                 value_overrides=task_result_overrides,
             )
-            instance.task_object = task
-            instance.instrument = instrument
-            instance.errors = errors
         else:
             task, instrument, errors = download_instrument(
                 instrument_code=instance.instrument_code,
@@ -1489,18 +1309,19 @@ class ImportInstrumentSerializer(serializers.Serializer):
                 master_user=instance.master_user,
                 member=instance.member,
             )
-            instance.task_object = task
-            instance.instrument = instrument
-            instance.errors = errors
+
+        instance.task_object = task
+        instance.instrument = instrument
+        instance.errors = errors
         return instance
 
     def get_task_result(self, obj):
-        if obj.task_object.status == CeleryTask.STATUS_DONE:
-            fields = obj.task_object.options_object["fields"]
-            result_object = obj.task_object.result_object
-            return {k: v for k, v in result_object.items() if k in fields}
-        else:
+        if obj.task_object.status != CeleryTask.STATUS_DONE:
             return {}
+
+        fields = obj.task_object.options_object["fields"]
+        result_object = obj.task_object.result_object
+        return {k: v for k, v in result_object.items() if k in fields}
 
 
 def check_instrument_type(instrument_type: str) -> str:
@@ -1517,7 +1338,6 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     user_code = serializers.CharField(required=True)
-    name = serializers.CharField(required=False, allow_null=True)
     instrument_type_user_code = serializers.CharField(
         required=True,
         validators=[check_instrument_type],
@@ -1543,15 +1363,20 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         )
         task.options_object = {  # params expected in finmars-database view
             "user_code": validated_data["user_code"],
-            "name": validated_data["name"],
             "type_user_code": validated_data["instrument_type_user_code"],
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
-            'space_code': task.master_user.space_code,
-            'realm_code': task.master_user.realm_code
-        }}, countdown=task.ttl)
+        ttl_finisher.apply_async(
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
+            countdown=task.ttl,
+        )
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1596,10 +1421,16 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
-            'space_code': task.master_user.space_code,
-            'realm_code': task.master_user.realm_code
-        }}, countdown=task.ttl)
+        ttl_finisher.apply_async(
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
+            countdown=task.ttl,
+        )
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1644,10 +1475,16 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
-            'space_code': task.master_user.space_code,
-            'realm_code': task.master_user.realm_code
-        }}, countdown=task.ttl)
+        ttl_finisher.apply_async(
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
+            countdown=task.ttl,
+        )
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1681,10 +1518,7 @@ class ImportPriceDatabaseSerializer(serializers.Serializer):
         return attrs
 
     def create_task(self, validated_data: dict) -> dict:
-        from poms.integrations.tasks import (
-            import_price_finmars_database,
-            ttl_finisher,
-        )
+        from poms.integrations.tasks import import_price_finmars_database, ttl_finisher
 
         task = CeleryTask.objects.create(
             status=CeleryTask.STATUS_PENDING,
@@ -1702,10 +1536,16 @@ class ImportPriceDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id, 'context': {
-            'space_code': task.master_user.space_code,
-            'realm_code': task.master_user.realm_code
-        }}, countdown=task.ttl)
+        ttl_finisher.apply_async(
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            },
+            countdown=task.ttl,
+        )
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1795,20 +1635,20 @@ class ImportTestCertificate(object):
 
 class ImportPricingEntry(object):
     def __init__(
-            self,
-            master_user=None,
-            member=None,
-            instruments=None,
-            currencies=None,
-            date_from=None,
-            date_to=None,
-            is_yesterday=None,
-            balance_date=None,
-            fill_days=None,
-            override_existed=False,
-            task=None,
-            instrument_histories=None,
-            currency_histories=None,
+        self,
+        master_user=None,
+        member=None,
+        instruments=None,
+        currencies=None,
+        date_from=None,
+        date_to=None,
+        is_yesterday=None,
+        balance_date=None,
+        fill_days=None,
+        override_existed=False,
+        task=None,
+        instrument_histories=None,
+        currency_histories=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -1841,9 +1681,7 @@ class ImportPricingEntry(object):
     @property
     def errors(self):
         t = self.task_object
-        if t:
-            return t.options_object.get("errors", None)
-        return None
+        return t.options_object.get("errors", None) if t else None
 
     @property
     def instrument_price_missed(self):
@@ -1931,17 +1769,13 @@ class TestCertificateSerializer(serializers.Serializer):
                 member=instance.member,
                 task=instance.task_object,
             )
-            instance.task_object = task
         else:
             task, is_ready = test_certificate(
                 master_user=instance.master_user, member=instance.member
             )
-            instance.task_object = task
 
+        instance.task_object = task
         return instance
-
-
-# ----------------------------------------
 
 
 class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer):
@@ -2062,12 +1896,6 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
             *args, **kwargs
         )
 
-        # TODO: circular import error
-        # from poms.transactions.serializers import TransactionTypeInputViewSerializer
-        # self.fields['transaction_type_input_object'] = TransactionTypeInputViewSerializer(
-        #     source='transaction_type_input', read_only=True)
-        pass
-
     def to_representation(self, instance):
         ret = super(
             ComplexTransactionImportSchemeFieldSerializer, self
@@ -2091,17 +1919,14 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                 ret["transaction_type_input_object"] = s.data
             except Exception as e:
                 _l.error(
-                    "Error in to_representation instance.rule_scenario.transaction_type: %s"
-                    % instance.rule_scenario.transaction_type
+                    f"Error in to_representation instance.rule_scenario.transaction_type: "
+                    f"{instance.rule_scenario.transaction_type}"
                 )
                 _l.error(
-                    "Error in to_representation instance.transaction_type_input: %s"
-                    % instance.transaction_type_input
+                    f"Error in to_representation instance.transaction_type_input: "
+                    f"{instance.transaction_type_input}"
                 )
-                _l.error("Error in to_representation: %s" % e)
-                _l.error(
-                    "Error in to_representation traceback: %s" % traceback.format_exc()
-                )
+                _l.error(f"Error in to_representation: {e} trace {traceback.format_exc()}")
 
                 ret["transaction_type_input_object"] = None
 
@@ -2132,15 +1957,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             *args, **kwargs
         )
 
-        # TODO: circular import error
-        # from poms.transactions.serializers import TransactionTypeViewOnlySerializer
-        # self.fields['transaction_type_object'] = TransactionTypeViewOnlySerializer(source='transaction_type',
-        #                                                                        read_only=True)
-
     def to_representation(self, instance):
-        ret = super(
-            ComplexTransactionImportSchemeRuleScenarioSerializer, self
-        ).to_representation(instance)
+        ret = super().to_representation(instance)
 
         selector_values = []
 
@@ -2396,7 +2214,6 @@ class ComplexTransactionImportSchemeSerializer(
         ).transaction_type
 
         for rule_values in rules:
-
             # TODO: remove in release 1.9.0 after testing
             # that there are no complexTransactionImportScheme
             # without field `is_error_rule_scenario`
@@ -2415,16 +2232,16 @@ class ComplexTransactionImportSchemeSerializer(
 
             fields = rule_values.pop("fields", []) or []
 
-            _l.info("rule_values before %s" % rule_values)
+            _l.info(f"rule_values before {rule_values}")
 
             selector_values = rule_values.pop("selector_values", []) or []
             for name, value in rule_values.items():
                 setattr(rule, name, value)
             rule.save()
 
-            selector_values_instances = []
-
             if selector_values:
+                selector_values_instances = []
+
                 for val in selector_values:
                     try:
                         selector = (
@@ -2465,9 +2282,9 @@ class ComplexTransactionImportSchemeSerializer(
 
             recon0.save()
 
-            selector_values_instances = []
-
             if selector_values:
+                selector_values_instances = []
+
                 for val in selector_values:
                     try:
                         selector = (
@@ -2521,7 +2338,7 @@ class ComplexTransactionImportSchemeSerializer(
                         transaction_type__user_code=rule_scenario.transaction_type,
                     )
 
-                    _l.debug("Input exists %s " % input)
+                    _l.debug(f"Input exists {input} ")
 
                     field_id = field_values.pop("id", None)
                     field0 = None
@@ -2543,18 +2360,11 @@ class ComplexTransactionImportSchemeSerializer(
                     if field_values.get("value_expr", None):
                         field0.value_expr = field_values["value_expr"]
 
-                    # for name, value in field_values.items():
-                    #     setattr(field0, name, value)
-
-                    # TODO check why is that?
-                    # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
-                    #     raise serializers.ValidationError(gettext_lazy('Invalid transaction type input. (Hacker has detected!)'))
-
                     field0.save()
                     pk_set.add(field0.id)
 
                 except Exception as e:
-                    _l.error("Input does not exists %s " % e)
+                    _l.error(f"Input does not exists {e} ")
 
         rule_scenario.fields.exclude(pk__in=pk_set).delete()
 
@@ -2565,32 +2375,39 @@ class ComplexTransactionImportSchemeLightSerializer(serializers.ModelSerializer)
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ["id", "master_user", "user_code", "name", "rule_expr", "configuration_code"]
+        fields = [
+            "id",
+            "master_user",
+            "user_code",
+            "name",
+            "rule_expr",
+            "configuration_code",
+        ]
 
 
 class ComplexTransactionCsvFileImport:
     def __init__(
-            self,
-            task_id=None,
-            task_status=None,
-            master_user=None,
-            member=None,
-            scheme=None,
-            file_path=None,
-            skip_first_line=None,
-            delimiter=None,
-            quotechar=None,
-            encoding=None,
-            error_handling=None,
-            missing_data_handler=None,
-            error=None,
-            error_message=None,
-            error_row_index=None,
-            error_rows=None,
-            total_rows=None,
-            processed_rows=None,
-            file_name=None,
-            stats_file_report=None,
+        self,
+        task_id=None,
+        task_status=None,
+        master_user=None,
+        member=None,
+        scheme=None,
+        file_path=None,
+        skip_first_line=None,
+        delimiter=None,
+        quotechar=None,
+        encoding=None,
+        error_handling=None,
+        missing_data_handler=None,
+        error=None,
+        error_message=None,
+        error_row_index=None,
+        error_rows=None,
+        total_rows=None,
+        processed_rows=None,
+        file_name=None,
+        stats_file_report=None,
     ):
         self.task_id = task_id
         self.task_status = task_status
@@ -2645,15 +2462,13 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     def create(self, validated_data):
         if "scheme" in validated_data:
             validated_data["delimiter"] = validated_data["scheme"].delimiter
-            validated_data["error_handling"] = validated_data[
-                "scheme"
-            ].error_handler
+            validated_data["error_handling"] = validated_data["scheme"].error_handler
             validated_data["missing_data_handler"] = validated_data[
                 "scheme"
             ].missing_data_handler
 
             _l.debug(
-                f'scheme missing data helper: '
+                f"scheme missing data helper: "
                 f'{validated_data["scheme"].missing_data_handler}'
             )
 

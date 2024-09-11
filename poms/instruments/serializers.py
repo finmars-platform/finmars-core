@@ -12,9 +12,9 @@ from poms.common.fields import DateTimeTzAwareField, ExpressionField, FloatEvalF
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
     ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
-    ModelWithObjectStateSerializer,
     PomsClassSerializer,
 )
 from poms.common.utils import date_now
@@ -215,7 +215,9 @@ def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class PricingPolicySerializer(
-    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+    ModelWithUserCodeSerializer,
+    ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -890,7 +892,8 @@ class InstrumentTypeSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentTypePricingPolicy.objects.get_or_create(
-                instrument_type=instance, pricing_policy_id=item["pricing_policy_id"],
+                instrument_type=instance,
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -1250,16 +1253,15 @@ class InstrumentSerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = InstrumentPricingPolicy.objects.get_or_create(
-                instrument=instance, pricing_policy_id=item["pricing_policy_id"],
+                instrument=instance,
+                pricing_policy_id=item["pricing_policy_id"],
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
 
         to_delete = InstrumentPricingPolicy.objects.filter(instrument=instance)
         if len(ids):
-            to_delete = to_delete.exclude(
-                id__in=ids
-            )
+            to_delete = to_delete.exclude(id__in=ids)
         to_delete.delete()
 
     @staticmethod

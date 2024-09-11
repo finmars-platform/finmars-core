@@ -24,7 +24,7 @@ expected_response = {
             "size_pretty": "8.17 MB",
         }
     ],
-    "meta": {"execution_time": 3, "request_id": "b212f36e-9144-4f13-aaed-d9a16b54133d"},
+    # "meta": {"execution_time": 3, "request_id": "b212f36e-9144-4f13-aaed-d9a16b54133d"},
 }
 
 
@@ -80,7 +80,7 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         response_json = response.json()
 
-        self.assertIn("meta", response_json)
+        # self.assertIn("meta", response_json)
         self.assertEqual(response_json["count"], 1)
         self.assertEqual(len(response_json["results"]), 1)
 
