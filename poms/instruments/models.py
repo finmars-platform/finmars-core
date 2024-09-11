@@ -3063,8 +3063,8 @@ class PriceHistory(TimeStampedModel):
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
 
-        if not self.created:
-            self.created = date_now()
+        if not self.created_at:
+            self.created_at = date_now()
 
         self.run_auto_calculation()
 
