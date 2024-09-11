@@ -85,7 +85,7 @@ INSTRUMENTS_TYPES = [
     f"{TYPE_PREFIX}stock",
 ]
 
-IDENTIFIER_FIELDS = [
+IDENTIFIERS = [
     {
         "cbonds_id": "id",
         "isin": "isin",
@@ -111,8 +111,8 @@ IDENTIFIER_FIELDS = [
 
 
 INSTRUMENTS = [
-    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL, IDENTIFIER_FIELDS[0]),
-    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL, IDENTIFIER_FIELDS[1]),
+    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL, IDENTIFIERS[0]),
+    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL, IDENTIFIERS[1]),
     # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
