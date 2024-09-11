@@ -7,8 +7,8 @@ expected_response = [
     {
         "id": 1,
         "instruments": [{"id": 1, "user_code": "-"}],
-        "created": "2024-06-30T15:38:23.565757Z",
-        "modified": "2024-06-30T15:38:23.565764Z",
+        "created_at": "2024-06-30T15:38:23.565757Z",
+        "modified_at": "2024-06-30T15:38:23.565764Z",
         "name": "file_1.json",
         "path": "/root/workload",
         "extension": "json",
@@ -17,8 +17,8 @@ expected_response = [
     {
         "id": 2,
         "instruments": [{"id": 1, "user_code": "-"}],
-        "created": "2024-06-30T15:38:23.566583Z",
-        "modified": "2024-06-30T15:38:23.566588Z",
+        "created_at": "2024-06-30T15:38:23.566583Z",
+        "modified_at": "2024-06-30T15:38:23.566588Z",
         "name": "file_2.json",
         "path": "/root/workload",
         "extension": "json",
@@ -27,8 +27,8 @@ expected_response = [
     {
         "id": 3,
         "instruments": [{"id": 1, "user_code": "-"}],
-        "created": "2024-06-30T15:38:23.567007Z",
-        "modified": "2024-06-30T15:38:23.567012Z",
+        "created_at": "2024-06-30T15:38:23.567007Z",
+        "modified_at": "2024-06-30T15:38:23.567012Z",
         "name": "file_3.json",
         "path": "/root/workload",
         "extension": "json",
@@ -64,15 +64,13 @@ class AttachmentViewSetTest(BaseTestCase):
     def test__files_added(self):
         amount = self.random_int(2, 10)
         files = []
-        path = "/root/workload"
         for i in range(1, amount + 1):
-            name = f"file_{i}.json"
+            path = f"/root/workload/file_{i}.json"
             FinmarsFile.objects.create(
-                name=name,
                 path=path,
                 size=self.random_int(10, 1000),
             )
-            files.append(f"{path}/{name}")
+            files.append(path)
 
         response = self.client.patch(
             path=self.url.format(self.instrument.id),
@@ -88,13 +86,12 @@ class AttachmentViewSetTest(BaseTestCase):
         self.assertIn("id", file_data)
         self.assertIn("instruments", file_data)
         self.assertEqual(len(file_data["instruments"]), 1)
-        self.assertIn("created", file_data)
-        self.assertIn("modified", file_data)
+        self.assertIn("created_at", file_data)
+        self.assertIn("modified_at", file_data)
         self.assertIn("name", file_data)
         self.assertIn("path", file_data)
-        self.assertEqual(file_data["path"], path)
         self.assertIn("extension", file_data)
-        self.assertEqual(file_data["extension"], "json")
+        self.assertEqual(file_data["extension"], ".json")
         self.assertIn("size", file_data)
 
     def test__no_attachments(self):

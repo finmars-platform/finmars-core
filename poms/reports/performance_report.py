@@ -37,7 +37,7 @@ _l = logging.getLogger("poms.reports")
 
 class PerformanceReportBuilder:
     def __init__(self, instance=None):
-        _l.info("PerformanceReportBuilder init")
+        _l.debug("PerformanceReportBuilder init")
 
         self.instance = instance
 
@@ -45,10 +45,10 @@ class PerformanceReportBuilder:
             master_user=self.instance.master_user
         )
 
-        _l.info("self.instance master_user %s" % self.instance.master_user)
-        _l.info("self.instance period_type %s" % self.instance.period_type)
-        _l.info("self.instance begin_date %s" % self.instance.begin_date)
-        _l.info("self.instance end_date %s" % self.instance.end_date)
+        _l.debug("self.instance master_user %s" % self.instance.master_user)
+        _l.debug("self.instance period_type %s" % self.instance.period_type)
+        _l.debug("self.instance begin_date %s" % self.instance.begin_date)
+        _l.debug("self.instance end_date %s" % self.instance.end_date)
 
         proxy_user = ProxyUser(self.instance.member, self.instance.master_user)
         proxy_request = ProxyRequest(proxy_user)
@@ -95,7 +95,7 @@ class PerformanceReportBuilder:
                     portfolio_register.portfolio_id
                 ] = portfolio_register
 
-            # _l.info('get_first_transaction.portfolios %s ' % portfolios)
+            # _l.debug('get_first_transaction.portfolios %s ' % portfolios)
 
             transaction = (
                 Transaction.objects.filter(
@@ -141,7 +141,7 @@ class PerformanceReportBuilder:
 
         self.end_date = self.instance.end_date
 
-        _l.info("typeof end_date %s" % type(self.end_date))
+        _l.debug("typeof end_date %s" % type(self.end_date))
 
         if not self.instance.end_date:
             self.end_date = get_closest_bday_of_yesterday()
@@ -152,10 +152,10 @@ class PerformanceReportBuilder:
         begin_date = None
 
         if not self.instance.begin_date and self.instance.period_type:
-            _l.info(
+            _l.debug(
                 "No begin date passed, calculating begin date based on period_type and end_date"
             )
-            _l.info("self.instance.period_type %s" % self.instance.period_type)
+            _l.debug("self.instance.period_type %s" % self.instance.period_type)
 
             if self.instance.period_type == "inception":
                 begin_date = get_last_business_day(
@@ -193,8 +193,8 @@ class PerformanceReportBuilder:
 
         self.instance.begin_date = begin_date
 
-        _l.info("typeof end_date %s" % type(self.end_date))
-        _l.info("typeof begin_date %s" % type(begin_date))
+        _l.debug("typeof end_date %s" % type(self.end_date))
+        _l.debug("typeof begin_date %s" % type(begin_date))
 
         if self.end_date < begin_date:
             self.end_date = begin_date
@@ -267,9 +267,9 @@ class PerformanceReportBuilder:
         if self.instance.adjustment_type == "annualized":
             self.calc_annualized_grand_total()
 
-        # _l.info('items total %s' % len(self.instance.items))
+        # _l.debug('items total %s' % len(self.instance.items))
 
-        _l.info("build_st done: %s", "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug("build_st done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
@@ -422,13 +422,13 @@ class PerformanceReportBuilder:
         return result
 
     def get_periods(self, date_from, date_to, segmentation_type):
-        # _l.info("Getting periods %s from %s to %s" % (self.instance.segmentation_type, date_from, date_to))
+        # _l.debug("Getting periods %s from %s to %s" % (self.instance.segmentation_type, date_from, date_to))
 
         result = []
 
         dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
-        # _l.info('dates %s' % dates)
+        # _l.debug('dates %s' % dates)
 
         if segmentation_type == "days":
             if date_from == date_to and is_business_day(date_from):
@@ -488,7 +488,7 @@ class PerformanceReportBuilder:
         for key, value in result_obj.items():
             result.append(result_obj[key])
 
-        # _l.info("result %s" % result)
+        # _l.debug("result %s" % result)
 
         return result
 
@@ -514,7 +514,7 @@ class PerformanceReportBuilder:
         return result
 
     def build_time_weighted(self, date_from, date_to):
-        # _l.info("build portfolio records")
+        # _l.debug("build portfolio records")
 
         date_from_str = str(date_from)
         date_to_str = str(date_to)
@@ -652,8 +652,8 @@ class PerformanceReportBuilder:
         for key, value in table.items():
             item_date = table[key]
 
-            _l.info("performance.table.key %s" % key)
-            _l.info("performance.table.previous_date %s" % previous_date)
+            _l.debug("performance.table.key %s" % key)
+            _l.debug("performance.table.previous_date %s" % previous_date)
 
             for _key, _value in item_date["portfolios"].items():
                 item = item_date["portfolios"][_key]
@@ -1007,7 +1007,7 @@ class PerformanceReportBuilder:
 
         nav = 0
 
-        _l.info(
+        _l.debug(
             f"get_nav_by_date.balance_report. date: {date}, len:{len(balance_report.items)}"
         )
 
@@ -1055,7 +1055,7 @@ class PerformanceReportBuilder:
         return fx_rate
 
     def build_modified_dietz(self, date_from, date_to):
-        _l.info("performance_report.build_modified_dietz")
+        _l.debug("performance_report.build_modified_dietz")
 
         portfolio_registers = self.get_portfolio_registers()
         portfolios = self.get_portfolios(portfolio_registers)
@@ -1085,14 +1085,15 @@ class PerformanceReportBuilder:
         if date_to > date_from:
             no_first_date = []
             no_register_records = []
-            for portfolio in portfolios:
+            for register in portfolio_registers:
+                portfolio = register.portfolio
                 first_transaction_date = portfolio.first_transaction_date
                 if not first_transaction_date:
                     no_first_date.append(portfolio.user_code)
                     continue
 
                 portfolio_records = PortfolioRegisterRecord.objects.filter(
-                    portfolio_register__portfolio=portfolio,
+                    portfolio_register=register,
                     transaction_date__lte=date_to,  # 2023-12-29
                     transaction_class__in=[
                         TransactionClass.CASH_INFLOW,
@@ -1110,7 +1111,7 @@ class PerformanceReportBuilder:
                     transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
                 )
 
-                _l.info("portfolio_records count %s " % len(portfolio_records))
+                _l.debug("portfolio_records count %s " % len(portfolio_records))
 
                 for record in portfolio_records:
                     fx_rate = self.get_record_fx_rate(record)
@@ -1468,7 +1469,7 @@ def add_data_items(self):
         master_user=self.instance.master_user
     )
 
-    _l.info(
+    _l.debug(
         "_refresh_with_perms_optimized item relations done: %s",
         "{:3.3f}".format(time.perf_counter() - item_relations_st),
     )

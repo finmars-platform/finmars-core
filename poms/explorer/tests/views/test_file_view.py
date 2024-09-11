@@ -4,9 +4,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import get_root_path, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
-class ExplorerViewFileViewSetTest(BaseTestCase):
+class ExplorerViewFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -46,3 +49,28 @@ class ExplorerViewFileViewSetTest(BaseTestCase):
         response = self.client.get(self.url, {"path": path})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content)
+
+    def test__no_permission(self):
+        user, member = self.create_user_member()
+        self.client.force_authenticate(user=user)
+        file_name = f"{self.random_string()}.{self.random_string(3)}"
+
+        response = self.client.get(self.url, {"path": file_name})
+
+        self.assertEqual(response.status_code, 403)
+
+    def test__has_root_permission(self):
+        user, member = self.create_user_member()
+
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
+
+        file_name = f"{self.random_string()}.{self.random_string(3)}"
+        FinmarsFile.objects.create(path=file_name, size=1111, parent=root)
+
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(self.url, {"path": file_name})
+
+        self.assertEqual(response.status_code, 200)

@@ -14,31 +14,27 @@ class FinmarsFileTest(BaseTestCase):
     def test__file_created(self):
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
-        path = (
-            f"/{self.random_string()}/{self.random_string(5)}/{self.random_string(7)}/"
-        )
+        path = f"/{self.random_string()}/{self.random_string(7)}/{name}"
         size = self.random_int()
-        file = FinmarsFile.objects.create(name=name, path=path, size=size)
+        file = FinmarsFile.objects.create(path=path, size=size)
 
         self.assertIsNotNone(file)
         self.assertEqual(file.name, name)
-        self.assertEqual(file.path, path)
+        self.assertEqual(file.path, path.rstrip("/"))
         self.assertEqual(file.size, size)
-        self.assertEqual(file.extension, extension)
-        self.assertIsNotNone(file.created)
-        self.assertIsNotNone(file.modified)
+        self.assertEqual(file.extension, f".{extension}")
+        self.assertIsNotNone(file.created_at)
+        self.assertIsNotNone(file.modified_at)
 
     def test__add_files_to_instrument(self):
         kwargs_1 = dict(
-            name="name_1.pdf",
-            path="/test/",
+            path="/test/name_1.pdf",
             size=self.random_int(1, 10000000),
         )
         file_1 = FinmarsFile.objects.create(**kwargs_1)
 
         kwargs_2 = dict(
-            name="name_2.pdf",
-            path="/test/",
+            path="/test/name_2.pdf",
             size=self.random_int(1, 10000000),
         )
         file_2 = FinmarsFile.objects.create(**kwargs_2)
@@ -50,28 +46,9 @@ class FinmarsFileTest(BaseTestCase):
         self.assertEqual(len(instrument.files.all()), 2)
 
     def test__unique_path_and_name(self):
-        kwargs = dict(
-            name="name.pdf",
-            path="/test/",
-            size=self.random_int(1, 10000000),
-        )
+        kwargs = dict(path="/test/name.pdf", size=1)
         FinmarsFile.objects.create(**kwargs)
 
-        kwargs["size"] = self.random_int(100000, 100000000)
+        kwargs["size"] = 2
         with self.assertRaises(Exception):
             FinmarsFile.objects.create(**kwargs)
-
-    @BaseTestCase.cases(
-        ("0", "/a/b"),
-        ("1", "/a/b/"),
-        ("2", "/a/b//"),
-    )
-    def test__filepath(self, path):
-        kwargs = dict(
-            name="name.pdf",
-            path=path,
-            size=self.random_int(10, 10000000),
-        )
-        file = FinmarsFile.objects.create(**kwargs)
-
-        self.assertEqual(file.filepath, "/a/b/name.pdf")

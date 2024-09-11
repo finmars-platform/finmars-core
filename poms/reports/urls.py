@@ -19,6 +19,14 @@ router.register(
     reports.BalanceReportViewSet,
     "BalanceReport",
 )
+
+router.register(
+    r"balance-report-light",
+    reports.BalanceReportLightViewSet,
+    "BalanceReportLight",
+)
+
+
 router.register(
     r"balance-report-sql",
     reports.BalanceReportViewSet,
@@ -83,4 +91,17 @@ router.register(
     r"price-history-check",
     reports.PriceHistoryCheckViewSet,
     "priceHistoryCheck",
+)
+
+
+router.register(
+    r"balance-report-instance",
+    reports.BalanceReportInstanceViewSet,
+    "balanceReportInstance",
+)
+
+router.register(
+    r"pl-report-instance",
+    reports.PLReportInstanceViewSet,
+    "plReportInstance",
 )

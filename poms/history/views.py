@@ -46,7 +46,7 @@ class ContentTypeFilter(django_filters.CharFilter):
 
 class HistoricalRecordFilterSet(FilterSet):
     id = NoOpFilter()
-    created = django_filters.DateFromToRangeFilter()
+    created_at = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = HistoricalRecord
@@ -73,7 +73,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     filter_class = HistoricalRecordFilterSet
 
     ordering_fields = [
-        'created', 'user_code', 'member'
+        'created_at', 'user_code', 'member'
     ]
 
     @action(detail=False, methods=['post'], url_path='export', serializer_class=ExportJournalSerializer)

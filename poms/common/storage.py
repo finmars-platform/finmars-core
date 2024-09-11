@@ -319,13 +319,8 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     Mixin adds FinmarsFile object support to the FinmarsStorage class.
     """
 
-    @staticmethod
-    def split_path(path: str) -> Tuple[str, str]:
-        path_obj = Path(path)
-        return str(path_obj.parent), path_obj.name
-
     def save(self, path: str, content: Any, **kwargs) -> str:
-        from poms.explorer.models import FinmarsFile
+        from poms.explorer.utils import update_or_create_file_and_parents
 
         if path.endswith("/.init"):
             # creates system directory with empty .init file
@@ -333,28 +328,22 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             return path
 
         size = len(content) if hasattr(content, "__len__") else 0
-        parent, name = self.split_path(path)
-        _l.info(f"FinmarsStorageFileObjMixin.save {parent}|{name} of size {size}")
+        _l.info(f"FinmarsStorageFileObjMixin.save {path} of size {size}")
 
         super().save(path, content, **kwargs)
 
-        file, _ = FinmarsFile.objects.update_or_create(
-            path=parent,
-            name=name,
-            defaults={"size": size},
-        )
-        return file.filepath
+        with contextlib.suppress(Exception):
+            update_or_create_file_and_parents(path, size)
 
     def delete(self, path: str) -> None:
         from poms.explorer.models import FinmarsFile
 
-        parent, name = self.split_path(path)
-        _l.info(f"FinmarsStorageFileObjMixin.delete {parent}|{name}")
+        _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
 
         super().delete(path)
 
         with contextlib.suppress(Exception):
-            FinmarsFile.objects.filter(path=parent, name=name).delete()
+            FinmarsFile.objects.filter(path=path).delete()
 
 
 class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):
@@ -543,6 +532,12 @@ class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
         except Exception as e:
             _l.error(f"dir_exists: check resulted in {repr(e)}")
             return False
+
+    def exists(self, path: str) -> bool:
+        if path.endswith("/"):
+            return self.dir_exists(path)
+
+        return super().exists(path)
 
 
 class FinmarsLocalFileSystemStorage(FinmarsStorageFileObjMixin, FileSystemStorage):

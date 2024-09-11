@@ -22,8 +22,8 @@ class RunPricingSerializer(serializers.Serializer):
 
 class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
-    modified = serializers.DateTimeField(read_only=True, allow_null=False)
-    created = serializers.DateTimeField(read_only=True, allow_null=False)
+    modified_at = serializers.DateTimeField(read_only=True, allow_null=False)
+    created_at = serializers.DateTimeField(read_only=True, allow_null=False)
 
     def __init__(self, *args, **kwargs):
         super(PriceHistoryErrorSerializer, self).__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
                   'status',
 
-                  'modified', 'created',
+                  'modified_at', 'created_at',
 
                   )
 
@@ -68,8 +68,8 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
 class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
 
-    modified = serializers.DateTimeField(read_only=True, allow_null=False)
-    created = serializers.DateTimeField(read_only=True, allow_null=False)
+    modified_at = serializers.DateTimeField(read_only=True, allow_null=False)
+    created_at = serializers.DateTimeField(read_only=True, allow_null=False)
 
     def __init__(self, *args, **kwargs):
         super(CurrencyHistoryErrorSerializer, self).__init__(*args, **kwargs)
@@ -86,8 +86,8 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
 
                   'status',
 
-                  'modified',
-                  'created',
+                  'modified_at',
+                  'created_at',
 
                   )
 

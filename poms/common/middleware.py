@@ -20,6 +20,7 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     PermissionDenied,
 )
+import socket
 
 from geoip2.errors import AddressNotFoundError
 from memory_profiler import profile
@@ -328,13 +329,17 @@ class ResponseTimeMiddleware(MiddlewareMixin):
     @staticmethod
     def update_response_content(data_dict: dict, request, response):
         execution_time = int((time.time() - request.start_time) * 1000)
-        data_dict["meta"] = {
-            "execution_time": execution_time,
-            "request_id": request.request_id,
-        }
-        response.content = json.dumps(data_dict).encode()
+        # TODO szhitenev probably extra json convert too heavy for performance
+        # data_dict["meta"] = {
+        #     "execution_time": execution_time,
+        #     "request_id": request.request_id,
+        # }
+        # response.content = json.dumps(data_dict).encode()
 
         # Update the content length
+        response["X-Execution-Time"] = execution_time
+        response["X-Request-Id"] = request.request_id
+        response["X-Worker"] = socket.gethostname()
         response["Content-Length"] = len(response.content)
 
     def process_request(self, request):
@@ -401,6 +406,10 @@ class RealmAndSpaceMiddleware:
                 # Setting the PostgreSQL search path to the tenant's schema
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO {request.space_code};")
+
+            # fix PLAT-1001: cache might return data from another schema, clear it
+            from django.contrib.contenttypes.models import ContentType
+            ContentType.objects.clear_cache()
 
         else:
             # If we do not have realm_code, we suppose its legacy Space which do not need scheme changing

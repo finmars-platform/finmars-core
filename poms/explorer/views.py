@@ -2,7 +2,6 @@ import json
 import logging
 import mimetypes
 import os
-from tempfile import NamedTemporaryFile
 
 from django.core.files.base import ContentFile
 from django.db.models import Q
@@ -10,6 +9,7 @@ from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
@@ -17,27 +17,46 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.pagination import PageNumberPaginationExt
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.explorer.explorer_permission import (
+    ExplorerDeletePathPermission,
+    ExplorerMovePermission,
+    ExplorerReadDirectoryPathPermission,
+    ExplorerReadFilePathPermission,
+    ExplorerRootAccessPermission,
+    ExplorerRootWritePermission,
+    ExplorerUnZipPermission,
+    ExplorerWriteDirectoryPathPermission,
+    ExplorerZipPathsReadPermission,
+)
 from poms.explorer.models import FinmarsFile
 from poms.explorer.serializers import (
+    AccessPolicySerializer,
+    BasePathSerializer,
     DeletePathSerializer,
+    DirectoryPathSerializer,
     FilePathSerializer,
-    FinmarsFileSerializer,
-    FolderPathSerializer,
     MoveSerializer,
+    PaginatedResponseSerializer,
     QuerySearchSerializer,
     ResponseSerializer,
     SearchResultSerializer,
+    StorageObjectAccessPolicySerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
+    RenameSerializer,
+    CopySerializer,
 )
 from poms.explorer.tasks import (
     move_directory_in_storage,
-    sync_files_with_database,
+    sync_storage_with_database,
     unzip_file_in_storage,
+    rename_directory_in_storage,
+    copy_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
+    paginate,
     remove_first_dir_from_path,
     response_with_file,
 )
@@ -51,12 +70,28 @@ _l = logging.getLogger("poms.explorer")
 storage = get_storage()
 
 
+class ContextMixin:
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update(
+            {
+                "storage": storage,
+                "space_code": self.request.space_code,
+                "realm_code": self.request.realm_code,
+            },
+        )
+        return context
+
+
 class ExplorerViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadDirectoryPathPermission
+    ]
+    serializer_class = DirectoryPathSerializer
     http_method_names = ["get"]
 
     @swagger_auto_schema(
-        query_serializer=FolderPathSerializer(),
+        query_serializer=DirectoryPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
         },
@@ -66,12 +101,15 @@ class ExplorerViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
 
         space_code = request.space_code
-        path = f"{join_path(space_code, serializer.validated_data['path'])}/"
+        original_path = serializer.validated_data["path"]
+        path = f"{join_path(space_code, original_path)}/"
 
         directories, files = storage.listdir(path)
 
-        members_usernames = Member.objects.exclude(user=request.user).values_list(
-            "user__username", flat=True
+        members_usernames = set(
+            Member.objects.exclude(user=request.user).values_list(
+                "user__username", flat=True
+            )
         )
 
         results = [
@@ -85,17 +123,16 @@ class ExplorerViewSet(AbstractViewSet):
             or path != f"{space_code}/"
         ]
         for file in files:
-            created = storage.get_created_time(f"{path}/{file}")
-            modified = storage.get_modified_time(f"{path}/{file}")
-
+            created_at = storage.get_created_time(f"{path}/{file}")
+            modified_at = storage.get_modified_time(f"{path}/{file}")
             mime_type, encoding = mimetypes.guess_type(file)
 
             item = {
                 "type": "file",
                 "mime_type": mime_type,
                 "name": file,
-                "created": created,
-                "modified": modified,
+                "created_at": created_at,
+                "modified_at": modified_at,
                 "file_path": f"/{remove_first_dir_from_path(os.path.join(path, file))}",
                 "size": storage.size(f"{path}/{file}"),
                 "size_pretty": storage.convert_size(storage.size(f"{path}/{file}")),
@@ -103,11 +140,26 @@ class ExplorerViewSet(AbstractViewSet):
 
             results.append(item)
 
-        result = {"status": "ok", "path": path, "results": results}
-        return Response(ResponseSerializer(result).data)
+        page = serializer.validated_data["page"]
+        page_size = serializer.validated_data["page_size"]
+        api_url = f"{request.build_absolute_uri(location='')}?path={original_path}"
+        page_dict = paginate(results, page_size, page, api_url)
+
+        result = {
+            "status": "ok",
+            "path": path,
+            "results": page_dict["items"],
+            "count": page_dict["count"],
+            "previous": page_dict["previous_url"],
+            "next": page_dict["next_url"],
+        }
+        return Response(PaginatedResponseSerializer(result).data)
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadFilePathPermission
+    ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
@@ -133,7 +185,10 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         return response_with_file(storage, path)
 
 
-class ExplorerServeFileViewSet(AbstractViewSet):
+class ExplorerServerFileViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadFilePathPermission
+    ]
     serializer_class = FilePathSerializer
     http_method_names = ["get"]
 
@@ -160,11 +215,14 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-    serializer_class = FolderPathSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerWriteDirectoryPathPermission
+    ]
+    serializer_class = DirectoryPathSerializer
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FolderPathSerializer(),
+        request_body=DirectoryPathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -224,6 +282,9 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerDeletePathPermission
+    ]
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
@@ -266,11 +327,14 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-    serializer_class = FilePathSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerRootWritePermission,
+    ]
+    serializer_class = BasePathSerializer
     http_method_names = ["post"]
 
     @swagger_auto_schema(
-        request_body=FilePathSerializer(),
+        request_body=BasePathSerializer(),
         responses={
             status.HTTP_200_OK: ResponseSerializer(),
             status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
@@ -280,17 +344,15 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        path = f"{request.space_code}/{serializer.validated_data['path']}/.init"
+        path = f"{request.space_code}/{serializer.validated_data['path']}/"
 
         # TODO validate path that either public/import/system or user home directory
 
         try:
-            with NamedTemporaryFile(delete=False) as tmpf:
-                tmpf.write(b"init")
-                tmpf.flush()
-
-            with open(tmpf.name, 'rb') as tmpf_read:
-                storage.save(path, ContentFile(tmpf_read.read()))
+            # to create folder we have to create system .init file
+            init_file_storage_path = f"{path}.init"
+            init_file = ContentFile(b"init", name=".init")
+            storage.save(init_file_storage_path, init_file)
 
         except Exception as e:
             _l.error(f"ExplorerCreateFolderViewSet failed due to {repr(e)}")
@@ -306,6 +368,9 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteFolderViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerWriteDirectoryPathPermission
+    ]
     serializer_class = DeletePathSerializer
     http_method_names = ["post"]
 
@@ -340,6 +405,9 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
 class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ZipFilesSerializer
     http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerZipPathsReadPermission
+    ]
 
     @swagger_auto_schema(
         request_body=ZipFilesSerializer(),
@@ -381,6 +449,9 @@ class DownloadAsZipViewSet(AbstractViewSet):
 class DownloadViewSet(AbstractViewSet):
     serializer_class = FilePathSerializer
     http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerReadFilePathPermission,
+    ]
 
     @swagger_auto_schema(
         request_body=FilePathSerializer(),
@@ -419,19 +490,12 @@ class DownloadViewSet(AbstractViewSet):
             return response
 
 
-class MoveViewSet(AbstractViewSet):
+class MoveViewSet(ContextMixin, AbstractViewSet):
     serializer_class = MoveSerializer
     http_method_names = ["post"]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                "storage": storage,
-                "space_code": self.request.space_code,
-            },
-        )
-        return context
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
+    ]
 
     @swagger_auto_schema(
         request_body=MoveSerializer(),
@@ -473,19 +537,12 @@ class MoveViewSet(AbstractViewSet):
         )
 
 
-class UnZipViewSet(AbstractViewSet):
+class UnZipViewSet(ContextMixin, AbstractViewSet):
     serializer_class = UnZipSerializer
     http_method_names = ["post"]
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                "storage": storage,
-                "space_code": self.request.space_code,
-            },
-        )
-        return context
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerUnZipPermission,
+    ]
 
     @swagger_auto_schema(
         request_body=UnZipSerializer(),
@@ -540,11 +597,11 @@ class SyncViewSet(AbstractViewSet):
             master_user=request.user.master_user,
             member=request.user.member,
             verbose_name="Sync files with database",
-            type="sync_files_with_database",
+            type="sync_storage_with_database",
             options_object={},
         )
 
-        sync_files_with_database.apply_async(
+        sync_storage_with_database.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {
@@ -573,20 +630,19 @@ class FinmarsFileFilter(BaseFilterBackend):
 
         options = Q()
         for query in queries.split(","):
-            options.add(Q(name__icontains=query), Q.OR)
+            query = query.strip("/")
             options.add(Q(path__icontains=query), Q.OR)
 
         return queryset.filter(options)
 
 
 class SearchViewSet(AbstractModelViewSet):
+    access_policy = ExplorerRootAccessPermission
     serializer_class = SearchResultSerializer
     queryset = FinmarsFile.objects.all()
     pagination_class = PageNumberPaginationExt
     http_method_names = ["get"]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        FinmarsFileFilter,
-    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]
 
     @swagger_auto_schema(
         query_serializer=QuerySearchSerializer(),
@@ -601,9 +657,113 @@ class SearchViewSet(AbstractModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class FinmarsFilesView(AbstractModelViewSet):
-    queryset = FinmarsFile.objects.all()
-    serializer_class = FinmarsFileSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        FinmarsFileFilter,
+class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = StorageObjectAccessPolicySerializer
+    http_method_names = ["post"]
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_staff or not request.user.is_superuser:
+            raise PermissionDenied("Only privileged users can perform this action")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        access_policy = serializer.set_access_policy()
+
+        return Response(
+            AccessPolicySerializer(access_policy).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class RenameViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = RenameSerializer
+    http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
     ]
+
+    @swagger_auto_schema(
+        request_body=RenameSerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Rename directory in storage",
+            type="rename_directory_in_storage",
+            options_object=serializer.validated_data,
+        )
+
+        rename_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class CopyViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = CopySerializer
+    http_method_names = ["post"]
+    permission_classes = AbstractViewSet.permission_classes + [
+        ExplorerMovePermission,
+    ]
+
+    @swagger_auto_schema(
+        request_body=CopySerializer(),
+        responses={
+            status.HTTP_400_BAD_REQUEST: ResponseSerializer(),
+            status.HTTP_200_OK: TaskResponseSerializer(),
+        },
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Copy directory in storage",
+            type="copy_directory_in_storage",
+            options_object=serializer.validated_data,
+        )
+
+        copy_directory_in_storage.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            }
+        )
+
+        return Response(
+            TaskResponseSerializer(
+                {
+                    "status": "ok",
+                    "task_id": celery_task.id,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )

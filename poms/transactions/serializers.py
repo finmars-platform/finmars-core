@@ -5611,7 +5611,7 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
             "date",
             "transaction_unique_code",
             "deleted_transaction_unique_code",
-            "modified",
+            "modified_at",
             "text",
             "user_text_1",
             "user_text_2",

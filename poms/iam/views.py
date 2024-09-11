@@ -81,7 +81,7 @@ class RoleViewSet(ModelViewSet):
         'id',
         'name',
         'user_code',
-        'created'
+        'created_at'
     ]
 
 
@@ -112,7 +112,7 @@ class GroupViewSet(ModelViewSet):
         'id',
         'name',
         'user_code',
-        'created'
+        'created_at'
     ]
 
 
@@ -142,5 +142,5 @@ class AccessPolicyViewSet(ModelViewSet):
         'id',
         'name',
         'user_code',
-        'created'
+        'created_at'
     ]

@@ -9,7 +9,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 from django.utils import timezone
 
-from poms.common.models import NamedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.users.models import MasterUser, Member
 
 LANGUAGE_MAX_LENGTH = 5
@@ -22,7 +22,7 @@ import logging
 _l = logging.getLogger('poms.auth_tokens')
 
 
-class AuthToken(models.Model):
+class AuthToken(TimeStampedModel):
     '''
         Probably Deprecated
         Since Keycloak integration now in no use
@@ -40,8 +40,6 @@ class AuthToken(models.Model):
                                             on_delete=models.SET_NULL)
     current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
                                        on_delete=models.SET_NULL)
-
-    created = models.DateTimeField("Created", auto_now_add=True)
 
     class Meta:
         verbose_name = "Token"

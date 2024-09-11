@@ -2,9 +2,18 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
+from poms.explorer.models import (
+    DIR_SUFFIX,
+    AccessLevel,
+    FinmarsDirectory,
+    FinmarsFile,
+    get_root_path,
+)
+from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
-class ExplorerUploadViewSetTest(BaseTestCase):
+class ExplorerDeletePathViewTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -57,3 +66,55 @@ class ExplorerUploadViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.storage_mock.delete_directory.assert_called_once()
         self.storage_mock.delete.assert_not_called()
+
+    def test__no_permission_file(self):
+        user, member = self.create_user_member()
+        self.client.force_authenticate(user=user)
+
+        file_name = f"{self.random_string()}.{self.random_string(3)}"
+
+        response = self.client.post(f"{self.url}?path={file_name}&is_dir=false")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test__no_permission_dir(self):
+        user, member = self.create_user_member()
+        self.client.force_authenticate(user=user)
+
+        dir_name = f"{self.random_string()}/{self.random_string()}"
+
+        response = self.client.post(f"{self.url}?path={dir_name}&is_dir=true")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test__has_root_permission_file(self):
+        user, member = self.create_user_member()
+
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
+
+        file_name = f"{self.random_string()}.{self.random_string(3)}"
+        FinmarsFile.objects.create(path=file_name, parent=root, size=555)
+
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(f"{self.url}?path={file_name}&is_dir=false")
+
+        self.assertEqual(response.status_code, 200)
+
+    def test__has_root_permission_dir(self):
+        user, member = self.create_user_member()
+
+        root_path = get_root_path()
+        root = FinmarsDirectory.objects.create(path=root_path)
+        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
+
+        dir_name = f"{self.random_string()}/{self.random_string()}"
+        FinmarsDirectory.objects.create(path=f"{dir_name}{DIR_SUFFIX}", parent=root)
+
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(f"{self.url}?path={dir_name}&is_dir=true")
+
+        self.assertEqual(response.status_code, 200)

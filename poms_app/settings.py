@@ -519,7 +519,11 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_RENDERER_CLASSES": ("poms.common.renderers.CustomJSONRenderer",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "poms.common.renderers.CustomJSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.AdminRenderer",
+    ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
     # "DEFAULT_THROTTLE_CLASSES": (
     #     "poms.api.throttling.AnonRateThrottleExt",
@@ -531,10 +535,6 @@ REST_FRAMEWORK = {
     },
 }
 
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] += (
-    "rest_framework.renderers.BrowsableAPIRenderer",
-    "rest_framework.renderers.AdminRenderer",
-)
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
@@ -774,10 +774,14 @@ REDOC_SETTINGS = {
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
+SENTRY_DSN = ENV_STR("SENTRY_DSN", None)
+if SENTRY_DSN is None:
+    SENTRY_DSN = "https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2"
+
 # SENTRY
 if SERVER_TYPE != "local":
     sentry_sdk.init(
-        dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
+        dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         environment=SERVER_TYPE,
         # Set traces_sample_rate to 1.0 to capture 100%

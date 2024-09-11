@@ -6,7 +6,7 @@ from .models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 class SystemMessageAdmin(admin.ModelAdmin):
     model = SystemMessage
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'created', 'title', 'description', 'performed_by']
+    list_display = ['id', 'master_user', 'created_at', 'title', 'description', 'performed_by']
     search_fields = ['id', 'description']
     raw_id_fields = ['master_user', ]
 

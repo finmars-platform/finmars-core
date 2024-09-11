@@ -2,13 +2,35 @@ import mimetypes
 import os.path
 import re
 
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import (
+    DIR_SUFFIX,
+    MAX_NAME_LENGTH,
+    MAX_PATH_LENGTH,
+    AccessLevel,
+    FinmarsDirectory,
+    FinmarsFile,
+)
+from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.explorer.utils import is_true_value, path_is_file
+from poms.iam.models import AccessPolicy
 from poms.instruments.models import Instrument
+from poms.users.models import MasterUser, Member
+
+forbidden_symbols_in_path = r'[:*?"<>|;&]'
+bad_path_regex = re.compile(forbidden_symbols_in_path)
+
+"""
+ Path (a string in the DB), should be a valid UNIX style path which has no: 
+ forbidden symbols, two and more adjusted '/' ( like //, /// etc ). 
+ Path should end with file name (without '/' at the end) or with '/*' for directories.
+ Root path contains '<space-code>/', it's the first directory available for a user.
+ Path should be no longer than 2048 characters.
+"""
 
 
 class BasePathSerializer(serializers.Serializer):
@@ -23,12 +45,22 @@ class BasePathSerializer(serializers.Serializer):
         return path.strip("/") if path else ""
 
 
-class FolderPathSerializer(BasePathSerializer):
+class DirectoryPathSerializer(BasePathSerializer):
     path = serializers.CharField(
         required=False,
         allow_blank=True,
         allow_null=True,
-        default="",
+        default=DIR_SUFFIX,
+    )
+    page = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        default=1,
+    )
+    page_size = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        default=settings.REST_FRAMEWORK.get("PAGE_SIZE", 40),
     )
 
 
@@ -62,7 +94,7 @@ class DeletePathSerializer(BasePathSerializer):
 
 class MoveSerializer(serializers.Serializer):
     target_directory_path = serializers.CharField(required=True, allow_blank=False)
-    items = serializers.ListField(
+    paths = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
         required=True,
     )
@@ -78,8 +110,8 @@ class MoveSerializer(serializers.Serializer):
                 f"target directory '{new_target_directory_path}' does not exist"
             )
 
-        updated_items = []
-        for path in attrs["items"]:
+        updated_paths = []
+        for path in attrs["paths"]:
             path = path.strip("/")
 
             directory_path = os.path.dirname(path)
@@ -94,10 +126,10 @@ class MoveSerializer(serializers.Serializer):
                 # this is a directory
                 path = f"{path}/"
 
-            updated_items.append(path)
+            updated_paths.append(path)
 
         attrs["target_directory_path"] = new_target_directory_path
-        attrs["items"] = updated_items
+        attrs["paths"] = updated_paths
         return attrs
 
 
@@ -125,6 +157,11 @@ class ResponseSerializer(serializers.Serializer):
         required=False,
         child=serializers.DictField(),
     )
+
+class PaginatedResponseSerializer(ResponseSerializer):
+    previous = serializers.CharField(required=False)
+    next = serializers.CharField(required=False)
+    count = serializers.IntegerField(required=False)
 
 
 class TaskResponseSerializer(serializers.Serializer):
@@ -169,6 +206,7 @@ class UnZipSerializer(serializers.Serializer):
 class SearchResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinmarsFile
+        fields = "__all__"
 
     def to_representation(self, instance: FinmarsFile) -> dict:
         name = instance.name
@@ -178,8 +216,8 @@ class SearchResultSerializer(serializers.ModelSerializer):
             "type": "file",
             "mime_type": mime_type,
             "name": name,
-            "created": instance.created,
-            "modified": instance.modified,
+            "created_at": instance.created_at,
+            "modified_at": instance.modified_at,
             "file_path": instance.path,
             "size": size,
             "size_pretty": pretty_size(size),
@@ -188,13 +226,6 @@ class SearchResultSerializer(serializers.ModelSerializer):
 
 class QuerySearchSerializer(serializers.Serializer):
     query = serializers.CharField(allow_null=True, required=False, allow_blank=True)
-
-
-forbidden_symbols_in_name = r'[/\\:*?"<>|;&]'
-bad_name_regex = re.compile(forbidden_symbols_in_name)
-
-forbidden_symbols_in_path = r'[:*?"<>|;&]'
-bad_path_regex = re.compile(forbidden_symbols_in_path)
 
 
 class InstrumentMicroSerializer(serializers.ModelSerializer):
@@ -208,28 +239,165 @@ class InstrumentMicroSerializer(serializers.ModelSerializer):
 
 class FinmarsFileSerializer(serializers.ModelSerializer):
     instruments = InstrumentMicroSerializer(many=True, read_only=True)
+    name = serializers.SerializerMethodField()
+    extension = serializers.SerializerMethodField()
 
     class Meta:
         model = FinmarsFile
-        fields = "__all__"
+        fields = [
+            "id",
+            "path",
+            "size",
+            "name",
+            "extension",
+            "created_at",
+            "modified_at",
+            "instruments",
+        ]
+
+    @staticmethod
+    def get_name(obj: FinmarsFile) -> str:
+        return obj.name
+
+    @staticmethod
+    def get_extension(obj: FinmarsFile) -> str:
+        return obj.extension
 
     @staticmethod
     def validate_path(path: str) -> str:
         if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {path}", code="path")
-
-        return path
-
-    @staticmethod
-    def validate_name(name: str) -> str:
-        if bad_name_regex.search(name):
-            raise ValidationError(detail=f"Invalid name {name}", code="name")
-
-        return name
+        return path.rstrip("/")
 
     @staticmethod
     def validate_size(size: int) -> int:
-        if size < 1:
+        if size < 0:
             raise ValidationError(detail=f"Invalid size {size}", code="size")
 
         return size
+
+
+class AccessPolicySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessPolicy
+        fields = "__all__"
+
+
+class StorageObjectAccessPolicySerializer(serializers.Serializer):
+    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    access = serializers.CharField(allow_blank=False, max_length=10)
+    username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
+
+    @staticmethod
+    def validate_path(value: str) -> str:
+        path = value.removesuffix(DIR_SUFFIX)
+        if bad_path_regex.search(path):
+            raise ValidationError(detail=f"Invalid path {value}", code="path")
+        return value
+
+    @staticmethod
+    def validate_access(value: str) -> str:
+        AccessLevel.validate_level(value)
+        return value
+
+    def validate_username(self, value: str) -> str:
+        realm_code = self.context["realm_code"]
+        space_code = self.context["space_code"]
+        master_user = MasterUser.objects.filter(space_code=space_code).first()
+        if not master_user:
+            raise ValidationError(
+                detail=f"MasterUser not found for {realm_code}/{space_code}",
+                code="master_user",
+            )
+        member = Member.objects.filter(master_user=master_user, username=value).first()
+        if not master_user:
+            raise ValidationError(
+                detail=f"Member with username {value} not found in {realm_code}/{space_code}",
+                code="username",
+            )
+        return member
+
+    def validate(self, attrs: dict) -> dict:
+        path = attrs["path"]
+        if path.endswith(DIR_SUFFIX):
+            storage_object = FinmarsDirectory.objects.filter(path=path).first()
+        else:
+            storage_object = FinmarsFile.objects.filter(path=path).first()
+
+        if not storage_object:
+            raise ValidationError(
+                detail=f"Storage object {path} was not found",
+                code="path",
+            )
+
+        attrs["storage_object"] = storage_object
+        return attrs
+
+    def set_access_policy(self) -> AccessPolicy:
+        storage_object = self.validated_data["storage_object"]
+        access = self.validated_data["access"]
+        member = self.validated_data["username"]
+        return get_or_create_storage_access_policy(storage_object, member, access)
+
+
+class RenameSerializer(serializers.Serializer):
+    path = serializers.CharField(required=True, allow_blank=False)
+    new_name = serializers.CharField(required=True, allow_blank=False)
+
+    def validate(self, attrs):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+        path = attrs["path"].strip("/")
+  
+        if path == "/":
+            raise serializers.ValidationError(
+                f"target directory '{path}' is system root"
+            )
+
+        path = f"{space_code}/{path}"
+        dir_path = f"{path}/"
+        if storage.dir_exists(dir_path):
+            path = dir_path
+            
+        if not storage.exists(path):
+            raise serializers.ValidationError(
+                f"target directory '{path}' does not exist"
+            )
+
+        attrs["path"] = path
+        return attrs
+
+
+class CopySerializer(serializers.Serializer):
+    target_directory_path = serializers.CharField(required=True, allow_blank=False)
+    paths = serializers.ListField(
+        child=serializers.CharField(allow_blank=False),
+        required=True,
+    )
+
+    def validate(self, attrs):
+        storage = self.context["storage"]
+        space_code = self.context["space_code"]
+        target_directory_path = attrs["target_directory_path"].strip("/")
+        new_target_directory_path = f"{space_code}/{target_directory_path}/"
+        
+        if not storage.dir_exists(new_target_directory_path):
+            raise serializers.ValidationError(
+                f"target directory '{new_target_directory_path}' does not exist"
+            )
+
+        updated_paths = []
+        for path in attrs["paths"]:
+            path = path.strip("/")
+            path = f"{space_code}/{path}"
+            dir_path = f"{path}/"
+            
+            if storage.dir_exists(dir_path):
+                # this is a directory
+                path = f"{path}/"
+
+            updated_paths.append(path)
+
+        attrs["target_directory_path"] = new_target_directory_path
+        attrs["paths"] = updated_paths
+        return attrs

@@ -5,7 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import OwnerModel
+from poms.common.models import OwnerModel, TimeStampedModel
 from poms.configuration.utils import replace_special_chars_and_spaces
 from poms_app import settings
 
@@ -64,7 +64,7 @@ CHANNEL_CHOICES = [
     ["rc", "Release Candidate"],
 ]
 
-class Configuration(models.Model):
+class Configuration(TimeStampedModel):
     # com.finmars.hnwi
     configuration_code = models.CharField(
         max_length=255,
@@ -115,27 +115,15 @@ class Configuration(models.Model):
         blank=True,
         verbose_name=gettext_lazy("manifest_data"),
     )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
-    modified = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("modified"),
-    )
     is_primary = models.BooleanField(
         default=False,
         verbose_name=gettext_lazy("is primary"),
     )
 
     class Meta:
-        get_latest_by = "modified"
+        get_latest_by = "modified_at"
         ordering = [
-            "created",
+            "created_at",
         ]
 
     def save(self, *args, **kwargs):

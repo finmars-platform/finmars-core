@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +12,7 @@ from poms.common.fields import DateTimeTzAwareField, ExpressionField, FloatEvalF
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
     ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
     PomsClassSerializer,
@@ -215,7 +215,9 @@ def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class PricingPolicySerializer(
-    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+    ModelWithUserCodeSerializer,
+    ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -956,6 +958,7 @@ class InstrumentSerializer(
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -1476,7 +1479,7 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
             "name",
             "short_name",
             "identifier",
-            "modified",
+            "modified_at",
             "instrument_type",
             "instrument_type_object",
             "public_name",
@@ -1804,7 +1807,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
         history_item.accrued_price = instance.accrued_price
         history_item.date = instance.date
         history_item.pricing_policy = instance.pricing_policy
-        history_item.created = now()
         history_item.save()
         return history_item
 
@@ -1845,9 +1847,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        if not instance.created:
-            instance.created = now()
-
         instance = super().update(instance, validated_data)
         instance.procedure_modified_datetime = now()
         instance.save()
@@ -2223,11 +2222,7 @@ class AttachmentSerializer(serializers.Serializer):
 
         files = []
         for file_path in attrs["attachments"]:
-            directory_path, file_name = os.path.split(file_path)
-            file = FinmarsFile.objects.filter(
-                name=file_name,
-                path=directory_path,
-            ).first()
+            file = FinmarsFile.objects.filter(path=file_path).first()
             if not file:
                 raise ValidationError(f"no such file: {file_path}")
 

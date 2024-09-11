@@ -30,7 +30,7 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
             "context_url",
             "action",
             "content_type",
-            "created",
+            "created_at",
         )
 
         read_only_fields = fields

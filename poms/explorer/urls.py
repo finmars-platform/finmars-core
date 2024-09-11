@@ -5,67 +5,77 @@ import poms.explorer.views as explorer
 router = routers.DefaultRouter()
 
 router.register(
-    r"explorer",
+    "explorer",
     explorer.ExplorerViewSet,
     "explorer",
 )
 router.register(
-    r"view",
+    "view",
     explorer.ExplorerViewFileViewSet,
     "explorer_view",
 )
 router.register(
-    r"upload",
+    "upload",
     explorer.ExplorerUploadViewSet,
     "explorer_upload",
 )
 router.register(
-    r"delete",
+    "delete",
     explorer.ExplorerDeleteViewSet,
     "explorer_delete",
 )
 router.register(
-    r"create-folder",
+    "create-folder",
     explorer.ExplorerCreateFolderViewSet,
     "explorer_create_folder",
 )
 router.register(
-    r"delete-folder",
+    "delete-folder",
     explorer.ExplorerDeleteFolderViewSet,
     "explorer_delete_folder",
 )
 router.register(
-    r"download-as-zip",
+    "download-as-zip",
     explorer.DownloadAsZipViewSet,
     "download_as_zip",
 )
 router.register(
-    r"download",
+    "download",
     explorer.DownloadViewSet,
     "explorer_download",
 )
 router.register(
-    r"move",
+    "move",
     explorer.MoveViewSet,
     "explorer_move",
 )
 router.register(
-    r"unzip",
+    "unzip",
     explorer.UnZipViewSet,
     "explorer_unzip",
 )
 router.register(
-    r"sync",
+    "sync",
     explorer.SyncViewSet,
     "explorer_sync",
 )
 router.register(
-    r"search",
+    "search",
     explorer.SearchViewSet,
     "explorer_search",
 )
 router.register(
-    r"files",
-    explorer.FinmarsFilesView,
-    "explorer_files_obj",
+    "set-access-policy",
+    explorer.StorageObjectAccessPolicyViewSet,
+    "explorer_set_access_policy",
+)
+router.register(
+    "rename",
+    explorer.RenameViewSet,
+    "explorer_rename",
+)
+router.register(
+    "copy",
+    explorer.CopyViewSet,
+    "explorer_copy",
 )

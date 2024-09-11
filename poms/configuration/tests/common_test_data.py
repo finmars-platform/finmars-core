@@ -52,8 +52,8 @@ PACKAGE_RESPONSE_JSON = {
             "id": 1,
             "name": "Finmars",
             "description": "",
-            "created": "2023-04-15T11:07:33.656722Z",
-            "modified": "2023-04-15T11:07:33.656742Z",
+            "created_at": "2023-04-15T11:07:33.656722Z",
+            "modified_at": "2023-04-15T11:07:33.656742Z",
             "members": [
                 {
                     "id": 1,
@@ -71,8 +71,8 @@ PACKAGE_RESPONSE_JSON = {
         "is_package": True,
         "name": "Finmars Initial",
         "description": "",
-        "created": "2023-04-22T19:52:13.178250Z",
-        "modified": "2023-06-01T18:23:13.364081Z"
+        "created_at": "2023-04-22T19:52:13.178250Z",
+        "modified_at": "2023-06-01T18:23:13.364081Z"
     },
     "manifest": {
         "configuration_code": "com.finmars.initial",
@@ -99,8 +99,8 @@ PACKAGE_RESPONSE_JSON = {
     "channel": "rc",
     "is_latest": True,
     "changelog": "",
-    "created": "2023-06-18T22:45:58.393808Z",
-    "modified": "2023-06-22T12:35:28.782104Z",
+    "created_at": "2023-06-18T22:45:58.393808Z",
+    "modified_at": "2023-06-22T12:35:28.782104Z",
     "file_name": "tmp_vu63hqf.zip",
     "file_path": "marketplace/com.finmars.initial/1.0.1/tmp_vu63hqf.zip"
 }
@@ -122,8 +122,8 @@ MODULE_1_RESPONSE_JSON = {
             "id": 1,
             "name": "Finmars",
             "description": "",
-            "created": "2023-04-15T11:07:33.656722Z",
-            "modified": "2023-04-15T11:07:33.656742Z",
+            "created_at": "2023-04-15T11:07:33.656722Z",
+            "modified_at": "2023-04-15T11:07:33.656742Z",
             "members": [
                 {
                     "id": 1,
@@ -141,8 +141,8 @@ MODULE_1_RESPONSE_JSON = {
         "is_package": False,
         "name": "Initial Instrument Types",
         "description": "",
-        "created": "2023-04-22T19:51:58.023435Z",
-        "modified": "2023-08-26T10:42:05.134667Z"
+        "created_at": "2023-04-22T19:51:58.023435Z",
+        "modified_at": "2023-08-26T10:42:05.134667Z"
     },
     "manifest": {
         "configuration_code": "com.finmars.initial-instrument-type",
@@ -154,8 +154,8 @@ MODULE_1_RESPONSE_JSON = {
     "version": "1.0.0",
     "is_latest": True,
     "changelog": "",
-    "created": "2023-04-27T20:39:56.668764Z",
-    "modified": "2023-04-27T20:39:56.668783Z",
+    "created_at": "2023-04-27T20:39:56.668764Z",
+    "modified_at": "2023-04-27T20:39:56.668783Z",
     "file_name": "tmpzih_d8no.zip",
     "file_path": "marketplace/com.finmars.initial-instrument-type/1.0.0/tmpzih_d8no.zip"
 }
@@ -171,8 +171,8 @@ MODULE_2_RESPONSE_JSON = {
             "id": 1,
             "name": "Finmars",
             "description": "",
-            "created": "2023-04-15T11:07:33.656722Z",
-            "modified": "2023-04-15T11:07:33.656742Z",
+            "created_at": "2023-04-15T11:07:33.656722Z",
+            "modified_at": "2023-04-15T11:07:33.656742Z",
             "members": [
                 {
                     "id": 1,
@@ -190,8 +190,8 @@ MODULE_2_RESPONSE_JSON = {
         "is_package": False,
         "name": "Initial System Procedures",
         "description": "",
-        "created": "2023-04-22T20:11:08.843746Z",
-        "modified": "2023-08-26T10:42:09.504979Z"
+        "created_at": "2023-04-22T20:11:08.843746Z",
+        "modified_at": "2023-08-26T10:42:09.504979Z"
     },
     "manifest": {
         "configuration_code": "com.finmars.initial-system-procedure",
@@ -203,8 +203,8 @@ MODULE_2_RESPONSE_JSON = {
     "version": "1.0.0",
     "is_latest": True,
     "changelog": "",
-    "created": "2023-04-22T21:09:30.406945Z",
-    "modified": "2023-04-24T13:31:53.656277Z",
+    "created_at": "2023-04-22T21:09:30.406945Z",
+    "modified_at": "2023-04-24T13:31:53.656277Z",
     "file_name": "tmp8mxrbpak.zip",
     "file_path": "marketplace/com.finmars.initial-system-procedure/1.0.0/tmp8mxrbpak.zip"
 }
