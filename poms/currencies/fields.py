@@ -11,6 +11,9 @@ class CurrencyDefault:
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
+        if not hasattr(self._master_user, "currency"):
+            self._master_user.currency = Currency.objects.get(user_code="USD")
+
         return self._master_user.currency
 
 

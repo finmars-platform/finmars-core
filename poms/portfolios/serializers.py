@@ -821,7 +821,9 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         choices=PortfolioHistory.PERIOD_CHOICES,
     )
     cost_method = CostMethodField(
-        required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO
+        required=False,
+        default=CostMethod.AVCO,
+        initial=CostMethod.AVCO,
     )
     performance_method = serializers.ChoiceField(
         required=False,
@@ -829,7 +831,9 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES,
     )
     benchmark = serializers.CharField(
-        required=False, default="sp_500", initial="sp_500"
+        required=False,
+        default="sp_500",
+        initial="sp_500",
     )
 
 
