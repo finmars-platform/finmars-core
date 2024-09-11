@@ -1472,7 +1472,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance = BalanceReportInstance.objects.create(
+            report_instance = BalanceReportInstance(
                 unique_key=unique_key,
                 settings=settings,
                 master_user=instance.master_user,
@@ -1502,7 +1502,8 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
             report_instance.data = json.loads(json.dumps(data, default=str))
 
-            report_instance.save()
+            if report_instance.data:
+                report_instance.save()
 
             data["execution_time"] = float(
                 "{:3.3f}".format(time.perf_counter() - to_representation_st)
@@ -1624,7 +1625,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance = BalanceReportInstance.objects.create(
+            report_instance = BalanceReportInstance(
                 unique_key=unique_key,
                 settings=settings,
                 master_user=instance.master_user,
@@ -1656,7 +1657,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
                 json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
-            report_instance.save()
+            if report_instance.data:
+                report_instance.save()
 
             data["execution_time"] = float(
                 "{:3.3f}".format(time.perf_counter() - to_representation_st)
@@ -1775,7 +1777,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance = PLReportInstance.objects.create(
+            report_instance = PLReportInstance(
                 unique_key=unique_key,
                 settings=settings,
                 master_user=instance.master_user,
@@ -1814,7 +1816,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
                 json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
-            report_instance.save()
+            if report_instance.data:
+                report_instance.save()
 
         data["report_instance_id"] = report_instance.id
 
@@ -1917,7 +1920,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance = PLReportInstance.objects.create(
+            report_instance = PLReportInstance(
                 unique_key=unique_key,
                 settings=settings,
                 master_user=instance.master_user,
@@ -1952,7 +1955,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
                 json.dumps(data, default=str)
             )  # TODO consider something more logical, we got here date conversion error
 
-            report_instance.save()
+            if report_instance.data:
+                report_instance.save()
 
         data["report_instance_id"] = report_instance.id
 
