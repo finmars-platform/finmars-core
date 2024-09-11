@@ -17,10 +17,6 @@ class PortfolioDefault:
 class PortfolioField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Portfolio.objects
 
-    # Possibly Deprecated
-    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 class PortfolioReconcileGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioReconcileGroup.objects
