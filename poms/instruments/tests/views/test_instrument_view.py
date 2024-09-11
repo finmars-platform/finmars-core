@@ -122,6 +122,12 @@ class InstrumentViewSetTest(BaseTestCase):
             instrument.user_text_1,
         )
 
+        # identifier_keys_values = {"cbonds_id": "id", "isin": "isin"} - without encoding characters look like
+        response = self.client.get(path=f"{self.url}?identifier_keys_values=%7B%22cbonds_id%22%3A%22id%22%2C%22isin%22%3A%22isin%22%7D")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
+
     def test__create(self):
         create_data = self.prepare_data_for_create()
 
