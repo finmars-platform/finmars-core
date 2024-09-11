@@ -23,11 +23,11 @@ from celery.result import AsyncResult
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import (
+    AttributeFilter,
     CharFilter,
+    GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
     NoOpFilter,
-    GroupsAttributeFilter,
-    AttributeFilter,
 )
 from poms.common.mixins import (
     BulkModelMixin,
@@ -86,6 +86,7 @@ from poms.integrations.models import (
     InstrumentDownloadSchemeAttribute,
     InstrumentMapping,
     InstrumentTypeMapping,
+    MappingTable,
     PaymentSizeDetailMapping,
     PeriodicityMapping,
     PortfolioClassifierMapping,
@@ -101,7 +102,6 @@ from poms.integrations.models import (
     Strategy2Mapping,
     Strategy3Mapping,
     TransactionFileResult,
-    MappingTable,
 )
 from poms.integrations.serializers import (
     AccountClassifierMappingSerializer,
@@ -132,6 +132,7 @@ from poms.integrations.serializers import (
     InstrumentDownloadSchemeSerializer,
     InstrumentMappingSerializer,
     InstrumentTypeMappingSerializer,
+    MappingTableSerializer,
     PaymentSizeDetailMappingSerializer,
     PeriodicityMappingSerializer,
     PortfolioClassifierMappingSerializer,
@@ -148,7 +149,6 @@ from poms.integrations.serializers import (
     Strategy3MappingSerializer,
     TestCertificateSerializer,
     TransactionFileResultSerializer,
-    MappingTableSerializer,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -298,9 +298,6 @@ class PriceDownloadSchemeFilterSet(FilterSet):
 class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     queryset = PriceDownloadScheme.objects.select_related("provider")
     serializer_class = PriceDownloadSchemeSerializer
-    # permission_classes = AbstractModelViewSet.permission_classes + [
-    #     SuperUserOrReadOnly,
-    # ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -941,9 +938,6 @@ class ImportCompanyDatabaseViewSet(AbstractViewSet):
         return Response(serializer.create_task(serializer.validated_data))
 
 
-# ----------------------------------------
-
-
 class ComplexTransactionImportSchemeFilterSet(FilterSet):
     id = NoOpFilter()
     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
@@ -989,7 +983,8 @@ class ComplexTransactionImportSchemeViewSet(
         detail=False,
         methods=["post"],
         url_path="ev-item",
-        serializer_class=ComplexTransactionImportSchemeLightSerializer)
+        serializer_class=ComplexTransactionImportSchemeLightSerializer,
+    )
     def list_ev_item(self, request, *args, **kwargs):
         return super().list_ev_item(request, *args, **kwargs)
 
@@ -1348,9 +1343,9 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         response = HttpResponse(
             new_raw_items, content_type="application/force-download"
         )
-        response["Content-Disposition"] = (
-            f"attachment; filename=preprocessed_{filename_without_ext}.json"
-        )
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename=preprocessed_{filename_without_ext}.json"
 
         return response
 
