@@ -791,7 +791,6 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
 
-    # SEGMENTATION_TYPE_DAYS = "days"
     SEGMENTATION_TYPE_DAYS = "days"
     SEGMENTATION_TYPE_BUSINESS_DAYS = "business_days"
     SEGMENTATION_TYPE_BUSINESS_DAYS_END_OF_MONTHS = "business_days_end_of_months"
