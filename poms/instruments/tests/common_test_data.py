@@ -237,6 +237,7 @@ EXPECTED_INSTRUMENT = {
     "external_id": None,
     "is_manual_locked": False,
     "is_locked": True,
+    "first_transaction_date": None,
 }
 
 INSTRUMENT_CREATE_DATA = {
