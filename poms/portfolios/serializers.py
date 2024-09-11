@@ -8,21 +8,21 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common.serializers import (
+    ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
-    ModelMetaSerializer,
     PomsClassSerializer,
-    ModelWithObjectStateSerializer,
 )
-from poms.currencies.fields import CurrencyField, CurrencyDefault
+from poms.currencies.fields import CurrencyDefault, CurrencyField
 from poms.file_reports.serializers import FileReportSerializer
 from poms.instruments.fields import (
+    CostMethodField,
     PricingPolicyField,
     SystemPricingPolicyDefault,
-    CostMethodField,
 )
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import Instrument, InstrumentType, CostMethod
+from poms.instruments.models import CostMethod, Instrument, InstrumentType
 from poms.instruments.serializers import (
     InstrumentSerializer,
     InstrumentViewSerializer,
@@ -33,16 +33,16 @@ from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
-    PortfolioRegister,
-    PortfolioRegisterRecord,
-    PortfolioHistory,
-    PortfolioType,
     PortfolioClass,
+    PortfolioHistory,
     PortfolioReconcileGroup,
     PortfolioReconcileHistory,
+    PortfolioRegister,
+    PortfolioRegisterRecord,
+    PortfolioType,
 )
 from poms.portfolios.utils import get_price_calculation_type
-from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.models import EcosystemDefault
 
 _l = getLogger("poms.portfolios")
@@ -498,12 +498,12 @@ class PortfolioRegisterSerializer(
         instrument_object["has_linked_with_portfolio"] = True
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
-        instrument_object["co_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
-        instrument_object["counter_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
+        instrument_object[
+            "co_directional_exposure_currency"
+        ] = instance.valuation_currency_id
+        instrument_object[
+            "counter_directional_exposure_currency"
+        ] = instance.valuation_currency_id
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -552,9 +552,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
 
     def __init__(self, *args, **kwargs):
         from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.transactions.serializers import (
-            TransactionClassSerializer,
-        )
+        from poms.transactions.serializers import TransactionClassSerializer
 
         super().__init__(*args, **kwargs)
 
@@ -596,7 +594,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
 
 
 class PortfolioBundleSerializer(
-    ModelWithUserCodeSerializer, 
+    ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
     ModelWithObjectStateSerializer,
 ):
@@ -881,10 +879,10 @@ class PortfolioReconcileHistorySerializer(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["portfolio_reconcile_group_object"] = (
-            PortfolioReconcileGroupSerializer(
-                source="portfolio_reconcile_group", read_only=True
-            )
+        self.fields[
+            "portfolio_reconcile_group_object"
+        ] = PortfolioReconcileGroupSerializer(
+            source="portfolio_reconcile_group", read_only=True
         )
 
         self.fields["file_report_object"] = FileReportSerializer(
