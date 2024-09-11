@@ -141,10 +141,8 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
             },
         )
         reference = self.random_string()
-        name = self.random_string()
         request_data = {
             "user_code": reference,
-            "name": name,
             "instrument_type_user_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
@@ -201,15 +199,12 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
             task_id=remote_task_id,
         )
         user_code = self.random_string()
-        name = self.random_string()
         request_data = {
             "user_code": user_code,
-            "name": name,
             "instrument_type_user_code": "bond",
         }
         instrument = self.create_instrument()  # create instrument
         instrument.user_code = user_code
-        instrument.name = name
         instrument.save()
 
         response = self.client.post(path=self.url, format="json", data=request_data)
@@ -224,7 +219,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNone(response_json["errors"])
 
         self.assertIn("task", response_json)
-        self.assertEqual(response_json["name"], name)
         self.assertEqual(response_json["user_code"], user_code)
 
         self.assertIn("remote_task_id", response_json)
