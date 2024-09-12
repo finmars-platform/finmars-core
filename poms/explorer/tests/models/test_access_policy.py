@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, StorageObject
 from poms.explorer.policy_handlers import get_or_create_storage_access_policy
 from poms.users.models import Member
 
@@ -36,12 +36,12 @@ class FileAccessPolicyTest(BaseTestCase):
         )
         return member
 
-    def _create_file(self) -> FinmarsFile:
+    def _create_file(self) -> StorageObject:
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
         path = f"/{self.random_string()}/{self.random_string(5)}/{name}"
         size = self.random_int()
-        return FinmarsFile.objects.create(path=path, size=size)
+        return StorageObject.objects.create(path=path, size=size, is_file=True)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
@@ -74,9 +74,9 @@ class DirectoryAccessPolicyTest(BaseTestCase):
         )
         return member
 
-    def _create_directory(self) -> FinmarsDirectory:
+    def _create_directory(self) -> StorageObject:
         path = f"/{self.random_string()}/{self.random_string(3)}{DIR_SUFFIX}"
-        return FinmarsDirectory.objects.create(path=path, parent=None)
+        return StorageObject.objects.create(path=path, parent=None)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),

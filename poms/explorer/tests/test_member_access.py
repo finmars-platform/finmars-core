@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import AccessLevel, StorageObject
 from poms.explorer.policy_handlers import (
     get_or_create_storage_access_policy,
     member_has_access,
@@ -15,16 +15,16 @@ class MemberHasAccessTest(BaseTestCase):
         self.file = self._create_file()
         self.dir = self._create_directory()
 
-    def _create_file(self, parent: FinmarsDirectory = None) -> FinmarsFile:
+    def _create_file(self, parent: StorageObject = None) -> StorageObject:
         extension = self.random_string(3)
         name = f"{self.random_string()}.{extension}"
         path = f"/{self.random_string()}/{self.random_string(5)}/{name}/"
         size = self.random_int()
-        return FinmarsFile.objects.create(path=path, size=size, parent=parent)
+        return StorageObject.objects.create(path=path, size=size, parent=parent, is_file=True)
 
-    def _create_directory(self, parent: FinmarsDirectory = None) -> FinmarsDirectory:
+    def _create_directory(self, parent: StorageObject = None) -> StorageObject:
         path = f"/{self.random_string()}/{self.random_string(3)}"
-        return FinmarsDirectory.objects.create(path=path, parent=parent)
+        return StorageObject.objects.create(path=path, parent=parent)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
@@ -52,19 +52,19 @@ class MemberHasAccessTest(BaseTestCase):
 
     def create_dir_tree(self):
         kwargs = dict(path="/root")
-        self.root = FinmarsDirectory.objects.create(**kwargs)
+        self.root = StorageObject.objects.create(**kwargs)
 
         kwargs = dict(path=f"/root/path_1")
-        self.dir_1 = FinmarsDirectory.objects.create(parent=self.root, **kwargs)
+        self.dir_1 = StorageObject.objects.create(parent=self.root, **kwargs)
 
         kwargs = dict(path=f"/root/path_2")
-        self.dir_2 = FinmarsDirectory.objects.create(parent=self.root, **kwargs)
+        self.dir_2 = StorageObject.objects.create(parent=self.root, **kwargs)
 
         kwargs = dict(path=f"/root/path_1/path_3")
-        self.dir_3 = FinmarsDirectory.objects.create(parent=self.dir_1, **kwargs)
+        self.dir_3 = StorageObject.objects.create(parent=self.dir_1, **kwargs)
 
         kwargs = dict(path=f"/root/path_4")
-        self.dir_4 = FinmarsDirectory.objects.create(parent=self.root, **kwargs)
+        self.dir_4 = StorageObject.objects.create(parent=self.root, **kwargs)
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),

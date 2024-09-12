@@ -5,9 +5,8 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
-from pathlib import Path
 from zipfile import ZipFile
-from typing import Any, Tuple
+from typing import Any
 
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
@@ -336,14 +335,14 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
             update_or_create_file_and_parents(path, size)
 
     def delete(self, path: str) -> None:
-        from poms.explorer.models import FinmarsFile
+        from poms.explorer.models import StorageObject
 
         _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
 
         super().delete(path)
 
         with contextlib.suppress(Exception):
-            FinmarsFile.objects.filter(path=path).delete()
+            StorageObject.objects.filter(path=path).delete()
 
 
 class FinmarsSFTPStorage(FinmarsStorageFileObjMixin, SFTPStorage):

@@ -1562,7 +1562,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         on_delete=models.SET_NULL,
     )
     files = models.ManyToManyField(
-        "explorer.FinmarsFile",
+        "explorer.StorageObject",
         related_name="instruments",
         through="InstrumentAttachment",
         through_fields=("instrument", "file"),
@@ -3765,6 +3765,6 @@ class InstrumentAttachment(models.Model):
         on_delete=models.CASCADE,
     )
     file = models.ForeignKey(
-        "explorer.FinmarsFile",
+        "explorer.StorageObject",
         on_delete=models.CASCADE,
     )

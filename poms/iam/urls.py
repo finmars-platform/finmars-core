@@ -3,9 +3,18 @@ from rest_framework import routers
 import poms.iam.views as iam
 
 router = routers.DefaultRouter()
-router.register(r'role', iam.RoleViewSet, 'role')
-router.register(r'group', iam.GroupViewSet, 'group')
-router.register(r'access-policy', iam.AccessPolicyViewSet, 'accessPolicy')
-
-
-
+router.register(
+    "role",
+    iam.RoleViewSet,
+    "role",
+)
+router.register(
+    "group",
+    iam.GroupViewSet,
+    "group",
+)
+router.register(
+    "access-policy",
+    iam.AccessPolicyViewSet,
+    "accessPolicy",
+)
