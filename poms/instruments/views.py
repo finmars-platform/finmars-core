@@ -49,6 +49,7 @@ from poms.instruments.filters import (
     InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
+    IdentifierKeysValuesFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -98,6 +99,7 @@ from poms.instruments.serializers import (
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
     PriceHistorySerializer,
+    PriceHistoryRecalculateSerializer,
     PricingConditionSerializer,
     PricingPolicyLightSerializer,
     PricingPolicySerializer,
@@ -771,6 +773,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
         EntitySpecificFilter,
+        IdentifierKeysValuesFilter,
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [
@@ -784,6 +787,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         "instrument_type__name",
         "instrument_type__short_name",
         "instrument_type__public_name",
+        "identifier",
         "pricing_currency",
         "pricing_currency__user_code",
         "pricing_currency__name",
@@ -1740,6 +1744,25 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
+
+    @action(
+        detail=False,
+        methods=["put"],
+        url_path="recalculate",
+        permission_classes=[IsAuthenticated],
+        serializer_class=PriceHistoryRecalculateSerializer,
+    )
+    def recalculate(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        recalculate_inputs = serializer.validated_data.pop("recalculate_inputs")
+        instance = PriceHistory(**serializer.validated_data)
+        instance.run_auto_calculation(recalculate_inputs)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response(serializer.data)
 
 
 class GeneratedEventFilterSet(FilterSet):

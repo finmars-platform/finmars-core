@@ -3619,6 +3619,13 @@ class Transaction(models.Model):
             )
             self.portfolio.save()
 
+        if self.instrument:
+            # force run of calculate_first_transactions_dates and update instrument
+            _l.debug(
+                "Transaction.save: recalculate first_transactions_dates in instrument"
+            )
+            self.instrument.save()
+
     def delete(self, *args, **kwargs):
         _l.debug(f"Transaction.delete: {self.id}")
 
@@ -3630,6 +3637,13 @@ class Transaction(models.Model):
                 "Transaction.delete: recalculate first_transactions_dates in portfolio"
             )
             self.portfolio.save()
+
+        if self.instrument:
+            # force run of calculate_first_transactions_dates and update instrument
+            _l.debug(
+                "Transaction.save: recalculate first_transactions_dates in instrument"
+            )
+            self.instrument.save()
 
     def is_can_calc_cash_by_formulas(self):
         return (

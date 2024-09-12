@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.db.models import Q
@@ -106,3 +107,18 @@ class InstrumentsUserCodeFilter(BaseFilterBackend):
             return queryset.filter(instrument__user_code__in=user_codes)
 
         return queryset
+
+
+class IdentifierKeysValuesFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        keys_values = request.query_params.get('identifier_keys_values', None)
+
+        if keys_values is None:
+            return queryset
+
+        filter_data = json.loads(keys_values)
+        filter_q = Q()
+        for key, value in filter_data.items():
+            filter_q &= Q(**{f"identifier__{key}": value})
+
+        return queryset.filter(filter_q)

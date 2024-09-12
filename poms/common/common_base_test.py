@@ -84,9 +84,35 @@ INSTRUMENTS_TYPES = [
     f"{TYPE_PREFIX}bond",
     f"{TYPE_PREFIX}stock",
 ]
+
+IDENTIFIERS = [
+    {
+        "cbonds_id": "id",
+        "isin": "isin",
+        "state_reg_number": "state_reg_number",
+        "bbgid": "bbgid",
+        "figi": "bbgid",
+        "isin_code_144a": "isin_code_144a",
+        "sedol": "sedol",
+        "database_id": "",
+    },
+    
+    {
+        "cbonds_id": None,
+        "isin": "isin",
+        "state_reg_number": "state_reg_number",
+        "bbgid": "bbgid",
+        "figi": "bbgid",
+        "isin_code_144a": "isin_code_144a",
+        "sedol": "sedol",
+        "database_id": "",
+    },
+]
+
+
 INSTRUMENTS = [
-    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL),
-    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL),
+    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL, IDENTIFIERS[0]),
+    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL, IDENTIFIERS[1]),
     # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
@@ -662,7 +688,7 @@ class DbInitializer:
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
-        for name, type_, class_id in INSTRUMENTS:
+        for name, type_, class_id, identifier in INSTRUMENTS:
             instrument_type, _ = InstrumentType.objects.using(
                 settings.DB_DEFAULT
             ).get_or_create(
@@ -684,6 +710,7 @@ class DbInitializer:
                     instrument_type=instrument_type,
                     name=name,
                     short_name=name,
+                    identifier=identifier,
                     public_name=name,
                     accrued_currency=self.usd,
                     pricing_currency=self.usd,
