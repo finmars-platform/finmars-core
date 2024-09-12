@@ -3002,7 +3002,7 @@ class PriceHistory(TimeStampedModel):
     def calculate_duration(self, date, ytm):
         return self.instrument.calculate_quantlib_modified_duration(date=date, ytm=ytm)
 
-    def save(self, *args, **kwargs):
+    def run_auto_calculation(self, recalculate_inputs=[]):
         from poms.instruments.fields import AUTO_CALCULATE
 
         if not self.procedure_modified_datetime:
@@ -3041,7 +3041,7 @@ class PriceHistory(TimeStampedModel):
         except Exception as e:
             self.handle_err(f"calculate_ytm error {repr(e)}")
 
-        if self.factor in {None, AUTO_CALCULATE}:
+        if "factor" in recalculate_inputs or not recalculate_inputs and self.factor in {None, AUTO_CALCULATE}:
             if self.error_message:  # reset error messages
                 self.error_message = ""
             try:
@@ -3050,7 +3050,7 @@ class PriceHistory(TimeStampedModel):
                 self.handle_err(f"get_factor error {repr(e)}")
                 self.factor = 1
 
-        if self.accrued_price in {None, AUTO_CALCULATE}:
+        if "accrued_price" in recalculate_inputs or not recalculate_inputs and self.accrued_price in {None, AUTO_CALCULATE}:
             if self.error_message:  # reset error messages
                 self.error_message = ""
             try:
@@ -3058,6 +3058,15 @@ class PriceHistory(TimeStampedModel):
             except Exception as e:
                 self.handle_err(f"get_accrued_price error {repr(e)}")
                 self.accrued_price = 0
+
+    def save(self, *args, **kwargs):
+        if not self.procedure_modified_datetime:
+            self.procedure_modified_datetime = date_now()
+
+        if not self.created_at:
+            self.created_at = date_now()
+
+        self.run_auto_calculation()
 
         super().save(*args, **kwargs)
 

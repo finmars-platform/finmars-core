@@ -99,6 +99,7 @@ from poms.instruments.serializers import (
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
     PriceHistorySerializer,
+    PriceHistoryRecalculateSerializer,
     PricingConditionSerializer,
     PricingPolicyLightSerializer,
     PricingPolicySerializer,
@@ -1743,6 +1744,25 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
+
+    @action(
+        detail=False,
+        methods=["put"],
+        url_path="recalculate",
+        permission_classes=[IsAuthenticated],
+        serializer_class=PriceHistoryRecalculateSerializer,
+    )
+    def recalculate(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        recalculate_inputs = serializer.validated_data.pop("recalculate_inputs")
+        instance = PriceHistory(**serializer.validated_data)
+        instance.run_auto_calculation(recalculate_inputs)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response(serializer.data)
 
 
 class GeneratedEventFilterSet(FilterSet):

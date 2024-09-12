@@ -1781,7 +1781,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
     def validate(self, attrs: dict) -> dict:
         action = self.context["view"].action
         if action in AUTOCALCULATE_ACTIONS:
-            if action in CREATE_ACTIONS and ("date" not in attrs or not attrs["date"]):
+            if action in CREATE_ACTIONS and not attrs.get("date"):
                 raise ValidationError(
                     "To calculate 'accrued_price' valid 'date' must be provided"
                 )
@@ -1869,6 +1869,28 @@ class PriceHistorySerializer(ModelMetaSerializer):
         )
 
         return instance
+
+
+class PriceHistoryRecalculateSerializer(PriceHistorySerializer):
+    recalculate_inputs = serializers.MultipleChoiceField(
+        required=False,
+        default=[],
+        choices=["accrued_price", "factor", "ytm", "modified_duration"]
+    )
+
+    class Meta(PriceHistorySerializer.Meta):
+        fields = PriceHistorySerializer.Meta.fields + ["recalculate_inputs"]
+
+    def validate(self, attrs: dict) -> dict:
+        if "accrued_price" in attrs.get("recalculate_inputs"):
+            if not attrs.get("date"):
+                raise ValidationError("To calculate 'accrued_price' valid 'date' must be provided")
+            attrs["accrued_price"] = None
+
+        if "factor" in attrs.get("recalculate_inputs"):
+            attrs["factor"] = None
+
+        return attrs
 
 
 class GeneratedEventSerializer(serializers.ModelSerializer):
