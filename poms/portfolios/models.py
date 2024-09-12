@@ -283,7 +283,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         from poms.transactions.models import Transaction, TransactionClass
 
         first_transaction = (
-            Transaction.objects.filter(portfolio=self)
+            Transaction.objects.filter(portfolio=self, is_deleted=False)
             .order_by(
                 "accounting_date",
             )
@@ -296,6 +296,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         first_cash_flow_transaction = (
             Transaction.objects.filter(
                 portfolio=self,
+                is_deleted=False,
                 transaction_class_id__in=[
                     TransactionClass.CASH_INFLOW,
                     TransactionClass.CASH_OUTFLOW,

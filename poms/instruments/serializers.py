@@ -984,6 +984,8 @@ class InstrumentSerializer(
 
     country = CountryField(required=False, allow_null=True)
 
+    first_transaction_date = serializers.ReadOnlyField()
+
     # ==== Objects below ====
 
     instrument_type_object = InstrumentTypeViewSerializer(
@@ -1083,6 +1085,7 @@ class InstrumentSerializer(
             "country",
             "country_object",
             "files",
+            "first_transaction_date",
             # 'attributes'
         ]
 
