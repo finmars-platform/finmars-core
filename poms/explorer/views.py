@@ -28,31 +28,31 @@ from poms.explorer.explorer_permission import (
     ExplorerWriteDirectoryPathPermission,
     ExplorerZipPathsReadPermission,
 )
-from poms.explorer.models import FinmarsFile
+from poms.explorer.models import StorageObject
 from poms.explorer.serializers import (
     AccessPolicySerializer,
     BasePathSerializer,
+    CopySerializer,
     DeletePathSerializer,
     DirectoryPathSerializer,
     FilePathSerializer,
     MoveSerializer,
     PaginatedResponseSerializer,
     QuerySearchSerializer,
+    RenameSerializer,
     ResponseSerializer,
     SearchResultSerializer,
     StorageObjectAccessPolicySerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
-    RenameSerializer,
-    CopySerializer,
 )
 from poms.explorer.tasks import (
+    copy_directory_in_storage,
     move_directory_in_storage,
+    rename_directory_in_storage,
     sync_storage_with_database,
     unzip_file_in_storage,
-    rename_directory_in_storage,
-    copy_directory_in_storage,
 )
 from poms.explorer.utils import (
     join_path,
@@ -92,9 +92,7 @@ class ExplorerViewSet(AbstractViewSet):
 
     @swagger_auto_schema(
         query_serializer=DirectoryPathSerializer(),
-        responses={
-            status.HTTP_200_OK: ResponseSerializer(),
-        },
+        responses={status.HTTP_200_OK: ResponseSerializer()},
     )
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.query_params)
@@ -622,7 +620,7 @@ class SyncViewSet(AbstractViewSet):
         )
 
 
-class FinmarsFileFilter(BaseFilterBackend):
+class StorageObjectFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         queries = request.query_params.get("query")
         if not queries:
@@ -639,10 +637,10 @@ class FinmarsFileFilter(BaseFilterBackend):
 class SearchViewSet(AbstractModelViewSet):
     access_policy = ExplorerRootAccessPermission
     serializer_class = SearchResultSerializer
-    queryset = FinmarsFile.objects.all()
+    queryset = StorageObject.objects.filter(is_file=True)
     pagination_class = PageNumberPaginationExt
     http_method_names = ["get"]
-    filter_backends = AbstractModelViewSet.filter_backends + [FinmarsFileFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [StorageObjectFilter]
 
     @swagger_auto_schema(
         query_serializer=QuerySearchSerializer(),

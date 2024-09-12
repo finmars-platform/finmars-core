@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import DIR_SUFFIX, AccessLevel, FinmarsDirectory, FinmarsFile
+from poms.explorer.models import DIR_SUFFIX, AccessLevel, StorageObject
 
 expected_response = {
     "id": 2,
@@ -22,6 +22,7 @@ expected_response = {
     },
     "owner": 2,
     "members": [],
+    "resource_group": None,
     # "meta": {
     #     "execution_time": 10,
     #     "request_id": "33e86689-5ed9-4422-908e-9cd45a008451",
@@ -31,6 +32,7 @@ expected_response = {
 
 class FinmarsFileViewSetTest(BaseTestCase):
     databases = "__all__"
+    maxDiff = None
 
     def setUp(self):
         super().setUp()
@@ -42,8 +44,10 @@ class FinmarsFileViewSetTest(BaseTestCase):
         )
         self.dirpath = f"/test/next{DIR_SUFFIX}"
         self.filepath = "/test/next/test.pdf"
-        self.directory = FinmarsDirectory.objects.create(path=self.dirpath)
-        self.file = FinmarsFile.objects.create(path=self.filepath, size=111)
+        self.directory = StorageObject.objects.create(path=self.dirpath)
+        self.file = StorageObject.objects.create(
+            path=self.filepath, size=111, is_file=True
+        )
 
     @BaseTestCase.cases(
         ("read", AccessLevel.READ),
@@ -60,7 +64,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), expected_response.keys())
+        self.assertEqual(set(response_json.keys()), set(expected_response.keys()))
         expected_user_code = (
             f"local.poms.space00000:finmars:explorer:{self.filepath}-{access}"
         )
@@ -91,7 +95,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json.keys(), expected_response.keys())
+        self.assertEqual(set(response_json.keys()), set(expected_response.keys()))
         expected_user_code = (
             f"local.poms.space00000:finmars:explorer:{self.dirpath}-{access}"
         )

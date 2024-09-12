@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 
-from poms.explorer.models import DIR_SUFFIX, FinmarsDirectory, get_root_path
+from poms.explorer.models import DIR_SUFFIX, StorageObject, get_root_path
 
 
 class FinmarsDirectoryTest(BaseTestCase):
@@ -10,10 +10,10 @@ class FinmarsDirectoryTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
 
-    def _create_directory(self) -> FinmarsDirectory:
+    def _create_directory(self) -> StorageObject:
         self.path = f"/{self.random_string()}/{self.random_string(5)}{DIR_SUFFIX}*"
 
-        return FinmarsDirectory.objects.create(path=self.path)
+        return StorageObject.objects.create(path=self.path)
 
     def test__directory_created(self):
         directory = self._create_directory()
@@ -33,26 +33,26 @@ class FinmarsDirectoryTest(BaseTestCase):
     )
     def test__unique_path(self, path):
         kwargs = dict(path=path)
-        FinmarsDirectory.objects.create(**kwargs)
+        StorageObject.objects.create(**kwargs)
 
         with self.assertRaises(Exception):
-            FinmarsDirectory.objects.create(**kwargs)
+            StorageObject.objects.create(**kwargs)
 
     def test__directory_tree(self):
         kwargs = dict(path=get_root_path())
-        root = FinmarsDirectory.objects.create(**kwargs)
+        root = StorageObject.objects.create(**kwargs)
 
         kwargs = dict(path=f"/path_1{DIR_SUFFIX}")
-        dir_1 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+        dir_1 = StorageObject.objects.create(parent=root, **kwargs)
 
         kwargs = dict(path=f"/path_2{DIR_SUFFIX}")
-        dir_2 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+        dir_2 = StorageObject.objects.create(parent=root, **kwargs)
 
         kwargs = dict(path=f"/path_1/path_3{DIR_SUFFIX}")
-        dir_3 = FinmarsDirectory.objects.create(parent=dir_1, **kwargs)
+        dir_3 = StorageObject.objects.create(parent=dir_1, **kwargs)
 
         kwargs = dict(path=f"/path_4{DIR_SUFFIX}")
-        dir_4 = FinmarsDirectory.objects.create(parent=root, **kwargs)
+        dir_4 = StorageObject.objects.create(parent=root, **kwargs)
 
         self.assertEqual(dir_1.get_root(), root)
         self.assertEqual(dir_2.get_root(), root)

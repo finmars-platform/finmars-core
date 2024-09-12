@@ -14,7 +14,7 @@ MAX_PATH_LENGTH = 2048
 MAX_NAME_LENGTH = 255
 MAX_TOKEN_LENGTH = 32
 
-DIR_SUFFIX = "/*"
+DIR_SUFFIX = "/"
 
 
 def get_root_path():
@@ -31,12 +31,44 @@ class AccessLevel:
     @classmethod
     def validate_level(cls, access: str):
         if access not in {cls.READ, cls.WRITE}:
-            raise ValueError(
-                f"AccessLevel must be either '{cls.READ}' or '{cls.WRITE}'"
-            )
+            raise ValueError(f"AccessLevel can be '{cls.READ}' or '{cls.WRITE}'")
 
 
-class ObjMixin:
+class StorageObject(MPTTModel, TimeStampedModel):
+    """
+    Model represents an object (directory or file)
+    in the Finmars storage (Filesystem, AWS, Azure...).
+    """
+
+    path = models.CharField(
+        max_length=MAX_PATH_LENGTH,
+        unique=True,
+        blank=False,
+        help_text="Path to the directory in the storage system",
+    )
+    parent = TreeForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children",
+    )
+    size = models.PositiveBigIntegerField(
+        default=0,
+        help_text="Size of the file in bytes",
+    )
+    is_file = models.BooleanField(
+        default=False,
+        help_text="Is this directory a file",
+    )
+
+    class Meta:
+        ordering = ["path"]
+
+    class MPTTMeta:
+        level_attr = "mptt_level"
+        order_insertion_by = ["path"]
+
     def __str__(self):
         return self.path
 
@@ -56,59 +88,3 @@ class ObjMixin:
     def extension(self) -> str:
         path = Path(self.path)
         return path.suffix
-
-
-class FinmarsDirectory(MPTTModel, ObjMixin, TimeStampedModel):
-    """
-    Model represents a directory in the Finmars storage (File system, AWS, Azure...).
-    """
-
-    path = models.CharField(
-        max_length=MAX_PATH_LENGTH,
-        unique=True,
-        blank=False,
-        help_text="Path to the directory in the storage system",
-    )
-    parent = TreeForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="children",
-    )
-
-    class Meta:
-        ordering = ["path"]
-
-    class MPTTMeta:
-        level_attr = "mptt_level"
-        order_insertion_by = ["path"]
-
-    @property
-    def size(self):
-        return 0
-
-
-class FinmarsFile(ObjMixin, TimeStampedModel):
-    """
-    Model represents a file in the Finmars storage (File system, AWS, Azure...).
-    """
-
-    path = models.CharField(
-        max_length=MAX_PATH_LENGTH,
-        unique=True,
-        help_text="Path to the file in the storage system with name and extension",
-    )
-    parent = models.ForeignKey(
-        FinmarsDirectory,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="files",
-    )
-    size = models.PositiveBigIntegerField(
-        help_text="Size of the file in bytes",
-    )
-
-    class Meta:
-        ordering = ["path"]

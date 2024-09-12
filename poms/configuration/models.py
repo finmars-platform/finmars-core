@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import OwnerModel, TimeStampedModel
 from poms.configuration.utils import replace_special_chars_and_spaces
-from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
 
@@ -59,10 +58,12 @@ class ConfigurationModel(OwnerModel):
 
         super().save(*args, **kwargs)
 
+
 CHANNEL_CHOICES = [
     ["stable", "Stable"],
     ["rc", "Release Candidate"],
 ]
+
 
 class Configuration(TimeStampedModel):
     # com.finmars.hnwi

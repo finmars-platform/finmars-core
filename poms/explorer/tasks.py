@@ -137,7 +137,7 @@ def unzip_file_in_storage(self, *args, **kwargs):
 @finmars_task(name="explorer.tasks.sync_storage_with_database", bind=True)
 def sync_storage_with_database(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
-    from poms.explorer.models import FinmarsDirectory
+    from poms.explorer.models import StorageObject
 
     task_name = "sync_storage_with_database"
 
@@ -165,7 +165,7 @@ def sync_storage_with_database(self, *args, **kwargs):
 
     dirs, files = storage.listdir(storage_root)
 
-    root_obj, _ = FinmarsDirectory.objects.get_or_create(
+    root_obj, _ = StorageObject.objects.get_or_create(
         path=make_dir_path(storage_root),
         parent=None,
     )
@@ -181,7 +181,7 @@ def sync_storage_with_database(self, *args, **kwargs):
                 continue
 
             directory_path = os.path.join(storage_root, directory)
-            directory_obj, _ = FinmarsDirectory.objects.get_or_create(
+            directory_obj, _ = StorageObject.objects.get_or_create(
                 path=make_dir_path(directory_path),
                 parent=root_obj,
             )
@@ -238,18 +238,18 @@ def rename_directory_in_storage(self, *args, **kwargs):
         rename_file(storage, path, destination_file_path)
     else:
         destination_dir_path = os.path.join(os.path.dirname(os.path.normpath(path)), new_name)
-        rename_dir(storage, path, destination_dir_path)     
+        rename_dir(storage, path, destination_dir_path)
 
     celery_task.update_progress(
         {
             "description": "rename_directory_in_storage finished",
         }
     )
-    
+
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"renamed file"
     celery_task.save()
-    
+
 
 @finmars_task(name="explorer.tasks.copy_directory_in_storage", bind=True)
 def copy_directory_in_storage(self, *args, **kwargs):

@@ -2,7 +2,7 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import AccessLevel, FinmarsDirectory, get_root_path
+from poms.explorer.models import AccessLevel, StorageObject, get_root_path
 from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
@@ -62,7 +62,7 @@ class ExplorerCreateFolderViewTest(CreateUserMemberMixin, BaseTestCase):
         user, member = self.create_user_member()
 
         root_path = get_root_path()
-        FinmarsDirectory.objects.create(path=root_path)
+        StorageObject.objects.create(path=root_path)
         get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
 
         dir_name = f"{self.random_string()}/{self.random_string()}"

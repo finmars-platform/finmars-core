@@ -1,15 +1,17 @@
 import logging
+
 from django.core.cache import cache
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.middleware import get_request
-from poms.expressions_engine import formula
 from poms.currencies.constants import DASH
+from poms.expressions_engine import formula
 
 EXPRESSION_FIELD_LENGTH = 4096
 
 _l = logging.getLogger("poms.celery_tasks")
+
 
 class OwnerModel(models.Model):
     owner = models.ForeignKey(
@@ -179,9 +181,9 @@ class FakeDeletableModel(models.Model):
         index_together = [["master_user", "is_deleted"]]
 
     def fake_delete(self):
-        from poms.system_messages.handlers import send_system_message
         from poms.celery_tasks.models import CeleryTask
         from poms.common.celery import get_active_celery_task_id
+        from poms.system_messages.handlers import send_system_message
 
         self.is_deleted = True
 
@@ -199,7 +201,7 @@ class FakeDeletableModel(models.Model):
         if hasattr(self, "user_code"):
             if self.user_code == DASH:
                 return
-            
+
             self.deleted_user_code = self.user_code
             self.name = f"(del) {self.name}"
             self.short_name = f"(del) {self.short_name}"
@@ -234,9 +236,9 @@ class FakeDeletableModel(models.Model):
         self.save(update_fields=fields_to_update)
 
     def restore(self):
-        from poms.system_messages.handlers import send_system_message
         from poms.celery_tasks.models import CeleryTask
         from poms.common.celery import get_active_celery_task_id
+        from poms.system_messages.handlers import send_system_message
 
         # if not isinstance(context, dict):
         #     raise TypeError(
