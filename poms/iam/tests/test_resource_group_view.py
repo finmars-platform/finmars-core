@@ -35,3 +35,23 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
         self.assertIn("id", group_data)
+
+    def test__retrieve(self):
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test2",
+            user_code="test2",
+            description="test2",
+        )
+        response = self.client.get(f"{self.url}{rg.id}/")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        group_data = response.json()
+
+        self.assertEqual(group_data["id"], rg.id)
+        self.assertEqual(group_data["name"], "test2")
+        self.assertEqual(group_data["user_code"], "test2")
+        self.assertEqual(group_data["description"], "test2")
+        self.assertEqual(group_data["master_user"], self.master_user.id)
+        self.assertIn("created_at", group_data)
+        self.assertIn("modified_at", group_data)
