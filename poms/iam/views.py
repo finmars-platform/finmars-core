@@ -2,14 +2,25 @@ import django_filters
 from django_filters.rest_framework import FilterSet
 from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import filters
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
-from poms.iam.models import AccessPolicy, Group, Role
+from poms.iam.models import (  # ResourceGroupAssignment,
+    AccessPolicy,
+    Group,
+    ResourceGroup,
+    Role,
+)
 from poms.iam.permissions import FinmarsAccessPolicy
-from poms.iam.serializers import AccessPolicySerializer, GroupSerializer, RoleSerializer
+from poms.iam.serializers import (
+    AccessPolicySerializer,
+    GroupSerializer,
+    ResourceGroupSerializer,
+    RoleSerializer,
+)
 
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
@@ -77,12 +88,7 @@ class RoleViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created_at'
-    ]
+    ordering_fields = ["id", "name", "user_code", "created_at"]
 
 
 class GroupFilterSet(FilterSet):
@@ -107,12 +113,7 @@ class GroupViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created_at'
-    ]
+    ordering_fields = ["id", "name", "user_code", "created_at"]
 
 
 class AccessPolicyFilterSet(FilterSet):
@@ -136,9 +137,105 @@ class AccessPolicyViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-    ordering_fields = [
-        'id',
-        'name',
-        'user_code',
-        'created_at'
-    ]
+    ordering_fields = ["id", "name", "user_code", "created_at"]
+
+
+class IAMBaseViewSet(ModelViewSet):
+    """
+    A base viewset that enforces IAM policies based on user policies.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_policy = getattr(self.request, "user_policy", {})
+
+        allowed_resources = user_policy.get("Resource")
+
+        if allowed_resources is None:
+            # Admin user, no filtering
+            return queryset
+
+        if not allowed_resources:
+            # No access to any resources
+            return queryset.none()
+
+        # Assuming models have 'user_code' field
+        return queryset.filter(user_code__in=allowed_resources)
+
+    def list(self, request, *args, **kwargs):
+        # Check if user has access to the endpoint
+        if not self.has_endpoint_access():
+            raise PermissionDenied("You do not have access to this endpoint.")
+
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        # Check if user has access to the specific resource
+        instance = self.get_object()
+        if not self.has_resource_access(instance):
+            raise PermissionDenied("You do not have access to this resource.")
+
+        return super().retrieve(request, *args, **kwargs)
+
+    def has_endpoint_access(self):
+        """
+        Implement your logic to check if the user has access to the requested endpoint.
+        For simplicity, return True. Customize as needed.
+        """
+        return True
+
+    def has_resource_access(self, instance):
+        """
+        Check if the user has access to the specific resource based on 'user_code'.
+        """
+        user_policy = getattr(self.request, "user_policy", {})
+        allowed_resources = user_policy.get("Resource")
+
+        if allowed_resources is None:
+            # Admin user
+            return True
+
+        return instance.user_code in allowed_resources
+
+
+class ResourceGroupViewSet(IAMBaseViewSet):
+    """
+    A viewset for viewing and editing ResourceGroup instances.
+    """
+
+    queryset = ResourceGroup.objects.all()
+    serializer_class = ResourceGroupSerializer
+
+    def has_endpoint_access(self):
+        # Implement specific endpoint access logic if needed
+        # For example, only admins can create or delete ResourceGroups
+        if self.action in ["create", "destroy", "update", "partial_update"]:
+            user = self.request.user
+            return user.is_staff or user.is_superuser or user.is_admin
+
+        return True
+
+
+# class PortfolioViewSet(IAMBaseViewSet):
+#     """
+#     A viewset for viewing and editing Portfolio instances.
+#     """
+#
+#     queryset = Portfolio.objects.all()
+#     serializer_class = PortfolioSerializer
+#
+#     # only an example, already implemented in IAM engine
+#     def has_endpoint_access(self):
+#         # Implement specific endpoint access logic if needed
+#         # For example, only certain groups can create or delete Portfolios
+#         if self.action in ["create", "destroy", "update", "partial_update"]:
+#             # Example: Only admins or specific groups can perform write operations
+#             return (
+#                 self.request.user.is_staff
+#                 or self.request.user.groups.filter(
+#                     name__in=["team_am_1", "team_am_2"]
+#                 ).exists()
+#             )
+#         return True

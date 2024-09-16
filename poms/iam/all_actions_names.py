@@ -18,6 +18,7 @@ ALL_EXTRA_ACTIONS = {
     "configure",
     "create_personal_access_token",
     "create_worker",
+    "data",
     "delete_preview",
     "dry_run",
     "error",
@@ -180,6 +181,7 @@ FULL_ACCESS_ACTIONS = {
     "update_status",
 }
 READ_ACCESS_ACTIONS = {
+    "data",
     "export_configuration",
     "get_content_types",
     "get_data",

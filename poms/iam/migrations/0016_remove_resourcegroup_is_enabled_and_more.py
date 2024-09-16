@@ -111,6 +111,14 @@ class Migration(migrations.Migration):
                         to="iam.resourcegroup",
                     ),
                 ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True),
+                ),
+                (
+                    "modified_at",
+                    models.DateTimeField(auto_now=True),
+                ),
             ],
         ),
         migrations.AddConstraint(

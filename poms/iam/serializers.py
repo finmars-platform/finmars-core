@@ -3,9 +3,14 @@ import logging
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from poms.iam.models import AccessPolicy, Group, Role
+from poms.iam.models import (
+    AccessPolicy,
+    Group,
+    ResourceGroup,
+    ResourceGroupAssignment,
+    Role,
+)
 from poms.users.models import Member
-from poms_app import settings
 
 _l = logging.getLogger("poms.iam")
 User = get_user_model()
@@ -103,6 +108,7 @@ class IamModelMetaSerializer(IamModelOwnerSerializer):
         representation = super().to_representation(instance)
 
         from poms.users.utils import get_space_code_from_context
+
         space_code = get_space_code_from_context(self.context)
 
         representation["meta"] = {
@@ -111,7 +117,7 @@ class IamModelMetaSerializer(IamModelOwnerSerializer):
             + self.Meta.model._meta.model_name,
             "app_label": self.Meta.model._meta.app_label,
             "model_name": self.Meta.model._meta.model_name,
-            "space_code": space_code
+            "space_code": space_code,
         }
 
         return representation
@@ -198,8 +204,8 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = Role
@@ -222,7 +228,7 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     def create(self, validated_data):
         # role_access_policies_data = self.context['request'].data.get('access_policies', [])
 
-        _l.info("validated_data %s" % validated_data)
+        _l.info(f"validated_data {validated_data}")
 
         access_policies_data = validated_data.pop("access_policies", [])
         members_data = validated_data.pop("members", [])
@@ -276,8 +282,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = Group
@@ -341,9 +347,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
 
 class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
-
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = AccessPolicy
@@ -357,3 +362,27 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
             "created_at",
             "modified_at",
         ]
+
+
+class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
+    content_type = serializers.StringRelatedField()  # Displays the model name
+    content_object = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+
+    class Meta:
+        model = ResourceGroupAssignment
+        fields = ["id", "content_type", "object_id", "content_object"]
+
+    def get_content_object(self, obj):
+        return str(obj.content_object)
+
+
+class ResourceGroupSerializer(serializers.ModelSerializer):
+    assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+
+    class Meta:
+        model = ResourceGroup
+        fields = "__all__"
