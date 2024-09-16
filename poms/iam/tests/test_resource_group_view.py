@@ -66,12 +66,51 @@ class ResourceGroupViewTest(BaseTestCase):
         response = self.client.delete(f"{self.url}{rg.id}/")
 
         self.assertEqual(response.status_code, 204, response.content)
+
+    def test__destroy_no_permission(self):
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test2",
+            user_code="test2",
+            description="test2",
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.delete(f"{self.url}{rg.id}/")
+
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test__patch(self):
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test2",
+            user_code="test2",
+            description="test2",
+        )
+        response = self.client.patch(
+            f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
+        )
         group_data = response.json()
 
-        self.assertEqual(group_data["id"], rg.id)
-        self.assertEqual(group_data["name"], "test2")
-        self.assertEqual(group_data["user_code"], "test2")
-        self.assertEqual(group_data["description"], "test2")
-        self.assertEqual(group_data["master_user"], self.master_user.id)
-        self.assertIn("created_at", group_data)
-        self.assertIn("modified_at", group_data)
+        self.assertEqual(group_data["name"], "test3")
+
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test__patch_no_permission(self):
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test2",
+            user_code="test2",
+            description="test2",
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.patch(
+            f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 403, response.content)
