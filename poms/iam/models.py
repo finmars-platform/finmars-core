@@ -159,7 +159,7 @@ class ResourceGroupAssignment(models.Model):
         on_delete=models.CASCADE,
     )
     object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey()
+    content_object = GenericForeignKey("content_type", "object_id")
     user_code = models.CharField(
         max_length=1024,
         null=True,

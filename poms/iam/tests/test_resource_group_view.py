@@ -1,5 +1,7 @@
+from django.contrib.contenttypes.models import ContentType
+
 from poms.common.common_base_test import BaseTestCase
-from poms.iam.models import ResourceGroup
+from poms.iam.models import ResourceGroup, ResourceGroupAssignment
 
 
 class ResourceGroupViewTest(BaseTestCase):
@@ -116,3 +118,26 @@ class ResourceGroupViewTest(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, 403, response.content)
+
+    def test_assignment(self):
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test2",
+            user_code="test2",
+            description="test2",
+        )
+        ass = ResourceGroupAssignment.objects.create(
+            resource_group=rg,
+            content_type=ContentType.objects.get_for_model(rg),
+            object_id=rg.id,
+            user_code="test4",
+        )
+        self.assertEqual(ass.content_object, rg)
+
+        response = self.client.get(f"{self.url}{rg.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        group_data = response.json()
+        self.assertEqual(len(group_data["assignments"]), 1)
+        ass_data = group_data["assignments"][0]
+        self.assertEqual(ass_data["user_code"], ass.user_code)

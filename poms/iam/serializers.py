@@ -372,7 +372,7 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResourceGroupAssignment
-        fields = ["id", "content_type", "object_id", "content_object"]
+        fields = "__all__"
 
     def get_content_object(self, obj):
         return str(obj.content_object)
