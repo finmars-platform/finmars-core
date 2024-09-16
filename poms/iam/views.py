@@ -8,13 +8,13 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
-from poms.iam.models import (  # ResourceGroupAssignment,
+from poms.iam.models import (
     AccessPolicy,
     Group,
     ResourceGroup,
     Role,
 )
-from poms.iam.permissions import FinmarsAccessPolicy
+from poms.iam.permissions import AdminPermission, FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
     GroupSerializer,
@@ -25,7 +25,6 @@ from poms.iam.serializers import (
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
     access_policy = FinmarsAccessPolicy
-
     filter_backends = ModelViewSet.filter_backends + [
         ObjectPermissionBackend,
     ]
@@ -204,16 +203,16 @@ class ResourceGroupViewSet(IAMBaseViewSet):
     """
     A viewset for viewing and editing ResourceGroup instances.
     """
-
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
+    permission_classes = [IsAuthenticated]
 
-    def has_endpoint_access(self):
+    def get_permissions(self):
         # Implement specific endpoint access logic if needed
         # For example, only admins can create or delete ResourceGroups
         if self.action in ["create", "destroy", "update", "partial_update"]:
-            user = self.request.user
-            return user.is_staff or user.is_superuser or user.is_admin
+            self.permission_classes.append(AdminPermission)
+            return super().get_permissions()
 
         return True
 

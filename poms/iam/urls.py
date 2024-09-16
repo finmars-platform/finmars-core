@@ -16,5 +16,10 @@ router.register(
 router.register(
     "access-policy",
     iam.AccessPolicyViewSet,
-    "accessPolicy",
+    "access-policy",
+)
+router.register(
+    "resource-group",
+    iam.ResourceGroupViewSet,
+    "resource-group",
 )

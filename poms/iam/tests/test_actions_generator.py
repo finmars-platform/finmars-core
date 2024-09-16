@@ -23,8 +23,6 @@ class ActionHandlingTest(BaseTestCase):
         self.init_test_case()
         self.all_actions = set()
         self.all_actions_names = set()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
         self.all_viewsets = get_viewsets_from_all_apps()
         for viewset in self.all_viewsets:
             for action in viewset.get_extra_actions():

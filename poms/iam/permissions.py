@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import BasePermission
 
 from poms.iam.access_policy import AccessPolicy
 from poms.iam.utils import get_statements
@@ -14,3 +15,13 @@ class FinmarsAccessPolicy(AccessPolicy):
             raise PermissionDenied(f"User {request.user.username} has no member")
 
         return get_statements(member=request.user.member)
+
+
+class AdminPermission(BasePermission):
+    def has_object_permission(self, request, *args, **kwargs) -> bool:
+        user = request.user
+        return (
+            user.is_staff
+            or user.is_superuser
+            or (hasattr(user, "is_admin") and user.is_admin)
+        )
