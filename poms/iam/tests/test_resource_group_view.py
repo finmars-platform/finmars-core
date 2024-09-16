@@ -119,7 +119,7 @@ class ResourceGroupViewTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 403, response.content)
 
-    def test_assignment(self):
+    def test__assignment(self):
         rg = ResourceGroup.objects.create(
             master_user=self.master_user,
             name="test2",
@@ -141,3 +141,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(len(group_data["assignments"]), 1)
         ass_data = group_data["assignments"][0]
         self.assertEqual(ass_data["user_code"], ass.user_code)
+        self.assertEqual(ass_data["content_type"], "iam | resource group")
+        self.assertEqual(ass_data["object_id"], rg.id)
+        self.assertEqual(ass_data["content_object"], str(rg))
+        self.assertIn("created_at", ass_data)
+        self.assertIn("modified_at", ass_data)
