@@ -13,3 +13,25 @@ class ResourceGroupViewTest(BaseTestCase):
     def test__check_url(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200, response.content)
+
+    def test__list(self):
+        ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test",
+            user_code="test",
+            description="test",
+        )
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(len(response_json), 1)
+        group_data = response_json[0]
+        self.assertEqual(group_data["name"], "test")
+        self.assertEqual(group_data["user_code"], "test")
+        self.assertEqual(group_data["description"], "test")
+        self.assertEqual(group_data["master_user"], self.master_user.id)
+        self.assertIn("created_at", group_data)
+        self.assertIn("modified_at", group_data)
+        self.assertIn("id", group_data)

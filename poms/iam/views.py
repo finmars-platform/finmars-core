@@ -22,6 +22,7 @@ from poms.iam.serializers import (
     RoleSerializer,
 )
 
+WRITABLE_ACTIONS = {"create", "destroy", "update", "partial_update",}
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
     access_policy = FinmarsAccessPolicy
@@ -206,15 +207,15 @@ class ResourceGroupViewSet(IAMBaseViewSet):
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None
 
     def get_permissions(self):
-        # Implement specific endpoint access logic if needed
-        # For example, only admins can create or delete ResourceGroups
-        if self.action in ["create", "destroy", "update", "partial_update"]:
+        # only admins can create, change & delete ResourceGroups
+        if self.action in WRITABLE_ACTIONS:
             self.permission_classes.append(AdminPermission)
-            return super().get_permissions()
 
-        return True
+        return super().get_permissions()
+
 
 
 # class PortfolioViewSet(IAMBaseViewSet):
