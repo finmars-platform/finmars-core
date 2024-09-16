@@ -32,6 +32,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], "test")
         self.assertEqual(group_data["description"], "test")
         self.assertEqual(group_data["master_user"], self.master_user.id)
+        self.assertEqual(group_data["assignments"], [])
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
         self.assertIn("id", group_data)
@@ -53,6 +54,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], "test2")
         self.assertEqual(group_data["description"], "test2")
         self.assertEqual(group_data["master_user"], self.master_user.id)
+        self.assertEqual(group_data["assignments"], [])
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
 
