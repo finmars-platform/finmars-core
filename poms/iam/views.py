@@ -242,26 +242,3 @@ class ResourceGroupAssignmentViewSet(IAMBaseViewSet):
             self.permission_classes.append(AdminPermission)
 
         return super().get_permissions()
-
-
-# class PortfolioViewSet(IAMBaseViewSet):
-#     """
-#     A viewset for viewing and editing Portfolio instances.
-#     """
-#
-#     queryset = Portfolio.objects.all()
-#     serializer_class = PortfolioSerializer
-#
-#     # only an example, already implemented in IAM engine
-#     def has_endpoint_access(self):
-#         # Implement specific endpoint access logic if needed
-#         # For example, only certain groups can create or delete Portfolios
-#         if self.action in ["create", "destroy", "update", "partial_update"]:
-#             # Example: Only admins or specific groups can perform write operations
-#             return (
-#                 self.request.user.is_staff
-#                 or self.request.user.groups.filter(
-#                     name__in=["team_am_1", "team_am_2"]
-#                 ).exists()
-#             )
-#         return True

@@ -12,10 +12,6 @@ class ResourceGroupViewTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/iam/resource-group/"
 
-    def test__check_url(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200, response.content)
-
     def create_group(self, name: str = "test") -> ResourceGroup:
         return ResourceGroup.objects.create(
             master_user=self.master_user,
@@ -23,6 +19,10 @@ class ResourceGroupViewTest(BaseTestCase):
             user_code=name,
             description=name,
         )
+
+    def test__check_url(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200, response.content)
 
     def test__list(self):
         self.create_group()
@@ -105,7 +105,6 @@ class ResourceGroupViewTest(BaseTestCase):
 
     def test__assignment(self):
         rg = self.create_group(name="test2")
-
         ass = ResourceGroupAssignment.objects.create(
             resource_group=rg,
             content_type=ContentType.objects.get_for_model(rg),
