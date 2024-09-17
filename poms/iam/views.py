@@ -12,17 +12,25 @@ from poms.iam.models import (
     AccessPolicy,
     Group,
     ResourceGroup,
+    ResourceGroupAssignment,
     Role,
 )
 from poms.iam.permissions import AdminPermission, FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
     GroupSerializer,
+    ResourceGroupAssignmentSerializer,
     ResourceGroupSerializer,
     RoleSerializer,
 )
 
-WRITABLE_ACTIONS = {"create", "destroy", "update", "partial_update",}
+WRITABLE_ACTIONS = {
+    "create",
+    "destroy",
+    "update",
+    "partial_update",
+}
+
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
     access_policy = FinmarsAccessPolicy
@@ -204,6 +212,7 @@ class ResourceGroupViewSet(IAMBaseViewSet):
     """
     A viewset for viewing and editing ResourceGroup instances.
     """
+
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
     permission_classes = [IsAuthenticated]
@@ -216,6 +225,23 @@ class ResourceGroupViewSet(IAMBaseViewSet):
 
         return super().get_permissions()
 
+
+class ResourceGroupAssignmentViewSet(IAMBaseViewSet):
+    """
+    A viewset for viewing and editing ResourceGroupAssignment instances.
+    """
+
+    queryset = ResourceGroupAssignment.objects.all()
+    serializer_class = ResourceGroupAssignmentSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_permissions(self):
+        # only admins can create, change & delete ResourceGroups
+        if self.action in WRITABLE_ACTIONS:
+            self.permission_classes.append(AdminPermission)
+
+        return super().get_permissions()
 
 
 # class PortfolioViewSet(IAMBaseViewSet):

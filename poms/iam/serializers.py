@@ -374,7 +374,8 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
         model = ResourceGroupAssignment
         fields = "__all__"
 
-    def get_content_object(self, obj):
+    @staticmethod
+    def get_content_object(obj) -> str:
         return str(obj.content_object)
 
 

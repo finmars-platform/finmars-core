@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
                 ),
                 ("object_id", models.PositiveIntegerField()),
                 (
-                    "user_code",
+                    "object_user_code",
                     models.CharField(
                         blank=True,
                         help_text="Unique Code for referenced object.",

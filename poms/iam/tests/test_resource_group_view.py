@@ -16,13 +16,17 @@ class ResourceGroupViewTest(BaseTestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    def test__list(self):
-        ResourceGroup.objects.create(
+    def create_group(self, name: str = "test") -> ResourceGroup:
+        return ResourceGroup.objects.create(
             master_user=self.master_user,
-            name="test",
-            user_code="test",
-            description="test",
+            name=name,
+            user_code=name,
+            description=name,
         )
+
+    def test__list(self):
+        self.create_group()
+
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200, response.content)
@@ -40,12 +44,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertIn("id", group_data)
 
     def test__retrieve(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         response = self.client.get(f"{self.url}{rg.id}/")
 
         self.assertEqual(response.status_code, 200, response.content)
@@ -61,23 +61,15 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertIn("modified_at", group_data)
 
     def test__destroy(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         response = self.client.delete(f"{self.url}{rg.id}/")
 
         self.assertEqual(response.status_code, 204, response.content)
 
     def test__destroy_no_permission(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         self.user.is_staff = False
         self.user.is_superuser = False
         self.user.save()
@@ -87,12 +79,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 403, response.content)
 
     def test__patch(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         response = self.client.patch(
             f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
         )
@@ -103,12 +91,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
     def test__patch_no_permission(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         self.user.is_staff = False
         self.user.is_superuser = False
         self.user.save()
@@ -120,17 +104,13 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 403, response.content)
 
     def test__assignment(self):
-        rg = ResourceGroup.objects.create(
-            master_user=self.master_user,
-            name="test2",
-            user_code="test2",
-            description="test2",
-        )
+        rg = self.create_group(name="test2")
+
         ass = ResourceGroupAssignment.objects.create(
             resource_group=rg,
             content_type=ContentType.objects.get_for_model(rg),
             object_id=rg.id,
-            user_code="test4",
+            object_user_code="test4",
         )
         self.assertEqual(ass.content_object, rg)
 
@@ -140,7 +120,7 @@ class ResourceGroupViewTest(BaseTestCase):
         group_data = response.json()
         self.assertEqual(len(group_data["assignments"]), 1)
         ass_data = group_data["assignments"][0]
-        self.assertEqual(ass_data["user_code"], ass.user_code)
+        self.assertEqual(ass_data["object_user_code"], ass.object_user_code)
         self.assertEqual(ass_data["content_type"], "iam | resource group")
         self.assertEqual(ass_data["object_id"], rg.id)
         self.assertEqual(ass_data["content_object"], str(rg))
