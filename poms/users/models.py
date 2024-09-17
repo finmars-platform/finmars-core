@@ -527,9 +527,7 @@ class MasterUser(models.Model):
 
     def create_defaults_currencies(self, finmars_bot):
         from poms.currencies.models import Currency, currencies_data
-        from poms.instruments.models import (
-            Country,
-        )
+        from poms.instruments.models import Country
 
         ccys = {}
         ccy_usd = None
@@ -537,7 +535,6 @@ class MasterUser(models.Model):
         for dc in currencies_data.values():
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
-
             cuontry_alpha_3 = dc.get("country_alpha_3", dc_user_code)
             try:
                 dc_cuontry = Country.objects.get(alpha_3=cuontry_alpha_3)
@@ -857,10 +854,9 @@ class MasterUser(models.Model):
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
             dc_reference_for_pricing = dc.get("reference_for_pricing", None)
-            
             country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
             try:
-                dc_country = Country.objects.get(alpha_3=country_alpha_3).id
+                dc_country = Country.objects.get(alpha_3=country_alpha_3)
             except (Country.DoesNotExist, Country.MultipleObjectsReturned) as e:
                 dc_country = None
 
