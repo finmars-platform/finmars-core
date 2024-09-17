@@ -187,7 +187,7 @@ class ResourceGroupAssignment(models.Model):
     def __str__(self) -> str:
         return (
             f"{self.resource_group.name} assigned to "
-            f"{self.content_object} : {self.object_user_code}"
+            f"{self.content_object}:{self.object_user_code}"
         )
 
 
