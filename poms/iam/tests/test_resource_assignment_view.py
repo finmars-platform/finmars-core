@@ -21,33 +21,54 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
             description=name,
         )
 
+    @staticmethod
+    def create_assignment(
+        group_name: str = "test",
+        model_name: str = "unknown",
+        object_id: int = -1,
+    ) -> ResourceGroupAssignment:
+        resource_group = ResourceGroup.objects.get(name=group_name)
+        content_type = ContentType.objects.get_by_natural_key(
+            app_label="iam", model=model_name.lower()
+        )
+        model = content_type.model_class()
+        model_object = model.objects.get(id=object_id)
+        return ResourceGroupAssignment.objects.create(
+            resource_group=resource_group,
+            content_type=content_type,
+            object_id=object_id,
+            object_user_code=model_object.user_code,
+        )
+
     def test__check_url(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    # def test__list(self):
-    #     ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test",
-    #         object_user_code="test",
-    #         description="test",
-    #     )
-    #     response = self.client.get(self.url)
-    #
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #
-    #     self.assertEqual(len(response_json), 1)
-    #     group_data = response_json[0]
-    #     self.assertEqual(group_data["name"], "test")
-    #     self.assertEqual(group_data["object_user_code"], "test")
-    #     self.assertEqual(group_data["description"], "test")
-    #     self.assertEqual(group_data["master_user"], self.master_user.id)
-    #     self.assertEqual(group_data["assignments"], [])
-    #     self.assertIn("created_at", group_data)
-    #     self.assertIn("modified_at", group_data)
-    #     self.assertIn("id", group_data)
-    #
+    def test__list(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        self.assertEqual(
+            str(ass),
+            f"{rg.name} assigned to {ass.content_object}:{ass.object_user_code}",
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(len(response_json), 1)
+        ass_data = response_json[0]
+        self.assertEqual(ass_data["id"], ass.id)
+        self.assertEqual(ass_data["resource_group"], rg.id)
+        self.assertEqual(ass_data["object_user_code"], "test7")
+        self.assertEqual(ass_data["content_type"], "iam | resource group")
+        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertIn("created_at", ass_data)
+        self.assertIn("modified_at", ass_data)
+
     # def test__retrieve(self):
     #     rg = ResourceGroup.objects.create(
     #         master_user=self.master_user,

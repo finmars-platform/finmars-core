@@ -184,9 +184,11 @@ class ResourceGroupAssignment(models.Model):
             )
         ]
 
-    def __str__(self):
-        return f"{self.resource_group.name} assigned to {self.content_object}:{self.object_id}"
-
+    def __str__(self) -> str:
+        return (
+            f"{self.resource_group.name} assigned to "
+            f"{self.content_object} : {self.object_user_code}"
+        )
 
 
 # Important, needs for cache clearance after Policy Updated !!!
