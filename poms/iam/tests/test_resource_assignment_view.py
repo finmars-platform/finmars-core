@@ -101,21 +101,19 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 204, response.content)
 
-    # def test__destroy_no_permission(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     self.user.is_staff = False
-    #     self.user.is_superuser = False
-    #     self.user.save()
-    #
-    #     response = self.client.delete(f"{self.url}{rg.id}/")
-    #
-    #     self.assertEqual(response.status_code, 403, response.content)
-    #
+    def test__destroy_no_permission(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.delete(f"{self.url}{ass.id}/")
+
+        self.assertEqual(response.status_code, 403, response.content)
+
     # def test__patch(self):
     #     rg = ResourceGroup.objects.create(
     #         master_user=self.master_user,
