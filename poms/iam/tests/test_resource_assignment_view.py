@@ -142,4 +142,42 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 403, response.content)
 
     def test__create(self):
-        pass
+        rg = self.create_group(name="test11")
+        content_type = ContentType.objects.get_by_natural_key(
+            app_label="iam", model="resourcegroup"
+        )
+        ass_data = dict(
+            resource_group=rg.id,
+            content_type=content_type.id,
+            object_id=rg.id,
+            object_user_code="test11",
+        )
+        response = self.client.post(self.url, data=ass_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        ass_data = response.json()
+        self.assertEqual(ass_data["resource_group"], rg.id)
+        self.assertEqual(ass_data["object_user_code"], "test7")
+        self.assertEqual(ass_data["content_type"], "iam | resource group")
+        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertIn("created_at", ass_data)
+        self.assertIn("modified_at", ass_data)
+
+    def test__create_no_permission(self):
+        rg = self.create_group(name="test11")
+        content_type = ContentType.objects.get_by_natural_key(
+            app_label="iam", model="resourcegroup"
+        )
+        ass_data = dict(
+            resource_group=rg.id,
+            content_type=content_type.id,
+            object_id=rg.id,
+            object_user_code="test11",
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.post(self.url, data=ass_data, format="json")
+
+        self.assertEqual(response.status_code, 403, response.content)
