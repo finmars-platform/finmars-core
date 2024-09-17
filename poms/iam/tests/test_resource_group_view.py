@@ -126,3 +126,23 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(ass_data["content_object"], str(rg))
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
+
+    def test__create(self):
+        group_data = dict(
+            master_user=self.master_user.id,
+            name="test9",
+            user_code="test9",
+            description="test9",
+        )
+        response = self.client.post(self.url, data=group_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        group_data = response.json()
+        self.assertEqual(group_data["name"], "test9")
+        self.assertEqual(group_data["user_code"], "test9")
+        self.assertEqual(group_data["description"], "test9")
+        self.assertEqual(group_data["master_user"], self.master_user.id)
+        self.assertEqual(group_data["assignments"], [])
+        self.assertIn("id", group_data)
+        self.assertIn("created_at", group_data)
+        self.assertIn("modified_at", group_data)

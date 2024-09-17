@@ -111,25 +111,21 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.user.save()
 
         response = self.client.delete(f"{self.url}{ass.id}/")
-
         self.assertEqual(response.status_code, 403, response.content)
 
-    # def test__patch(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     response = self.client.patch(
-    #         f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
-    #     )
-    #     group_data = response.json()
-    #
-    #     self.assertEqual(group_data["name"], "test3")
-    #
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
+    def test__patch(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        response = self.client.patch(
+            f"{self.url}{ass.id}/", data={"object_user_code": "test11"}, format="json"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        ass_data = response.json()
+        self.assertEqual(ass_data["object_user_code"], "test11")
+
     # def test__patch_no_permission(self):
     #     rg = ResourceGroup.objects.create(
     #         master_user=self.master_user,
