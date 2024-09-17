@@ -69,27 +69,29 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
 
-    # def test__retrieve(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     response = self.client.get(f"{self.url}{rg.id}/")
-    #
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     group_data = response.json()
-    #
-    #     self.assertEqual(group_data["id"], rg.id)
-    #     self.assertEqual(group_data["name"], "test2")
-    #     self.assertEqual(group_data["object_user_code"], "test2")
-    #     self.assertEqual(group_data["description"], "test2")
-    #     self.assertEqual(group_data["master_user"], self.master_user.id)
-    #     self.assertEqual(group_data["assignments"], [])
-    #     self.assertIn("created_at", group_data)
-    #     self.assertIn("modified_at", group_data)
-    #
+    def test__retrieve(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        self.assertEqual(
+            str(ass),
+            f"{rg.name} assigned to {ass.content_object}:{ass.object_user_code}",
+        )
+
+        response = self.client.get(f"{self.url}{ass.id}/")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        ass_data = response.json()
+
+        self.assertEqual(ass_data["id"], ass.id)
+        self.assertEqual(ass_data["resource_group"], rg.id)
+        self.assertEqual(ass_data["object_user_code"], "test7")
+        self.assertEqual(ass_data["content_type"], "iam | resource group")
+        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertIn("created_at", ass_data)
+        self.assertIn("modified_at", ass_data)
+
     # def test__destroy(self):
     #     rg = ResourceGroup.objects.create(
     #         master_user=self.master_user,
