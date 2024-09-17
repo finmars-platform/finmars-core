@@ -92,17 +92,15 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
 
-    # def test__destroy(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     response = self.client.delete(f"{self.url}{rg.id}/")
-    #
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
+    def test__destroy(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        response = self.client.delete(f"{self.url}{ass.id}/")
+
+        self.assertEqual(response.status_code, 204, response.content)
+
     # def test__destroy_no_permission(self):
     #     rg = ResourceGroup.objects.create(
     #         master_user=self.master_user,
