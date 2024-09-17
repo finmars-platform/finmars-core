@@ -126,47 +126,20 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         ass_data = response.json()
         self.assertEqual(ass_data["object_user_code"], "test11")
 
-    # def test__patch_no_permission(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     self.user.is_staff = False
-    #     self.user.is_superuser = False
-    #     self.user.save()
-    #
-    #     response = self.client.patch(
-    #         f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
-    #     )
-    #
-    #     self.assertEqual(response.status_code, 403, response.content)
-    #
-    # def test__assignment(self):
-    #     rg = ResourceGroup.objects.create(
-    #         master_user=self.master_user,
-    #         name="test2",
-    #         object_user_code="test2",
-    #         description="test2",
-    #     )
-    #     ass = ResourceGroupAssignment.objects.create(
-    #         resource_group=rg,
-    #         content_type=ContentType.objects.get_for_model(rg),
-    #         object_id=rg.id,
-    #         object_user_code="test4",
-    #     )
-    #     self.assertEqual(ass.content_object, rg)
-    #
-    #     response = self.client.get(f"{self.url}{rg.id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     group_data = response.json()
-    #     self.assertEqual(len(group_data["assignments"]), 1)
-    #     ass_data = group_data["assignments"][0]
-    #     self.assertEqual(ass_data["object_user_code"], ass.object_user_code)
-    #     self.assertEqual(ass_data["content_type"], "iam | resource group")
-    #     self.assertEqual(ass_data["object_id"], rg.id)
-    #     self.assertEqual(ass_data["content_object"], str(rg))
-    #     self.assertIn("created_at", ass_data)
-    #     self.assertIn("modified_at", ass_data)
+    def test__patch_no_permission(self):
+        rg = self.create_group(name="test7")
+        ass = self.create_assignment(
+            group_name="test7", model_name="ResourceGroup", object_id=rg.id
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.patch(
+            f"{self.url}{ass.id}/", data={"object_user_code": "test11"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 403, response.content)
+
+    def test__create(self):
+        pass

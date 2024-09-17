@@ -146,3 +146,17 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertIn("id", group_data)
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
+
+    def test__create_no_permission(self):
+        group_data = dict(
+            master_user=self.master_user.id,
+            name="test9",
+            user_code="test9",
+            description="test9",
+        )
+        self.user.is_staff = False
+        self.user.is_superuser = False
+        self.user.save()
+
+        response = self.client.post(self.url, data=group_data, format="json")
+        self.assertEqual(response.status_code, 403, response.content)
