@@ -38,13 +38,11 @@ class CreateDefaultCurrenciesTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.master_user = MasterUser.objects.create(name="test", realm_code="space00000")
-        self.finmars_bot = Member.objects.get(username="finmars_bot")
 
     @mock.patch('poms.currencies.models.currencies_data', new_callable=mock.MagicMock)
     def test__upload_correct_data(self, mock_currencies_data):
         mock_currencies_data.values.return_value = correct_mock_currencies_data
-        _ = self.master_user.create_defaults_currencies(self.finmars_bot)
+        _ = self.master_user.create_defaults_currencies(self.member)
             
         currency = Currency.objects.get(user_code="CHF")
         self.assertEqual(currency.name, "Swiss Franc (CHF)")
@@ -59,4 +57,4 @@ class CreateDefaultCurrenciesTestCase(BaseTestCase):
         mock_currencies_data.values.return_value = not_correct_mock_currencies_data
 
         with self.assertRaises(Country.DoesNotExist):
-            _ = self.master_user.create_defaults_currencies(self.finmars_bot)
+            _ = self.master_user.create_defaults_currencies(self.member)
