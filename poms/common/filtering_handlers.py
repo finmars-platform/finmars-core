@@ -504,6 +504,10 @@ def add_filter(qs, filter_config):
     value_type = str(filter_config["value_type"])
     key = filter_config["key"]
     value = None
+    exclude_empty_cells = filter_config.get("exclude_empty_cells", False)
+
+    if len(filter_config["value"]):
+        value = filter_config["value"][0]
 
     # print('value_type %s' % value_type)
     # print('value_type %s' % type(value_type))
@@ -521,7 +525,7 @@ def add_filter(qs, filter_config):
             clauses = []
 
             for value in values:
-                options = {key + "__user_code": value}
+                options = {f"{key}__user_code": value}
 
                 clauses.append(Q(**options))
 
@@ -576,11 +580,9 @@ def add_filter(qs, filter_config):
     elif filter_type == FilterType.EQUAL and value_type == ValueType.FIELD:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
-
-        if value:
-            q = _get_equal_q(key + "__name", value_type, value)
-
-            q = q | Q(**{f"{key}__name": ""})
+            q = _get_equal_q(f"{key}__name", value_type, value)
+            if not exclude_empty_cells:
+                q = q | Q(**{f"{key}__name": ""})
 
             qs = qs.filter(q)
 
