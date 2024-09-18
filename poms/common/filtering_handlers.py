@@ -67,9 +67,7 @@ def _get_equal_q(field_key, value_type, value):
     if value_type in (ValueType.NUMBER, ValueType.DATE):
         lookup = "exact"
 
-    q = Q(**{f"{field_key}__{lookup}": value})
-
-    return q
+    return Q(**{f"{field_key}__{lookup}": value})
 
 
 def _get_has_substring_q(field_key, value):
@@ -925,7 +923,7 @@ def is_dynamic_attribute_filter(filter_config):
 
 def handle_filters(qs, filter_settings, master_user, content_type):
     # print('Handle filters %s' % filter_settings)
-    start_time = time.time()
+    # start_time = time.time()
 
     if filter_settings:
         for filter_config in filter_settings:
