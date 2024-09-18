@@ -537,32 +537,24 @@ class MasterUser(models.Model):
             dc_name = dc.get("name", dc_user_code)
             cuontry_alpha_3 = dc.get("country_alpha_3", dc_user_code)
             try:
-                dc_cuontry = Country.objects.get(alpha_3=cuontry_alpha_3)
-            except (Country.DoesNotExist, Country.MultipleObjectsReturned) as e:
-                dc_cuontry = None
+                dc_country = Country.objects.get(alpha_3=cuontry_alpha_3)
+            except Country.DoesNotExist:
+                dc_country = None
 
             if dc_user_code != "-":
+                c = Currency.objects.create(
+                    master_user=self,
+                    user_code=dc_user_code,
+                    short_name=dc_user_code,
+                    name=dc_name,
+                    owner=finmars_bot,
+                    reference_for_pricing=dc_reference_for_pricing,
+                    country=dc_country,
+                )
+
                 if dc_user_code == "USD":
-                    c = Currency.objects.update_or_create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                        country=dc_cuontry,
-                    )
                     ccy_usd = c
-                else:
-                    c = Currency.objects.update_or_create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                        country=dc_cuontry,
-                    )
+
                 ccys[c.user_code] = c
 
         return ccy_usd
