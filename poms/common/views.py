@@ -352,20 +352,20 @@ class AbstractModelViewSet(
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "complextransaction",
             "transaction",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
                 queryset = queryset.filter(is_enabled=True)
 
-        if content_type.model in ["complextransaction"]:
+        if content_type.model == "complextransaction":
             queryset = queryset.filter(is_deleted=False)
 
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
