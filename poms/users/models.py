@@ -535,11 +535,8 @@ class MasterUser(models.Model):
         for dc in currencies_data.values():
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
-            cuontry_alpha_3 = dc.get("country_alpha_3", dc_user_code)
-            try:
-                dc_country = Country.objects.get(alpha_3=cuontry_alpha_3)
-            except Country.DoesNotExist:
-                dc_country = None
+            country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
 
             if dc_user_code != "-":
                 c = Currency.objects.create(
