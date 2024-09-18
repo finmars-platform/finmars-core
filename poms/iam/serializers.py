@@ -365,8 +365,6 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
 
 
 class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
-    content_type = serializers.StringRelatedField()  # Displays the model name
-    content_object = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
@@ -374,9 +372,6 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
         model = ResourceGroupAssignment
         fields = "__all__"
 
-    @staticmethod
-    def get_content_object(obj) -> str:
-        return str(obj.content_object)
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):

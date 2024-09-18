@@ -64,8 +64,7 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["id"], ass.id)
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test7")
-        self.assertEqual(ass_data["content_type"], "iam | resource group")
-        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertEqual(ass_data["content_type"], 24)
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
 
@@ -87,8 +86,7 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["id"], ass.id)
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test7")
-        self.assertEqual(ass_data["content_type"], "iam | resource group")
-        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertEqual(ass_data["content_type"], 24)
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
 
@@ -157,9 +155,8 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
 
         ass_data = response.json()
         self.assertEqual(ass_data["resource_group"], rg.id)
-        self.assertEqual(ass_data["object_user_code"], "test7")
-        self.assertEqual(ass_data["content_type"], "iam | resource group")
-        self.assertEqual(ass_data["content_object"], "test7")
+        self.assertEqual(ass_data["object_user_code"], "test11")
+        self.assertEqual(ass_data["content_type"], 24)
         self.assertIn("created_at", ass_data)
         self.assertIn("modified_at", ass_data)
 
