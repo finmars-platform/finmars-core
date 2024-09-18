@@ -844,10 +844,7 @@ class MasterUser(models.Model):
             dc_name = dc.get("name", dc_user_code)
             dc_reference_for_pricing = dc.get("reference_for_pricing", None)
             country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
-            try:
-                dc_country = Country.objects.get(alpha_3=country_alpha_3)
-            except (Country.DoesNotExist, Country.MultipleObjectsReturned) as e:
-                dc_country = None
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
 
             if dc_user_code in ccys_existed:
                 c1 = ccys_existed[dc_user_code]
