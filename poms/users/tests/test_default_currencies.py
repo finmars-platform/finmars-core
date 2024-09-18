@@ -32,7 +32,7 @@ not_correct_mock_currencies_data = [
 ]
 
 
-class CreateDefaultsCurrenciesTestCase(BaseTestCase):
+class CreateDefaultCurrenciesTestCase(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
@@ -40,8 +40,6 @@ class CreateDefaultsCurrenciesTestCase(BaseTestCase):
         self.init_test_case()
         self.master_user = MasterUser.objects.create(name="test", realm_code="space00000")
         self.finmars_bot = Member.objects.get(username="finmars_bot")
-        
-        
 
     @mock.patch('poms.currencies.models.currencies_data', new_callable=mock.MagicMock)
     def test__upload_correct_data(self, mock_currencies_data):
@@ -55,7 +53,6 @@ class CreateDefaultsCurrenciesTestCase(BaseTestCase):
         currency = Currency.objects.get(user_code="GBP")
         self.assertEqual(currency.name, "Pound Sterling (GBP)")
         self.assertEqual(currency.country.alpha_3, "GBR")
-
 
     @mock.patch('poms.currencies.models.currencies_data', new_callable=mock.MagicMock)
     def test__upload_not_correct_data(self, mock_currencies_data):
