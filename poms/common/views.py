@@ -5,7 +5,6 @@ import time
 import traceback
 from os.path import getsize
 
-from celery.result import AsyncResult
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
@@ -15,8 +14,7 @@ from django.db import connection
 from django.http import Http404, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.inspectors import SwaggerAutoSchema
-from rest_framework import parsers, renderers
-from rest_framework import status
+from rest_framework import parsers, renderers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -24,6 +22,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
+
+from celery.result import AsyncResult
 
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
@@ -739,7 +739,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
     :return list:
     """
 
-    report_instance_model = apps.get_model(content_type + "instance")
+    report_instance_model = apps.get_model(f"{content_type}instance")
 
     report_instance = report_instance_model.objects.get(id=report_instance_id)
 
@@ -752,9 +752,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
         item[key] for item in full_items if key in item and item[key] not in (None, "")
     }
 
-    values = list(values)
-    values.sort()
-
+    values = sorted(values)
     return values
 
 
@@ -849,7 +847,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
             ]
 
         if "attributes." in key:
-
             try:
                 results = _get_values_of_generic_attribute(
                     master_user, value_type, content_type, key
@@ -866,7 +863,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         elif is_report and (
             key in report_system_attrs_keys_list or "custom_fields." in key
         ):
-
             if report_instance_id is None:
                 return Response(
                     {
@@ -988,7 +984,6 @@ class RealmMigrateSchemeView(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -999,7 +994,7 @@ class RealmMigrateSchemeView(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"SET search_path TO {space_code};")
 
-            _l.info("RealmMigrateSchemeView.space_code %s" % space_code)
+            _l.info(f"RealmMigrateSchemeView.space_code {space_code}")
 
             # Programmatically call the migrate command
             call_command("migrate")
@@ -1011,8 +1006,9 @@ class RealmMigrateSchemeView(APIView):
             return Response({"status": "ok"})
 
         except Exception as e:
-
-            _l.error(f"RealmMigrateSchemeView.exception: {str(e)}")
-            _l.error(f"RealmMigrateSchemeView.traceback: {traceback.format_exc()}")
+            _l.error(
+                f"RealmMigrateSchemeView.exception: {str(e)} "
+                f"trace: {traceback.format_exc()}"
+            )
 
             return Response({"status": "error", "message": str(e)})
