@@ -96,7 +96,7 @@ IDENTIFIERS = [
         "sedol": "sedol",
         "database_id": "",
     },
-    
+
     {
         "cbonds_id": None,
         "isin": "isin",
@@ -608,6 +608,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.account = None
         self.instrument_type = None
         self.db_data = None
+        self.realm_code = "realm0000"
+        self.space_code = "space0000"
 
     def init_test_case(self):
         self.client = APIClient()
