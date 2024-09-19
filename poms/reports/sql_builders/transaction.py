@@ -708,7 +708,7 @@ class TransactionReportBuilderSql:
                 result_item['entry_item_type_name'] = None
 
                 if result_item['transaction_class_id'] == TransactionClass.CASH_INFLOW or result_item[
-                    'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
+                    'transaction_class_id'] == TransactionClass.CASH_OUTFLOW or result_item['transaction_class_id'] == TransactionClass.DISTRIBUTION or result_item['transaction_class_id'] == TransactionClass.INJECTION:
 
                     if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
                         result_item[
