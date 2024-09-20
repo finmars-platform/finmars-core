@@ -160,6 +160,36 @@ router.register(
     api.UniversalInputViewSet,
     "universalInput",
 )
+router.register(
+    "utils/date/split-date-range",
+    api.SplitDateRangeViewSet,
+    "split_date_range",
+)
+router.register(
+    "utils/date/pick-dates-from-range",
+    api.PickDatesFromRangeViewSet,
+    "pick_dates_from_range",
+)
+router.register(
+    "utils/date/calc-period-date",
+    api.CalcPeriodDateViewSet,
+    "calc_period_date",
+)
+router.register(
+    "utils/date/get-last-business-day",
+    api.LastBusinessDayViewSet,
+    "get_last_business_day",
+)
+router.register(
+    "utils/date/is-business-day",
+    api.IsBusinessDayViewSet,
+    "is_business_day",
+)
+router.register(
+    "utils/date/last-day-of-month",
+    api.LastDayOfMonthViewSet,
+    "last_day_of_month",
+)
 router.register(  # Probably deprecated
     r"import/complex/scheme",
     complex_import.ComplexImportSchemeViewSet,
