@@ -564,7 +564,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
-            user_code=f"{INITIAL_TYPE_PREFIX}_",
+            user_code=INITIAL_TYPE_PREFIX,
             defaults=dict(
                 master_user=self.master_user,
                 owner=self.member,
