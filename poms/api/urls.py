@@ -161,32 +161,32 @@ router.register(
     "universalInput",
 )
 router.register(
-    "utils/date/split-date-range",
+    r"utils/date/split-date-range",
     api.SplitDateRangeViewSet,
     "split_date_range",
 )
 router.register(
-    "utils/date/pick-dates-from-range",
+    r"utils/date/pick-dates-from-range",
     api.PickDatesFromRangeViewSet,
     "pick_dates_from_range",
 )
 router.register(
-    "utils/date/calc-period-date",
+    r"utils/date/calc-period-date",
     api.CalcPeriodDateViewSet,
     "calc_period_date",
 )
 router.register(
-    "utils/date/get-last-business-day",
+    r"utils/date/last-business-day",
     api.LastBusinessDayViewSet,
-    "get_last_business_day",
+    "last_business_day",
 )
 router.register(
-    "utils/date/is-business-day",
+    r"utils/date/is-business-day",
     api.IsBusinessDayViewSet,
     "is_business_day",
 )
 router.register(
-    "utils/date/last-day-of-month",
+    r"utils/date/last-day-of-month",
     api.LastDayOfMonthViewSet,
     "last_day_of_month",
 )
