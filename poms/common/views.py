@@ -854,6 +854,10 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                 results = _get_values_of_generic_attribute(
                     master_user, value_type, content_type, key
                 )
+
+                if 'Cash & Equivalents' not in results:
+                    results.append('Cash & Equivalents')
+
             except GenericAttributeType.DoesNotExist:
                 return Response(
                     {

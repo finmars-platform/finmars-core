@@ -952,7 +952,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
 
     process = InstrumentTypeProcess(instrument_type=instrument_type)
     instrument_dict = process.instrument
-    instrument_dict["name"] = options_data["name"]
+    instrument_dict["name"] = options_data.get("name", "unknown")
     instrument_dict["user_code"] = options_data["user_code"]
     instrument_dict["is_active"] = False
     instrument_dict["identifier"] = {}
