@@ -176,8 +176,6 @@ class PortfolioViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio/"
         self.portfolio = Portfolio.objects.last()
         self.user_code = self.random_string()
@@ -215,6 +213,8 @@ class PortfolioViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["user_code"], self.user_code)
         self.assertFalse(response_json["is_deleted"])
+        self.assertIn("resource_groups", response_json)
+
 
     def test_destroy(self):
         response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
@@ -237,3 +237,28 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
+
+    def test_add_resource_group(self):
+        from django.contrib.contenttypes.models import ContentType
+        from poms.iam.models import ResourceGroup, ResourceGroupAssignment
+
+        rg = ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name="test",
+            user_code="test",
+            description="test",
+        )
+        ass = ResourceGroupAssignment.objects.create(
+            resource_group=rg,
+            content_type=ContentType.objects.get_for_model(self.portfolio),
+            object_id=self.portfolio.id,
+            object_user_code=self.portfolio.user_code,
+        )
+        response = self.client.get(f"{self.url}{self.portfolio.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        from pprint import pprint
+        pprint(response_json)
+        self.assertEqual(response_json["resource_groups"][0]["id"], rg.id)

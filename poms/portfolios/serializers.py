@@ -17,6 +17,7 @@ from poms.common.serializers import (
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.file_reports.serializers import FileReportSerializer
+from poms.iam.models import ResourceGroup
 from poms.instruments.fields import (
     PricingPolicyField,
     SystemPricingPolicyDefault,
@@ -172,14 +173,16 @@ class PortfolioSerializer(
         required=False,
         read_only=True,
     )
-
     first_transaction = serializers.SerializerMethodField(read_only=True)
-
     first_transaction_date = serializers.ReadOnlyField()
     first_cash_flow_date = serializers.ReadOnlyField()
-
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
+    )
+    resource_groups = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ResourceGroup.objects.all(),
+        required=False
     )
 
     class Meta:
@@ -201,6 +204,7 @@ class PortfolioSerializer(
             "first_cash_flow_date",
             "portfolio_type",
             "portfolio_type_object",
+            "resource_groups",
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
@@ -256,7 +260,7 @@ class PortfolioSerializer(
                     "user_code": instance.user_code,
                     "short_name": instance.short_name,
                     "public_name": instance.public_name,
-                    "instrument_type": f"{settings.INSTRUMENT_TYPE_PREFIX}:portfolio",
+                    "instrument_type": f"{settings.INSTRUMENT_TYPE_PREFIX}:portfolio",  # FIXME WTF?
                     "identifier": {},
                 }
 

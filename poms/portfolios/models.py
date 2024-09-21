@@ -9,16 +9,17 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import (
     AbstractClassModel,
-    TimeStampedModel,
+    ComputedModel,
     FakeDeletableModel,
     NamedModel,
-    ComputedModel,
     ObjectStateModel,
+    TimeStampedModel,
 )
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
+from poms.iam.models import ResourceGroupAssignment
 from poms.instruments.models import CostMethod, Instrument, PricingPolicy
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import EcosystemDefault, MasterUser
@@ -170,9 +171,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         verbose_name=gettext_lazy("transaction types"),
     )
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
-
     portfolio_type = models.ForeignKey(
         PortfolioType,
         on_delete=models.PROTECT,
@@ -180,15 +181,18 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         blank=True,
         verbose_name=gettext_lazy("portfolio type"),
     )
-
     first_transaction_date = models.DateField(
         null=True,
         verbose_name=gettext_lazy("first transaction date"),
     )
-
     first_cash_flow_date = models.DateField(
         null=True,
         verbose_name=gettext_lazy("first cash flow date"),
+    )
+    resource_groups = GenericRelation(
+        ResourceGroupAssignment,
+        related_query_name="portfolios",
+        verbose_name=gettext_lazy("resource groups to which portfolio belongs"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -330,7 +334,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         ]
 
 
-class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
+class PortfolioRegister(
+    NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
+):
     """
     Portfolio Register
 
@@ -787,7 +793,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         ]
 
     def get_balance_report(self):
-
         from poms.reports.common import Report
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 
@@ -812,7 +817,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         return instance
 
     def get_pl_report(self):
-
         from poms.reports.common import Report
         from poms.reports.sql_builders.pl import PLReportBuilderSql
 
@@ -838,7 +842,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         return instance
 
     def get_performance_report(self):
-
         from poms.reports.common import PerformanceReport
 
         try:
@@ -867,7 +870,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         return instance
 
     def get_annualized_return(self):
-
         _delta = self.date - str_to_date(self.portfolio.first_transaction_date)
         days_from_first_transaction = _delta.days
 
@@ -887,7 +889,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         return annualized_return
 
     def calculate(self):
-
         self.error_message = ""
 
         self.balance_report = self.get_balance_report()
@@ -925,7 +926,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         total = 0
         for item in self.pl_report.items:
-
             # Check position_size aswell?
             if item["total"] is not None:
                 total = total + item["total"]
@@ -1086,9 +1086,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         has_reconcile_error = False
 
         for portfolio_id, portfolio in portfolios.items():
-
             if portfolio_id != reference_portfolio["portfolio"]:
-
                 for user_code, position_size in portfolio["items"].items():
                     # Initialize with reference position size; default to 0 if not found
                     reference_size = reference_items.get(user_code, 0)
@@ -1106,17 +1104,17 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                     report_entry[
                         reference_portfolio["portfolio_object"]["user_code"]
                     ] = reference_size
-                    report_entry[portfolio["portfolio_object"]["user_code"]] = (
-                        position_size
-                    )
+                    report_entry[
+                        portfolio["portfolio_object"]["user_code"]
+                    ] = position_size
 
                     # Check for discrepancies
                     if position_size != reference_size:
                         discrepancy = abs(reference_size - position_size)
                         report_entry["status"] = "error"
-                        report_entry["message"] = (
-                            f"{portfolio['portfolio_object']['user_code']} is {'missing' if position_size < reference_size else 'over by'} {discrepancy} units"
-                        )
+                        report_entry[
+                            "message"
+                        ] = f"{portfolio['portfolio_object']['user_code']} is {'missing' if position_size < reference_size else 'over by'} {discrepancy} units"
                         report_entry["diff"] = discrepancy
 
                         has_reconcile_error = True
@@ -1126,7 +1124,6 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         return report, has_reconcile_error
 
     def calculate(self):
-
         from poms.reports.common import Report
 
         ecosystem_defaults = EcosystemDefault.objects.filter(
@@ -1169,9 +1166,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             )
 
         for item in instance.items:
-
             if "portfolio_id" in item:
-
                 if item["portfolio_id"] not in reconcile_result:
                     reconcile_result[item["portfolio_id"]] = {
                         "portfolio": item["portfolio_id"],
@@ -1208,9 +1203,9 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                         "items": {},
                     }
 
-                reconcile_result[item["portfolio_id"]]["items"][item["user_code"]] = (
-                    item["position_size"]
-                )
+                reconcile_result[item["portfolio_id"]]["items"][
+                    item["user_code"]
+                ] = item["position_size"]
                 reconcile_result[item["portfolio_id"]]["position_size"] = (
                     reconcile_result[item["portfolio_id"]]["position_size"]
                     + item["position_size"]
