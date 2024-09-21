@@ -259,6 +259,4 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        from pprint import pprint
-        pprint(response_json)
-        self.assertEqual(response_json["resource_groups"][0]["id"], rg.id)
+        self.assertEqual(response_json["resource_groups"][0], rg.id)
