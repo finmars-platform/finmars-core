@@ -2,6 +2,7 @@ from datetime import timedelta
 from logging import getLogger
 from typing import Type
 
+from django.conf import settings
 from django.db import models, transaction
 from django.views.generic.dates import timezone_today
 from rest_framework import serializers
@@ -255,7 +256,7 @@ class PortfolioSerializer(
                     "user_code": instance.user_code,
                     "short_name": instance.short_name,
                     "public_name": instance.public_name,
-                    "instrument_type": "com.finmars.initial-instrument-type:portfolio",
+                    "instrument_type": f"{settings.INSTRUMENT_TYPE_PREFIX}:portfolio",
                     "identifier": {},
                 }
 
@@ -596,7 +597,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
 
 
 class PortfolioBundleSerializer(
-    ModelWithUserCodeSerializer, 
+    ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
     ModelWithObjectStateSerializer,
 ):

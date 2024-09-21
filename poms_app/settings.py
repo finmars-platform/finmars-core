@@ -792,3 +792,5 @@ if SERVER_TYPE != "local":
         # django.contrib.auth) you may enable sending PII data.
         send_default_pii=True,
     )
+
+INSTRUMENT_TYPE_PREFIX =  ENV_STR("INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type")
