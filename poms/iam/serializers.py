@@ -373,6 +373,24 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ResourceGroupAssignmentShortSerializer(serializers.ModelSerializer):
+    resource_group_assignment_id = serializers.IntegerField(source="id", read_only=True)
+    resource_group_name = serializers.CharField(source="resource_group.name", read_only=True)
+    resource_group_user_code = serializers.CharField(
+        source="resource_group.user_code", read_only=True
+    )
+
+    class Meta:
+        model = ResourceGroupAssignment
+        fields = [
+            "resource_group_assignment_id",
+            "resource_group_id",
+            "resource_group_name",
+            "resource_group_user_code",
+        ]
+
+
+
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
     assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)

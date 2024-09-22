@@ -17,7 +17,6 @@ from poms.common.serializers import (
 )
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.file_reports.serializers import FileReportSerializer
-from poms.iam.models import ResourceGroup
 from poms.instruments.fields import (
     PricingPolicyField,
     SystemPricingPolicyDefault,
@@ -179,11 +178,13 @@ class PortfolioSerializer(
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
     )
-    resource_groups = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=ResourceGroup.objects.all(),
-        required=False
-    )
+    # resource_groups = serializers.PrimaryKeyRelatedField(
+    #     many=True,
+    #     queryset=ResourceGroup.objects.all(),
+    #     required=False
+    # )
+
+    resource_groups = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Portfolio
@@ -206,6 +207,13 @@ class PortfolioSerializer(
             "portfolio_type_object",
             "resource_groups",
         ]
+
+    def get_resource_groups(self, instance: Portfolio) -> list:
+        from poms.iam.serializers import ResourceGroupAssignmentShortSerializer
+
+        return ResourceGroupAssignmentShortSerializer(
+            instance.resource_groups.all(), many=True
+        ).data
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
         return {
@@ -503,12 +511,12 @@ class PortfolioRegisterSerializer(
         instrument_object["has_linked_with_portfolio"] = True
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
-        instrument_object["co_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
-        instrument_object["counter_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
+        instrument_object[
+            "co_directional_exposure_currency"
+        ] = instance.valuation_currency_id
+        instrument_object[
+            "counter_directional_exposure_currency"
+        ] = instance.valuation_currency_id
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -886,10 +894,10 @@ class PortfolioReconcileHistorySerializer(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["portfolio_reconcile_group_object"] = (
-            PortfolioReconcileGroupSerializer(
-                source="portfolio_reconcile_group", read_only=True
-            )
+        self.fields[
+            "portfolio_reconcile_group_object"
+        ] = PortfolioReconcileGroupSerializer(
+            source="portfolio_reconcile_group", read_only=True
         )
 
         self.fields["file_report_object"] = FileReportSerializer(

@@ -215,7 +215,6 @@ class PortfolioViewSetTest(BaseTestCase):
         self.assertFalse(response_json["is_deleted"])
         self.assertIn("resource_groups", response_json)
 
-
     def test_destroy(self):
         response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
@@ -242,6 +241,8 @@ class PortfolioViewSetTest(BaseTestCase):
         from django.contrib.contenttypes.models import ContentType
         from poms.iam.models import ResourceGroup, ResourceGroupAssignment
 
+
+
         rg = ResourceGroup.objects.create(
             master_user=self.master_user,
             name="test",
@@ -259,4 +260,16 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["resource_groups"][0], rg.id)
+        self.assertEqual(
+            response_json["resource_groups"][0]["resource_group_assignment_id"], ass.id
+        )
+        self.assertEqual(
+            response_json["resource_groups"][0]["resource_group_id"], rg.id
+        )
+        self.assertEqual(
+            response_json["resource_groups"][0]["resource_group_name"], rg.name
+        )
+        self.assertEqual(
+            response_json["resource_groups"][0]["resource_group_user_code"],
+            rg.user_code,
+        )
