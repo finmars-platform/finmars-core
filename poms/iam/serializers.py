@@ -34,7 +34,6 @@ class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
 
 
 class IamProtectedSerializer(serializers.ModelSerializer):
-
     """
     Abstract serializer for models with User Code.
     """
@@ -375,7 +374,9 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
 class ResourceGroupAssignmentShortSerializer(serializers.ModelSerializer):
     resource_group_assignment_id = serializers.IntegerField(source="id", read_only=True)
-    resource_group_name = serializers.CharField(source="resource_group.name", read_only=True)
+    resource_group_name = serializers.CharField(
+        source="resource_group.name", read_only=True
+    )
     resource_group_user_code = serializers.CharField(
         source="resource_group.user_code", read_only=True
     )
@@ -388,8 +389,6 @@ class ResourceGroupAssignmentShortSerializer(serializers.ModelSerializer):
             "resource_group_name",
             "resource_group_user_code",
         ]
-
-
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):

@@ -241,12 +241,13 @@ class PortfolioViewSetTest(BaseTestCase):
         from django.contrib.contenttypes.models import ContentType
         from poms.iam.models import ResourceGroup, ResourceGroupAssignment
 
-
+        name = self.random_string()
+        user_code = self.random_string()
 
         rg = ResourceGroup.objects.create(
             master_user=self.master_user,
-            name="test",
-            user_code="test",
+            name=name,
+            user_code=user_code,
             description="test",
         )
         ass = ResourceGroupAssignment.objects.create(
@@ -267,9 +268,9 @@ class PortfolioViewSetTest(BaseTestCase):
             response_json["resource_groups"][0]["resource_group_id"], rg.id
         )
         self.assertEqual(
-            response_json["resource_groups"][0]["resource_group_name"], rg.name
+            response_json["resource_groups"][0]["resource_group_name"], name
         )
         self.assertEqual(
             response_json["resource_groups"][0]["resource_group_user_code"],
-            rg.user_code,
+            user_code,
         )
