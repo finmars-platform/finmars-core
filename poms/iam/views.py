@@ -1,11 +1,13 @@
 import django_filters
+from django.contrib.contenttypes.models import ContentType
 from django_filters.rest_framework import FilterSet
 from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import filters
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from poms.common.serializers import ContentTypeSerializer
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
 from poms.iam.models import (
@@ -208,7 +210,7 @@ class IAMBaseViewSet(ModelViewSet):
         return instance.user_code in allowed_resources
 
 
-class ResourceGroupViewSet(IAMBaseViewSet):
+class ResourceGroupViewSet(ModelViewSet):
     """
     A viewset for viewing and editing ResourceGroup instances.
     """
@@ -226,7 +228,7 @@ class ResourceGroupViewSet(IAMBaseViewSet):
         return super().get_permissions()
 
 
-class ResourceGroupAssignmentViewSet(IAMBaseViewSet):
+class ResourceGroupAssignmentViewSet(ModelViewSet):
     """
     A viewset for viewing and editing ResourceGroupAssignment instances.
     """
@@ -242,3 +244,24 @@ class ResourceGroupAssignmentViewSet(IAMBaseViewSet):
             self.permission_classes.append(AdminPermission)
 
         return super().get_permissions()
+
+
+from typing import List
+
+class ContentTypeViewSet(ModelViewSet):
+    """
+    A viewset for viewing all ContentTypes objects in 'poms',
+    and which have 'user_code' field.
+    """
+
+    queryset = ContentType.objects.filter(app_label="poms", model__isnull=False)
+    serializer_class = ContentTypeSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    http_method_names = ["get"]
+
+    def get_queryset(self) -> List[ContentType]:
+        return [ct for ct in self.queryset if hasattr(ct, "user_code")]
+
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed("Action 'retrieve' is not allowed in this URI")

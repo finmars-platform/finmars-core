@@ -172,7 +172,9 @@ class ContentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContentType
         fields = [
-            "name",
+            "id",
+            "app_label",
+            "model",
         ]
         read_only_fields = fields
 

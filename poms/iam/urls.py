@@ -28,3 +28,8 @@ router.register(
     iam.ResourceGroupAssignmentViewSet,
     "resource-group-assignment",
 )
+router.register(
+    "content-types",
+    iam.ContentTypeViewSet,
+    "content-types",
+)
