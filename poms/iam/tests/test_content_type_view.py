@@ -1,5 +1,3 @@
-from django.contrib.contenttypes.models import ContentType
-
 from poms.common.common_base_test import BaseTestCase
 
 

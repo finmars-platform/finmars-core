@@ -246,22 +246,31 @@ class ResourceGroupAssignmentViewSet(ModelViewSet):
         return super().get_permissions()
 
 
-from typing import List
-
 class ContentTypeViewSet(ModelViewSet):
     """
-    A viewset for viewing all ContentTypes objects in 'poms',
-    and which have 'user_code' field.
+    A viewset for viewing all ContentTypes objects,which have 'user_code' field,
+    but except ResourceGroup.
     """
 
-    queryset = ContentType.objects.filter(app_label="poms", model__isnull=False)
+    queryset = ContentType.objects.filter(
+        app_label__isnull=False,
+        model__isnull=False,
+    ).exclude(
+        model=ResourceGroup._meta.model_name,
+        app_label=ResourceGroup._meta.app_label,
+    )
     serializer_class = ContentTypeSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
     http_method_names = ["get"]
 
-    def get_queryset(self) -> List[ContentType]:
-        return [ct for ct in self.queryset if hasattr(ct, "user_code")]
+    def get_queryset(self) -> list[ContentType]:
+        return [
+            ct
+            for ct in self.queryset
+            if hasattr(ct.model_class(), "user_code")
+            and ct.model_class != ResourceGroup
+        ]
 
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed("Action 'retrieve' is not allowed in this URI")

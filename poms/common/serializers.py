@@ -169,14 +169,19 @@ class ClassifierListSerializer(serializers.ListSerializer):
 
 
 class ContentTypeSerializer(serializers.ModelSerializer):
+    app_model = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = ContentType
         fields = [
             "id",
-            "app_label",
-            "model",
+            "app_model",
         ]
         read_only_fields = fields
+
+    @staticmethod
+    def get_app_model(obj) -> str:
+        return f"{obj.app_label}.{obj.model}"
 
 
 class RealmMigrateSchemeSerializer(serializers.Serializer):
