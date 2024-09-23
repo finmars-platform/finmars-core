@@ -7,6 +7,8 @@ from rest_framework.exceptions import ValidationError
 
 from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
+from poms.common.utils import VALID_FREQUENCY
+from poms_app.settings import API_DATE_FORMAT
 
 _l = logging.getLogger('poms.api')
 
@@ -114,3 +116,47 @@ class ExpressionSerializer(serializers.Serializer):
 
     def get_help_raw(self, obj):
         return formula.HELP.split('\n')
+
+
+class SplitDateRangeSerializer(serializers.Serializer):
+    start_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
+    end_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
+    frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
+    is_only_bday = serializers.BooleanField(required=True)
+
+    def validate(self, data):
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        frequency = data.get("frequency")
+
+        if start_date > end_date:
+            raise serializers.ValidationError("Start date cannot be after end date.")
+
+        if frequency not in VALID_FREQUENCY:
+            raise serializers.ValidationError(f"Not allowed frequency '{frequency}', allowed frequencies are: {', '.join(VALID_FREQUENCY)}")
+
+        return data
+
+
+class PickDatesFromRangeSerializer(SplitDateRangeSerializer):
+    start = serializers.BooleanField(required=True)
+
+
+class CalcPeriodDateSerializer(serializers.Serializer):
+    date = serializers.DateField(required=True, format=API_DATE_FORMAT)
+    frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
+    is_only_bday = serializers.BooleanField(required=True)
+    shift = serializers.IntegerField(required=True)
+    start = serializers.BooleanField(required=True)
+
+    def validate(self, data):
+        frequency = data.get("frequency")
+
+        if frequency not in VALID_FREQUENCY:
+            raise serializers.ValidationError(f"Not allowed frequency '{frequency}', allowed frequencies are: {', '.join(VALID_FREQUENCY)}")
+
+        return data
+
+
+class UtilsDateSerializer(serializers.Serializer):
+    date = serializers.DateField(required=True, format=API_DATE_FORMAT)
