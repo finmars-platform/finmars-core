@@ -268,7 +268,7 @@ class PortfolioSerializer(
                     "user_code": instance.user_code,
                     "short_name": instance.short_name,
                     "public_name": instance.public_name,
-                    "instrument_type": f"{settings.INSTRUMENT_TYPE_PREFIX}:portfolio",  # FIXME WTF?
+                    "instrument_type": f"{settings.INSTRUMENT_TYPE_PREFIX}:portfolio",
                     "identifier": {},
                 }
 
