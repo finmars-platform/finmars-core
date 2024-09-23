@@ -208,17 +208,25 @@ class SearchResultSerializer(serializers.ModelSerializer):
         model = StorageObject
         fields = "__all__"
 
+    @staticmethod
+    def remove_spacecode(path: str) -> str:
+        if not path.startswith("space"):
+            return path
+        parts = path.rsplit(sep="/", maxsplit=1)
+        return parts[1]
+
     def to_representation(self, instance: StorageObject) -> dict:
         name = instance.name
         size = instance.size
         mime_type, _ = mimetypes.guess_type(name)
+        file_path = self.remove_spacecode(instance.path)
         return {
             "type": "file" if instance.is_file else "dir",
             "mime_type": mime_type if instance.is_file else "-",
             "name": name,
             "created_at": instance.created_at,
             "modified_at": instance.modified_at,
-            "file_path": instance.path,
+            "file_path": file_path,
             "size": size,
             "size_pretty": pretty_size(size),
         }
