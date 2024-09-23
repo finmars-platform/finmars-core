@@ -31,6 +31,10 @@ from poms.api.serializers import (
     LanguageSerializer,
     Timezone,
     TimezoneSerializer,
+    SplitDateRangeSerializer,
+    PickDatesFromRangeSerializer,
+    CalcPeriodDateSerializer,
+    UtilsDateSerializer,
 )
 from poms.common.storage import get_storage
 from poms.common.utils import (
@@ -38,6 +42,11 @@ from poms.common.utils import (
     get_list_of_business_days_between_two_dates,
     get_list_of_dates_between_two_dates,
     last_day_of_month,
+    split_date_range,
+    calc_period_date,
+    pick_dates_from_range,
+    get_last_business_day,
+    is_business_day,
 )
 from poms.common.views import AbstractViewSet
 from poms.currencies.models import Currency
@@ -1543,3 +1552,88 @@ def serve_docs(request, path, **kwargs):
     kwargs["document_root"] = settings.DOCS_ROOT
 
     return serve(request, path, **kwargs)
+
+
+class SplitDateRangeViewSet(AbstractViewSet):
+    serializer_class = SplitDateRangeSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        start_date = serializer.validated_data["start_date"]
+        end_date = serializer.validated_data["end_date"]
+        frequency = serializer.validated_data["frequency"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        dates = split_date_range(start_date, end_date, frequency, is_only_bday)
+
+        return Response({"result": dates}, status=status.HTTP_200_OK)
+
+
+class CalcPeriodDateViewSet(AbstractViewSet):
+    serializer_class = CalcPeriodDateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        date = serializer.validated_data["date"]
+        frequency = serializer.validated_data["frequency"]
+        shift = serializer.validated_data["shift"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        start = serializer.validated_data["start"]
+        dates = calc_period_date(date, frequency, shift, is_only_bday, start)
+
+        return Response({"result": dates}, status=status.HTTP_200_OK)
+
+
+class PickDatesFromRangeViewSet(AbstractViewSet):
+    serializer_class = PickDatesFromRangeSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        start_date = serializer.validated_data["start_date"]
+        end_date = serializer.validated_data["end_date"]
+        frequency = serializer.validated_data["frequency"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        start = serializer.validated_data["start"]
+        dates = pick_dates_from_range(start_date, end_date, frequency, is_only_bday, start)
+
+        return Response({"result": dates}, status=status.HTTP_200_OK)
+
+
+class LastBusinessDayViewSet(AbstractViewSet):
+    serializer_class = UtilsDateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
+        date = get_last_business_day(date, True)
+
+        return Response({"result": date}, status=status.HTTP_200_OK)
+
+
+class IsBusinessDayViewSet(AbstractViewSet):
+    serializer_class = UtilsDateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
+
+        return Response({"result": is_business_day(date)}, status=status.HTTP_200_OK)
+
+
+class LastDayOfMonthViewSet(AbstractViewSet):
+    serializer_class = UtilsDateSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
+        date = last_day_of_month(date)
+
+        return Response({"result": date}, status=status.HTTP_200_OK)
