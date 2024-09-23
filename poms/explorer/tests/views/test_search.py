@@ -178,3 +178,22 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], amount)
         self.assertEqual(len(response_json["results"]), page_size)
+
+    def test__spacecode_removed(self):
+        amount = 2
+        for i in range(1, amount + 1):
+            StorageObject.objects.create(
+                path=f"space00000/etc/system/name_{i}.pdf",
+                size=self.random_int(10, 1000),
+                is_file=True,
+            )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], amount)
+        self.assertEqual(len(response_json["results"]), amount)
+        results = response_json["results"]
+        for r in results:
+            self.assertNotIn("space00000", r["file_path"])
