@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.utils import VALID_FREQUENCY
+from poms_app.settings import API_DATE_FORMAT
 
 _l = logging.getLogger('poms.api')
 
@@ -118,8 +119,8 @@ class ExpressionSerializer(serializers.Serializer):
 
 
 class SplitDateRangeSerializer(serializers.Serializer):
-    start_date = serializers.DateField(required=True, format="%Y-%m-%d")
-    end_date = serializers.DateField(required=True, format="%Y-%m-%d")
+    start_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
+    end_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
     frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
     is_only_bday = serializers.BooleanField(required=True)
 
@@ -142,7 +143,7 @@ class PickDatesFromRangeSerializer(SplitDateRangeSerializer):
 
 
 class CalcPeriodDateSerializer(serializers.Serializer):
-    date = serializers.DateField(required=True, format="%Y-%m-%d")
+    date = serializers.DateField(required=True, format=API_DATE_FORMAT)
     frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
     is_only_bday = serializers.BooleanField(required=True)
     shift = serializers.IntegerField(required=True)
@@ -158,4 +159,4 @@ class CalcPeriodDateSerializer(serializers.Serializer):
 
 
 class UtilsDateSerializer(serializers.Serializer):
-    date = serializers.DateField(required=True, format="%Y-%m-%d")
+    date = serializers.DateField(required=True, format=API_DATE_FORMAT)

@@ -1559,17 +1559,15 @@ class SplitDateRangeViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-            start_date = serializer.validated_data["start_date"]
-            end_date = serializer.validated_data["end_date"]
-            frequency = serializer.validated_data["frequency"]
-            is_only_bday = serializer.validated_data["is_only_bday"]
-            dates = split_date_range(start_date, end_date, frequency, is_only_bday)
+        start_date = serializer.validated_data["start_date"]
+        end_date = serializer.validated_data["end_date"]
+        frequency = serializer.validated_data["frequency"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        dates = split_date_range(start_date, end_date, frequency, is_only_bday)
 
-            return Response({"result": dates}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": dates}, status=status.HTTP_200_OK)
 
 
 class CalcPeriodDateViewSet(AbstractViewSet):
@@ -1577,18 +1575,16 @@ class CalcPeriodDateViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        date = serializer.validated_data["date"]
+        frequency = serializer.validated_data["frequency"]
+        shift = serializer.validated_data["shift"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        start = serializer.validated_data["start"]
+        dates = calc_period_date(date, frequency, shift, is_only_bday, start)
 
-        if serializer.is_valid():
-            date = serializer.validated_data["date"]
-            frequency = serializer.validated_data["frequency"]
-            shift = serializer.validated_data["shift"]
-            is_only_bday = serializer.validated_data["is_only_bday"]
-            start = serializer.validated_data["start"]
-            dates = calc_period_date(date, frequency, shift, is_only_bday, start)
-
-            return Response({"result": dates}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": dates}, status=status.HTTP_200_OK)
 
 
 class PickDatesFromRangeViewSet(AbstractViewSet):
@@ -1596,19 +1592,16 @@ class PickDatesFromRangeViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        start_date = serializer.validated_data["start_date"]
+        end_date = serializer.validated_data["end_date"]
+        frequency = serializer.validated_data["frequency"]
+        is_only_bday = serializer.validated_data["is_only_bday"]
+        start = serializer.validated_data["start"]
+        dates = pick_dates_from_range(start_date, end_date, frequency, is_only_bday, start)
 
-        if serializer.is_valid():
-            start_date = serializer.validated_data["start_date"]
-            end_date = serializer.validated_data["end_date"]
-            frequency = serializer.validated_data["frequency"]
-            is_only_bday = serializer.validated_data["is_only_bday"]
-            start = serializer.validated_data["start"]
-
-            dates = pick_dates_from_range(start_date, end_date, frequency, is_only_bday, start)
-
-            return Response({"result": dates}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": dates}, status=status.HTTP_200_OK)
 
 
 class LastBusinessDayViewSet(AbstractViewSet):
@@ -1616,14 +1609,11 @@ class LastBusinessDayViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
+        date = get_last_business_day(date, True)
 
-        if serializer.is_valid():
-            date = serializer.validated_data["date"]
-            date = get_last_business_day(date, True)
-
-            return Response({"result": date}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": date}, status=status.HTTP_200_OK)
 
 
 class IsBusinessDayViewSet(AbstractViewSet):
@@ -1631,13 +1621,10 @@ class IsBusinessDayViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
 
-        if serializer.is_valid():
-            date = serializer.validated_data["date"]
-
-            return Response({"result": is_business_day(date)}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": is_business_day(date)}, status=status.HTTP_200_OK)
 
 
 class LastDayOfMonthViewSet(AbstractViewSet):
@@ -1645,11 +1632,8 @@ class LastDayOfMonthViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data["date"]
+        date = last_day_of_month(date)
 
-        if serializer.is_valid():
-            date = serializer.validated_data["date"]
-            date = last_day_of_month(date)
-
-            return Response({"result": date}, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": date}, status=status.HTTP_200_OK)

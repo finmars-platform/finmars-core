@@ -21,22 +21,23 @@ from poms_app import settings
 
 _l = logging.getLogger("poms.common")
 
-VALID_FREQUENCY = ["D", "W", "M", "Q", "Y"]
+VALID_FREQUENCY = {"D", "W", "M", "Q", "Y"}
+
+FORWARD = 1
 
 calc_shift_date_map = {
-        "D": lambda date: (pd.Timestamp(date) - pd.offsets.Day(0)).date(),
-        "W": lambda date: (pd.Timestamp(date) - pd.offsets.Week(weekday=0)).date(),
-        "M": lambda date: (pd.Timestamp(date) - pd.offsets.MonthBegin()).date(),
-        "Q": lambda date: (pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1)).date(),
-        "Y": lambda date: (pd.Timestamp(date) - pd.offsets.YearBegin(1)).date(),
+        "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
+        "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
+        "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
+        "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
+        "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
 
-        "ED": lambda date: (pd.Timestamp(date) + pd.offsets.Day(0)).date(),
-        "EW": lambda date: (pd.Timestamp(date) + pd.DateOffset(days=6)).date(),
-        "EM": lambda date: (pd.Timestamp(date) + pd.offsets.MonthEnd(0)).date(),
-        "EQ": lambda date: (pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3)).date(),
-        "EY": lambda date: (pd.Timestamp(date) + pd.offsets.YearEnd(1)).date(),
+        "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
+        "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
+        "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
+        "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
+        "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
     }
-
 
 frequency_map = {
         "D": lambda shift=1: pd.offsets.Day(shift),
@@ -758,11 +759,9 @@ def get_last_business_day_in_previous_quarter(date):
 
 
 def shift_to_bday(date, shift):
+    shift = FORWARD if shift > 0 else -1
     while not is_business_day(date):
-        if shift > 0:
-            date = date + datetime.timedelta(days=1)
-        else:
-            date = date - datetime.timedelta(days=1)
+        date += datetime.timedelta(days=shift)
 
     return date
 
@@ -796,10 +795,9 @@ def split_date_range(
     start_date = calc_shift_date_map[freq_start](start_date)
     ranges = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
 
-    date_pairs_ranges: list[tuple] = list()
+    date_pairs: list[tuple] = list()
     for sd in ranges:
         ed = calc_shift_date_map[freq_end](sd)
-        sd = sd.date()
 
         if is_only_bday:
             if frequency == "D" and not is_business_day(sd):
@@ -807,10 +805,25 @@ def split_date_range(
             sd = shift_to_bday(sd, 1)
             ed = shift_to_bday(ed, -1)
 
-        sd, ed = str(sd), str(ed)
-        date_pairs_ranges.append((sd, ed))
+        sd_str = str(sd.strftime(settings.API_DATE_FORMAT))
+        ed_str = str(ed.strftime(settings.API_DATE_FORMAT))
+        date_pair: tuple = (sd_str, ed_str)
+        date_pairs.append(date_pair)
 
-    return date_pairs_ranges
+    return date_pairs
+
+
+def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
+    """
+    Changes the day to the beginning/end of the week,
+    taking into account the boundaries of the range
+    """
+    if start and date > sdate:
+        date = calc_shift_date_map[freq](date)
+    elif not start and date < edate:
+        date = calc_shift_date_map[freq](date)
+
+    return date
 
 
 def pick_dates_from_range(
@@ -846,15 +859,7 @@ def pick_dates_from_range(
     pick_dates: list[str] = list()
     for date in dates:
         if "W" in frequency:
-            # Сhanges day to the beginning/end of the week
-            if start and date > start_date:
-                date = calc_shift_date_map[frequency](date)
-
-            elif not start and date < end_date:
-                if date.weekday() == 6:
-                    pass
-                else:
-                    date = calc_shift_date_map[frequency](date)
+            date = shift_to_week_boundary(date, start_date, end_date, start, frequency)
 
         if is_only_bday:
             if "D" in frequency and not is_business_day(date):
@@ -866,9 +871,9 @@ def pick_dates_from_range(
                 else:
                     date = shift_to_bday(date, -1)
 
-        date = str(date)
-        if date not in pick_dates:
-            pick_dates.append(date)
+        date_str = str(date.strftime(settings.API_DATE_FORMAT))
+        if date_str not in pick_dates:
+            pick_dates.append(date_str)
 
     return pick_dates
 
@@ -895,10 +900,7 @@ def calc_period_date(
     frequency = frequency if start else "E" + frequency
     date = get_validated_date(date)
     if "W" in frequency:
-        if not start and date.weekday() == 6:
-            pass
-        else:
-            date = calc_shift_date_map[frequency](date)
+        date = calc_shift_date_map[frequency](date)
 
     date = date + frequency_map[frequency](shift)
 
@@ -908,7 +910,7 @@ def calc_period_date(
         else:
             date = shift_to_bday(date, -1)
 
-    return str(date.date())
+    return str(date.strftime(settings.API_DATE_FORMAT))
 
 # endregion Dates
 
