@@ -197,3 +197,4 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         results = response_json["results"]
         for r in results:
             self.assertNotIn("space00000", r["file_path"])
+            self.assertIn("etc/system/name_", r["file_path"])

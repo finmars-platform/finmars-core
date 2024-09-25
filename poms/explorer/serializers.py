@@ -212,7 +212,7 @@ class SearchResultSerializer(serializers.ModelSerializer):
     def remove_spacecode(path: str) -> str:
         if not path.startswith("space"):
             return path
-        parts = path.rsplit(sep="/", maxsplit=1)
+        parts = path.split(sep="/", maxsplit=1)
         return parts[1]
 
     def to_representation(self, instance: StorageObject) -> dict:
