@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
         ("users", "0014_member_deleted_at"),
-        ("iam", "0015_remove_resourcegroup_created_and_more"),
+        ("iam", "0016_resourcegroup_group"),
     ]
 
     operations = [
