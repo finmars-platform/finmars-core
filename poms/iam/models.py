@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
@@ -32,13 +33,9 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
         related_name="iam_access_policies",
         blank=True,
     )
-    resource_group = models.ForeignKey(
-        "ResourceGroup",
-        related_name="access_policies",
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        verbose_name=gettext_lazy("Resource Group"),
+    resource_groups = ArrayField(
+        base_field=models.CharField(max_length=1024),
+        verbose_name=gettext_lazy("List of ResourceGroup user_codes"),
     )
 
     # objects = AccessPoliceManager()
@@ -121,11 +118,9 @@ class ResourceGroup(models.Model):
     )
     user_code = models.CharField(
         max_length=1024,
-        null=True,
-        blank=True,
-        verbose_name=gettext_lazy("user code"),
+        unique=True,
         help_text=gettext_lazy(
-            "Unique Code for this object. Used in Configuration and Permissions Logic"
+            "Unique code of the ResourceGroup. Used in Configuration and Permissions Logic"
         ),
     )
     description = models.TextField(
