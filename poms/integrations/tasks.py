@@ -4348,6 +4348,7 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
         "name": data.get("name"),
         "short_name": data.get("short_name"),
         "pricing_condition": PricingCondition.NO_VALUATION,
+        "country": data.get("country"),
     }
 
     _l.info(f"{func} currency_data={currency_data}")
@@ -4480,6 +4481,7 @@ def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
         result["user_code"] = currency.user_code
         result["short_name"] = currency.short_name
         result["name"] = currency.name
+        result["country"] = currency.country
 
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
