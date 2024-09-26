@@ -122,8 +122,6 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(ass_data["object_user_code"], ass.object_user_code)
         self.assertEqual(ass_data["content_type"], 24)
         self.assertEqual(ass_data["object_id"], rg.id)
-        self.assertIn("created_at", ass_data)
-        self.assertIn("modified_at", ass_data)
 
     def test__create(self):
         group_data = dict(

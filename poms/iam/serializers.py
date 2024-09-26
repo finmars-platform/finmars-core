@@ -364,10 +364,6 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
 
 
 class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
-    content_type = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
-    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
-
     class Meta:
         model = ResourceGroupAssignment
         fields = "__all__"

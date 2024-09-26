@@ -21,8 +21,8 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
             description=name,
         )
 
-    @staticmethod
     def create_assignment(
+        self,
         group_name: str = "test",
         model_name: str = "unknown",
         object_id: int = -1,
@@ -31,6 +31,7 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         content_type = ContentType.objects.get_by_natural_key(
             app_label="iam", model=model_name.lower()
         )
+        self.assertIsNotNone(content_type)
         model = content_type.model_class()
         model_object = model.objects.get(id=object_id)
         return ResourceGroupAssignment.objects.create(
@@ -65,8 +66,6 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test7")
         self.assertEqual(ass_data["content_type"], 24)
-        self.assertIn("created_at", ass_data)
-        self.assertIn("modified_at", ass_data)
 
     def test__retrieve(self):
         rg = self.create_group(name="test7")
@@ -87,8 +86,6 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test7")
         self.assertEqual(ass_data["content_type"], 24)
-        self.assertIn("created_at", ass_data)
-        self.assertIn("modified_at", ass_data)
 
     def test__destroy(self):
         rg = self.create_group(name="test7")
@@ -157,8 +154,6 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test11")
         self.assertEqual(ass_data["content_type"], 24)
-        self.assertIn("created_at", ass_data)
-        self.assertIn("modified_at", ass_data)
 
     def test__create_no_permission(self):
         rg = self.create_group(name="test11")
