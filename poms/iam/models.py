@@ -107,6 +107,19 @@ class Group(ConfigurationModel, TimeStampedModel):
         return str(self.name)
 
 
+class ResourceGroupManager(models.Manager):
+    def add_object(
+        self,
+        group_user_code: str,
+        app_name: str,
+        model_name: str,
+        object_id: int,
+        object_user_code: str,
+    ):
+        rg = self.get_queryset().get(user_code=group_user_code)
+        rg.create_assignment(app_name, model_name, object_id, object_user_code)
+
+
 class ResourceGroup(models.Model):
     master_user = models.ForeignKey(
         MasterUser,
@@ -137,11 +150,37 @@ class ResourceGroup(models.Model):
         editable=False,
     )
 
+    objects = ResourceGroupManager()
+
     class Meta:
         ordering = ["user_code"]
 
     def __str__(self):
         return self.name
+
+    def create_assignment(
+        self,
+        app_name: str,
+        model_name: str,
+        object_id: int,
+        object_user_code: str,
+    ):
+        # Validate that content_type is available
+        content_type = ContentType.objects.get_by_natural_key(app_name, model_name)
+
+        # Validate that object_id is available
+        model = content_type.model_class()
+        obj = model.objects.get(id=object_id)
+
+        # Validate that object_user_code is available
+        assert obj.user_code == object_user_code
+
+        ResourceGroupAssignment.objects.update_or_create(
+            resource_group=self,
+            content_type=content_type,
+            object_id=object_id,
+            defaults=dict(object_user_code=object_user_code),
+        )
 
 
 class ResourceGroupAssignment(models.Model):
