@@ -101,3 +101,16 @@ class ResourceGroupViewTest(BaseTestCase):
                 object_id=self.random_int(10000, 1000000),
                 object_user_code=portfolio.user_code,
             )
+
+    def test_add_object_error_invalid_object_user_code(self):
+        rg = self.create_group()
+        portfolio = Portfolio.objects.first()
+
+        with self.assertRaises(ValueError):
+            ResourceGroup.objects.add_object(
+                group_user_code=rg.user_code,
+                app_name="portfolios",
+                model_name="Portfolio",
+                object_id=portfolio.id,
+                object_user_code=self.random_string(),
+            )

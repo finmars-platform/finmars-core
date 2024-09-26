@@ -175,7 +175,8 @@ class ResourceGroup(models.Model):
         obj = model.objects.get(id=object_id)
 
         # Validate that object_user_code is available
-        assert obj.user_code == object_user_code
+        if obj.user_code != object_user_code:
+            raise ValueError("Object user_code does not match object_user_code")
 
         ResourceGroupAssignment.objects.update_or_create(
             resource_group=self,
