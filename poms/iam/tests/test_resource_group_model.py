@@ -33,3 +33,31 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(rg.assignments.count(), 1)
         self.assertEqual(rg.assignments.first().content_object, portfolio)
         self.assertEqual(rg.assignments.first().resource_group, rg)
+        ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
+        self.assertEqual(ass, rg.assignments.first())
+
+    def test_add_object_duplicate(self):
+        rg = self.create_group()
+        portfolio = Portfolio.objects.first()
+
+        ResourceGroup.objects.add_object(
+            group_user_code=rg.user_code,
+            app_name="portfolios",
+            model_name="Portfolio",
+            object_id=portfolio.id,
+            object_user_code=portfolio.user_code,
+        )
+
+        ResourceGroup.objects.add_object(
+            group_user_code=rg.user_code,
+            app_name="portfolios",
+            model_name="Portfolio",
+            object_id=portfolio.id,
+            object_user_code=portfolio.user_code,
+        )
+
+        self.assertEqual(rg.assignments.count(), 1)
+        self.assertEqual(rg.assignments.first().content_object, portfolio)
+        self.assertEqual(rg.assignments.first().resource_group, rg)
+        ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
+        self.assertEqual(ass, rg.assignments.first())
