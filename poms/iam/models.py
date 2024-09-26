@@ -35,6 +35,7 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
     )
     resource_groups = ArrayField(
         base_field=models.CharField(max_length=1024),
+        default=[],
         verbose_name=gettext_lazy("List of ResourceGroup user_codes"),
     )
 
