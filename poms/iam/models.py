@@ -117,7 +117,9 @@ class ResourceGroupManager(models.Manager):
         object_user_code: str,
     ):
         rg = self.get_queryset().get(user_code=group_user_code)
-        rg.create_assignment(app_name, model_name, object_id, object_user_code)
+        rg.create_assignment(
+            app_name.lower(), model_name.lower(), object_id, object_user_code
+        )
 
 
 class ResourceGroup(models.Model):
