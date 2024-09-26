@@ -22,7 +22,7 @@ expected_response = {
     },
     "owner": 2,
     "members": [],
-    "resource_group": None,
+    "resource_groups": None,
     # "meta": {
     #     "execution_time": 10,
     #     "request_id": "33e86689-5ed9-4422-908e-9cd45a008451",
