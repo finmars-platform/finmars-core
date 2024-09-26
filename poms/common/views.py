@@ -25,6 +25,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
+from poms.common.tasks import apply_migration_to_space
+
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
     ByIdFilterBackend,
@@ -997,16 +999,10 @@ class RealmMigrateSchemeView(APIView):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            # realm_code = serializer.validated_data.get('realm_code')
             space_code = serializer.validated_data.get("space_code")
+            realm_code = serializer.validated_data.get('realm_code')
 
-            with connection.cursor() as cursor:
-                cursor.execute(f"SET search_path TO {space_code};")
-
-            _l.info("RealmMigrateSchemeView.space_code %s" % space_code)
-
-            # Programmatically call the migrate command
-            call_command("migrate")
+            apply_migration_to_space.apply_async(kwargs={"space_code": space_code, "realm_code": realm_code})
 
             # Optionally, reset the search path to default after migrating
             # with connection.cursor() as cursor:
