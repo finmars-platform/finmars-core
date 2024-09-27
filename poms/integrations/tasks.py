@@ -58,6 +58,7 @@ from poms.instruments.models import (
     Periodicity,
     PriceHistory,
     PricingCondition,
+    Country,
 )
 from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.integrations.models import (
@@ -4343,12 +4344,21 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
         "member": member,
     }
 
+    country = data.get("country")
+    if country is not None:
+        try:
+            country = Country.objects.get(alpha_3=country).id
+
+        except Country.DoesNotExist:
+            _l.error(f"{func} Dont exist Country with {country} alpha_3 code")
+            country = None
+
     currency_data = {
         "user_code": data.get("user_code"),
         "name": data.get("name"),
         "short_name": data.get("short_name"),
         "pricing_condition": PricingCondition.NO_VALUATION,
-        "country": data.get("country"),
+        "country": country,
     }
 
     _l.info(f"{func} currency_data={currency_data}")
