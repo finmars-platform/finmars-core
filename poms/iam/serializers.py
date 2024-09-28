@@ -1,4 +1,5 @@
 import logging
+from email.policy import default
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -396,3 +397,17 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceGroup
         fields = "__all__"
+
+
+class GenericResourceResourceGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceGroup
+        fields = ["user_code"]
+
+
+class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["resource_groups"] = GenericResourceResourceGroupSerializer(
+            many=True, required=False, default=[]
+        )
