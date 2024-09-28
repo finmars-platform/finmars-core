@@ -64,6 +64,41 @@ SCHEME_20_FIELDS = [
         "name_expr": "float(factor)",
         "scheme": None,
     },
+    {
+        "column": 6,
+        "name": "ytm",
+        "name_expr": "float(ytm)",
+        "column_name": "YTM",
+        "scheme": None,
+    },
+    {
+        "column": 7,
+        "name": "short_delta",
+        "name_expr": "float(short_delta)",
+        "column_name": "Short Delta",
+        "scheme": None,
+    },
+    {
+        "column": 8,
+        "name": "modified_duration",
+        "name_expr": "float(modified_duration)",
+        "column_name": "Modified Duration",
+        "scheme": None,
+    },
+    {
+        "column": 9,
+        "name": "is_temporary_price",
+        "name_expr": "float(is_temporary_price)",
+        "column_name": "Is Temporary Price",
+        "scheme": None,
+    },
+    {
+        "column": 10,
+        "name": "long_delta",
+        "name_expr": "float(long_delta)",
+        "column_name": "Long Delta",
+        "scheme": None,
+    }
 ]
 
 SCHEME_20_ENTITIES = [
@@ -103,6 +138,38 @@ SCHEME_20_ENTITIES = [
         "system_property_key": "factor",
         "scheme": None,
     },
+    
+    
+    {
+        "name": "ytm",
+        "expression": "ytm",
+        "system_property_key": "ytm",
+        "scheme": None,
+    },
+    {
+        "name": "short_delta",
+        "expression": "short_delta",
+        "system_property_key": "short_delta",
+        "scheme": None,
+    },
+    {
+        "name": "modified_duration",
+        "expression": "modified_duration",
+        "system_property_key": "modified_duration",
+        "scheme": None,
+    },
+    {
+        "name": "is_temporary_price",
+        "expression": "is_temporary_price",
+        "system_property_key": "is_temporary_price",
+        "scheme": None,
+    },
+    {
+        "name": "long_delta",
+        "expression": "long_delta",
+        "system_property_key": "long_delta",
+        "scheme": None,
+    }
 ]
 
 
@@ -113,6 +180,12 @@ PRICE_HISTORY = [
         "Principal Price": 109.72,
         "Accrued Price": None,
         "Factor": None,
+        
+        "YTM": None,
+        "Modified Duration": 1.1,
+        "Long Delta": 1.1,
+        "Short Delta": 1.1,
+        "Is Temporary Price": False,
     }
 ]
 
@@ -122,6 +195,11 @@ PRICE_HISTORY_ITEM = {
     "principal_price": 109.72,
     "accrued_price": None,
     "factor": None,
+    "ytm": None,
+    "modified_duration": 1.1,
+    "long_delta": 1.1,
+    "short_delta": 1.1,
+    "is_temporary_price": False,
 }
 
 
@@ -132,6 +210,12 @@ EXPECTED_RESULT = {
         "factor": None,
         "instrument": "USP37341AA50",
         "principal_price": 109.72,
+        
+        "ytm": None,
+        "modified_duration": 1.1,
+        "long_delta": 1.1,
+        "short_delta": 1.1,
+        "is_temporary_price": False,
     },
     "error_message": "",
     "file_inputs": {
@@ -140,12 +224,22 @@ EXPECTED_RESULT = {
         "Factor": None,
         "Instrument": "USP37341AA50",
         "Principal Price": 109.72,
+        
+        "YTM": None,
+        "Modified Duration": 1.1,
+        "Long Delta": 1.1,
+        "Short Delta": 1.1,
+        "Is Temporary Price": False,
     },
     "final_inputs": {
         "date": "2024-01-05",
         "instrument": "USP37341AA50",
         "pricing_policy": "com.finmars.standard-pricing:standard",
         "principal_price": 109.72,
+        "modified_duration": 1.1,
+        "long_delta": 1.1,
+        "short_delta": 1.1,
+        "is_temporary_price": False,
     },
     "imported_items": None,
     "inputs": {
@@ -154,6 +248,12 @@ EXPECTED_RESULT = {
         "factor": "None",
         "instrument": "USP37341AA50",
         "principal_price": "109.72",
+        "ytm": None,
+        "modified_duration": 1.1,
+        "long_delta": 1.1,
+        "short_delta": 1.1,
+        "is_temporary_price": False,
+        
     },
     "message": "",
     "raw_inputs": {
@@ -162,6 +262,11 @@ EXPECTED_RESULT = {
         "factor": None,
         "instrument": "USP37341AA50",
         "principal_price": 109.72,
+        "ytm": None,
+        "modified_duration": 1.1,
+        "long_delta": 1.1,
+        "short_delta": 1.1,
+        "is_temporary_price": False,
     },
     "row_number": 1,
     "status": "init",
