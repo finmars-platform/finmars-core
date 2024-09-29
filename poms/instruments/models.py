@@ -3061,8 +3061,11 @@ class PriceHistory(TimeStampedModel):
                         date=self.date, currency=self.instrument.pricing_currency
                     ).fx_rate
 
-            self.ytm = self.calculate_ytm(self.date)
-            self.modified_duration = self.calculate_duration(self.date, self.ytm)
+            if "ytm" in recalculate_inputs or self.ytm == 0:
+                self.ytm = self.calculate_ytm(self.date)
+
+            if "modified_duration" in recalculate_inputs or self.modified_duration == 0:
+                self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
             self.handle_err(f"calculate_ytm error {repr(e)}")
