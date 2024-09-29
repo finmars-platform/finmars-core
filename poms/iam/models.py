@@ -9,6 +9,10 @@ from poms.configuration.models import ConfigurationModel
 from poms.users.models import MasterUser, Member
 
 
+def default_list():
+    return []
+
+
 class AccessPolicy(ConfigurationModel, TimeStampedModel):
     name = models.CharField(
         max_length=255,
@@ -35,7 +39,7 @@ class AccessPolicy(ConfigurationModel, TimeStampedModel):
     )
     resource_groups = ArrayField(
         base_field=models.CharField(max_length=1024),
-        default=[],
+        default=default_list,
         verbose_name=gettext_lazy("List of ResourceGroup user_codes"),
     )
 
