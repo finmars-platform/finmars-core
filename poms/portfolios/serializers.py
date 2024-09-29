@@ -22,6 +22,7 @@ from poms.instruments.fields import (
     SystemPricingPolicyDefault,
     CostMethodField,
 )
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
@@ -164,6 +165,7 @@ class PortfolioSerializer(
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
     ModelWithObjectStateSerializer,
+    ModelWithResourceGroupSerializer,
 ):
     master_user = MasterUserField()
     registers = PortfolioPortfolioRegisterSerializer(
@@ -178,13 +180,6 @@ class PortfolioSerializer(
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
     )
-    # resource_groups = serializers.PrimaryKeyRelatedField(
-    #     many=True,
-    #     queryset=ResourceGroup.objects.all(),
-    #     required=False
-    # )
-
-    resource_groups = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Portfolio
@@ -207,13 +202,6 @@ class PortfolioSerializer(
             "portfolio_type_object",
             "resource_groups",
         ]
-
-    def get_resource_groups(self, instance: Portfolio) -> list:
-        from poms.iam.serializers import ResourceGroupAssignmentShortSerializer
-
-        return ResourceGroupAssignmentShortSerializer(
-            instance.resource_groups.all(), many=True
-        ).data
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
         return {

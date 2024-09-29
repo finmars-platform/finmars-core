@@ -411,3 +411,44 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         self.fields["resource_groups"] = GenericResourceResourceGroupSerializer(
             many=True, required=False, default=[]
         )
+
+    def create(self, validated_data: dict) -> object:
+        resource_groups = validated_data.pop("resource_groups", [])
+        instance = super().create(validated_data)
+
+        for rg_user_code in resource_groups:
+            ResourceGroup.objects.add_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name =instance._meta.model_name,
+                object_id=instance.id,
+                object_user_code=instance.user_code,
+            )
+
+        return instance
+
+    def update(self, instance, validated_data: dict):
+        old_resource_groups = instance.resource_groups.all()
+        new_resource_groups = validated_data.pop("resource_groups", [])
+
+        resource_group_to_remove = set(old_resource_groups) - set(new_resource_groups)
+        for rg_user_code in resource_group_to_remove:
+            ResourceGroup.objects.remove_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name =instance._meta.model_name,
+                object_id=instance.id,
+            )
+
+        instance = super().update(instance, validated_data)
+
+        for rg_user_code in new_resource_groups:
+            ResourceGroup.objects.add_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name =instance._meta.model_name,
+                object_id=instance.id,
+                object_user_code=instance.user_code,
+            )
+
+        return instance
