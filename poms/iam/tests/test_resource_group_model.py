@@ -114,3 +114,28 @@ class ResourceGroupViewTest(BaseTestCase):
                 object_id=portfolio.id,
                 object_user_code=self.random_string(),
             )
+
+    def test__delete_object(self):
+        rg = self.create_group()
+        portfolio = Portfolio.objects.first()
+
+        ResourceGroup.objects.add_object(
+            group_user_code=rg.user_code,
+            app_name="portfolios",
+            model_name="Portfolio",
+            object_id=portfolio.id,
+            object_user_code=portfolio.user_code,
+        )
+        ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
+        self.assertEqual(ass, rg.assignments.first())
+
+        ResourceGroup.objects.remove_object(
+            group_user_code=rg.user_code,
+            app_name="portfolios",
+            model_name="Portfolio",
+            object_id=portfolio.id,
+        )
+
+        self.assertEqual(rg.assignments.count(), 0)
+        ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
+        self.assertIsNone(ass)
