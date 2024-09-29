@@ -133,7 +133,9 @@ class PortfolioType(
             },
         ]
 
-
+from django.contrib.postgres.fields import ArrayField
+def default_list():
+    return []
 # noinspection PyUnresolvedReferences
 class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
@@ -189,10 +191,12 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         null=True,
         verbose_name=gettext_lazy("first cash flow date"),
     )
-    resource_groups = GenericRelation(
-        ResourceGroupAssignment,
-        related_query_name="portfolios",
-        verbose_name=gettext_lazy("resource groups to which portfolio belongs"),
+    resource_groups = ArrayField(
+        base_field=models.CharField(max_length=1024),
+        default=default_list,
+        verbose_name=gettext_lazy(
+            "list of resource groups user_codes, to which object belongs"
+        ),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):

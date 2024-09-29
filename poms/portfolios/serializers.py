@@ -200,7 +200,6 @@ class PortfolioSerializer(
             "first_cash_flow_date",
             "portfolio_type",
             "portfolio_type_object",
-            "resource_groups",
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:

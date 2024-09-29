@@ -400,6 +400,12 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
 
 
 class GenericResourceGroupSerializer(serializers.ModelSerializer):
+    user_code = serializers.SlugRelatedField(
+        slug_field="user_code",
+        queryset=ResourceGroup.objects.all(),
+        many=True,
+        required=False,
+    )
     class Meta:
         model = ResourceGroup
         fields = ["user_code"]

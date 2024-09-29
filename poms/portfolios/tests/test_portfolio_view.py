@@ -187,57 +187,57 @@ class PortfolioViewSetTest(BaseTestCase):
             self.db_data.default_instrument,
             self.user_code,
         )
-    #
-    # def test_formula(self):
-    #     # test user_code generated
-    #     n1 = formula.safe_eval(
-    #         'generate_user_code("del", "", 0)',
-    #         context={"master_user": self.master_user},
-    #     )
-    #     n2 = formula.safe_eval(
-    #         'generate_user_code("del", "", 0)',
-    #         context={"master_user": self.master_user},
-    #     )
-    #     n3 = formula.safe_eval(
-    #         'generate_user_code("del", "", 0)',
-    #         context={"master_user": self.master_user},
-    #     )
-    #     self.assertEqual(n1, "del00000000000000001")
-    #     self.assertEqual(n2, "del00000000000000002")
-    #     self.assertEqual(n3, "del00000000000000003")
-    #
-    # def test_retrieve(self):
-    #     response = self.client.get(f"{self.url}{self.portfolio.id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     self.assertEqual(response_json["user_code"], self.user_code)
-    #     self.assertFalse(response_json["is_deleted"])
-    #     self.assertIn("resource_groups", response_json)
-    #     self.assertEqual(response_json["resource_groups"], [])
-    #
-    # def test_destroy(self):
-    #     response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     # test that Portfolio object is not deleted
-    #
-    #     self.portfolio.refresh_from_db()
-    #     self.assertTrue(self.portfolio.is_deleted)
-    #     self.assertEqual(self.portfolio.user_code, "del00000000000000001")
-    #
-    # def test_retrieve_destroy(self):
-    #     response = self.client.get(f"{self.url}{self.portfolio.id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     portfolio_data = response.json()
-    #
-    #     id_0 = portfolio_data.pop("id")
-    #     portfolio_data.pop("meta")
-    #
-    #     response = self.client.delete(f"{self.url}{id_0}/", format="json")
-    #     self.assertEqual(response.status_code, 204, response.content)
+
+    def test_formula(self):
+        # test user_code generated
+        n1 = formula.safe_eval(
+            'generate_user_code("del", "", 0)',
+            context={"master_user": self.master_user},
+        )
+        n2 = formula.safe_eval(
+            'generate_user_code("del", "", 0)',
+            context={"master_user": self.master_user},
+        )
+        n3 = formula.safe_eval(
+            'generate_user_code("del", "", 0)',
+            context={"master_user": self.master_user},
+        )
+        self.assertEqual(n1, "del00000000000000001")
+        self.assertEqual(n2, "del00000000000000002")
+        self.assertEqual(n3, "del00000000000000003")
+
+    def test_retrieve(self):
+        response = self.client.get(f"{self.url}{self.portfolio.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["user_code"], self.user_code)
+        self.assertFalse(response_json["is_deleted"])
+        self.assertIn("resource_groups", response_json)
+        self.assertEqual(response_json["resource_groups"], [])
+
+    def test_destroy(self):
+        response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        # test that Portfolio object is not deleted
+
+        self.portfolio.refresh_from_db()
+        self.assertTrue(self.portfolio.is_deleted)
+        self.assertEqual(self.portfolio.user_code, "del00000000000000001")
+
+    def test_retrieve_destroy(self):
+        response = self.client.get(f"{self.url}{self.portfolio.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+
+        id_0 = portfolio_data.pop("id")
+        portfolio_data.pop("meta")
+
+        response = self.client.delete(f"{self.url}{id_0}/", format="json")
+        self.assertEqual(response.status_code, 204, response.content)
 
     def create_group(self, name: str = "test") -> ResourceGroup:
         return ResourceGroup.objects.create(
@@ -248,10 +248,11 @@ class PortfolioViewSetTest(BaseTestCase):
         )
 
     def test_add_resource_group(self):
-        self.create_group()
+        rg_name = self.random_string()
+        self.create_group(name=rg_name)
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
-            data={"resource_groups": [{"user_code": "test"}]},
+            data={"resource_groups": [rg_name]},
             format="json",
         )
         self.assertEqual(response.status_code, 200, response.content)
