@@ -399,7 +399,7 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GenericResourceResourceGroupSerializer(serializers.ModelSerializer):
+class GenericResourceGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceGroup
         fields = ["user_code"]
@@ -408,7 +408,7 @@ class GenericResourceResourceGroupSerializer(serializers.ModelSerializer):
 class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["resource_groups"] = GenericResourceResourceGroupSerializer(
+        self.fields["resource_groups"] = GenericResourceGroupSerializer(
             many=True, required=False, default=[]
         )
 

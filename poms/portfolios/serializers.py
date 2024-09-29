@@ -161,11 +161,11 @@ class PortfolioPortfolioRegisterSerializer(
 
 
 class PortfolioSerializer(
+    ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
     ModelWithObjectStateSerializer,
-    ModelWithResourceGroupSerializer,
 ):
     master_user = MasterUserField()
     registers = PortfolioPortfolioRegisterSerializer(
