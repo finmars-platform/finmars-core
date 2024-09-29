@@ -420,7 +420,7 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             ResourceGroup.objects.add_object(
                 group_user_code=rg_user_code,
                 app_name=instance._meta.app_label,
-                model_name =instance._meta.model_name,
+                model_name=instance._meta.model_name,
                 object_id=instance.id,
                 object_user_code=instance.user_code,
             )
@@ -428,7 +428,9 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data: dict):
-        old_resource_groups = instance.resource_groups.all()
+        old_resource_groups = instance.resource_groups.values_list(
+            "user_code", flat=True
+        ).all()
         new_resource_groups = validated_data.pop("resource_groups", [])
 
         resource_group_to_remove = set(old_resource_groups) - set(new_resource_groups)
@@ -436,7 +438,7 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             ResourceGroup.objects.remove_object(
                 group_user_code=rg_user_code,
                 app_name=instance._meta.app_label,
-                model_name =instance._meta.model_name,
+                model_name=instance._meta.model_name,
                 object_id=instance.id,
             )
 
@@ -446,7 +448,7 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             ResourceGroup.objects.add_object(
                 group_user_code=rg_user_code,
                 app_name=instance._meta.app_label,
-                model_name =instance._meta.model_name,
+                model_name=instance._meta.model_name,
                 object_id=instance.id,
                 object_user_code=instance.user_code,
             )

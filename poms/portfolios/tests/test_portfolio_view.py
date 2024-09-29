@@ -1,6 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.portfolios.models import Portfolio
+from poms.iam.models import ResourceGroup
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -238,9 +239,22 @@ class PortfolioViewSetTest(BaseTestCase):
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
 
+    def create_group(self, name: str = "test") -> ResourceGroup:
+        return ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name=name,
+            user_code=name,
+            description=name,
+        )
+
     def test_add_resource_group(self):
-        pass
-        # response = self.client.post(
-        #     f"{self.url}{self.portfolio.id}/resource_groups/",
-        #     data={"name": "test"},
-        #     format="json",
+        self.create_group()
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": ["test"]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertIn("resource_groups", portfolio_data)
