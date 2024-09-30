@@ -415,11 +415,19 @@ class GenericResourceGroupSerializer(serializers.ModelSerializer):
 class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["resource_groups"] = GenericResourceGroupSerializer(
-            many=True,
+        self.fields["resource_groups"] = serializers.ListSerializer(
+            child=serializers.CharField(max_length=1024),
             required=False,
             default=default_list,
         )
+
+    def validate_resource_groups(self, group_list):
+        for gr_user_code in group_list:
+            if not ResourceGroup.objects.filter(user_code=gr_user_code).exists():
+                raise serializers.ValidationError(
+                    f"No such ResourceGroup {gr_user_code}"
+                )
+        return group_list
 
     def create(self, validated_data: dict) -> object:
         resource_groups = validated_data.pop("resource_groups", [])
