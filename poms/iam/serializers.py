@@ -370,25 +370,6 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ResourceGroupAssignmentShortSerializer(serializers.ModelSerializer):
-    resource_group_assignment_id = serializers.IntegerField(source="id", read_only=True)
-    resource_group_name = serializers.CharField(
-        source="resource_group.name", read_only=True
-    )
-    resource_group_user_code = serializers.CharField(
-        source="resource_group.user_code", read_only=True
-    )
-
-    class Meta:
-        model = ResourceGroupAssignment
-        fields = [
-            "resource_group_assignment_id",
-            "resource_group_id",
-            "resource_group_name",
-            "resource_group_user_code",
-        ]
-
-
 class ResourceGroupSerializer(serializers.ModelSerializer):
     assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
@@ -397,19 +378,6 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceGroup
         fields = "__all__"
-
-
-class GenericResourceGroupSerializer(serializers.ModelSerializer):
-    user_code = serializers.SlugRelatedField(
-        slug_field="user_code",
-        queryset=ResourceGroup.objects.all(),
-        many=True,
-        required=False,
-    )
-
-    class Meta:
-        model = ResourceGroup
-        fields = ["user_code"]
 
 
 class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
