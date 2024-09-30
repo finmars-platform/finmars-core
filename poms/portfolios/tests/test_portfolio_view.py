@@ -285,4 +285,7 @@ class PortfolioViewSetTest(BaseTestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 1)
+        self.assertEqual(portfolio_data["resource_groups"], [name_2])
