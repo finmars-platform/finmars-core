@@ -195,7 +195,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         base_field=models.CharField(max_length=1024),
         default=default_list,
         verbose_name=gettext_lazy(
-            "list of resource groups user_codes, to which object belongs"
+            "list of resource groups user_codes, to which portfolio belongs"
         ),
     )
 
