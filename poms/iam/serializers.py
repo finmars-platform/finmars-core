@@ -1,5 +1,4 @@
 import logging
-from email.policy import default
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -10,6 +9,7 @@ from poms.iam.models import (
     ResourceGroup,
     ResourceGroupAssignment,
     Role,
+    default_list,
 )
 from poms.users.models import Member
 
@@ -406,6 +406,7 @@ class GenericResourceGroupSerializer(serializers.ModelSerializer):
         many=True,
         required=False,
     )
+
     class Meta:
         model = ResourceGroup
         fields = ["user_code"]
@@ -415,7 +416,9 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["resource_groups"] = GenericResourceGroupSerializer(
-            many=True, required=False, default=[]
+            many=True,
+            required=False,
+            default=default_list,
         )
 
     def create(self, validated_data: dict) -> object:
