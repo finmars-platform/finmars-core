@@ -445,9 +445,7 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data: dict):
-        old_resource_groups = instance.resource_groups.values_list(
-            "user_code", flat=True
-        ).all()
+        old_resource_groups = [rg.user_code for rg in instance.resource_groups]
         new_resource_groups = validated_data.pop("resource_groups", [])
 
         resource_group_to_remove = set(old_resource_groups) - set(new_resource_groups)
