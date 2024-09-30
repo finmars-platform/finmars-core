@@ -259,3 +259,4 @@ class PortfolioViewSetTest(BaseTestCase):
 
         portfolio_data = response.json()
         self.assertIn("resource_groups", portfolio_data)
+        self.assertEqual(portfolio_data["resource_groups"], [rg_name])

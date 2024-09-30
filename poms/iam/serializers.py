@@ -441,6 +441,8 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
                 object_id=instance.id,
                 object_user_code=instance.user_code,
             )
+        instance.resource_groups = resource_groups
+        instance.save()
 
         return instance
 
@@ -467,5 +469,8 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
                 object_id=instance.id,
                 object_user_code=instance.user_code,
             )
+
+        instance.resource_groups = new_resource_groups
+        instance.save()
 
         return instance
