@@ -671,19 +671,15 @@ def _get_date_last_year_end_business(date):
     return offset.rollback(date).date()
 
 
-def _format_date2(date, format=None, locale=None):
+def _format_date2(date, format_=None, locale=None):
     if not isinstance(date, datetime.date):
         date = _parse_date2(str(date))
-    if not format:
-        format = "yyyy-MM-dd"
-    else:
-        format = str(format)
-
+    format_ = str(format_) if format_ else "yyyy-MM-dd"
     from babel import Locale
     from babel.dates import LC_TIME, format_date
 
     l = Locale.parse(locale or LC_TIME)
-    return format_date(date, format=format, locale=l)
+    return format_date(date, format=format_, locale=l)
 
 
 def _parse_date2(date_string, format=None, locale=None):
@@ -4493,7 +4489,7 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
             )
 
     except Exception as e:
-        _l.error("_rebook_transaction. general exception %s" % e)
+        _l.error(f"_rebook_transaction. general exception {e}")
         _l.error(
             "_rebook_transaction. general exception traceback %s"
             % traceback.format_exc()
@@ -4716,12 +4712,12 @@ def _run_data_import(evaluator, filepath, scheme):
 
         scheme = CsvImportScheme.objects.get(master_user=master_user, user_code=scheme)
 
-        options_object = {}
-
-        options_object["file_path"] = filepath
-        options_object["filename"] = ""
-        options_object["scheme_id"] = scheme.id
-        options_object["execution_context"] = None
+        options_object = {
+            "file_path": filepath,
+            "filename": "",
+            "scheme_id": scheme.id,
+            "execution_context": None,
+        }
 
         celery_task.options_object = options_object
         celery_task.save()
@@ -4765,7 +4761,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         if filepath[0] == "/":
             filepath = master_user.space_code + filepath
         else:
-            filepath = master_user.space_code + "/" + filepath
+            filepath = f"{master_user.space_code}/{filepath}"
 
         celery_task = CeleryTask.objects.create(
             master_user=master_user,
@@ -4803,7 +4799,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         return None
 
     except Exception as e:
-        _l.error("_run_transaction_import. general exception %s" % e)
+        _l.error(f"_run_transaction_import. general exception {e}")
         _l.error(
             "_run_transaction_import. general exception traceback %s"
             % traceback.format_exc()
