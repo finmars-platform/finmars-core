@@ -21,6 +21,37 @@ from poms_app import settings
 
 _l = logging.getLogger("poms.common")
 
+VALID_FREQUENCY = {"D", "W", "M", "Q", "Y"}
+
+FORWARD = 1
+
+calc_shift_date_map = {
+        "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
+        "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
+        "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
+        "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
+        "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
+
+        "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
+        "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
+        "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
+        "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
+        "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
+    }
+
+frequency_map = {
+        "D": lambda shift=1: pd.offsets.Day(shift),
+        "W": lambda shift=1: pd.offsets.Week(shift),
+        "M": lambda shift=1: pd.offsets.MonthBegin(shift),
+        "Q": lambda shift=1: pd.offsets.QuarterBegin(n=shift, startingMonth=1),
+        "Y": lambda shift=1: pd.offsets.YearBegin(shift),
+        "ED": lambda shift=1: pd.offsets.Day(shift),
+        "EW": lambda shift=1: pd.offsets.Week(shift),
+        "EM": lambda shift=1: pd.offsets.MonthEnd(shift),
+        "EQ": lambda shift=1: pd.offsets.QuarterEnd(n=shift, startingMonth=3),
+        "EY": lambda shift=1: pd.offsets.YearEnd(shift),
+}
+
 
 def force_qs_evaluation(qs):
     list(qs)
@@ -726,6 +757,160 @@ def get_last_business_day_in_previous_quarter(date):
 
     return last_day_of_previous_quarter
 
+
+def shift_to_bday(date, shift):
+    shift = FORWARD if shift > 0 else -1
+    while not is_business_day(date):
+        date += datetime.timedelta(days=shift)
+
+    return date
+
+
+def get_validated_date(date) -> datetime.datetime:
+    if not isinstance(date, datetime.date):
+        return datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    return date
+
+
+def split_date_range(
+    start_date: str | datetime.date,
+    end_date: str | datetime.date,
+    frequency: str,
+    is_only_bday: bool,
+) -> list[tuple[str]]:
+    """
+    :param start_date: Start date in YYYY-MM-DD format.
+    :param end_date: End date in YYYY-MM-DD format.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) / 
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :return: A list of tuples[str], each containing the start and end of a frequency.
+    """
+    start_date = get_validated_date(start_date)
+    end_date = get_validated_date(end_date)
+    freq_start = frequency
+    freq_end = "E" + frequency
+
+    start_date = calc_shift_date_map[freq_start](start_date)
+    ranges = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+
+    date_pairs: list[tuple] = list()
+    for sd in ranges:
+        ed = calc_shift_date_map[freq_end](sd)
+
+        if is_only_bday:
+            if frequency == "D" and not is_business_day(sd):
+                continue
+            sd = shift_to_bday(sd, 1)
+            ed = shift_to_bday(ed, -1)
+
+        sd_str = str(sd.strftime(settings.API_DATE_FORMAT))
+        ed_str = str(ed.strftime(settings.API_DATE_FORMAT))
+        date_pair: tuple = (sd_str, ed_str)
+        date_pairs.append(date_pair)
+
+    return date_pairs
+
+
+def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
+    """
+    Changes the day to the beginning/end of the week,
+    taking into account the boundaries of the range
+    """
+    if start and date > sdate:
+        date = calc_shift_date_map[freq](date)
+    elif not start and date < edate:
+        date = calc_shift_date_map[freq](date)
+
+    return date
+
+
+def pick_dates_from_range(
+    start_date: str | datetime.date,
+    end_date: str | datetime.date,
+    frequency: str,
+    is_only_bday: bool,
+    start: bool,
+) -> list[str]:
+    """
+    :param start_date: Start date in YYYY-MM-DD format.
+    :param end_date: End date in YYYY-MM-DD format.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :param start: The beginning of frequency, if False end of frequency.
+    :return: A list, containing the start or end of a each frequency.
+    """
+    start_date = get_validated_date(start_date)
+    end_date = get_validated_date(end_date)
+    frequency = frequency if start else "E" + frequency
+
+    dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+    dates = [d.date() for d in dates]
+
+    # pd.date_range - adds dates that fall completely within
+    # the frequency. Adding in list uneven areas of date
+    if start and start_date != dates[0]:
+        dates.insert(0, start_date)
+    if not start and end_date != dates[-1]:
+        dates.append(end_date)
+
+    pick_dates: list[str] = list()
+    for date in dates:
+        if "W" in frequency:
+            date = shift_to_week_boundary(date, start_date, end_date, start, frequency)
+
+        if is_only_bday:
+            if "D" in frequency and not is_business_day(date):
+                continue
+
+            if not is_business_day(date):
+                if start:
+                    date = shift_to_bday(date, 1)
+                else:
+                    date = shift_to_bday(date, -1)
+
+        date_str = str(date.strftime(settings.API_DATE_FORMAT))
+        if date_str not in pick_dates:
+            pick_dates.append(date_str)
+
+    return pick_dates
+
+
+def calc_period_date(
+    date: str | datetime.date,
+    frequency: str,
+    shift: int,
+    is_only_bday: bool,
+    start: bool,
+) -> str:
+    """
+    Calculates the start or end date of a certain time period,
+    with the possibility of shifting forward or backward by several periods.
+    
+    :param date: A string in YYYY-MM-DD ISO format representing the current date.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly).
+    :param shift: Indicating how many periods to shift (-N for backward, +N for forward).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :param start: The beginning of frequency, if False end of frequency.
+    :return: The calculated date in YYYY-MM-DD format.
+    """
+    frequency = frequency if start else "E" + frequency
+    date = get_validated_date(date)
+    if "W" in frequency:
+        date = calc_shift_date_map[frequency](date)
+
+    date = date + frequency_map[frequency](shift)
+
+    if is_only_bday and not is_business_day(date):
+        if start:
+            date = shift_to_bday(date, 1)
+        else:
+            date = shift_to_bday(date, -1)
+
+    return str(date.strftime(settings.API_DATE_FORMAT))
 
 # endregion Dates
 
