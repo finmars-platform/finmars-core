@@ -182,8 +182,7 @@ def _add_workdays(date, workdays, only_workdays=True):
     if not isinstance(date, datetime.date):
         date = _parse_date(str(date))
     workdays = int(workdays)
-    weeks = int(workdays / 5)
-    days_remainder = workdays % 5
+    weeks, days_remainder = divmod(workdays, 5)
     date = date + datetime.timedelta(weeks=weeks, days=days_remainder)
     if only_workdays:
         if date.weekday() == 5:
@@ -193,15 +192,12 @@ def _add_workdays(date, workdays, only_workdays=True):
     return date
 
 
-def _format_date(date, format=None):
+def _format_date(date, format_=None):
     if not isinstance(date, datetime.date):
         date = _parse_date(str(date))
     # _check_date(date)
-    if not format:
-        format = "%Y-%m-%d"
-    else:
-        format = str(format)
-    return date.strftime(format)
+    format_ = str(format_) if format_ else "%Y-%m-%d"
+    return date.strftime(format_)
 
 
 def _get_list_of_dates_between_two_dates(date_from, date_to):
@@ -217,12 +213,11 @@ def _send_system_message(
     action_status="not_required",
     performed_by="Expression Engine",
 ):
-    try:
-        from poms.system_messages.handlers import send_system_message
-        from poms.system_messages.models import SystemMessage
+    from poms.system_messages.handlers import send_system_message
+    from poms.users.utils import get_master_user_from_context
 
+    try:
         context = evaluator.context
-        from poms.users.utils import get_master_user_from_context
 
         master_user = get_master_user_from_context(context)
 
@@ -237,7 +232,7 @@ def _send_system_message(
         )
 
     except Exception as e:
-        _l.error("Could not sent system message %s" % e)
+        _l.error(f"Could not sent system message {e}")
 
 
 _send_system_message.evaluator = True
@@ -253,22 +248,17 @@ def _calculate_performance_report(
     segmentation_type,
     registers,
 ):
-    try:
-        from poms.system_messages.handlers import send_system_message
+    from poms.instruments.models import Instrument
+    from poms.reports.common import PerformanceReport
+    from poms.reports.performance_report import PerformanceReportBuilder
+    from poms.reports.serializers import PerformanceReportSerializer
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
 
+    try:
         context = evaluator.context
-        from poms.users.utils import (
-            get_master_user_from_context,
-            get_member_from_context,
-        )
 
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
-
-        from poms.instruments.models import Instrument
-        from poms.reports.common import PerformanceReport
-        from poms.reports.performance_report import PerformanceReportBuilder
-        from poms.reports.serializers import PerformanceReportSerializer
 
         currency = _safe_get_currency(evaluator, report_currency)
 
@@ -325,23 +315,19 @@ def _calculate_balance_report(
     cost_method="AVCO",
     portfolios=[],
 ):
-    try:
-        from poms.system_messages.handlers import send_system_message
+    from poms.instruments.models import CostMethod
+    from poms.portfolios.models import Portfolio
+    from poms.reports.common import Report
+    from poms.reports.serializers import BalanceReportSerializer
+    from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+    from poms.users.models import EcosystemDefault
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
 
+    try:
         context = evaluator.context
-        from poms.users.utils import (
-            get_master_user_from_context,
-            get_member_from_context,
-        )
 
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
-
-        from poms.instruments.models import Instrument
-        from poms.reports.common import Report
-        from poms.reports.serializers import BalanceReportSerializer
-        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
-        from poms.users.models import EcosystemDefault
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
@@ -351,18 +337,14 @@ def _calculate_balance_report(
         else:
             pricing_policy = ecosystem_default.pricing_policy
 
-        from poms.instruments.models import CostMethod
-
         cost_method = CostMethod.objects.get(user_code=cost_method)
 
-        _l.info("_calculate_balance_report master_user %s" % master_user)
-        _l.info("_calculate_balance_report member %s" % member)
-        _l.info("_calculate_balance_report report_date  %s" % report_date)
-        _l.info("_calculate_balance_report currency %s" % currency)
+        _l.info(f"_calculate_balance_report master_user {master_user}")
+        _l.info(f"_calculate_balance_report member {member}")
+        _l.info(f"_calculate_balance_report report_date  {report_date}")
+        _l.info(f"_calculate_balance_report currency {currency}")
 
         report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
-
-        from poms.portfolios.models import Portfolio
 
         portfolios_instances = []
 
@@ -393,8 +375,8 @@ def _calculate_balance_report(
         serializer.to_representation(instance)
 
     except Exception as e:
-        _l.error("_calculate_balance_report.Exception %s" % e)
-        _l.error("_calculate_balance_report.Trace %s" % traceback.format_exc())
+        _l.error(f"_calculate_balance_report.Exception {e}")
+        _l.error(f"_calculate_balance_report.Trace {traceback.format_exc()}")
 
 
 _calculate_balance_report.evaluator = True
@@ -410,22 +392,18 @@ def _calculate_pl_report(
     cost_method="AVCO",
     portfolios=[],
 ):
-    try:
-        from poms.system_messages.handlers import send_system_message
+    from poms.instruments.models import CostMethod
+    from poms.portfolios.models import Portfolio
+    from poms.reports.common import Report
+    from poms.reports.sql_builders.balance import PLReportBuilderSql
+    from poms.users.models import EcosystemDefault
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
 
+    try:
         context = evaluator.context
-        from poms.users.utils import (
-            get_master_user_from_context,
-            get_member_from_context,
-        )
 
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
-
-        from poms.instruments.models import Instrument
-        from poms.reports.common import Report
-        from poms.reports.sql_builders.balance import PLReportBuilderSql
-        from poms.users.models import EcosystemDefault
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
@@ -434,8 +412,6 @@ def _calculate_pl_report(
             pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
         else:
             pricing_policy = ecosystem_default.pricing_policy
-
-        from poms.instruments.models import CostMethod
 
         cost_method = CostMethod.objects.get(user_code=cost_method)
 
@@ -447,8 +423,6 @@ def _calculate_pl_report(
 
         report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
         pl_first_date_d = datetime.datetime.strptime(pl_first_date, "%Y-%m-%d").date()
-
-        from poms.portfolios.models import Portfolio
 
         portfolios_instances = []
 
@@ -473,7 +447,7 @@ def _calculate_pl_report(
         )
 
         builder = PLReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        instance = builder.build_balance()  # FIXME invalid method
 
         from poms.reports.serializers import PLReportSerializer
 
@@ -490,8 +464,9 @@ _calculate_pl_report.evaluator = True
 
 
 def _get_current_member(evaluator):
-    context = evaluator.context
     from poms.users.utils import get_member_from_context
+
+    context = evaluator.context
 
     member = get_member_from_context(context)
 
@@ -595,21 +570,21 @@ def _universal_parse_country(value):
         country = Country.objects.filter(name=value)[0]
         result = country
         return result
-    except Exception as e:
+    except Exception:
         pass
 
     try:
         country = Country.objects.filter(alpha_3=value)[0]
         result = country
         return result
-    except Exception as e:
+    except Exception:
         pass
 
     try:
         country = Country.objects.filter(alpha_2=value)[0]
         result = country
         return result
-    except Exception as e:
+    except Exception:
         pass
 
     return result
@@ -683,20 +658,17 @@ def _format_date2(date, format_=None, locale=None):
 
 
 def _parse_date2(date_string, format=None, locale=None):
+    from babel import Locale
+    from babel.dates import LC_TIME, parse_pattern
+
     # babel haven't supported parse by dynamic pattern
     if not date_string:
         return None
     if isinstance(date_string, datetime.date):
         return date_string
+
     date_string = str(date_string)
-    if not format:
-        format = "yyyy-MM-dd"
-    else:
-        format = str(format)
-
-    from babel import Locale
-    from babel.dates import LC_TIME, parse_pattern
-
+    format = str(format) if format else "yyyy-MM-dd"
     l = Locale.parse(locale or LC_TIME)
     p = parse_pattern(format)
     return p.apply(date_string, l)
