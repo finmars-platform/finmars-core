@@ -4256,7 +4256,7 @@ _run_task.evaluator = True
 
 def _run_pricing_procedure(evaluator, user_code, **kwargs):
     try:
-        from poms.pricing.handlers import PricingProcedureProcess
+        from poms.pricing.handlers import PricingProcedureProcess  # FIXME no such class
         from poms.procedures.models import PricingProcedure
         from poms.users.utils import (
             get_master_user_from_context,
