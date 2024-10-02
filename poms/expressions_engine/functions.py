@@ -699,9 +699,7 @@ def _format_number(
 
 
 def _parse_number(a):
-    if isinstance(a, (float, int)):
-        return a
-    return float(a)
+    return a if isinstance(a, (float, int)) else float(a)
 
 
 def _join(data, separator):
@@ -726,9 +724,7 @@ def _split(text, delimeter):
 
 
 def _parse_bool(a):
-    if isinstance(a, (bool)):
-        return a
-    return bool(a)
+    return a if isinstance(a, bool) else bool(a)
 
 
 def _simple_price(date, date1, value1, date2, value2):
