@@ -4131,7 +4131,7 @@ def _create_task(
     notes=None,
     **kwargs,
 ):
-    _l.info("_create_task task_name: %s" % name)
+    _l.info(f"_create_task task_name: {name}")
 
     try:
         from poms.celery_tasks.models import CeleryTask
@@ -4159,7 +4159,7 @@ def _create_task(
         return celery_task.id
 
     except Exception as e:
-        _l.debug("_create_task.exception %s" % e)
+        _l.debug(f"_create_task.exception {e}")
 
 
 _create_task.evaluator = True
