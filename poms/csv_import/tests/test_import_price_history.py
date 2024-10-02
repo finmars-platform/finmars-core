@@ -35,8 +35,10 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.space_code = "space0000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme_20 = self.create_scheme_20()
+        self.file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
         self.storage = mock.Mock()
         self.storage.save.return_value = None
+        self.storage.open.return_value = self.file_content
         self.instrument = self.create_instrument_for_price_history(
             isin=PRICE_HISTORY[0]["Instrument"]
         )

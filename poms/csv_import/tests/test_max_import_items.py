@@ -4,17 +4,13 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.files.uploadedfile import SimpleUploadedFile
 
-from poms.instruments.models import PricingPolicy, PriceHistory
+from poms.instruments.models import PricingPolicy
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvField, CsvImportScheme, EntityField
-from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import (
     PRICE_HISTORY,
-    PRICE_HISTORY_ITEM,
     SCHEME_20,
     SCHEME_20_ENTITIES,
     SCHEME_20_FIELDS,
@@ -34,6 +30,7 @@ class MaxItemsImportTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme_20 = self.create_scheme_20()
         self.storage = mock.Mock()
+        self.storage.save.return_value = None
         self.storage.save.return_value = None
         self.instrument = self.create_instrument_for_price_history(
             isin=PRICE_HISTORY[0]["Instrument"]
