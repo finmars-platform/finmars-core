@@ -4252,8 +4252,7 @@ def _run_task(evaluator, task_name, options={}):
         )
 
     except Exception as e:
-        _l.error(f"_run_task.exception {e}")
-        _l.error("_run_task.traceback %s" % traceback.format_exc())
+        _l.error(f"_run_task err {e} trace {traceback.format_exc()}")
 
 
 _run_task.evaluator = True
@@ -4283,8 +4282,8 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
         instance.process()
 
     except Exception as e:
-        _l.debug("_run_pricing_procedure.exception %s" % e)
-        raise Exception(e)
+        _l.debug(f"_run_pricing_procedure.exception {e}")
+        raise e
 
 
 _run_pricing_procedure.evaluator = True
@@ -4337,26 +4336,6 @@ def _run_data_procedure(
             ]
 
         run_data_procedure_from_formula.apply_async(kwargs=procedure_kwargs, link=link)
-
-        #
-        # merged_context = {}
-        # merged_context.update(context)
-        #
-        # if 'names' not in merged_context:
-        #     merged_context['names'] = {}
-        #
-        # if user_context:
-        #     merged_context['names'].update(user_context)
-        #
-        # _l.info('merged_context %s' % merged_context)
-        #
-        # procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
-        #
-        # kwargs.pop('user_context', None)
-        #
-        # instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
-        #                                            context=merged_context, **kwargs)
-        # instance.process()
 
     except Exception as e:
         _l.error("_run_data_procedure.exception %s" % e)
