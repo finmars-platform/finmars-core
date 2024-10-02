@@ -9,12 +9,11 @@ import traceback
 import uuid
 from typing import Optional
 
-from dateutil import relativedelta
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.utils import numberformat
+
+from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
 from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose
@@ -133,17 +132,17 @@ def _months(months):
 
 
 def _timedelta(
-        years=0,
-        months=0,
-        days=0,
-        leapdays=0,
-        weeks=0,
-        year=None,
-        month=None,
-        day=None,
-        weekday=None,
-        yearday=None,
-        nlyearday=None,
+    years=0,
+    months=0,
+    days=0,
+    leapdays=0,
+    weeks=0,
+    year=None,
+    month=None,
+    day=None,
+    weekday=None,
+    yearday=None,
+    nlyearday=None,
 ):
     return relativedelta.relativedelta(
         years=int(years),
@@ -210,13 +209,13 @@ def _get_list_of_dates_between_two_dates(date_from, date_to):
 
 
 def _send_system_message(
-        evaluator,
-        title=None,
-        description=None,
-        type="info",
-        section="other",
-        action_status="not_required",
-        performed_by="Expression Engine",
+    evaluator,
+    title=None,
+    description=None,
+    type="info",
+    section="other",
+    action_status="not_required",
+    performed_by="Expression Engine",
 ):
     try:
         from poms.system_messages.handlers import send_system_message
@@ -245,14 +244,14 @@ _send_system_message.evaluator = True
 
 
 def _calculate_performance_report(
-        evaluator,
-        name,
-        date_from,
-        date_to,
-        report_currency,
-        calculation_type,
-        segmentation_type,
-        registers,
+    evaluator,
+    name,
+    date_from,
+    date_to,
+    report_currency,
+    calculation_type,
+    segmentation_type,
+    registers,
 ):
     try:
         from poms.system_messages.handlers import send_system_message
@@ -318,13 +317,13 @@ _calculate_performance_report.evaluator = True
 
 
 def _calculate_balance_report(
-        evaluator,
-        name,
-        report_date,
-        report_currency,
-        pricing_policy=None,
-        cost_method="AVCO",
-        portfolios=[],
+    evaluator,
+    name,
+    report_date,
+    report_currency,
+    pricing_policy=None,
+    cost_method="AVCO",
+    portfolios=[],
 ):
     try:
         from poms.system_messages.handlers import send_system_message
@@ -402,14 +401,14 @@ _calculate_balance_report.evaluator = True
 
 
 def _calculate_pl_report(
-        evaluator,
-        name,
-        pl_first_date,
-        report_date,
-        report_currency,
-        pricing_policy=None,
-        cost_method="AVCO",
-        portfolios=[],
+    evaluator,
+    name,
+    pl_first_date,
+    report_date,
+    report_currency,
+    pricing_policy=None,
+    cost_method="AVCO",
+    portfolios=[],
 ):
     try:
         from poms.system_messages.handlers import send_system_message
@@ -570,9 +569,9 @@ def _universal_parse_date(date_string, **kwargs):
 
 
 def _get_quarter(date):
-    date = _parse_date(date)
+    import pandas as pd
 
-    quarter = pd.Timestamp(date).quarter
+    quarter = pd.Timestamp(_parse_date(date)).quarter
 
     return quarter
 
@@ -616,17 +615,14 @@ def _universal_parse_country(value):
     return result
 
 
-def _unix_to_date(unix, format=None):
+def _unix_to_date(unix, format_=None):
     if not unix:
         return None
     if isinstance(unix, datetime.date):
         return unix
     unix = int(unix)
-    if not format:
-        format = "%Y-%m-%d"
-    else:
-        format = str(format)
-    return datetime.datetime.utcfromtimestamp(unix).strftime(format)
+    format_ = str(format) if format else "%Y-%m-%d"
+    return datetime.datetime.utcfromtimestamp(unix).strftime(format_)
 
 
 def _last_business_day(date):
@@ -711,12 +707,12 @@ def _parse_date2(date_string, format=None, locale=None):
 
 
 def _format_number(
-        number,
-        decimal_sep=".",
-        decimal_pos=None,
-        grouping=3,
-        thousand_sep="",
-        use_grouping=False,
+    number,
+    decimal_sep=".",
+    decimal_pos=None,
+    grouping=3,
+    thousand_sep="",
+    use_grouping=False,
 ):
     number = float(number)
     decimal_sep = str(decimal_sep)
@@ -944,27 +940,27 @@ def _set_complex_transaction_input(evaluator, input, value):
 
         if value:
             if (
-                    input_obj.transaction_type_input.value_type
-                    == TransactionTypeInput.RELATION
+                input_obj.transaction_type_input.value_type
+                == TransactionTypeInput.RELATION
             ):
                 input_obj.value_relation = value
             elif (
-                    input_obj.transaction_type_input.value_type
-                    == TransactionTypeInput.STRING
+                input_obj.transaction_type_input.value_type
+                == TransactionTypeInput.STRING
             ):
                 input_obj.value_string = value
             elif (
-                    input_obj.transaction_type_input.value_type
-                    == TransactionTypeInput.NUMBER
+                input_obj.transaction_type_input.value_type
+                == TransactionTypeInput.NUMBER
             ):
                 input_obj.value_float = value
             elif (
-                    input_obj.transaction_type_input.value_type == TransactionTypeInput.DATE
+                input_obj.transaction_type_input.value_type == TransactionTypeInput.DATE
             ):
                 input_obj.value_date = value
             elif (
-                    input_obj.transaction_type_input.value_type
-                    == TransactionTypeInput.SELECTOR
+                input_obj.transaction_type_input.value_type
+                == TransactionTypeInput.SELECTOR
             ):
                 input_obj.value_string = value
 
@@ -1326,11 +1322,11 @@ _get_mapping_key_values.evaluator = True
 
 
 def _convert_to_number(
-        evaluator,
-        text_number,
-        thousand_separator="",
-        decimal_separator=".",
-        has_braces=False,
+    evaluator,
+    text_number,
+    thousand_separator="",
+    decimal_separator=".",
+    has_braces=False,
 ):
     result = text_number.replace(thousand_separator, "")
 
@@ -1395,7 +1391,7 @@ def _generate_user_code(evaluator, prefix="", suffix="", counter=0):
         raise InvalidExpression("Counter is greater than 10")
 
     master_user.user_code_counters[counter] = (
-            master_user.user_code_counters[counter] + 1
+        master_user.user_code_counters[counter] + 1
     )
     master_user.save()
 
@@ -1478,14 +1474,14 @@ _add_fx_rate.evaluator = True
 
 
 def _add_price_history(
-        evaluator,
-        date,
-        instrument,
-        pricing_policy,
-        principal_price=0,
-        accrued_price=None,
-        is_temporary_price=False,
-        overwrite=True,
+    evaluator,
+    date,
+    instrument,
+    pricing_policy,
+    principal_price=0,
+    accrued_price=None,
+    is_temporary_price=False,
+    overwrite=True,
 ):
     """
     Adds a price history entry for an instrument.
@@ -1549,7 +1545,7 @@ _add_price_history.evaluator = True
 
 
 def _get_latest_principal_price(
-        evaluator, date_from, date_to, instrument, pricing_policy, default_value=None
+    evaluator, date_from, date_to, instrument, pricing_policy, default_value=None
 ):
     try:
         from poms.instruments.models import PriceHistory
@@ -1592,7 +1588,7 @@ _get_latest_principal_price.evaluator = True
 
 
 def _get_latest_principal_price_date(
-        evaluator, instrument, pricing_policy, default_value=None
+    evaluator, instrument, pricing_policy, default_value=None
 ):
     try:
         from poms.instruments.models import PriceHistory
@@ -1629,7 +1625,7 @@ _get_latest_principal_price_date.evaluator = True
 
 
 def _get_latest_fx_rate(
-        evaluator, date_from, date_to, currency, pricing_policy, default_value=None
+    evaluator, date_from, date_to, currency, pricing_policy, default_value=None
 ):
     try:
         from poms.currencies.models import CurrencyHistory
@@ -1666,7 +1662,7 @@ _get_latest_fx_rate.evaluator = True
 
 
 def _get_price_history_principal_price(
-        evaluator, date, instrument, pricing_policy, default_value=0
+    evaluator, date, instrument, pricing_policy, default_value=0
 ):
     from poms.instruments.models import PriceHistory
     from poms.users.utils import get_master_user_from_context
@@ -1697,7 +1693,7 @@ _get_price_history_principal_price.evaluator = True
 
 
 def _get_price_history_accrued_price(
-        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+    evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
 ):
     from poms.instruments.models import PriceHistory, PricingPolicy
     from poms.users.utils import get_master_user_from_context
@@ -1773,7 +1769,7 @@ _get_price_history_accrued_price.evaluator = True
 
 
 def _get_price_history(
-        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+    evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
 ):
     from poms.instruments.models import PriceHistory, PricingPolicy
     from poms.users.utils import get_master_user_from_context
@@ -1849,7 +1845,7 @@ _get_price_history.evaluator = True
 
 
 def _get_factor_from_price(
-        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+    evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
 ):
     from poms.instruments.models import PriceHistory, PricingPolicy
     from poms.users.utils import get_master_user_from_context
@@ -2001,8 +1997,8 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
     result = None
     for attribute in attributes:
         if (
-                attribute.get("attribute_type", {}).get("user_code")
-                == attribute_type_user_code
+            attribute.get("attribute_type", {}).get("user_code")
+            == attribute_type_user_code
         ):
             value_type = attribute.get("attribute_type", {}).get("value_type")
 
@@ -2074,6 +2070,7 @@ def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
 
 _add_factor_schedule.evaluator = True
 
+
 # DEPRECATED
 def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
     from poms.users.utils import get_master_user_from_context
@@ -2119,9 +2116,9 @@ _get_currency_pricing_scheme.evaluator = True
 
 
 def _add_accrual_schedule(evaluator, instrument, data):
-    from poms.users.utils import get_master_user_from_context
-    from poms.instruments.serializers import AccrualCalculationScheduleSerializer
     from poms.instruments.models import AccrualCalculationSchedule
+    from poms.instruments.serializers import AccrualCalculationScheduleSerializer
+    from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
@@ -2561,8 +2558,7 @@ def _safe_get_instrument(evaluator, instrument, identifier_key=None):
     user_code = None
 
     if identifier_key:
-
-        query = {f'identifier__{identifier_key}': instrument}
+        query = {f"identifier__{identifier_key}": instrument}
         instrument = Instrument.objects.filter(**query).first()
         if instrument:
             return instrument
@@ -2649,7 +2645,6 @@ def _remove_instrument_identifier(evaluator, instrument, identifier_key):
 
     context = evaluator.context
 
-
     if instrument.identifier and identifier_key in instrument.identifier:
         del instrument.identifier[identifier_key]
         instrument.save()
@@ -2734,29 +2729,30 @@ def _check_currency(evaluator, currency) -> Optional[dict]:
 
     from poms.currencies.serializers import CurrencySerializer
 
-    if isinstance(currency, str):
-        if len(currency) == 3 and currency.isupper() and currency.isalpha():
-            try:
-                currency_obj = _safe_get_currency(evaluator, currency)
+    if isinstance(currency, str) and (
+        len(currency) == 3 and currency.isupper() and currency.isalpha()
+    ):
+        try:
+            currency_obj = _safe_get_currency(evaluator, currency)
 
-                context = evaluator.context
-                return CurrencySerializer(instance=currency_obj, context=context).data
-            except ExpressionEvalError:
-                return {
-                    "id": None,
-                    "master_user": None,
-                    "user_code": currency,
-                    "name": currency,
-                    "short_name": currency,
-                    "notes": None,
-                    "reference_for_pricing": "",
-                    "pricing_condition": None,
-                    "default_fx_rate": None,
-                    "is_deleted": None,
-                    "is_enabled": None,
-                    "pricing_policies": None,
-                    "country": None
-                }
+            context = evaluator.context
+            return CurrencySerializer(instance=currency_obj, context=context).data
+        except ExpressionEvalError:
+            return {
+                "id": None,
+                "master_user": None,
+                "user_code": currency,
+                "name": currency,
+                "short_name": currency,
+                "notes": None,
+                "reference_for_pricing": "",
+                "pricing_condition": None,
+                "default_fx_rate": None,
+                "is_deleted": None,
+                "is_enabled": None,
+                "pricing_policies": None,
+                "country": None,
+            }
     return None
 
 
@@ -2780,8 +2776,6 @@ _get_account_type.evaluator = True
 
 
 def _set_account_user_attribute(evaluator, account, user_code, value):
-    context = evaluator.context
-
     account = _safe_get_account(evaluator, account)
 
     try:
@@ -3067,7 +3061,9 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
         attribute_type = GenericAttributeType.objects.get(
             master_user=master_user,
             user_code=attribute_user_code,
-            content_type=ContentType.objects.get(app_label='instruments', model='instrument'),
+            content_type=ContentType.objects.get(
+                app_label="instruments", model="instrument"
+            ),
         )
     except GenericAttributeType.DoesNotExist:
         raise ExpressionEvalError("Attribute type is not found")
@@ -3078,7 +3074,9 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
         attribute = GenericAttribute.objects.get(
             attribute_type=attribute_type,
             object_id=pk,
-            content_type=ContentType.objects.get(app_label='instruments', model='instrument'),
+            content_type=ContentType.objects.get(
+                app_label="instruments", model="instrument"
+            ),
         )
     except GenericAttribute.DoesNotExist:
         raise ExpressionEvalError("Attribute is not found")
@@ -3117,7 +3115,7 @@ _calculate_accrued_price.evaluator = True
 
 
 def _get_position_size_on_date(
-        evaluator, instrument, date, accounts=None, portfolios=None
+    evaluator, instrument, date, accounts=None, portfolios=None
 ):
     from poms.transactions.models import Transaction
     from poms.users.utils import get_master_user_from_context
@@ -3137,8 +3135,14 @@ def _get_position_size_on_date(
         # Transfer is deprecated, but for now still in use
         # szhitenev 2024-02-12
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument,
-            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+            master_user=master_user,
+            accounting_date__lte=date,
+            instrument=instrument,
+            transaction_class_id__in=[
+                TransactionClass.BUY,
+                TransactionClass.SELL,
+                TransactionClass.TRANSFER,
+            ],
         )
 
         if accounts:
@@ -3166,12 +3170,16 @@ _get_position_size_on_date.evaluator = True
 
 
 def _get_principal_on_date(
-        evaluator, instrument, date, report_currency=None,
-        pricing_policy=None, accounts=None, portfolios=None
+    evaluator,
+    instrument,
+    date,
+    report_currency=None,
+    pricing_policy=None,
+    accounts=None,
+    portfolios=None,
 ):
-    from poms.transactions.models import Transaction
-    from poms.transactions.models import TransactionClass
     from poms.currencies.models import CurrencyHistory
+    from poms.transactions.models import Transaction, TransactionClass
     from poms.users.utils import get_master_user_from_context
 
     try:
@@ -3187,6 +3195,7 @@ def _get_principal_on_date(
         master_user = get_master_user_from_context(context)
 
         from poms.users.models import EcosystemDefault
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
         if report_currency:
@@ -3205,8 +3214,14 @@ def _get_principal_on_date(
         # szhitenev 2024-02-12
 
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument,
-            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+            master_user=master_user,
+            accounting_date__lte=date,
+            instrument=instrument,
+            transaction_class_id__in=[
+                TransactionClass.BUY,
+                TransactionClass.SELL,
+                TransactionClass.TRANSFER,
+            ],
         )
 
         if accounts:
@@ -3220,15 +3235,12 @@ def _get_principal_on_date(
         # _l.info('transactions %s ' % transactions)
 
         for trn in transactions:
-
             result_principal = 0
 
             try:
-
                 if trn.transaction_currency_id == report_currency.id:
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                 else:
-
                     if trn.transaction_currency_id == default_currency_id:
                         trn_currency_fx_rate = 1
                     else:
@@ -3247,7 +3259,12 @@ def _get_principal_on_date(
                             date=date,
                         ).fx_rate
 
-                    result_principal = trn.principal_with_sign * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
+                    result_principal = (
+                        trn.principal_with_sign
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
 
                 result = result + result_principal
 
@@ -3267,12 +3284,16 @@ _get_principal_on_date.evaluator = True
 
 
 def _get_principal_on_date(
-        evaluator, instrument, date, report_currency=None,
-        pricing_policy=None, accounts=None, portfolios=None
+    evaluator,
+    instrument,
+    date,
+    report_currency=None,
+    pricing_policy=None,
+    accounts=None,
+    portfolios=None,
 ):
-    from poms.transactions.models import Transaction
-    from poms.transactions.models import TransactionClass
     from poms.currencies.models import CurrencyHistory
+    from poms.transactions.models import Transaction, TransactionClass
     from poms.users.utils import get_master_user_from_context
 
     try:
@@ -3288,6 +3309,7 @@ def _get_principal_on_date(
         master_user = get_master_user_from_context(context)
 
         from poms.users.models import EcosystemDefault
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
         if report_currency:
@@ -3306,8 +3328,14 @@ def _get_principal_on_date(
         # szhitenev 2024-02-12
 
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument,
-            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+            master_user=master_user,
+            accounting_date__lte=date,
+            instrument=instrument,
+            transaction_class_id__in=[
+                TransactionClass.BUY,
+                TransactionClass.SELL,
+                TransactionClass.TRANSFER,
+            ],
         )
 
         if accounts:
@@ -3321,15 +3349,12 @@ def _get_principal_on_date(
         # _l.info('transactions %s ' % transactions)
 
         for trn in transactions:
-
             result_principal = 0
 
             try:
-
                 if trn.transaction_currency_id == report_currency.id:
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                 else:
-
                     if trn.transaction_currency_id == default_currency_id:
                         trn_currency_fx_rate = 1
                     else:
@@ -3348,7 +3373,12 @@ def _get_principal_on_date(
                             date=date,
                         ).fx_rate
 
-                    result_principal = trn.principal_with_sign * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
+                    result_principal = (
+                        trn.principal_with_sign
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
 
                 result = result + result_principal
 
@@ -3368,24 +3398,28 @@ _get_principal_on_date.evaluator = True
 
 
 def _get_transactions_amounts_on_date(
-        evaluator, instrument, date, report_currency=None,
-        pricing_policy=None, accounts_position=None, accounts_cash=None, portfolios=None
+    evaluator,
+    instrument,
+    date,
+    report_currency=None,
+    pricing_policy=None,
+    accounts_position=None,
+    accounts_cash=None,
+    portfolios=None,
 ):
-    from poms.transactions.models import Transaction
-    from poms.transactions.models import TransactionClass
     from poms.currencies.models import CurrencyHistory
+    from poms.transactions.models import Transaction, TransactionClass
     from poms.users.utils import get_master_user_from_context
 
     result = {
-        'position_size_with_sign': 0,
-        'principal_with_sign': 0,
-        'carry_with_sign': 0,
-        'overheads_with_sign': 0,
-        'cash_consideration': 0
+        "position_size_with_sign": 0,
+        "principal_with_sign": 0,
+        "carry_with_sign": 0,
+        "overheads_with_sign": 0,
+        "cash_consideration": 0,
     }
 
     try:
-
         context = evaluator.context
 
         master_user = get_master_user_from_context(context)
@@ -3396,6 +3430,7 @@ def _get_transactions_amounts_on_date(
         master_user = get_master_user_from_context(context)
 
         from poms.users.models import EcosystemDefault
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
         if report_currency:
@@ -3414,15 +3449,25 @@ def _get_transactions_amounts_on_date(
         # szhitenev 2024-02-12
 
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument,
-            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+            master_user=master_user,
+            accounting_date__lte=date,
+            instrument=instrument,
+            transaction_class_id__in=[
+                TransactionClass.BUY,
+                TransactionClass.SELL,
+                TransactionClass.TRANSFER,
+            ],
         )
 
         if accounts_position and len(accounts_position):
-            transactions = transactions.filter(account_position__user_code__in=accounts_position)
+            transactions = transactions.filter(
+                account_position__user_code__in=accounts_position
+            )
 
         if accounts_cash and len(accounts_cash):
-            transactions = transactions.filter(account_cash__user_code__in=accounts_cash)
+            transactions = transactions.filter(
+                account_cash__user_code__in=accounts_cash
+            )
 
         # _l.info('portfolios %s' % type(portfolios))
 
@@ -3432,7 +3477,6 @@ def _get_transactions_amounts_on_date(
         # _l.info('transactions %s ' % transactions)
 
         for trn in transactions:
-
             result_position_size = 0
             result_principal = 0
             result_carry = 0
@@ -3440,15 +3484,15 @@ def _get_transactions_amounts_on_date(
             cash_consideration = 0
 
             try:
-
                 if trn.transaction_currency_id == report_currency.id:
                     result_position_size = trn.position_size_with_sign
                     result_principal = trn.principal_with_sign * trn.reference_fx_rate
                     result_carry = trn.carry_with_sign * trn.reference_fx_rate
                     result_overheads = trn.overheads_with_sign * trn.reference_fx_rate
-                    result_cash_consideration = trn.cash_consideration * trn.reference_fx_rate
+                    result_cash_consideration = (
+                        trn.cash_consideration * trn.reference_fx_rate
+                    )
                 else:
-
                     if trn.transaction_currency_id == default_currency_id:
                         trn_currency_fx_rate = 1
                     else:
@@ -3468,16 +3512,44 @@ def _get_transactions_amounts_on_date(
                         ).fx_rate
 
                     result_position_size = trn.position_size_with_sign
-                    result_principal = trn.principal_with_sign * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
-                    result_carry = trn.carry_with_sign * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
-                    result_overheads = trn.overheads_with_sign * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
-                    result_cash_consideration = trn.cash_consideration * trn.reference_fx_rate * trn_currency_fx_rate / report_currency_fx_rate
+                    result_principal = (
+                        trn.principal_with_sign
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
+                    result_carry = (
+                        trn.carry_with_sign
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
+                    result_overheads = (
+                        trn.overheads_with_sign
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
+                    result_cash_consideration = (
+                        trn.cash_consideration
+                        * trn.reference_fx_rate
+                        * trn_currency_fx_rate
+                        / report_currency_fx_rate
+                    )
 
-                result['position_size_with_sign'] = result['position_size_with_sign'] + result_position_size
-                result['principal_with_sign'] = result['principal_with_sign'] + result_principal
-                result['carry_with_sign'] = result['carry_with_sign'] + result_carry
-                result['overheads_with_sign'] = result['overheads_with_sign'] + result_overheads
-                result['cash_consideration'] = result['cash_consideration'] + result_cash_consideration
+                result["position_size_with_sign"] = (
+                    result["position_size_with_sign"] + result_position_size
+                )
+                result["principal_with_sign"] = (
+                    result["principal_with_sign"] + result_principal
+                )
+                result["carry_with_sign"] = result["carry_with_sign"] + result_carry
+                result["overheads_with_sign"] = (
+                    result["overheads_with_sign"] + result_overheads
+                )
+                result["cash_consideration"] = (
+                    result["cash_consideration"] + result_cash_consideration
+                )
 
             except Exception as e:
                 _l.error("Could not fetch fx rate %s" % e)
@@ -3495,11 +3567,10 @@ _get_transactions_amounts_on_date.evaluator = True
 
 
 def _get_net_cost_price_on_date(
-        evaluator, instrument, date, accounts=None, portfolios=None
+    evaluator, instrument, date, accounts=None, portfolios=None
 ):
-    from poms.transactions.models import Transaction
+    from poms.transactions.models import Transaction, TransactionClass
     from poms.users.utils import get_master_user_from_context
-    from poms.transactions.models import TransactionClass
 
     try:
         result = 0
@@ -3515,8 +3586,14 @@ def _get_net_cost_price_on_date(
         # szhitenev 2024-02-12
 
         transactions = Transaction.objects.filter(
-            master_user=master_user, accounting_date__lte=date, instrument=instrument,
-            transaction_class_id__in=[TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSFER]
+            master_user=master_user,
+            accounting_date__lte=date,
+            instrument=instrument,
+            transaction_class_id__in=[
+                TransactionClass.BUY,
+                TransactionClass.SELL,
+                TransactionClass.TRANSFER,
+            ],
         )
 
         if accounts:
@@ -3553,14 +3630,14 @@ _get_net_cost_price_on_date.evaluator = True
 
 
 def _get_instrument_report_data(
-        evaluator,
-        instrument,
-        report_date,
-        report_currency=None,
-        pricing_policy=None,
-        cost_method="AVCO",
-        accounts=None,
-        portfolios=None,
+    evaluator,
+    instrument,
+    report_date,
+    report_currency=None,
+    pricing_policy=None,
+    cost_method="AVCO",
+    accounts=None,
+    portfolios=None,
 ):
     from poms.reports.common import Report
     from poms.reports.serializers import BalanceReportSerializer
@@ -3765,7 +3842,7 @@ def _get_default_portfolio(evaluator):
         return item.portfolio
 
     except Exception as e:
-        print("get_default_portfolio error %s" % e)
+        print(f"get_default_portfolio error {e}")
 
     return None
 
@@ -3788,7 +3865,7 @@ def _get_default_instrument(evaluator):
         return item.instrument
 
     except Exception as e:
-        print("get_default_instrument error %s" % e)
+        print(f"get_default_instrument error {e}")
 
     return None
 
@@ -3811,7 +3888,7 @@ def _get_default_account(evaluator):
         return item.account
 
     except Exception as e:
-        print("get_default_account error %s" % e)
+        print(f"get_default_account error {e}")
 
     return None
 
@@ -3834,7 +3911,7 @@ def _get_default_currency(evaluator):
         return item.currency
 
     except Exception as e:
-        print("get_default_currency error %s" % e)
+        print(f"get_default_currency error {e}")
 
     return None
 
@@ -4050,13 +4127,13 @@ _get_default_strategy3.evaluator = True
 
 
 def _create_task(
-        evaluator,
-        name,
-        type="user_task",
-        options=None,
-        function_name=None,
-        notes=None,
-        **kwargs,
+    evaluator,
+    name,
+    type="user_task",
+    options=None,
+    function_name=None,
+    notes=None,
+    **kwargs,
 ):
     _l.info("_create_task task_name: %s" % name)
 
@@ -4093,16 +4170,16 @@ _create_task.evaluator = True
 
 
 def _update_task(
-        evaluator,
-        id,
-        name,
-        type=None,
-        status="P",
-        options=None,
-        notes=None,
-        error_message=None,
-        result=None,
-        **kwargs,
+    evaluator,
+    id,
+    name,
+    type=None,
+    status="P",
+    options=None,
+    notes=None,
+    error_message=None,
+    result=None,
+    **kwargs,
 ):
     _l.info("_create_task task_name: %s" % name)
 
@@ -4163,10 +4240,19 @@ def _run_task(evaluator, task_name, options={}):
             options_object=options,
         )
 
-        celery_app.send_task(task_name, kwargs={"task_id": task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
+        celery_app.send_task(
+            task_name,
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "realm_code": task.realm_code,
+                    "space_code": task.space_code,
+                },
+            },
+        )
 
     except Exception as e:
-        _l.error("_run_task.exception %s" % e)
+        _l.error(f"_run_task.exception {e}")
         _l.error("_run_task.traceback %s" % traceback.format_exc())
 
 
@@ -4205,7 +4291,7 @@ _run_pricing_procedure.evaluator = True
 
 
 def _run_data_procedure(
-        evaluator, user_code, user_context=None, linked_task_kwargs=None, **kwargs
+    evaluator, user_code, user_context=None, linked_task_kwargs=None, **kwargs
 ):
     _l.info("_run_data_procedure")
 
@@ -4230,21 +4316,20 @@ def _run_data_procedure(
             "member_id": member.id,
             "user_code": user_code,
             "user_context": user_context,
-            'context': {
-                'space_code': master_user.space_code,
-                'realm_code': master_user.realm_code
-            }
+            "context": {
+                "space_code": master_user.space_code,
+                "realm_code": master_user.realm_code,
+            },
         }
         procedure_kwargs.update(kwargs)
 
         link = []
 
         if linked_task_kwargs:
-
             # TODO maybe should append mode here
-            linked_task_kwargs['context'] = {
-                'space_code': master_user.space_code,
-                'realm_code': master_user.realm_code
+            linked_task_kwargs["context"] = {
+                "space_code": master_user.space_code,
+                "realm_code": master_user.realm_code,
             }
 
             link = [
@@ -4440,7 +4525,7 @@ _rebook_transaction.evaluator = True
 
 
 def _download_instrument_from_finmars_database(
-        evaluator, reference, instrument_name=None, instrument_type_user_code=None
+    evaluator, reference, instrument_name=None, instrument_type_user_code=None
 ):
     _l.info("_download_instrument_from_finmars_database formula")
 
@@ -4482,10 +4567,13 @@ def _download_instrument_from_finmars_database(
         )
 
         download_instrument_finmars_database_async.apply_async(
-            kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }}
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            }
         )
 
     except Exception as e:
@@ -4660,7 +4748,14 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.save()
 
         simple_import.apply(
-            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "realm_code": celery_task.master_user.realm_code,
+                    "space_code": celery_task.master_user.space_code,
+                },
+            },
+            queue="backend-background-queue",
         )
 
         return {"task_id": celery_task.id}
@@ -4693,7 +4788,6 @@ def _run_transaction_import(evaluator, filepath, scheme):
         else:
             filepath = master_user.space_code + "/" + filepath
 
-
         celery_task = CeleryTask.objects.create(
             master_user=master_user,
             member=member,
@@ -4717,7 +4811,14 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.save()
 
         transaction_import.apply(
-            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}}, queue="backend-background-queue"
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "realm_code": celery_task.master_user.realm_code,
+                    "space_code": celery_task.master_user.space_code,
+                },
+            },
+            queue="backend-background-queue",
         )
 
         return None
@@ -4779,11 +4880,11 @@ def _date_group(evaluator, val, ranges, default=None):
         if begin <= val <= end:
             if step:
                 if not isinstance(
-                        step,
-                        (
-                                datetime.timedelta,
-                                relativedelta.relativedelta,
-                        ),
+                    step,
+                    (
+                        datetime.timedelta,
+                        relativedelta.relativedelta,
+                    ),
                 ):
                     step = _timedelta(days=step)
                 # _l.debug('start=%s, end=%s, step=%s', start, end, step)
@@ -4852,7 +4953,7 @@ _print_message.evaluator = True
 
 
 def _if_valid_isin(evaluator, isin: str) -> bool:
-    isin = isin.upper().replace('-', '')
+    isin = isin.upper().replace("-", "")
 
     if len(isin) != 12:
         return False
@@ -4865,14 +4966,17 @@ def _if_valid_isin(evaluator, isin: str) -> bool:
     if not isin[:2].isalpha():
         return False
 
-    converted_digits = [str(ord(char) - 55) if char.isalpha() else char for char in isin[:-1]]
+    converted_digits = [
+        str(ord(char) - 55) if char.isalpha() else char for char in isin[:-1]
+    ]
     converted_digits_str = "".join(converted_digits)
     converted_digits_str_multiplied = [
-                                          int(char) * 2
-                                          if i % 2 == 0 else char
-                                          for i, char in enumerate(converted_digits_str[::-1])
-                                      ][::-1]
-    summed_digits = sum(int(digit) for char in converted_digits_str_multiplied for digit in str(char))
+        int(char) * 2 if i % 2 == 0 else char
+        for i, char in enumerate(converted_digits_str[::-1])
+    ][::-1]
+    summed_digits = sum(
+        int(digit) for char in converted_digits_str_multiplied for digit in str(char)
+    )
     checksum = (10 - (summed_digits % 10)) % 10
 
     if isin[-1] != str(checksum):
@@ -4889,12 +4993,12 @@ def _print(message, *args, **kwargs):
 
 
 def _clean_str_val(
-        evaluator,
-        value: [str, int, float],
-        if_empty_str_is_none: bool = False,
-        if_number: bool = False,
-        decimal_sep: str = ".",
-        default_value: [str, int, float] = None
+    evaluator,
+    value: [str, int, float],
+    if_empty_str_is_none: bool = False,
+    if_number: bool = False,
+    decimal_sep: str = ".",
+    default_value: [str, int, float] = None,
 ) -> [str, int, float]:
     """
     Cleans and processes string value based on specified criteria.
@@ -4918,7 +5022,7 @@ def _clean_str_val(
     # remove leading and trailing zeroes
     clean_value = value_str.strip()
     # Remove consecutive spaces
-    clean_value = ' '.join(clean_value.split())
+    clean_value = " ".join(clean_value.split())
     if if_empty_str_is_none:
         if clean_value == "":
             return default_value
@@ -4931,7 +5035,8 @@ def _clean_str_val(
         if clean_value[0] == "-":
             sign = -1
         clean_value = [
-            char for char in clean_value if char.isdigit() or char == decimal_sep]
+            char for char in clean_value if char.isdigit() or char == decimal_sep
+        ]
         clean_value = "".join(clean_value)
         clean_value = clean_value.replace(decimal_sep, ".")
         try:
@@ -5046,7 +5151,9 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("calculate_accrued_price", _calculate_accrued_price),
     SimpleEval2Def("get_position_size_on_date", _get_position_size_on_date),
     SimpleEval2Def("get_principal_on_date", _get_principal_on_date),
-    SimpleEval2Def("get_transactions_amounts_on_date", _get_transactions_amounts_on_date),
+    SimpleEval2Def(
+        "get_transactions_amounts_on_date", _get_transactions_amounts_on_date
+    ),
     SimpleEval2Def("get_net_cost_price_on_date", _get_net_cost_price_on_date),
     SimpleEval2Def("get_instrument_report_data", _get_instrument_report_data),
     SimpleEval2Def("get_instrument_factor", _get_instrument_factor),
