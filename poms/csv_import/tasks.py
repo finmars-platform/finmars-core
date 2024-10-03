@@ -58,11 +58,8 @@ def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
                 import_process.file_items = new_file_items
 
             except Exception as e:
-                err_msg = f"transaction_import.preprocess errors {repr(e)}"
+                err_msg = f"transaction_import.preprocess error {repr(e)}"
                 _l.error(err_msg)
-                celery_task.error_message = err_msg
-                celery_task.status = CeleryTask.STATUS_ERROR
-                celery_task.save()
                 raise RuntimeError(err_msg) from e
 
         import_process.fill_with_raw_items()
