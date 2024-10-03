@@ -11,6 +11,7 @@ from operator import or_
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils.dateparse import parse_date
@@ -611,6 +612,13 @@ def handler_instrument_object(
     return object_data
 
 
+def count_lines_in_file(file_path: str) -> int:
+    with storage.open(file_path, "r") as f:
+        num_lines = sum(1 for _ in f)
+
+    return num_lines
+
+
 class SimpleImportProcess:
     def __init__(self, task_id, procedure_instance_id=None):
         self.task = CeleryTask.objects.get(pk=task_id)
@@ -653,6 +661,15 @@ class SimpleImportProcess:
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
+
+        num_lines = count_lines_in_file(self.file_path)
+        if num_lines == 0:
+            raise RuntimeError(f"File {self.file_path} has no lines. Nothing to import")
+        if num_lines > settings.MAX_ITEMS_IMPORT:
+            raise RuntimeError(
+                f"File {self.file_path} has more than {settings.MAX_ITEMS_IMPORT} "
+                f"lines. Import impossible"
+            )
 
         self.ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.master_user

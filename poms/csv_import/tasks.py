@@ -2,7 +2,6 @@ import json
 import traceback
 from logging import getLogger
 
-from django.conf import settings
 from django.db import transaction
 
 from poms.celery_tasks import finmars_task
@@ -39,7 +38,6 @@ def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
             task_id=task_id,
             procedure_instance_id=procedure_instance_id,
         )
-
         celery_task.update_progress(
             {
                 "current": 0,
@@ -51,21 +49,10 @@ def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
 
         import_process.fill_with_file_items()
 
-        if import_process.result.total_rows > settings.MAX_ITEMS_IMPORT:
-            err_msg = (
-                f"file {import_process.result.file_name} "
-                f"has {import_process.result.total_rows} items, but max "
-                f"allowed is {settings.MAX_ITEMS_IMPORT // 1000}k items"
-            )
-            _l.error(err_msg)
-            celery_task.error_message = err_msg
-            celery_task.status = CeleryTask.STATUS_ERROR
-            celery_task.save()
-            raise RuntimeError(err_msg)
-
-
         if import_process.scheme.data_preprocess_expression:
-            _l.info(f"Going to execute {import_process.scheme.data_preprocess_expression}")
+            _l.info(
+                f"Going to execute {import_process.scheme.data_preprocess_expression}"
+            )
             try:
                 new_file_items = import_process.whole_file_preprocess()
                 import_process.file_items = new_file_items
@@ -125,7 +112,9 @@ def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
-def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id, *args, **kwargs):
+def data_csv_file_import_by_procedure_json(
+    self, procedure_instance_id, celery_task_id, *args, **kwargs
+):
     from poms.procedures.models import RequestDataFileProcedureInstance
 
     _l.info(
@@ -178,10 +167,11 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             lambda: simple_import.apply_async(
                 kwargs={
                     "task_id": celery_task.id,
-                    "procedure_instance_id": procedure_instance_id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }
+                    "procedure_instance_id": procedure_instance_id,
+                    "context": {
+                        "space_code": celery_task.master_user.space_code,
+                        "realm_code": celery_task.master_user.realm_code,
+                    },
                 },
                 queue="backend-background-queue",
             )
@@ -208,9 +198,12 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         procedure_instance.save()
 
 
-
-@finmars_task(name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True)
-def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_instance_id=None, *args, **kwargs):
+@finmars_task(
+    name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True
+)
+def simple_import_bulk_insert_final_updates_procedure(
+    self, task_id, procedure_instance_id=None, *args, **kwargs
+):
     from poms.csv_import.handlers import SimpleImportFinalUpdatesProcess
 
     try:
