@@ -58,6 +58,7 @@ from poms.strategies.models import (
 )
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
+from poms.portfolios.models import PortfolioType
 
 storage = get_storage()
 
@@ -108,6 +109,7 @@ RELATION_FIELDS_MAP = {
     "co_directional_exposure_currency": Currency,
     "counter_directional_exposure_currency": Currency,
     "daily_pricing_model": DailyPricingModel,
+    "portfolio_type": PortfolioType,
 }
 
 
