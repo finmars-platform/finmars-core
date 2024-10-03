@@ -148,12 +148,14 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         self.assertEqual(task.progress_object["description"], "Preprocess items")
 
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_create_and_run_simple_import_process(self, mock_send_message):
+    def test_create_and_run_simple_import_process(self, mock_send_message, mock_count):
         """
         Imitate all steps to handle file with price history datta
         """
         self.assertFalse(bool(PriceHistory.objects.all()))
+        mock_count.return_value = len(PRICE_HISTORY)
 
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
@@ -215,11 +217,13 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(ph.accrued_price, 0.0)
         self.assertEqual(ph.factor, 1.0)
 
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_run_simple_import_process_missing_fields(self, mock_send_message):
+    def test_run_simple_import_process_missing_fields(self, mock_send_message, mock_count):
         """
         Imitate all steps to handle file with price history datta
         """
+        mock_count.return_value = len(PRICE_HISTORY)
         self.assertFalse(bool(PriceHistory.objects.all()))
 
         task = self.create_task(remove_accrued_and_factor=True)
