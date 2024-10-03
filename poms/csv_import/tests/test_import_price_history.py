@@ -285,3 +285,12 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
         self.assertEqual(ph.accrued_price, 0.0)
         self.assertEqual(ph.factor, 1.0)
+
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
+    @mock.patch("poms.csv_import.handlers.send_system_message")
+    def test__error_too_many_line(self, mock_send_message, mock_count):
+        mock_count.return_value = settings.MAX_ITEMS_IMPORT + 1
+
+        task = self.create_task()
+        with self.assertRaises(RuntimeError):
+            SimpleImportProcess(task_id=task.id)
