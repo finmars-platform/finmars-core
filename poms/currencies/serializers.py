@@ -49,6 +49,7 @@ class CurrencySerializer(
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "notes",
             "reference_for_pricing",
