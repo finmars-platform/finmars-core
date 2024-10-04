@@ -50,6 +50,8 @@ from poms.auth_tokens.views import (
     SetAuthToken,
 )
 from poms.explorer.views import ExplorerServerFileViewSet
+import poms.clients.urls as clients_router
+
 
 router = routers.DefaultRouter()
 
@@ -344,6 +346,7 @@ urlpatterns = [
     re_path(r"^v1/import/", include(csv_import_router.router.urls)),
     re_path(r"^v1/ui/", include(ui_router.router.urls)),
     re_path(r"^v1/explorer/", include(explorer_router.router.urls)),
+    re_path(r"^v1/clients/", include(clients_router.router.urls)),
     re_path(r"^v1/vault/", include(vault_router.router.urls)),
     re_path(r"^v1/iam/", include(iam_router.router.urls)),
     re_path(r"^v1/", include(router.urls)),
