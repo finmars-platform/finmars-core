@@ -35,8 +35,10 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.space_code = "space0000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme_20 = self.create_scheme_20()
+        self.file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
         self.storage = mock.Mock()
         self.storage.save.return_value = None
+        self.storage.open.return_value = self.file_content
         self.instrument = self.create_instrument_for_price_history(
             isin=PRICE_HISTORY[0]["Instrument"]
         )
@@ -146,12 +148,14 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         self.assertEqual(task.progress_object["description"], "Preprocess items")
 
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_create_and_run_simple_import_process(self, mock_send_message):
+    def test_create_and_run_simple_import_process(self, mock_send_message, mock_count):
         """
         Imitate all steps to handle file with price history datta
         """
         self.assertFalse(bool(PriceHistory.objects.all()))
+        mock_count.return_value = len(PRICE_HISTORY)
 
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
@@ -213,11 +217,13 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(ph.accrued_price, 0.0)
         self.assertEqual(ph.factor, 1.0)
 
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
     @mock.patch("poms.csv_import.handlers.send_system_message")
-    def test_run_simple_import_process_missing_fields(self, mock_send_message):
+    def test_run_simple_import_process_missing_fields(self, mock_send_message, mock_count):
         """
         Imitate all steps to handle file with price history datta
         """
+        mock_count.return_value = len(PRICE_HISTORY)
         self.assertFalse(bool(PriceHistory.objects.all()))
 
         task = self.create_task(remove_accrued_and_factor=True)
@@ -279,3 +285,11 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
         self.assertEqual(ph.accrued_price, 0.0)
         self.assertEqual(ph.factor, 1.0)
+
+    @mock.patch("poms.csv_import.handlers.count_lines_in_file")
+    def test__error_too_many_line(self, mock_count):
+        mock_count.return_value = settings.MAX_ITEMS_IMPORT + 1
+
+        task = self.create_task()
+        with self.assertRaises(RuntimeError):
+            SimpleImportProcess(task_id=task.id)
