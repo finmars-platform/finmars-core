@@ -9,13 +9,17 @@ from poms.common.filters import ClassifierRootFilter
 from poms.iam.serializers import IamProtectedSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.utils import get_master_user_from_context, get_member_from_context, get_space_code_from_context, \
-    get_realm_code_from_context
-from poms_app import settings
+from poms.users.utils import (
+    get_master_user_from_context,
+    get_member_from_context,
+    get_realm_code_from_context,
+    get_space_code_from_context,
+)
 
 
 class BulkSerializer(serializers.Serializer):
     ids = serializers.ListField(child=serializers.IntegerField())
+
 
 class PomsClassSerializer(serializers.ModelSerializer):
     class Meta:
@@ -165,16 +169,22 @@ class ClassifierListSerializer(serializers.ListSerializer):
 
 
 class ContentTypeSerializer(serializers.ModelSerializer):
+    app_model = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = ContentType
         fields = [
-            "name",
+            "id",
+            "app_model",
         ]
         read_only_fields = fields
 
+    @staticmethod
+    def get_app_model(obj) -> str:
+        return f"{obj.app_label}.{obj.model}"
+
 
 class RealmMigrateSchemeSerializer(serializers.Serializer):
-
     realm_code = serializers.CharField(required=True)
     space_code = serializers.CharField(required=True)
 
@@ -182,18 +192,34 @@ class RealmMigrateSchemeSerializer(serializers.Serializer):
 class ModelWithObjectStateSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["is_active"] = serializers.BooleanField(default=True, required=False)
-        self.fields["actual_at"] = serializers.DateTimeField(allow_null=True, required=False)
-        self.fields["source_type"] = serializers.ChoiceField(choices=("manual", "external"), default="manual", required=False)
-        self.fields["source_origin"] = serializers.CharField(default="manual", required=False)
-        self.fields["external_id"] = serializers.CharField(allow_null=True, required=False)
-        self.fields["is_manual_locked"] = serializers.BooleanField(default=False, required=False)
-        self.fields["is_locked"] = serializers.BooleanField(default=True, required=False)
+        self.fields["is_active"] = serializers.BooleanField(
+            default=True, required=False
+        )
+        self.fields["actual_at"] = serializers.DateTimeField(
+            allow_null=True, required=False
+        )
+        self.fields["source_type"] = serializers.ChoiceField(
+            choices=("manual", "external"), default="manual", required=False
+        )
+        self.fields["source_origin"] = serializers.CharField(
+            default="manual", required=False
+        )
+        self.fields["external_id"] = serializers.CharField(
+            allow_null=True, required=False
+        )
+        self.fields["is_manual_locked"] = serializers.BooleanField(
+            default=False, required=False
+        )
+        self.fields["is_locked"] = serializers.BooleanField(
+            default=True, required=False
+        )
 
     def validate(self, data):
         if data.get("source_type", "manual") == "manual" and (
-                data.get("source_origin") and data["source_origin"] != "manual"
+            data.get("source_origin") and data["source_origin"] != "manual"
         ):
-            raise serializers.ValidationError("Object is protected from external changes")
+            raise serializers.ValidationError(
+                "Object is protected from external changes"
+            )
 
         return data

@@ -1,6 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.portfolios.models import Portfolio
+from poms.iam.models import ResourceGroup
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -176,8 +177,6 @@ class PortfolioViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio/"
         self.portfolio = Portfolio.objects.last()
         self.user_code = self.random_string()
@@ -215,6 +214,8 @@ class PortfolioViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["user_code"], self.user_code)
         self.assertFalse(response_json["is_deleted"])
+        self.assertIn("resource_groups", response_json)
+        self.assertEqual(response_json["resource_groups"], [])
 
     def test_destroy(self):
         response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
@@ -237,3 +238,81 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
+
+    def create_group(self, name: str = "test") -> ResourceGroup:
+        return ResourceGroup.objects.create(
+            master_user=self.master_user,
+            name=name,
+            user_code=name,
+            description=name,
+        )
+
+    def test_add_resource_group(self):
+        rg_name = self.random_string()
+        self.create_group(name=rg_name)
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": [rg_name]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertIn("resource_groups", portfolio_data)
+        self.assertEqual(portfolio_data["resource_groups"], [rg_name])
+
+    def test_update_resource_groups(self):
+        name_1 = self.random_string()
+        self.create_group(name=name_1)
+        name_2 = self.random_string()
+        self.create_group(name=name_2)
+        name_3 = self.random_string()
+        self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": [name_1, name_2, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertEqual(len(portfolio_data["resource_groups"]), 3)
+
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": [name_2]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertEqual(len(portfolio_data["resource_groups"]), 1)
+        self.assertEqual(portfolio_data["resource_groups"], [name_2])
+
+    def test_remove_resource_groups(self):
+        name_1 = self.random_string()
+        self.create_group(name=name_1)
+        name_3 = self.random_string()
+        self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": [name_1, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertEqual(len(portfolio_data["resource_groups"]), 2)
+
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"resource_groups": []},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertEqual(len(portfolio_data["resource_groups"]), 0)
+        self.assertEqual(portfolio_data["resource_groups"], [])
