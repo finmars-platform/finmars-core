@@ -7,7 +7,7 @@ from poms.common.models import NamedModel
 class Client(NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
-        related_name="clietn",
+        related_name="client",
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
