@@ -138,8 +138,6 @@ SCHEME_20_ENTITIES = [
         "system_property_key": "factor",
         "scheme": None,
     },
-    
-    
     {
         "name": "ytm",
         "expression": "ytm",
@@ -180,7 +178,6 @@ PRICE_HISTORY = [
         "Principal Price": 109.72,
         "Accrued Price": None,
         "Factor": None,
-        
         "YTM": None,
         "Modified Duration": 1.1,
         "Long Delta": 1.1,
@@ -210,7 +207,7 @@ EXPECTED_RESULT = {
         "factor": None,
         "instrument": "USP37341AA50",
         "principal_price": 109.72,
-        
+
         "ytm": None,
         "modified_duration": 1.1,
         "long_delta": 1.1,
@@ -224,7 +221,7 @@ EXPECTED_RESULT = {
         "Factor": None,
         "Instrument": "USP37341AA50",
         "Principal Price": 109.72,
-        
+
         "YTM": None,
         "Modified Duration": 1.1,
         "Long Delta": 1.1,
@@ -253,7 +250,7 @@ EXPECTED_RESULT = {
         "long_delta": 1.1,
         "short_delta": 1.1,
         "is_temporary_price": False,
-        
+
     },
     "message": "",
     "raw_inputs": {
