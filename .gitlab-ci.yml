@@ -51,7 +51,9 @@ Test:
   services:
     - name: postgres:15
       pull_policy: if-not-present # available: always, if-not-present,
-    - name: rabbitmq:3.11.3-management
+    - name: rabbitmq:3.13.7-management
+      pull_policy: if-not-present # available: always, if-not-present,
+    - name: redis:7
       pull_policy: if-not-present # available: always, if-not-present,
 
   variables:
@@ -71,6 +73,9 @@ Test:
     RABBITMQ_USER: test_finmars_user
     RABBITMQ_PASSWORD: test_finmars_password
     RABBITMQ_PORT: 5672
+
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
 
   before_script:
     - |
