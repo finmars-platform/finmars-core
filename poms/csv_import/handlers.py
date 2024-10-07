@@ -612,13 +612,6 @@ def handler_instrument_object(
     return object_data
 
 
-def count_lines_in_file(file_path: str) -> int:
-    with storage.open(file_path, "r") as f:
-        num_lines = sum(1 for _ in f)
-
-    return num_lines
-
-
 class SimpleImportProcess:
     def __init__(self, task_id, procedure_instance_id=None):
         self.task = CeleryTask.objects.get(pk=task_id)
@@ -661,16 +654,6 @@ class SimpleImportProcess:
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
-
-        num_lines = count_lines_in_file(self.file_path)
-        if num_lines == 0:
-            raise RuntimeError(f"File {self.file_path} has no lines. Nothing to import")
-        if num_lines > settings.MAX_ITEMS_IMPORT:
-            raise RuntimeError(
-                f"File {self.file_path} has more than {settings.MAX_ITEMS_IMPORT} "
-                f"lines. Import impossible"
-            )
-
         self.ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.master_user
         )
@@ -919,11 +902,8 @@ class SimpleImportProcess:
             if self.process_type == ProcessType.JSON:
                 try:
                     _l.info("Trying to get json items from task object options")
-                    items = self.task.options_object["items"]
 
-                    self.result.total_rows = len(items)
-
-                    self.file_items = items
+                    self.file_items = self.task.options_object["items"]
 
                 except Exception:
                     _l.info("Trying to get json items from file")
@@ -933,7 +913,8 @@ class SimpleImportProcess:
 
                 if not isinstance(self.file_items, list):
                     raise ValueError(
-                        "Input json is not a list. Did you forget to wrap it into []?"
+                        f"File {self.file_path} of type json is not a List. "
+                        f"Did you forget to wrap it into []?"
                     )
 
             elif self.process_type == ProcessType.CSV:
@@ -962,13 +943,29 @@ class SimpleImportProcess:
                             )
 
                             self.append_and_count_file_items(reader)
+
             elif self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
                         self.read_from_excel_file(f, tmpf)
 
             else:
-                raise ValueError(f"invalid {self.process_type} process type")
+                raise ValueError(
+                    f"File {self.file_path} is of invalid type {self.process_type}. "
+                    f"Import impossible"
+                )
+
+            self.result.total_rows = len(self.file_items)
+
+            if self.result.total_rows == 0:
+                raise ValueError(
+                    f"File {self.file_path} has no items. Nothing to import"
+                )
+            if self.result.total_rows > settings.MAX_ITEMS_IMPORT:
+                raise ValueError(
+                    f"File {self.file_path} has more than {settings.MAX_ITEMS_IMPORT} "
+                    f"items. Import impossible"
+                )
 
             _l.info(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
@@ -1043,8 +1040,6 @@ class SimpleImportProcess:
                     for column_index, value in enumerate(row)
                 }
                 self.file_items.append(file_item)
-
-        self.result.total_rows = len(self.file_items)
 
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
