@@ -602,6 +602,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.ecosystem = None
         self.default_instrument = None
         self.master_user = None
