@@ -64,6 +64,7 @@ class CurrencyFilterSet(FilterSet):
                     Q(user_code__icontains=term)
                     | Q(name__icontains=term)
                     | Q(short_name__icontains=term)
+                    | Q(public_name__icontains=term)
                 )
             queryset = queryset.filter(conditions)
 

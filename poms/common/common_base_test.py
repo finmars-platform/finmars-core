@@ -555,6 +555,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 user_code=currency[0],
                 defaults=dict(
                     name=currency[0],
+                    public_name=currency[0],
                     default_fx_rate=currency[1],
                 ),
             )

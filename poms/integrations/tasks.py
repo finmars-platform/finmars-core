@@ -4354,7 +4354,7 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
             country = None
 
     currency_data = {
-        "user_code": data.get("user_code"),
+        "user_code": data.get("user_code").rstrip(".CC"),
         "name": data.get("name"),
         "public_name": data.get("public_name"),
         "short_name": data.get("short_name"),
