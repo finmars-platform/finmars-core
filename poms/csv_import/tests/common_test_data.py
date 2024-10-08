@@ -207,7 +207,6 @@ EXPECTED_RESULT = {
         "factor": None,
         "instrument": "USP37341AA50",
         "principal_price": 109.72,
-
         "ytm": None,
         "modified_duration": 1.1,
         "long_delta": 1.1,
@@ -221,7 +220,6 @@ EXPECTED_RESULT = {
         "Factor": None,
         "Instrument": "USP37341AA50",
         "Principal Price": 109.72,
-
         "YTM": None,
         "Modified Duration": 1.1,
         "Long Delta": 1.1,
@@ -487,4 +485,124 @@ INSTRUMENT = {
         "model_name": "instrument",
         "space_code": "space00000",
     },
+}
+
+
+# PORTFOLIO
+
+SCHEME_PORTFOLIO_FIELDS = [
+    {
+        "column": 1,
+        "name": "temp_portfolio",
+        "name_expr": "str(temp_portfolio)",
+        "column_name": "Portfolio",
+        "scheme": None,
+    },
+    {
+        "column": 1,
+        "name": "portfolio_type",
+        "name_expr": "portfolio_type",
+        "column_name": "portfolio_type",
+        "scheme": None,
+    },
+
+]
+
+SCHEME_PORTFOLIO_ENTITIES = [
+    {
+        "name": "portfolio type",
+        "expression": "portfolio_type",
+        "system_property_key": "portfolio_type",
+        "scheme": None,
+    },
+    {
+        "name": "user code",
+        "expression": "temp_portfolio",
+        "system_property_key": "user_code",
+        "scheme": None,
+    },
+    {
+        "name": "name",
+        "expression": "temp_portfolio",
+        "system_property_key": "name",
+        "scheme": None,
+    },
+    {
+        "name": "short name",
+        "expression": "temp_portfolio",
+        "system_property_key": "short_name",
+        "scheme": None,
+    },
+    {
+        "name": "public name",
+        "expression": "temp_portfolio",
+        "system_property_key": "public_name",
+        "scheme": None,
+    },
+    {
+        "name": "notes",
+        "expression": "'-'",
+        "system_property_key": "notes",
+        "scheme": None,
+    }
+]
+
+PORTFOLIO = [
+    {
+        "Portfolio": "Test",
+        "portfolio_type": "com.finmars.test_01",
+    },
+]
+
+PORTFOLIO_ITEM = {
+    'portfolio_type': 'com.finmars.test_01',
+    'temp_portfolio': 'Test',
+}
+
+BAD_PORTFOLIO_ITEM = {
+    'portfolio_type': None,
+    'temp_portfolio': 'Test',
+}
+
+EXPECTED_RESULT = {
+    "conversion_inputs": {
+        "portfolio_type": "1",
+        "temp_portfolio": "Test"
+    },
+
+    "error_message": "",
+    "file_inputs": {
+        "Portfolio": "Test",
+        "portfolio_type": "1"
+    },
+
+    "final_inputs": {
+        "name": "Test",
+        "notes": "-",
+        "portfolio_type": "com.finmars.test_01",
+        "public_name": "Test",
+        "short_name": "Test",
+        "user_code": "Test"
+    },
+
+    "imported_items": [
+        {
+            "id": 13,
+            "user_code": "Test"
+        }
+    ],
+
+    "inputs": {
+        "portfolio_type": "1",
+        "temp_portfolio": "Test"
+    },
+
+    "message": "Item Imported Test",
+    "raw_inputs": {
+        "portfolio_type": "1",
+        "temp_portfolio": "Test"
+    },
+
+    "row_number": 1,
+    "status": "success"
 }
