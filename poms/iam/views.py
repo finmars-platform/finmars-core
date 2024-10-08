@@ -26,13 +26,6 @@ from poms.iam.serializers import (
     RoleSerializer,
 )
 
-WRITABLE_ACTIONS = {
-    "create",
-    "destroy",
-    "update",
-    "partial_update",
-}
-
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
     access_policy = FinmarsAccessPolicy
