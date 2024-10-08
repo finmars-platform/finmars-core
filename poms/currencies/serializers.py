@@ -49,6 +49,7 @@ class CurrencySerializer(
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "notes",
             "reference_for_pricing",
@@ -125,6 +126,7 @@ class CurrencyLightSerializer(ModelWithUserCodeSerializer):
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "is_deleted",
             "is_enabled",
@@ -141,6 +143,7 @@ class CurrencyViewSerializer(ModelWithUserCodeSerializer):
             "user_code",
             "name",
             "short_name",
+            "public_name",
         ]
 
 
