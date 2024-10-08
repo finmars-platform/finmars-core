@@ -794,3 +794,5 @@ if SERVER_TYPE != "local":
     )
 
 INSTRUMENT_TYPE_PREFIX =  ENV_STR("INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type")
+
+MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 20000)

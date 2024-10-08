@@ -602,6 +602,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.ecosystem = None
         self.default_instrument = None
         self.master_user = None
@@ -613,6 +615,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.account = None
         self.instrument_type = None
         self.db_data = None
+        self.realm_code = "realm0000"
+        self.space_code = "space0000"
 
     def init_test_case(self):
         self.client = APIClient()

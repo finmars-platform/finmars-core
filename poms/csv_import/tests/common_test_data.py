@@ -248,7 +248,7 @@ EXPECTED_RESULT = {
         "long_delta": 1.1,
         "short_delta": 1.1,
         "is_temporary_price": False,
-        
+
     },
     "message": "",
     "raw_inputs": {

@@ -3,9 +3,15 @@ import logging
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from poms.iam.models import AccessPolicy, Group, Role
+from poms.iam.models import (
+    AccessPolicy,
+    Group,
+    ResourceGroup,
+    ResourceGroupAssignment,
+    Role,
+    default_list,
+)
 from poms.users.models import Member
-from poms_app import settings
 
 _l = logging.getLogger("poms.iam")
 User = get_user_model()
@@ -29,7 +35,6 @@ class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
 
 
 class IamProtectedSerializer(serializers.ModelSerializer):
-
     """
     Abstract serializer for models with User Code.
     """
@@ -103,6 +108,7 @@ class IamModelMetaSerializer(IamModelOwnerSerializer):
         representation = super().to_representation(instance)
 
         from poms.users.utils import get_space_code_from_context
+
         space_code = get_space_code_from_context(self.context)
 
         representation["meta"] = {
@@ -111,7 +117,7 @@ class IamModelMetaSerializer(IamModelOwnerSerializer):
             + self.Meta.model._meta.model_name,
             "app_label": self.Meta.model._meta.app_label,
             "model_name": self.Meta.model._meta.model_name,
-            "space_code": space_code
+            "space_code": space_code,
         }
 
         return representation
@@ -198,8 +204,8 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = Role
@@ -222,7 +228,7 @@ class RoleSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
     def create(self, validated_data):
         # role_access_policies_data = self.context['request'].data.get('access_policies', [])
 
-        _l.info("validated_data %s" % validated_data)
+        _l.info(f"validated_data {validated_data}")
 
         access_policies_data = validated_data.pop("access_policies", [])
         members_data = validated_data.pop("members", [])
@@ -276,8 +282,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
         source="access_policies", many=True, read_only=True
     )
 
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = Group
@@ -341,9 +347,8 @@ class GroupSerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
 
 
 class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerializer):
-
-    created_at = serializers.DateTimeField(format='iso-8601', read_only=True)
-    modified_at = serializers.DateTimeField(format='iso-8601', read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = AccessPolicy
@@ -357,3 +362,81 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
             "created_at",
             "modified_at",
         ]
+
+
+class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceGroupAssignment
+        fields = "__all__"
+
+
+class ResourceGroupSerializer(serializers.ModelSerializer):
+    assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+    modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+
+    class Meta:
+        model = ResourceGroup
+        fields = "__all__"
+
+
+class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["resource_groups"] = serializers.ListSerializer(
+            child=serializers.CharField(max_length=1024),
+            required=False,
+            default=default_list,
+        )
+
+    def validate_resource_groups(self, group_list):
+        for gr_user_code in group_list:
+            if not ResourceGroup.objects.filter(user_code=gr_user_code).exists():
+                raise serializers.ValidationError(
+                    f"No such ResourceGroup {gr_user_code}"
+                )
+        return group_list
+
+    def create(self, validated_data: dict) -> object:
+        resource_groups = validated_data.pop("resource_groups", [])
+        instance = super().create(validated_data)
+
+        for rg_user_code in resource_groups:
+            ResourceGroup.objects.add_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name=instance._meta.model_name,
+                object_id=instance.id,
+                object_user_code=instance.user_code,
+            )
+        instance.resource_groups = resource_groups
+        instance.save()
+
+        return instance
+
+    def update(self, instance, validated_data: dict):
+        new_resource_groups = validated_data.pop("resource_groups", [])
+        instance = super().update(instance, validated_data)
+
+        resource_group_to_remove = set(instance.resource_groups) - set(new_resource_groups)
+        for rg_user_code in resource_group_to_remove:
+            ResourceGroup.objects.remove_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name=instance._meta.model_name,
+                object_id=instance.id,
+            )
+
+        for rg_user_code in new_resource_groups:
+            ResourceGroup.objects.add_object(
+                group_user_code=rg_user_code,
+                app_name=instance._meta.app_label,
+                model_name=instance._meta.model_name,
+                object_id=instance.id,
+                object_user_code=instance.user_code,
+            )
+
+        instance.resource_groups = new_resource_groups
+        instance.save()
+
+        return instance

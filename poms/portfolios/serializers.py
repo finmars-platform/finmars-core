@@ -22,6 +22,7 @@ from poms.instruments.fields import (
     SystemPricingPolicyDefault,
     CostMethodField,
 )
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import Instrument, InstrumentType, CostMethod
 from poms.instruments.serializers import (
@@ -160,6 +161,7 @@ class PortfolioPortfolioRegisterSerializer(
 
 
 class PortfolioSerializer(
+    ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
@@ -172,12 +174,9 @@ class PortfolioSerializer(
         required=False,
         read_only=True,
     )
-
     first_transaction = serializers.SerializerMethodField(read_only=True)
-
     first_transaction_date = serializers.ReadOnlyField()
     first_cash_flow_date = serializers.ReadOnlyField()
-
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
     )
@@ -499,12 +498,12 @@ class PortfolioRegisterSerializer(
         instrument_object["has_linked_with_portfolio"] = True
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
-        instrument_object["co_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
-        instrument_object["counter_directional_exposure_currency"] = (
-            instance.valuation_currency_id
-        )
+        instrument_object[
+            "co_directional_exposure_currency"
+        ] = instance.valuation_currency_id
+        instrument_object[
+            "counter_directional_exposure_currency"
+        ] = instance.valuation_currency_id
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -882,10 +881,10 @@ class PortfolioReconcileHistorySerializer(
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["portfolio_reconcile_group_object"] = (
-            PortfolioReconcileGroupSerializer(
-                source="portfolio_reconcile_group", read_only=True
-            )
+        self.fields[
+            "portfolio_reconcile_group_object"
+        ] = PortfolioReconcileGroupSerializer(
+            source="portfolio_reconcile_group", read_only=True
         )
 
         self.fields["file_report_object"] = FileReportSerializer(
