@@ -17,7 +17,7 @@ from poms.iam.models import (
     ResourceGroupAssignment,
     Role,
 )
-from poms.iam.permissions import AdminPermission, FinmarsAccessPolicy
+from poms.iam.permissions import FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
     GroupSerializer,
@@ -25,13 +25,6 @@ from poms.iam.serializers import (
     ResourceGroupSerializer,
     RoleSerializer,
 )
-
-WRITABLE_ACTIONS = {
-    "create",
-    "destroy",
-    "update",
-    "partial_update",
-}
 
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
@@ -217,15 +210,7 @@ class ResourceGroupViewSet(ModelViewSet):
 
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
-    permission_classes = [IsAuthenticated]
     pagination_class = None
-
-    def get_permissions(self):
-        # only admins can create, change & delete ResourceGroups
-        if self.action in WRITABLE_ACTIONS:
-            self.permission_classes.append(AdminPermission)
-
-        return super().get_permissions()
 
 
 class ResourceGroupAssignmentViewSet(ModelViewSet):
@@ -235,15 +220,7 @@ class ResourceGroupAssignmentViewSet(ModelViewSet):
 
     queryset = ResourceGroupAssignment.objects.all()
     serializer_class = ResourceGroupAssignmentSerializer
-    permission_classes = [IsAuthenticated]
     pagination_class = None
-
-    def get_permissions(self):
-        # only admins can create, change & delete ResourceGroups
-        if self.action in WRITABLE_ACTIONS:
-            self.permission_classes.append(AdminPermission)
-
-        return super().get_permissions()
 
 
 class ContentTypeViewSet(ModelViewSet):
@@ -260,7 +237,6 @@ class ContentTypeViewSet(ModelViewSet):
         app_label=ResourceGroup._meta.app_label,
     )
     serializer_class = ContentTypeSerializer
-    permission_classes = [IsAuthenticated]
     pagination_class = None
     http_method_names = ["get"]
 
