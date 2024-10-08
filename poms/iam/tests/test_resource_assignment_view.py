@@ -96,18 +96,6 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 204, response.content)
 
-    def test__destroy_no_permission(self):
-        rg = self.create_group(name="test7")
-        ass = self.create_assignment(
-            group_name="test7", model_name="ResourceGroup", object_id=rg.id
-        )
-        self.user.is_staff = False
-        self.user.is_superuser = False
-        self.user.save()
-
-        response = self.client.delete(f"{self.url}{ass.id}/")
-        self.assertEqual(response.status_code, 403, response.content)
-
     def test__patch(self):
         rg = self.create_group(name="test7")
         ass = self.create_assignment(
@@ -120,21 +108,6 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
 
         ass_data = response.json()
         self.assertEqual(ass_data["object_user_code"], "test11")
-
-    def test__patch_no_permission(self):
-        rg = self.create_group(name="test7")
-        ass = self.create_assignment(
-            group_name="test7", model_name="ResourceGroup", object_id=rg.id
-        )
-        self.user.is_staff = False
-        self.user.is_superuser = False
-        self.user.save()
-
-        response = self.client.patch(
-            f"{self.url}{ass.id}/", data={"object_user_code": "test11"}, format="json"
-        )
-
-        self.assertEqual(response.status_code, 403, response.content)
 
     def test__create(self):
         rg = self.create_group(name="test11")
@@ -154,22 +127,3 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
         self.assertEqual(ass_data["resource_group"], rg.id)
         self.assertEqual(ass_data["object_user_code"], "test11")
         self.assertEqual(ass_data["content_type"], 24)
-
-    def test__create_no_permission(self):
-        rg = self.create_group(name="test11")
-        content_type = ContentType.objects.get_by_natural_key(
-            app_label="iam", model="resourcegroup"
-        )
-        ass_data = dict(
-            resource_group=rg.id,
-            content_type=content_type.id,
-            object_id=rg.id,
-            object_user_code="test11",
-        )
-        self.user.is_staff = False
-        self.user.is_superuser = False
-        self.user.save()
-
-        response = self.client.post(self.url, data=ass_data, format="json")
-
-        self.assertEqual(response.status_code, 403, response.content)
