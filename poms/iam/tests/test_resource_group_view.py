@@ -31,8 +31,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
 
-        self.assertEqual(len(response_json), 1)
-        group_data = response_json[0]
+        self.assertEqual(len(response_json["results"]), 1)
+        group_data = response_json["results"][0]
         self.assertEqual(group_data["name"], "test")
         self.assertEqual(group_data["user_code"], "test")
         self.assertEqual(group_data["description"], "test")

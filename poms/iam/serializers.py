@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from poms.iam.models import (
@@ -14,7 +13,6 @@ from poms.iam.models import (
 from poms.users.models import Member
 
 _l = logging.getLogger("poms.iam")
-User = get_user_model()
 
 
 class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
@@ -105,9 +103,9 @@ class IamModelOwnerSerializer(serializers.ModelSerializer):
 
 class IamModelMetaSerializer(IamModelOwnerSerializer):
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-
         from poms.users.utils import get_space_code_from_context
+
+        representation = super().to_representation(instance)
 
         space_code = get_space_code_from_context(self.context)
 
@@ -418,7 +416,9 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         new_resource_groups = validated_data.pop("resource_groups", [])
         instance = super().update(instance, validated_data)
 
-        resource_group_to_remove = set(instance.resource_groups) - set(new_resource_groups)
+        resource_group_to_remove = set(instance.resource_groups) - set(
+            new_resource_groups
+        )
         for rg_user_code in resource_group_to_remove:
             ResourceGroup.objects.remove_object(
                 group_user_code=rg_user_code,
