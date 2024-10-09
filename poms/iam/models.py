@@ -133,11 +133,6 @@ class ResourceGroupManager(models.Manager):
 
 
 class ResourceGroup(models.Model):
-    master_user = models.ForeignKey(
-        MasterUser,
-        related_name="resource_groups",
-        on_delete=models.CASCADE,
-    )
     name = models.CharField(
         max_length=255,
         unique=True,
