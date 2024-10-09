@@ -9,6 +9,7 @@ class ClientsViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Client
         fields = [
+            "id",
             "master_user",
             "user_code",
             "name",
