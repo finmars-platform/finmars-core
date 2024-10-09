@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from poms.iam.models import (
@@ -11,10 +10,10 @@ from poms.iam.models import (
     Role,
     default_list,
 )
+from poms.portfolios.models import Portfolio
 from poms.users.models import Member
 
 _l = logging.getLogger("poms.iam")
-User = get_user_model()
 
 
 class IamModelWithTimeStampSerializer(serializers.ModelSerializer):
@@ -105,9 +104,9 @@ class IamModelOwnerSerializer(serializers.ModelSerializer):
 
 class IamModelMetaSerializer(IamModelOwnerSerializer):
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-
         from poms.users.utils import get_space_code_from_context
+
+        representation = super().to_representation(instance)
 
         space_code = get_space_code_from_context(self.context)
 
@@ -380,6 +379,17 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ResourceGroupShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceGroup
+        fields = [
+            "id",
+            "name",
+            "user_code",
+            "description",
+        ]
+
+
 class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -388,8 +398,20 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             required=False,
             default=default_list,
         )
+        self.fields["resource_groups_object"] = serializers.SerializerMethodField(
+            "get_resource_groups_object",
+            read_only=True,
+        )
 
-    def validate_resource_groups(self, group_list):
+    @staticmethod
+    def get_resource_groups_object(obj: Portfolio) -> list:
+        resource_groups = ResourceGroup.objects.filter(
+            user_code__in=obj.resource_groups
+        )
+        return ResourceGroupShortSerializer(resource_groups, many=True).data
+
+    @staticmethod
+    def validate_resource_groups(group_list):
         for gr_user_code in group_list:
             if not ResourceGroup.objects.filter(user_code=gr_user_code).exists():
                 raise serializers.ValidationError(
@@ -418,7 +440,9 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         new_resource_groups = validated_data.pop("resource_groups", [])
         instance = super().update(instance, validated_data)
 
-        resource_group_to_remove = set(instance.resource_groups) - set(new_resource_groups)
+        resource_group_to_remove = set(instance.resource_groups) - set(
+            new_resource_groups
+        )
         for rg_user_code in resource_group_to_remove:
             ResourceGroup.objects.remove_object(
                 group_user_code=rg_user_code,
