@@ -1,27 +1,23 @@
 import django_filters
-from django.contrib.contenttypes.models import ContentType
 from django_filters.rest_framework import FilterSet
 from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import filters
-from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from poms.common.serializers import ContentTypeSerializer
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
 from poms.iam.models import (
     AccessPolicy,
     Group,
     ResourceGroup,
-    ResourceGroupAssignment,
     Role,
 )
 from poms.iam.permissions import FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
     GroupSerializer,
-    ResourceGroupAssignmentSerializer,
     ResourceGroupSerializer,
     RoleSerializer,
 )
@@ -210,43 +206,3 @@ class ResourceGroupViewSet(ModelViewSet):
 
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
-    pagination_class = None
-
-
-class ResourceGroupAssignmentViewSet(ModelViewSet):
-    """
-    A viewset for viewing and editing ResourceGroupAssignment instances.
-    """
-
-    queryset = ResourceGroupAssignment.objects.all()
-    serializer_class = ResourceGroupAssignmentSerializer
-    pagination_class = None
-
-
-class ContentTypeViewSet(ModelViewSet):
-    """
-    A viewset for viewing all ContentTypes objects,which have 'user_code' field,
-    but except ResourceGroup.
-    """
-
-    queryset = ContentType.objects.filter(
-        app_label__isnull=False,
-        model__isnull=False,
-    ).exclude(
-        model=ResourceGroup._meta.model_name,
-        app_label=ResourceGroup._meta.app_label,
-    )
-    serializer_class = ContentTypeSerializer
-    pagination_class = None
-    http_method_names = ["get"]
-
-    def get_queryset(self) -> list[ContentType]:
-        return [
-            ct
-            for ct in self.queryset
-            if hasattr(ct.model_class(), "user_code")
-            and ct.model_class != ResourceGroup
-        ]
-
-    def retrieve(self, request, *args, **kwargs):
-        raise MethodNotAllowed("Action 'retrieve' is not allowed in this URI")

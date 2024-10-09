@@ -1,7 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
-from poms.portfolios.models import Portfolio
 from poms.iam.models import ResourceGroup
+from poms.portfolios.models import Portfolio
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -216,6 +216,7 @@ class PortfolioViewSetTest(BaseTestCase):
         self.assertFalse(response_json["is_deleted"])
         self.assertIn("resource_groups", response_json)
         self.assertEqual(response_json["resource_groups"], [])
+        self.assertEqual(response_json["resource_groups_object"], [])
 
     def test_destroy(self):
         response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
@@ -248,7 +249,7 @@ class PortfolioViewSetTest(BaseTestCase):
 
     def test_add_resource_group(self):
         rg_name = self.random_string()
-        self.create_group(name=rg_name)
+        rg = self.create_group(name=rg_name)
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
             data={"resource_groups": [rg_name]},
@@ -259,6 +260,14 @@ class PortfolioViewSetTest(BaseTestCase):
         portfolio_data = response.json()
         self.assertIn("resource_groups", portfolio_data)
         self.assertEqual(portfolio_data["resource_groups"], [rg_name])
+
+        self.assertIn("resource_groups_object", portfolio_data)
+        resource_group = portfolio_data["resource_groups_object"][0]
+        self.assertEqual(resource_group["name"], rg.name)
+        self.assertEqual(resource_group["id"], rg.id)
+        self.assertEqual(resource_group["user_code"], rg.user_code)
+        self.assertEqual(resource_group["description"], rg.description)
+        self.assertNotIn("assignments", resource_group)
 
     def test_update_resource_groups(self):
         name_1 = self.random_string()
@@ -277,6 +286,7 @@ class PortfolioViewSetTest(BaseTestCase):
 
         portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 3)
+        self.assertEqual(len(portfolio_data["resource_groups_object"]), 3)
 
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
@@ -288,6 +298,8 @@ class PortfolioViewSetTest(BaseTestCase):
         portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 1)
         self.assertEqual(portfolio_data["resource_groups"], [name_2])
+
+        self.assertEqual(len(portfolio_data["resource_groups_object"]), 1)
 
     def test_remove_resource_groups(self):
         name_1 = self.random_string()
@@ -304,6 +316,7 @@ class PortfolioViewSetTest(BaseTestCase):
 
         portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 2)
+        self.assertEqual(len(portfolio_data["resource_groups_object"]), 2)
 
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
@@ -315,3 +328,6 @@ class PortfolioViewSetTest(BaseTestCase):
         portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 0)
         self.assertEqual(portfolio_data["resource_groups"], [])
+
+        self.assertEqual(len(portfolio_data["resource_groups_object"]), 0)
+        self.assertEqual(portfolio_data["resource_groups_object"], [])
