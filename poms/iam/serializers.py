@@ -10,6 +10,7 @@ from poms.iam.models import (
     Role,
     default_list,
 )
+from poms.portfolios.models import Portfolio
 from poms.users.models import Member
 
 _l = logging.getLogger("poms.iam")
@@ -378,6 +379,17 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ResourceGroupShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceGroup
+        fields = [
+            "id",
+            "name",
+            "user_code",
+            "description",
+        ]
+
+
 class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -386,8 +398,20 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             required=False,
             default=default_list,
         )
+        self.fields["resource_groups_object"] = serializers.SerializerMethodField(
+            "get_resource_groups_object",
+            read_only=True,
+        )
 
-    def validate_resource_groups(self, group_list):
+    @staticmethod
+    def get_resource_groups_object(obj: Portfolio) -> list:
+        resource_groups = ResourceGroup.objects.filter(
+            user_code__in=obj.resource_groups
+        )
+        return ResourceGroupShortSerializer(resource_groups, many=True).data
+
+    @staticmethod
+    def validate_resource_groups(group_list):
         for gr_user_code in group_list:
             if not ResourceGroup.objects.filter(user_code=gr_user_code).exists():
                 raise serializers.ValidationError(
