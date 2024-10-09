@@ -13,7 +13,6 @@ class ResourceGroupViewTest(BaseTestCase):
 
     def create_group(self, name: str = "test") -> ResourceGroup:
         return ResourceGroup.objects.create(
-            master_user=self.master_user,
             name=name,
             user_code=name,
             description=name,
