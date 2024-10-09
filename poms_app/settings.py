@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "poms.reconciliation",
     "poms.file_reports",
     "poms.configuration_sharing",  # DEPRECATED
+    "poms.clients",
 
     "poms.schedules",
     "poms.procedures",
