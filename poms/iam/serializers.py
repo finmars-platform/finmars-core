@@ -426,13 +426,8 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
         for rg_user_code in resource_groups:
             ResourceGroup.objects.add_object(
                 group_user_code=rg_user_code,
-                app_name=instance._meta.app_label,
-                model_name=instance._meta.model_name,
-                object_id=instance.id,
-                object_user_code=instance.user_code,
+                obj_instance=instance,
             )
-        instance.resource_groups = resource_groups
-        instance.save()
 
         return instance
 
@@ -444,23 +439,15 @@ class ModelWithResourceGroupSerializer(serializers.ModelSerializer):
             new_resource_groups
         )
         for rg_user_code in resource_group_to_remove:
-            ResourceGroup.objects.remove_object(
+            ResourceGroup.objects.del_object(
                 group_user_code=rg_user_code,
-                app_name=instance._meta.app_label,
-                model_name=instance._meta.model_name,
-                object_id=instance.id,
+                obj_instance=instance,
             )
 
         for rg_user_code in new_resource_groups:
             ResourceGroup.objects.add_object(
                 group_user_code=rg_user_code,
-                app_name=instance._meta.app_label,
-                model_name=instance._meta.model_name,
-                object_id=instance.id,
-                object_user_code=instance.user_code,
+                obj_instance=instance,
             )
-
-        instance.resource_groups = new_resource_groups
-        instance.save()
 
         return instance
