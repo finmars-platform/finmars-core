@@ -1,10 +1,9 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.models import ResourceGroup, ResourceGroupAssignment
 from poms.portfolios.models import Portfolio
-from django.core.exceptions import ObjectDoesNotExist
 
 
-class ResourceGroupViewTest(BaseTestCase):
+class ResourceGroupModelTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
@@ -24,10 +23,7 @@ class ResourceGroupViewTest(BaseTestCase):
 
         ResourceGroup.objects.add_object(
             group_user_code=rg.user_code,
-            app_name="portfolios",
-            model_name="Portfolio",
-            object_id=portfolio.id,
-            object_user_code=portfolio.user_code,
+            obj_instance=portfolio,
         )
 
         self.assertEqual(rg.assignments.count(), 1)
@@ -35,6 +31,9 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(rg.assignments.first().resource_group, rg)
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
+
+        self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
 
     def test_add_object_duplicate(self):
         rg = self.create_group()
@@ -42,18 +41,12 @@ class ResourceGroupViewTest(BaseTestCase):
 
         ResourceGroup.objects.add_object(
             group_user_code=rg.user_code,
-            app_name="portfolios",
-            model_name="Portfolio",
-            object_id=portfolio.id,
-            object_user_code=portfolio.user_code,
+            obj_instance=portfolio,
         )
 
         ResourceGroup.objects.add_object(
             group_user_code=rg.user_code,
-            app_name="portfolios",
-            model_name="Portfolio",
-            object_id=portfolio.id,
-            object_user_code=portfolio.user_code,
+            obj_instance=portfolio,
         )
 
         self.assertEqual(rg.assignments.count(), 1)
@@ -62,57 +55,8 @@ class ResourceGroupViewTest(BaseTestCase):
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
 
-    def test_add_object_error_invalid_model(self):
-        rg = self.create_group()
-        portfolio = Portfolio.objects.first()
-
-        with self.assertRaises(ObjectDoesNotExist):
-            ResourceGroup.objects.add_object(
-                group_user_code=rg.user_code,
-                app_name="portfolios",
-                model_name="InvalidModel",
-                object_id=portfolio.id,
-                object_user_code=portfolio.user_code,
-            )
-
-    def test_add_object_error_invalid_app(self):
-        rg = self.create_group()
-        portfolio = Portfolio.objects.first()
-
-        with self.assertRaises(ObjectDoesNotExist):
-            ResourceGroup.objects.add_object(
-                group_user_code=rg.user_code,
-                app_name="invalid",
-                model_name="Portfolio",
-                object_id=portfolio.id,
-                object_user_code=portfolio.user_code,
-            )
-
-    def test_add_object_error_invalid_object_id(self):
-        rg = self.create_group()
-        portfolio = Portfolio.objects.first()
-
-        with self.assertRaises(ObjectDoesNotExist):
-            ResourceGroup.objects.add_object(
-                group_user_code=rg.user_code,
-                app_name="portfolios",
-                model_name="Portfolio",
-                object_id=self.random_int(10000, 1000000),
-                object_user_code=portfolio.user_code,
-            )
-
-    def test_add_object_error_invalid_object_user_code(self):
-        rg = self.create_group()
-        portfolio = Portfolio.objects.first()
-
-        with self.assertRaises(ValueError):
-            ResourceGroup.objects.add_object(
-                group_user_code=rg.user_code,
-                app_name="portfolios",
-                model_name="Portfolio",
-                object_id=portfolio.id,
-                object_user_code=self.random_string(),
-            )
+        self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
 
     def test__delete_object(self):
         rg = self.create_group()
@@ -120,21 +64,27 @@ class ResourceGroupViewTest(BaseTestCase):
 
         ResourceGroup.objects.add_object(
             group_user_code=rg.user_code,
-            app_name="portfolios",
-            model_name="Portfolio",
-            object_id=portfolio.id,
-            object_user_code=portfolio.user_code,
+            obj_instance=portfolio,
         )
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
+        self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
 
-        ResourceGroup.objects.remove_object(
+        ResourceGroup.objects.del_object(
             group_user_code=rg.user_code,
-            app_name="portfolios",
-            model_name="Portfolio",
-            object_id=portfolio.id,
+            obj_instance=portfolio,
         )
 
         self.assertEqual(rg.assignments.count(), 0)
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertIsNone(ass)
+        self.assertEqual(portfolio.resource_groups, [])
+
+        # delete from empty resource_groups
+        ResourceGroup.objects.del_object(
+            group_user_code=rg.user_code,
+            obj_instance=portfolio,
+        )
+        self.assertIsNone(ass)
+        self.assertEqual(portfolio.resource_groups, [])
