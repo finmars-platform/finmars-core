@@ -62,6 +62,7 @@ class ResourceGroupModelTest(BaseTestCase):
         )
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
+        self.assertIn(rg.user_code, portfolio.resource_groups)
 
         ResourceGroup.objects.del_object(
             group_user_code=rg.user_code,
@@ -71,3 +72,10 @@ class ResourceGroupModelTest(BaseTestCase):
         self.assertEqual(rg.assignments.count(), 0)
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertIsNone(ass)
+        self.assertEqual(portfolio.resource_groups, [])
+
+        # delete from empty resource_groups
+        ResourceGroup.objects.del_object(
+            group_user_code=rg.user_code,
+            obj_instance=portfolio,
+        )

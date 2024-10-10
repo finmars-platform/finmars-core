@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -198,15 +199,18 @@ class ResourceGroup(models.Model):
             obj_instance: model instance to be removed from the group.
         """
 
-        with transaction.atomic():
+        with contextlib.suppress(ValueError):
             obj_instance.resource_groups.remove(self.user_code)
+
+        with transaction.atomic():
             obj_instance.save(update_fields=["resource_groups"])
-            assignment = ResourceGroupAssignment.objects.get(
+            assignment = ResourceGroupAssignment.objects.filter(
                 resource_group=self,
                 content_type=self.get_content_type(obj_instance),
                 object_id=obj_instance.id,
-            )
-            assignment.delete()
+            ).first()
+            if assignment:
+                assignment.delete()
 
     def destroy_assignments(self):
         group_assignments = ResourceGroupAssignment.objects.filter(resource_group=self)
