@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy
+from isort.literal import assignments
 
 from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
@@ -224,15 +225,25 @@ class ResourceGroup(models.Model):
 
         # Validate that object_id is available
         model = content_type.model_class()
-        _ = model.objects.get(id=object_id)
+        obj = model.objects.get(id=object_id)
 
-        obj = ResourceGroupAssignment.objects.get(
+        assignment = ResourceGroupAssignment.objects.get(
             resource_group=self,
             content_type=content_type,
-            object_id=object_id,
+            object_id=obj.id,
         )
-        obj.delete()
+        assignment.delete()
 
+    def destroy_assignments(self):
+        group_assignments = ResourceGroupAssignment.objects.filter(resource_group=self)
+
+        for assignment in group_assignments:
+            model = assignment.content_type.model_class()
+            obj = model.objects.get(id=assignment.object_id)
+            if hasattr(obj, "resource_groups"):
+                obj.resource_groups.remove(self.user_code)
+
+        group_assignments.delete()
 
 class ResourceGroupAssignment(models.Model):
     resource_group = models.ForeignKey(
