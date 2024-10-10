@@ -32,6 +32,9 @@ class ResourceGroupModelTest(BaseTestCase):
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
 
+        self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
+
     def test_add_object_duplicate(self):
         rg = self.create_group()
         portfolio = Portfolio.objects.first()
@@ -52,6 +55,9 @@ class ResourceGroupModelTest(BaseTestCase):
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
 
+        self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
+
     def test__delete_object(self):
         rg = self.create_group()
         portfolio = Portfolio.objects.first()
@@ -63,6 +69,7 @@ class ResourceGroupModelTest(BaseTestCase):
         ass = ResourceGroupAssignment.objects.filter(resource_group=rg).first()
         self.assertEqual(ass, rg.assignments.first())
         self.assertIn(rg.user_code, portfolio.resource_groups)
+        self.assertEqual(len(portfolio.resource_groups), 1)
 
         ResourceGroup.objects.del_object(
             group_user_code=rg.user_code,
@@ -79,3 +86,5 @@ class ResourceGroupModelTest(BaseTestCase):
             group_user_code=rg.user_code,
             obj_instance=portfolio,
         )
+        self.assertIsNone(ass)
+        self.assertEqual(portfolio.resource_groups, [])
