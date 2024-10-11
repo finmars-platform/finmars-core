@@ -81,7 +81,7 @@ class ResourceGroupModelTest(BaseTestCase):
         self.assertIsNone(ass)
         self.assertEqual(portfolio.resource_groups, [])
 
-        # delete from empty resource_groups
+        # delete from empty resource_groups one more time
         ResourceGroup.objects.del_object(
             group_user_code=rg.user_code,
             obj_instance=portfolio,
