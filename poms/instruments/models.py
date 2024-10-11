@@ -2810,6 +2810,7 @@ class AccrualCalculationSchedule(models.Model):
                 accrual_start_date=self.accrual_start_date,
             ).first()
             if existing_record:
+                kwargs.pop("force_insert", None)
                 self.id = existing_record.id
 
         super().save(*args, **kwargs)

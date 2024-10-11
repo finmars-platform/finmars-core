@@ -200,7 +200,7 @@ PRICE_HISTORY_ITEM = {
 }
 
 
-EXPECTED_RESULT = {
+EXPECTED_RESULT_PRICE_HISTORY = {
     "conversion_inputs": {
         "accrued_price": None,
         "date": "2024-01-05",
@@ -564,7 +564,7 @@ BAD_PORTFOLIO_ITEM = {
     'temp_portfolio': 'Test',
 }
 
-EXPECTED_RESULT = {
+EXPECTED_RESULT_PORTFOLIO = {
     "conversion_inputs": {
         "portfolio_type": "1",
         "temp_portfolio": "Test"
@@ -605,4 +605,228 @@ EXPECTED_RESULT = {
 
     "row_number": 1,
     "status": "success"
+}
+
+# Accrual Calculation Schedule
+
+SCHEME_ACCRUAL_CALCULATION_FIELDS = [
+    {
+        "column": 1,
+        "name": "instrument",
+        "name_expr": "instrument",
+        "column_name": "instrument",
+        "scheme": None,
+    },
+    {
+        "column": 2,
+        "name": "accrual_start_date",
+        "name_expr": "accrual_start_date",
+        "column_name": "accrual_start_date",
+        "scheme": None,
+    },
+    {
+        "column": 3,
+        "name": "first_payment_date",
+        "name_expr": "first_payment_date",
+        "column_name": "first_payment_date",
+        "scheme": None,
+    },
+    {
+        "column": 4,
+        "name": "accrual_calculation_model",
+        "name_expr": "accrual_calculation_model",
+        "column_name": "accrual_calculation_model",
+        "scheme": None,
+    },
+    {
+        "column": 5,
+        "name": "periodicity",
+        "name_expr": "periodicity",
+        "column_name": "periodicity",
+        "scheme": None,
+    },
+    {
+        "column": 6,
+        "name": "accrual_size",
+        "name_expr": "float(accrual_size)",
+        "column_name": "accrual_size",
+        "scheme": None,
+    },
+    {
+        "column": 7,
+        "name": "periodicity_n",
+        "name_expr": "periodicity_n",
+        "column_name": "periodicity_n",
+        "scheme": None,
+    },
+    {
+        "column": 8,
+        "name": "end_of_month",
+        "name_expr": "end_of_month",
+        "column_name": "end_of_month",
+        "scheme": None,
+    },
+]
+
+
+SCHEME_ACCRUAL_CALCULATION_ENTITIES = [
+    {
+        "name": "first payment date",
+        "expression": "first_payment_date",
+        "system_property_key": "first_payment_date",
+        "scheme": None,
+    },
+    {
+        "name": "instrument",
+        "expression": "instrument",
+        "system_property_key": "instrument",
+        "scheme": None,
+    },
+    {
+        "name": "accrual size",
+        "expression": "accrual_size",
+        "system_property_key": "accrual_size",
+        "scheme": None,
+    },
+    {
+        "name": "accrual calculation model",
+        "expression": "accrual_calculation_model",
+        "system_property_key": "accrual_calculation_model",
+        "scheme": None,
+    },
+    {
+        "name": "periodicity",
+        "expression": "periodicity",
+        "system_property_key": "periodicity",
+        "scheme": None,
+    },
+    {
+        "name": "accrual start date",
+        "expression": "accrual_start_date",
+        "system_property_key": "accrual_start_date",
+        "scheme": None,
+    },
+    {
+        "name": "periodicity n",
+        "expression": "periodicity_n",
+        "system_property_key": "periodicity_n",
+        "scheme": None,
+    },
+    {
+        "name": "notes",
+        "expression": "",
+        "system_property_key": "notes",
+        "scheme": None,
+    },
+    {
+        "name": "EOM",
+        "expression": "end_of_month",
+        "system_property_key": "eom",
+        "scheme": None,
+    },
+]
+
+
+ACCRUAL_CALCULATION = [
+    {
+        "instrument": "commitment-startup-2-round-a-debt",
+        "accrual_start_date": 20171122,
+        "first_payment_date": 20171122,
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+        "accrual_size": 4.5,
+        "end_of_month": False,
+    },
+]
+
+
+ACCRUAL_CALCULATION_ITEM = {
+        "instrument": "commitment-startup-2-round-a-debt",
+        "accrual_start_date": 20171122,
+        "first_payment_date": 20171122,
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+        "accrual_size": 4.5,
+        "end_of_month": False,
+}
+
+
+BAD_ACCRUAL_CALCULATION_ITEM = {
+        "instrument": "commitment-startup-2-round-a-debt",
+        "accrual_start_date": None,
+        "first_payment_date": 20171122,
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+        "accrual_size": 4.5,
+        "end_of_month": False,
+}
+
+
+EXPECTED_RESULT_ACCRUAL_CALCULATION = {
+    "conversion_inputs": {
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "accrual_size": 4.5,
+        "accrual_start_date": 20171122,
+        "end_of_month": False,
+        "first_payment_date": 20171122,
+        "instrument": "commitment-startup-2-round-a-debt",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+    },
+    "error_message": "",
+    "file_inputs": {
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "accrual_size": 4.5,
+        "accrual_start_date": 20171122,
+        "end_of_month": False,
+        "first_payment_date": 20171122,
+        "instrument": "commitment-startup-2-round-a-debt",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+    },
+    "final_inputs": {
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "accrual_size": 4.5,
+        "accrual_start_date": 20171122,
+        "eom": False,
+        "first_payment_date": 20171122,
+        "instrument": "commitment-startup-2-round-a-debt",
+        "notes": None,
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+    },
+    "imported_items": [
+        {
+            "id": 99,
+            "user_code": "2017-11-22",
+        }
+    ],
+    "inputs": {
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "accrual_id": "commitment-startup-2-round-a-debt",
+        "accrual_size": "4.5",
+        "accrual_start_date": "20171122",
+        "end_of_month": "False",
+        "first_payment_date": "20171122",
+        "instrument": "commitment-startup-2-round-a-debt",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": "None",
+    },
+    "message": "Item Imported 2017-11-22",
+    "raw_inputs": {
+        "accrual_calculation_model": "DAY_COUNT_30E_360",
+        "accrual_id": "commitment-startup-2-round-a-debt",
+        "accrual_size": 4.5,
+        "accrual_start_date": 20171122,
+        "end_of_month": False,
+        "first_payment_date": 20171122,
+        "instrument": "commitment-startup-2-round-a-debt",
+        "periodicity": "ANNUALLY",
+        "periodicity_n": None,
+    },
+    "row_number": 1,
+    "status": "success",
 }
