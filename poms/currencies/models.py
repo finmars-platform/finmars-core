@@ -4,7 +4,6 @@ import os
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import SimpleLazyObject
@@ -26,7 +25,7 @@ _l = logging.getLogger("poms.currencies")
 
 
 # Probably Deprecated
-def _load_currencies_data():
+def _load_currencies_data() -> dict:
     ccy_path = os.path.join(settings.BASE_DIR, "data", "currencies.csv")
     ret = {}
     with open(ccy_path) as csvfile:
@@ -240,15 +239,13 @@ class CurrencyHistory(TimeStampedModel):
         ordering = ["date"]
 
     def save(self, *args, **kwargs):
-        cache.clear()
-
         if self.fx_rate == 0:
             raise ValidationError("FX rate must not be zero")
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
 
-        super(CurrencyHistory, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.fx_rate} @{self.date}"
