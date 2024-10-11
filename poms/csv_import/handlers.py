@@ -4,7 +4,7 @@ import json
 import os
 import re
 import traceback
-from datetime import datetime
+from datetime import datetime, date
 from functools import reduce
 from logging import getLogger
 from operator import or_
@@ -61,6 +61,8 @@ from poms.strategies.models import (
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
 from poms.portfolios.models import PortfolioType
+from dateutil.parser import parse
+
 
 storage = get_storage()
 
@@ -112,6 +114,8 @@ RELATION_FIELDS_MAP = {
     "counter_directional_exposure_currency": Currency,
     "daily_pricing_model": DailyPricingModel,
     "portfolio_type": PortfolioType,
+    "accrual_calculation_model": AccrualCalculationModel,
+    "periodicity": Periodicity,
 }
 
 
@@ -1596,6 +1600,17 @@ class SimpleImportProcess:
                             ],
                             date=item.final_inputs["date"],
                         )
+                    elif self.scheme.content_type.model == "accrualcalculationschedule":
+                        accrual_start_date = item.final_inputs["accrual_start_date"]
+                        if not isinstance(accrual_start_date, date):
+                            accrual_start_date = parse(str(accrual_start_date))
+
+                        instance = model.objects.get(
+                            instrument__user_code=item.final_inputs["instrument"],
+                            accrual_start_date=accrual_start_date.strftime(
+                                settings.API_DATE_FORMAT
+                            ),
+                        )
                     else:
                         instance = model.objects.get(
                             master_user=self.master_user,
@@ -1615,6 +1630,7 @@ class SimpleImportProcess:
                     if self.scheme.content_type.model not in [
                         "pricehistory",
                         "currencyhistory",
+                        "accrualcalculationschedule",
                     ]:
                         self.overwrite_item_attributes(result_item, item)
 
