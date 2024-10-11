@@ -4,16 +4,13 @@ from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import filters
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.viewsets import ModelViewSet
 
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
-from poms.iam.models import (
-    AccessPolicy,
-    Group,
-    ResourceGroup,
-    Role,
-)
+from poms.iam.models import AccessPolicy, Group, ResourceGroup, Role
 from poms.iam.permissions import FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
@@ -206,3 +203,9 @@ class ResourceGroupViewSet(ModelViewSet):
 
     queryset = ResourceGroup.objects.all()
     serializer_class = ResourceGroupSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.destroy_assignments()
+        instance.delete()
+        return Response(status=HTTP_204_NO_CONTENT)

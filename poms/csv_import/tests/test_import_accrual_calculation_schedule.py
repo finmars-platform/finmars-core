@@ -12,21 +12,21 @@ from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvField, CsvImportScheme, EntityField
 from poms.csv_import.tasks import simple_import
 from poms.csv_import.tests.common_test_data import (
-    EXPECTED_RESULT_PORTFOLIO,
+    EXPECTED_RESULT_ACCRUAL_CALCULATION,
     SCHEME_20,
-    SCHEME_PORTFOLIO_ENTITIES,
-    SCHEME_PORTFOLIO_FIELDS,
-    PORTFOLIO,
-    PORTFOLIO_ITEM
+    SCHEME_ACCRUAL_CALCULATION_ENTITIES,
+    SCHEME_ACCRUAL_CALCULATION_FIELDS,
+    ACCRUAL_CALCULATION,
+    ACCRUAL_CALCULATION_ITEM
 )
-from poms.portfolios.models import PortfolioType, Portfolio, PortfolioClass
+
+from poms.instruments.models import AccrualCalculationSchedule, Instrument
+
+FILE_CONTENT = json.dumps(ACCRUAL_CALCULATION).encode("utf-8")
+FILE_NAME = "accrual_calculation.json"
 
 
-FILE_CONTENT = json.dumps(PORTFOLIO).encode("utf-8")
-FILE_NAME = "portfolio.json"
-
-
-class ImportPortfolioTypeTest(BaseTestCase):
+class ImportAccrualCalculationTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
@@ -38,21 +38,19 @@ class ImportPortfolioTypeTest(BaseTestCase):
         self.scheme_20 = self.create_scheme_20()
         self.storage = mock.Mock()
         self.storage.save.return_value = None
-        self.portfolio_type = PortfolioType.objects.using(settings.DB_DEFAULT).create(
-            master_user=self.master_user,
-            owner=self.member,
-            user_code="com.finmars.test_01",
-            configuration_code="com.finmars.test",
-            name="Test",
-            short_name="Test",
-            public_name="Test",
-            portfolio_class=PortfolioClass.objects.filter().first(),
-        )
+        self.instrument = self.prepare_instrument()
+
+    def prepare_instrument(self):
+        instrument = self.create_instrument()
+        instrument.user_code = "commitment-startup-2-round-a-debt"
+        instrument.save()
+
+        return instrument
 
     def create_scheme_20(self):
         content_type = ContentType.objects.using(settings.DB_DEFAULT).get(
-            app_label="portfolios",
-            model="portfolio",
+            app_label="instruments",
+            model="accrualcalculationschedule",
         )
         scheme_data = SCHEME_20.copy()
         scheme_data.update(
@@ -60,27 +58,27 @@ class ImportPortfolioTypeTest(BaseTestCase):
                 "content_type_id": content_type.id,
                 "master_user_id": self.master_user.id,
                 "owner_id": self.member.id,
-                "user_code": "com.finmars.standard-import-from-file:portfolios.portfolio:portfolios_from_file",
-                "name": "STD - Portfolios (from File)",
-                "short_name": "STD - Portfolios (from File)",
+                "user_code": "com.finmars.standard-import-from-file:instruments.accrualcalculationschedule:accrued_schedule",
+                "name": "STD - Accrued Schedule",
+                "short_name": "STD - Accrued Schedule",
             }
         )
         scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(
             **scheme_data
         )
 
-        for field_data in SCHEME_PORTFOLIO_FIELDS:
+        for field_data in SCHEME_ACCRUAL_CALCULATION_FIELDS:
             field_data["scheme"] = scheme
             CsvField.objects.create(**field_data)
 
-        for entity_data in SCHEME_PORTFOLIO_ENTITIES:
+        for entity_data in SCHEME_ACCRUAL_CALCULATION_ENTITIES:
             entity_data["scheme"] = scheme
             EntityField.objects.using(settings.DB_DEFAULT).create(**entity_data)
 
         return scheme
 
-    def create_task(self, remove_portfolio_type=False):
-        items = copy.deepcopy(PORTFOLIO)
+    def create_task(self, remove_instrument=False):
+        items = copy.deepcopy(ACCRUAL_CALCULATION)
         options_object = {
             "file_path": FILE_NAME,
             "filename": FILE_NAME,
@@ -89,8 +87,8 @@ class ImportPortfolioTypeTest(BaseTestCase):
             "items": items,
         }
 
-        if remove_portfolio_type:
-            items[0]["portfolio_type"] = None
+        if remove_instrument:
+            items[0]["instrument"] = None
 
         return CeleryTask.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
@@ -141,7 +139,7 @@ class ImportPortfolioTypeTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
-        self.assertFalse(bool(Portfolio.objects.filter(user_code='Test')))
+        self.assertFalse(bool(AccrualCalculationSchedule.objects.filter(accrual_start_date='2017-11-22')))
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -152,31 +150,30 @@ class ImportPortfolioTypeTest(BaseTestCase):
         self.assertEqual(import_process.process_type, "JSON")
 
         import_process.fill_with_file_items()
-        self.assertEqual(import_process.file_items, PORTFOLIO)
+        self.assertEqual(import_process.file_items, ACCRUAL_CALCULATION)
 
         import_process.fill_with_raw_items()
-        self.assertEqual(import_process.raw_items, [PORTFOLIO_ITEM])
+        self.assertEqual(import_process.raw_items, [ACCRUAL_CALCULATION_ITEM])
 
         import_process.apply_conversion_to_raw_items()
         conversion_item = import_process.conversion_items[0]
-        self.assertEqual(conversion_item.conversion_inputs, PORTFOLIO_ITEM)
+        self.assertEqual(conversion_item.conversion_inputs, ACCRUAL_CALCULATION_ITEM)
 
         import_process.preprocess()
         item = import_process.items[0]
-        self.assertEqual(item.inputs, PORTFOLIO_ITEM)
+        self.assertEqual(item.inputs, ACCRUAL_CALCULATION_ITEM)
 
         import_process.process()
         result = import_process.task.result_object["items"][0]
-        self.assertEqual(result["final_inputs"], EXPECTED_RESULT_PORTFOLIO["final_inputs"])
+        self.assertEqual(result["final_inputs"], EXPECTED_RESULT_ACCRUAL_CALCULATION["final_inputs"])
 
-        portfolio = Portfolio.objects.get(user_code="Test")
-        self.assertEqual(portfolio.portfolio_type.user_code, "com.finmars.test_01")
-        self.assertEqual(portfolio.name, "Test")
+        accrual = AccrualCalculationSchedule.objects.get(accrual_start_date="2017-11-22")
+        self.assertEqual(accrual.instrument.user_code, "commitment-startup-2-round-a-debt")
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_run_simple_import_process_missing_fields(self, mock_send_message):
-        self.assertFalse(bool(Portfolio.objects.filter(user_code='Test')))
-        task = self.create_task(remove_portfolio_type=True)
+        self.assertFalse(bool(AccrualCalculationSchedule.objects.filter(accrual_start_date='2017-11-22')))
+        task = self.create_task(remove_instrument=True)
         import_process = SimpleImportProcess(task_id=task.id)
 
         mock_send_message.assert_called()
@@ -191,6 +188,6 @@ class ImportPortfolioTypeTest(BaseTestCase):
         import_process.preprocess()
         import_process.process()
 
-        with self.assertRaises(Portfolio.DoesNotExist) as e:
-            Portfolio.objects.get(user_code="Test")
+        with self.assertRaises(AccrualCalculationSchedule.DoesNotExist) as e:
+            AccrualCalculationSchedule.objects.get(accrual_start_date="2017-11-22")
 
