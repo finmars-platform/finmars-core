@@ -16,9 +16,13 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.views import AbstractModelViewSet
-from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter, CurrencyUserCodeFilter
-from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.constants import MAIN_CURRENCIES
+from poms.currencies.filters import (
+    CurrencyUserCodeFilter,
+    ListDatesFilter,
+    OwnerByCurrencyFilter,
+)
+from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import (
     CurrencyHistorySerializer,
     CurrencyLightSerializer,
@@ -176,9 +180,10 @@ class CurrencyViewSet(AbstractModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.user_code in MAIN_CURRENCIES:
-            return Response({
-                "message": "Cannot delete instance because they are referenced through a protected foreign key",
-            },
+            return Response(
+                {
+                    "message": "Cannot delete instance because they are referenced through a protected foreign key",
+                },
                 status=status.HTTP_409_CONFLICT,
             )
         return super().destroy(request, *args, **kwargs)
@@ -241,9 +246,12 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"CurrencyHistoryViewSet.valid_data {len(valid_data)}")
 
-        CurrencyHistory.objects.bulk_create(valid_data, update_conflicts=True,
-                                            unique_fields=["currency", "pricing_policy", "date"],
-                                            update_fields=['fx_rate'])
+        CurrencyHistory.objects.bulk_create(
+            valid_data,
+            update_conflicts=True,
+            unique_fields=["currency", "pricing_policy", "date"],
+            update_fields=["fx_rate"],
+        )
 
         if errors:
             _l.info(f"CurrencyHistoryViewSet.bulk_create.errors {errors}")
