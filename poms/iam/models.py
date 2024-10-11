@@ -220,6 +220,7 @@ class ResourceGroup(models.Model):
             obj = model.objects.get(id=assignment.object_id)
             if hasattr(obj, "resource_groups"):
                 obj.resource_groups.remove(self.user_code)
+                obj.save(update_fields=["resource_groups"])
 
         group_assignments.delete()
 
