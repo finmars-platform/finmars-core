@@ -170,6 +170,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             "fx_rate",
             "procedure_modified_datetime",
             "modified_at",
+            "is_temporary_fx_rate",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -197,7 +198,6 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         history_item.date = instance.date
         history_item.pricing_policy = instance.pricing_policy
         history_item.status = CurrencyHistoryError.STATUS_CREATED
-
         history_item.save()
 
         member = get_member_from_context(self.context)
