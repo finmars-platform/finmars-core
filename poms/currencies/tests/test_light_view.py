@@ -18,6 +18,7 @@ class CompanyViewTestCase(BaseTestCase):
         ("name", "name"),
         ("user_code", "user_code"),
         ("short_name", "short_name"),
+        ("public_name", "public_name"),
     )
     def test__filter_by_query(self, field):
         query = self.random_string(7)

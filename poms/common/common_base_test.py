@@ -59,6 +59,7 @@ from poms.transactions.models import (
     TransactionTypeGroup,
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
+from poms.clients.models import Client
 
 # TEST_CASE = TransactionTestCase  # if settings.USE_DB_REPLICA == True
 TEST_CASE = TestCase
@@ -528,6 +529,15 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return self._add_attributes(self.account)
 
+    def create_client_obj(self) -> Client:
+        return Client.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            public_name=self.random_string(3),
+            name=self.random_string(3),
+        )
+
     def _add_attributes(self, model):
         model.attributes.set([self.create_attribute()])
         model.save()
@@ -555,6 +565,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 user_code=currency[0],
                 defaults=dict(
                     name=currency[0],
+                    public_name=currency[0],
                     default_fx_rate=currency[1],
                 ),
             )
