@@ -224,6 +224,10 @@ class CurrencyHistory(TimeStampedModel):
         blank=True,
         verbose_name=gettext_lazy("procedure_modified_datetime"),
     )
+    is_temporary_fx_rate = models.BooleanField(
+        default=False,
+        verbose_name=gettext_lazy("is temporary fx rate"),
+    )
 
     objects = CurrencyHistoryManager()
 
