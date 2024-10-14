@@ -103,7 +103,7 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             currency_history.fx_rate,
         )
 
-    def test__create(self):
+    def test__create_with_pricing_policy(self):
         create_data = self.prepare_data_for_create()
 
         response = self.client.post(path=self.url, format="json", data=create_data)
@@ -186,3 +186,22 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
 
         response = self.client.get(path=f"{self.url}{currency_history_id}/")
         self.assertEqual(response.status_code, 404, response.content)
+
+    def test__update_temporary_flag(self):
+        ch = self.create_currency_history()
+
+        response = self.client.get(path=f"{self.url}{ch.id}/", format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertFalse(response_json["is_temporary_fx_rate"])
+
+        update_data = {"is_temporary_fx_rate": True}
+        response = self.client.patch(
+            path=f"{self.url}{ch.id}/", format="json", data=update_data
+        )
+        response_json = response.json()
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response_json["is_temporary_fx_rate"])
+
+        currency_history = CurrencyHistory.objects.get(id=ch.id)
+        self.assertTrue(currency_history.is_temporary_fx_rate)
