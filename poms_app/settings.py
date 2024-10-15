@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "poms.reconciliation",
     "poms.file_reports",
     "poms.configuration_sharing",  # DEPRECATED
+    "poms.clients",
 
     "poms.schedules",
     "poms.procedures",
@@ -795,4 +796,4 @@ if SERVER_TYPE != "local":
 
 INSTRUMENT_TYPE_PREFIX =  ENV_STR("INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type")
 
-MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 20000)
+MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 10000)

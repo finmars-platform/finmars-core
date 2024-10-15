@@ -14,7 +14,6 @@ class ResourceGroupViewTest(BaseTestCase):
 
     def create_group(self, name: str = "test") -> ResourceGroup:
         return ResourceGroup.objects.create(
-            master_user=self.master_user,
             name=name,
             user_code=name,
             description=name,
@@ -32,12 +31,11 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
 
-        self.assertEqual(len(response_json), 1)
-        group_data = response_json[0]
+        self.assertEqual(len(response_json["results"]), 1)
+        group_data = response_json["results"][0]
         self.assertEqual(group_data["name"], "test")
         self.assertEqual(group_data["user_code"], "test")
         self.assertEqual(group_data["description"], "test")
-        self.assertEqual(group_data["master_user"], self.master_user.id)
         self.assertEqual(group_data["assignments"], [])
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
@@ -55,7 +53,6 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["name"], "test2")
         self.assertEqual(group_data["user_code"], "test2")
         self.assertEqual(group_data["description"], "test2")
-        self.assertEqual(group_data["master_user"], self.master_user.id)
         self.assertEqual(group_data["assignments"], [])
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
@@ -101,7 +98,6 @@ class ResourceGroupViewTest(BaseTestCase):
 
     def test__create(self):
         group_data = dict(
-            master_user=self.master_user.id,
             name="test9",
             user_code="test9",
             description="test9",
@@ -113,7 +109,6 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["name"], "test9")
         self.assertEqual(group_data["user_code"], "test9")
         self.assertEqual(group_data["description"], "test9")
-        self.assertEqual(group_data["master_user"], self.master_user.id)
         self.assertEqual(group_data["assignments"], [])
         self.assertIn("id", group_data)
         self.assertIn("created_at", group_data)
