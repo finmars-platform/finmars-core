@@ -600,6 +600,26 @@ class FinmarsLocalFileSystemStorage(FinmarsStorageFileObjMixin, FileSystemStorag
 
         return download_local_folder_as_zip(path)
 
+    def dir_exists(self, path: str) -> bool:
+        if not path.endswith("/"):
+            raise ValueError("dir path must ends with /")
+
+        path = self.path(path)
+        try:
+            if not os.path.isdir(path):
+                raise NotADirectoryError(f"Path '{path}' is not a directory.")
+
+            return True
+
+        except Exception as e:
+            _l.error(f"dir_exists: check resulted in {repr(e)}")
+            return False
+
+    def size(self, name):
+        if os.path.isdir(self.path(name)):
+            return 0
+        return os.path.getsize(self.path(name))
+
 
 def get_storage():
     storage = None

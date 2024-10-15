@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponse
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.storage import FinmarsS3Storage
+from poms.common.storage import FinmarsS3Storage, FinmarsLocalFileSystemStorage
 from poms.explorer.models import StorageObject
 
 _l = logging.getLogger("poms.explorer")
@@ -35,6 +35,9 @@ CONTENT_TYPES = {
 }
 SYSTEM_PATHS = {".hello-world", ".system", ".init"}
 TRUTHY_VALUES = {"true", "1", "yes"}
+
+# 100 MB
+CHUNK_SIZE = 1024 * 1024 * 100
 
 
 def is_true_value(value: str) -> bool:
@@ -98,7 +101,10 @@ def sanitize_html(html: str) -> str:
     return str(soup)
 
 
-def path_is_file(storage: FinmarsS3Storage, file_path: str) -> bool:
+def path_is_file(
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    file_path: str,
+    ) -> bool:
     """
     Check if the given path is a file in the storage.
     Args:
@@ -125,7 +131,11 @@ def last_dir_name(path: str) -> str:
     return f"{path.rsplit('/', 1)[-1]}/"
 
 
-def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str):
+def move_file(
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    source_file_path: str,
+    destin_file_path: str,
+    ):
     """
     Move a file from the source path to the destination path within the storage.
 
@@ -142,13 +152,7 @@ def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
         f"to {destin_file_path}"
     )
 
-    content = storage.open(source_file_path).read()
-    _l.info(
-        f"move_file: with content len={len(content)} "
-        f"from {source_file_path} to {destin_file_path}"
-    )
-
-    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    save_file_from_chunk(storage, source_file_path, destin_file_path)
     _l.info(f"move_file: content saved to {destin_file_path}")
 
     storage.delete(source_file_path)
@@ -156,7 +160,7 @@ def move_file(storage: FinmarsS3Storage, source_file_path: str, destin_file_path
 
 
 def move_dir(
-    storage: FinmarsS3Storage,
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     source_dir: str,
     destin_dir: str,
     celery_task: CeleryTask,
@@ -170,8 +174,6 @@ def move_dir(
         source_dir (str): The path of the source directory.
         destin_dir (str): The path of the destination directory.
         celery_task (CeleryTask): The celery task to update.
-    Returns:
-        None
     """
     _l.info(f"move_dir: move content of directory '{source_dir}' to '{destin_dir}'")
 
@@ -180,18 +182,22 @@ def move_dir(
     for dir_name in dirs:
         s_dir = os.path.join(source_dir, dir_name)
         d_dir = os.path.join(destin_dir, dir_name)
-        move_dir(storage, s_dir, d_dir, celery_task)
+        yield from move_dir(storage, s_dir, d_dir, celery_task)
 
     for file_name in files:
         s_file = os.path.join(source_dir, file_name)
         d_file = os.path.join(destin_dir, file_name)
         move_file(storage, s_file, d_file)
 
+    if isinstance(storage, FinmarsLocalFileSystemStorage): 
+        storage.delete(source_dir)
+    
     celery_task.refresh_from_db()
     progres_dict = celery_task.progress_object
     progres_dict["current"] += len(files)
     progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
     celery_task.update_progress(progres_dict)
+    yield
 
 
 def count_files(storage: FinmarsS3Storage, source_dir: str) -> int:
@@ -445,7 +451,10 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
     }
 
 
-def gen_path_copy(storage: FinmarsS3Storage, path: str) -> str:
+def gen_path_copy(
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    path: str
+) -> str:
     """
     Generate new path startswith _copy(number) for file (or directory).
     Args:
@@ -483,7 +492,9 @@ def gen_path_copy(storage: FinmarsS3Storage, path: str) -> str:
 
 
 def copy_file(
-    storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    source_file_path: str,
+    destin_file_path: str,
 ) -> None:
     """
     Copy a file from the source path to the destination path within the storage.
@@ -492,8 +503,6 @@ def copy_file(
         storage (Storage): The storage instance to use.
         source_file_path (str): The path of the source file.
         destin_file_path (str): The path of the destination file.
-    Returns:
-        None
     """
 
     if storage.exists(destin_file_path):
@@ -502,29 +511,23 @@ def copy_file(
             f"copy_file: file from {source_file_path} "
             f"already exists in target path, path has updated to {destin_file_path}"
         )
-    file_name = os.path.basename(destin_file_path)
 
+    file_name = os.path.basename(destin_file_path)
     _l.info(
         f"copy_file: copy file {file_name} from {source_file_path} "
         f"to {destin_file_path}"
     )
 
-    content = storage.open(source_file_path).read()
-    _l.info(
-        f"copy_file: with content len={len(content)} "
-        f"from {source_file_path} to {destin_file_path}"
-    )
-
-    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    save_file_from_chunk(storage, source_file_path, destin_file_path)
     _l.info(f"copy_file: content saved to {destin_file_path}")
 
 
 def copy_dir(
-    storage: FinmarsS3Storage,
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     source_dir: str,
     destin_dir: str,
     celery_task: CeleryTask,
-) -> None:
+):
     """
     Copy a directory and its contents recursively within the storage and update the
     celery task progress. Empty directories will not be copy/created in the storage!
@@ -534,8 +537,6 @@ def copy_dir(
         source_dir (str): The path of the source directory.
         destin_dir (str): The path of the destination directory.
         celery_task (CeleryTask): The celery task to update.
-    Returns:
-        None
     """
     _l.info(f"copy_dir: copy content of directory '{source_dir}' to '{destin_dir}'")
 
@@ -551,7 +552,7 @@ def copy_dir(
     for dir_name in dirs:
         s_dir = os.path.join(source_dir, dir_name)
         d_dir = os.path.join(destin_dir, dir_name)
-        copy_dir(storage, s_dir, d_dir, celery_task)
+        yield from copy_dir(storage, s_dir, d_dir, celery_task)
 
     for file_name in files:
         s_file = os.path.join(source_dir, file_name)
@@ -563,10 +564,13 @@ def copy_dir(
     progres_dict["current"] += len(files)
     progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
     celery_task.update_progress(progres_dict)
+    yield
 
 
 def rename_file(
-    storage: FinmarsS3Storage, source_file_path: str, destin_file_path: str
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    source_file_path: str,
+    destin_file_path: str,
 ):
     """
     Rename a file from the source path to the destination path within the storage.
@@ -574,19 +578,10 @@ def rename_file(
         storage (Storage): The storage instance to use.
         source_file_path (str): The path of the source file.
         destin_file_path (str): The path of the destination file.
-    Returns:
-        None
     """
-    file_name = os.path.basename(destin_file_path)
     _l.info(f"rename_file: rename {source_file_path} to {destin_file_path}")
 
-    content = storage.open(source_file_path).read()
-    _l.info(
-        f"rename_file: with content len={len(content)} "
-        f"from {source_file_path} to {destin_file_path}"
-    )
-
-    storage.save(destin_file_path, ContentFile(content, name=file_name))
+    save_file_from_chunk(storage, source_file_path, destin_file_path)
     _l.info(f"rename_file: content saved to {destin_file_path}")
 
     storage.delete(source_file_path)
@@ -594,7 +589,7 @@ def rename_file(
 
 
 def rename_dir(
-    storage: FinmarsS3Storage,
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     source_dir: str,
     destin_dir: str,
 ):
@@ -605,9 +600,6 @@ def rename_dir(
         storage (Storage): The storage instance to use.
         source_dir (str): The path of the source directory.
         destin_dir (str): The path of the destination directory.
-
-    Returns:
-        None
     """
     _l.info(f"rename_dir: move content of directory '{source_dir}' to '{destin_dir}'")
 
@@ -616,9 +608,44 @@ def rename_dir(
     for dir_name in dirs:
         s_dir = os.path.join(source_dir, dir_name)
         d_dir = os.path.join(destin_dir, dir_name)
-        rename_dir(storage, s_dir, d_dir)
+        yield from rename_dir(storage, s_dir, d_dir)
 
     for file_name in files:
         s_file = os.path.join(source_dir, file_name)
         d_file = os.path.join(destin_dir, file_name)
         rename_file(storage, s_file, d_file)
+
+    if isinstance(storage, FinmarsLocalFileSystemStorage):
+        storage.delete(source_dir)
+
+    yield
+
+
+def save_file_from_chunk(
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
+    source_file_path: str,
+    destin_file_path: str,
+    chunk_size: int = CHUNK_SIZE,
+):
+    if isinstance(storage, FinmarsLocalFileSystemStorage):
+        absolute_path = storage.path(destin_file_path)
+        destin_dir = os.path.dirname(absolute_path)
+
+        if not os.path.exists(destin_dir):
+            os.makedirs(destin_dir, exist_ok=True)
+            _l.info(f"save_file_from_chunk: created missing directories for path: {destin_dir}")
+
+    with storage.open(source_file_path, 'rb') as source_file:
+        with storage.open(destin_file_path, 'wb') as dest_file:
+            total_size = 0
+            while True:
+                content = source_file.read(chunk_size)
+                if not content:
+                    break
+
+                dest_file.write(content)
+                total_size += len(content)
+            _l.info(
+                f"save_file_from_chunk: file {destin_file_path} been saved,"
+                "total_size - {total_size} bytes."
+                )
