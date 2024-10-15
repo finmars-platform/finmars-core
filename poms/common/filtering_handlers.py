@@ -923,10 +923,15 @@ def add_filter(qs, filter_config):
     return qs
 
 
-def is_dynamic_attribute_filter(filter_config):
-    key = filter_config["key"]
+def is_dynamic_attribute_filter(filter_config: dict) -> bool:
+    from poms.common.grouping_handlers import ATTRIBUTE_PREFIX, has_attribute
 
-    return "attributes" in key
+    key = filter_config["key"]
+    has_attribute_prefix = has_attribute(key)
+    attribute_code = (
+        key.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    )
+    return has_attribute_prefix and attribute_code
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
