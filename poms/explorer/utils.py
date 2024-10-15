@@ -638,14 +638,12 @@ def save_file_from_chunk(
     with storage.open(source_file_path, 'rb') as source_file:
         with storage.open(destin_file_path, 'wb') as dest_file:
             total_size = 0
-            while True:
-                content = source_file.read(chunk_size)
-                if not content:
-                    break
-
+            content = source_file.read(chunk_size)
+            while content:
                 dest_file.write(content)
                 total_size += len(content)
+                content = source_file.read(chunk_size)
             _l.info(
                 f"save_file_from_chunk: file {destin_file_path} been saved,"
-                "total_size - {total_size} bytes."
+                f"total_size - {total_size} bytes."
                 )
