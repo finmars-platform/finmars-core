@@ -11,6 +11,8 @@ from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger("poms.common")
 
+ATTRIBUTE_PREFIX = "attributes."
+
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
     start_time = time.time()
@@ -66,8 +68,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     return qs
 
 
-def is_attribute(item):
-    return "attributes." in item
+def has_attribute(item) -> bool:
+    return ATTRIBUTE_PREFIX in item
 
 
 def get_root_system_attr_group(qs, root_group, groups_order, content_type_key):
@@ -197,14 +199,18 @@ def is_root_groups_configuration(groups_types, groups_values):
     return len(groups_types) == 1 and not len(groups_values)
 
 
-def format_groups(group_type, master_user, content_type):
-    if "attributes." in group_type:
+def format_groups(group_type, master_user, content_type) -> str:
+    has_attribute_prefix = has_attribute(group_type)
+    attribute_code = (
+        group_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    )
+
+    if has_attribute_prefix and attribute_code:
         attribute_type = GenericAttributeType.objects.get(
-            user_code__exact=group_type.split("attributes.")[1],
+            user_code__exact=attribute_code,
             master_user=master_user,
             content_type=content_type,
         )
-
         return str(attribute_type.id)
 
     return group_type
@@ -290,14 +296,17 @@ def count_groups(
     for item in qs:
         q = Q()
         index = 0
-
-        #  TODO handle attributes
         for groups_type in groups_types:
-            if is_attribute(groups_type):
-                attribute_type_user_code = groups_type.split("attributes.")[1]
+            has_attribute_prefix = has_attribute(groups_type)
+            attribute_code = (
+                groups_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+            )
+            if has_attribute_prefix:
+                if not attribute_code:
+                    continue
 
                 attribute_type = GenericAttributeType.objects.get(
-                    user_code__exact=attribute_type_user_code,
+                    user_code__exact=attribute_code,
                     master_user=master_user,
                     content_type=content_type,
                 )
