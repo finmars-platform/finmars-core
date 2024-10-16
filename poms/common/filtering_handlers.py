@@ -18,6 +18,7 @@ from django.db.models import (
     Q,
     TextField,
 )
+from rest_framework.exceptions import ValidationError
 
 from dateutil.parser import parse
 
@@ -58,7 +59,6 @@ class FilterType:
 
 def _get_equal_q(field_key, value_type, value):
     """
-
     :param field_key:
     :param value_type: - values: 10, 20, 30, 40
     :param value:
@@ -69,14 +69,11 @@ def _get_equal_q(field_key, value_type, value):
     if value_type in (ValueType.NUMBER, ValueType.DATE):
         lookup = "exact"
 
-    q = Q(**{f"{field_key}__{lookup}": value})
-
-    return q
+    return Q(**{f"{field_key}__{lookup}": value})
 
 
 def _get_has_substring_q(field_key, value):
     """
-
     :param field_key:
     :param value:
     :return: Q object for filter type "contains_has_substring"
@@ -101,8 +98,9 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     source_key = filter_config["key"]
     attribute_type_user_code = source_key.split("attributes.")[1]
     if not attribute_type_user_code:
-        _l.warning(f"Empty attribute type user code in source_key={source_key}")
-        return qs
+        raise ValidationError(
+            f"Empty attribute type user code in source_key={source_key}"
+        )
 
     attribute_type = GenericAttributeType.objects.get(
         user_code=attribute_type_user_code,
@@ -200,11 +198,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-        include_null_options = {}
-        include_empty_string_options = {}
-
-        include_null_options["value_string__isnull"] = True
-        include_empty_string_options["value_string"] = ""
+        include_null_options = {"value_string__isnull": True}
+        include_empty_string_options = {"value_string": ""}
 
         attributes_qs = attributes_qs.filter(
             Q(**include_null_options) | Q(**include_empty_string_options)
@@ -928,9 +923,7 @@ def is_dynamic_attribute_filter(filter_config: dict) -> bool:
 
     key = filter_config["key"]
     has_attribute_prefix = has_attribute(key)
-    attribute_code = (
-        key.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
-    )
+    attribute_code = key.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
     return has_attribute_prefix and attribute_code
 
 
