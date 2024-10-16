@@ -87,7 +87,8 @@ class TestMoveFolder(BaseTestCase):
         source_folder = "empty_folder"
         destination_folder = "destination/folder"
 
-        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
+        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+            pass
 
         self.storage.listdir.assert_called_with(source_folder)
 
@@ -102,7 +103,8 @@ class TestMoveFolder(BaseTestCase):
             ([], []),
         ]
 
-        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
+        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+            pass
 
         # Assert the recursive move of subdirectories
         self.assertEqual(self.storage.listdir.call_count, 3)
@@ -125,7 +127,8 @@ class TestMoveFolder(BaseTestCase):
         self.storage.listdir.return_value = ([], ["file1.txt"])
         self.storage.dir_exists.return_value = True
         self.storage.open.return_value.read.return_value = file_content
-        move_dir(self.storage, source_folder, destination_folder, self.celery_task)
+        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+            pass
 
         # Assert the move of files
         self.storage.listdir.assert_called_with(source_folder)
