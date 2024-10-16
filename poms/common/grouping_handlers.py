@@ -3,6 +3,7 @@ import time
 
 from django.apps import apps
 from django.db.models import F, Q
+from rest_framework.exceptions import ValidationError
 
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import filter_items_for_group, get_q_obj_for_attribute_type
@@ -191,7 +192,7 @@ def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
 #     return qs
 
 
-def is_dynamic_attribute(item):
+def is_digit_attribute(item):
     return item.isdigit()
 
 
@@ -204,8 +205,9 @@ def format_groups(group_type, master_user, content_type) -> str:
     attribute_code = (
         group_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
     )
-
-    if has_attribute_prefix and attribute_code:
+    if has_attribute_prefix and not attribute_code:
+        raise ValidationError(f"Invalid attribute code {group_type} for attribute type")
+    if has_attribute_prefix:
         attribute_type = GenericAttributeType.objects.get(
             user_code__exact=attribute_code,
             master_user=master_user,
@@ -234,7 +236,7 @@ def handle_groups(
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     if is_root_groups_configuration(groups_types, groups_values):
-        if is_dynamic_attribute(groups_types[0]):
+        if is_digit_attribute(groups_types[0]):
             qs = get_root_dynamic_attr_group(
                 qs, root_group=groups_types[0], groups_order=groups_order
             )
@@ -256,7 +258,7 @@ def handle_groups(
             qs, groups_types, groups_values, content_type_key, Model
         )
 
-        if is_dynamic_attribute(groups_types[-1]):
+        if is_digit_attribute(groups_types[-1]):
             qs = get_last_dynamic_attr_group(
                 qs, last_group=groups_types[-1], groups_order=groups_order
             )
@@ -303,7 +305,9 @@ def count_groups(
             )
             if has_attribute_prefix:
                 if not attribute_code:
-                    continue
+                    raise ValidationError(
+                        f"Invalid attribute code {groups_type} for attribute type"
+                    )
 
                 attribute_type = GenericAttributeType.objects.get(
                     user_code__exact=attribute_code,
