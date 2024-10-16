@@ -49,11 +49,6 @@ class CopyTaskTest(BaseTestCase):
         self.storage_mock.dir_exists.return_value = False
         self.storage_mock.exists.return_value = False
 
-        mock_source_file = mock.MagicMock()
-        mock_source_file.read.side_effect = [file_content, ""]
-        mock_dest_file = mock.MagicMock()
-        self.storage_mock.open.return_value.__enter__.side_effect = [mock_source_file, mock_dest_file]
-
         copy_directory_in_storage(task_id=celery_task.id, context=context)
 
         celery_task.refresh_from_db()
@@ -68,4 +63,3 @@ class CopyTaskTest(BaseTestCase):
                 "description": "copy_directory_in_storage finished",
             },
         )
-        mock_dest_file.write.assert_called_once_with(file_content)

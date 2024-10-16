@@ -36,9 +36,6 @@ CONTENT_TYPES = {
 SYSTEM_PATHS = {".hello-world", ".system", ".init"}
 TRUTHY_VALUES = {"true", "1", "yes"}
 
-# 100 MB
-CHUNK_SIZE = 1024 * 1024 * 100
-
 
 def is_true_value(value: str) -> bool:
     return bool(value and (value.lower() in TRUTHY_VALUES))
@@ -152,7 +149,13 @@ def move_file(
         f"to {destin_file_path}"
     )
 
-    save_file_from_chunk(storage, source_file_path, destin_file_path)
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"move_file: with content len={len(content)} "
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
     _l.info(f"move_file: content saved to {destin_file_path}")
 
     storage.delete(source_file_path)
@@ -518,7 +521,13 @@ def copy_file(
         f"to {destin_file_path}"
     )
 
-    save_file_from_chunk(storage, source_file_path, destin_file_path)
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"copy_file: with content len={len(content)} "
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
     _l.info(f"copy_file: content saved to {destin_file_path}")
 
 
@@ -579,9 +588,16 @@ def rename_file(
         source_file_path (str): The path of the source file.
         destin_file_path (str): The path of the destination file.
     """
+    file_name = os.path.basename(destin_file_path)
     _l.info(f"rename_file: rename {source_file_path} to {destin_file_path}")
 
-    save_file_from_chunk(storage, source_file_path, destin_file_path)
+    content = storage.open(source_file_path).read()
+    _l.info(
+        f"rename_file: with content len={len(content)} "
+        f"from {source_file_path} to {destin_file_path}"
+    )
+
+    storage.save(destin_file_path, ContentFile(content, name=file_name))
     _l.info(f"rename_file: content saved to {destin_file_path}")
 
     storage.delete(source_file_path)
@@ -619,31 +635,3 @@ def rename_dir(
         storage.delete(source_dir)
 
     yield
-
-
-def save_file_from_chunk(
-    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
-    source_file_path: str,
-    destin_file_path: str,
-    chunk_size: int = CHUNK_SIZE,
-):
-    if isinstance(storage, FinmarsLocalFileSystemStorage):
-        absolute_path = storage.path(destin_file_path)
-        destin_dir = os.path.dirname(absolute_path)
-
-        if not os.path.exists(destin_dir):
-            os.makedirs(destin_dir, exist_ok=True)
-            _l.info(f"save_file_from_chunk: created missing directories for path: {destin_dir}")
-
-    with storage.open(source_file_path, 'rb') as source_file:
-        with storage.open(destin_file_path, 'wb') as dest_file:
-            total_size = 0
-            content = source_file.read(chunk_size)
-            while content:
-                dest_file.write(content)
-                total_size += len(content)
-                content = source_file.read(chunk_size)
-            _l.info(
-                f"save_file_from_chunk: file {destin_file_path} been saved,"
-                f"total_size - {total_size} bytes."
-                )
