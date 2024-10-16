@@ -200,13 +200,15 @@ def is_root_groups_configuration(groups_types, groups_values):
     return len(groups_types) == 1 and not len(groups_values)
 
 
-def format_groups(group_type, master_user, content_type) -> str:
+def format_groups(group_type: str, master_user, content_type) -> str:
     has_attribute_prefix = has_attribute(group_type)
     attribute_code = (
         group_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
     )
     if has_attribute_prefix and not attribute_code:
-        raise ValidationError(f"Invalid attribute code {group_type} for attribute type")
+        raise ValidationError(
+            f"format_groups: invalid group_type '{group_type}' (no attribute code)"
+        )
     if has_attribute_prefix:
         attribute_type = GenericAttributeType.objects.get(
             user_code__exact=attribute_code,

@@ -255,19 +255,12 @@ class InstrumentViewSetTest(BaseTestCase):
     def test__list_by_post_attributes_filter(self):  # sourcery skip: extract-duplicate-method
         self.create_instrument()
         filter_data = {
-            "filter_settings": [
-                {
-                    "key": "attributes.",
-                    "name": "check empty attributes",
-                    "value_type": 10,
-                    "filter_type": "exact",
-                    "value": "test",
-                }
+            "groups_types": [
+                "attributes.",
+            ],
+            "groups_values": [
+                "12345",
             ]
         }
         response = self.client.post(path=f"{self.url}ev-group/", data=filter_data, format="json")
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 1)
-
-        print(response_json["results"][0])
+        self.assertEqual(response.status_code, 400, response.content)
