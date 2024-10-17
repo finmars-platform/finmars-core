@@ -198,12 +198,14 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-        include_null_options = {"value_string__isnull": True}
-        include_empty_string_options = {"value_string": ""}
+        # include_null_options = {"value_string__isnull": True}
+        # include_empty_string_options = {"value_string": ""}
+        #
+        # attributes_qs = attributes_qs.filter(
+        #     Q(**include_null_options) | Q(**include_empty_string_options)
+        # )
 
-        attributes_qs = attributes_qs.filter(
-            Q(**include_null_options) | Q(**include_empty_string_options)
-        )
+        attributes_qs = attributes_qs.filter({"classifier__isnull": True})
 
     # endregion CLASSIFIER FILTERS END
 
