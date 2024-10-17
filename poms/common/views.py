@@ -238,12 +238,12 @@ class AbstractEvGroupViewSet(
                 content_type,
             )
 
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
