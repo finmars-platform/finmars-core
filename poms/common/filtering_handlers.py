@@ -8,7 +8,6 @@ import time
 from datetime import datetime
 from functools import reduce
 
-from dateutil.parser import parse
 from django.conf import settings
 from django.db.models import (
     CharField,
@@ -19,6 +18,9 @@ from django.db.models import (
     Q,
     TextField,
 )
+from rest_framework.exceptions import ValidationError
+
+from dateutil.parser import parse
 
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
@@ -54,9 +56,9 @@ class FilterType:
     SELECTOR = "selector"
     DATE_TREE = "date_tree"
 
+
 def _get_equal_q(field_key, value_type, value):
     """
-
     :param field_key:
     :param value_type: - values: 10, 20, 30, 40
     :param value:
@@ -67,13 +69,11 @@ def _get_equal_q(field_key, value_type, value):
     if value_type in (ValueType.NUMBER, ValueType.DATE):
         lookup = "exact"
 
-    q = Q(**{f"{field_key}__{lookup}": value})
+    return Q(**{f"{field_key}__{lookup}": value})
 
-    return q
 
 def _get_has_substring_q(field_key, value):
     """
-
     :param field_key:
     :param value:
     :return: Q object for filter type "contains_has_substring"
@@ -89,6 +89,7 @@ def _get_has_substring_q(field_key, value):
 
     return q
 
+
 def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     filter_type = filter_config["filter_type"]
     value_type = str(filter_config["value_type"])
@@ -96,6 +97,10 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     source_key = filter_config["key"]
     attribute_type_user_code = source_key.split("attributes.")[1]
+    if not attribute_type_user_code:
+        raise ValidationError(
+            f"Empty attribute type user code in source_key={source_key}"
+        )
 
     attribute_type = GenericAttributeType.objects.get(
         user_code=attribute_type_user_code,
@@ -135,28 +140,22 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"classifier__name__icontains": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-
             options = {"classifier__name__iexact": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-
             q = Q(classifier__name__icontains=value)
 
             attributes_qs = attributes_qs.filter(q)
@@ -199,15 +198,14 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-        include_null_options = {}
-        include_empty_string_options = {}
+        # include_null_options = {"value_string__isnull": True}
+        # include_empty_string_options = {"value_string": ""}
+        #
+        # attributes_qs = attributes_qs.filter(
+        #     Q(**include_null_options) | Q(**include_empty_string_options)
+        # )
 
-        include_null_options["value_string__isnull"] = True
-        include_empty_string_options["value_string"] = ""
-
-        attributes_qs = attributes_qs.filter(
-            Q(**include_null_options) | Q(**include_empty_string_options)
-        )
+        attributes_qs = attributes_qs.filter({"classifier__isnull": True})
 
     # endregion CLASSIFIER FILTERS END
 
@@ -238,9 +236,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__icontains": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
         if len(filter_config["value"]):
@@ -249,9 +245,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__icontains": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
         if len(filter_config["value"]):
@@ -276,9 +270,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_string__iexact": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.STRING:
         if len(filter_config["value"]):
@@ -311,7 +303,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q("value_float", value_type, value)
 
             attributes_qs = attributes_qs.filter(q)
@@ -336,9 +327,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__gt": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -347,9 +336,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__gte": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -358,9 +345,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__lt": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
@@ -369,9 +354,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_float__lte": value}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
         max_value = filter_config["value"].get("max_value")
@@ -383,9 +366,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 "value_float__lte": max_value,
             }
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.NUMBER:
         max_value = filter_config["value"].get("max_value")
@@ -395,9 +376,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             q_less_than_min = Q(value_float__lt=min_value)
             q_greater_than_max = Q(value_float__gt=max_value)
 
-            attributes_qs = attributes_qs.filter(
-                q_less_than_min | q_greater_than_max
-            )
+            attributes_qs = attributes_qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {"value_float__isnull": True}
@@ -413,7 +392,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q(
                 "value_date",
                 value_type,
@@ -442,9 +420,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__gt": datetime.strptime(value, DATE_FORMAT).date()}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -453,9 +429,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__gte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -464,9 +438,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__lt": datetime.strptime(value, DATE_FORMAT).date()}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
@@ -475,9 +447,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
             options = {"value_date__lte": datetime.strptime(value, DATE_FORMAT).date()}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
         max_value = filter_config["value"].get("max_value")
@@ -489,21 +459,21 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 "value_date__lte": datetime.strptime(max_value, DATE_FORMAT).date(),
             }
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
         max_value = filter_config["value"].get("max_value")
         min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
-            q_less_than_min = Q(value_date__lt=datetime.strptime(min_value, DATE_FORMAT).date())
-            q_greater_than_max = Q(value_date__gt=datetime.strptime(max_value, DATE_FORMAT).date())
-
-            attributes_qs = attributes_qs.filter(
-                q_less_than_min | q_greater_than_max
+            q_less_than_min = Q(
+                value_date__lt=datetime.strptime(min_value, DATE_FORMAT).date()
             )
+            q_greater_than_max = Q(
+                value_date__gt=datetime.strptime(max_value, DATE_FORMAT).date()
+            )
+
+            attributes_qs = attributes_qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
         include_null_options = {"value_date__isnull": True}
@@ -520,9 +490,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if len(dates):
             options = {"value_date__in": dates}
 
-            attributes_qs = attributes_qs.filter(
-                Q(**options)
-            )
+            attributes_qs = attributes_qs.filter(Q(**options))
 
     # endregion DATE FILTERS
 
@@ -531,6 +499,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     qs = qs.filter(id__in=filtered_attributes_ids)
 
     return qs
+
 
 def add_filter(qs, filter_config):
     # print('filter_config %s ' % filter_config)
@@ -578,9 +547,7 @@ def add_filter(qs, filter_config):
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
-            qs = qs.filter(
-                Q(**options)
-            )
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.FIELD:
         if len(filter_config["value"]):
@@ -592,9 +559,7 @@ def add_filter(qs, filter_config):
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
-            qs = qs.filter(
-                Q(**options)
-            )
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.FIELD:
         if len(filter_config["value"]):
@@ -617,7 +582,6 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q(key + "__name", value_type, value)
 
             q = q | Q(**{f"{key}__name": ""})
@@ -678,9 +642,7 @@ def add_filter(qs, filter_config):
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
-            qs = qs.filter(
-                Q(**options)
-            )
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
         # print('here?')
@@ -694,9 +656,7 @@ def add_filter(qs, filter_config):
             # print('include_null_options %s' % include_null_options)
             # print('options %s' % options)
 
-            qs = qs.filter(
-                Q(**options)
-            )
+            qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
         if len(filter_config["value"]):
@@ -719,7 +679,6 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
@@ -751,7 +710,6 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value or value == 0:
-
             q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
@@ -825,9 +783,7 @@ def add_filter(qs, filter_config):
             q_less_than_min = Q(**{key + "__lt": min_value})
             q_greater_than_max = Q(**{key + "__gt": max_value})
 
-            qs = qs.filter(
-                q_less_than_min | q_greater_than_max
-            )
+            qs = qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {}
@@ -844,7 +800,6 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q(
                 key,
                 value_type,
@@ -919,12 +874,14 @@ def add_filter(qs, filter_config):
         min_value = filter_config["value"].get("min_value")
 
         if max_value and min_value:
-            q_less_than_min = Q(**{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()})
-            q_greater_than_max = Q(**{key + "__gt": datetime.strptime(max_value, DATE_FORMAT).date()})
-
-            qs = qs.filter(
-                q_less_than_min | q_greater_than_max
+            q_less_than_min = Q(
+                **{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()}
             )
+            q_greater_than_max = Q(
+                **{key + "__gt": datetime.strptime(max_value, DATE_FORMAT).date()}
+            )
+
+            qs = qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.DATE:
         include_null_options = {}
@@ -954,7 +911,6 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-
             q = _get_equal_q(key, value_type, value)
 
             qs = qs.filter(q)
@@ -964,10 +920,13 @@ def add_filter(qs, filter_config):
     return qs
 
 
-def is_dynamic_attribute_filter(filter_config):
-    key = filter_config["key"]
+def is_dynamic_attribute_filter(filter_config: dict) -> bool:
+    from poms.common.grouping_handlers import ATTRIBUTE_PREFIX, has_attribute
 
-    return "attributes" in key
+    key = filter_config["key"]
+    has_attribute_prefix = has_attribute(key)
+    attribute_code = key.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    return has_attribute_prefix and attribute_code
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
