@@ -5,18 +5,14 @@ import time
 import traceback
 from os.path import getsize
 
-from celery.result import AsyncResult
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
-from django.core.management import call_command
 from django.core.signing import TimestampSigner
-from django.db import connection
 from django.http import Http404, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.inspectors import SwaggerAutoSchema
-from rest_framework import parsers, renderers
-from rest_framework import status
+from rest_framework import parsers, renderers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -25,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from poms.common.tasks import apply_migration_to_space
+from celery.result import AsyncResult
 
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
@@ -44,6 +40,7 @@ from poms.common.mixins import (
 )
 from poms.common.serializers import RealmMigrateSchemeSerializer
 from poms.common.sorting import sort_by_dynamic_attrs
+from poms.common.tasks import apply_migration_to_space
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
@@ -241,12 +238,12 @@ class AbstractEvGroupViewSet(
                 content_type,
             )
 
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
@@ -430,12 +427,12 @@ class AbstractModelViewSet(
                 content_type,
             )
 
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
@@ -851,14 +848,13 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
             ]
 
         if "attributes." in key:
-
             try:
                 results = _get_values_of_generic_attribute(
                     master_user, value_type, content_type, key
                 )
 
-                if 'Cash & Equivalents' not in results:
-                    results.append('Cash & Equivalents')
+                if "Cash & Equivalents" not in results:
+                    results.append("Cash & Equivalents")
 
             except GenericAttributeType.DoesNotExist:
                 return Response(
@@ -872,7 +868,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         elif is_report and (
             key in report_system_attrs_keys_list or "custom_fields." in key
         ):
-
             if report_instance_id is None:
                 return Response(
                     {
@@ -994,15 +989,16 @@ class RealmMigrateSchemeView(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
             space_code = serializer.validated_data.get("space_code")
-            realm_code = serializer.validated_data.get('realm_code')
+            realm_code = serializer.validated_data.get("realm_code")
 
-            apply_migration_to_space.apply_async(kwargs={"space_code": space_code, "realm_code": realm_code})
+            apply_migration_to_space.apply_async(
+                kwargs={"space_code": space_code, "realm_code": realm_code}
+            )
 
             # Optionally, reset the search path to default after migrating
             # with connection.cursor() as cursor:
@@ -1011,7 +1007,6 @@ class RealmMigrateSchemeView(APIView):
             return Response({"status": "ok"})
 
         except Exception as e:
-
             _l.error(f"RealmMigrateSchemeView.exception: {str(e)}")
             _l.error(f"RealmMigrateSchemeView.traceback: {traceback.format_exc()}")
 
