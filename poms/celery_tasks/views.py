@@ -254,7 +254,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         completed_task = CeleryTask.objects.get(pk=pk)
         options = request.data.get("options", None)
-        if options is None:
+        if not options:
             options = completed_task.options_object
 
         full_task_name = None
@@ -263,6 +263,17 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
                 full_task_name = registered_task_name
                 _l.info(f"relaunch - full task name is {full_task_name}")
                 break
+        else:
+            err_message = f"Сan't match task {completed_task.type} with any full names of tasks."
+            _l.error(err_message)
+            return Response(
+                {
+                    "status": "error",
+                    "task_id": completed_task.id,
+                    "error_message": err_message,
+                },
+                status=400,
+            )
 
         reloaded_task = CeleryTask.objects.create(
             master_user=completed_task.master_user,
@@ -272,7 +283,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             options_object=options,
         )
 
-        result = celery_app.send_task(
+        new_celery_task = celery_app.send_task(
             full_task_name,
             kwargs= {
                 "task_id": reloaded_task.id,
@@ -283,13 +294,13 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             }
         )
 
-        _l.info(f"relaunch - result is {result}")
+        _l.info(f"relaunch - result is {new_celery_task}")
 
         return Response(
             {
                 "status": "ok",
                 "task_id": reloaded_task.id,
-                "celery_task_id": result.id,
+                "celery_task_id": new_celery_task.id,
             }
         )
 
