@@ -2,6 +2,7 @@ import json
 from logging import getLogger
 
 from celery.result import AsyncResult
+from celery import current_app
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -19,6 +20,7 @@ from .serializers import (
     CeleryTaskSerializer,
     CeleryTaskUpdateStatusSerializer,
     CeleryWorkerSerializer,
+    CeleryTaskRelaunchSerializer,
 )
 
 _l = getLogger("poms.celery_tasks")
@@ -245,6 +247,51 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         task.save()
 
         return Response({"status": "ok"})
+
+    @action(detail=True, methods=["post"], url_path="relaunch", serializer_class=CeleryTaskRelaunchSerializer)
+    def relaunch(self, request, pk=None, realm_code=None, space_code=None):
+        from poms_app import celery_app
+
+        completed_task = CeleryTask.objects.get(pk=pk)
+        options = request.data.get("options", None)
+        if options is None:
+            options = completed_task.options_object
+
+        full_task_name = None
+        for registered_task_name in current_app.tasks.keys():
+            if completed_task.type in registered_task_name:
+                full_task_name = registered_task_name
+                _l.info(f"relaunch - full task name is {full_task_name}")
+                break
+
+        reloaded_task = CeleryTask.objects.create(
+            master_user=completed_task.master_user,
+            member=completed_task.member,
+            type=completed_task.type,
+            verbose_name=completed_task.verbose_name,
+            options_object=options,
+        )
+
+        result = celery_app.send_task(
+            full_task_name,
+            kwargs= {
+                "task_id": reloaded_task.id,
+                "context": {
+                    "realm_code": reloaded_task.master_user.realm_code,
+                    "space_code": reloaded_task.master_user.space_code,
+                }
+            }
+        )
+
+        _l.info(f"relaunch - result is {result}")
+
+        return Response(
+            {
+                "status": "ok",
+                "task_id": reloaded_task.id,
+                "celery_task_id": result.id,
+            }
+        )
 
 
 class CeleryStatsViewSet(AbstractViewSet):
