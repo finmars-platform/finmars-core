@@ -6,6 +6,6 @@ router = routers.DefaultRouter()
 
 router.register(
     r"client",
-    clients.ClietnsViewSet,
+    clients.ClientsViewSet,
     "client",
 )
