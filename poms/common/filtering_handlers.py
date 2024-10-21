@@ -138,27 +138,21 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__icontains": value}
-
-            attributes_qs = attributes_qs.filter(Q(**options))
+             attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__iexact": value}
-
-            attributes_qs = attributes_qs.filter(Q(**options))
+            attributes_qs = attributes_qs.filter(classifier__name__iexact=value)
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-            q = Q(classifier__name__icontains=value)
-
-            attributes_qs = attributes_qs.filter(q)
+            attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
@@ -166,7 +160,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
         if value:
             # options = {"classifier__name__icontains": value}
-
             # include_null_options = {}
             # if not exclude_empty_cells:
             #     include_null_options["classifier__isnull"] = True
@@ -189,23 +182,12 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__icontains": value}
-
-            exclude_empty_cells_options = {"classifier__isnull": True}
-
             attributes_qs = attributes_qs.exclude(
-                Q(**options) | Q(**exclude_empty_cells_options)
+                Q(classifier__name__icontains=value) | Q(classifier__isnull=True)
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-        # include_null_options = {"value_string__isnull": True}
-        # include_empty_string_options = {"value_string": ""}
-        #
-        # attributes_qs = attributes_qs.filter(
-        #     Q(**include_null_options) | Q(**include_empty_string_options)
-        # )
-
-        attributes_qs = attributes_qs.filter({"classifier__isnull": True})
+        attributes_qs = attributes_qs.filter(classifier__isnull=True)
 
     # endregion CLASSIFIER FILTERS END
 
