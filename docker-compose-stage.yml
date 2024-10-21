@@ -1,6 +1,6 @@
 services:
   stage_db:
-    image: postgres:13-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,7 +16,7 @@ services:
     stdin_open: true
     tty: true
   redis:
-    image: redis
+    image: redis:7-alpine
     ports:
       - "6379:6379"
     stdin_open: true

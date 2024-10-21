@@ -49,11 +49,11 @@ Test:
     pull_policy: if-not-present # available: always, if-not-present,
 
   services:
-    - name: postgres:15
+    - name: postgres:15-alpine
       pull_policy: if-not-present # available: always, if-not-present,
-    - name: rabbitmq:3.13.7-management
+    - name: rabbitmq:3.13-management-alpine
       pull_policy: if-not-present # available: always, if-not-present,
-    - name: redis:7
+    - name: redis:7-alpine
       pull_policy: if-not-present # available: always, if-not-present,
 
   variables:

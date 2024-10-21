@@ -15,7 +15,7 @@ services:
     depends_on:
       - database
   database:
-    image: postgres:13-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
