@@ -213,16 +213,8 @@ class ResourceGroup(models.Model):
                 assignment.delete()
 
     def destroy_assignments(self):
-        group_assignments = ResourceGroupAssignment.objects.filter(resource_group=self)
-
-        for assignment in group_assignments:
-            model = assignment.content_type.model_class()
-            obj = model.objects.get(id=assignment.object_id)
-            if hasattr(obj, "resource_groups"):
-                obj.resource_groups.remove(self.user_code)
-                obj.save(update_fields=["resource_groups"])
-
-        group_assignments.delete()
+        for assignment in ResourceGroupAssignment.objects.filter(resource_group=self):
+            assignment.delete()
 
 
 class ResourceGroupAssignment(models.Model):
@@ -259,6 +251,15 @@ class ResourceGroupAssignment(models.Model):
             f"{self.content_object}:{self.object_user_code}"
         )
 
+    def delete(self, **kwargs):
+        model = self.content_type.model_class()
+        obj = model.objects.get(id=self.object_id)
+        if hasattr(obj, "resource_groups"):
+            with contextlib.suppress(ValueError):
+                obj.resource_groups.remove(self.resource_group.user_code)
+                obj.save(update_fields=["resource_groups"])
+
+        super().delete(**kwargs)
 
 # Important, needs for cache clearance after Policy Updated !!!
 from . import signals

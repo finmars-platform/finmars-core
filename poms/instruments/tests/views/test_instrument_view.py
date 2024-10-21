@@ -251,3 +251,16 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(file_data["path"], file.path)
         self.assertEqual(file_data["size"], file.size)
         self.assertEqual(file_data["extension"], ".pdf")
+
+    def test__list_by_post_attributes_filter(self):  # sourcery skip: extract-duplicate-method
+        self.create_instrument()
+        filter_data = {
+            "groups_types": [
+                "attributes.",
+            ],
+            "groups_values": [
+                "12345",
+            ]
+        }
+        response = self.client.post(path=f"{self.url}ev-group/", data=filter_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)

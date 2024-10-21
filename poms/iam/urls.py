@@ -23,3 +23,8 @@ router.register(
     iam.ResourceGroupViewSet,
     "resource-group",
 )
+router.register(
+    "resource-group-assignment",
+    iam.ResourceGroupAssignmentViewSet,
+    "resource-group-assignment",
+)
