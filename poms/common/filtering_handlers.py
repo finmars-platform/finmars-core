@@ -22,13 +22,12 @@ from rest_framework.exceptions import ValidationError
 
 from dateutil.parser import parse
 
-from dateutil.parser import parse
-
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
 _l = logging.getLogger("poms.common")
 
 DATE_FORMAT = settings.API_DATE_FORMAT
+
 
 class ValueType:
     STRING = "10"
@@ -38,6 +37,7 @@ class ValueType:
     BOOLEAN = "50"
     FIELD = "field"
     JSON = "json"
+
 
 class FilterType:
     EMPTY = "empty"
@@ -138,8 +138,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-
-
             attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
@@ -147,8 +145,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-
-
             attributes_qs = attributes_qs.filter(classifier__name__iexact=value)
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
@@ -156,7 +152,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-                        attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
+            attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
@@ -556,7 +552,7 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            options = {key + "__name__icontains": value}
+            options = {f"{key}__name__icontains": value}
 
             exclude_nulls_options = {key + "__name__isnull": True}
             exclude_empty_cells_options = {key + "__name": ""}
@@ -581,7 +577,7 @@ def add_filter(qs, filter_config):
             value = filter_config["value"][0]
 
         if value:
-            key_name = key + "__name"
+            key_name = f"{key}__name"
 
             q = _get_has_substring_q(key_name, value)
 
@@ -1021,8 +1017,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     integer_fields = [f for f in model._meta.fields if isinstance(f, IntegerField)]
     integer_queries = [
-        Q(**{f"{f.name}__icontains": global_table_search})
-        for f in integer_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in integer_fields
     ]
 
     for query in integer_queries:
@@ -1030,8 +1025,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     float_fields = [f for f in model._meta.fields if isinstance(f, FloatField)]
     float_queries = [
-        Q(**{f"{f.name}__icontains": global_table_search})
-        for f in float_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in float_fields
     ]
 
     for query in float_queries:
