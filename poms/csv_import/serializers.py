@@ -250,6 +250,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "short_name",
                 "public_name",
                 "notes",
+                "portfolio_type",
             ],
             "instruments.instrument": [
                 "name",
@@ -304,6 +305,11 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "principal_price",
                 "accrued_price",
                 "factor",
+                "ytm",
+                "modified_duration",
+                "long_delta",
+                "short_delta",
+                "is_temporary_price",
             ],
             "currencies.currencyhistory": [
                 "currency",

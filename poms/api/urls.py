@@ -50,6 +50,8 @@ from poms.auth_tokens.views import (
     SetAuthToken,
 )
 from poms.explorer.views import ExplorerServerFileViewSet
+import poms.clients.urls as clients_router
+
 
 router = routers.DefaultRouter()
 
@@ -159,6 +161,36 @@ router.register(
     r"utils/universal-input",
     api.UniversalInputViewSet,
     "universalInput",
+)
+router.register(
+    r"utils/date/split-date-range",
+    api.SplitDateRangeViewSet,
+    "split_date_range",
+)
+router.register(
+    r"utils/date/pick-dates-from-range",
+    api.PickDatesFromRangeViewSet,
+    "pick_dates_from_range",
+)
+router.register(
+    r"utils/date/calc-period-date",
+    api.CalcPeriodDateViewSet,
+    "calc_period_date",
+)
+router.register(
+    r"utils/date/last-business-day",
+    api.LastBusinessDayViewSet,
+    "last_business_day",
+)
+router.register(
+    r"utils/date/is-business-day",
+    api.IsBusinessDayViewSet,
+    "is_business_day",
+)
+router.register(
+    r"utils/date/last-day-of-month",
+    api.LastDayOfMonthViewSet,
+    "last_day_of_month",
 )
 router.register(  # Probably deprecated
     r"import/complex/scheme",
@@ -314,6 +346,7 @@ urlpatterns = [
     re_path(r"^v1/import/", include(csv_import_router.router.urls)),
     re_path(r"^v1/ui/", include(ui_router.router.urls)),
     re_path(r"^v1/explorer/", include(explorer_router.router.urls)),
+    re_path(r"^v1/clients/", include(clients_router.router.urls)),
     re_path(r"^v1/vault/", include(vault_router.router.urls)),
     re_path(r"^v1/iam/", include(iam_router.router.urls)),
     re_path(r"^v1/", include(router.urls)),

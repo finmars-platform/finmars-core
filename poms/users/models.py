@@ -525,6 +525,37 @@ class MasterUser(models.Model):
                     color.name = f"Color {str(x + 1)}"
                     color.save()
 
+    def create_defaults_currencies(self, finmars_bot):
+        from poms.currencies.models import Currency, currencies_data
+        from poms.instruments.models import Country
+
+        ccys = {}
+        ccy_usd = None
+        dc_reference_for_pricing = ""
+        for dc in currencies_data.values():
+            dc_user_code = dc["user_code"]
+            dc_name = dc.get("name", dc_user_code)
+            country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
+
+            if dc_user_code != "-":
+                c = Currency.objects.create(
+                    master_user=self,
+                    user_code=dc_user_code,
+                    short_name=dc_user_code,
+                    name=dc_name,
+                    owner=finmars_bot,
+                    reference_for_pricing=dc_reference_for_pricing,
+                    country=dc_country,
+                )
+
+                if dc_user_code == "USD":
+                    ccy_usd = c
+
+                ccys[c.user_code] = c
+
+        return ccy_usd
+
     def create_defaults(self, user=None):
         from poms.accounts.models import Account, AccountType
         from poms.counterparties.models import (
@@ -580,37 +611,10 @@ class MasterUser(models.Model):
                 user=user, username="finmars_bot", master_user=self, is_admin=True
             )
 
-        ccys = {}
         ccy = Currency.objects.create(
             master_user=self, name="-", user_code="-", owner=finmars_bot
         )
-        ccy_usd = None
-        dc_reference_for_pricing = ""
-
-        for dc in currencies_data.values():
-            dc_user_code = dc["user_code"]
-            dc_name = dc.get("name", dc_user_code)
-            if dc_user_code != "-":
-                if dc_user_code == "USD":
-                    c = Currency.objects.create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                    )
-                    ccy_usd = c
-                else:
-                    c = Currency.objects.create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                    )
-                ccys[c.user_code] = c
+        ccy_usd = self.create_defaults_currencies(finmars_bot)
 
         account_type = AccountType.objects.create(
             master_user=self, name="-", owner=finmars_bot
@@ -827,6 +831,7 @@ class MasterUser(models.Model):
         self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
+        from poms.instruments.models import Country
 
         ccys_existed = {
             c.user_code: c
@@ -838,6 +843,8 @@ class MasterUser(models.Model):
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
             dc_reference_for_pricing = dc.get("reference_for_pricing", None)
+            country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
 
             if dc_user_code in ccys_existed:
                 c1 = ccys_existed[dc_user_code]
@@ -854,6 +861,10 @@ class MasterUser(models.Model):
                 if overwrite_name or not c1.public_name:
                     c1.public_name = dc_name
                     is_change = True
+                    
+                if overwrite_name or not c1.country:
+                    c1.country =  dc_country
+                    is_change = True
 
                 if overwrite_reference_for_pricing or not c1.reference_for_pricing:
                     c1.reference_for_pricing = dc_reference_for_pricing
@@ -869,6 +880,7 @@ class MasterUser(models.Model):
                     short_name=dc_user_code,
                     public_name=dc_name,
                     reference_for_pricing=dc_reference_for_pricing,
+                    country=dc_country,
                 )
                 ccys[c.user_code] = c
 

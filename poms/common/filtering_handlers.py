@@ -18,6 +18,9 @@ from django.db.models import (
     Q,
     TextField,
 )
+from rest_framework.exceptions import ValidationError
+
+from dateutil.parser import parse
 
 from dateutil.parser import parse
 
@@ -56,7 +59,6 @@ class FilterType:
 
 def _get_equal_q(field_key, value_type, value):
     """
-
     :param field_key:
     :param value_type: - values: 10, 20, 30, 40
     :param value:
@@ -72,7 +74,6 @@ def _get_equal_q(field_key, value_type, value):
 
 def _get_has_substring_q(field_key, value):
     """
-
     :param field_key:
     :param value:
     :return: Q object for filter type "contains_has_substring"
@@ -96,6 +97,10 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     source_key = filter_config["key"]
     attribute_type_user_code = source_key.split("attributes.")[1]
+    if not attribute_type_user_code:
+        raise ValidationError(
+            f"Empty attribute type user code in source_key={source_key}"
+        )
 
     attribute_type = GenericAttributeType.objects.get(
         user_code=attribute_type_user_code,
@@ -133,27 +138,25 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__icontains": value}
 
-            attributes_qs = attributes_qs.filter(Q(**options))
+
+            attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__iexact": value}
 
-            attributes_qs = attributes_qs.filter(Q(**options))
+
+            attributes_qs = attributes_qs.filter(classifier__name__iexact=value)
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
 
         if value:
-            q = Q(classifier__name__icontains=value)
-
-            attributes_qs = attributes_qs.filter(q)
+                        attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
@@ -161,7 +164,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
         if value:
             # options = {"classifier__name__icontains": value}
-
             # include_null_options = {}
             # if not exclude_empty_cells:
             #     include_null_options["classifier__isnull"] = True
@@ -184,24 +186,12 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            options = {"classifier__name__icontains": value}
-
-            exclude_empty_cells_options = {"classifier__isnull": True}
-
             attributes_qs = attributes_qs.exclude(
-                Q(**options) | Q(**exclude_empty_cells_options)
+                Q(classifier__name__icontains=value) | Q(classifier__isnull=True)
             )
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-        include_null_options = {}
-        include_empty_string_options = {}
-
-        include_null_options["value_string__isnull"] = True
-        include_empty_string_options["value_string"] = ""
-
-        attributes_qs = attributes_qs.filter(
-            Q(**include_null_options) | Q(**include_empty_string_options)
-        )
+        attributes_qs = attributes_qs.filter(classifier__isnull=True)
 
     # endregion CLASSIFIER FILTERS END
 
@@ -917,10 +907,13 @@ def add_filter(qs, filter_config):
     return qs
 
 
-def is_dynamic_attribute_filter(filter_config):
-    key = filter_config["key"]
+def is_dynamic_attribute_filter(filter_config: dict) -> bool:
+    from poms.common.grouping_handlers import ATTRIBUTE_PREFIX, has_attribute
 
-    return "attributes" in key
+    key = filter_config["key"]
+    has_attribute_prefix = has_attribute(key)
+    attribute_code = key.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    return has_attribute_prefix and attribute_code
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):

@@ -59,6 +59,7 @@ from poms.transactions.models import (
     TransactionTypeGroup,
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
+from poms.clients.models import Client
 
 # TEST_CASE = TransactionTestCase  # if settings.USE_DB_REPLICA == True
 TEST_CASE = TestCase
@@ -79,11 +80,13 @@ TRANSACTIONS_TYPES = [
     INSTRUMENT_EXP,
     NON_INSTRUMENT_EXP,
 ]
-TYPE_PREFIX = "local.poms.space00000:"
-INSTRUMENTS_TYPES = [
-    f"{TYPE_PREFIX}bond",
-    f"{TYPE_PREFIX}stock",
+INITIAL_TYPE_PREFIX = "local.poms.space00000"
+INITIAL_INSTRUMENTS_TYPES = [
+    f"{INITIAL_TYPE_PREFIX}:bond",
+    f"{INITIAL_TYPE_PREFIX}:stock",
 ]
+STANDARD_TYPE_BOND = f"{settings.INSTRUMENT_TYPE_PREFIX}:bond"
+STANDARD_TYPE_STOCK = f"{settings.INSTRUMENT_TYPE_PREFIX}:stock"
 
 IDENTIFIERS = [
     {
@@ -96,7 +99,6 @@ IDENTIFIERS = [
         "sedol": "sedol",
         "database_id": "",
     },
-    
     {
         "cbonds_id": None,
         "isin": "isin",
@@ -111,9 +113,8 @@ IDENTIFIERS = [
 
 
 INSTRUMENTS = [
-    ("Apple", INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL, IDENTIFIERS[0]),
-    ("Tesla B.", INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL, IDENTIFIERS[1]),
-    # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
+    ("Apple", INITIAL_INSTRUMENTS_TYPES[0], InstrumentClass.GENERAL, IDENTIFIERS[0]),
+    ("Tesla B.", INITIAL_INSTRUMENTS_TYPES[1], InstrumentClass.GENERAL, IDENTIFIERS[1]),
 ]
 TRANSACTIONS_CLASSES = [
     TransactionClass.CASH_INFLOW,
@@ -352,7 +353,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return cls.today() - timedelta(days=1)
 
     @classmethod
-    def random_future_date(cls, interval: int = 365*50) -> date:
+    def random_future_date(cls, interval: int = 365 * 50) -> date:
         days = cls.random_int(_max=interval)
         return cls.today() + timedelta(days=days)
 
@@ -362,7 +363,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     @staticmethod
     def get_instrument_type(
-        instrument_type: str = INSTRUMENTS_TYPES[0],
+        instrument_type: str = INITIAL_INSTRUMENTS_TYPES[0],
     ) -> InstrumentType:
         return InstrumentType.objects.using(settings.DB_DEFAULT).get(
             user_code__contains=instrument_type
@@ -441,7 +442,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     def create_instrument(
         self,
-        instrument_type: str = INSTRUMENTS_TYPES[0],
+        instrument_type: str = INITIAL_INSTRUMENTS_TYPES[0],
         currency_code: str = "EUR",
     ) -> Instrument:
         currency = self.get_currency(user_code=currency_code)
@@ -471,17 +472,20 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         instrument.attributes.set([self.create_attribute()])
         instrument.save()
-        if instrument_type == INSTRUMENTS_TYPES[0]:
+        if instrument_type == INITIAL_INSTRUMENTS_TYPES[0]:
             self.create_accrual(instrument)
             self.create_factor(instrument)
 
         return instrument
 
-    def create_attribute_type(self, content_type=None, value_type=GenericAttributeType.NUMBER) -> GenericAttributeType:
+    def create_attribute_type(
+        self, content_type=None, value_type=GenericAttributeType.NUMBER
+    ) -> GenericAttributeType:
         return GenericAttributeType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
+            content_type=content_type
+            or ContentType.objects.using(settings.DB_DEFAULT).first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             value_type=value_type,
@@ -492,10 +496,13 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             expr=self.random_string(),
         )
 
-    def create_attribute(self, attribute_type=None, object_id=None, content_type=None) -> GenericAttribute:
+    def create_attribute(
+        self, attribute_type=None, object_id=None, content_type=None
+    ) -> GenericAttribute:
         return GenericAttribute.objects.using(settings.DB_DEFAULT).create(
-            attribute_type= attribute_type or self.create_attribute_type(),
-            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
+            attribute_type=attribute_type or self.create_attribute_type(),
+            content_type=content_type
+            or ContentType.objects.using(settings.DB_DEFAULT).first(),
             object_id=object_id or self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
@@ -522,13 +529,22 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return self._add_attributes(self.account)
 
+    def create_client_obj(self) -> Client:
+        return Client.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            public_name=self.random_string(3),
+            name=self.random_string(3),
+        )
+
     def _add_attributes(self, model):
         model.attributes.set([self.create_attribute()])
         model.save()
         return model
 
     def create_instruments_types(self):
-        for type_ in INSTRUMENTS_TYPES:
+        for type_ in INITIAL_INSTRUMENTS_TYPES:
             InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=type_,
@@ -549,6 +565,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 user_code=currency[0],
                 defaults=dict(
                     name=currency[0],
+                    public_name=currency[0],
                     default_fx_rate=currency[1],
                 ),
             )
@@ -558,7 +575,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             settings.DB_DEFAULT
         ).get_or_create(
             master_user=self.master_user,
-            user_code=f"{TYPE_PREFIX}_",
+            user_code=INITIAL_TYPE_PREFIX,
             defaults=dict(
                 master_user=self.master_user,
                 owner=self.member,
@@ -592,11 +609,12 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             owner=self.member,
             user_code=name,
             name=name,
-
         )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.ecosystem = None
         self.default_instrument = None
         self.master_user = None
@@ -608,6 +626,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.account = None
         self.instrument_type = None
         self.db_data = None
+        self.realm_code = "realm0000"
+        self.space_code = "space0000"
 
     def init_test_case(self):
         self.client = APIClient()
@@ -615,7 +635,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
         ).get_or_create(
-            space_code='space00000',
+            space_code="space00000",
             defaults=dict(
                 name=MASTER_USER,
                 journal_status="disabled",
@@ -837,8 +857,7 @@ class DbInitializer:
     def create_strategy_subgroups(self):
         sub_groups = {}
         for i, model in enumerate(
-            [Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup],
-            start=1
+            [Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup], start=1
         ):
             sub_group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,

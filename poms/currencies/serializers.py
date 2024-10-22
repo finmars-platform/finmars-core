@@ -7,14 +7,13 @@ from rest_framework.fields import ReadOnlyField
 from poms.common.fields import FloatEvalField
 from poms.common.serializers import (
     ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
-    ModelWithObjectStateSerializer,
 )
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory, CurrencyPricingPolicy
-from poms.instruments.fields import PricingPolicyField, CountryField
-from poms.instruments.models import PricingPolicy
+from poms.instruments.fields import PricingPolicyField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.pricing.models import CurrencyHistoryError
 from poms.system_messages.handlers import send_system_message
@@ -49,6 +48,7 @@ class CurrencySerializer(
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "notes",
             "reference_for_pricing",
@@ -57,7 +57,7 @@ class CurrencySerializer(
             "is_deleted",
             "is_enabled",
             "pricing_policies",
-            "country"
+            "country",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -70,10 +70,12 @@ class CurrencySerializer(
         )
 
         from poms.instruments.serializers import CountrySerializer
-        self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
+
+        self.fields["country_object"] = CountrySerializer(
+            source="country", read_only=True
+        )
 
     def create(self, validated_data):
-
         pricing_policies = validated_data.pop("pricing_policies", None)
 
         instance = super(CurrencySerializer, self).create(validated_data)
@@ -96,8 +98,7 @@ class CurrencySerializer(
         pricing_policies = pricing_policies or []
         for item in pricing_policies:
             obj, _ = CurrencyPricingPolicy.objects.get_or_create(
-                currency=instance,
-                pricing_policy_id=item["pricing_policy_id"]
+                currency=instance, pricing_policy_id=item["pricing_policy_id"]
             )
             self._update_and_save_pricing_policies(item, obj)
             ids.add(obj.id)
@@ -125,6 +126,7 @@ class CurrencyLightSerializer(ModelWithUserCodeSerializer):
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "is_deleted",
             "is_enabled",
@@ -141,6 +143,7 @@ class CurrencyViewSerializer(ModelWithUserCodeSerializer):
             "user_code",
             "name",
             "short_name",
+            "public_name",
         ]
 
 
@@ -167,6 +170,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             "fx_rate",
             "procedure_modified_datetime",
             "modified_at",
+            "is_temporary_fx_rate",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -194,7 +198,6 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         history_item.date = instance.date
         history_item.pricing_policy = instance.pricing_policy
         history_item.status = CurrencyHistoryError.STATUS_CREATED
-
         history_item.save()
 
         member = get_member_from_context(self.context)

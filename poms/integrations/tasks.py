@@ -58,6 +58,7 @@ from poms.instruments.models import (
     Periodicity,
     PriceHistory,
     PricingCondition,
+    Country,
 )
 from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.integrations.models import (
@@ -99,8 +100,6 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.integrations")
-
-TYPE_PREFIX = "com.finmars.initial-instrument-type:"
 
 storage = get_storage()
 
@@ -425,7 +424,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
+        instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -556,7 +555,7 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
-            user_code = f"{TYPE_PREFIX}{instrument_data['instrument_type']}"
+            user_code = f"{settings.INSTRUMENT_TYPE_PREFIX}:{instrument_data['instrument_type']}"
 
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -937,7 +936,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         return instrument
 
     type_user_type = options_data["type_user_code"]
-    instrument_type_user_code_full = f"{TYPE_PREFIX}{type_user_type}"
+    instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{type_user_type}"
     try:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
@@ -952,7 +951,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
 
     process = InstrumentTypeProcess(instrument_type=instrument_type)
     instrument_dict = process.instrument
-    instrument_dict["name"] = options_data["name"]
+    instrument_dict["name"] = options_data.get("name", "unknown")
     instrument_dict["user_code"] = options_data["user_code"]
     instrument_dict["is_active"] = False
     instrument_dict["identifier"] = {}
@@ -4345,11 +4344,22 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
         "member": member,
     }
 
+    country = data.get("country")
+    if country is not None:
+        try:
+            country = Country.objects.get(alpha_3=country).id
+
+        except Country.DoesNotExist:
+            _l.error(f"{func} Dont exist Country with {country} alpha_3 code")
+            country = None
+
     currency_data = {
-        "user_code": data.get("user_code"),
+        "user_code": data.get("user_code").rstrip(".CC"),
         "name": data.get("name"),
+        "public_name": data.get("public_name"),
         "short_name": data.get("short_name"),
         "pricing_condition": PricingCondition.NO_VALUATION,
+        "country": country,
     }
 
     _l.info(f"{func} currency_data={currency_data}")
@@ -4481,7 +4491,9 @@ def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
         result["result_id"] = currency.id
         result["user_code"] = currency.user_code
         result["short_name"] = currency.short_name
+        result["public_name"] = currency.public_name
         result["name"] = currency.name
+        result["country"] = currency.country
 
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
