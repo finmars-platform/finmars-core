@@ -571,8 +571,10 @@ def add_filter(qs, filter_config):
             q1 = _get_equal_q(f"{key}__name", value_type, value)
             q2 = _get_equal_q(f"{key}__short_name", value_type, value)
             q3 = _get_equal_q(f"{key}__public_name", value_type, value)
-            q4 = Q(**{f"{key}__name": ""})  # FIXME why it should be equal to "" ?
-            q = q1 | q2 | q3 | q4
+            q = q1 | q2 | q3
+            if not exclude_empty_cells:
+                q4 = Q(**{f"{key}__name": ""})
+                q |= q4
 
             qs = qs.filter(q)
 
