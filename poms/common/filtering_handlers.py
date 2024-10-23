@@ -138,7 +138,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-             attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
+            attributes_qs = attributes_qs.filter(classifier__name__icontains=value)
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.CLASSIFIER:
         if len(filter_config["value"]):
@@ -489,7 +489,11 @@ def add_filter(qs, filter_config):
     filter_type = filter_config["filter_type"]
     value_type = str(filter_config["value_type"])
     key = filter_config["key"]
+    exclude_empty_cells = filter_config.get("exclude_empty_cells", False)
+
     value = None
+    if len(filter_config["value"]):
+        value = filter_config["value"][0]
 
     # print('value_type %s' % value_type)
     # print('value_type %s' % type(value_type))
@@ -498,16 +502,12 @@ def add_filter(qs, filter_config):
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
         print(filter_config["value"])
 
-        if len(filter_config["value"]):
-            values = filter_config["value"]
-        else:
-            values = []
-
+        values = value  # it should be list
         if values:
             clauses = []
 
             for value in values:
-                options = {key + "__user_code": value}
+                options = {f"{key}__user_code": value}
 
                 clauses.append(Q(**options))
 
@@ -517,9 +517,6 @@ def add_filter(qs, filter_config):
 
     elif filter_type == FilterType.SELECTOR and value_type == ValueType.FIELD:
         # TODO HANDLE SYSTEM CODE
-
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
 
         if value:
             print("value %s" % value)
@@ -532,9 +529,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.FIELD:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__name__icontains": value}
 
@@ -544,11 +538,8 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.FIELD:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
-            options = {key + "__name__icontains": value}
+            options = {f"{key}__name__icontains": value}
 
             exclude_nulls_options = {key + "__name__isnull": True}
             exclude_empty_cells_options = {key + "__name": ""}
@@ -560,22 +551,20 @@ def add_filter(qs, filter_config):
             )
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.FIELD:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
-        if value:
-            q = _get_equal_q(key + "__name", value_type, value)
-
-            q = q | Q(**{f"{key}__name": ""})
+        if value and isinstance(value, str):
+            q1 = _get_equal_q(f"{key}__name", value_type, value)
+            q2 = _get_equal_q(f"{key}__short_name", value_type, value)
+            q3 = _get_equal_q(f"{key}__public_name", value_type, value)
+            q = q1 | q2 | q3
+            if not exclude_empty_cells:
+                q4 = Q(**{f"{key}__name": ""})
+                q |= q4
 
             qs = qs.filter(q)
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.FIELD:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
-            key_name = key + "__name"
+            key_name = f"{key}__name"
 
             q = _get_has_substring_q(key_name, value)
 
@@ -595,11 +584,7 @@ def add_filter(qs, filter_config):
     elif filter_type == FilterType.MULTISELECTOR and value_type == ValueType.STRING:
         print(filter_config["value"])
 
-        if len(filter_config["value"]):
-            values = filter_config["value"]
-        else:
-            values = []
-
+        values = value  # it should be list
         if values:
             clauses = []
 
@@ -613,11 +598,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(query)
 
     elif filter_type == FilterType.SELECTOR and value_type == ValueType.STRING:
-        # print('here?')
-
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key: value}
 
@@ -627,11 +607,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
-        # print('here?')
-
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__icontains": value}
 
@@ -641,9 +616,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__icontains": value}
 
@@ -657,21 +629,13 @@ def add_filter(qs, filter_config):
             )
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.STRING:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             q = _get_equal_q(key, value_type, value)
-
             qs = qs.filter(q)
 
     elif filter_type == FilterType.HAS_SUBSTRING and value_type == ValueType.STRING:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             q = _get_has_substring_q(key, value)
-
             qs = qs.filter(q)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.STRING:
@@ -688,18 +652,11 @@ def add_filter(qs, filter_config):
     # region NUMBER FILTERS START
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             q = _get_equal_q(key, value_type, value)
-
             qs = qs.filter(q)
 
     elif filter_type == FilterType.NOT_EQUAL and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             options = {key + "__exact": value}
 
@@ -710,39 +667,23 @@ def add_filter(qs, filter_config):
             qs = qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
     elif filter_type == FilterType.GREATER and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             options = {key + "__gt": value}
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             options = {key + "__gte": value}
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             options = {key + "__lt": value}
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value or value == 0:
             options = {key + "__lte": value}
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
@@ -768,8 +709,7 @@ def add_filter(qs, filter_config):
             qs = qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
-        include_null_options = {}
-        include_null_options[key + "__isnull"] = True
+        include_null_options = {f"{key}__isnull": True}
 
         qs = qs.filter(Q(**include_null_options))
 
@@ -778,9 +718,6 @@ def add_filter(qs, filter_config):
     # DATE FILTERS START
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             q = _get_equal_q(
                 key,
@@ -791,9 +728,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(q)
 
     elif filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key: datetime.strptime(value, DATE_FORMAT).date()}
 
@@ -802,9 +736,6 @@ def add_filter(qs, filter_config):
             qs = qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
     elif filter_type == FilterType.GREATER and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__gt": datetime.strptime(value, DATE_FORMAT).date()}
 
@@ -813,30 +744,20 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__gte": datetime.strptime(value, DATE_FORMAT).date()}
 
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__lt": datetime.strptime(value, DATE_FORMAT).date()}
 
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             options = {key + "__lte": datetime.strptime(value, DATE_FORMAT).date()}
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
@@ -889,15 +810,9 @@ def add_filter(qs, filter_config):
     # BOOLEAN FILTER
 
     elif filter_type == FilterType.EQUAL and value_type == ValueType.BOOLEAN:
-        if len(filter_config["value"]):
-            value = filter_config["value"][0]
-
         if value:
             q = _get_equal_q(key, value_type, value)
-
             qs = qs.filter(q)
-
-    # print('qs len after filters %s' % len(list(qs)))
 
     return qs
 
@@ -913,7 +828,7 @@ def is_dynamic_attribute_filter(filter_config: dict) -> bool:
 
 def handle_filters(qs, filter_settings, master_user, content_type):
     # print('Handle filters %s' % filter_settings)
-    start_time = time.time()
+    # start_time = time.time()
 
     if filter_settings:
         for filter_config in filter_settings:
@@ -957,7 +872,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     # _l.info('relation_fields %s' % relation_fields)
 
     relation_queries_short_name = [
-        Q(**{f.name + "__short_name__icontains": global_table_search})
+        Q(**{f"{f.name}__short_name__icontains": global_table_search})
         for f in relation_fields
     ]
 
@@ -965,7 +880,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     relation_queries_name = [
-        Q(**{f.name + "__name__icontains": global_table_search})
+        Q(**{f"{f.name}__name__icontains": global_table_search})
         for f in relation_fields
     ]
 
@@ -973,7 +888,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     relation_queries_user_code = [
-        Q(**{f.name + "__user_code__icontains": global_table_search})
+        Q(**{f"{f.name}__user_code__icontains": global_table_search})
         for f in relation_fields
     ]
 
@@ -989,7 +904,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     # _l.info('char_fields %s' % char_fields)
 
     char_queries = [
-        Q(**{f.name + "__icontains": global_table_search}) for f in char_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in char_fields
     ]
 
     for query in char_queries:
@@ -1000,7 +915,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     # _l.info('text_fields %s' % text_fields)
 
     text_queries = [
-        Q(**{f.name + "__icontains": global_table_search}) for f in text_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in text_fields
     ]
 
     for query in text_queries:
@@ -1008,7 +923,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     date_fields = [f for f in model._meta.fields if isinstance(f, DateField)]
     date_queries = [
-        Q(**{f.name + "__icontains": global_table_search}) for f in date_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in date_fields
     ]
 
     for query in date_queries:
@@ -1016,7 +931,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     integer_fields = [f for f in model._meta.fields if isinstance(f, IntegerField)]
     integer_queries = [
-        Q(**{f.name + "__icontains": global_table_search}) for f in integer_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in integer_fields
     ]
 
     for query in integer_queries:
@@ -1024,13 +939,13 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     float_fields = [f for f in model._meta.fields if isinstance(f, FloatField)]
     float_queries = [
-        Q(**{f.name + "__icontains": global_table_search}) for f in float_fields
+        Q(**{f"{f.name}__icontains": global_table_search}) for f in float_fields
     ]
 
     for query in float_queries:
         q = q | query
 
-    if content_type.model not in [
+    if content_type.model not in {
         "currencyhistory",
         "pricehistory",
         "transaction",
@@ -1042,7 +957,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         "generatedevent",
         "portfolioregisterrecord",
         "complextransaction",
-    ]:
+    }:
         string_attr_query = Q(
             **{"attributes__value_float__icontains": global_table_search}
         )

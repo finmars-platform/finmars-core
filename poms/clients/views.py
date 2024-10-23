@@ -41,7 +41,7 @@ class ClientsFilterSet(FilterSet):
         return queryset
 
 
-class ClietnsViewSet(AbstractModelViewSet):
+class ClientsViewSet(AbstractModelViewSet):
     queryset = Client.objects.select_related(
         "master_user",
     )
