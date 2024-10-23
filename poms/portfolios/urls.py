@@ -8,7 +8,6 @@ router.register(
     "portfolio-class",
     portfolios.PortfolioClassViewSet,
 )
-
 router.register(
     "portfolio-type",
     portfolios.PortfolioTypeViewSet,
@@ -17,7 +16,6 @@ router.register(
     "portfolio-type-attribute-type",
     portfolios.PortfolioTypeAttributeTypeViewSet,
 )
-
 router.register(
     r"portfolio-attribute-type",
     portfolios.PortfolioAttributeTypeViewSet,
@@ -58,19 +56,16 @@ router.register(
     portfolios.PortfolioFirstTransactionViewSet,
     "firsttransactiondate",
 )
-
 router.register(
     r"portfolio-history",
     portfolios.PortfolioHistoryViewSet,
     "portfoliohistory",
 )
-
 router.register(
     r"portfolio-reconcile-group",
     portfolios.PortfolioReconcileGroupViewSet,
     "portfolioreconcilegroup",
 )
-
 router.register(
     r"portfolio-reconcile-history",
     portfolios.PortfolioReconcileHistoryViewSet,
