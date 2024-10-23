@@ -226,24 +226,37 @@ def rename_directory_in_storage(self, *args, **kwargs):
     validated_data = celery_task.options_object
     path = validated_data["path"]
     new_name = validated_data["new_name"]
+    
+    is_file = path_is_file(storage, path)
+    if is_file:
+        total_items = 1
+    else:
+        dirs, files = storage.listdir(path)
+        total_items = len(dirs + files)
 
     _l.info(f"rename_directory_in_storage: rename {path} to new name {new_name}")
     celery_task.update_progress(
         {
+            "current": 0,
+            "total": total_items,
+            "percent": 0,
             "description": "rename_directory_in_storage starting ...",
         }
     )
 
-    if path_is_file(storage, path):
+    if is_file:
         destination_file_path =  str(os.path.join(os.path.dirname(path), new_name))
         rename_file(storage, path, destination_file_path)
     else:
         destination_dir_path = os.path.join(os.path.dirname(os.path.normpath(path)), new_name)
-        for _ in rename_dir(storage, path, destination_dir_path):
+        for _ in rename_dir(storage, path, destination_dir_path, celery_task):
             pass
 
     celery_task.update_progress(
         {
+            "current": total_items,
+            "total": total_items,
+            "percent": 100,
             "description": "rename_directory_in_storage finished",
         }
     )
