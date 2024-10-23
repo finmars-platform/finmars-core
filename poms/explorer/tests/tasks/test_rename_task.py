@@ -56,6 +56,9 @@ class RenameTaskTest(BaseTestCase):
         self.assertEqual(
             celery_task.progress_object,
             {
+                "current": 1,
+                "total": 1,
+                "percent": 100,
                 "description": "rename_directory_in_storage finished",
             },
         )

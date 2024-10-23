@@ -608,6 +608,7 @@ def rename_dir(
     storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     source_dir: str,
     destin_dir: str,
+    celery_task: CeleryTask,
 ):
     """
     Rename a directory recursively within the storage and update the celery task progress.
@@ -624,7 +625,7 @@ def rename_dir(
     for dir_name in dirs:
         s_dir = os.path.join(source_dir, dir_name)
         d_dir = os.path.join(destin_dir, dir_name)
-        yield from rename_dir(storage, s_dir, d_dir)
+        yield from rename_dir(storage, s_dir, d_dir, celery_task)
 
     for file_name in files:
         s_file = os.path.join(source_dir, file_name)
@@ -634,4 +635,9 @@ def rename_dir(
     if isinstance(storage, FinmarsLocalFileSystemStorage):
         storage.delete(source_dir)
 
+    celery_task.refresh_from_db()
+    progres_dict = celery_task.progress_object
+    progres_dict["current"] += len(files)
+    progres_dict["percent"] = int(progres_dict["current"] / progres_dict["total"] * 100)
+    celery_task.update_progress(progres_dict)
     yield

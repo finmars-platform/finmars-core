@@ -6,7 +6,7 @@ import traceback
 from datetime import date, datetime
 
 from django.apps import apps
-from django.core.cache import cache
+# from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy
@@ -2921,7 +2921,7 @@ class TransactionTypeProcess:
 
         try:
             if self.execution_context == "manual":
-                cache.clear()
+                # cache.clear()
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
                     date_from = None

@@ -25,7 +25,7 @@ INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, schedule
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-print(f'BASE_DIR {BASE_DIR}')
+print(f"BASE_DIR {BASE_DIR}")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL("DEBUG", True)
@@ -46,7 +46,7 @@ SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
 
 REALM_CODE = ENV_STR("REALM_CODE", "realm00000")
-BASE_API_URL = ENV_STR("BASE_API_URL", "space00000") # DEPRECATED, remove in 1.9.0
+BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")  # DEPRECATED, remove in 1.9.0
 
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
 VERIFY_SSL = ENV_BOOL("VERIFY_SSL", True)
@@ -76,21 +76,16 @@ XS_SHARING_ALLOWED_METHODS = ["POST", "GET", "OPTIONS", "PUT", "DELETE"]
 # Application definition
 
 INSTALLED_APPS = [
-
     "modeltranslation",
-
-
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
-
     # Admin always required (even if urls are not serverd) - because of migrations
     "django.contrib.admin",
     "django.contrib.admindocs",
     "django.contrib.sessions",
     "django.contrib.messages",
-
     "drf_yasg",
     "django_filters",
     "mptt",
@@ -132,7 +127,6 @@ INSTALLED_APPS = [
     "poms.auth_tokens",
     "poms.widgets",
     "poms.explorer",
-
     "crispy_forms",
     "rest_framework",
     "rest_framework_swagger",
@@ -172,7 +166,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
-
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
@@ -392,25 +385,45 @@ USE_WEBSOCKETS = ENV_BOOL("USE_WEBSOCKETS", False)
 WEBSOCKET_HOST = ENV_STR("WEBSOCKET_HOST", "ws://0.0.0.0:6969")
 WEBSOCKET_APP_TOKEN = ENV_STR("WEBSOCKET_APP_TOKEN", "943821230")
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "throttling": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "http_session": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-# }
+# ==========
+# = REDIS =
+# ==========
 
-# Maybe in future, we will return to Redis
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379',
-#     },
-# }
+REDIS_HOST = ENV_STR("REDIS_HOST", default="localhost")
+REDIS_PORT = ENV_INT("REDIS_PORT", default=6379)
+REDIS_DB_DEFAULT = ENV_INT("REDIS_DB_DEFAULT", default=1)
+REDIS_DB_SESSION = ENV_INT("REDIS_DB_SESSION", default=2)
+REDIS_DB_THROTTLING = ENV_INT("REDIS_DB_THROTTLING", default=3)
+REDIS_BACKEND = "django_redis.cache.RedisCache"
+REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+REDIS_CLIENT_CLASS = "django_redis.client.DefaultClient"
+
+CACHES = {
+    "default": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_DEFAULT}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.default",
+    },
+    "throttling": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_THROTTLING}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.throttling",
+    },
+    "http_session": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_SESSION}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.session",
+    },
+}
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
@@ -794,6 +807,8 @@ if SERVER_TYPE != "local":
         send_default_pii=True,
     )
 
-INSTRUMENT_TYPE_PREFIX =  ENV_STR("INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type")
+INSTRUMENT_TYPE_PREFIX = ENV_STR(
+    "INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type"
+)
 
 MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 10000)
