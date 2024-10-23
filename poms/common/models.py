@@ -1,6 +1,6 @@
 import logging
 
-from django.core.cache import cache
+# from django.core.cache import cache
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -74,7 +74,7 @@ class NamedModel(OwnerModel):
         return self.user_code or ""
 
     def save(self, *args, **kwargs):
-        cache.clear()
+        # cache.clear()
 
         if not self.user_code:
             self.user_code = self.name
