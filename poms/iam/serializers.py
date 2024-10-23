@@ -370,13 +370,47 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
-    assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)
+    assignments = ResourceGroupAssignmentSerializer(many=True)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = ResourceGroup
         fields = "__all__"
+
+    def update(self, instance, validated_data):
+        assignments = validated_data.pop("assignments", [])
+        if assignments:
+            existing_assignments = {
+                assignment.id: assignment for assignment in instance.assignments.all()
+            }
+            new_assignments = []
+
+            for assignment_data in assignments:
+                assignment_id = assignment_data.get("id", None)
+                if assignment_id and assignment_id in existing_assignments:
+                    # Update existing assignment
+                    assignment_instance = existing_assignments.pop(assignment_id)
+                    for attr, value in assignment_data.items():
+                        setattr(assignment_instance, attr, value)
+                    assignment_instance.save()
+                else:
+                    # Create new assignment
+                    new_assignments.append(
+                        ResourceGroupAssignment(
+                            resource_group=instance, **assignment_data
+                        )
+                    )
+
+            # Create the new assignments
+            if new_assignments:
+                ResourceGroupAssignment.objects.bulk_create(new_assignments)
+
+            # Delete assignments that are not present in the new assignments list
+            for assignment_instance in existing_assignments.values():
+                assignment_instance.delete()
+
+        return super().update(instance, validated_data)
 
 
 class ResourceGroupShortSerializer(serializers.ModelSerializer):
