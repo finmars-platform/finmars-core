@@ -370,7 +370,8 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
-    assignments = ResourceGroupAssignmentSerializer(many=True)
+    assignments = ResourceGroupAssignmentSerializer(many=True, required=False)
+    assignments_object = ResourceGroupAssignmentSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
@@ -379,36 +380,49 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def update(self, instance, validated_data):
+        """
+        Args:
+        - instance: The instance of the ResourceGroup that is being updated.
+        - validated_data: The data that has been validated and will be used
+
+        Updates the assignments for a given instance based on the provided validated_data.
+        Existing assignments are updated if present, otherwise new assignments to be created.
+        Assignments that are not present in the new assignments list to be deleted.
+        """
         assignments = validated_data.pop("assignments", [])
         if assignments:
             existing_assignments = {
                 assignment.id: assignment for assignment in instance.assignments.all()
             }
-            new_assignments = []
 
+            new_assignments = []
+            ids_to_keep = []
             for assignment_data in assignments:
                 assignment_id = assignment_data.get("id", None)
-                if assignment_id and assignment_id in existing_assignments:
-                    # Update existing assignment
-                    assignment_instance = existing_assignments.pop(assignment_id)
-                    for attr, value in assignment_data.items():
-                        setattr(assignment_instance, attr, value)
-                    assignment_instance.save()
+                if assignment_id:
+                    ids_to_keep.append(assignment_id)
+                    # update existing assignment
+                    if assignment_id in existing_assignments:
+                        assignment = existing_assignments[assignment_id]
+                        for attr, value in assignment_data.items():
+                            setattr(assignment, attr, value)
+                        assignment.save()
                 else:
-                    # Create new assignment
+                    # update the list of new assignments instances
                     new_assignments.append(
                         ResourceGroupAssignment(
                             resource_group=instance, **assignment_data
                         )
                     )
 
-            # Create the new assignments
+            # create new assignments
             if new_assignments:
                 ResourceGroupAssignment.objects.bulk_create(new_assignments)
 
-            # Delete assignments that are not present in the new assignments list
-            for assignment_instance in existing_assignments.values():
-                assignment_instance.delete()
+            # delete assignments that are not in the list
+            for assignment_id, assignment in existing_assignments.items():
+                if assignment_id not in ids_to_keep:
+                    assignment.delete()
 
         return super().update(instance, validated_data)
 
