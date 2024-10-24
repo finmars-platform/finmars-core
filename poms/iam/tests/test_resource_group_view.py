@@ -127,24 +127,42 @@ class ResourceGroupViewTest(BaseTestCase):
 
         group_data = response.json()
         self.assertIn("id", group_data)
+        new_group_id = group_data["id"]
         self.assertEqual(group_data["name"], "test10")
         self.assertEqual(group_data["user_code"], "test10")
         self.assertEqual(group_data["description"], "test10")
 
+        # add assignment to the new resource group
+        content_type_id = ContentType.objects.get_for_model(rg).id
         update_data = {
             "assignments": [
                 dict(
                     object_user_code=rg.user_code,
-                    content_type=ContentType.objects.get_for_model(rg).id,
+                    content_type=content_type_id,
                     object_id=rg.id,
                 )
             ]
         }
-        response = self.client.patch(f"{self.url}{rg.id}/", data=update_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{new_group_id}/", data=update_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 
-        new = ResourceGroupAssignment.objects.filter(resource_group_id=group_data["id"])
+
+        new = ResourceGroupAssignment.objects.filter(
+            resource_group_id=new_group_id
+        ).first()
         self.assertIsNotNone(new)
+        self.assertEqual(new.object_user_code, rg.user_code)
+        self.assertEqual(new.object_id, rg.id)
+        self.assertEqual(new.content_type.id, content_type_id)
 
         self.assertEqual(len(updated_group_data["assignments"]), 1)
+        self.assertEqual(
+            updated_group_data["assignments"][0]["object_user_code"], rg.user_code
+        )
+        self.assertEqual(
+            updated_group_data["assignments"][0]["content_type"], content_type_id
+        )
+        self.assertEqual(updated_group_data["assignments"][0]["object_id"], rg.id)
