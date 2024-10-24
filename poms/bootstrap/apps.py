@@ -85,8 +85,6 @@ class BootstrapConfig(AppConfig):
 
         _l.info("bootstrap: Finmars Application is running 💚")
 
-        check_redis_connection()
-
         self.get_gunicorn_memory_usage()
 
         gunicorn_start_time = os.environ.get("GUNICORN_START_TIME")
@@ -126,6 +124,8 @@ class BootstrapConfig(AppConfig):
                 # self.create_iam_access_policies_templates() # TODO temporary not needed
             except Exception as e:
                 _l.error(f"bootstrap: failed for {current_space_code} due to {repr(e)}")
+
+        check_redis_connection()
 
     @staticmethod
     def create_finmars_bot():
