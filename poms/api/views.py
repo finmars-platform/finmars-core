@@ -25,28 +25,28 @@ from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 
 from poms.api.serializers import (
+    CalcPeriodDateSerializer,
     EmailSerializer,
     ExpressionSerializer,
     Language,
     LanguageSerializer,
+    PickDatesFromRangeSerializer,
+    SplitDateRangeSerializer,
     Timezone,
     TimezoneSerializer,
-    SplitDateRangeSerializer,
-    PickDatesFromRangeSerializer,
-    CalcPeriodDateSerializer,
     UtilsDateSerializer,
 )
 from poms.common.storage import get_storage
 from poms.common.utils import (
+    calc_period_date,
     get_closest_bday_of_yesterday,
+    get_last_business_day,
     get_list_of_business_days_between_two_dates,
     get_list_of_dates_between_two_dates,
-    last_day_of_month,
-    split_date_range,
-    calc_period_date,
-    pick_dates_from_range,
-    get_last_business_day,
     is_business_day,
+    last_day_of_month,
+    pick_dates_from_range,
+    split_date_range,
 )
 from poms.common.views import AbstractViewSet
 from poms.currencies.models import Currency
@@ -82,7 +82,6 @@ def _get_timezones(locale, now):
 def get_timezones():
     now = timezone.now()
     now = now.replace(minute=0, second=0, microsecond=0)
-    # now = timezone.make_aware(datetime(2009, 10, 31, 23, 30))
     return _get_timezones(translation.get_language(), now)
 
 
@@ -1576,7 +1575,7 @@ class CalcPeriodDateViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         date = serializer.validated_data["date"]
         frequency = serializer.validated_data["frequency"]
         shift = serializer.validated_data["shift"]
@@ -1593,13 +1592,15 @@ class PickDatesFromRangeViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         start_date = serializer.validated_data["start_date"]
         end_date = serializer.validated_data["end_date"]
         frequency = serializer.validated_data["frequency"]
         is_only_bday = serializer.validated_data["is_only_bday"]
         start = serializer.validated_data["start"]
-        dates = pick_dates_from_range(start_date, end_date, frequency, is_only_bday, start)
+        dates = pick_dates_from_range(
+            start_date, end_date, frequency, is_only_bday, start
+        )
 
         return Response({"result": dates}, status=status.HTTP_200_OK)
 
