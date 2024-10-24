@@ -389,7 +389,7 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         Assignments that are not present in the new assignments list to be deleted.
         """
         assignments = validated_data.pop("assignments", None)
-        if assignments:
+        if assignments is not None:
             existing_assignments = {
                 assignment.id: assignment for assignment in instance.assignments.all()
             }

@@ -149,7 +149,6 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 
-
         new = ResourceGroupAssignment.objects.filter(
             resource_group_id=new_group_id
         ).first()
@@ -166,3 +165,36 @@ class ResourceGroupViewTest(BaseTestCase):
             updated_group_data["assignments"][0]["content_type"], content_type_id
         )
         self.assertEqual(updated_group_data["assignments"][0]["object_id"], rg.id)
+
+    def test__remove_assignments(self):
+        rg = self.create_group(name="test2")
+        ass = ResourceGroupAssignment.objects.create(
+            resource_group=rg,
+            content_type=ContentType.objects.get_for_model(rg),
+            object_id=rg.id,
+            object_user_code="test2",
+        )
+        self.assertEqual(ass.content_object, rg)
+
+        response = self.client.get(f"{self.url}{rg.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+        group_data = response.json()
+
+        self.assertEqual(group_data["id"], rg.id)
+        self.assertEqual(group_data["name"], rg.name)
+        self.assertEqual(group_data["user_code"], rg.user_code)
+        self.assertEqual(group_data["description"], rg.description)
+        self.assertEqual(len(group_data["assignments"]), 1)
+
+        # remove assignment
+        update_data = {"assignments": []}
+        response = self.client.patch(
+            f"{self.url}{rg.id}/", data=update_data, format="json"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        updated_group_data = response.json()
+
+        new = ResourceGroupAssignment.objects.filter(resource_group_id=rg.id).first()
+        self.assertIsNone(new)
+
+        self.assertEqual(len(updated_group_data["assignments"]), 0)
