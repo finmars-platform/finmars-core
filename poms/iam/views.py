@@ -207,7 +207,7 @@ class ResourceGroupViewSet(ModelViewSet):
     """
     A viewset for viewing and editing ResourceGroup instances.
     """
-    queryset = ResourceGroup.objects.all()
+    queryset = ResourceGroup.objects.prefetch_related("assignments")
     serializer_class = ResourceGroupSerializer
 
     def destroy(self, request, *args, **kwargs):

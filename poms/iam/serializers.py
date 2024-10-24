@@ -371,7 +371,6 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
     assignments = ResourceGroupAssignmentSerializer(many=True, required=False)
-    assignments_object = ResourceGroupAssignmentSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
@@ -389,7 +388,7 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         Existing assignments are updated if present, otherwise new assignments to be created.
         Assignments that are not present in the new assignments list to be deleted.
         """
-        assignments = validated_data.pop("assignments", [])
+        assignments = validated_data.pop("assignments", None)
         if assignments:
             existing_assignments = {
                 assignment.id: assignment for assignment in instance.assignments.all()
@@ -398,7 +397,7 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
             new_assignments = []
             ids_to_keep = []
             for assignment_data in assignments:
-                assignment_id = assignment_data.get("id", None)
+                assignment_id = assignment_data.pop("id", None)
                 if assignment_id:
                     ids_to_keep.append(assignment_id)
                     # update existing assignment
@@ -409,9 +408,11 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
                         assignment.save()
                 else:
                     # update the list of new assignments instances
+                    assignment_data.pop("resource_group", None)
                     new_assignments.append(
                         ResourceGroupAssignment(
-                            resource_group=instance, **assignment_data
+                            resource_group=instance,
+                            **assignment_data,
                         )
                     )
 
