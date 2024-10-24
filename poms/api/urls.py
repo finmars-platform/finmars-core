@@ -5,6 +5,7 @@ from rest_framework import routers
 import poms.accounts.urls as account_router
 import poms.api.views as api
 import poms.celery_tasks.views as celery_tasks
+import poms.clients.urls as clients_router
 import poms.common.views as common
 import poms.complex_import.views as complex_import
 import poms.configuration.views as configuration
@@ -50,8 +51,6 @@ from poms.auth_tokens.views import (
     SetAuthToken,
 )
 from poms.explorer.views import ExplorerServerFileViewSet
-import poms.clients.urls as clients_router
-
 
 router = routers.DefaultRouter()
 

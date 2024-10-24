@@ -1,38 +1,37 @@
-from __future__ import unicode_literals
-
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
-from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
+from mptt.utils import get_cached_trees
+
 from poms.common.serializers import (
-    ModelWithTimeStampSerializer,
     ModelMetaSerializer,
+    ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import (
-    ListLayout,
-    EditLayout,
     Bookmark,
-    ConfigurationExportLayout,
-    ComplexTransactionUserField,
-    InstrumentUserField,
-    PortalInterfaceAccessModel,
-    DashboardLayout,
-    TemplateLayout,
-    ContextMenuLayout,
-    EntityTooltip,
-    ColorPaletteColor,
     ColorPalette,
-    CrossEntityAttributeExtension,
+    ColorPaletteColor,
     ColumnSortData,
-    TransactionUserField,
-    MobileLayout,
-    MemberLayout,
+    ComplexTransactionUserField,
+    ConfigurationExportLayout,
+    ContextMenuLayout,
+    CrossEntityAttributeExtension,
+    DashboardLayout,
     Draft,
+    EditLayout,
+    EntityTooltip,
+    InstrumentUserField,
+    ListLayout,
+    MemberLayout,
+    MobileLayout,
+    PortalInterfaceAccessModel,
+    TemplateLayout,
+    TransactionUserField,
 )
-from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.users.fields import HiddenMemberField, MasterUserField
 
 
 class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
