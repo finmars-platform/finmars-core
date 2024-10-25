@@ -497,7 +497,6 @@ def add_filter(qs, filter_config):
 
     # FIELD FILTERS. Uses same filter types as string filter
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
-
         values = value  # it should be list
         if values:
             clauses = []
@@ -517,7 +516,7 @@ def add_filter(qs, filter_config):
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.FIELD:
         if value:
-            options = {key + "__name__icontains": value}
+            options = {f"{key}__name__icontains": value}
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.FIELD:
@@ -560,10 +559,8 @@ def add_filter(qs, filter_config):
         values = value  # it should be list
         if values:
             clauses = []
-
             for value in values:
                 options = {key: value}
-
                 clauses.append(Q(**options))
 
             query = reduce(operator.or_, clauses)
