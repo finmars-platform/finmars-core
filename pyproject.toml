@@ -7,7 +7,9 @@ profile="black"
 py_version=310
 known_django=[
     "django",
+    "django_celery_results",
     "django_filters",
+    "django_redis",
     "rest_framework",
     "drf_spectacular",
     "drf_yasg",

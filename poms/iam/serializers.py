@@ -370,13 +370,62 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
-    assignments = ResourceGroupAssignmentSerializer(many=True, read_only=True)
+    assignments = ResourceGroupAssignmentSerializer(many=True, required=False)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
 
     class Meta:
         model = ResourceGroup
         fields = "__all__"
+
+    def update(self, instance, validated_data):
+        """
+        Args:
+        - instance: The instance of the ResourceGroup that is being updated.
+        - validated_data: The data that has been validated and will be used
+
+        Updates the assignments for a given instance based on the provided validated_data.
+        Existing assignments are updated if present, otherwise new assignments to be created.
+        Assignments that are not present in the new assignments list to be deleted.
+        """
+        assignments = validated_data.pop("assignments", None)
+        if assignments is not None:
+            existing_assignments = {
+                assignment.id: assignment for assignment in instance.assignments.all()
+            }
+
+            new_assignments = []
+            ids_to_keep = []
+            for assignment_data in assignments:
+                assignment_id = assignment_data.pop("id", None)
+                if assignment_id:
+                    ids_to_keep.append(assignment_id)
+                    # update existing assignment
+                    if assignment_id in existing_assignments:
+                        assignment = existing_assignments[assignment_id]
+                        for attr, value in assignment_data.items():
+                            setattr(assignment, attr, value)
+                        assignment.save()
+                else:
+                    # update the list of new assignments instances
+                    assignment_data.pop("resource_group", None)
+                    new_assignments.append(
+                        ResourceGroupAssignment(
+                            resource_group=instance,
+                            **assignment_data,
+                        )
+                    )
+
+            # create new assignments
+            if new_assignments:
+                ResourceGroupAssignment.objects.bulk_create(new_assignments)
+
+            # delete assignments that are not in the list
+            for assignment_id, assignment in existing_assignments.items():
+                if assignment_id not in ids_to_keep:
+                    assignment.delete()
+
+        return super().update(instance, validated_data)
 
 
 class ResourceGroupShortSerializer(serializers.ModelSerializer):
