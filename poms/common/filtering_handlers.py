@@ -488,16 +488,13 @@ def add_filter(qs, filter_config):
     value_type = str(filter_config["value_type"])
     key = filter_config["key"]
     exclude_empty_cells = filter_config.get("exclude_empty_cells", False)
+    values = filter_config["value"]
+    value = values[0] if values else None
 
-    value = None
-    if len(filter_config["value"]):
-        value = filter_config["value"][0]
-
-    print(f"add_filter: value={value} value_type={value_type} key={key}")
+    print(f"add_filter: values={values} value={value} value_type={value_type} key={key}")
 
     # FIELD FILTERS. Uses same filter types as string filter
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
-        values = value  # it should be list
         if values:
             clauses = []
             for value in values:
@@ -556,7 +553,6 @@ def add_filter(qs, filter_config):
 
     # STRING FILTERS
     elif filter_type == FilterType.MULTISELECTOR and value_type == ValueType.STRING:
-        values = value  # it should be list
         if values:
             clauses = []
             for value in values:
@@ -564,7 +560,6 @@ def add_filter(qs, filter_config):
                 clauses.append(Q(**options))
 
             query = reduce(operator.or_, clauses)
-
             qs = qs.filter(query)
 
     elif filter_type == FilterType.SELECTOR and value_type == ValueType.STRING:
@@ -580,10 +575,8 @@ def add_filter(qs, filter_config):
     elif filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
         if value:
             options = {key + "__icontains": value}
-
             exclude_nulls_options = {key + "__isnull": True}
             exclude_empty_cells_options = {key: ""}
-
             qs = qs.exclude(
                 Q(**options)
                 | Q(**exclude_nulls_options)
@@ -603,7 +596,6 @@ def add_filter(qs, filter_config):
     elif filter_type == FilterType.EMPTY and value_type == ValueType.STRING:
         include_null_options = {}
         include_empty_string_options = {}
-
         include_null_options[key + "__isnull"] = True
         include_empty_string_options[key] = ""
 
@@ -638,7 +630,7 @@ def add_filter(qs, filter_config):
 
     elif filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
         if value or value == 0:
-            options = {key + "__lte": value}
+            options = {f"{key}__lte": value}
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
@@ -647,8 +639,8 @@ def add_filter(qs, filter_config):
 
         if max_value is not None and min_value is not None:
             options = {
-                key + "__gte": min_value,
-                key + "__lte": max_value,
+                f"{key}__gte": min_value,
+                f"{key}__lte": max_value,
             }
             qs = qs.filter(Q(**options))
 
@@ -659,12 +651,10 @@ def add_filter(qs, filter_config):
         if max_value is not None and min_value is not None:
             q_less_than_min = Q(**{key + "__lt": min_value})
             q_greater_than_max = Q(**{key + "__gt": max_value})
-
             qs = qs.filter(q_less_than_min | q_greater_than_max)
 
     elif filter_type == FilterType.EMPTY and value_type == ValueType.NUMBER:
         include_null_options = {f"{key}__isnull": True}
-
         qs = qs.filter(Q(**include_null_options))
 
     # DATE FILTERS START
@@ -675,15 +665,12 @@ def add_filter(qs, filter_config):
                 value_type,
                 datetime.strptime(value, DATE_FORMAT).date(),
             )
-
             qs = qs.filter(q)
 
     elif filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
         if value:
             options = {key: datetime.strptime(value, DATE_FORMAT).date()}
-
-            exclude_empty_cells_options = {key + "__isnull": True}
-
+            exclude_empty_cells_options = {f"{key}__isnull": True}
             qs = qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
     elif filter_type == FilterType.GREATER and value_type == ValueType.DATE:
@@ -739,13 +726,12 @@ def add_filter(qs, filter_config):
 
     elif filter_type == FilterType.DATE_TREE and value_type == ValueType.DATE:
         dates = []
-
-        if len(filter_config["value"]):
-            for val in filter_config["value"]:
+        if values:
+            for val in values:
                 dates.append(parse(val))
 
-        if len(dates):
-            options = {key + "__in": dates}
+        if dates:
+            options = {f"{key}__in": dates}
             qs = qs.filter(Q(**options))
 
     # BOOLEAN FILTER
