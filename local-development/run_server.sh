@@ -39,6 +39,6 @@ AUTHORIZER_URL=http://0.0.0.0:8083/authorizer \
 BACKEND_ROLES="ALL" \
 CSRF_COOKIE_DOMAIN=0.0.0.0 \
 GUNICORN_START_TIME=$(date +%s) \
-gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi
+gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi --name=finmars-backend
 
 #python manage.py runserver
