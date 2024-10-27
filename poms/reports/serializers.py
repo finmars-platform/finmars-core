@@ -1604,54 +1604,41 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
 
         to_representation_st = time.perf_counter()
 
+        def log_with_time(message):
+            elapsed_time = time.perf_counter() - to_representation_st
+            _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
+
         helper_service = BackendReportHelperService()
-
-        _l.debug("BackendBalanceReportItemsSerializer.to_representation")
-
-        # TODO Hard logic requires refactor
-        # Idea is that if user is not passed report_instance_id then we calculated it normal flow
-        # if user passed report_instance_id then we skip:
-        #    - build_report step
-        #    - all to_representation steps
-        # Idea is that we put calculated report and to_representation result to BalanceReportInstance.data
-        # And if user just applies filters or regroups there is no need for calculating whole report again
+        log_with_time("Starting BackendBalanceReportItemsSerializer.to_representation")
 
         settings, unique_key = generate_unique_key(instance, "balance")
+        log_with_time("Unique key generated")
 
         if instance.ignore_cache:
-
-            data = super(BackendBalanceReportItemsSerializer, self).to_representation(
-                instance
-            )
+            data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+            log_with_time("Data retrieved without cache")
 
             full_items = helper_service.convert_report_items_to_full_items(data)
+            log_with_time("Report items converted to full items without cache")
 
         else:
-
             try:
-
                 report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
+                log_with_time("Report instance retrieved from cache")
 
                 data = report_instance.data
-
                 full_items = report_instance.data["items"]
+                log_with_time("Data and full items loaded from report instance")
 
-                data["execution_time"] = float(
-                    "{:3.3f}".format(time.perf_counter() - to_representation_st)
-                )
+                data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+                log_with_time("Execution time added to data from cache")
 
             except ObjectDoesNotExist:
-                data = super(BackendBalanceReportItemsSerializer, self).to_representation(
-                    instance
-                )
+                log_with_time("Report instance not found in cache, generating new data")
 
+                data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
                 report_uuid = str(uuid.uuid4())
-
-                report_instance_name = ""
-                if self.instance.report_instance_name:
-                    report_instance_name = self.instance.report_instance_name
-                else:
-                    report_instance_name = report_uuid
+                report_instance_name = self.instance.report_instance_name or report_uuid
 
                 report_instance = BalanceReportInstance(
                     unique_key=unique_key,
@@ -1668,83 +1655,53 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
                     cost_method=instance.cost_method,
                 )
 
-                report_instance.report_date = instance.report_date
-                report_instance.report_currency = instance.report_currency
-                report_instance.pricing_policy = instance.pricing_policy
-                report_instance.cost_method = instance.cost_method
-
-                report_instance.report_uuid = report_uuid
-
                 data["report_uuid"] = report_uuid
-
                 full_items = helper_service.convert_report_items_to_full_items(data)
-
                 data["items"] = full_items
+                log_with_time("New report instance data and items prepared")
 
-                report_instance.data = json.loads(
-                    json.dumps(data, default=str)
-                )  # TODO consider something more logical, we got here date conversion error
+                report_instance.data = json.loads(json.dumps(data, default=str))
+                log_with_time("Data serialized to JSON")
 
                 if report_instance.data:
                     report_instance.save()
+                    log_with_time("Report instance saved to database")
 
-                data["execution_time"] = float(
-                    "{:3.3f}".format(time.perf_counter() - to_representation_st)
-                )
+                data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+                log_with_time("Execution time added to newly generated data")
 
-        full_items = helper_service.calculate_value_percent(
-            full_items, instance.calculation_group, "market_value"
-        )
-        full_items = helper_service.calculate_value_percent(
-            full_items, instance.calculation_group, "exposure"
-        )
+        # Processing full_items with various helper_service methods
+        full_items = helper_service.calculate_value_percent(full_items, instance.calculation_group, "market_value")
+        log_with_time("Market value percent calculated")
 
-        # _l.debug('full_items %s' % full_items[0])
-        full_items = helper_service.filter(
-            full_items, instance.frontend_request_options
-        )
+        full_items = helper_service.calculate_value_percent(full_items, instance.calculation_group, "exposure")
+        log_with_time("Exposure percent calculated")
 
-        full_items = helper_service.filter_by_groups_filters(
-            full_items, instance.frontend_request_options
-        )
+        full_items = helper_service.filter(full_items, instance.frontend_request_options)
+        log_with_time("Items filtered based on frontend request options")
 
-        full_items = helper_service.sort_items(
-            full_items, instance.frontend_request_options
-        )
-        # full_items = helper_service.reduce_columns(full_items, instance.frontend_request_options)
+        full_items = helper_service.filter_by_groups_filters(full_items, instance.frontend_request_options)
+        log_with_time("Items filtered by group filters")
 
-        result_items = []
-
-        # _l.debug("full_items items len %s" % len(full_items))
-        # _l.debug("original items len %s" % len(data['items']))
-
-        # for item in data['items']:
-        #     for full_item in full_items:
-        #         if item['id'] == full_item['id']:
-        #             result_items.append(item)
-        #
-        # data['items'] = result_items
-
-        # data['items'] = full_items
+        full_items = helper_service.sort_items(full_items, instance.frontend_request_options)
+        log_with_time("Items sorted based on frontend request options")
 
         data["count"] = len(full_items)
+        log_with_time("Item count added to data")
 
         if not instance.ignore_cache:
             data["report_instance_id"] = report_instance.id
             data["created_at"] = report_instance.created_at
+            log_with_time("Report instance ID and creation date added to data")
 
-
-        data["items"] = helper_service.paginate_items(
-            full_items,
-            {
-                "page_size": instance.page_size,
-                "page": instance.page,
-            },
-        )
+        data["items"] = helper_service.paginate_items(full_items, {"page_size": instance.page_size, "page": instance.page})
+        log_with_time("Items paginated")
 
         for item in data["items"]:
             item["date"] = data["report_date"]
+        log_with_time("Report date added to each item")
 
+        # Removing unused data fields from the response
         data.pop("item_currencies", [])
         data.pop("item_portfolios", [])
         data.pop("item_instruments", [])
@@ -1755,16 +1712,10 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data.pop("item_strategies1", [])
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
+        log_with_time("Unused fields removed from data")
 
-
-
-        # _l.debug("after filter items len %s" % len(data['items']))
-
-        # original_items = helper_service.filterByGlobalTableSearch(original_items, globalTableSearch)
-
-        data["serialization_time"] = float(
-            "{:3.3f}".format(time.perf_counter() - to_representation_st)
-        )
+        data["serialization_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+        log_with_time("Final serialization time added to data")
 
         return data
 

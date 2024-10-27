@@ -969,8 +969,10 @@ class TransactionReport(models.Model):
 
 class BalanceReportInstance(TimeStampedModel, NamedModel):
 
-    unique_key = models.TextField(
+    unique_key = models.CharField(
+        max_length=32,
         unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
         verbose_name=gettext_lazy("unique key"),
         help_text=gettext_lazy(
             "Unique Key. Used for getting Report by its Report Settings"
@@ -1048,8 +1050,10 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
 
 class PLReportInstance(TimeStampedModel, NamedModel):
 
-    unique_key = models.TextField(
+    unique_key = models.CharField(
+        max_length=32,
         unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
         verbose_name=gettext_lazy("unique key"),
         help_text=gettext_lazy(
             "Unique Key. Used for getting Report by its Report Settings"

@@ -3,8 +3,8 @@
 # The granularity of Error log outputs
 loglevel = "info"
 # The number of worker processes for handling requests
-workers = 4
-threads = 8
+workers = 1
+# threads = 8
 # The socket to bind
 bind = "0.0.0.0:8000"
 # Restart workers when code changes (development only!)

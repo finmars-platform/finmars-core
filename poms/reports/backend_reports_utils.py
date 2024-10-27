@@ -586,41 +586,36 @@ class BackendReportHelperService:
     # Methods for filter_table_rows
 
     def filter_by_groups_filters(self, items, options):
-        groups_types = options["groups_types"]
+        # Retrieve the group types and values from the options dictionary
+        groups_types = options.get("groups_types", [])
+        groups_values = options.get("groups_values", [])
 
-        # _l.debug('filter_by_groups_filters.groups_types %s' % groups_types)
-        # _l.debug('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
+        # Early exit: If there are no group types or values, return the original list without filtering
+        if not groups_types or not groups_values:
+            _l.debug(f"filter_by_groups_filters after len {len(items)}")
+            return items
 
-        # _l.debug(f'filter_by_groups_filters before len {len(items)}')
+        # Filter the items based on group types and values
+        # We use a list comprehension for efficiency and readability
+        filtered_items = [
+            item  # Include item in the filtered list if it matches all criteria
+            for item in items
+            if all(  # `all` checks that every condition in the inner loop is True
+                self.get_filter_match(
+                    item,
+                    self.convert_name_key_to_user_code_key(groups_types[i]["key"]),
+                    groups_values[i]
+                )
+                for i in range(len(groups_types))  # Iterate over each index in group types
+            )
+        ]
 
-        if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
-            filtered_items = []
-            for item in items:
-                match = True
-                for i in range(len(options["groups_values"])):
-                    key = options["groups_types"][i]["key"]
-                    value = options["groups_values"][i]
-                    converted_key = self.convert_name_key_to_user_code_key(key)
+        # Log the final count of filtered items
+        _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
 
-                    # _l.debug('filter_by_groups_filters.key %s' % key)
-                    # _l.debug('filter_by_groups_filters.value %s' % value)
+        # Return the filtered list
+        return filtered_items
 
-                    match = self.get_filter_match(item, converted_key, value)
-
-                    if not match:
-                        break
-                if match:
-                    filtered_items.append(item)
-
-            # _l.debug('filter_by_groups_filters.filtered_items %s' % filtered_items)
-
-            _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
-
-            return filtered_items
-
-        _l.debug(f"filter_by_groups_filters after len {len(items)}")
-
-        return items
 
     def filter_by_global_table_search(self, items, options):
         query = options.get("globalTableSearch", "")
