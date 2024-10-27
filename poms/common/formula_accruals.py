@@ -652,37 +652,49 @@ def f_xnpv(data, rate):
         return 0.0
 
 
-# def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
-#     """Equivalent of Excel's XIRR function.
-#     https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
-#
-#     from datetime import date
-#     dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-#     values = [-90, 5, 5, 105, ]
-#     data = [(d, v) for d, v in zip(dates, values)]
-#     f_xirr(data)
-#     0.3291520343150294
-#     """
-#     # _l.debug('f_xirr: data=%s', data)
-#
-#     # return newton(lambda r: xnpv(r, values, dates), 0.0), \
-#     #        brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
-#     # return newton(lambda r: xnpv(r, values, dates), 0.0)
-#     # return brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
-#
-#     if not data:
-#         return 0.0
-#
-#     try:
-#         kw = {}
-#         if tol is not None:
-#             kw["tol"] = tol
-#         if maxiter is not None:
-#             kw["maxiter"] = maxiter
-#         return newton(func=lambda r: f_xnpv(data, r), x0=x0, **kw)
-#     except RuntimeError:  # Failed to converge?
-#         # _l.debug('newton error', exc_info=True)
-#         return 0.0
+from datetime import date
+
+def f_xnpv(data, rate):
+    """Calculate the Net Present Value for irregular cash flows."""
+    if rate == -1:
+        return float('inf')  # Avoid division by zero
+
+    npv = 0.0
+    start_date = data[0][0]  # Use the first date as the base date
+    for d, value in data:
+        days = (d - start_date).days / 365.0  # Convert days to years
+        npv += value / ((1 + rate) ** days)
+    return npv
+
+def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
+    """Calculate the XIRR (Internal Rate of Return) for irregular cash flows."""
+    if not data:
+        return 0.0
+
+    # Newton-Raphson iteration
+    rate = x0
+    for i in range(maxiter):
+        npv = f_xnpv(data, rate)
+        # Calculate the derivative (approximate derivative using finite difference)
+        epsilon = 1e-5
+        npv_derivative = (f_xnpv(data, rate + epsilon) - npv) / epsilon
+
+        # Avoid division by zero if the derivative is very small
+        if abs(npv_derivative) < tol:
+            return 0.0
+
+        # Update the rate using Newton-Raphson
+        new_rate = rate - npv / npv_derivative
+
+        # Check for convergence
+        if abs(new_rate - rate) < tol:
+            return new_rate
+
+        rate = new_rate
+
+    # If the method fails to converge, return 0.0
+    return 0.0
+
 
 
 # def f_duration(data, ytm=None):
