@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10-bullseye
+FROM python:3.13.0-bullseye
 
 # Update and install packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
