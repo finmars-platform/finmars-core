@@ -1488,7 +1488,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
                 else:
                     report_instance_name = report_uuid
 
-                report_instance, _ = BalanceReportInstance(
+                report_instance = BalanceReportInstance(
                     unique_key=unique_key,
                     settings=settings,
                     master_user=instance.master_user,
@@ -1653,7 +1653,7 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
                 else:
                     report_instance_name = report_uuid
 
-                report_instance, _ = BalanceReportInstance(
+                report_instance = BalanceReportInstance(
                     unique_key=unique_key,
                     settings=settings,
                     master_user=instance.master_user,
@@ -1976,7 +1976,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
                 else:
                     report_instance_name = report_uuid
 
-                report_instance, _ = PLReportInstance(
+                report_instance = PLReportInstance(
                     unique_key=unique_key,
                     settings=settings,
                     master_user=instance.master_user,
