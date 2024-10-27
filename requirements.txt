@@ -1,6 +1,4 @@
 amqp==5.1.1
-asgiref==3.7.2
-async-timeout==4.0.2
 attrs==22.1.0
 azure-core==1.26.1
 azure-storage-blob==12.14.1
@@ -32,7 +30,7 @@ django-cuser==2017.3.16
 django-debug-toolbar==4.2.0
 django-filter==2.4.0
 django-js-asset==2.0.0
-django-modeltranslation==0.18.7
+django-modeltranslation==0.19.10
 django-mptt==0.14.0
 django-rest-swagger==2.2.0
 django-storages==1.14.2
