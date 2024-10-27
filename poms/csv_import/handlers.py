@@ -4,17 +4,19 @@ import json
 import os
 import re
 import traceback
-from datetime import datetime
+from datetime import datetime, date
 from functools import reduce
 from logging import getLogger
 from operator import or_
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
+
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -58,6 +60,9 @@ from poms.strategies.models import (
 )
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
+from poms.portfolios.models import PortfolioType
+from dateutil.parser import parse
+
 
 storage = get_storage()
 
@@ -108,6 +113,9 @@ RELATION_FIELDS_MAP = {
     "co_directional_exposure_currency": Currency,
     "counter_directional_exposure_currency": Currency,
     "daily_pricing_model": DailyPricingModel,
+    "portfolio_type": PortfolioType,
+    "accrual_calculation_model": AccrualCalculationModel,
+    "periodicity": Periodicity,
 }
 
 
@@ -120,9 +128,9 @@ def set_defaults_from_instrument_type(
         # Set system attributes
 
         if instrument_type.payment_size_detail_id:
-            instrument_object["payment_size_detail"] = (
-                instrument_type.payment_size_detail_id
-            )
+            instrument_object[
+                "payment_size_detail"
+            ] = instrument_type.payment_size_detail_id
         else:
             instrument_object["payment_size_detail"] = None
 
@@ -140,16 +148,16 @@ def set_defaults_from_instrument_type(
         instrument_object["default_accrued"] = instrument_type.default_accrued
 
         if instrument_type.exposure_calculation_model_id:
-            instrument_object["exposure_calculation_model"] = (
-                instrument_type.exposure_calculation_model_id
-            )
+            instrument_object[
+                "exposure_calculation_model"
+            ] = instrument_type.exposure_calculation_model_id
         else:
             instrument_object["exposure_calculation_model"] = None
 
         if instrument_type.pricing_condition_id:
-            instrument_object["pricing_condition"] = (
-                instrument_type.pricing_condition_id
-            )
+            instrument_object[
+                "pricing_condition"
+            ] = instrument_type.pricing_condition_id
         else:
             instrument_object["pricing_condition"] = None
 
@@ -160,13 +168,13 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception:
             _l.info("Could not set long_underlying_instrument, fallback to default")
-            instrument_object["long_underlying_instrument"] = (
-                ecosystem_default.instrument.pk
-            )
+            instrument_object[
+                "long_underlying_instrument"
+            ] = ecosystem_default.instrument.pk
 
-        instrument_object["underlying_long_multiplier"] = (
-            instrument_type.underlying_long_multiplier
-        )
+        instrument_object[
+            "underlying_long_multiplier"
+        ] = instrument_type.underlying_long_multiplier
 
         try:
             instrument_object["short_underlying_instrument"] = Instrument.objects.get(
@@ -175,52 +183,52 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception:
             _l.info("Could not set short_underlying_instrument, fallback to default")
-            instrument_object["short_underlying_instrument"] = (
-                ecosystem_default.instrument.pk
-            )
+            instrument_object[
+                "short_underlying_instrument"
+            ] = ecosystem_default.instrument.pk
 
-        instrument_object["underlying_short_multiplier"] = (
-            instrument_type.underlying_short_multiplier
-        )
+        instrument_object[
+            "underlying_short_multiplier"
+        ] = instrument_type.underlying_short_multiplier
 
-        instrument_object["long_underlying_exposure"] = (
-            instrument_type.long_underlying_exposure_id
-        )
-        instrument_object["short_underlying_exposure"] = (
-            instrument_type.short_underlying_exposure_id
-        )
+        instrument_object[
+            "long_underlying_exposure"
+        ] = instrument_type.long_underlying_exposure_id
+        instrument_object[
+            "short_underlying_exposure"
+        ] = instrument_type.short_underlying_exposure_id
 
         try:
-            instrument_object["co_directional_exposure_currency"] = (
-                Currency.objects.get(
-                    master_user=instrument_type.master_user,
-                    user_code=instrument_type.co_directional_exposure_currency,
-                ).pk
-            )
+            instrument_object[
+                "co_directional_exposure_currency"
+            ] = Currency.objects.get(
+                master_user=instrument_type.master_user,
+                user_code=instrument_type.co_directional_exposure_currency,
+            ).pk
         except Exception as e:
             _l.info(
                 f"Could not set co_directional_exposure_currency, "
                 f"fallback to default {repr(e)}"
             )
-            instrument_object["co_directional_exposure_currency"] = (
-                ecosystem_default.currency.pk
-            )
+            instrument_object[
+                "co_directional_exposure_currency"
+            ] = ecosystem_default.currency.pk
 
         try:
-            instrument_object["counter_directional_exposure_currency"] = (
-                Currency.objects.get(
-                    master_user=instrument_type.master_user,
-                    user_code=instrument_type.counter_directional_exposure_currency,
-                ).pk
-            )
+            instrument_object[
+                "counter_directional_exposure_currency"
+            ] = Currency.objects.get(
+                master_user=instrument_type.master_user,
+                user_code=instrument_type.counter_directional_exposure_currency,
+            ).pk
         except Exception as e:
             _l.info(
                 f"Could not set counter_directional_exposure_currency, "
                 f"fallback to default {repr(e)}"
             )
-            instrument_object["counter_directional_exposure_currency"] = (
-                ecosystem_default.currency.pk
-            )
+            instrument_object[
+                "counter_directional_exposure_currency"
+            ] = ecosystem_default.currency.pk
 
         # Set attributes
         instrument_object["attributes"] = []
@@ -652,7 +660,6 @@ class SimpleImportProcess:
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
-
         self.ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.master_user
         )
@@ -901,11 +908,8 @@ class SimpleImportProcess:
             if self.process_type == ProcessType.JSON:
                 try:
                     _l.info("Trying to get json items from task object options")
-                    items = self.task.options_object["items"]
 
-                    self.result.total_rows = len(items)
-
-                    self.file_items = items
+                    self.file_items = self.task.options_object["items"]
 
                 except Exception:
                     _l.info("Trying to get json items from file")
@@ -914,7 +918,10 @@ class SimpleImportProcess:
                         self.file_items = json.loads(f.read())
 
                 if not isinstance(self.file_items, list):
-                    raise ValueError('Input json is not a list. Did you forget to wrap it into []?')
+                    raise ValueError(
+                        f"File {self.file_path} of type json is not a List. "
+                        f"Did you forget to wrap it into []?"
+                    )
 
             elif self.process_type == ProcessType.CSV:
                 _l.info(f"ProcessType.CSV self.file_path {self.file_path}")
@@ -942,13 +949,29 @@ class SimpleImportProcess:
                             )
 
                             self.append_and_count_file_items(reader)
+
             elif self.process_type == ProcessType.EXCEL:
                 with storage.open(self.file_path, "rb") as f:
                     with NamedTemporaryFile() as tmpf:
                         self.read_from_excel_file(f, tmpf)
 
             else:
-                raise ValueError(f"invalid {self.process_type} process type")
+                raise ValueError(
+                    f"File {self.file_path} is of invalid type {self.process_type}. "
+                    f"Import impossible"
+                )
+
+            self.result.total_rows = len(self.file_items)
+
+            if self.result.total_rows == 0:
+                raise ValueError(
+                    f"File {self.file_path} has no items. Nothing to import"
+                )
+            if self.result.total_rows > settings.MAX_ITEMS_IMPORT:
+                raise ValueError(
+                    f"File {self.file_path} has more than {settings.MAX_ITEMS_IMPORT} "
+                    f"items. Import impossible"
+                )
 
             _l.info(
                 f"SimpleImportProcess.Task {self.task}. fill_with_raw_items "
@@ -1024,8 +1047,6 @@ class SimpleImportProcess:
                 }
                 self.file_items.append(file_item)
 
-        self.result.total_rows = len(self.file_items)
-
     def whole_file_preprocess(self):
         if self.scheme.data_preprocess_expression:
             names = {"data": self.file_items}
@@ -1089,10 +1110,10 @@ class SimpleImportProcess:
             for scheme_input in self.scheme.csv_fields.all():
                 try:
                     names = raw_item
-                    conversion_item.conversion_inputs[scheme_input.name] = (
-                        formula.safe_eval(
-                            scheme_input.name_expr, names=names, context=self.context
-                        )
+                    conversion_item.conversion_inputs[
+                        scheme_input.name
+                    ] = formula.safe_eval(
+                        scheme_input.name_expr, names=names, context=self.context
                     )
                 except Exception:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -1122,9 +1143,9 @@ class SimpleImportProcess:
                 key_column_name = scheme_input.column_name
 
                 try:
-                    preprocess_item.inputs[scheme_input.name] = (
-                        preprocess_item.conversion_inputs[scheme_input.name]
-                    )
+                    preprocess_item.inputs[
+                        scheme_input.name
+                    ] = preprocess_item.conversion_inputs[scheme_input.name]
 
                 except Exception as e:
                     preprocess_item.inputs[scheme_input.name] = None
@@ -1559,7 +1580,6 @@ class SimpleImportProcess:
             self.handle_successful_item_import(item, serializer)
 
         except Exception as e:
-
             if self.scheme.mode == "overwrite":
                 try:
                     model = self.scheme.content_type.model_class()
@@ -1580,6 +1600,17 @@ class SimpleImportProcess:
                             ],
                             date=item.final_inputs["date"],
                         )
+                    elif self.scheme.content_type.model == "accrualcalculationschedule":
+                        accrual_start_date = item.final_inputs["accrual_start_date"]
+                        if not isinstance(accrual_start_date, date):
+                            accrual_start_date = parse(str(accrual_start_date))
+
+                        instance = model.objects.get(
+                            instrument__user_code=item.final_inputs["instrument"],
+                            accrual_start_date=accrual_start_date.strftime(
+                                settings.API_DATE_FORMAT
+                            ),
+                        )
                     else:
                         instance = model.objects.get(
                             master_user=self.master_user,
@@ -1599,6 +1630,7 @@ class SimpleImportProcess:
                     if self.scheme.content_type.model not in [
                         "pricehistory",
                         "currencyhistory",
+                        "accrualcalculationschedule",
                     ]:
                         self.overwrite_item_attributes(result_item, item)
 
@@ -1642,12 +1674,11 @@ class SimpleImportProcess:
                         f"{traceback.format_exc()}"
                     )
             else:
-
                 # _l.info("e %s" % e)
                 # _l.info("e %s" % e)
                 # _l.info("e %s" % e.__dict__)
 
-                if 'make a unique set' in str(e.__dict__):
+                if "make a unique set" in str(e.__dict__):
                     item.status = "skip"
                     item.error_message = f"{item.error_message} ==== Skipped due to uniqueness constraint violation"
 
@@ -1859,9 +1890,9 @@ class SimpleImportProcess:
 
                     try:
                         # models_for_bulk_update.append(model_for_update_ids[item_key_for_matching_model])
-                        models_for_bulk_update[item_key_for_matching_model] = (
-                            model_for_update_ids[item_key_for_matching_model]
-                        )
+                        models_for_bulk_update[
+                            item_key_for_matching_model
+                        ] = model_for_update_ids[item_key_for_matching_model]
 
                     except Exception as e:
                         self.items[item_index].status = "error"

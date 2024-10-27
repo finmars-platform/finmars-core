@@ -5,8 +5,8 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 
-from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.handlers import SimpleImportProcess
@@ -19,9 +19,9 @@ from poms.csv_import.tests.common_test_data import (
     SCHEME_20_ENTITIES,
     SCHEME_20_FIELDS,
 )
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, PriceHistory, PricingPolicy
 
-FILE_CONTENT = json.dumps(PRICE_HISTORY).encode("utf-8")
+FILE_CONTENT = json.dumps(PRICE_HISTORY).encode()
 FILE_NAME = "price_history.json"
 
 
@@ -35,8 +35,10 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.space_code = "space0000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme_20 = self.create_scheme_20()
+        self.file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
         self.storage = mock.Mock()
         self.storage.save.return_value = None
+        self.storage.open.return_value = self.file_content
         self.instrument = self.create_instrument_for_price_history(
             isin=PRICE_HISTORY[0]["Instrument"]
         )
@@ -77,8 +79,8 @@ class ImportPriceHistoryTest(BaseTestCase):
 
         return scheme
 
-    def create_task(self, remove_accrued_and_factor=False):
-        items = copy.deepcopy(PRICE_HISTORY)
+    def create_task(self, remove_accrued_and_factor=False, amount=1):
+        items = copy.deepcopy([PRICE_HISTORY[0] for _ in range(amount)])
         if remove_accrued_and_factor:
             for item in items:
                 item.pop("Accrued Price", None)
@@ -279,3 +281,11 @@ class ImportPriceHistoryTest(BaseTestCase):
         self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
         self.assertEqual(ph.accrued_price, 0.0)
         self.assertEqual(ph.factor, 1.0)
+
+    @override_settings(MAX_ITEMS_IMPORT=3)
+    def test__error_too_many_line(self):
+        task = self.create_task(amount=4)
+        process = SimpleImportProcess(task_id=task.id)
+
+        with self.assertRaises(ValueError):
+            process.fill_with_file_items()

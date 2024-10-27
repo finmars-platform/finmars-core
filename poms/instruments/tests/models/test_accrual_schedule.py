@@ -81,20 +81,25 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
         ("date", date.today()),
         ("str", date.today().strftime(DATE_FORMAT)),
     )
-    def test_error_duplicated_start_date(self, accrual_start_date):
-        AccrualCalculationSchedule.objects.create(
+    def test_duplicated_start_date(self, accrual_start_date):
+        old_accrual = AccrualCalculationSchedule.objects.create(
             instrument=self.instrument,
             accrual_calculation_model_id=self.accrual_model_id,
             accrual_start_date=accrual_start_date,
             first_payment_date=self.random_future_date(),
         )
-        with self.assertRaises(Exception):
-            AccrualCalculationSchedule.objects.create(
-                instrument=self.instrument,
-                accrual_calculation_model_id=self.accrual_model_id,
-                accrual_start_date=accrual_start_date,
-                first_payment_date=self.random_future_date(),
-            )
+
+        new_accrual = AccrualCalculationSchedule.objects.create(
+            instrument=self.instrument,
+            accrual_calculation_model_id=self.accrual_model_id,
+            accrual_start_date=accrual_start_date,
+            first_payment_date=self.random_future_date(),
+            notes=self.random_string(),
+        )
+
+        self.assertEqual(old_accrual.id, new_accrual.id)
+        self.assertNotEqual(old_accrual.notes, new_accrual.notes)
+        self.assertNotEqual(old_accrual.first_payment_date, new_accrual.first_payment_date)
 
     @BaseTestCase.cases(
         ("date", date.today()),

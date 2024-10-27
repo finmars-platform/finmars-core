@@ -18,10 +18,12 @@ ALL_EXTRA_ACTIONS = {
     "configure",
     "create_personal_access_token",
     "create_worker",
+    "data",
     "delete_preview",
     "dry_run",
     "error",
     "execute",
+    "relaunch",
     "export",
     "export_configuration",
     "filtered_list",
@@ -124,6 +126,7 @@ FULL_ACCESS_ACTIONS = {
     "dry_run",
     "error",
     "execute",
+    "relaunch",
     "export",
     "filtered_list",
     "generate_code",
@@ -180,6 +183,7 @@ FULL_ACCESS_ACTIONS = {
     "update_status",
 }
 READ_ACCESS_ACTIONS = {
+    "data",
     "export_configuration",
     "get_content_types",
     "get_data",
