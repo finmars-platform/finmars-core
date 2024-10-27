@@ -4,7 +4,8 @@ from datetime import date, timedelta
 
 from poms.common.exceptions import FinmarsBaseException
 from dateutil import relativedelta, rrule
-from scipy.optimize import newton
+# no need for scipy 2024-10-27 szhitenev
+# from scipy.optimize import newton
 
 _l = logging.getLogger("poms.common")
 
@@ -651,72 +652,72 @@ def f_xnpv(data, rate):
         return 0.0
 
 
-def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
-    """Equivalent of Excel's XIRR function.
-    https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
+# def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
+#     """Equivalent of Excel's XIRR function.
+#     https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
+#
+#     from datetime import date
+#     dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
+#     values = [-90, 5, 5, 105, ]
+#     data = [(d, v) for d, v in zip(dates, values)]
+#     f_xirr(data)
+#     0.3291520343150294
+#     """
+#     # _l.debug('f_xirr: data=%s', data)
+#
+#     # return newton(lambda r: xnpv(r, values, dates), 0.0), \
+#     #        brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
+#     # return newton(lambda r: xnpv(r, values, dates), 0.0)
+#     # return brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
+#
+#     if not data:
+#         return 0.0
+#
+#     try:
+#         kw = {}
+#         if tol is not None:
+#             kw["tol"] = tol
+#         if maxiter is not None:
+#             kw["maxiter"] = maxiter
+#         return newton(func=lambda r: f_xnpv(data, r), x0=x0, **kw)
+#     except RuntimeError:  # Failed to converge?
+#         # _l.debug('newton error', exc_info=True)
+#         return 0.0
 
-    from datetime import date
-    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-    values = [-90, 5, 5, 105, ]
-    data = [(d, v) for d, v in zip(dates, values)]
-    f_xirr(data)
-    0.3291520343150294
-    """
-    # _l.debug('f_xirr: data=%s', data)
 
-    # return newton(lambda r: xnpv(r, values, dates), 0.0), \
-    #        brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
-    # return newton(lambda r: xnpv(r, values, dates), 0.0)
-    # return brentq(lambda r: xnpv(r, values, dates), -1.0, 1e10)
-
-    if not data:
-        return 0.0
-
-    try:
-        kw = {}
-        if tol is not None:
-            kw["tol"] = tol
-        if maxiter is not None:
-            kw["maxiter"] = maxiter
-        return newton(func=lambda r: f_xnpv(data, r), x0=x0, **kw)
-    except RuntimeError:  # Failed to converge?
-        # _l.debug('newton error', exc_info=True)
-        return 0.0
-
-
-def f_duration(data, ytm=None):
-    """Equivalent of Excel's XIRR function.
-    https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
-
-    from datetime import date
-    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
-    values = [-90, 5, 5, 105, ]
-    data = [(d, v) for d, v in zip(dates, values)]
-    f_xirr(data)
-    0.6438341602180792
-    """
-    # _l.debug('duration >')
-
-    if not data:
-        return 0.0
-
-    if ytm is None:
-        ytm = f_xirr(data)
-    d0, v0 = data[0]
-    v0 = -v0
-
-    try:
-        return (
-            sum(
-                ((di - d0).days / 365.0)
-                * (vi / ((1.0 + ytm) ** ((di - d0).days / 365.0)))
-                for di, vi in data
-            )
-            / v0
-            / (1 + ytm)
-        )
-    except (OverflowError, ZeroDivisionError):
-        return 0.0
+# def f_duration(data, ytm=None):
+#     """Equivalent of Excel's XIRR function.
+#     https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d
+#
+#     from datetime import date
+#     dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
+#     values = [-90, 5, 5, 105, ]
+#     data = [(d, v) for d, v in zip(dates, values)]
+#     f_xirr(data)
+#     0.6438341602180792
+#     """
+#     # _l.debug('duration >')
+#
+#     if not data:
+#         return 0.0
+#
+#     if ytm is None:
+#         ytm = f_xirr(data)
+#     d0, v0 = data[0]
+#     v0 = -v0
+#
+#     try:
+#         return (
+#             sum(
+#                 ((di - d0).days / 365.0)
+#                 * (vi / ((1.0 + ytm) ** ((di - d0).days / 365.0)))
+#                 for di, vi in data
+#             )
+#             / v0
+#             / (1 + ytm)
+#         )
+#     except (OverflowError, ZeroDivisionError):
+#         return 0.0
 
 
 if __name__ == "__main__":
