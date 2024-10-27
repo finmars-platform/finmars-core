@@ -1,5 +1,3 @@
-aiohttp==3.9.2
-aiosignal==1.3.1
 amqp==5.1.1
 asgiref==3.7.2
 async-timeout==4.0.2
@@ -46,7 +44,6 @@ ecdsa==0.18.0
 et-xmlfile==1.1.0
 filtration==2.3.0
 flower==1.2.0
-frozenlist==1.3.3
 geoip2==4.6.0
 humanize==4.4.0
 idna==3.7
@@ -59,9 +56,8 @@ kombu==5.3.4
 MarkupSafe==2.1.1
 maxminddb==2.2.0
 msrest==0.7.1
-multidict==6.0.2
 Naked==0.1.32
-numpy==1.23.5
+numpy==1.26.4
 oauthlib==3.2.2
 openapi-codec==1.3.2
 openpyxl==3.0.10
@@ -100,7 +96,6 @@ urllib3==1.26.20
 vine==5.1.0
 wcwidth==0.2.5
 websockets==10.4
-yarl==1.8.1
 pexpect==4.8.0
 djangorestframework-simplejwt==5.2.2
 gunicorn==20.0.4
@@ -122,7 +117,7 @@ coverage==7.2.7
 haikunator==2.1.0
 memory-profiler==0.61.0
 pympler==1.0.1
-QuantLib==1.31.1
+QuantLib==1.36.0
 pillow==10.4.0
 orjson==3.10.7
-django-redis==5.2.0
+setproctitle==1.3.3
