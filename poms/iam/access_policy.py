@@ -92,11 +92,37 @@ class AccessPolicy(permissions.BasePermission):
     def has_specific_permission(self, view, request):
         statements = self.get_policy_statements(request, view)
         if not statements:
+
+            action = self._get_invoked_action(view)
+            user_arn = f"finmars:member/{request.user.username}"  # Customize to suit your naming convention
+            resource = f"finmars:{view.__class__.__name__}"  # Customize based on your resources
+
+            request.permission_error_message = (
+                f"User: {user_arn} is not authorized to perform: "
+                f"{action} on resource: {resource} because no access policy allows the '{action}' action."
+            )
+
             return False
 
         action = self._get_invoked_action(view)
         allowed = self._evaluate_statements(statements, request, view, action)
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
+
+        _l.info('has_specific_permission.allowed %s' % allowed)
+
+        if not allowed:
+
+            action = self._get_invoked_action(view)
+            user_arn = f"finmars:member/{request.user.username}"  # Customize to suit your naming convention
+            resource = f"finmars:{view.__class__.__name__}"  # Customize based on your resources
+
+            request.permission_error_message = (
+                f"User: {user_arn} is not authorized to perform: "
+                f"{action} on resource: {resource} because no access policy allows the '{action}' action."
+            )
+
+            _l.info('permission_error_message %s' % request.permission_error_message)
+
         return allowed
 
     def get_policy_statements(self, request, view) -> List[Union[dict, Statement]]:
@@ -169,7 +195,7 @@ class AccessPolicy(permissions.BasePermission):
             if isinstance(statement, Statement):
                 statement = asdict(statement)
 
-            _l.debug(f"_normalize_statements.statement {statement} ")
+            # _l.debug(f"_normalize_statements.statement {statement} ")
 
             if isinstance(statement["principal"], str):
                 statement["principal"] = [statement["principal"]]

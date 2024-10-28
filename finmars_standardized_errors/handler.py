@@ -6,7 +6,8 @@ from typing import Optional
 import django
 from django.conf import settings
 from django.core import signals
-from django.core.exceptions import PermissionDenied
+# from django.core.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 from django.http import Http404
 from django.utils.log import log_response
 from rest_framework import exceptions
@@ -18,11 +19,13 @@ from .exceptions import FinmarsApiException
 from .formatter import ExceptionFormatter
 from .settings import package_settings
 from .types import ExceptionHandlerContext
+import logging
 
 
 def exception_handler(
         exc: Exception, context: ExceptionHandlerContext
 ) -> Optional[Response]:
+
     exception_handler_class = package_settings.EXCEPTION_HANDLER_CLASS
     msg = "`EXCEPTION_HANDLER_CLASS` should be a subclass of ExceptionHandler."
     assert issubclass(exception_handler_class, ExceptionHandler), msg
@@ -46,14 +49,13 @@ class ExceptionHandler:
         lines = traceback.format_exc().splitlines()[-6:]
         traceback_lines = []
 
-        # print('here? %s' % exc.error_key)
-
         for line in lines:
             traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
 
         data['error']['details']['traceback'] = '\n'.join(traceback_lines),
 
-        print('data %s' % data)
+
+        # print('data %s' % data)
 
         self.set_rollback()
         response = self.get_response(exc, data)
@@ -65,10 +67,11 @@ class ExceptionHandler:
         By default, Django's built-in `Http404` and `PermissionDenied` are converted
         to their DRF equivalent.
         """
+
         if isinstance(exc, Http404):
             return exceptions.NotFound()
         elif isinstance(exc, PermissionDenied):
-            return exceptions.PermissionDenied()
+            return exceptions.PermissionDenied(detail=self.context["request"].permission_error_message)
         else:
             return exc
 
@@ -90,9 +93,10 @@ class ExceptionHandler:
         has a 500 status code.
         """
 
-        # print('convert_unhandled_exceptions %s' % exc.error_key)
-
-        if getattr(exc, "error_key", None):
+        # If this is a PermissionDenied exception and has a custom message, use it
+        if isinstance(exc, PermissionDenied) and hasattr(self.context["request"], "permission_error_message"):
+            return exceptions.PermissionDenied(detail=self.context["request"].permission_error_message)
+        elif getattr(exc, "error_key", None):
             return FinmarsApiException(detail=str(exc), error_key=exc.error_key)
         elif not isinstance(exc, exceptions.APIException):
             return exceptions.APIException(detail=str(exc))

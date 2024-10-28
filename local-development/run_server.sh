@@ -3,7 +3,6 @@
 python poms_app/print_finmars.py
 export DJANGO_SETTINGS_MODULE=poms_app.settings
 . ../venv/bin/activate
-REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
 DB_USER=postgres \
 DB_PASSWORD=postgres \
@@ -39,6 +38,6 @@ AUTHORIZER_URL=http://0.0.0.0:8083/authorizer \
 BACKEND_ROLES="ALL" \
 CSRF_COOKIE_DOMAIN=0.0.0.0 \
 GUNICORN_START_TIME=$(date +%s) \
-gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi --name=finmars-backend
+python manage.py runserver
 
-#python manage.py runserver
+#gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi --name=finmars-backend
