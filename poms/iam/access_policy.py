@@ -114,7 +114,7 @@ class AccessPolicy(permissions.BasePermission):
 
             action = self._get_invoked_action(view)
             user_arn = f"finmars:member/{request.user.username}"  # Customize to suit your naming convention
-            resource = f"finmars:{view.__class__.__name__}"  # Customize based on your resources
+            resource = f"finmars:{view.__class__.__name__.replace('ViewSet', '')}"  # Customize based on your resources
 
             request.permission_error_message = (
                 f"User: {user_arn} is not authorized to perform: "
