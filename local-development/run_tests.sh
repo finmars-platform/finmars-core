@@ -37,4 +37,6 @@ ADMIN_USERNAME=admin \
 ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
 BACKEND_ROLES="ALL" \
-python manage.py test --keepdb
+python manage.py test --keepdb poms/explorer/tests
+
+#python manage.py test --keepdb poms.explorer

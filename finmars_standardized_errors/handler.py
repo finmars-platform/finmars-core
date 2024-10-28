@@ -96,6 +96,8 @@ class ExceptionHandler:
         # If this is a PermissionDenied exception and has a custom message, use it
         if isinstance(exc, PermissionDenied) and hasattr(self.context["request"], "permission_error_message"):
             return exceptions.PermissionDenied(detail=self.context["request"].permission_error_message)
+        elif isinstance(exc, PermissionDenied):
+            return exceptions.PermissionDenied()
         elif getattr(exc, "error_key", None):
             return FinmarsApiException(detail=str(exc), error_key=exc.error_key)
         elif not isinstance(exc, exceptions.APIException):
