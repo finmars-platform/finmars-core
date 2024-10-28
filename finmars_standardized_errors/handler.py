@@ -71,7 +71,11 @@ class ExceptionHandler:
         if isinstance(exc, Http404):
             return exceptions.NotFound()
         elif isinstance(exc, PermissionDenied):
-            return exceptions.PermissionDenied(detail=self.context["request"].permission_error_message)
+
+            if hasattr(self.context["request"], "permission_error_message"):
+                return exceptions.PermissionDenied(detail=self.context["request"].permission_error_message)
+            else:
+                return exceptions.PermissionDenied(exc)
         else:
             return exc
 
