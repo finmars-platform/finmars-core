@@ -595,6 +595,14 @@ class BackendReportHelperService:
             _l.debug(f"filter_by_groups_filters after len {len(items)}")
             return items
 
+        # Validate that both lists have the same length
+        if len(groups_types) != len(groups_values):
+            _l.warning("Mismatch between groups_types and groups_values lengths")
+            # Optionally, handle this by truncating the longer list or raising an error
+            min_length = min(len(groups_types), len(groups_values))
+            groups_types = groups_types[:min_length]
+            groups_values = groups_values[:min_length]
+
         # Filter the items based on group types and values
         # We use a list comprehension for efficiency and readability
         filtered_items = [
