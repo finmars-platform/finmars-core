@@ -42,7 +42,9 @@ def lowercase_keys_and_values(dictionary):
     to
         {
          "type": "frn",
-         "service": "authorizer
+         "service": "authorizer"
+         "app_label": authorizer",
+         "model": "spacebackup",
          ...
          "user_code": "space00000"
         }
@@ -51,7 +53,7 @@ def lowercase_keys_and_values(dictionary):
 def parse_resource_into_object(resource):
     result = {}
 
-    pieces = resource.split(':', 3)
+    pieces = resource.split(':', 4) # split only first 4 :
 
     result['type'] = pieces[0].lower()
     result['service'] = pieces[1].lower()
