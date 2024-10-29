@@ -28,6 +28,7 @@ from poms.common.authentication import get_access_token
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
+    CharExactFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
@@ -708,6 +709,7 @@ class InstrumentFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     user_code = CharFilter()
+    user_code__exact = CharExactFilter(field_name="user_code")
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
