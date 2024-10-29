@@ -46,38 +46,62 @@ class IamProtectedSerializer(serializers.ModelSerializer):
 
         if member.is_admin:
             return super().to_representation(instance)
+
         """
         Overriding to_representation to check if the user has access 
         to view the protected field. If not, hide the field.
         """
 
         queryset = self.Meta.model.objects.filter(pk=instance.pk)
-
         from poms.iam.utils import get_allowed_resources
+        from django.contrib.contenttypes.models import ContentType
+        from poms.iam.models import ResourceGroup
 
+        # Get initial allowed resources for the member and model
         allowed_resources = get_allowed_resources(member, self.Meta.model, queryset)
+        expanded_resources = set()
 
-        has_permission = False
+        # Parse and expand resources if ResourceGroups are present
         for resource in allowed_resources:
-            # _l.debug('to_representation.resource %s' % resource)
-
             prefix, app, content_type, user_code = resource.split(":", 3)
-            model_content_type = (
-                f"{self.Meta.model._meta.app_label}.{self.Meta.model.__name__.lower()}"
-            )
-            if model_content_type == content_type and user_code == instance.user_code:
-                has_permission = True
-                break
+            if resource.startswith("frn:finmars:iam:resourcegroup:"):
+                # Handle ResourceGroup resource
+                resource_group_code = user_code
+                try:
+                    # Fetch the ResourceGroup and its assignments
+                    resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                    assignments = resource_group.assignments.all()
 
+                    # Add each assigned object's user_code as an expanded resource
+                    expanded_resources.update(
+                        f"{assignment.content_type.app_label}.{assignment.content_type.model}:{assignment.object_user_code}"
+                        for assignment in assignments if assignment.object_user_code
+                    )
+                except ResourceGroup.DoesNotExist:
+                    _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                    continue
+            else:
+                expanded_resources.add(resource)
+
+        # Check permission against expanded resources
+        has_permission = False
+        model_content_type = f"{self.Meta.model._meta.app_label}:{self.Meta.model.__name__.lower()}"
+        instance_identifier = f"frn:finmars:{model_content_type}:{instance.user_code}"
+
+        if instance_identifier in expanded_resources:
+            has_permission = True
+
+        # Return the appropriate representation based on permission
         if has_permission:
             return super().to_representation(instance)
         else:
             return {
-                "id": instance.id,
-                "name": instance.public_name,
-                "short_name": instance.public_name,
-                "user_code": instance.user_code,
+                "id": getattr(instance, "id", None),
+                "name": getattr(instance, "public_name", None),
+                "short_name": getattr(instance, "public_name", None),
+                "user_code": getattr(instance, "user_code", None),
             }
+
 
 
 class IamModelOwnerSerializer(serializers.ModelSerializer):
