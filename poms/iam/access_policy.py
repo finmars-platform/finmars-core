@@ -266,9 +266,11 @@ class AccessPolicy(permissions.BasePermission):
         SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
         http_method = f"<method:{request.method.lower()}>"
 
+        viewset_name = view.__class__.__name__.replace('ViewSet', '')
+
         _l.debug(
             f"_get_statements_matching_action.action {action} "
-            f"name {view.basename.lower()}"
+            f"name {viewset_name.lower()}"
         )
         # _l.info('_get_statements_matching_action.view %s' % view.__dict__)
         # _l.info('_get_statements_matching_action.self %s' % self)
@@ -286,7 +288,8 @@ class AccessPolicy(permissions.BasePermission):
                     maybe its a problem, see  utils.py#get_allowed_resources
 
                     """
-                    if view.basename.lower() in action_object["viewset"]:
+
+                    if viewset_name.lower() in action_object["viewset"]:
                         if (
                             action in action_object["action"]
                             or "*" in action_object["action"]
