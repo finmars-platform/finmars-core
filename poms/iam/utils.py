@@ -199,7 +199,7 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
                         # Add each assigned object's user_code as a resource
                         expanded_resources.update(
-                            f"{assignment.content_type.app_label}.{assignment.content_type.model}:{assignment.object_user_code}"
+                            f"frn:finmars:{assignment.content_type.app_label}.{assignment.content_type.model}:{assignment.object_user_code}"
                             for assignment in assignments if assignment.object_user_code
                         )
                     except ResourceGroup.DoesNotExist:
