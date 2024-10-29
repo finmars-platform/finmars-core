@@ -96,13 +96,13 @@ class AccessPolicy(permissions.BasePermission):
 
         action = self._get_invoked_action(view)
         user_arn = f"frn:finmars:users:member:{request.user.username}"  # Customize to suit your naming convention
-        view_name = f"finmars:{view.__class__.__name__}"  # Customize based on your resources
+        viewset_name = f"finmars:{view.__class__.__name__.replace('ViewSet', '')}"
 
         if not statements:
 
             request.permission_error_message = (
                 f"User: {user_arn} is not authorized to perform: "
-                f"{action} on resource: {view_name} because no access policy allows the '{action}' action."
+                f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
             )
 
             return False
@@ -116,7 +116,7 @@ class AccessPolicy(permissions.BasePermission):
 
             request.permission_error_message = (
                 f"User: {user_arn} is not authorized to perform: "
-                f"{action} on resource: {view_name} because no access policy allows the '{action}' action."
+                f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
             )
 
             _l.info('permission_error_message %s' % request.permission_error_message)
