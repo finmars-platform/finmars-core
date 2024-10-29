@@ -131,9 +131,11 @@ PORTFOLIOS = [BIG, SMALL]
 UNIFIED = "Unified"
 
 USD = "USD"
+USD2 = "USD"
 EUR = "EUR"
 CURRENCIES = [
     (USD, 1),
+    (USD2, 2),
     (EUR, 1.1),
 ]
 
