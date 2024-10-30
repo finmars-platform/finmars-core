@@ -22,6 +22,6 @@ class IamProtectedRelatedField(RelatedField):
         # TODO iam
         # szhitenev consider do we need filtering on RelatedFields?
         # probably we just need to serialize them in secure manner
-        # queryset = get_allowed_queryset(member, queryset)
+        queryset = get_allowed_queryset(member, queryset)
 
         return queryset
