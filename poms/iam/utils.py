@@ -2,14 +2,11 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q, QuerySet
-
+from django.db.models import QuerySet
 from poms.iam.models import AccessPolicy, ResourceGroup
 from poms.users.models import Member
 
 _l = logging.getLogger('poms.iam')
-from django.contrib.contenttypes.models import ContentType
-
 
 
 def add_to_list_if_not_exists(string, my_list):
@@ -139,7 +136,7 @@ def get_statements(member: Member) -> list:
 
 
 from django.db.models import Q
-from django.contrib.contenttypes.models import ContentType
+
 
 def filter_queryset_with_access_policies(member, queryset, view):
     if not member:
@@ -218,7 +215,9 @@ def filter_queryset_with_access_policies(member, queryset, view):
                         base_code = user_code_val.split('*')[0]
                         q |= Q(user_code__icontains=base_code)
                     else:
-                        q |= Q(user_code=user_code_val)
+                        # TODO szhitenev
+                        # in future release enforce user_code to asci lowercase only
+                        q |= Q(user_code_icontains=user_code_val)
 
     _l.debug('filter_queryset_with_access_policies.q %s' % len(q))
 
