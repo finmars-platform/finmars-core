@@ -211,7 +211,7 @@ def filter_queryset_with_access_policies(member, queryset, view):
                 _l.info('filter_queryset_with_access_policies.parsed_resource %s' % parsed_resource)
 
                 # Match the content type and apply filters
-                if parsed_resource['content_type'] == content_type_key:
+                if f"{parsed_resource['app_label']}.{parsed_resource['model']}" == content_type_key:
                     user_code_val = parsed_resource['user_code']
                     if '*' in user_code_val:
                         # Apply wildcard match
