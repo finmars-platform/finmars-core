@@ -19,6 +19,9 @@ class IamProtectedRelatedField(RelatedField):
 
         _l.debug(f"IamProtectedRelatedField {member}")
 
-        queryset = get_allowed_queryset(member, queryset)
+        # TODO iam
+        # szhitenev consider do we need filtering on RelatedFields?
+        # probably we just need to serialize them in secure manner
+        # queryset = get_allowed_queryset(member, queryset)
 
         return queryset
