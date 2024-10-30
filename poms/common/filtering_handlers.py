@@ -489,7 +489,9 @@ def add_filter(qs, filter_config):
     key = filter_config["key"]
     exclude_empty_cells = filter_config.get("exclude_empty_cells", False)
     values = filter_config["value"]
-    value = values[0] if values else None
+    value = None
+    if isinstance(values, list) and values:
+        value = values[0]
 
     print(f"add_filter: values={values} value={value} value_type={value_type} key={key}")
 
@@ -697,26 +699,34 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
-        max_value = filter_config["value"].get("max_value")
-        min_value = filter_config["value"].get("min_value")
+        # values = {
+        #    "min_value": "2020-01-01",
+        #    "max_value": "2030-12-31"
+        # }
+        max_value = values.get("max_value")
+        min_value = values.get("min_value")
 
         if max_value and min_value:
             options = {
-                key + "__gte": datetime.strptime(min_value, DATE_FORMAT).date(),
-                key + "__lte": datetime.strptime(max_value, DATE_FORMAT).date(),
+                f"{key}__gte": datetime.strptime(min_value, DATE_FORMAT).date(),
+                f"{key}__lte": datetime.strptime(max_value, DATE_FORMAT).date(),
             }
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.OUT_OF_RANGE and value_type == ValueType.DATE:
-        max_value = filter_config["value"].get("max_value")
-        min_value = filter_config["value"].get("min_value")
+        # values = {
+        #    "min_value": "2020-01-01",
+        #    "max_value": "2030-12-31"
+        # }
+        max_value = values.get("max_value")
+        min_value = values.get("min_value")
 
         if max_value and min_value:
             q_less_than_min = Q(
-                **{key + "__lt": datetime.strptime(min_value, DATE_FORMAT).date()}
+                **{f"{key}__lt": datetime.strptime(min_value, DATE_FORMAT).date()}
             )
             q_greater_than_max = Q(
-                **{key + "__gt": datetime.strptime(max_value, DATE_FORMAT).date()}
+                **{f"{key}__gt": datetime.strptime(max_value, DATE_FORMAT).date()}
             )
             qs = qs.filter(q_less_than_min | q_greater_than_max)
 
