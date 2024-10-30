@@ -217,7 +217,7 @@ def filter_queryset_with_access_policies(member, queryset, view):
                     else:
                         # TODO szhitenev
                         # in future release enforce user_code to asci lowercase only
-                        q |= Q(user_code_icontains=user_code_val)
+                        q |= Q(user_code__icontains=user_code_val)
 
     _l.debug('filter_queryset_with_access_policies.q %s' % len(q))
 
