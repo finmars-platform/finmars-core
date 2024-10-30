@@ -297,8 +297,16 @@ def get_allowed_queryset(member, queryset):
         parsed_resource = parse_resource_into_object(resource)
         allowed_user_codes.append(parsed_resource['user_code'])
 
+    _l.debug('get_allowed_queryset.allowed_user_codes %s' % allowed_user_codes)
+
     # Filter queryset based on allowed user codes
-    return queryset.filter(user_code__in=allowed_user_codes)
+    # Build a Q object for filtering using icontains for each user_code
+    q_filter = Q()
+    for user_code in allowed_user_codes:
+        q_filter |= Q(user_code__icontains=user_code)
+
+    # Apply the Q filter to the queryset
+    return queryset.filter(q_filter)
 
 
 def get_allowed_resources(member, model, queryset):
