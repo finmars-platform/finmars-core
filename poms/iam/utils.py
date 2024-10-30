@@ -90,9 +90,6 @@ parse_resource_attribute
 '''
 
 
-def parse_resource_attribute(resources: list) -> list:
-    return [parse_resource_into_object(resource) for resource in resources]
-
 
 def get_member_access_policies(member: Member) -> QuerySet:
     """
@@ -210,7 +207,7 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
             # Apply the filters for expanded resources
             for resource in expanded_resources:
-                parsed_resource = parse_resource_attribute(resource)
+                parsed_resource = parse_resource_into_object(resource)
                 _l.info('filter_queryset_with_access_policies.parsed_resource %s' % parsed_resource)
 
                 # Match the content type and apply filters
