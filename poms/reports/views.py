@@ -2,7 +2,6 @@ import logging
 import time
 from datetime import timedelta
 
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -15,12 +14,12 @@ from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.reports.light_builders.balance import BalanceReportLightBuilderSql
 from poms.reports.models import (
     BalanceReportCustomField,
+    BalanceReportInstance,
     PLReportCustomField,
+    PLReportInstance,
     ReportSummary,
     ReportSummaryInstance,
     TransactionReportCustomField,
-    BalanceReportInstance,
-    PLReportInstance,
 )
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import (
@@ -31,28 +30,27 @@ from poms.reports.serializers import (
     BackendTransactionReportGroupsSerializer,
     BackendTransactionReportItemsSerializer,
     BalanceReportCustomFieldSerializer,
+    BalanceReportInstanceSerializer,
+    BalanceReportLightSerializer,
     BalanceReportSerializer,
     PerformanceReportSerializer,
     PLReportCustomFieldSerializer,
+    PLReportInstanceSerializer,
     PLReportSerializer,
     PriceHistoryCheckSerializer,
     SummarySerializer,
     TransactionReportCustomFieldSerializer,
     TransactionReportSerializer,
-    BalanceReportLightSerializer,
-    BalanceReportInstanceSerializer,
-    PLReportInstanceSerializer,
 )
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.utils import (
-    generate_report_unique_hash,
     generate_unique_key,
     get_pl_first_date,
-    transform_to_allowed_portfolios,
     transform_to_allowed_accounts,
+    transform_to_allowed_portfolios,
 )
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
@@ -1212,7 +1210,6 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         _l.info("unique_key %s" % unique_key)
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
@@ -1221,7 +1218,6 @@ class BackendBalanceReportViewSet(AbstractViewSet):
             )
 
         except ObjectDoesNotExist:
-
             # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
@@ -1257,7 +1253,6 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         _l.info("unique_key %s" % unique_key)
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
@@ -1266,7 +1261,6 @@ class BackendBalanceReportViewSet(AbstractViewSet):
             )
 
         except ObjectDoesNotExist:
-
             # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
@@ -1308,7 +1302,6 @@ class BackendPLReportViewSet(AbstractViewSet):
         _l.info("pnl.viewset %s" % instance.pl_first_date)
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
@@ -1317,7 +1310,6 @@ class BackendPLReportViewSet(AbstractViewSet):
             _l.debug("PL report if found, take from cache")
 
         except ObjectDoesNotExist as e:
-
             _l.info("e %s" % e)
 
             builder = PLReportBuilderSql(instance=instance)
@@ -1356,14 +1348,12 @@ class BackendPLReportViewSet(AbstractViewSet):
         settings, unique_key = generate_unique_key(instance, "pnl")
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
         except ObjectDoesNotExist:
-
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
 
