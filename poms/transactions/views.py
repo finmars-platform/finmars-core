@@ -775,7 +775,7 @@ class TransactionFilterSet(FilterSet):
     transaction_class = django_filters.ModelMultipleChoiceFilter(
         queryset=TransactionClass.objects
     )
-    transaction_code = django_filters.RangeFilter()
+    transaction_code = django_filters.NumberFilter()
     transaction_currency = ModelExtMultipleChoiceFilter(model=Currency)
     position_size_with_sign = django_filters.RangeFilter()
     settlement_currency = ModelExtMultipleChoiceFilter(model=Currency)
@@ -1195,7 +1195,7 @@ class ComplexTransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
 
 class ComplexTransactionFilterSet(FilterSet):
     id = NoOpFilter()
-    code = django_filters.RangeFilter()
+    code = django_filters.NumberFilter()
     date = django_filters.DateFromToRangeFilter()
     is_deleted = django_filters.BooleanFilter()
 

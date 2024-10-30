@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
+    CharExactFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
@@ -46,6 +47,7 @@ class CurrencyFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     user_code = CharFilter()
+    user_code__exact = CharExactFilter(field_name="user_code")
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
