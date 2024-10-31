@@ -159,6 +159,7 @@ class IamGroupSerializer(serializers.ModelSerializer):
 
 
 class IamAccessPolicySerializer(serializers.ModelSerializer):
+
     class Meta:
         model = AccessPolicy
         fields = ["id", "name", "user_code", "configuration_code"]

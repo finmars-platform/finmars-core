@@ -188,6 +188,30 @@ def export_configuration_to_directory(
             context,
         )
 
+        # IAM
+
+        save_serialized_entity(
+            "iam.role",
+            configuration.configuration_code,
+            source_directory + "/iam/roles",
+            context,
+            )
+
+        save_serialized_entity(
+            "iam.group",
+            configuration.configuration_code,
+            source_directory + "/iam/groups",
+            context,
+            )
+
+        save_serialized_entity(
+            "iam.accesspolicy",
+            configuration.configuration_code,
+            source_directory + "/iam/access-policies",
+            context,
+            )
+
+
         _l.info("Going to export: obj_attrs.genericattributetype")
 
         save_serialized_attribute_type(
