@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 export DJANGO_SETTINGS_MODULE=poms_app.settings
-REDIS_HOST=0.0.0.0:6379 \
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
 DB_NAME=finmars_dev \
 DB_USER=postgres \
