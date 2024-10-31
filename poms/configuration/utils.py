@@ -144,6 +144,15 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
         if "members" in serialized_data:
             serialized_data.pop("members")
 
+        if "owner" in serialized_data:
+            serialized_data.pop("owner")
+
+        if "created_at" in serialized_data:
+            serialized_data.pop("created_at")
+
+        if "modified_at" in serialized_data:
+            serialized_data.pop("modified_at")
+
         serialized_data = remove_object_keys(serialized_data)
 
         path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
