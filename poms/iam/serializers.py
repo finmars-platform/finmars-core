@@ -121,8 +121,12 @@ class IamModelOwnerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # You should have 'request' in the serializer context
         request = self.context.get("request", None)
-        if request and hasattr(request, "user"):
+        member = self.context.get("member", None)
+        if member:
+            validated_data["owner"] = member
+        elif request and hasattr(request, "user"):
             validated_data["owner"] = Member.objects.get(user=request.user)
+
         return super(IamModelOwnerSerializer, self).create(validated_data)
 
 
