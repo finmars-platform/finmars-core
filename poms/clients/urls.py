@@ -9,3 +9,9 @@ router.register(
     clients.ClientsViewSet,
     "client",
 )
+
+router.register(
+    r"client-secret",
+    clients.ClientSecretsViewSet,
+    "clientsecrets",
+)
