@@ -15,6 +15,7 @@ from poms.common.models import (
     ObjectStateModel,
     TimeStampedModel,
 )
+from poms.clients.models import Client
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
@@ -198,6 +199,14 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             "list of resource groups user_codes, to which portfolio belongs"
         ),
     )
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="portfolios",
+        verbose_name=gettext_lazy("client"),
+    )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio")
@@ -272,6 +281,14 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
                 "name": "Transaction types",
                 "value_content_type": "transactions.transactiontype",
                 "value_entity": "transaction-type",
+                "code": "user_code",
+                "value_type": "mc_field",
+            },
+            {
+                "key": "client",
+                "name": "Сlient",
+                "value_content_type": "clients.client",
+                "value_entity": "client",
                 "code": "user_code",
                 "value_type": "mc_field",
             },

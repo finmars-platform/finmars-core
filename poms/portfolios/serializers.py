@@ -46,6 +46,8 @@ from poms.portfolios.models import (
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
+from poms.clients.models import Client
+from poms.clients.serializers import ClientsViewSerializer
 
 _l = getLogger("poms.portfolios")
 
@@ -180,6 +182,14 @@ class PortfolioSerializer(
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
     )
+    client = serializers.SlugRelatedField(
+        slug_field="user_code",
+        queryset=Client.objects.all(),
+        required=True
+    )
+    client_object = serializers.PrimaryKeyRelatedField(
+        source="client", read_only=True, many=False
+    )
 
     class Meta:
         model = Portfolio
@@ -200,6 +210,8 @@ class PortfolioSerializer(
             "first_cash_flow_date",
             "portfolio_type",
             "portfolio_type_object",
+            "client",
+            "client_object",
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
@@ -229,6 +241,9 @@ class PortfolioSerializer(
         )
         self.fields["transaction_types_object"] = TransactionTypeViewSerializer(
             source="transaction_types", many=True, read_only=True
+        )
+        self.fields["client_object"] = ClientsViewSerializer(
+            source="client", many=False, read_only=True
         )
 
     def create_register_if_not_exists(self, instance):
