@@ -185,7 +185,7 @@ class PortfolioSerializer(
     client = serializers.SlugRelatedField(
         slug_field="user_code",
         queryset=Client.objects.all(),
-        required=True
+        required=False
     )
     client_object = serializers.PrimaryKeyRelatedField(
         source="client", read_only=True, many=False
