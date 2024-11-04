@@ -35,6 +35,7 @@ class ErrorResponseDetails:
 @dataclass
 class ErrorResponse:
     url: str
+    method: str
     username: str
     status_code: int
     message: str

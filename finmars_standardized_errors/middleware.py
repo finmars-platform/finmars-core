@@ -41,7 +41,7 @@ class ExceptionMiddleware(MiddlewareMixin):
         :param exception: Application error
         :return: Return is object with fixed error structure in JSON
         '''
-        # print('exception %s' % exception)
+        # print('process_exception.exception %s' % exception)
 
         _l.error("ExceptionMiddleware process error %s" % request.build_absolute_uri())
         _l.error(traceback.format_exc())

@@ -11,8 +11,8 @@ gunicorn_start_time = time.time()
 chdir = "/var/app/"
 loglevel = "info"
 # The number of worker processes for handling requests
-workers = ENV_INT("GUNICORN_WORKERS", 2)  # to reduce memory usage, increase number of workers on Galaxy Level customers
-threads = ENV_INT("GUNICORN_THREADS", os.cpu_count())  # Max of CPU Cores
+workers = ENV_INT("GUNICORN_WORKERS", 1)  # to reduce memory usage, increase number of workers on Galaxy Level customers
+# threads = ENV_INT("GUNICORN_THREADS", 2)  # Max of CPU Cores
 timeout = 180
 # The socket to bind
 bind = "0.0.0.0:8080"

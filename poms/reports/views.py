@@ -3,6 +3,7 @@ import time
 from datetime import timedelta
 
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -1212,11 +1213,14 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             balance_report_instance = BalanceReportInstance.objects.get(
                 unique_key=unique_key
             )
 
-        except BalanceReportInstance.DoesNotExist:
+        except ObjectDoesNotExist:
 
             # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
@@ -1254,11 +1258,14 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             balance_report_instance = BalanceReportInstance.objects.get(
                 unique_key=unique_key
             )
 
-        except BalanceReportInstance.DoesNotExist:
+        except ObjectDoesNotExist:
 
             # Check to_representation comments to find why is that
             builder = BalanceReportBuilderSql(instance=instance)
@@ -1302,11 +1309,14 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
             _l.debug("PL report if found, take from cache")
 
-        except PLReportInstance.DoesNotExist as e:
+        except ObjectDoesNotExist as e:
 
             _l.info("e %s" % e)
 
@@ -1347,9 +1357,12 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
-        except PLReportInstance.DoesNotExist:
+        except ObjectDoesNotExist:
 
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()

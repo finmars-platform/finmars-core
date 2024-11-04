@@ -3,8 +3,6 @@ import json
 import logging
 from datetime import date, timedelta
 
-import orjson
-
 from poms.accounts.models import Account
 from poms.common.utils import get_last_business_day, \
     get_last_business_day_of_previous_year, get_last_business_day_in_previous_quarter, \
@@ -15,8 +13,6 @@ import hashlib
 import json
 import logging
 from datetime import date, timedelta
-
-import orjson
 
 from poms.accounts.models import Account
 from poms.common.utils import get_last_business_day, \

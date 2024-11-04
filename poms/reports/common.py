@@ -79,6 +79,7 @@ class Report(BaseReport):
             task_status=None,
             report_instance_name=None,
             save_report=False,
+            ignore_cache=False,
             pl_first_date=None,
             report_type=TYPE_BALANCE,
             report_date=None,
@@ -147,6 +148,7 @@ class Report(BaseReport):
 
         self.report_instance_name = report_instance_name
         self.save_report = save_report
+        self.ignore_cache = ignore_cache
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode

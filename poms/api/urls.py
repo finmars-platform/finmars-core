@@ -62,7 +62,7 @@ router.register(
 router.register(
     "system/whitelabel",
     system.WhitelabelViewSet,
-    "system-whitelabel",
+    "Whitelabel",
 )
 router.register(
     "reference-tables/reference-table",
@@ -265,10 +265,12 @@ router.register(
 router.register(
     r"system-messages/message",
     system_messages.SystemMessageViewSet,
+    "SystemMessage"
 )
 router.register(  # Probably deprecated
     r"credentials/credentials",
     credentials.CredentialsViewSet,
+    "Credentials"
 )
 router.register(  # Probably deprecated
     r"integrations/data-provider",
@@ -322,12 +324,12 @@ router.register(
 router.register(
     r"history/historical-record",
     history.HistoricalRecordViewSet,
-    "historical-record",
+    "HistoricalRecord",
 )
 router.register(
     r"auth-tokens/personal-access-token",
     PersonalAccessTokenViewSet,
-    "personal_access_token",
+    "PersonalAccessToken",
 )
 
 urlpatterns = [
