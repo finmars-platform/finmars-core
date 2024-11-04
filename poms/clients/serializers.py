@@ -31,7 +31,7 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class ClientSecretLightSerializer(ModelMetaSerializer, ModelOwnerSerializer):
+class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
     master_user = MasterUserField()
     client = serializers.SlugRelatedField(
         slug_field="user_code",
