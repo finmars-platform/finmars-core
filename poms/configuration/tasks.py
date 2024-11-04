@@ -107,7 +107,7 @@ def import_configuration(self, task_id, *args, **kwargs):
         return file_report
 
     proxy_user = ProxyUser(task.member, task.master_user)
-    proxy_request = ProxyRequest(task.member.user)
+    proxy_request = ProxyRequest(proxy_user)
 
     context = {
         "master_user": task.master_user,
