@@ -189,7 +189,9 @@ class PerformanceReportBuilder:
 
         if not begin_date or begin_date <= self.instance.first_transaction_date:
 
-            begin_date = get_last_business_day(self.instance.first_transaction_date)
+            # szhitenev 2024-10-04
+            # before here was  begin_date = get_last_business_day(self.instance.first_transaction_date)
+            begin_date = self.instance.first_transaction_date
 
         self.instance.begin_date = begin_date
 
@@ -992,6 +994,31 @@ class PerformanceReportBuilder:
 
         return nav
 
+    def get_inception_date_cash_flow(self, portfolios, date, pricing_policy):
+
+        portfolio_registers = self.get_portfolio_registers()
+
+        portfolio_records = PortfolioRegisterRecord.objects.filter(
+            portfolio_register__in=portfolio_registers,
+            transaction_date__lte=date,  # 2023-12-29
+            transaction_class__in=[
+                TransactionClass.CASH_INFLOW,
+                TransactionClass.CASH_OUTFLOW,
+                TransactionClass.INJECTION,
+                TransactionClass.DISTRIBUTION,
+            ],
+        ).order_by("transaction_date")
+
+        cash_flow = 0
+
+        for record in portfolio_records:
+
+            fx_rate = self.get_record_fx_rate(record)
+
+            cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
+
+        return cash_flow
+
     def get_nav_by_date(self, portfolios, date, pricing_policy):
 
         balance_report = Report(master_user=self.instance.master_user)
@@ -1068,7 +1095,15 @@ class PerformanceReportBuilder:
         begin_nav = self.get_nav_by_date(portfolios, date_from, pricing_policy)
         end_nav = self.get_nav_by_date(portfolios, date_to, pricing_policy)
 
+        inception_cash_flow = 0
+        if date_from <= self.instance.first_transaction_date:
+            inception_cash_flow = self.get_inception_date_cash_flow(portfolios, date_from, pricing_policy)
+            date_from = self.instance.first_transaction_date - timedelta(days=1)
+            begin_nav = inception_cash_flow
+
+
         self.instance.execution_log = {"items": []}
+
 
         total_nav = begin_nav
         grand_cash_flow = 0
@@ -1107,6 +1142,7 @@ class PerformanceReportBuilder:
                     no_register_records.append(portfolio.user_code)
                     continue
 
+                #
                 portfolio_records = portfolio_records.filter(
                     transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
                 )
@@ -1149,6 +1185,10 @@ class PerformanceReportBuilder:
                         grand_cash_flow = 0
                         grand_cash_flow_weighted = 0
                         # total_nav += record_cash_flow
+                    elif record.transaction_date == self.instance.first_transaction_date:
+                        time_weight = 0
+                        grand_cash_flow = 0
+                        grand_cash_flow_weighted = 0
                     else:
                         time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
                         grand_cash_flow += record_cash_flow
