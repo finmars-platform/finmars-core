@@ -878,7 +878,7 @@ def pick_dates_from_range(
     return pick_dates
 
 
-def calc_period_date(
+def calculate_period_date(
     date: str | datetime.date,
     frequency: str,
     shift: int,

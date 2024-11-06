@@ -16,7 +16,7 @@ from django.utils import numberformat
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
-from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose
+from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose, calculate_period_date
 from poms.expressions_engine.exceptions import ExpressionEvalError, InvalidExpression
 
 _l = logging.getLogger("poms.formula")
@@ -644,6 +644,23 @@ def _get_date_last_year_end_business(date):
     offset = BYearEnd()
 
     return offset.rollback(date).date()
+
+def _calculate_period_date(
+    date: str,
+    frequency: str,
+    shift: str,
+    is_only_bday: str,
+    start: str,
+):
+    """
+    To get information refer to docstring for the `calculate_period_date` function
+    """
+    date = _parse_date(date)
+    shift = int(shift)
+    is_only_bday = bool(is_only_bday)
+    start = bool(start)
+
+    return calculate_period_date(date, frequency, shift, is_only_bday, start)
 
 
 def _format_date2(date, format_=None, locale=None):
@@ -5068,6 +5085,7 @@ FINMARS_FUNCTIONS = [
         "get_date_last_quarter_end_business", _get_date_last_quarter_end_business
     ),
     SimpleEval2Def("get_date_last_year_end_business", _get_date_last_year_end_business),
+    SimpleEval2Def("calculate_period_date", _calculate_period_date),
     SimpleEval2Def("format_number", _format_number),
     SimpleEval2Def("parse_number", _parse_number),
     SimpleEval2Def("join", _join),
