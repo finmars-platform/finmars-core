@@ -69,23 +69,30 @@ class IamProtectedSerializer(serializers.ModelSerializer):
                 resource_group_code = user_code
                 try:
                     # Fetch the ResourceGroup and its assignments
-                    resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                    resource_group = ResourceGroup.objects.get(
+                        user_code=resource_group_code
+                    )
                     assignments = resource_group.assignments.all()
 
                     # Add each assigned object's user_code as an expanded resource
                     expanded_resources.update(
                         f"frn:finmars:{assignment.content_type.app_label}:{assignment.content_type.model}:{assignment.object_user_code}"
-                        for assignment in assignments if assignment.object_user_code
+                        for assignment in assignments
+                        if assignment.object_user_code
                     )
                 except ResourceGroup.DoesNotExist:
-                    _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                    _l.warning(
+                        f"ResourceGroup with user_code {resource_group_code} does not exist."
+                    )
                     continue
             else:
                 expanded_resources.add(resource)
 
         # Check permission against expanded resources
         has_permission = False
-        model_content_type = f"{self.Meta.model._meta.app_label}:{self.Meta.model.__name__.lower()}"
+        model_content_type = (
+            f"{self.Meta.model._meta.app_label}:{self.Meta.model.__name__.lower()}"
+        )
         instance_identifier = f"frn:finmars:{model_content_type}:{instance.user_code}"
 
         if instance_identifier in expanded_resources:
@@ -101,7 +108,6 @@ class IamProtectedSerializer(serializers.ModelSerializer):
                 "short_name": getattr(instance, "public_name", None),
                 "user_code": getattr(instance, "user_code", None),
             }
-
 
 
 class IamModelOwnerSerializer(serializers.ModelSerializer):
@@ -163,7 +169,6 @@ class IamGroupSerializer(serializers.ModelSerializer):
 
 
 class IamAccessPolicySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AccessPolicy
         fields = ["id", "name", "user_code", "configuration_code"]
@@ -423,42 +428,41 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         Existing assignments are updated if present, otherwise new assignments to be created.
         Assignments that are not present in the new assignments list to be deleted.
         """
-        assignments = validated_data.pop("assignments", None)
-        if assignments is not None:
-            existing_assignments = {
+
+        def create_new_assignments(rg: ResourceGroup, new_ids: set, rcvd_ids: dict):
+            to_create = []
+            for new_id in new_ids:
+                to_create.append(
+                    ResourceGroupAssignment(
+                        resource_group=rg,
+                        **rcvd_ids[new_id],
+                    )
+                )
+            if to_create:
+                ResourceGroupAssignment.objects.bulk_create(to_create)
+
+        def delete_removed_assignments(old_ids: set, exst_ids: dict):
+            for old_id in old_ids:
+                exst_ids[old_id].delete()
+
+
+        received_assignments = validated_data.pop("assignments", None)
+
+        if received_assignments is not None:
+            received_ids = {
+                assignment["id"]: assignment
+                for assignment in received_assignments
+                if assignment.get("id")
+            }
+            existing_ids = {
                 assignment.id: assignment for assignment in instance.assignments.all()
             }
 
-            new_assignments = []
-            ids_to_keep = []
-            for assignment_data in assignments:
-                assignment_id = assignment_data.pop("id", None)
-                if assignment_id:
-                    ids_to_keep.append(assignment_id)
-                    # update existing assignment
-                    if assignment_id in existing_assignments:
-                        assignment = existing_assignments[assignment_id]
-                        for attr, value in assignment_data.items():
-                            setattr(assignment, attr, value)
-                        assignment.save()
-                else:
-                    # update the list of new assignments instances
-                    assignment_data.pop("resource_group", None)
-                    new_assignments.append(
-                        ResourceGroupAssignment(
-                            resource_group=instance,
-                            **assignment_data,
-                        )
-                    )
+            ids_to_create = set(received_ids.keys()) - set(existing_ids.keys())
+            create_new_assignments(instance, ids_to_create, received_ids)
 
-            # create new assignments
-            if new_assignments:
-                ResourceGroupAssignment.objects.bulk_create(new_assignments)
-
-            # delete assignments that are not in the list
-            for assignment_id, assignment in existing_assignments.items():
-                if assignment_id not in ids_to_keep:
-                    assignment.delete()
+            ids_to_remove = set(existing_ids.keys()) - set(received_ids.keys())
+            delete_removed_assignments(ids_to_remove, existing_ids)
 
         return super().update(instance, validated_data)
 
