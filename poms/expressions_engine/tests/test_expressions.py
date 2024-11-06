@@ -47,7 +47,6 @@ class TestExpressions(BaseTestCase):
                 "result": "2025-03-03"
             }
         ),
-
         (
                 "weekly_start",
                 {

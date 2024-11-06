@@ -645,20 +645,22 @@ def _get_date_last_year_end_business(date):
 
     return offset.rollback(date).date()
 
+
 def _calculate_period_date(
-    date: str,
+    date: str | datetime.date,
     frequency: str,
-    shift: str,
-    is_only_bday: str,
-    start: str,
-):
+    shift: int,
+    is_only_bday=False,
+    start=False,
+) -> str:
     """
     To get information refer to docstring for the `calculate_period_date` function
+    
+    :param date: A string in YYYY-MM-DD ISO format representing the current date / date / a string that is 
+    another expression that evaluates to date.
+    
     """
     date = _parse_date(date)
-    shift = int(shift)
-    is_only_bday = bool(is_only_bday)
-    start = bool(start)
 
     return calculate_period_date(date, frequency, shift, is_only_bday, start)
 
