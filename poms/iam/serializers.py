@@ -418,6 +418,21 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         model = ResourceGroup
         fields = "__all__"
 
+    @staticmethod
+    def create_new_assignments(rg: ResourceGroup, new_ids: set, rcvd_ids: dict):
+        to_create = []
+        for new_id in new_ids:
+            to_create.append(
+                ResourceGroupAssignment(resource_group=rg, **rcvd_ids[new_id])
+            )
+        if to_create:
+            ResourceGroupAssignment.objects.bulk_create(to_create)
+
+    @staticmethod
+    def delete_removed_assignments(old_ids: set, exst_ids: dict):
+        for old_id in old_ids:
+            exst_ids[old_id].delete()
+
     def update(self, instance, validated_data):
         """
         Args:
@@ -429,26 +444,8 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         Assignments that are not present in the new assignments list to be deleted.
         """
 
-        def create_new_assignments(rg: ResourceGroup, new_ids: set, rcvd_ids: dict):
-            to_create = []
-            for new_id in new_ids:
-                to_create.append(
-                    ResourceGroupAssignment(
-                        resource_group=rg,
-                        **rcvd_ids[new_id],
-                    )
-                )
-            if to_create:
-                ResourceGroupAssignment.objects.bulk_create(to_create)
-
-        def delete_removed_assignments(old_ids: set, exst_ids: dict):
-            for old_id in old_ids:
-                exst_ids[old_id].delete()
-
-
         received_assignments = validated_data.pop("assignments", None)
-
-        if received_assignments is not None:
+        if received_assignments:
             received_ids = {
                 assignment["id"]: assignment
                 for assignment in received_assignments
@@ -459,10 +456,10 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
             }
 
             ids_to_create = set(received_ids.keys()) - set(existing_ids.keys())
-            create_new_assignments(instance, ids_to_create, received_ids)
+            self.create_new_assignments(instance, ids_to_create, received_ids)
 
             ids_to_remove = set(existing_ids.keys()) - set(received_ids.keys())
-            delete_removed_assignments(ids_to_remove, existing_ids)
+            self.delete_removed_assignments(ids_to_remove, existing_ids)
 
         return super().update(instance, validated_data)
 
