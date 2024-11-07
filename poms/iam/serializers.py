@@ -42,6 +42,9 @@ class IamProtectedSerializer(serializers.ModelSerializer):
         abstract = True
 
     def to_representation(self, instance):
+        from poms.iam.models import ResourceGroup
+        from poms.iam.utils import get_allowed_resources
+
         member = self.context["request"].user.member
 
         if member.is_admin:
@@ -53,9 +56,6 @@ class IamProtectedSerializer(serializers.ModelSerializer):
         """
 
         queryset = self.Meta.model.objects.filter(pk=instance.pk)
-        from poms.iam.utils import get_allowed_resources
-        from django.contrib.contenttypes.models import ContentType
-        from poms.iam.models import ResourceGroup
 
         # Get initial allowed resources for the member and model
         allowed_resources = get_allowed_resources(member, self.Meta.model, queryset)
@@ -112,11 +112,9 @@ class IamProtectedSerializer(serializers.ModelSerializer):
 
 class IamModelOwnerSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
-        # print('ModelOwnerSerializer %s' % instance)
+        from poms.users.serializers import MemberViewSerializer
 
         representation = super().to_representation(instance)
-
-        from poms.users.serializers import MemberViewSerializer
 
         serializer = MemberViewSerializer(instance=instance.owner)
 
@@ -391,19 +389,14 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
 
     class Meta:
         model = AccessPolicy
-        fields = [
-            "id",
-            "name",
-            "user_code",
-            "configuration_code",
-            "policy",
-            "description",
-            "created_at",
-            "modified_at",
-        ]
+        fields = "__all__"
 
 
 class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(
+        required=False
+    )  # ensure ID presence in validated data
+
     class Meta:
         model = ResourceGroupAssignment
         fields = [
@@ -443,8 +436,6 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         in the received list to be deleted.
         """
 
-        print(">>>>> validated_data: ", validated_data, " <<<<<<<\n\n")
-
         received_assignments = validated_data.pop("assignments", None)
         if received_assignments is not None:
             received_ids = {
@@ -457,8 +448,6 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
             }
 
             ids_to_remove = set(existing_ids.keys()) - set(received_ids.keys())
-
-            print(">>>>> ids_to_remove: ", ids_to_remove, " <<<<<<<")
 
             if ids_to_remove:
                 for old_id in ids_to_remove:
