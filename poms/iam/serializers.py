@@ -406,7 +406,13 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
 class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceGroupAssignment
-        fields = "__all__"
+        fields = [
+            "id",
+            "resource_group",
+            "content_type",
+            "object_id",
+            "object_user_code",
+        ]
 
 
 class ResourceGroupSerializer(serializers.ModelSerializer):
@@ -416,22 +422,15 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResourceGroup
-        fields = "__all__"
-
-    @staticmethod
-    def create_new_assignments(rg: ResourceGroup, new_ids: set, rcvd_ids: dict):
-        to_create = []
-        for new_id in new_ids:
-            to_create.append(
-                ResourceGroupAssignment(resource_group=rg, **rcvd_ids[new_id])
-            )
-        if to_create:
-            ResourceGroupAssignment.objects.bulk_create(to_create)
-
-    @staticmethod
-    def delete_removed_assignments(old_ids: set, exst_ids: dict):
-        for old_id in old_ids:
-            exst_ids[old_id].delete()
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "description",
+            "assignments",
+            "created_at",
+            "modified_at",
+        ]
 
     def update(self, instance, validated_data):
         """
@@ -440,12 +439,14 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         - validated_data: The data that has been validated and will be used
 
         Updates the assignments for a given instance based on the provided validated_data.
-        Existing assignments are updated if present, otherwise new assignments to be created.
-        Assignments that are not present in the new assignments list to be deleted.
+        Existing assignments can be only deleted, so assignments that are not present
+        in the received list to be deleted.
         """
 
+        print(">>>>> validated_data: ", validated_data, " <<<<<<<\n\n")
+
         received_assignments = validated_data.pop("assignments", None)
-        if received_assignments:
+        if received_assignments is not None:
             received_ids = {
                 assignment["id"]: assignment
                 for assignment in received_assignments
@@ -455,11 +456,13 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
                 assignment.id: assignment for assignment in instance.assignments.all()
             }
 
-            ids_to_create = set(received_ids.keys()) - set(existing_ids.keys())
-            self.create_new_assignments(instance, ids_to_create, received_ids)
-
             ids_to_remove = set(existing_ids.keys()) - set(received_ids.keys())
-            self.delete_removed_assignments(ids_to_remove, existing_ids)
+
+            print(">>>>> ids_to_remove: ", ids_to_remove, " <<<<<<<")
+
+            if ids_to_remove:
+                for old_id in ids_to_remove:
+                    existing_ids[old_id].delete()
 
         return super().update(instance, validated_data)
 
