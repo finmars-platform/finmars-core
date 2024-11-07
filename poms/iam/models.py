@@ -261,5 +261,6 @@ class ResourceGroupAssignment(models.Model):
 
         super().delete(**kwargs)
 
+
 # Important, needs for cache clearance after Policy Updated !!!
 from . import signals
