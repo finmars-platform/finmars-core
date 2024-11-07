@@ -389,13 +389,21 @@ class AccessPolicySerializer(IamModelMetaSerializer, IamModelWithTimeStampSerial
 
     class Meta:
         model = AccessPolicy
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "user_code",
+            "configuration_code",
+            "policy",
+            "description",
+            "created_at",
+            "modified_at",
+        ]
 
 
 class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(
-        required=False
-    )  # ensure ID presence in validated data
+    # Explicit declaration to ensure ID presence in validated data
+    id = serializers.IntegerField(required=False)
 
     class Meta:
         model = ResourceGroupAssignment
