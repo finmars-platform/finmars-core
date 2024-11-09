@@ -35,7 +35,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
         schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
 
-        finmars_bot = Member.objects.get(username="finmars_bot")
+        owner = Member.objects.get(username=schedule.owner.username)
 
         context = {
             "execution_context": {
@@ -103,7 +103,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 instance = DataProcedureProcess(
                     procedure=item,
                     master_user=master_user,
-                    member=finmars_bot,
+                    member=owner,
                     context=context,
                     schedule_instance=schedule_instance,
                 )
@@ -125,11 +125,10 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 item = ExpressionProcedure.objects.get(
                     master_user=master_user, user_code=procedure.user_code
                 )
-
                 instance = ExpressionProcedureProcess(
                     procedure=item,
                     master_user=master_user,
-                    member=finmars_bot,
+                    member=owner,
                     context=context,
                 )
                 instance.process()
