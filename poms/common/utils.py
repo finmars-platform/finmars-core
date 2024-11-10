@@ -878,12 +878,12 @@ def pick_dates_from_range(
     return pick_dates
 
 
-def calc_period_date(
+def calculate_period_date(
     date: str | datetime.date,
     frequency: str,
     shift: int,
-    is_only_bday: bool,
-    start: bool,
+    is_only_bday=False,
+    start=False,
 ) -> str:
     """
     Calculates the start or end date of a certain time period,

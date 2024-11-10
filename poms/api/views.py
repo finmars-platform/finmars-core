@@ -38,7 +38,7 @@ from poms.api.serializers import (
 )
 from poms.common.storage import get_storage
 from poms.common.utils import (
-    calc_period_date,
+    calculate_period_date,
     get_closest_bday_of_yesterday,
     get_last_business_day,
     get_list_of_business_days_between_two_dates,
@@ -1581,7 +1581,7 @@ class CalcPeriodDateViewSet(AbstractViewSet):
         shift = serializer.validated_data["shift"]
         is_only_bday = serializer.validated_data["is_only_bday"]
         start = serializer.validated_data["start"]
-        dates = calc_period_date(date, frequency, shift, is_only_bday, start)
+        dates = calculate_period_date(date, frequency, shift, is_only_bday, start)
 
         return Response({"result": dates}, status=status.HTTP_200_OK)
 

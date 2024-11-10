@@ -174,7 +174,7 @@ router.register(
 router.register(
     r"utils/date/calc-period-date",
     api.CalcPeriodDateViewSet,
-    "calc_period_date",
+    "calculate_period_date",
 )
 router.register(
     r"utils/date/last-business-day",

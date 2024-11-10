@@ -7,7 +7,7 @@ from poms.common.utils import (
     get_last_business_day_in_previous_quarter,
     split_date_range,
     pick_dates_from_range,
-    calc_period_date,
+    calculate_period_date,
 )
 
 
@@ -126,5 +126,5 @@ class TestBusinessDayFunctions(SimpleTestCase):
         ]
 
         for i, test_case in enumerate(test_cases):
-            date = calc_period_date(test_case[0], test_case[1], test_case[2], test_case[3], test_case[4])
+            date = calculate_period_date(test_case[0], test_case[1], test_case[2], test_case[3], test_case[4])
             self.assertEqual(date, expected[i])
