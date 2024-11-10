@@ -13,16 +13,7 @@ class ScheduleViewSetTest(BaseTestCase):
         self.realm_code = 'realm00000'
         self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/schedules/schedule/"
-
-        self.schedule = Schedule.objects.using(settings.DB_DEFAULT).create(
-            master_user=self.master_user,
-            owner=self.member,
-            cron_expr="1 * * * *",
-            user_code="com.finmars.initial-system-procedure:system_clearance",
-            short_name="System Clearance",
-            name="System Clearance",
-            configuration_code="com.finmars.initial-system-procedure",
-        )
+        self.schedule = self.create_schedule()
 
 
     def test__run_schedule(self):
