@@ -41,6 +41,20 @@ class ClientSecret(OwnerModel):
         on_delete=models.CASCADE,
     )
 
+    provider = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("provider"),
+    )
+
+    portfolio = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("portfolio"),
+    )
+
     class Meta(NamedModel.Meta):
         verbose_name = gettext_lazy("client secret")
         verbose_name_plural = gettext_lazy("client secrets")

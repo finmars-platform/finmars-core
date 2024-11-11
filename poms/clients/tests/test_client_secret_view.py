@@ -7,6 +7,8 @@ from poms.common.common_base_test import BaseTestCase
 EXPECTED_DATA = {
     "id": 1,
     "user_code": "user_code",
+    "provider": "",
+    "portfolio": "",
     "client": "test",
     "client_object": {
         "id": 3,

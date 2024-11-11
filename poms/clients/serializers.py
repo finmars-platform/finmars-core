@@ -48,6 +48,9 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
             "id",
             "master_user",
             "user_code",
+            "provider",
+            "portfolio",
+
             "client",
             "client_object",
         ]
