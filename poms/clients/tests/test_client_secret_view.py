@@ -58,8 +58,6 @@ class ClientViewTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
 
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
         self.master_user = self.master_user
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/clients/client-secret/"
         self.create_client_obj(user_code=CREATE_DATA["client"])

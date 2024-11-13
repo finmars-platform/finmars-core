@@ -45,14 +45,12 @@ class ClientSecret(OwnerModel):
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=gettext_lazy("provider"),
     )
 
     portfolio = models.CharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=gettext_lazy("portfolio"),
     )
 
     class Meta(NamedModel.Meta):
