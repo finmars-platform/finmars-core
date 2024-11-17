@@ -532,11 +532,12 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return self._add_attributes(self.account)
 
-    def create_client_obj(self) -> Client:
+    def create_client_obj(self, user_code:str=None) -> Client:
+        user_code = self.random_string() if user_code is None else user_code
         return Client.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            user_code=self.random_string(),
+            user_code=user_code,
             public_name=self.random_string(3),
             name=self.random_string(3),
         )
