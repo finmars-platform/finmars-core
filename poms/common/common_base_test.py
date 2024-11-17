@@ -60,6 +60,7 @@ from poms.transactions.models import (
 )
 from poms.users.models import EcosystemDefault, MasterUser, Member
 from poms.clients.models import Client
+from poms.schedules.models import Schedule
 
 # TEST_CASE = TransactionTestCase  # if settings.USE_DB_REPLICA == True
 TEST_CASE = TestCase
@@ -611,6 +612,17 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             owner=self.member,
             user_code=name,
             name=name,
+        )
+
+    def create_schedule(self, user_code=None, name=None, configuration_code=None, cron_expr=""):
+        return Schedule.objects.using(settings.DB_DEFAULT).create(
+            master_user=self.master_user,
+            owner=self.member,
+            cron_expr=cron_expr,
+            user_code=user_code or self.random_string(),
+            short_name=name or self.random_string(),
+            name=name or self.random_string(),
+            configuration_code=configuration_code or self.random_string(),
         )
 
     def __init__(self, *args, **kwargs):
