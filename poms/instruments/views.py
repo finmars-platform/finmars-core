@@ -713,6 +713,7 @@ class InstrumentFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
+    identifier = IdentifierKeysValuesFilter()
     instrument_type__instrument_class = django_filters.ModelMultipleChoiceFilter(
         queryset=InstrumentClass.objects
     )
@@ -775,7 +776,6 @@ class InstrumentViewSet(AbstractModelViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
         EntitySpecificFilter,
-        IdentifierKeysValuesFilter,
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [
