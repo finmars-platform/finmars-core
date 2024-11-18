@@ -45,7 +45,6 @@ class ClientViewTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/clients/client/"
         self.create_client_obj()
 
-
     def test__list_and_default(self):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
@@ -55,7 +54,6 @@ class ClientViewTest(BaseTestCase):
         
         client = response_json["results"][0]
         self.assertEqual(client.keys(), EXPECTED_CLIENT.keys())
-
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         client = self.create_client_obj()
@@ -69,14 +67,12 @@ class ClientViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
-
     def test__create(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
         self.assertEqual(response.status_code, 201, response.content)
 
         client = Client.objects.filter(user_code=CREATE_DATA["user_code"])
         self.assertIsNotNone(client)
-
 
     def test__update_patch(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
@@ -96,7 +92,6 @@ class ClientViewTest(BaseTestCase):
         self.assertEqual(response_json["count"], 1)
         client = response_json["results"][0]
         self.assertEqual(client["name"], new_name)
-
 
     def test__delete(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
