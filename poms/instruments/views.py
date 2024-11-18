@@ -998,39 +998,59 @@ class InstrumentViewSet(AbstractModelViewSet):
         user_codes = serializer.validated_data["user_codes"]
 
         queryset = self.filter_queryset(self.get_queryset())
-        instruments = queryset.filter(user_code__in=user_codes)
+
+        queryset = queryset.filter(is_active=True, is_deleted=False)
+
+        queryset = queryset.select_related("instrument_type")
+
+        if user_codes:
+            instruments = queryset.filter(user_code__in=user_codes)
+        else:
+            instruments = queryset
+
         instrument_ids = [instrument.id for instrument in instruments]
 
         query = f"""
-            SELECT instrument_id, SUM(position_size) as position_size
-            FROM (
-                SELECT account_position_id, portfolio_id, instrument_id, 
+            SELECT account_position_id, portfolio_id, instrument_id, 
                         SUM(position_size_with_sign) as position_size
                 FROM {Transaction._meta.db_table}
                 WHERE transaction_date <= %s AND instrument_id = ANY(%s)
                 GROUP BY account_position_id, portfolio_id, instrument_id
                 HAVING SUM(position_size_with_sign) <> 0
-            ) as t
-            GROUP BY instrument_id
         """
+
         with connection.cursor() as cursor:
             cursor.execute(query, [balance_date, instrument_ids])
-            transactions = dictfetchall(cursor)
-        transactions = {t["instrument_id"]: t["position_size"] for t in transactions}
+            sql_results = dictfetchall(cursor)
 
-        items = [
-            {
+        # Group SQL results by instrument_id
+        grouped_results = {}
+        for row in sql_results:
+            instrument_id = row["instrument_id"]
+            if instrument_id not in grouped_results:
+                grouped_results[instrument_id] = []
+            grouped_results[instrument_id].append({
+                "account_position_id": row["account_position_id"],
+                "portfolio_id": row["portfolio_id"],
+                "position_size": row["position_size"],
+            })
+
+        # Prepare the response
+        items = []
+        for instrument in instruments:
+            instrument_items = grouped_results.get(instrument.id, [])
+            is_on_balance = any(item["position_size"] != 0 for item in instrument_items)
+
+            items.append({
                 "id": instrument.id,
                 "user_code": instrument.user_code,
                 "name": instrument.name,
-                "position_size": transactions.get(instrument.id, 0),
-                "is_on_balance": bool(transactions.get(instrument.id)),
-            }
-            for instrument in instruments
-        ]
+                "items": instrument_items,  # SQL results filtered by instrument ID
+                "is_on_balance": is_on_balance,  # True if at least one item has a non-zero position
+                "instrument_type": instrument.instrument_type.user_code if instrument.instrument_type else None,
+            })
 
         result = {"date": balance_date, "instruments": items}
-
         return Response(result)
 
     @action(
