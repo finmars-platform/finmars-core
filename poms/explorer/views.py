@@ -750,4 +750,4 @@ class CopyViewSet(ContextMixin, AbstractViewSet):
 class StorageObjectResourceGroupViewSet(ContextMixin, AbstractModelViewSet):
     queryset = StorageObject.objects.all()
     serializer_class = StorageObjectResourceGroupSerializer
-    http_method_names = ["patch"]
+    http_method_names = ["get", "patch"]

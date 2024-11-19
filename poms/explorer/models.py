@@ -90,3 +90,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
     def extension(self) -> str:
         path = Path(self.path)
         return path.suffix
+
+    @property
+    def user_code(self) -> str:
+        return f"storage_object:{self.id}:{self.path}"

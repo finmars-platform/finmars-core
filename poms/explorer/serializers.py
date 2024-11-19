@@ -342,29 +342,12 @@ class CopySerializer(serializers.Serializer):
 
 
 class StorageObjectResourceGroupSerializer(ModelWithResourceGroupSerializer):
-    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    path = serializers.CharField(read_only=True)
     parent = serializers.IntegerField(read_only=True)
     size = serializers.IntegerField(read_only=True)
     is_file = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     modified_at = serializers.DateTimeField(read_only=True)
-
-    def validate(self, attrs: dict) -> dict:
-        path = attrs["path"]
-        if bad_path_regex.search(path):
-            raise ValidationError(
-                detail=f"Invalid symbols in path: {path}", code="path"
-            )
-
-        try:
-            storage_object = StorageObject.objects.get(path=path)
-        except StorageObject.DoesNotExist:
-            raise ValidationError(
-                detail=f"Storage object {path} was not found", code="path"
-            )
-
-        attrs["storage_object"] = storage_object
-        return attrs
 
     class Meta:
         model = StorageObject
