@@ -201,6 +201,6 @@ class ResourceGroupsField(ArrayField):
         kwargs.setdefault("default", default_empty_list)
         kwargs.setdefault(
             "verbose_name",
-            _("list of resource groups user_codes, to which obj belongs"),
+            _("list of resource groups user_codes, to which object belongs"),
         )
         super().__init__(*args, **kwargs)
