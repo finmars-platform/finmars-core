@@ -35,7 +35,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
     def has_statements(self, view, request) -> Optional[bool]:
         return bool(self.get_policy_statements(request, view))
 
-    def has_specific_permission(self, view, request, *args):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
@@ -45,7 +45,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
 
 
 class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request, *args):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
@@ -60,7 +60,7 @@ class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
 
 
 class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request):
             return False
 
@@ -75,7 +75,7 @@ class ExplorerReadFilePathPermission(ExplorerRootAccessPermission):
 
 
 class ExplorerWriteDirectoryPathPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
@@ -87,7 +87,7 @@ class ExplorerWriteDirectoryPathPermission(ExplorerRootAccessPermission):
 
 
 class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
@@ -104,7 +104,7 @@ class ExplorerDeletePathPermission(ExplorerRootAccessPermission):
 
 
 class ExplorerRootWritePermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
@@ -118,7 +118,7 @@ class ExplorerRootWritePermission(ExplorerRootAccessPermission):
 
 
 class ExplorerZipPathsReadPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
@@ -142,7 +142,7 @@ class ExplorerZipPathsReadPermission(ExplorerRootAccessPermission):
 
 
 class ExplorerMovePermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 
@@ -166,7 +166,7 @@ class ExplorerMovePermission(ExplorerRootAccessPermission):
 
 
 class ExplorerUnZipPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, **kwargs):
         if not self.has_statements(view, request) or request.method == "GET":
             return False
 

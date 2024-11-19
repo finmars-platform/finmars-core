@@ -17,7 +17,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.pagination import PageNumberPaginationExt
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
-from poms.explorer.permission import (
+from poms.explorer.permissions import (
     ExplorerDeletePathPermission,
     ExplorerMovePermission,
     ExplorerReadDirectoryPathPermission,
