@@ -1,7 +1,9 @@
 import contextlib
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -20,6 +22,7 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
+from poms.common.utils import default_empty_list
 from poms.expressions_engine import formula
 from poms.iam.fields import IamProtectedRelatedField
 
@@ -190,3 +193,14 @@ class ContentTypeOrPrimaryKeyRelatedField(RelatedField):
 
     def to_representation(self, obj):
         return getattr(obj, "id")
+
+
+class ResourceGroupsField(ArrayField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("base_field", models.CharField(max_length=1024))
+        kwargs.setdefault("default", default_empty_list)
+        kwargs.setdefault(
+            "verbose_name",
+            _("list of resource groups user_codes, to which obj belongs"),
+        )
+        super().__init__(*args, **kwargs)

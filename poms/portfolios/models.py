@@ -17,6 +17,7 @@ from poms.common.models import (
 )
 from poms.clients.models import Client
 from poms.common.utils import date_now, str_to_date
+from poms.common.fields import ResourceGroupsField
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
@@ -192,9 +193,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         null=True,
         verbose_name=gettext_lazy("first cash flow date"),
     )
-    resource_groups = ArrayField(
-        base_field=models.CharField(max_length=1024),
-        default=default_list,
+    resource_groups = ResourceGroupsField(
         verbose_name=gettext_lazy(
             "list of resource groups user_codes, to which portfolio belongs"
         ),
