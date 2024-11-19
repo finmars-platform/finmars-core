@@ -9,7 +9,6 @@ from django.http import FileResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.response import Response
 
@@ -30,7 +29,6 @@ from poms.explorer.permissions import (
 )
 from poms.explorer.models import StorageObject
 from poms.explorer.serializers import (
-    AccessPolicySerializer,
     BasePathSerializer,
     CopySerializer,
     DeletePathSerializer,
@@ -655,24 +653,6 @@ class SearchViewSet(AbstractModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class StorageObjectResourceGroupViewSet(ContextMixin, AbstractViewSet):
-    serializer_class = StorageObjectResourceGroupSerializer
-    http_method_names = ["patch"]
-
-    def create(self, request, *args, **kwargs):
-        if not request.user.is_staff or not request.user.is_superuser:
-            raise PermissionDenied("Only privileged users can perform this action")
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        access_policy = serializer.set_access_policy()
-
-        return Response(
-            AccessPolicySerializer(access_policy).data,
-            status=status.HTTP_200_OK,
-        )
-
-
 class RenameViewSet(ContextMixin, AbstractViewSet):
     serializer_class = RenameSerializer
     http_method_names = ["post"]
@@ -765,3 +745,9 @@ class CopyViewSet(ContextMixin, AbstractViewSet):
             ).data,
             status=status.HTTP_200_OK,
         )
+
+
+class StorageObjectResourceGroupViewSet(ContextMixin, AbstractModelViewSet):
+    queryset = StorageObject.objects.all()
+    serializer_class = StorageObjectResourceGroupSerializer
+    http_method_names = ["patch"]

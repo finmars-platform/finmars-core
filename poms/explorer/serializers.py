@@ -7,18 +7,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
-from poms.explorer.models import (
-    DIR_SUFFIX,
-    MAX_NAME_LENGTH,
-    MAX_PATH_LENGTH,
-    AccessLevel,
-    StorageObject,
-)
-from poms.explorer.policy_handlers import get_or_create_storage_access_policy
+from poms.explorer.models import DIR_SUFFIX, MAX_PATH_LENGTH, StorageObject
 from poms.explorer.utils import is_true_value, path_is_file
-from poms.iam.models import AccessPolicy
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.models import Instrument
-from poms.users.models import MasterUser, Member
 
 forbidden_symbols_in_path = r'[:*?"<>|;&]'
 bad_path_regex = re.compile(forbidden_symbols_in_path)
@@ -26,7 +18,7 @@ bad_path_regex = re.compile(forbidden_symbols_in_path)
 """
  Path (a string in the DB), should be a valid UNIX style path which has no: 
  forbidden symbols, two and more adjusted '/' ( like //, /// etc ). 
- Path should end with file name (without '/' at the end) or with '/*' for directories.
+ Path should end with file name (without '/' at the end) or with '/' for directories.
  Root path contains '<space-code>/', it's the first directory available for a user.
  Path should be no longer than 2048 characters.
 """
@@ -286,49 +278,6 @@ class FinmarsFileSerializer(serializers.ModelSerializer):
         return size
 
 
-class AccessPolicySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessPolicy
-        fields = "__all__"
-
-
-class StorageObjectResourceGroupSerializer(serializers.Serializer):
-    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
-
-    @staticmethod
-    def validate_path(value: str) -> str:
-        path = value.removesuffix(DIR_SUFFIX)
-        if bad_path_regex.search(path):
-            raise ValidationError(detail=f"Invalid path {value}", code="path")
-        return value
-
-    def validate(self, attrs: dict) -> dict:
-        path = attrs["path"]
-        if path.endswith(DIR_SUFFIX):
-            storage_object = StorageObject.objects.filter(
-                path=path, is_file=False
-            ).first()
-        else:
-            storage_object = StorageObject.objects.filter(
-                path=path, is_file=True
-            ).first()
-
-        if not storage_object:
-            raise ValidationError(
-                detail=f"Storage object {path} was not found",
-                code="path",
-            )
-
-        attrs["storage_object"] = storage_object
-        return attrs
-
-    def set_access_policy(self) -> AccessPolicy:
-        storage_object = self.validated_data["storage_object"]
-        access = self.validated_data["access"]
-        member = self.validated_data["username"]
-        return get_or_create_storage_access_policy(storage_object, member, access)
-
-
 class RenameSerializer(serializers.Serializer):
     path = serializers.CharField(required=True, allow_blank=False)
     new_name = serializers.CharField(required=True, allow_blank=False)
@@ -390,3 +339,33 @@ class CopySerializer(serializers.Serializer):
         attrs["target_directory_path"] = new_target_directory_path
         attrs["paths"] = updated_paths
         return attrs
+
+
+class StorageObjectResourceGroupSerializer(ModelWithResourceGroupSerializer):
+    path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
+    parent = serializers.IntegerField(read_only=True)
+    size = serializers.IntegerField(read_only=True)
+    is_file = serializers.BooleanField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    modified_at = serializers.DateTimeField(read_only=True)
+
+    def validate(self, attrs: dict) -> dict:
+        path = attrs["path"]
+        if bad_path_regex.search(path):
+            raise ValidationError(
+                detail=f"Invalid symbols in path: {path}", code="path"
+            )
+
+        try:
+            storage_object = StorageObject.objects.get(path=path)
+        except StorageObject.DoesNotExist:
+            raise ValidationError(
+                detail=f"Storage object {path} was not found", code="path"
+            )
+
+        attrs["storage_object"] = storage_object
+        return attrs
+
+    class Meta:
+        model = StorageObject
+        fields = "__all__"

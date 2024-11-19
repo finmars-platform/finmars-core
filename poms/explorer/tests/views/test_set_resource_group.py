@@ -30,7 +30,7 @@ expected_response = {
 }
 
 
-class FinmarsFileViewSetTest(BaseTestCase):
+class StorageObjectResourceGroupViewTest(BaseTestCase):
     databases = "__all__"
     maxDiff = None
 
@@ -40,7 +40,7 @@ class FinmarsFileViewSetTest(BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-access-policy/"
+            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-resource-group/"
         )
         self.dirpath = f"/test/next{DIR_SUFFIX}"
         self.filepath = "/test/next/test.pdf"
@@ -49,10 +49,6 @@ class FinmarsFileViewSetTest(BaseTestCase):
             path=self.filepath, size=111, is_file=True
         )
 
-    @BaseTestCase.cases(
-        ("read", AccessLevel.READ),
-        ("write", AccessLevel.WRITE),
-    )
     def test__file_access_policy_created_at(self, access):
         data = {
             "path": self.filepath,
