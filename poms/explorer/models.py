@@ -45,7 +45,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
         max_length=MAX_PATH_LENGTH,
         unique=True,
         blank=False,
-        help_text="Path to the directory in the storage system",
+        help_text="Path to the file or directory in the storage system",
     )
     parent = TreeForeignKey(
         "self",

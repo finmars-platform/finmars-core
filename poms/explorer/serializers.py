@@ -292,10 +292,8 @@ class AccessPolicySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class StorageObjectAccessPolicySerializer(serializers.Serializer):
+class StorageObjectResourceGroupSerializer(serializers.Serializer):
     path = serializers.CharField(allow_blank=False, max_length=MAX_PATH_LENGTH)
-    access = serializers.CharField(allow_blank=False, max_length=10)
-    username = serializers.CharField(allow_blank=False, max_length=MAX_NAME_LENGTH)
 
     @staticmethod
     def validate_path(value: str) -> str:
@@ -303,28 +301,6 @@ class StorageObjectAccessPolicySerializer(serializers.Serializer):
         if bad_path_regex.search(path):
             raise ValidationError(detail=f"Invalid path {value}", code="path")
         return value
-
-    @staticmethod
-    def validate_access(value: str) -> str:
-        AccessLevel.validate_level(value)
-        return value
-
-    def validate_username(self, value: str) -> str:
-        realm_code = self.context["realm_code"]
-        space_code = self.context["space_code"]
-        master_user = MasterUser.objects.filter(space_code=space_code).first()
-        if not master_user:
-            raise ValidationError(
-                detail=f"MasterUser not found for {realm_code}/{space_code}",
-                code="master_user",
-            )
-        member = Member.objects.filter(master_user=master_user, username=value).first()
-        if not master_user:
-            raise ValidationError(
-                detail=f"Member with username {value} not found in {realm_code}/{space_code}",
-                code="username",
-            )
-        return member
 
     def validate(self, attrs: dict) -> dict:
         path = attrs["path"]

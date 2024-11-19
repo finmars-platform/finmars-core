@@ -42,7 +42,7 @@ from poms.explorer.serializers import (
     RenameSerializer,
     ResponseSerializer,
     SearchResultSerializer,
-    StorageObjectAccessPolicySerializer,
+    StorageObjectResourceGroupSerializer,
     TaskResponseSerializer,
     UnZipSerializer,
     ZipFilesSerializer,
@@ -655,9 +655,9 @@ class SearchViewSet(AbstractModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class StorageObjectAccessPolicyViewSet(ContextMixin, AbstractViewSet):
-    serializer_class = StorageObjectAccessPolicySerializer
-    http_method_names = ["post"]
+class StorageObjectResourceGroupViewSet(ContextMixin, AbstractViewSet):
+    serializer_class = StorageObjectResourceGroupSerializer
+    http_method_names = ["patch"]
 
     def create(self, request, *args, **kwargs):
         if not request.user.is_staff or not request.user.is_superuser:
