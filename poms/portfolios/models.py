@@ -7,6 +7,8 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 
+from poms.clients.models import Client
+from poms.common.fields import ResourceGroupsField
 from poms.common.models import (
     AbstractClassModel,
     ComputedModel,
@@ -15,9 +17,7 @@ from poms.common.models import (
     ObjectStateModel,
     TimeStampedModel,
 )
-from poms.clients.models import Client
 from poms.common.utils import date_now, str_to_date
-from poms.common.fields import ResourceGroupsField
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
@@ -28,6 +28,12 @@ from poms.users.models import EcosystemDefault, MasterUser
 from poms_app import settings
 
 _l = getLogger("poms.portfolios")
+
+def default_list():
+    """
+    Return default empty list for model fields
+    """
+    return []
 
 
 class PortfolioClass(AbstractClassModel):
@@ -135,9 +141,7 @@ class PortfolioType(
             },
         ]
 
-from django.contrib.postgres.fields import ArrayField
-def default_list():
-    return []
+
 # noinspection PyUnresolvedReferences
 class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
@@ -194,6 +198,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         verbose_name=gettext_lazy("first cash flow date"),
     )
     resource_groups = ResourceGroupsField(
+        default=default_list,
         verbose_name=gettext_lazy(
             "list of resource groups user_codes, to which portfolio belongs"
         ),
