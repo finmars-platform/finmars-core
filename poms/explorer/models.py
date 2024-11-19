@@ -5,6 +5,7 @@ from django.db import models
 
 from mptt.models import MPTTModel, TreeForeignKey
 
+from poms.common.fields import ResourceGroupsField
 from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
@@ -61,6 +62,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
         default=False,
         help_text="Is this directory a file",
     )
+    resource_groups = ResourceGroupsField()
 
     class Meta:
         ordering = ["path"]
