@@ -35,7 +35,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
     def has_statements(self, view, request) -> Optional[bool]:
         return bool(self.get_policy_statements(request, view))
 
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, *args):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
@@ -45,7 +45,7 @@ class ExplorerRootAccessPermission(AccessPolicy):
 
 
 class ExplorerReadDirectoryPathPermission(ExplorerRootAccessPermission):
-    def has_specific_permission(self, view, request):
+    def has_specific_permission(self, view, request, *args):
         if not self.has_statements(view, request) or request.method != "GET":
             return False
 
