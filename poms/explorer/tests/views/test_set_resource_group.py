@@ -13,7 +13,7 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/set-resource-group/"
+            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/storage-object/"
         )
         self.dirpath = f"/test/next{DIR_SUFFIX}"
         self.filepath = "/test/next/test.pdf"

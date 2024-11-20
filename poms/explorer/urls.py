@@ -65,9 +65,9 @@ router.register(
     "explorer_search",
 )
 router.register(
-    "set-resource-group",
+    "storage-object",
     explorer.StorageObjectResourceGroupViewSet,
-    "explorer_set_resource_group",
+    "explorer_storage_object",
 )
 router.register(
     "rename",
