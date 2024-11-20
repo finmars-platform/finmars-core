@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common.storage import pretty_size
-from poms.explorer.models import DIR_SUFFIX, MAX_PATH_LENGTH, StorageObject
+from poms.explorer.models import DIR_SUFFIX, StorageObject
 from poms.explorer.utils import is_true_value, path_is_file
 from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.models import Instrument

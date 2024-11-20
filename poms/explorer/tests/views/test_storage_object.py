@@ -35,6 +35,9 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
 
+        self.assertEqual(response_json["count"], 2)
+        self.assertEqual(len(response_json["results"]), 2)
+
     def test__add_resource_group(self):
         rg_name = self.random_string()
         rg = self.create_group(name=rg_name)

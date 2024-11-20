@@ -682,4 +682,6 @@ class CopyViewSet(ContextMixin, AbstractViewSet):
 class StorageObjectResourceGroupViewSet(ContextMixin, AbstractModelViewSet):
     queryset = StorageObject.objects.all()
     serializer_class = StorageObjectResourceGroupSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [StorageObjectFilter]
+    pagination_class = PageNumberPaginationExt
     http_method_names = ["get", "patch"]
