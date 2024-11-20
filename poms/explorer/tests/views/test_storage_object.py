@@ -143,3 +143,33 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         directory_data = response.json()
         self.assertEqual(len(directory_data["resource_groups"]), 0)
         self.assertEqual(directory_data["resource_groups"], [])
+
+    @BaseTestCase.cases(
+        ("no_query", None),
+        ("empty_query", ""),
+    )
+    def test__filter_no_query(self, query):
+        api_url = self.url if query is None else f"{self.url}?query={query}"
+        response = self.client.get(api_url)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 2)
+        self.assertEqual(len(response_json["results"]), 2)
+
+    @BaseTestCase.cases(
+        ("post", "post"),
+        ("put", "put"),
+        ("delete", "delete"),
+    )
+    def test__405_methods(self, name: str):
+        method = getattr(self.client, name)
+        response = method(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    def test__filter_wrong_query(self):
+        api_url = f"{self.url}?query={self.random_string()}"
+        response = self.client.get(api_url)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+        self.assertEqual(len(response_json["results"]), 0)
