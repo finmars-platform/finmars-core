@@ -12,6 +12,7 @@ from poms.counterparties.models import (
     Responsible,
     ResponsibleGroup,
 )
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.users.fields import MasterUserField
@@ -160,6 +161,7 @@ class ResponsibleGroupViewSerializer(serializers.ModelSerializer):
 
 
 class ResponsibleSerializer(
+    ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,

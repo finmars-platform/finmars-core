@@ -25,6 +25,13 @@ from rest_framework.relations import (
 from poms.common.utils import default_empty_list
 from poms.expressions_engine import formula
 from poms.iam.fields import IamProtectedRelatedField
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
+
+def default_empty_list():
+    return []
+
 
 
 class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
@@ -201,6 +208,6 @@ class ResourceGroupsField(ArrayField):
         kwargs.setdefault("default", default_empty_list)
         kwargs.setdefault(
             "verbose_name",
-            _("list of resource groups user_codes, to which object belongs"),
+            _("list of resource groups user_codes, to which obj belongs"),
         )
         super().__init__(*args, **kwargs)

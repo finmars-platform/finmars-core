@@ -198,7 +198,6 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         verbose_name=gettext_lazy("first cash flow date"),
     )
     resource_groups = ResourceGroupsField(
-        default=default_list,
         verbose_name=gettext_lazy(
             "list of resource groups user_codes, to which portfolio belongs"
         ),

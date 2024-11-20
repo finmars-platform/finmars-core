@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
+from poms.common.fields import ResourceGroupsField
 
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
@@ -132,6 +133,12 @@ class Account(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
     )
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
+    )
+
+    resource_groups = ResourceGroupsField(
+        verbose_name=gettext_lazy(
+            "list of resource groups user_codes, to which account belongs"
+        ),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
