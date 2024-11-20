@@ -17,6 +17,7 @@ from poms.common.serializers import (
     ModelWithUserCodeSerializer,
     PomsClassSerializer,
 )
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.models import CurrencyPricingPolicy
@@ -955,6 +956,7 @@ class InstrumentTypeViewSerializer(ModelWithUserCodeSerializer):
 
 
 class InstrumentSerializer(
+    ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
