@@ -12,6 +12,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+from poms.common.fields import ResourceGroupsField
 
 from dateutil import relativedelta, rrule
 
@@ -1573,6 +1574,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     first_transaction_date = models.DateField(
         null=True,
         verbose_name=gettext_lazy("first transaction date"),
+    )
+
+    resource_groups = ResourceGroupsField(
+        verbose_name=gettext_lazy(
+            "list of resource groups user_codes, to which instrument belongs"
+        ),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
