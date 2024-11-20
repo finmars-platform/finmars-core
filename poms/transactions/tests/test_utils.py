@@ -34,6 +34,6 @@ class TestUtils(BaseTestCase):
         fields = generate_user_fields()
         count = 0
         for field in fields:
-            if field.startswith("user_number_"):
+            if field.startswith("user_date_"):
                 count += 1
         self.assertEqual(count, MAX_DATE)
