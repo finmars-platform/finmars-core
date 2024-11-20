@@ -187,3 +187,14 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
+
+    def test__try_update_path(self):
+        response = self.client.patch(
+            f"{self.url}{self.directory.id}/",
+            data={"path": "new/path/"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        self.directory.refresh_from_db()
+        self.assertEqual(self.directory.path, "/config/next/")
