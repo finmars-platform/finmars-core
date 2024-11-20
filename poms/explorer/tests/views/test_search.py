@@ -1,10 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import (
-    AccessLevel,
-    StorageObject,
-    get_root_path,
-)
-from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.explorer.models import StorageObject
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 expected_response = {

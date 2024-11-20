@@ -3,8 +3,6 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import get_root_path, AccessLevel, StorageObject
-from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
