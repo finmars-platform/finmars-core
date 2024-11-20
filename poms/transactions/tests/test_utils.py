@@ -8,8 +8,6 @@ class TestUtils(BaseTestCase):
         fields = generate_user_fields()
         self.assertEqual(len(fields), MAX_TEXT + MAX_NUMBER + MAX_DATE)
 
-        print(fields)
-
     def test_provided_length(self):
         fields = generate_user_fields(max_text=1, max_number=1, max_date=1)
         self.assertEqual(len(fields), 3)
