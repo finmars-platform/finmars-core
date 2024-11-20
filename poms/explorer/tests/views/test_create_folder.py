@@ -47,28 +47,3 @@ class ExplorerCreateFolderViewTest(CreateUserMemberMixin, BaseTestCase):
             f"{self.space_code}/test/test/.init",
             mock.ANY,
         )
-
-    def test__no_permission(self):
-        user, member = self.create_user_member()
-        self.client.force_authenticate(user=user)
-
-        dir_name = f"{self.random_string()}/{self.random_string()}"
-
-        response = self.client.post(self.url, {"path": dir_name})
-
-        self.assertEqual(response.status_code, 403)
-
-    def test__has_root_permission(self):
-        user, member = self.create_user_member()
-
-        root_path = get_root_path()
-        StorageObject.objects.create(path=root_path)
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
-
-        dir_name = f"{self.random_string()}/{self.random_string()}"
-
-        self.client.force_authenticate(user=user)
-
-        response = self.client.post(self.url, {"path": dir_name})
-
-        self.assertEqual(response.status_code, 200)

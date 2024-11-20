@@ -46,33 +46,3 @@ class ExplorerViewFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         response = self.client.post(self.url, {"paths": [path]}, format="json")
         self.assertEqual(response.status_code, 200)
-
-    def test__no_permission(self):
-        user, member = self.create_user_member()
-        self.client.force_authenticate(user=user)
-
-        path = f"{self.random_string()}.txt"
-
-        response = self.client.post(self.url, {"paths": [path]})
-
-        self.assertEqual(response.status_code, 403)
-
-    def test__has_root_permission(self):
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file_path = temp_file.name
-        self.storage_mock.download_paths_as_zip.return_value = temp_file_path
-
-        user, member = self.create_user_member()
-
-        root_path = get_root_path()
-        root = StorageObject.objects.create(path=root_path)
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
-
-        path = f"{self.random_string()}.txt"
-        StorageObject.objects.create(path=path, size=777, parent=root, is_file=True)
-
-        self.client.force_authenticate(user=user)
-
-        response = self.client.post(self.url, {"paths": [path]}, format="json")
-
-        self.assertEqual(response.status_code, 200)
