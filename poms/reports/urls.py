@@ -20,6 +20,7 @@ router.register(
     "BalanceReport",
 )
 
+# seems deprecated, delete in 1.12.0
 router.register(
     r"balance-report-light",
     reports.BalanceReportLightViewSet,
