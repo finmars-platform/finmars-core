@@ -2526,41 +2526,27 @@ class TransactionTypeProcess:
 
         _result_for_log = {}
         for field_key in generate_user_fields():
-            # _l.debug('field_key')
 
-            if getattr(self.complex_transaction.transaction_type, field_key):
-                try:
-                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+            if not hasattr(self.complex_transaction.transaction_type, field_key):
+                continue
 
-                    val = formula.safe_eval(
-                        getattr(self.complex_transaction.transaction_type, field_key),
-                        names=names,
-                        context=self._context,
-                    )
+            field_value = getattr(self.complex_transaction.transaction_type, field_key)
+            try:
+                value = formula.safe_eval(
+                    field_value,
+                    names=names,
+                    context=self._context
+                )
+                setattr(self.complex_transaction, field_key, value)
+                _result_for_log[field_key] = value
 
-                    setattr(self.complex_transaction, field_key, val)
-
-                    _result_for_log[field_key] = val
-
-                except Exception as e:
-                    # _l.error("User Field Expression Eval error expression %s" % getattr(
-                    #     self.complex_transaction.transaction_type, field_key))
-                    # _l.error("User Field Expression Eval error names %s" % names)
-                    # _l.error("User Field Expression Eval error %s" % e)
-
-                    if "number" in field_key:
-                        setattr(self.complex_transaction, field_key, None)
-                    else:
-                        try:
-                            setattr(
-                                self.complex_transaction,
-                                field_key,
-                                "<InvalidExpression>",
-                            )
-                            _result_for_log[field_key] = str(e)
-                        except Exception as e:
-                            setattr(self.complex_transaction, field_key, None)
-                            _result_for_log[field_key] = str(e)
+            except Exception as e:
+                _l.error(
+                    f"execute_user_fields_expressions: formula.safe_eval resulted in {repr(e)} "
+                    f"field {field_key} value {field_value} names {names} context {self._context}"
+                )
+                setattr(self.complex_transaction, field_key, None)
+                _result_for_log[field_key] = f"value {field_value} error {e}"
 
         self.record_execution_progress("==== USER FIELDS ====", _result_for_log)
 
