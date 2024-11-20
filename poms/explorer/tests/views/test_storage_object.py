@@ -15,8 +15,8 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         self.url = (
             f"/{self.realm_code}/{self.space_code}/api/v1/explorer/storage-object/"
         )
-        self.dirpath = f"/test/next{DIR_SUFFIX}"
-        self.filepath = "/test/next/test.pdf"
+        self.dirpath = f"/config/next{DIR_SUFFIX}"
+        self.filepath = "/config/next/test.pdf"
         self.directory = StorageObject.objects.create(path=self.dirpath)
         self.file = StorageObject.objects.create(
             path=self.filepath, size=111, is_file=True
@@ -173,3 +173,17 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
         self.assertEqual(len(response_json["results"]), 0)
+
+    @BaseTestCase.cases(
+        ("config", "config", 2),
+        ("config/next", "config/next", 2),
+        ("pdf", "pdf", 1),
+        ("test", "test", 1),
+    )
+    def test__filter_query(self, query, count):
+        api_url = f"{self.url}?query={query}"
+        response = self.client.get(api_url)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], count)
+        self.assertEqual(len(response_json["results"]), count)
