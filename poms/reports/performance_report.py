@@ -433,6 +433,9 @@ class PerformanceReportBuilder:
 
         # _l.debug('dates %s' % dates)
 
+        if len(dates) == 0:
+            return result
+
         if segmentation_type == "days":
             if date_from == date_to and is_business_day(date_from):
                 result = self.format_to_days(dates)

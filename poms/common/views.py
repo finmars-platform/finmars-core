@@ -292,8 +292,11 @@ class AbstractModelViewSet(
     BulkModelMixin,
     AbstractFinmarsAccessPolicyViewSet,
 ):
-    permission_classes = AbstractFinmarsAccessPolicyViewSet.permission_classes + [
-        IsAuthenticated
+    # Seems order matters, szhitenev
+    # 2024-10-21
+    permission_classes = [
+        IsAuthenticated,
+        *AbstractFinmarsAccessPolicyViewSet.permission_classes
     ]
     filter_backends = AbstractFinmarsAccessPolicyViewSet.filter_backends + [
         ByIdFilterBackend,
