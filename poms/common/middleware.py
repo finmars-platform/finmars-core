@@ -194,11 +194,19 @@ class KeycloakMiddleware:
         print(f"self.keycloak {self.keycloak}")
 
     def __call__(self, request):
-        return self.get_response(request)
+        response = self.get_response(request)
+
+        # If authentication timing is available, add it to the response headers
+        if hasattr(request, "keycloak_auth_time"):
+            response["X-Keycloak-Auth-Time"] = request.keycloak_auth_time
+
+        return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         # for now there is no role assigned yet
         request.roles = []
+        # Measure the time taken to authenticate with Keycloak
+        auth_start_time = time.perf_counter()
 
         # Checks the URIs (paths) that doesn't needs authentication
         if hasattr(settings, "KEYCLOAK_EXEMPT_URIS"):
@@ -255,6 +263,11 @@ class KeycloakMiddleware:
 
         # Add to userinfo to the view
         request.userinfo = self.keycloak.userinfo(token)
+
+        # Record authentication time
+        request.keycloak_auth_time = int((time.perf_counter() - auth_start_time) * 1000)
+
+        print('keycloak_auth_time %s' % request.keycloak_auth_time)
 
 
 class LogRequestsMiddleware:
@@ -317,51 +330,20 @@ class MemoryMiddleware(object):
 
 
 class ResponseTimeMiddleware(MiddlewareMixin):
-    @staticmethod
-    def response_can_be_updated(request, response) -> bool:
-        return bool(
-            getattr(request, "start_time")
-            and getattr(request, "request_id")
-            and hasattr(response, "accepted_media_type")
-            and response.accepted_media_type == "application/json"
-            and response.content
-        )
-
-    @staticmethod
-    def update_response_content(data_dict: dict, request, response):
-        execution_time = int((time.time() - request.start_time) * 1000)
-        # TODO szhitenev probably extra json convert too heavy for performance
-        # data_dict["meta"] = {
-        #     "execution_time": execution_time,
-        #     "request_id": request.request_id,
-        # }
-        # response.content = json.dumps(data_dict).encode()
-
-        # Update the content length
-        response["X-Execution-Time"] = execution_time
-        response["X-Request-Id"] = request.request_id
-        response["X-Worker"] = socket.gethostname()
-        response["Content-Length"] = len(response.content)
-
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
-    def process_response(self, request, response):
-        if self.response_can_be_updated(request, response):
-            try:
-                json_data = json.loads(response.content.decode("utf-8"))
-                if isinstance(json_data, dict):
-                    self.update_response_content(json_data, request, response)
 
-            except Exception as e:
-                _l.error(
-                    f"ResponseTimeMiddleware error: {repr(e)} "
-                    f"request_id: {request.request_id}"
-                )
+    def process_response(self, request, response):
+        # Check if we have the start_time attribute to calculate the time
+        if hasattr(request, "start_time"):
+            execution_time = int((time.time() - request.start_time) * 1000)  # in ms
+            response["X-Execution-Time"] = execution_time
+            response["X-Request-Id"] = request.request_id
+            response["X-Worker"] = socket.gethostname()
 
         return response
-
 
 def schema_exists(schema_name):
     with connection.cursor() as cursor:

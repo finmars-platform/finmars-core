@@ -67,6 +67,9 @@ class AccessPolicy(permissions.BasePermission):
 
     def has_permission(self, request, view) -> bool:
 
+        if not request.user.is_authenticated:
+            return False
+
         if request.user.is_superuser:
             return True
 
@@ -76,6 +79,9 @@ class AccessPolicy(permissions.BasePermission):
         return self.has_specific_permission(view, request)
 
     def has_object_permission(self, request, view, obj):
+
+        if not request.user.is_authenticated:
+            return False
 
         if request.user.is_superuser:
             return True
