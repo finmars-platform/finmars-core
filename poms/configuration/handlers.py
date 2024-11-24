@@ -211,6 +211,12 @@ def export_configuration_to_directory(
             context,
             )
 
+        save_serialized_entity(
+            "iam.resourcegroup",
+            configuration.configuration_code,
+            source_directory + "/iam/resource-groups",
+            context,
+            )
 
         _l.info("Going to export: obj_attrs.genericattributetype")
 

@@ -416,22 +416,51 @@ class ResourceGroupAssignmentSerializer(serializers.ModelSerializer):
         ]
 
 
-class ResourceGroupSerializer(serializers.ModelSerializer):
+class ResourceGroupSerializer(IamModelMetaSerializer):
     assignments = ResourceGroupAssignmentSerializer(many=True, required=False)
     created_at = serializers.DateTimeField(format="iso-8601", read_only=True)
     modified_at = serializers.DateTimeField(format="iso-8601", read_only=True)
+
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=Member.objects.all(), many=True, required=False
+    )
+    members_object = IamMemberSerializer(
+        source="members", many=True, read_only=True
+    )
+
+    access_policies = AccessPolicyUserCodeField(
+        queryset=AccessPolicy.objects.all(), many=True, required=False
+    )
+    access_policies_object = IamAccessPolicySerializer(
+        source="access_policies", many=True, read_only=True
+    )
 
     class Meta:
         model = ResourceGroup
         fields = [
             "id",
             "user_code",
+            "configuration_code",
             "name",
             "description",
             "assignments",
             "created_at",
             "modified_at",
+            "members",
+            "members_object",
+            "access_policies",
+            "access_policies_object",
         ]
+
+    def create(self, validated_data):
+        access_policies_data = validated_data.pop("access_policies", [])
+        members_data = validated_data.pop("members", [])
+
+        instance = super().create(validated_data)
+        instance.members.set(members_data)
+        instance.access_policies.set(access_policies_data)
+
+        return instance
 
     def update(self, instance, validated_data):
         """
@@ -443,6 +472,8 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         Existing assignments can be only deleted, so assignments that are not present
         in the received list to be deleted.
         """
+        members_data = validated_data.pop("members", [])
+        access_policies_data = validated_data.pop("access_policies", [])
 
         received_assignments = validated_data.pop("assignments", None)
         if received_assignments is not None:
@@ -461,7 +492,11 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
                 for old_id in ids_to_remove:
                     existing_ids[old_id].delete()
 
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        instance.members.set(members_data)
+        instance.access_policies.set(access_policies_data)
+
+        return instance
 
 
 class ResourceGroupShortSerializer(serializers.ModelSerializer):

@@ -134,31 +134,20 @@ class ResourceGroupManager(models.Manager):
         rg.delete_assignment(obj_instance)
 
 
-class ResourceGroup(models.Model):
+class ResourceGroup(ConfigurationModel, TimeStampedModel):
     name = models.CharField(
         max_length=255,
         unique=True,
-    )
-    user_code = models.CharField(
-        max_length=1024,
-        unique=True,
-        help_text=gettext_lazy(
-            "Unique code of the ResourceGroup. Used in Configuration and Permissions Logic"
-        ),
     )
     description = models.TextField(
         blank=True,
         null=True,
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
+    members = models.ManyToManyField(
+        Member,
+        related_name="iam_resource_group",
+        blank=True,
     )
-    modified_at = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-    )
-
     objects = ResourceGroupManager()
 
     class Meta:
