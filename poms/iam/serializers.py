@@ -428,13 +428,6 @@ class ResourceGroupSerializer(IamModelMetaSerializer):
         source="members", many=True, read_only=True
     )
 
-    access_policies = AccessPolicyUserCodeField(
-        queryset=AccessPolicy.objects.all(), many=True, required=False
-    )
-    access_policies_object = IamAccessPolicySerializer(
-        source="access_policies", many=True, read_only=True
-    )
-
     class Meta:
         model = ResourceGroup
         fields = [
@@ -448,17 +441,13 @@ class ResourceGroupSerializer(IamModelMetaSerializer):
             "modified_at",
             "members",
             "members_object",
-            "access_policies",
-            "access_policies_object",
         ]
 
     def create(self, validated_data):
-        access_policies_data = validated_data.pop("access_policies", [])
         members_data = validated_data.pop("members", [])
 
         instance = super().create(validated_data)
         instance.members.set(members_data)
-        instance.access_policies.set(access_policies_data)
 
         return instance
 
@@ -473,9 +462,8 @@ class ResourceGroupSerializer(IamModelMetaSerializer):
         in the received list to be deleted.
         """
         members_data = validated_data.pop("members", [])
-        access_policies_data = validated_data.pop("access_policies", [])
-
         received_assignments = validated_data.pop("assignments", None)
+
         if received_assignments is not None:
             received_ids = {
                 assignment["id"]: assignment
@@ -494,7 +482,6 @@ class ResourceGroupSerializer(IamModelMetaSerializer):
 
         instance = super().update(instance, validated_data)
         instance.members.set(members_data)
-        instance.access_policies.set(access_policies_data)
 
         return instance
 
