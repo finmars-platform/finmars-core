@@ -2,6 +2,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.iam.models import ResourceGroup
 from poms.portfolios.models import Portfolio
+from poms.users.models import Member
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -268,6 +269,8 @@ class PortfolioViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):

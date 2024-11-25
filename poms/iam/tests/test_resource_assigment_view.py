@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.models import ResourceGroup, ResourceGroupAssignment
+from poms.users.models import Member
 
 
 class ResourceGroupAssignmentViewTest(BaseTestCase):
@@ -18,6 +19,8 @@ class ResourceGroupAssignmentViewTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def create_assignment(
