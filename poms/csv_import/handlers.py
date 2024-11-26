@@ -1902,11 +1902,18 @@ class SimpleImportProcess:
                         )
 
                 else:
-                    self.items[item_index].status = "error"
+
+                    self.items[item_index].status = "skip"
                     self.items[item_index].error_message = (
                         f"{self.items[item_index].error_message}"
-                        f"====  Overwrite disabled"
+                        f"==== Skip (Overwrite disabled)"
                     )
+
+                    # self.items[item_index].status = "error"
+                    # self.items[item_index].error_message = (
+                    #     f"{self.items[item_index].error_message}"
+                    #     f"====  Overwrite disabled"
+                    # )
             else:
                 result_item = {
                     key: self.items[item_index].final_inputs[key]
