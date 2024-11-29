@@ -5,6 +5,7 @@ from django.conf import settings
 from poms.iam.models import ResourceGroup
 from poms.accounts.models import AccountType
 from poms.common.common_base_test import BaseTestCase
+from poms.users.models import Member
 # from poms.accounts.tests.common_procs import print_users_and_members
 
 
@@ -217,6 +218,8 @@ class AccountViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):

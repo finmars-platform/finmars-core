@@ -5,6 +5,7 @@ from django.conf import settings
 from poms.common.common_base_test import BaseTestCase
 from poms.counterparties.models import Responsible, ResponsibleGroup
 from poms.iam.models import ResourceGroup
+from poms.users.models import Member
 
 EXPECTED_RESPONSIBLE = {
     "id": 3,
@@ -266,6 +267,8 @@ class ResponsibleViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):
