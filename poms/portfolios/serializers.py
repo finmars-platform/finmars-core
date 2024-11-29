@@ -47,7 +47,6 @@ from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 from poms.clients.models import Client
-from poms.clients.serializers import ClientsSerializer
 
 _l = getLogger("poms.portfolios")
 
@@ -182,8 +181,7 @@ class PortfolioSerializer(
     portfolio_type_object = PortfolioTypeSerializer(
         source="portfolio_type", read_only=True
     )
-    client = serializers.SlugRelatedField(
-        slug_field="user_code",
+    client = serializers.PrimaryKeyRelatedField(
         queryset=Client.objects.all(),
         required=False
     )
@@ -227,6 +225,7 @@ class PortfolioSerializer(
             ResponsibleViewSerializer,
         )
         from poms.transactions.serializers import TransactionTypeViewSerializer
+        from poms.clients.serializers import ClientsSerializer
 
         super().__init__(*args, **kwargs)
 

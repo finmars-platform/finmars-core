@@ -6,6 +6,7 @@ from poms.common.serializers import (
     ModelOwnerSerializer,
 )
 from poms.clients.models import Client, ClientSecret
+from poms.portfolios.models import Portfolio
 from poms.users.fields import MasterUserField
 from poms.system_messages.handlers import send_system_message
 from poms.users.utils import (
@@ -17,6 +18,13 @@ from poms.users.utils import (
 class ClientsSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    portfolios = serializers.PrimaryKeyRelatedField(
+        queryset=Portfolio.objects.all(), many=True, required=False
+    )
+    portfolios_object = serializers.PrimaryKeyRelatedField(
+        source="portfolios", many=True, read_only=True
+    )
+
     class Meta:
         model = Client
         fields = [
@@ -27,7 +35,18 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
             "short_name",
             "public_name",
             "notes",
+            "portfolios",
+            "portfolios_object",
         ]
+
+    def __init__(self, *args, **kwargs):
+        from poms.portfolios.serializers import PortfolioViewSerializer
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["portfolios_object"] = PortfolioViewSerializer(
+            source="portfolios", many=True, read_only=True
+        )
 
 
 class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
