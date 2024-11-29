@@ -393,11 +393,11 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
-            data={"client": client.user_code},
+            data={"client": client.pk},
             format="json",
         )
         self.assertEqual(response.status_code, 200, response.content)
 
         portfolio_data = response.json()
-        self.assertEqual(portfolio_data["client"], client.user_code)
-        self.assertEqual(portfolio_data["client_object"]["id"], client.id)
+        self.assertEqual(portfolio_data["client"], client.pk)
+        self.assertEqual(portfolio_data["client_object"]["user_code"], client.user_code)
