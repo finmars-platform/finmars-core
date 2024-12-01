@@ -830,3 +830,225 @@ EXPECTED_RESULT_ACCRUAL_CALCULATION = {
     "row_number": 1,
     "status": "success",
 }
+
+
+# Currency
+
+SCHEME_CURRENCY_FIELDS = [
+    {
+        "column": 1,
+        "name": "user_code",
+        "name_expr": "user_code",
+        "column_name": "user_code",
+        "scheme": None,
+    },
+    {
+        "column": 2,
+        "name": "name",
+        "name_expr": "name",
+        "column_name": "name",
+        "scheme": None,
+    },
+    {
+        "column": 3,
+        "name": "short_name",
+        "name_expr": "short_name",
+        "column_name": "short_name",
+        "scheme": None,
+    },
+    {
+        "column": 4,
+        "name": "public_name",
+        "name_expr": "public_name",
+        "column_name": "public_name",
+        "scheme": None,
+    },
+    {
+        "column": 5,
+        "name": "notes",
+        "name_expr": "notes",
+        "column_name": "notes",
+        "scheme": None,
+    },
+    {
+        "column": 6,
+        "name": "reference_for_pricing",
+        "name_expr": "reference_for_pricing",
+        "column_name": "reference_for_pricing",
+        "scheme": None,
+    },
+    {
+        "column": 7,
+        "name": "pricing_condition",
+        "name_expr": "pricing_condition",
+        "column_name": "pricing_condition",
+        "scheme": None,
+    },
+    {
+        "column": 8,
+        "name": "default_fx_rate",
+        "name_expr": "default_fx_rate",
+        "column_name": "default_fx_rate",
+        "scheme": None,
+    },
+    {
+        "column": 9,
+        "name": "country",
+        "name_expr": "country_obj = universal_parse_country(str(if_null(country,'-')))\nif country_obj:\n    country_obj['user_code']",
+        "column_name": "country",
+        "scheme": None,
+    }
+]
+
+
+SCHEME_CURRENCY_ENTITIES = [
+    {
+        "name": "Country",
+        "expression": "country",
+        "system_property_key": "country",
+        "scheme": None,
+    },
+    {
+        "name": "user code",
+        "expression": "user_code",
+        "system_property_key": "user_code",
+        "scheme": None,
+    },
+    {
+        "name": "name",
+        "expression": "name",
+        "system_property_key": "name",
+        "scheme": None,
+    },
+    {
+        "name": "short name",
+        "expression": "short_name",
+        "system_property_key": "short_name",
+        "scheme": None,
+    },
+    {
+        "name": "public name",
+        "expression": "public_name",
+        "system_property_key": "public_name",
+        "scheme": None,
+    },
+    {
+        "name": "notes",
+        "expression": "notes",
+        "system_property_key": "notes",
+        "scheme": None,
+    },
+    {
+        "name": "reference for pricing",
+        "expression": "reference_for_pricing",
+        "system_property_key": "reference_for_pricing",
+        "scheme": None,
+    },
+    {
+        "name": "pricing condition",
+        "expression": "if pricing_condition:\n    pricing_condition\nelse:\n    'RUN_VALUATION_IF_OPEN'",
+        "system_property_key": "pricing_condition",
+        "scheme": None,
+    },
+    {
+        "name": "default fx rate",
+        "expression": "default_fx_rate",
+        "system_property_key": "default_fx_rate",
+        "scheme": None,
+    }
+]
+
+
+CURRENCY = {
+    "country": "ALB",
+    "user_code": "ALL",
+    "name": "Albanian Lek",
+    "short_name": "ALL",
+    "public_name": "Public 1",
+    "notes": "No notes",
+    "reference_for_pricing": "Reference",
+    "pricing_condition": "RUN_VALUATION_IF_OPEN",
+    "default_fx_rate": "1",
+}
+
+
+CURRENCY_ITEM = {
+    "country": "Albania",
+    "user_code": "ALL",
+    "name": "Albanian Lek",
+    "short_name": "ALL",
+    "public_name": "Public 1",
+    "notes": "No notes",
+    "reference_for_pricing": "Reference",
+    "pricing_condition": "RUN_VALUATION_IF_OPEN",
+    "default_fx_rate": "1",
+}
+
+
+EXPECTED_RESULT_CURRENCY = {    
+    "conversion_inputs": {
+        "country": "Albania",
+        "default_fx_rate": "1",
+        "name": "Albanian Lek",
+        "notes": "No notes",
+        "pricing_condition": "RUN_VALUATION_IF_OPEN",
+        "public_name": "Public 1",
+        "reference_for_pricing": "Reference",
+        "short_name": "ALL",
+        "user_code": "ALL"
+    },
+    "error_message": "",
+    "file_inputs": {
+        "Country": "ALB",
+        "Currency ID": "ALL",
+        "Default FX Rate": "1",
+        "Name": "Albanian Lek",
+        "Notes": "No notes",
+        "Pricing Condition": "RUN_VALUATION_IF_OPEN",
+        "Pricing Reference": "Reference",
+        "Public Name": "Public 1",
+        "Short Name": "ALL"
+    },
+    "final_inputs": {
+        "country": "Albania",
+        "default_fx_rate": "1",
+        "name": "Albanian Lek",
+        "notes": "No notes",
+        "pricing_condition": "RUN_VALUATION_IF_OPEN",
+        "public_name": "Public 1",
+        "reference_for_pricing": "Reference",
+        "short_name": "ALL",
+        "user_code": "ALL"
+    },
+    "imported_items": [
+        {
+            "id": 24,
+            "user_code": "ALL"
+        }
+    ],
+    "inputs": {
+        "country": "Albania",
+        "default_fx_rate": "1",
+        "name": "Albanian Lek",
+        "notes": "No notes",
+        "ccy_prc_cond": "RUN_VALUATION_IF_OPEN",
+        "reference_for_pricing": "Reference",
+        "public_name": "Public 1",
+        "short_name": "ALL",
+        "user_code": "ALL"
+    },
+    "message": "Item Imported ALL",
+    "raw_inputs": {
+        "country": "ALB",
+        "default_fx_rate": "1",
+        "name": "Albanian Lek",
+        "notes": "No notes",
+        "ccy_prc_cond": "RUN_VALUATION_IF_OPEN",
+        "reference_for_pricing": "Reference",
+        "public_name": "Public 1",
+        "short_name": "ALL",
+        "user_code": "ALL"
+    },
+    "row_number": 1,
+    "status": "success",
+}

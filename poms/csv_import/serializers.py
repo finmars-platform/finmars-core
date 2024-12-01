@@ -219,6 +219,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "default_fx_rate",
                 "reference_for_pricing",
                 "pricing_condition",
+                "country",
             ],
             "accounts.account": [
                 "name",
