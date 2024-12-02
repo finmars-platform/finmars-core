@@ -7,6 +7,7 @@ from poms.instruments.tests.common_test_data import (
     EXPECTED_INSTRUMENT,
     INSTRUMENT_CREATE_DATA,
 )
+from poms.users.models import Member
 
 
 class InstrumentViewSetTest(BaseTestCase):
@@ -271,6 +272,8 @@ class InstrumentViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):

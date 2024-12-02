@@ -1,5 +1,6 @@
 from poms.clients.models import Client
 from poms.common.common_base_test import BaseTestCase
+from poms.portfolios.models import Portfolio
 
 
 EXPECTED_CLIENT = {
@@ -10,6 +11,8 @@ EXPECTED_CLIENT = {
     "public_name": "test",
     "notes": "test",
     "deleted_user_code": None,
+    "portfolios": [],
+    "portfolios_object": [],
     "owner": {
         "id": 1318,
         "username": "finmars_bot"
@@ -92,6 +95,22 @@ class ClientViewTest(BaseTestCase):
         self.assertEqual(response_json["count"], 1)
         client = response_json["results"][0]
         self.assertEqual(client["name"], new_name)
+
+        #-_-# Portfolios #-_-#
+        portfolio = Portfolio.objects.first()
+        portfolios = [portfolio.id,]
+        update_data = {"portfolios": portfolios}
+        response = self.client.patch(
+            path=f"{self.url}{client_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = self.client.get(path=f"{self.url}?portfolios={portfolio.id}")
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
+        client = response_json["results"][0]
+        self.assertEqual(client["portfolios"], portfolios)
+        self.assertEqual(client["portfolios_object"][0]["user_code"], portfolio.user_code)
 
     def test__delete(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
