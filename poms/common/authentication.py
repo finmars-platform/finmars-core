@@ -1,4 +1,5 @@
 import logging
+import time
 
 import jwt
 from django.conf import settings
@@ -87,6 +88,8 @@ class KeycloakAuthentication(TokenAuthentication):
         return self.authenticate_credentials(token, request)
 
     def authenticate_credentials(self, key, request=None):
+
+        auth_start_time = time.perf_counter()
         '''
         Validate user Berarer token in keycloak
 

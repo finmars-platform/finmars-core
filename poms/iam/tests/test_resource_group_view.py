@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.models import ResourceGroup, ResourceGroupAssignment
+from poms.users.models import Member
 
 
 class ResourceGroupViewTest(BaseTestCase):
@@ -18,6 +19,8 @@ class ResourceGroupViewTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test__check_url(self):
@@ -38,6 +41,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], "test")
         self.assertEqual(group_data["description"], "test")
         self.assertEqual(group_data["assignments"], [])
+        self.assertEqual(group_data["members"], [])
+        self.assertEqual(group_data["configuration_code"], "test")
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
         self.assertIn("id", group_data)
@@ -55,6 +60,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], "test2")
         self.assertEqual(group_data["description"], "test2")
         self.assertEqual(group_data["assignments"], [])
+        self.assertEqual(group_data["configuration_code"], "test2")
+        self.assertEqual(group_data["members"], [])
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
 
@@ -69,11 +76,14 @@ class ResourceGroupViewTest(BaseTestCase):
         rg = self.create_group(name="test2")
 
         response = self.client.patch(
-            f"{self.url}{rg.id}/", data={"name": "test3"}, format="json"
+            f"{self.url}{rg.id}/",
+            data={"name": "test3", "members": [self.member.pk]},
+            format="json",
         )
         group_data = response.json()
 
         self.assertEqual(group_data["name"], "test3")
+        self.assertEqual(group_data["members"], [self.member.pk])
 
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -102,6 +112,8 @@ class ResourceGroupViewTest(BaseTestCase):
             name="test9",
             user_code="test9",
             description="test9",
+            configuration_code="test9",
+            owner=1,
         )
         response = self.client.post(self.url, data=group_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
@@ -111,6 +123,8 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], "test9")
         self.assertEqual(group_data["description"], "test9")
         self.assertEqual(group_data["assignments"], [])
+        self.assertEqual(group_data["members"], [])
+        self.assertEqual(group_data["configuration_code"], "test9")
         self.assertIn("id", group_data)
         self.assertIn("created_at", group_data)
         self.assertIn("modified_at", group_data)
@@ -121,6 +135,8 @@ class ResourceGroupViewTest(BaseTestCase):
             name="test10",
             user_code="test10",
             description="test10",
+            configuration_code="test10",
+            owner=1,
         )
         response = self.client.post(self.url, data=group_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
@@ -131,6 +147,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["name"], "test10")
         self.assertEqual(group_data["user_code"], "test10")
         self.assertEqual(group_data["description"], "test10")
+        self.assertEqual(group_data["configuration_code"], "test10")
 
         # add assignment to the new resource group
         content_type_id = ContentType.objects.get_for_model(rg).id
@@ -170,6 +187,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], rg.user_code)
         self.assertEqual(group_data["description"], rg.description)
         self.assertEqual(len(group_data["assignments"]), 1)
+        self.assertEqual(group_data["configuration_code"], rg.configuration_code)
 
         # remove assignment
         update_data = {"assignments": []}
@@ -203,6 +221,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], rg.user_code)
         self.assertEqual(group_data["description"], rg.description)
         self.assertEqual(len(group_data["assignments"]), 1)
+        self.assertEqual(group_data["configuration_code"], rg.configuration_code)
 
         # remove assignment
         update_data = group_data.copy()
@@ -237,6 +256,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], rg.user_code)
         self.assertEqual(group_data["description"], rg.description)
         self.assertEqual(len(group_data["assignments"]), 1)
+        self.assertEqual(group_data["configuration_code"], rg.configuration_code)
 
         response = self.client.put(
             f"{self.url}{rg.id}/", data=group_data, format="json"
@@ -268,6 +288,7 @@ class ResourceGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["user_code"], rg.user_code)
         self.assertEqual(group_data["description"], rg.description)
         self.assertEqual(len(group_data["assignments"]), 1)
+        self.assertEqual(group_data["configuration_code"], rg.configuration_code)
 
         response = self.client.patch(
             f"{self.url}{rg.id}/", data=group_data, format="json"

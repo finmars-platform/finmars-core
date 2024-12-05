@@ -1,6 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.iam.models import ResourceGroup, ResourceGroupAssignment
 from poms.portfolios.models import Portfolio
+from poms.users.models import Member
 
 
 class ResourceGroupModelTest(BaseTestCase):
@@ -15,6 +16,8 @@ class ResourceGroupModelTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test__add_object(self):

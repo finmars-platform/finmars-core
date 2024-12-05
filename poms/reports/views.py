@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from datetime import timedelta
@@ -1150,44 +1151,18 @@ class PerformanceReportViewSet(AbstractViewSet):
         instance.task_id = 1
         instance.task_status = "SUCCESS"
 
+        # Timing the serialization to representation
+        serialization_start_time = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
+        serialized_data = serializer.data
+        _l.debug("Serialization (serializer.data) done in: %s seconds", "{:3.3f}".format(time.perf_counter() - serialization_start_time))
 
-        # DEPRECATED
-        # key = generate_report_unique_hash(
-        #     "report",
-        #     "performance",
-        #     request.data,
-        #     request.user.master_user,
-        #     request.user.member,
-        # )
-        #
-        # cached_data = cache.get(key)
-        #
-        # if not cached_data:
-        #     _l.debug("Could not find in cache")
-        #
-        #     serializer = self.get_serializer(data=request.data)
-        #     serializer.is_valid(raise_exception=True)
-        #     instance = serializer.save()
-        #
-        #     builder = PerformanceReportBuilder(instance=instance)
-        #     instance = builder.build_report()
-        #
-        #     instance.task_id = 1
-        #     instance.task_status = "SUCCESS"
-        #
-        #     serializer = self.get_serializer(instance=instance, many=False)
-        #
-        #     _l.debug(
-        #         "Performance Report done: %s"
-        #         % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        #     )
-        #
-        #     cached_data = serializer.data
-        #
-        #     cache.set(key, cached_data)
+        # # Timing JSON conversion
+        # json_conversion_start_time = time.perf_counter()
+        # json_data = json.dumps(serialized_data)
+        # _l.debug("JSON conversion (dumps) done in: %s seconds", "{:3.3f}".format(time.perf_counter() - json_conversion_start_time))
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serialized_data)
 
 
 class BackendBalanceReportViewSet(AbstractViewSet):

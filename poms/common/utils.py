@@ -368,6 +368,7 @@ def get_serializer(content_type_key):
         AccessPolicySerializer,
         GroupSerializer,
         RoleSerializer,
+        ResourceGroupSerializer,
     )
     from poms.instruments.serializers import (
         AccrualCalculationScheduleStandaloneSerializer,
@@ -467,6 +468,7 @@ def get_serializer(content_type_key):
         "iam.group": GroupSerializer,
         "iam.role": RoleSerializer,
         "iam.accesspolicy": AccessPolicySerializer,
+        "iam.resourcegroup": ResourceGroupSerializer,
         "reference_tables.referencetable": ReferenceTableSerializer,
         "configuration.newmembersetupconfiguration": NewMemberSetupConfigurationSerializer,
         "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,

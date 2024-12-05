@@ -2,6 +2,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.iam.models import ResourceGroup
 from poms.portfolios.models import Portfolio
+from poms.users.models import Member
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -268,6 +269,8 @@ class PortfolioViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):
@@ -390,11 +393,11 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.patch(
             f"{self.url}{self.portfolio.id}/",
-            data={"client": client.user_code},
+            data={"client": client.pk},
             format="json",
         )
         self.assertEqual(response.status_code, 200, response.content)
 
         portfolio_data = response.json()
-        self.assertEqual(portfolio_data["client"], client.user_code)
-        self.assertEqual(portfolio_data["client_object"]["id"], client.id)
+        self.assertEqual(portfolio_data["client"], client.pk)
+        self.assertEqual(portfolio_data["client_object"]["user_code"], client.user_code)
