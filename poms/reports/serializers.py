@@ -160,6 +160,7 @@ class TransactionReportCustomFieldSerializer(ModelWithUserCodeSerializer):
 
 
 class ReportSerializerWithLogs(serializers.Serializer):
+
     pass
     # def to_representation(self, instance):
     #     """
@@ -202,16 +203,16 @@ class ReportSerializerWithLogs(serializers.Serializer):
     #     _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
     #
     #     return ret
-
+    #
 
 class ReportSerializer(ReportSerializerWithLogs):
-    task_id = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False
-    )  # something depreacted
+    # task_id = serializers.CharField(
+    #     allow_null=True, allow_blank=True, required=False
+    # )  # something depreacted
     report_instance_id = serializers.CharField(
         read_only=True
     )  # needs for backend reports
-    task_status = serializers.ReadOnlyField()
+    # task_status = serializers.ReadOnlyField()
 
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -372,34 +373,34 @@ class ReportSerializer(ReportSerializerWithLogs):
         ),
     )
 
-    pricing_policy_object = PricingPolicyViewSerializer(
-        source="pricing_policy", read_only=True
-    )
-    report_currency_object = CurrencyViewSerializer(
-        source="report_currency", read_only=True
-    )
-    cost_method_object = CostMethodSerializer(source="cost_method", read_only=True)
-    portfolios_object = PortfolioViewSerializer(
-        source="portfolios", read_only=True, many=True
-    )
-    accounts_object = AccountViewSerializer(
-        source="accounts", read_only=True, many=True
-    )
-    accounts_position_object = AccountViewSerializer(
-        source="accounts_position", read_only=True, many=True
-    )
-    accounts_cash_object = AccountViewSerializer(
-        source="accounts_cash", read_only=True, many=True
-    )
-    strategies1_object = Strategy1ViewSerializer(
-        source="strategies1", read_only=True, many=True
-    )
-    strategies2_object = Strategy2ViewSerializer(
-        source="strategies2", read_only=True, many=True
-    )
-    strategies3_object = Strategy3ViewSerializer(
-        source="strategies3", read_only=True, many=True
-    )
+    # pricing_policy_object = PricingPolicyViewSerializer(
+    #     source="pricing_policy", read_only=True
+    # )
+    # report_currency_object = CurrencyViewSerializer(
+    #     source="report_currency", read_only=True
+    # )
+    # cost_method_object = CostMethodSerializer(source="cost_method", read_only=True)
+    # portfolios_object = PortfolioViewSerializer(
+    #     source="portfolios", read_only=True, many=True
+    # )
+    # accounts_object = AccountViewSerializer(
+    #     source="accounts", read_only=True, many=True
+    # )
+    # accounts_position_object = AccountViewSerializer(
+    #     source="accounts_position", read_only=True, many=True
+    # )
+    # accounts_cash_object = AccountViewSerializer(
+    #     source="accounts_cash", read_only=True, many=True
+    # )
+    # strategies1_object = Strategy1ViewSerializer(
+    #     source="strategies1", read_only=True, many=True
+    # )
+    # strategies2_object = Strategy2ViewSerializer(
+    #     source="strategies2", read_only=True, many=True
+    # )
+    # strategies3_object = Strategy3ViewSerializer(
+    #     source="strategies3", read_only=True, many=True
+    # )
     custom_fields_object = BalanceReportCustomFieldSerializer(
         source="custom_fields", read_only=True, many=True
     )
@@ -490,8 +491,8 @@ class ReportSerializer(ReportSerializerWithLogs):
         return {o["id"]: o for o in data[key]}
 
     def _set_object(self, names, pk_attr, objs):
-        if pk_attr in names:
-            pk = names[pk_attr]
+        if pk_attr + '.id' in names:
+            pk = names[pk_attr + '.id']
             if pk is not None:
                 with contextlib.suppress(KeyError):
                     names[f"{pk_attr}_object"] = objs[pk]
@@ -505,7 +506,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     def process_custom_field(self, cf, value):
         expr = cf["expr"]
-        if expr:
+        if expr and value:
             if cf["value_type"] == 10:
                 return self.evaluate_expression(
                     "str(item)", names={"item": value}, context=self.context
@@ -523,23 +524,19 @@ class ReportSerializer(ReportSerializerWithLogs):
         return None
 
     def to_representation(self, instance):
-        to_representation_st = time.perf_counter()
+        start_time = time.perf_counter()
+        _l.info("Entering to_representation for instance ID: %s", instance.id)
 
         instance.is_report = True
-
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.debug(
-            "ReportSerializer to_representation_st done: %s"
-            % "{:3.3f}".format(time.perf_counter() - to_representation_st)
-        )
+        helper_service = BackendReportHelperService()
 
-        # _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
+        full_items = helper_service.convert_report_items_to_full_items(data)
 
-        st = time.perf_counter()
+        _l.info("Initial serialization complete: %s seconds", time.perf_counter() - start_time)
 
         dict_st = time.perf_counter()
-
         item_dicts = {
             "portfolio": self._get_item_dict(data, "item_portfolios"),
             "account": self._get_item_dict(data, "item_accounts"),
@@ -554,86 +551,66 @@ class ReportSerializer(ReportSerializerWithLogs):
             "mismatch_portfolio": self._get_item_dict(data, "item_portfolios"),
             "mismatch_account": self._get_item_dict(data, "item_accounts"),
         }
+        _l.info("Item dictionaries created: %s seconds", time.perf_counter() - dict_st)
 
-        _l.debug(
-            "ReportSerializer custom columns dict  done: %s"
-            % "{:3.3f}".format(time.perf_counter() - dict_st)
-        )
+        custom_fields = data.get("custom_fields_object", [])
+        custom_fields_to_calculate = data.get("custom_fields_to_calculate", [])
 
-        custom_fields = data["custom_fields_object"]
-
-        calc_st = time.perf_counter()
-
-        if len(data["custom_fields_to_calculate"]) and custom_fields:
-            items = data["items"]
-
-            for item in items:
+        # index = 0
+        if custom_fields_to_calculate and custom_fields:
+            calc_st = time.perf_counter()
+            for item in full_items:
                 item_st = time.perf_counter()
-
                 names = self._extract_names(item, data)
+
                 for name, item_dict in item_dicts.items():
                     self._set_object(names, name, item_dict)
 
+                # if index == 0:
+                #     _l.info('names %s' % names)
+
+                # index = index + 1
+
                 names = formula.value_prepare(names)
-
-                cfv = []
-
                 custom_fields_names = {}
-
-                # _l.debug('names %s' % names)
 
                 for _ in range(data["expression_iterations_count"]):
                     for cf in custom_fields:
-                        if cf["name"] in data["custom_fields_to_calculate"]:
-                            expr = cf["expr"]
+                        if cf["name"] in custom_fields_to_calculate:
+                            expr = cf.get("expr")
                             value = (
-                                self.evaluate_expression(
-                                    expr, names, context=self.context
-                                )
-                                if expr
-                                else None
+                                self.evaluate_expression(expr, names, context=self.context)
+                                if expr else None
                             )
-                            if cf[
-                                "user_code"
-                            ] not in custom_fields_names or custom_fields_names[
-                                cf["user_code"]
-                            ] in [
-                                None,
-                                gettext_lazy("Invalid expression"),
-                            ]:
+                            if cf["user_code"] not in custom_fields_names:
                                 custom_fields_names[cf["user_code"]] = value
 
-                names["custom_fields"] = custom_fields_names
-
+                # Processing custom fields
+                cfv = []
                 for key, value in custom_fields_names.items():
                     for cf in custom_fields:
                         if cf["user_code"] == key:
                             value = self.process_custom_field(cf, value)
-                            cfv.append(
-                                {
-                                    "custom_field": cf["id"],
-                                    "user_code": cf["user_code"],
-                                    "value": value,
-                                }
-                            )
 
-                item["custom_fields"] = cfv
+                            item[f'custom_fields.{cf["user_code"]}'] = value
+                            # cfv.append(
+                            #     {"custom_field": cf["id"], "user_code": cf["user_code"], "value": value}
+                            # )
+                # item["custom_fields"] = cfv
 
-        _l.debug(
-            "ReportSerializer custom columns calc_st done: %s"
-            % "{:3.3f}".format(time.perf_counter() - calc_st)
-        )
+                _l.debug("Processed item in: %s seconds", time.perf_counter() - item_st)
 
-        _l.debug(
-            "ReportSerializer custom columns done: %s"
-            % "{:3.3f}".format(time.perf_counter() - st)
-        )
+            _l.info("Custom field calculation completed in: %s seconds", time.perf_counter() - calc_st)
 
-        data["serialization_time"] = float(
-            "{:3.3f}".format(time.perf_counter() - to_representation_st)
-        )
+        data["serialization_time"] = time.perf_counter() - start_time
+        _l.info("Exiting to_representation. Total time: %s seconds", data["serialization_time"])
+
+        data['items'] = full_items
+
+        # _l.info('===== first items %s' % data['items'][0])
 
         return data
+
 
 
 class BalanceReportLightSerializer(ReportSerializerWithLogs):
@@ -757,13 +734,14 @@ class BalanceReportSerializer(ReportSerializer):
 
     items = serializers.SerializerMethodField()
 
-    item_instruments = serializers.SerializerMethodField()
+    # item_instruments = serializers.SerializerMethodField()
 
     def get_items(self, obj):
         return [serialize_balance_report_item(item) for item in obj.items]
 
-    def get_item_instruments(self, obj):
-        return [serialize_report_item_instrument(item) for item in obj.item_instruments]
+    # to slow, because sql querys are not bulk fetcthed
+    # def get_item_instruments(self, obj):
+    #     return [serialize_report_item_instrument(item) for item in obj.item_instruments]
 
     def to_representation(self, instance):
         # No need for now, but do not delete
@@ -839,8 +817,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     report_instance_id = serializers.CharField(
         allow_null=True, allow_blank=True, required=False
     )
-    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    task_status = serializers.ReadOnlyField()
+    # task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    # task_status = serializers.ReadOnlyField()
 
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1445,17 +1423,22 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         to_representation_st = time.perf_counter()
 
+        def log_with_time(message):
+            elapsed_time = time.perf_counter() - to_representation_st
+            _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
+
         helper_service = BackendReportHelperService()
 
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
 
-        settings, unique_key = generate_unique_key(instance, "balance")
+        # settings, unique_key = generate_unique_key(instance, "balance")
 
         data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
             instance
         )
+        log_with_time("Report items are received from parent class")
 
-        full_items = helper_service.convert_report_items_to_full_items(data)
+        log_with_time("Report items converted to full items")
 
         # if instance.ignore_cache:
         #
@@ -1530,25 +1513,33 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         #             "{:3.3f}".format(time.perf_counter() - to_representation_st)
         #         )
 
+        full_items = data['items']
+
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
         )
+        log_with_time("calculate_value_percent_market_value")
+
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "exposure"
         )
+        log_with_time("calculate_value_percent_exposure")
 
         # filter by previous groups
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options
         )
+        log_with_time("helper_service.filter")
 
         full_items = helper_service.filter_by_groups_filters(
             full_items, instance.frontend_request_options
         )
+        log_with_time("helper_service.filter_by_groups_filters")
 
         full_items = helper_service.sort_items(
             full_items, instance.frontend_request_options
         )
+        log_with_time("helper_service.sort_items")
 
         groups_types = instance.frontend_request_options["groups_types"]
         columns = instance.frontend_request_options["columns"]
@@ -1558,9 +1549,11 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         unique_groups = helper_service.get_unique_groups(
             full_items, group_type, columns
         )
+        log_with_time("helper_service.get_unique_groups")
         unique_groups = helper_service.sort_groups(
             unique_groups, instance.frontend_request_options
         )
+        log_with_time("helper_service.sort_groups")
 
         # _l.debug('unique_groups %s' % unique_groups)
 
@@ -1573,6 +1566,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
                 "page": instance.page,
             },
         )
+        log_with_time("helper_service.paginate_items")
 
         # if not instance.ignore_cache:
         #     data["report_instance_id"] = report_instance.id
@@ -1589,6 +1583,7 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
         data.pop("item_strategies1", [])
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
+        log_with_time("clear items")
 
 
         _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
@@ -1622,7 +1617,8 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
         log_with_time("Data retrieved without cache")
 
-        full_items = helper_service.convert_report_items_to_full_items(data)
+        # full_items = helper_service.convert_report_items_to_full_items(data)
+        full_items = data['items']
         log_with_time("Report items converted to full items without cache")
 
         # if instance.ignore_cache:
@@ -1750,7 +1746,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
                 instance
             )
 
-            full_items = helper_service.convert_report_items_to_full_items(data)
+            # full_items = helper_service.convert_report_items_to_full_items(data)
+            full_items = data['items']
 
         else:
 
@@ -1807,7 +1804,8 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
 
                 data["report_uuid"] = report_uuid
 
-                full_items = helper_service.convert_report_items_to_full_items(data)
+                # full_items = helper_service.convert_report_items_to_full_items(data)
+                full_items = data['items']
 
                 data["execution_time"] = float(
                     "{:3.3f}".format(time.perf_counter() - to_representation_st)
@@ -1882,7 +1880,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         data.pop("item_strategies2", [])
         data.pop("item_strategies3", [])
 
-        _l.debug("BackendBalanceReportGroupsSerializer.to_representation")
+        _l.debug("BackendPLReportGroupsSerializer.to_representation")
 
         data["serialization_time"] = float(
             "{:3.3f}".format(time.perf_counter() - to_representation_st)
@@ -1910,7 +1908,8 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
                 instance
             )
 
-            full_items = helper_service.convert_report_items_to_full_items(data)
+            # full_items = helper_service.convert_report_items_to_full_items(data)
+            full_items = data['items']
 
         else:
 
@@ -1965,9 +1964,11 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
 
                 data["report_uuid"] = report_uuid
 
-                full_items = helper_service.convert_report_items_to_full_items(data)
+                full_items = data['items']
 
-                data["items"] = full_items
+                # full_items = helper_service.convert_report_items_to_full_items(data)
+
+                # data["items"] = full_items
 
                 report_instance.data = json.loads(
                     json.dumps(data, default=str)
@@ -2049,9 +2050,10 @@ class BackendTransactionReportGroupsSerializer(TransactionReportSerializer):
 
         data["report_uuid"] = report_uuid
 
-        full_items = helper_service.convert_report_items_to_full_items(data)
+        full_items = data['items']
+        # full_items = helper_service.convert_report_items_to_full_items(data)
 
-        data["items"] = full_items
+        # data["items"] = full_items
 
         _l.debug("BackendTransactionReportGroupsSerializer.to_representation")
 
@@ -2130,8 +2132,9 @@ class BackendTransactionReportItemsSerializer(TransactionReportSerializer):
         report_uuid = str(uuid.uuid4())
 
         data["report_uuid"] = report_uuid
-        full_items = helper_service.convert_report_items_to_full_items(data)
-        data["items"] = full_items
+        full_items = data['items']
+        # full_items = helper_service.convert_report_items_to_full_items(data)
+        # data["items"] = full_items
 
         full_items = helper_service.filter(
             full_items, instance.frontend_request_options

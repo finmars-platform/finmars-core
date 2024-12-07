@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 from poms.common.fields import ResourceGroupsField
+from django.core.cache import cache
 
 from dateutil import relativedelta, rrule
 
@@ -2652,6 +2653,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         self.calculate_first_transactions_dates()
 
         super().save(*args, **kwargs)
+
+        cache_key = f"{self.master_user.space_code}_serialized_report_instrument_{self.id}"
+        cache.delete(cache_key)
 
         try:
             self.generate_instrument_system_attributes()

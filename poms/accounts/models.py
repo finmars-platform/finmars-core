@@ -3,6 +3,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 from poms.common.fields import ResourceGroupsField
 
+from django.core.cache import cache
+
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     TimeStampedModel,
@@ -147,6 +149,13 @@ class Account(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
         permissions = [
             ("manage_account", "Can manage account"),
         ]
+
+    def save(self, *args, **kwargs):
+
+        cache_key = f"{self.master_user.space_code}_serialized_report_account_{self.id}"
+        cache.delete(cache_key)
+
+        super().save(*args, **kwargs)
 
     @staticmethod
     def get_system_attrs():

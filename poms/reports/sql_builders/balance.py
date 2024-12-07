@@ -128,7 +128,7 @@ class BalanceReportBuilderSql:
             "{:3.3f}".format(time.perf_counter() - relation_prefetch_st)
         )
 
-        _l.debug(f"build_st done: {self.instance.execution_time}")
+        _l.debug(f"===== build_balance done: {self.instance.execution_time}")
 
         return self.instance
 
@@ -713,7 +713,7 @@ class BalanceReportBuilderSql:
 
                             updated_result.append(new_exposure_item)
 
-                _l.debug("build balance result %s " % len(result))
+                # _l.debug("build balance result %s " % len(result))
 
                 _l.debug("single build done: %s" % (time.perf_counter() - st))
 
@@ -887,11 +887,6 @@ class BalanceReportBuilderSql:
     def add_data_items_instruments(self, ids):
         self.instance.item_instruments = (
             Instrument.objects.select_related(
-                "instrument_type",
-                "instrument_type__instrument_class",
-                "pricing_currency",
-                "accrued_currency",
-                "country",
                 "owner",
             )
             .prefetch_related(
@@ -899,6 +894,26 @@ class BalanceReportBuilderSql:
                 "attributes__attribute_type",
                 "attributes__classifier",
             )
+            .defer(
+                   "accrual_calculation_schedules",
+                "country",
+                   "factor_schedules",
+                    "pricing_policies",
+                    "event_schedules",
+                "pricing_currency",
+                "accrued_currency",
+                "daily_pricing_model",
+                "payment_size_detail",
+                    "instrument_type",
+                    "instrument_type__instrument_class",
+                   "identifier", "long_underlying_instrument",
+                   "short_underlying_instrument",
+                   "long_underlying_exposure",
+                   "short_underlying_exposure",
+                   "co_directional_exposure_currency",
+                   "counter_directional_exposure_currency",
+                   "files",
+                   "resource_groups")
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
         )
@@ -910,12 +925,7 @@ class BalanceReportBuilderSql:
             ids.append(instrument.instrument_type_id)
 
         self.instance.item_instrument_types = (
-            InstrumentType.objects.select_related("owner")
-            .prefetch_related(
-                "attributes",
-                "attributes__attribute_type",
-                "attributes__classifier",
-            )
+            InstrumentType.objects.select_related("owner", "instrument_class")
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
         )
@@ -932,7 +942,7 @@ class BalanceReportBuilderSql:
         self.instance.item_portfolios = (
             Portfolio.objects.select_related("owner")
             .prefetch_related("attributes")
-            .defer("responsibles", "counterparties", "transaction_types", "accounts")
+            .defer("responsibles", "counterparties", "transaction_types", "accounts", "portfolio_type", "resource_groups", "client")
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
         )
@@ -1085,6 +1095,7 @@ class BalanceReportBuilderSql:
         strategies3_ids = list(set(strategies3_ids))
 
         _l.debug("strategies1_ids %s" % strategies1_ids)
+        _l.debug("instrument_ids %s" % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)

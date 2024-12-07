@@ -1173,6 +1173,8 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serializer_class=BackendBalanceReportGroupsSerializer,
     )
     def groups(self, request, *args, **kwargs):
+
+        serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -1204,15 +1206,19 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         #     builder = BalanceReportBuilderSql(instance=instance)
         #     instance = builder.build_balance()
 
-        serialize_report_st = time.perf_counter()
+
         serializer = self.get_serializer(instance=instance, many=False)
+
+
+
+        response = Response(serializer.data, status=status.HTTP_200_OK)
 
         _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return response
 
     @action(
         detail=False,

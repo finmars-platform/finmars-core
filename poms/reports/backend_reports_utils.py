@@ -1,5 +1,6 @@
 import logging
 import itertools
+import time
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -345,6 +346,12 @@ class BackendReportHelperService:
     def convert_report_items_to_full_items(self, data):
         original_items = []  # probably we missing user attributes
 
+        to_representation_st = time.perf_counter()
+
+        def log_with_time(message):
+            elapsed_time = time.perf_counter() - to_representation_st
+            _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
+
         helper_dicts = {
             "accrued_currency": self.convert_helper_dict(data["item_currencies"]),
             "pricing_currency": self.convert_helper_dict(data["item_currencies"]),
@@ -375,6 +382,8 @@ class BackendReportHelperService:
             "strategy3_cash": self.convert_helper_dict(data["item_strategies3"]),
         }
 
+        # log_with_time("helper dicts are created")
+
         if "item_counterparties" in data:
             helper_dicts["counterparty"] = self.convert_helper_dict(
                 data["item_counterparties"]
@@ -395,6 +404,8 @@ class BackendReportHelperService:
             content_type=content_type
         )
 
+        # log_with_time("data prepared to be flattened")
+
         # _l.debug('data helper_dicts %s' %  helper_dicts)
         # _l.debug('data items %s' % data['items'][0])
         for item in data["items"]:
@@ -409,6 +420,9 @@ class BackendReportHelperService:
                     ] = custom_field["value"]
 
             original_items.append(original_item)
+
+
+        # log_with_time("data flattening")
 
         return original_items
 
@@ -592,7 +606,7 @@ class BackendReportHelperService:
 
         # Early exit: If there are no group types or values, return the original list without filtering
         if not groups_types or not groups_values:
-            _l.debug(f"filter_by_groups_filters after len {len(items)}")
+            # _l.debug(f"filter_by_groups_filters after len {len(items)}")
             return items
 
         # Validate that both lists have the same length
@@ -619,7 +633,7 @@ class BackendReportHelperService:
         ]
 
         # Log the final count of filtered items
-        _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
+        # _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
 
         # Return the filtered list
         return filtered_items
@@ -649,19 +663,19 @@ class BackendReportHelperService:
         return list(filter(item_matches, items))
 
     def filter(self, items, options):
-        _l.debug(f"Before filter {len(items)}")
+        # _l.debug(f"Before filter {len(items)}")
 
         items = self.filter_by_global_table_search(items, options)
 
-        _l.debug(f"After filter_by_global_table_search {len(items)}")
+        # _l.debug(f"After filter_by_global_table_search {len(items)}")
 
         items = self.filter_table_rows(items, options)
 
-        _l.debug(f"After filter_table_rows {len(items)}")
+        # _l.debug(f"After filter_table_rows {len(items)}")
 
         # items = self.filter_by_groups_filters(items, options)
 
-        _l.debug(f"After filter_by_groups_filters {len(items)}")
+        # _l.debug(f"After filter_by_groups_filters {len(items)}")
 
         return items
 
