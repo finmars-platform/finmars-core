@@ -123,7 +123,8 @@ class PLReportBuilderSql:
         _l.debug('self.instance.report_date %s' % self.instance.report_date)
         _l.debug('self.instance.pl_first_date %s' % self.instance.pl_first_date)
 
-        self.parallel_build()
+        # self.parallel_build()
+        self.serial_build()
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 

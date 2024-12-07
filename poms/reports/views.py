@@ -1383,14 +1383,11 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         builder = TransactionReportBuilderSql(instance=instance)
         instance = builder.build_transaction()
 
-        instance.task_id = 1  # deprecated, but not to remove
-        instance.task_status = "SUCCESS"  # deprecated, but not to remove
-
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
         _l.debug(
-            "Balance Report done: %s"
+            "BackendTransactionReportViewSet done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
 
@@ -1412,9 +1409,6 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         # Check to_representation comments to find why is that
         builder = TransactionReportBuilderSql(instance=instance)
         instance = builder.build_transaction()
-
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
