@@ -1182,24 +1182,27 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         instance.portfolios = transform_to_allowed_portfolios(instance)
         instance.accounts = transform_to_allowed_accounts(instance)
 
-        settings, unique_key = generate_unique_key(instance, "balance")
+        # settings, unique_key = generate_unique_key(instance, "balance")
 
-        _l.info("unique_key %s" % unique_key)
+        # _l.info("unique_key %s" % unique_key)
 
-        try:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-            if instance.ignore_cache:
-                raise ObjectDoesNotExist
-
-            balance_report_instance = BalanceReportInstance.objects.get(
-                unique_key=unique_key
-            )
-
-        except ObjectDoesNotExist:
-
-            # Check to_representation comments to find why is that
-            builder = BalanceReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
+        # try:
+        #
+        #     if instance.ignore_cache:
+        #         raise ObjectDoesNotExist
+        #
+        #     balance_report_instance = BalanceReportInstance.objects.get(
+        #         unique_key=unique_key
+        #     )
+        #
+        # except ObjectDoesNotExist:
+        #
+        #     # Check to_representation comments to find why is that
+        #     builder = BalanceReportBuilderSql(instance=instance)
+        #     instance = builder.build_balance()
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1227,24 +1230,27 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         instance.portfolios = transform_to_allowed_portfolios(instance)
         instance.accounts = transform_to_allowed_accounts(instance)
 
-        settings, unique_key = generate_unique_key(instance, "balance")
+        # settings, unique_key = generate_unique_key(instance, "balance")
+        #
+        # _l.info("unique_key %s" % unique_key)
 
-        _l.info("unique_key %s" % unique_key)
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-        try:
-
-            if instance.ignore_cache:
-                raise ObjectDoesNotExist
-
-            balance_report_instance = BalanceReportInstance.objects.get(
-                unique_key=unique_key
-            )
-
-        except ObjectDoesNotExist:
-
-            # Check to_representation comments to find why is that
-            builder = BalanceReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
+        # try:
+        #
+        #     if instance.ignore_cache:
+        #         raise ObjectDoesNotExist
+        #
+        #     balance_report_instance = BalanceReportInstance.objects.get(
+        #         unique_key=unique_key
+        #     )
+        #
+        # except ObjectDoesNotExist:
+        #
+        #     # Check to_representation comments to find why is that
+        #     builder = BalanceReportBuilderSql(instance=instance)
+        #     instance = builder.build_balance()
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)

@@ -753,7 +753,7 @@ class BalanceReportLightSerializer(ReportSerializerWithLogs):
 
 
 class BalanceReportSerializer(ReportSerializer):
-    calculate_pl = serializers.BooleanField(default=True, initial=True)
+    calculate_pl = serializers.BooleanField(default=False, initial=False)
 
     items = serializers.SerializerMethodField()
 
@@ -1451,78 +1451,84 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
 
         settings, unique_key = generate_unique_key(instance, "balance")
 
-        if instance.ignore_cache:
+        data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
+            instance
+        )
 
-            data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
-                instance
-            )
+        full_items = helper_service.convert_report_items_to_full_items(data)
 
-            full_items = helper_service.convert_report_items_to_full_items(data)
-
-        else:
-
-            try:
-
-                report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
-
-                data = report_instance.data
-
-                full_items = report_instance.data["items"]
-
-                data["execution_time"] = float(
-                    "{:3.3f}".format(time.perf_counter() - to_representation_st)
-                )
-
-            except ObjectDoesNotExist:
-
-                data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
-                    instance
-                )
-
-                report_uuid = str(uuid.uuid4())
-
-                report_instance_name = ""
-                if self.instance.report_instance_name:
-                    report_instance_name = self.instance.report_instance_name
-                else:
-                    report_instance_name = report_uuid
-
-                report_instance = BalanceReportInstance(
-                    unique_key=unique_key,
-                    settings=settings,
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    owner=instance.member,
-                    user_code=report_instance_name,
-                    name=report_instance_name,
-                    short_name=report_instance_name,
-                    report_date=instance.report_date,
-                    report_currency=instance.report_currency,
-                    pricing_policy=instance.pricing_policy,
-                    cost_method=instance.cost_method,
-                )
-
-                report_instance.report_date = instance.report_date
-                report_instance.report_currency = instance.report_currency
-                report_instance.pricing_policy = instance.pricing_policy
-                report_instance.cost_method = instance.cost_method
-
-                report_instance.report_uuid = report_uuid
-
-                data["report_uuid"] = report_uuid
-
-                full_items = helper_service.convert_report_items_to_full_items(data)
-
-                data["items"] = full_items
-
-                report_instance.data = json.loads(json.dumps(data, default=str))
-
-                if report_instance.data:
-                    report_instance.save()
-
-                data["execution_time"] = float(
-                    "{:3.3f}".format(time.perf_counter() - to_representation_st)
-                )
+        # if instance.ignore_cache:
+        #
+        #     data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
+        #         instance
+        #     )
+        #
+        #     full_items = helper_service.convert_report_items_to_full_items(data)
+        #
+        # else:
+        #
+        #     try:
+        #
+        #         report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
+        #
+        #         data = report_instance.data
+        #
+        #         full_items = report_instance.data["items"]
+        #
+        #         data["execution_time"] = float(
+        #             "{:3.3f}".format(time.perf_counter() - to_representation_st)
+        #         )
+        #
+        #     except ObjectDoesNotExist:
+        #
+        #         data = super(BackendBalanceReportGroupsSerializer, self).to_representation(
+        #             instance
+        #         )
+        #
+        #         report_uuid = str(uuid.uuid4())
+        #
+        #         report_instance_name = ""
+        #         if self.instance.report_instance_name:
+        #             report_instance_name = self.instance.report_instance_name
+        #         else:
+        #             report_instance_name = report_uuid
+        #
+        #         report_instance = BalanceReportInstance(
+        #             unique_key=unique_key,
+        #             settings=settings,
+        #             master_user=instance.master_user,
+        #             member=instance.member,
+        #             owner=instance.member,
+        #             user_code=report_instance_name,
+        #             name=report_instance_name,
+        #             short_name=report_instance_name,
+        #             report_date=instance.report_date,
+        #             report_currency=instance.report_currency,
+        #             pricing_policy=instance.pricing_policy,
+        #             cost_method=instance.cost_method,
+        #         )
+        #
+        #         report_instance.report_date = instance.report_date
+        #         report_instance.report_currency = instance.report_currency
+        #         report_instance.pricing_policy = instance.pricing_policy
+        #         report_instance.cost_method = instance.cost_method
+        #
+        #         report_instance.report_uuid = report_uuid
+        #
+        #         data["report_uuid"] = report_uuid
+        #
+        #         full_items = helper_service.convert_report_items_to_full_items(data)
+        #
+        #         data["items"] = full_items
+        #
+        #         report_instance.data = json.loads(json.dumps(data, default=str))
+        #
+        #         if report_instance.data:
+        #             report_instance.save()
+        #
+        #         data["execution_time"] = float(
+        #             "{:3.3f}".format(time.perf_counter() - to_representation_st)
+        #         )
 
         full_items = helper_service.calculate_value_percent(
             full_items, instance.calculation_group, "market_value"
@@ -1568,9 +1574,9 @@ class BackendBalanceReportGroupsSerializer(BalanceReportSerializer):
             },
         )
 
-        if not instance.ignore_cache:
-            data["report_instance_id"] = report_instance.id
-            data["created_at"] = report_instance.created_at
+        # if not instance.ignore_cache:
+        #     data["report_instance_id"] = report_instance.id
+        #     data["created_at"] = report_instance.created_at
 
         data["items"] = groups
         data.pop("item_currencies", [])
@@ -1613,61 +1619,67 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         settings, unique_key = generate_unique_key(instance, "balance")
         log_with_time("Unique key generated")
 
-        if instance.ignore_cache:
-            data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
-            log_with_time("Data retrieved without cache")
+        data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+        log_with_time("Data retrieved without cache")
 
-            full_items = helper_service.convert_report_items_to_full_items(data)
-            log_with_time("Report items converted to full items without cache")
+        full_items = helper_service.convert_report_items_to_full_items(data)
+        log_with_time("Report items converted to full items without cache")
 
-        else:
-            try:
-                report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
-                log_with_time("Report instance retrieved from cache")
-
-                data = report_instance.data
-                full_items = report_instance.data["items"]
-                log_with_time("Data and full items loaded from report instance")
-
-                data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
-                log_with_time("Execution time added to data from cache")
-
-            except ObjectDoesNotExist:
-                log_with_time("Report instance not found in cache, generating new data")
-
-                data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
-                report_uuid = str(uuid.uuid4())
-                report_instance_name = self.instance.report_instance_name or report_uuid
-
-                report_instance = BalanceReportInstance(
-                    unique_key=unique_key,
-                    settings=settings,
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    owner=instance.member,
-                    user_code=report_instance_name,
-                    name=report_instance_name,
-                    short_name=report_instance_name,
-                    report_date=instance.report_date,
-                    report_currency=instance.report_currency,
-                    pricing_policy=instance.pricing_policy,
-                    cost_method=instance.cost_method,
-                )
-
-                data["report_uuid"] = report_uuid
-                full_items = helper_service.convert_report_items_to_full_items(data)
-                data["items"] = full_items
-                log_with_time("New report instance data and items prepared")
-
-                report_instance.data = json.loads(json.dumps(data, default=str))
-                log_with_time("Data serialized to JSON")
-
-                if report_instance.data:
-                    report_instance.save()
-                    log_with_time("Report instance saved to database")
-
-                data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
-                log_with_time("Execution time added to newly generated data")
+        # if instance.ignore_cache:
+        #     data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+        #     log_with_time("Data retrieved without cache")
+        #
+        #     full_items = helper_service.convert_report_items_to_full_items(data)
+        #     log_with_time("Report items converted to full items without cache")
+        #
+        # else:
+        #     try:
+        #         report_instance = BalanceReportInstance.objects.get(unique_key=unique_key)
+        #         log_with_time("Report instance retrieved from cache")
+        #
+        #         data = report_instance.data
+        #         full_items = report_instance.data["items"]
+        #         log_with_time("Data and full items loaded from report instance")
+        #
+        #         data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+        #         log_with_time("Execution time added to data from cache")
+        #
+        #     except ObjectDoesNotExist:
+        #         log_with_time("Report instance not found in cache, generating new data")
+        #
+        #         data = super(BackendBalanceReportItemsSerializer, self).to_representation(instance)
+        #         report_uuid = str(uuid.uuid4())
+        #         report_instance_name = self.instance.report_instance_name or report_uuid
+        #
+        #         report_instance = BalanceReportInstance(
+        #             unique_key=unique_key,
+        #             settings=settings,
+        #             master_user=instance.master_user,
+        #             member=instance.member,
+        #             owner=instance.member,
+        #             user_code=report_instance_name,
+        #             name=report_instance_name,
+        #             short_name=report_instance_name,
+        #             report_date=instance.report_date,
+        #             report_currency=instance.report_currency,
+        #             pricing_policy=instance.pricing_policy,
+        #             cost_method=instance.cost_method,
+        #         )
+        #
+        #         data["report_uuid"] = report_uuid
+        #         full_items = helper_service.convert_report_items_to_full_items(data)
+        #         data["items"] = full_items
+        #         log_with_time("New report instance data and items prepared")
+        #
+        #         report_instance.data = json.loads(json.dumps(data, default=str))
+        #         log_with_time("Data serialized to JSON")
+        #
+        #         if report_instance.data:
+        #             report_instance.save()
+        #             log_with_time("Report instance saved to database")
+        #
+        #         data["execution_time"] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
+        #         log_with_time("Execution time added to newly generated data")
 
         # Processing full_items with various helper_service methods
         full_items = helper_service.calculate_value_percent(full_items, instance.calculation_group, "market_value")
@@ -1688,10 +1700,10 @@ class BackendBalanceReportItemsSerializer(BalanceReportSerializer):
         data["count"] = len(full_items)
         log_with_time("Item count added to data")
 
-        if not instance.ignore_cache:
-            data["report_instance_id"] = report_instance.id
-            data["created_at"] = report_instance.created_at
-            log_with_time("Report instance ID and creation date added to data")
+        # if not instance.ignore_cache:
+        #     data["report_instance_id"] = report_instance.id
+        #     data["created_at"] = report_instance.created_at
+        #     log_with_time("Report instance ID and creation date added to data")
 
         data["items"] = helper_service.paginate_items(full_items, {"page_size": instance.page_size, "page": instance.page})
         log_with_time("Items paginated")
