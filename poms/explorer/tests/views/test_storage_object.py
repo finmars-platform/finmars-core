@@ -1,6 +1,7 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.explorer.models import DIR_SUFFIX, StorageObject
 from poms.iam.models import ResourceGroup
+from poms.users.models import Member
 
 
 class StorageObjectResourceGroupViewTest(BaseTestCase):
@@ -10,14 +11,11 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
-        self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/storage-object/"
-        )
-        self.dirpath = f"/config/next{DIR_SUFFIX}"
+        api_url = f"/{self.realm_code}/{self.space_code}/api/v1/"
+        self.url = f"{api_url}explorer/storage-object/"
+        self.dir_path = f"/config/next{DIR_SUFFIX}"
         self.filepath = "/config/next/test.pdf"
-        self.directory = StorageObject.objects.create(path=self.dirpath)
+        self.directory = StorageObject.objects.create(path=self.dir_path)
         self.file = StorageObject.objects.create(
             path=self.filepath, size=111, is_file=True
         )
@@ -28,6 +26,7 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            owner=Member.objects.all().first(),
         )
 
     def test__list(self):
