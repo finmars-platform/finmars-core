@@ -607,7 +607,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data['items'] = full_items
 
-        _l.info('===== first items %s' % data['items'][15])
+        # _l.info('===== first items %s' % data['items'][15])
 
         return data
 
