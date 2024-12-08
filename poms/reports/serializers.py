@@ -992,13 +992,15 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
         st = time.perf_counter()
 
-        items = data["items"]
+        helper_service = BackendReportHelperService()
+
+        full_items = helper_service.convert_report_items_to_full_items(data)
         custom_fields = data["custom_fields_object"]
 
         # _l.debug('custom_fields_to_calculate %s' % data["custom_fields_to_calculate"])
         # _l.debug('custom_fields %s' % data["custom_fields_object"])
 
-        if len(data["custom_fields_to_calculate"]) and (custom_fields and items):
+        if len(data["custom_fields_to_calculate"]) and (custom_fields and full_items):
             item_transaction_classes = {
                 o["id"]: o for o in data["item_transaction_classes"]
             }
@@ -1022,7 +1024,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                         names[f"{pk_attr}_object"] = objs[pk]
                         # names[pk_attr] = objs[pk]
 
-            for item in items:
+            for item in full_items:
                 names = {}
 
                 for key, value in item.items():
@@ -1128,15 +1130,19 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                 else:
                                     value = None
 
-                            cfv.append(
-                                {
-                                    "custom_field": cf["id"],
-                                    "user_code": cf["user_code"],
-                                    "value": value,
-                                }
-                            )
+                            # cfv.append(
+                            #     {
+                            #         "custom_field": cf["id"],
+                            #         "user_code": cf["user_code"],
+                            #         "value": value,
+                            #     }
+                            # )
 
-                item["custom_fields"] = cfv
+                            item[f'custom_fields.{cf["user_code"]}'] = value
+
+                # item["custom_fields"] = cfv
+
+        data['items'] = full_items
 
         data["serialization_time"] = float(
             "{:3.3f}".format(time.perf_counter() - to_representation_st)
