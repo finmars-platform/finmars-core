@@ -150,10 +150,10 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
     class Meta:
         model = Instrument
         fields = [
-            'id', 'instrument_type_id', 'user_code', 'name', 'short_name',
+            'id', 'instrument_type', 'user_code', 'name', 'short_name',
             'public_name', 'notes',
-            'pricing_currency_id', 'price_multiplier',
-            'accrued_currency_id', 'accrued_multiplier',
+            'pricing_currency', 'price_multiplier',
+            'accrued_currency', 'accrued_multiplier',
             'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
@@ -161,7 +161,7 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
             # 'daily_pricing_model',
             'maturity_date', 'maturity_price',
 
-            'country_id'
+            'country'
 
         ]
         read_only_fields = fields
