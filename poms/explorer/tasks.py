@@ -23,6 +23,7 @@ from poms.explorer.utils import (
     unzip_file,
     update_or_create_file_and_parents,
 )
+from poms.users.models import MasterUser, Member
 
 storage = get_storage()
 
@@ -239,13 +240,13 @@ def rename_directory_in_storage(self, *args, **kwargs):
     )
 
     if is_file:
-        destination_file_path = str(os.path.join(os.path.dirname(path), new_name))
-        rename_file(storage, path, destination_file_path)
+        destination_file_path = os.path.join(os.path.dirname(path), new_name)
+        rename_file(storage, path, str(destination_file_path))
     else:
         destination_dir_path = os.path.join(
             os.path.dirname(os.path.normpath(path)), new_name
         )
-        for _ in rename_dir(storage, path, destination_dir_path, celery_task):
+        for _ in rename_dir(storage, path, str(destination_dir_path), celery_task):
             pass
 
     celery_task.update_progress(
@@ -335,3 +336,18 @@ def update_create_path_in_storage(self, *args, **kwargs):
         celery_task.status = CeleryTask.STATUS_DONE
 
     celery_task.save()
+
+
+def start_update_create_path_in_storage(path: str, size: int):
+    celery_task = CeleryTask.objects.create(
+        master_user=MasterUser.objects.first(),
+        member=Member.objects.first(),
+        verbose_name="Create StorageObject(s)",
+        type="update_create_path_in_storage",
+        status=CeleryTask.STATUS_PENDING,
+        options_object={
+            "path": path,
+            "size": size,
+        },
+    )
+    update_create_path_in_storage.apply_async(task_id=celery_task.id)
