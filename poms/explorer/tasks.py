@@ -21,9 +21,7 @@ from poms.explorer.utils import (
     sync_file,
     sync_storage_objects,
     unzip_file,
-    update_or_create_file_and_parents,
 )
-from poms.users.models import MasterUser, Member
 
 storage = get_storage()
 
