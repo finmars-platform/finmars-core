@@ -388,7 +388,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
 
     path = path.removeprefix("/")
     if not path:
-        raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
+        raise RuntimeError(f"empty path '{path}'")
 
     parent = None
     for dir_path in split_path(path):
