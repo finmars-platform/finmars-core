@@ -319,7 +319,7 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     """
 
     def save(self, path: str, content: Any, **kwargs) -> str:
-        from poms.explorer.utils import update_or_create_file_and_parents
+        from poms.explorer.tasks import start_update_create_path_in_storage
 
         if path.endswith("/.init"):
             # creates system directory with empty .init file
@@ -332,7 +332,7 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
         super().save(path, content, **kwargs)
 
         with contextlib.suppress(Exception):
-            update_or_create_file_and_parents(path, size)
+            start_update_create_path_in_storage(path, size)
 
     def delete(self, path: str) -> None:
         from poms.explorer.models import StorageObject

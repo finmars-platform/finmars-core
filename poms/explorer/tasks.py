@@ -2,7 +2,9 @@ import logging
 import os
 
 from poms.celery_tasks import finmars_task
+from poms.celery_tasks.models import CeleryTask
 from poms.common.storage import get_storage
+from poms.explorer.models import StorageObject
 from poms.explorer.utils import (
     count_files,
     delete_all_file_objects,
@@ -19,7 +21,9 @@ from poms.explorer.utils import (
     rename_dir,
     copy_dir,
     copy_file,
+    update_or_create_file_and_parents,
 )
+from poms.users.models import MasterUser, Member
 
 storage = get_storage()
 
@@ -29,9 +33,6 @@ MAX_FILES = 10000
 
 @finmars_task(name="explorer.tasks.move_directory_in_storage", bind=True)
 def move_directory_in_storage(self, *args, **kwargs):
-    from poms.celery_tasks.models import CeleryTask
-
-    context = kwargs["context"]
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -97,9 +98,6 @@ def move_directory_in_storage(self, *args, **kwargs):
 
 @finmars_task(name="explorer.tasks.unzip_file_in_storage", bind=True)
 def unzip_file_in_storage(self, *args, **kwargs):
-    from poms.celery_tasks.models import CeleryTask
-
-    context = kwargs["context"]
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -137,9 +135,6 @@ def unzip_file_in_storage(self, *args, **kwargs):
 
 @finmars_task(name="explorer.tasks.sync_storage_with_database", bind=True)
 def sync_storage_with_database(self, *args, **kwargs):
-    from poms.celery_tasks.models import CeleryTask
-    from poms.explorer.models import StorageObject
-
     task_name = "sync_storage_with_database"
 
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
@@ -217,7 +212,6 @@ def sync_storage_with_database(self, *args, **kwargs):
 
 @finmars_task(name="explorer.tasks.rename_directory_in_storage", bind=True)
 def rename_directory_in_storage(self, *args, **kwargs):
-    from poms.celery_tasks.models import CeleryTask
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -226,7 +220,7 @@ def rename_directory_in_storage(self, *args, **kwargs):
     validated_data = celery_task.options_object
     path = validated_data["path"]
     new_name = validated_data["new_name"]
-    
+
     is_file = path_is_file(storage, path)
     if is_file:
         total_items = 1
@@ -245,11 +239,11 @@ def rename_directory_in_storage(self, *args, **kwargs):
     )
 
     if is_file:
-        destination_file_path =  str(os.path.join(os.path.dirname(path), new_name))
-        rename_file(storage, path, destination_file_path)
+        destination_file_path =  os.path.join(os.path.dirname(path), new_name)
+        rename_file(storage, path, str(destination_file_path))
     else:
         destination_dir_path = os.path.join(os.path.dirname(os.path.normpath(path)), new_name)
-        for _ in rename_dir(storage, path, destination_dir_path, celery_task):
+        for _ in rename_dir(storage, path, str(destination_dir_path), celery_task):
             pass
 
     celery_task.update_progress(
@@ -262,14 +256,12 @@ def rename_directory_in_storage(self, *args, **kwargs):
     )
 
     celery_task.status = CeleryTask.STATUS_DONE
-    celery_task.verbose_result = f"renamed file"
+    celery_task.verbose_result = "renamed file"
     celery_task.save()
 
 
 @finmars_task(name="explorer.tasks.copy_directory_in_storage", bind=True)
 def copy_directory_in_storage(self, *args, **kwargs):
-    from poms.celery_tasks.models import CeleryTask
-
     celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -325,3 +317,34 @@ def copy_directory_in_storage(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"copied {total_items} items"
     celery_task.save()
+
+
+@finmars_task(name="explorer.tasks.update_create_path_in_storage", bind=True)
+def update_create_path_in_storage(self, *args, **kwargs):
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    path = celery_task.options_object["path"]
+    size = celery_task.options_object["size"]
+    try:
+        update_or_create_file_and_parents(path, size)
+    except Exception as e:
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.verbose_result = f"failed to update/create {path} due to {repr(e)}"
+    else:
+        celery_task.status = CeleryTask.STATUS_DONE
+
+    celery_task.save()
+
+
+def start_update_create_path_in_storage(path: str, size: int):
+    celery_task = CeleryTask.objects.create(
+        master_user=MasterUser.objects.first(),
+        member=Member.objects.first(),
+        verbose_name="Create StorageObject(s)",
+        type="update_create_path_in_storage",
+        status=CeleryTask.STATUS_PENDING,
+        options_object={
+            "path": path,
+            "size": size,
+        },
+    )
+    update_create_path_in_storage.apply_async(kwargs=dict(task_id=celery_task.id))

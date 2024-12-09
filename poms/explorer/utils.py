@@ -101,7 +101,7 @@ def sanitize_html(html: str) -> str:
 def path_is_file(
     storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     file_path: str,
-    ) -> bool:
+) -> bool:
     """
     Check if the given path is a file in the storage.
     Args:
@@ -132,7 +132,7 @@ def move_file(
     storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
     source_file_path: str,
     destin_file_path: str,
-    ):
+):
     """
     Move a file from the source path to the destination path within the storage.
 
@@ -192,9 +192,9 @@ def move_dir(
         d_file = os.path.join(destin_dir, file_name)
         move_file(storage, s_file, d_file)
 
-    if isinstance(storage, FinmarsLocalFileSystemStorage): 
+    if isinstance(storage, FinmarsLocalFileSystemStorage):
         storage.delete(source_dir)
-    
+
     celery_task.refresh_from_db()
     progres_dict = celery_task.progress_object
     progres_dict["current"] += len(files)
@@ -384,7 +384,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     """
     from poms.explorer.models import DIR_SUFFIX, StorageObject
 
-    _l.info(f"update_or_create_file_and_parents: starts with {path}")
+    _l.info(f"update_or_create_file_and_parents: started for path '{path}'")
 
     path = path.removeprefix("/")
     if not path:
@@ -392,27 +392,22 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
 
     parent = None
     for dir_path in split_path(path):
-        dir_obj, created = StorageObject.objects.update_or_create(
+        parent, created = StorageObject.objects.update_or_create(
             path=f"{dir_path}{DIR_SUFFIX}",
             defaults={"parent": parent},
         )
         if created:
-            _l.info(
-                f"update_or_create_file_and_parents: created directory {dir_obj.path}"
-            )
-        parent = dir_obj
+            _l.info(f"created directory {parent.path}")
 
     if parent is None:
-        raise RuntimeError(
-            f"update_or_create_file_and_parents: no parent path '{path}'"
-        )
+        raise RuntimeError(f"no parent path '{path}'")
 
     file, created = StorageObject.objects.update_or_create(
         path=path,
         defaults={"parent": parent, "size": size, "is_file": True},
     )
     if created:
-        _l.info(f"update_or_create_file_and_parents: created file {file.path}")
+        _l.info(f"created file '{file.path}'")
 
     return file.path
 
@@ -455,8 +450,7 @@ def paginate(items: list, page_size: int, page_number: int, base_url: str) -> di
 
 
 def gen_path_copy(
-    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage,
-    path: str
+    storage: FinmarsS3Storage | FinmarsLocalFileSystemStorage, path: str
 ) -> str:
     """
     Generate new path startswith _copy(number) for file (or directory).
