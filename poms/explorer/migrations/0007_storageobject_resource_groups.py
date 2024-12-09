@@ -17,9 +17,9 @@ class Migration(migrations.Migration):
             name="resource_groups",
             field=poms.common.fields.ResourceGroupsField(
                 base_field=models.CharField(max_length=1024),
-                default=poms.common.utils.default_empty_list,
+                default=poms.common.fields.default_empty_list,
                 size=None,
-                verbose_name="list of resource groups user_codes, to which object belongs",
+                verbose_name="list of resource groups user_codes, to which obj belongs",
             ),
         ),
     ]

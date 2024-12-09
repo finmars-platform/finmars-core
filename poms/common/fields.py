@@ -1,9 +1,7 @@
 import contextlib
 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -22,7 +20,6 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
-from poms.common.utils import default_empty_list
 from poms.expressions_engine import formula
 from poms.iam.fields import IamProtectedRelatedField
 from django.contrib.postgres.fields import ArrayField

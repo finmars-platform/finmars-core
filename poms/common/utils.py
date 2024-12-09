@@ -1034,10 +1034,3 @@ class FinmarsNestedObjects(NestedObjects):
                 item["protected"] = root in self.protected
                 roots.append(item)
         return roots
-
-
-def default_empty_list():
-    """
-    Return default empty list for model fields
-    """
-    return []
