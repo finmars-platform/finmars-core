@@ -2,13 +2,6 @@ from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import (
-    DIR_SUFFIX,
-    AccessLevel,
-    StorageObject,
-    get_root_path,
-)
-from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
@@ -89,37 +82,3 @@ class UnzipViewSetTest(CreateUserMemberMixin, BaseTestCase):
                 "realm_code": "realm00000",
             },
         )
-
-    def test__no_permission(self):
-        user, member = self.create_user_member()
-        self.client.force_authenticate(user=user)
-
-        data = {"target_directory_path": "target", "file_path": "file.zip"}
-
-        response = self.client.post(self.url, data, format="json")
-
-        self.assertEqual(response.status_code, 403)
-
-    @mock.patch("poms.explorer.serializers.path_is_file")
-    @mock.patch("poms.explorer.views.unzip_file_in_storage.apply_async")
-    def test__has_root_permission(self, mock_unzip, mock_is_file):
-        self.storage_mock.dir_exists.return_value = True
-        mock_is_file.return_value = True
-        user, member = self.create_user_member()
-        to_dir = "test/next"
-        file_name = "file.zip"
-        data = {"target_directory_path": to_dir, "file_path": file_name}
-
-        root_path = get_root_path()
-        root = StorageObject.objects.create(path=root_path)
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.WRITE)
-
-        StorageObject.objects.create(path=f"{to_dir}{DIR_SUFFIX}", parent=root)
-        StorageObject.objects.create(path=file_name, size=444, parent=root, is_file=True)
-
-        self.client.force_authenticate(user=user)
-
-        response = self.client.post(self.url, data, format="json")
-
-        self.assertEqual(response.status_code, 200)

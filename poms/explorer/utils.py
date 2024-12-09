@@ -388,7 +388,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
 
     path = path.removeprefix("/")
     if not path:
-        raise RuntimeError(f"update_or_create_file_and_parents: empty path '{path}'")
+        raise RuntimeError(f"empty path '{path}'")
 
     parent = None
     for dir_path in split_path(path):
@@ -400,7 +400,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
             _l.info(f"created directory {parent.path}")
 
     if parent is None:
-        raise RuntimeError(f"no parent path '{path}'")
+        raise RuntimeError(f"invalid parent path '{path}'")
 
     file, created = StorageObject.objects.update_or_create(
         path=path,

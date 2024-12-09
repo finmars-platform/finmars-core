@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy
 from django.core.cache import cache
 
 
+from poms.clients.models import Client
 from poms.common.fields import ResourceGroupsField
 from poms.common.models import (
     AbstractClassModel,
@@ -18,7 +19,6 @@ from poms.common.models import (
     ObjectStateModel,
     TimeStampedModel,
 )
-from poms.clients.models import Client
 from poms.common.utils import date_now, str_to_date
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import Currency
@@ -193,11 +193,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         null=True,
         verbose_name=gettext_lazy("first cash flow date"),
     )
-    resource_groups = ResourceGroupsField(
-        verbose_name=gettext_lazy(
-            "list of resource groups user_codes, to which portfolio belongs"
-        ),
-    )
+    resource_groups = ResourceGroupsField()
     client = models.ForeignKey(
         Client,
         on_delete=models.CASCADE,

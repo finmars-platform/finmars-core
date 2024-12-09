@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 (
                     "path",
                     models.CharField(
-                        help_text="Path to the directory in the storage system",
+                        help_text="Path to the file or directory in the storage system",
                         max_length=2048,
                         unique=True,
                     ),
