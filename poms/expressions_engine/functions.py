@@ -167,6 +167,25 @@ def _add_days(date, days):
         days = datetime.timedelta(days=int(days))
     return date + days
 
+def _days_diff(date_1, date_2):
+    """
+    Calculate the difference in days between two dates.
+    :param date_1: First date (datetime or string in YYYY-MM-DD format).
+    :param date_2: Second date (datetime or string in YYYY-MM-DD format).
+    :return: Integer difference in days.
+    """
+    # If the dates are strings, convert them to datetime objects
+    if isinstance(date_1, str):
+        date_1 = datetime.datetime.strptime(date_1, "%Y-%m-%d")
+    if isinstance(date_2, str):
+        date_2 = datetime.datetime.strptime(date_2, "%Y-%m-%d")
+
+    # Calculate the difference
+    diff = date_2 - date_1
+
+    # Return the absolute difference in days
+    return diff.days
+
 
 def _add_weeks(date, weeks):
     if not isinstance(date, datetime.date):
@@ -5062,6 +5081,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("weeks", _weeks),
     SimpleEval2Def("months", _months),
     SimpleEval2Def("timedelta", _timedelta),
+    SimpleEval2Def("days_diff", _days_diff),
     SimpleEval2Def("add_days", _add_days),
     SimpleEval2Def("add_weeks", _add_weeks),
     SimpleEval2Def("add_workdays", _add_workdays),

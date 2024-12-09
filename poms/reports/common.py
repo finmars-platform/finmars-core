@@ -111,7 +111,7 @@ class Report(BaseReport):
             date_field=None,
             custom_fields=None,
             custom_fields_to_calculate=None,
-            calculate_pl=True,
+            calculate_pl=False,
             only_numbers=False,
             items=None,
             execution_time=None,

@@ -157,15 +157,20 @@ CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
+
     "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
+
     "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",

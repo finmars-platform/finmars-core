@@ -20,6 +20,9 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction
 from poms.transactions.serializers import TransactionTypeViewSerializer
+from django.core.cache import cache
+
+from poms.users.utils import get_space_code_from_context
 
 _l = logging.getLogger('poms.reports')
 
@@ -154,8 +157,8 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
             'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
-            'payment_size_detail',
-            'daily_pricing_model',
+            # 'payment_size_detail',
+            # 'daily_pricing_model',
             'maturity_date', 'maturity_price',
 
             'country'
@@ -164,15 +167,18 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
         read_only_fields = fields
 
     def to_representation(self, instance):
-        st = time.perf_counter()
 
-        res = super(ReportInstrumentSerializer, self).to_representation(instance)
+        space_code = get_space_code_from_context(self.context)
 
-        result_st = time.perf_counter() - st
+        cache_key = f"{space_code}_serialized_report_instrument_{instance.id}"
+        cached_data = cache.get(cache_key)
 
-        # print('Instrument %s to representation done %s' % (instance.user_code, result_st))
+        if cached_data:
+            return cached_data
 
-        return res
+        serialized_data = super().to_representation(instance)
+        cache.set(cache_key, serialized_data, timeout=3600)  # Cache for 1 hour
+        return serialized_data
 
 
 class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
@@ -205,6 +211,20 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
             'first_transaction_date', 'first_cash_flow_date',
         ]
         read_only_fields = fields
+
+    def to_representation(self, instance):
+
+        space_code = get_space_code_from_context(self.context)
+
+        cache_key = f"{space_code}_serialized_report_portfolio_{instance.id}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data:
+            return cached_data
+
+        serialized_data = super().to_representation(instance)
+        cache.set(cache_key, serialized_data, timeout=3600)  # Cache for 1 hour
+        return serialized_data
 
 
 class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
@@ -241,6 +261,20 @@ class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSe
             'notes',
         ]
         read_only_fields = fields
+
+    def to_representation(self, instance):
+
+        space_code = get_space_code_from_context(self.context)
+
+        cache_key = f"{space_code}_serialized_report_account_{instance.id}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data:
+            return cached_data
+
+        serialized_data = super().to_representation(instance)
+        cache.set(cache_key, serialized_data, timeout=3600)  # Cache for 1 hour
+        return serialized_data
 
 
 class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
