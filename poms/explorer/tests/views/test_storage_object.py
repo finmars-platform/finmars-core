@@ -47,10 +47,6 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
         self.assertIn("resource_groups", obj_data)
         self.assertIn("resource_groups_object", obj_data)
 
-        from pprint import pprint
-        pprint(obj_data)
-
-
     def test__add_resource_group(self):
         rg_name = self.random_string()
         rg = self.create_group(name=rg_name)
