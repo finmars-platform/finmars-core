@@ -21,7 +21,9 @@ from poms.explorer.utils import (
     sync_file,
     sync_storage_objects,
     unzip_file,
+    update_or_create_file_and_parents,
 )
+from poms.users.models import MasterUser, Member
 
 storage = get_storage()
 
@@ -318,3 +320,34 @@ def copy_directory_in_storage(self, *args, **kwargs):
     celery_task.status = CeleryTask.STATUS_DONE
     celery_task.verbose_result = f"copied {total_items} items"
     celery_task.save()
+
+
+@finmars_task(name="explorer.tasks.update_create_path_in_storage", bind=True)
+def update_create_path_in_storage(self, *args, **kwargs):
+    celery_task = CeleryTask.objects.get(id=kwargs["task_id"])
+    path = celery_task.options_object["path"]
+    size = celery_task.options_object["size"]
+    try:
+        update_or_create_file_and_parents(path, size)
+    except Exception as e:
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.verbose_result = f"failed to update/create {path} due to {repr(e)}"
+    else:
+        celery_task.status = CeleryTask.STATUS_DONE
+
+    celery_task.save()
+
+
+def start_update_create_path_in_storage(path: str, size: int):
+    celery_task = CeleryTask.objects.create(
+        master_user=MasterUser.objects.first(),
+        member=Member.objects.first(),
+        verbose_name="Create StorageObject(s)",
+        type="update_create_path_in_storage",
+        status=CeleryTask.STATUS_PENDING,
+        options_object={
+            "path": path,
+            "size": size,
+        },
+    )
+    update_create_path_in_storage.apply_async(kwargs=dict(task_id=celery_task.id))

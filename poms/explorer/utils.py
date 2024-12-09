@@ -384,7 +384,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
     """
     from poms.explorer.models import DIR_SUFFIX, StorageObject
 
-    _l.info(f"update_or_create_file_and_parents: starts for path {path}")
+    _l.info(f"update_or_create_file_and_parents: started for path '{path}'")
 
     path = path.removeprefix("/")
     if not path:
@@ -407,7 +407,7 @@ def update_or_create_file_and_parents(path: str, size: int) -> str:
         defaults={"parent": parent, "size": size, "is_file": True},
     )
     if created:
-        _l.info(f"created file {file.path}")
+        _l.info(f"created file '{file.path}'")
 
     return file.path
 
