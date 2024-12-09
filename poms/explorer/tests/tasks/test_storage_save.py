@@ -40,3 +40,5 @@ class StartTaskTest(BaseTestCase):
             type="update_create_path_in_storage"
         ).first()
         self.assertIsNotNone(celery_task)
+        self.assertEqual(celery_task.options_object["path"], "file.txt")
+        self.assertEqual(celery_task.options_object["size"], 4)
