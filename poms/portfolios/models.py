@@ -6,6 +6,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+from django.core.cache import cache
+
 
 from poms.common.fields import ResourceGroupsField
 from poms.common.models import (
@@ -299,6 +301,10 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
 
     def save(self, *args, **kwargs):
         self.calculate_first_transactions_dates()
+
+        cache_key = f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
+        cache.delete(cache_key)
+
         super().save(*args, **kwargs)
 
     def calculate_first_transactions_dates(self):

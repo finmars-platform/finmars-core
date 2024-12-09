@@ -234,6 +234,7 @@ def generate_unique_key(instance, report_type):
         "strategy2_mode": instance.strategy2_mode,
         "strategy3_mode": instance.strategy3_mode,
         "allocation_mode": instance.allocation_mode,
+        "calculate_pl": instance.calculate_pl,
         "portfolios": portfolio_user_codes,
         "accounts": account_user_codes,
         "strategies1": strategy1_user_codes,
