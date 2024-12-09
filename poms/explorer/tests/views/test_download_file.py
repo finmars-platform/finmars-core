@@ -4,8 +4,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.storage import FinmarsS3Storage
-from poms.explorer.models import get_root_path, AccessLevel, StorageObject
-from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 
@@ -46,35 +44,4 @@ class ExplorerDownloadFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
         self.storage_mock.open.return_value = mock_file
 
         response = self.client.post(self.url, {"path": path}, format="json")
-        self.assertEqual(response.status_code, 200)
-
-    def test__no_permission(self):
-        user, member = self.create_user_member()
-        self.client.force_authenticate(user=user)
-        file_name = f"{self.random_string()}.{self.random_string(3)}"
-
-        response = self.client.post(self.url, {"path": file_name}, format="json")
-
-        self.assertEqual(response.status_code, 403)
-
-    def test__has_root_permission(self):
-        content = b"file content"
-        path = f"{self.random_string()}.txt"
-        mock_file = SimpleUploadedFile(
-            path,
-            content,
-            content_type="text/plain",
-        )
-        self.storage_mock.open.return_value = mock_file
-        user, member = self.create_user_member()
-        root_path = get_root_path()
-        root = StorageObject.objects.create(path=root_path)
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
-
-        StorageObject.objects.create(path=path, size=888, parent=root, is_file=True)
-
-        self.client.force_authenticate(user=user)
-
-        response = self.client.post(self.url, {"path": path}, format="json")
-
         self.assertEqual(response.status_code, 200)

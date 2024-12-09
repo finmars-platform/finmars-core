@@ -5,6 +5,7 @@ from django.db import models
 
 from mptt.models import MPTTModel, TreeForeignKey
 
+from poms.common.fields import ResourceGroupsField
 from poms.common.models import TimeStampedModel
 from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Group
@@ -44,7 +45,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
         max_length=MAX_PATH_LENGTH,
         unique=True,
         blank=False,
-        help_text="Path to the directory in the storage system",
+        help_text="Path to the file or directory in the storage system",
     )
     parent = TreeForeignKey(
         "self",
@@ -61,6 +62,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
         default=False,
         help_text="Is this directory a file",
     )
+    resource_groups = ResourceGroupsField()
 
     class Meta:
         ordering = ["path"]
@@ -88,3 +90,7 @@ class StorageObject(MPTTModel, TimeStampedModel):
     def extension(self) -> str:
         path = Path(self.path)
         return path.suffix
+
+    @property
+    def user_code(self) -> str:
+        return f"storage_object:{self.id}:{self.path}"
