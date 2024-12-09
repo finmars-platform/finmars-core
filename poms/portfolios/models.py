@@ -31,12 +31,6 @@ from poms_app import settings
 
 _l = getLogger("poms.portfolios")
 
-def default_list():
-    """
-    Return default empty list for model fields
-    """
-    return []
-
 
 class PortfolioClass(AbstractClassModel):
     GENERAL = 1
@@ -199,11 +193,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         null=True,
         verbose_name=gettext_lazy("first cash flow date"),
     )
-    resource_groups = ResourceGroupsField(
-        verbose_name=gettext_lazy(
-            "list of resource groups user_codes, to which portfolio belongs"
-        ),
-    )
+    resource_groups = ResourceGroupsField()
     client = models.ForeignKey(
         Client,
         on_delete=models.CASCADE,
