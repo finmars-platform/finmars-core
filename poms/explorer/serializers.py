@@ -342,13 +342,22 @@ class CopySerializer(serializers.Serializer):
 
 
 class StorageObjectResourceGroupSerializer(ModelWithResourceGroupSerializer):
+    id = serializers.IntegerField(read_only=True)
     path = serializers.CharField(read_only=True)
-    parent = serializers.IntegerField(read_only=True)
     size = serializers.IntegerField(read_only=True)
     is_file = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     modified_at = serializers.DateTimeField(read_only=True)
+    parent = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = StorageObject
-        fields = "__all__"
+        fields = [
+            "id",
+            "path",
+            "size",
+            "is_file",
+            "created_at",
+            "modified_at",
+            "parent",
+        ]
