@@ -422,3 +422,14 @@ class RealmAndSpaceMiddleware:
             cursor.execute("SET search_path TO public;")
 
         return response
+
+
+class TimerMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        request.start_time = time.perf_counter()
+
+    def process_response(self, request, response):
+        if hasattr(request, "start_time"):
+            duration = time.perf_counter() - request.start_time
+            print(f"==== Request to {request.path} took {duration:.3f}s")
+        return response

@@ -686,7 +686,7 @@ class PriceHistoryCheckerSql:
 
     def __init__(self, instance=None):
 
-        _l.debug('PriceHistoryCheckerSql init')
+        # _l.debug('PriceHistoryCheckerSql init')
 
         self.instance = instance
 
@@ -721,7 +721,7 @@ class PriceHistoryCheckerSql:
                 transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor,
                                                               self.ecosystem_defaults)
 
-                _l.debug('transactions %s ' % len(transactions))
+                # _l.debug('transactions %s ' % len(transactions))
 
                 self.instance.items = self.instance.items + transactions
 
@@ -745,7 +745,7 @@ class PriceHistoryCheckerSql:
             transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor,
                                                           self.ecosystem_defaults)
 
-            _l.debug('transactions %s ' % len(transactions))
+            # _l.debug('transactions %s ' % len(transactions))
 
             self.instance.items = self.instance.items + transactions
 
@@ -774,7 +774,7 @@ class PriceHistoryCheckerSql:
 
         # self.add_data_items()
 
-        _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        # _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 

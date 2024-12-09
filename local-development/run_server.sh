@@ -8,11 +8,11 @@ DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
-DEBUG=True \
+DEBUG=False \
 SEND_LOGS_TO_FINMARS=True \
 LOCAL=True \
 PROFILER=False \
-USE_DEBUGGER=True \
+USE_DEBUGGER=False \
 ENABLE_DEV_DOCUMENTATION=False \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
 AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \
@@ -38,6 +38,8 @@ AUTHORIZER_URL=http://0.0.0.0:8083/authorizer \
 BACKEND_ROLES="ALL" \
 CSRF_COOKIE_DOMAIN=0.0.0.0 \
 GUNICORN_START_TIME=$(date +%s) \
-gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi --name=finmars-backend
+python manage.py runserver
+
+#gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi --name=finmars-backend
 
 #python manage.py runserver

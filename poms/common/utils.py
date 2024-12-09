@@ -17,6 +17,7 @@ from rest_framework.views import exception_handler
 
 import pandas as pd
 
+from poms.expressions_engine.exceptions import InvalidExpression
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -558,6 +559,13 @@ def last_day_of_month(any_day):
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
+
+    if not date_from:
+        raise InvalidExpression("get_list_of_dates_between_two_dates.date_from is not set")
+
+    if not date_to:
+        raise InvalidExpression("get_list_of_dates_between_two_dates.date_to is not set")
+
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(
             date_from, settings.API_DATE_FORMAT
@@ -569,12 +577,14 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
     diff = date_to - date_from
 
     result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-        if to_string:
-            result.append(str(day))
-        else:
-            result.append(day)
+
+    if diff.days > 0:
+        for i in range(diff.days + 1):
+            day = date_from + timedelta(days=i)
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
 
     return result
 

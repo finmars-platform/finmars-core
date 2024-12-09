@@ -1965,6 +1965,7 @@ class ReportInstanceModel:
         self.strategy2_mode = kwargs["strategy2_mode"]
         self.strategy3_mode = kwargs["strategy3_mode"]
         self.allocation_mode = kwargs["allocation_mode"]
+        self.calculate_pl = kwargs.get("calculate_pl", False)
 
         self.master_user = kwargs["master_user"]
 
