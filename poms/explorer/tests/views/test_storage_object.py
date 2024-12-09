@@ -36,6 +36,16 @@ class StorageObjectResourceGroupViewTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], 2)
         self.assertEqual(len(response_json["results"]), 2)
+        obj_data = response_json["results"][0]
+        self.assertIn("id", obj_data)
+        self.assertIn("path", obj_data)
+        self.assertIn("parent", obj_data)
+        self.assertIn("size", obj_data)
+        self.assertIn("is_file", obj_data)
+        self.assertIn("created_at", obj_data)
+        self.assertIn("modified_at", obj_data)
+        self.assertIn("resource_groups", obj_data)
+        self.assertIn("resource_groups_object", obj_data)
 
     def test__add_resource_group(self):
         rg_name = self.random_string()
