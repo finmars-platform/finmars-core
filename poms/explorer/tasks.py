@@ -347,4 +347,4 @@ def start_update_create_path_in_storage(path: str, size: int):
             "size": size,
         },
     )
-    update_create_path_in_storage.apply_async(task_id=celery_task.id)
+    update_create_path_in_storage.apply_async(kwargs=dict(task_id=celery_task.id))
