@@ -888,6 +888,8 @@ class BalanceReportBuilderSql:
         self.instance.item_instruments = (
             Instrument.objects.select_related(
                 "owner",
+                "instrument_type",
+                "instrument_type__instrument_class"
             )
             .prefetch_related(
                 "attributes",
@@ -904,8 +906,6 @@ class BalanceReportBuilderSql:
                 "accrued_currency",
                 "daily_pricing_model",
                 "payment_size_detail",
-                    "instrument_type",
-                    "instrument_type__instrument_class",
                    "identifier", "long_underlying_instrument",
                    "short_underlying_instrument",
                    "long_underlying_exposure",
