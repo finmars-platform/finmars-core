@@ -537,6 +537,17 @@ class ReportSerializer(ReportSerializerWithLogs):
         _l.info("Initial serialization complete: %s seconds", time.perf_counter() - start_time)
 
         dict_st = time.perf_counter()
+
+        # Join instrument_type to each instrument
+        for instrument in data['item_instruments']:
+            instrument_type_id = instrument.get("instrument_type")  # Assuming this is the reference field
+            for instrument_type in data['item_instrument_types']:
+                # Add the full instrument type object to the instrument
+                if instrument_type['id'] == instrument_type_id:
+                    instrument["instrument_type"] = instrument_type
+
+        # _l.info(type(data['item_instruments'][0]))
+
         item_dicts = {
             "portfolio": self._get_item_dict(data, "item_portfolios"),
             "account": self._get_item_dict(data, "item_accounts"),
