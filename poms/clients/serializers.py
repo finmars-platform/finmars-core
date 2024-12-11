@@ -76,13 +76,6 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         validator(value)
         return value
 
-    def validate_email(self, value):
-        validator = EmailValidator(
-            message="Enter a valid email address, for example email@outlook.com",
-        )
-        validator(value)
-        return value
-
 
 class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
     master_user = MasterUserField()

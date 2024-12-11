@@ -30,7 +30,7 @@ class Client(NamedModel):
         null=True,
         help_text="Telephone number of client",
     )
-    email = models.CharField(
+    email = models.EmailField(
         max_length=255,
         blank=True,
         null=True,
