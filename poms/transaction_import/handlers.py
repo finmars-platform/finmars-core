@@ -474,7 +474,7 @@ class TransactionImportProcess(object):
                         'transaction_type_input': field.transaction_type_input,
                         'value': value
                     }
-                    
+                    raise BookException(code=400, error_message=item.error_message)
 
             return v
 
@@ -510,10 +510,10 @@ class TransactionImportProcess(object):
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
         try:
-            fields = self.get_fields_for_item(item, rule_scenario)
-
             if item.status == "error":
                 raise BookException(code=400, error_message=item.error_message)
+
+            fields = self.get_fields_for_item(item, rule_scenario)
 
             if error:
                 fields["error_message"] = str(error)
