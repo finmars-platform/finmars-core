@@ -10,6 +10,10 @@ EXPECTED_CLIENT = {
     "short_name": "test",
     "public_name": "test",
     "notes": "test",
+    "first_name": "test",
+    "last_name": "test",
+    "telephone": "+1234567890",
+    "email": "test@finmars.com",
     "deleted_user_code": None,
     "portfolios": [],
     "portfolios_object": [],
@@ -33,6 +37,10 @@ CREATE_DATA = {
     "short_name": EXPECTED_CLIENT["short_name"],
     "public_name": EXPECTED_CLIENT["public_name"],
     "notes": EXPECTED_CLIENT["notes"],
+    "first_name": EXPECTED_CLIENT["first_name"],
+    "last_name": EXPECTED_CLIENT["last_name"],
+    "telephone": EXPECTED_CLIENT["telephone"],
+    "email": EXPECTED_CLIENT["email"],
 }
 
 
@@ -124,3 +132,39 @@ class ClientViewTest(BaseTestCase):
         response = self.client.get(path=f"{self.url}?user_code={CREATE_DATA['user_code']}")
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
+
+    def test__assign_invalid_telephone(self):
+        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+        client_id = response_json["id"]
+
+        update_data = {"telephone": "-1234567890"}
+        response = self.client.patch(
+            path=f"{self.url}{client_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+        update_data = {"telephone": "1234567890123456"}
+        response = self.client.patch(
+            path=f"{self.url}{client_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test__assign_invalid_email(self):
+        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+        client_id = response_json["id"]
+
+        update_data = {"email": "email@outlook"}
+        response = self.client.patch(
+            path=f"{self.url}{client_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+        update_data = {"email": "emailoutlook.com"}
+        response = self.client.patch(
+            path=f"{self.url}{client_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 400, response.content)
