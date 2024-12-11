@@ -501,7 +501,7 @@ class TransactionImportProcess(object):
                     f"Traceback {traceback.format_exc()}"
                 )
 
-                # raise Exception(e) # Uncomment when apetrushkin will be ready
+                raise Exception(e)
 
         return fields
 
@@ -511,6 +511,9 @@ class TransactionImportProcess(object):
 
         try:
             fields = self.get_fields_for_item(item, rule_scenario)
+
+            if item.status == "error":
+                raise BookException(code=400, error_message=item.error_message)
 
             if error:
                 fields["error_message"] = str(error)
