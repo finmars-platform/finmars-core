@@ -8,23 +8,24 @@ from django.views.generic.dates import timezone_today
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from poms.clients.models import Client
 from poms.common.serializers import (
+    ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
-    ModelMetaSerializer,
     PomsClassSerializer,
-    ModelWithObjectStateSerializer,
 )
-from poms.currencies.fields import CurrencyField, CurrencyDefault
+from poms.currencies.fields import CurrencyDefault, CurrencyField
 from poms.file_reports.serializers import FileReportSerializer
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.fields import (
+    CostMethodField,
     PricingPolicyField,
     SystemPricingPolicyDefault,
-    CostMethodField,
 )
-from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import Instrument, InstrumentType, CostMethod
+from poms.instruments.models import CostMethod, Instrument, InstrumentType
 from poms.instruments.serializers import (
     InstrumentSerializer,
     InstrumentViewSerializer,
@@ -35,18 +36,17 @@ from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
-    PortfolioRegister,
-    PortfolioRegisterRecord,
-    PortfolioHistory,
-    PortfolioType,
     PortfolioClass,
+    PortfolioHistory,
     PortfolioReconcileGroup,
     PortfolioReconcileHistory,
+    PortfolioRegister,
+    PortfolioRegisterRecord,
+    PortfolioType,
 )
 from poms.portfolios.utils import get_price_calculation_type
-from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.models import EcosystemDefault
-from poms.clients.models import Client
 
 _l = getLogger("poms.portfolios")
 
@@ -183,10 +183,12 @@ class PortfolioSerializer(
     )
     client = serializers.PrimaryKeyRelatedField(
         queryset=Client.objects.all(),
-        required=False
+        required=False,
     )
     client_object = serializers.PrimaryKeyRelatedField(
-        source="client", read_only=True, many=False
+        source="client",
+        read_only=True,
+        many=False,
     )
 
     class Meta:
@@ -220,12 +222,12 @@ class PortfolioSerializer(
 
     def __init__(self, *args, **kwargs):
         from poms.accounts.serializers import AccountViewSerializer
+        from poms.clients.serializers import ClientsSerializer
         from poms.counterparties.serializers import (
             CounterpartyViewSerializer,
             ResponsibleViewSerializer,
         )
         from poms.transactions.serializers import TransactionTypeViewSerializer
-        from poms.clients.serializers import ClientsSerializer
 
         super().__init__(*args, **kwargs)
 
@@ -566,9 +568,7 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
 
     def __init__(self, *args, **kwargs):
         from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.transactions.serializers import (
-            TransactionClassSerializer,
-        )
+        from poms.transactions.serializers import TransactionClassSerializer
 
         super().__init__(*args, **kwargs)
 
