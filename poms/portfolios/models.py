@@ -298,7 +298,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
     def save(self, *args, **kwargs):
         self.calculate_first_transactions_dates()
 
-        cache_key = f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
+        cache_key = (
+            f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
+        )
         cache.delete(cache_key)
 
         super().save(*args, **kwargs)
@@ -1145,33 +1147,27 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
     def calculate(self):
         from poms.reports.common import Report
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 
         ecosystem_defaults = EcosystemDefault.objects.filter(
             master_user=self.master_user
         ).first()
 
-        default_currency = ecosystem_defaults.currency
-        default_pricing_policy = ecosystem_defaults.pricing_policy
+        report = Report(master_user=self.master_user)
+        report.master_user = self.master_user
+        report.member = self.owner
+        report.report_date = self.date
+        report.pricing_policy = ecosystem_defaults.pricing_policy
+        report.portfolios = self.portfolio_reconcile_group.portfolios.all()
+        report.report_currency = ecosystem_defaults.currency
 
-        instance = Report(master_user=self.master_user)
-        instance.master_user = self.master_user
-        instance.member = self.owner
-        instance.report_date = self.date
-        instance.pricing_policy = default_pricing_policy
-        instance.portfolios = self.portfolio_reconcile_group.portfolios.all()
-        instance.report_currency = default_currency
+        builder_instance = BalanceReportBuilderSql(instance=report)
+        builder = builder_instance.build_balance_sync()
 
-        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
-
-        builder = BalanceReportBuilderSql(instance=instance)
-        instance = builder.build_balance_sync()
-
-        reconcile_result = {}
-
-        _l.info("instance.items[0] %s" % instance.items[0])
+        _l.info(f"instance.items[0] {builder.items[0]}")
 
         portfolio_map = {}
-
+        reconcile_result = {}
         position_portfolio_id = None
 
         for portfolio in self.portfolio_reconcile_group.portfolios.all():
@@ -1181,60 +1177,43 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                 position_portfolio_id = portfolio.id
 
         if not position_portfolio_id:
-            raise Exception(
+            raise RuntimeError(
                 "Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group"
             )
 
-        for item in instance.items:
-            if "portfolio_id" in item:
-                if item["portfolio_id"] not in reconcile_result:
-                    reconcile_result[item["portfolio_id"]] = {
-                        "portfolio": item["portfolio_id"],
-                        "portfolio_object": {
-                            "name": portfolio_map[item["portfolio_id"]].name,
-                            "user_code": portfolio_map[item["portfolio_id"]].user_code,
-                            "portfolio_type": portfolio_map[
-                                item["portfolio_id"]
-                            ].portfolio_type_id,
-                            "portfolio_type_object": {
-                                "name": portfolio_map[
-                                    item["portfolio_id"]
-                                ].portfolio_type.name,
-                                "user_code": portfolio_map[
-                                    item["portfolio_id"]
-                                ].portfolio_type.user_code,
-                                "portfolio_class": portfolio_map[
-                                    item["portfolio_id"]
-                                ].portfolio_type.portfolio_class_id,
-                                "portfolio_class_object": {
-                                    "id": portfolio_map[
-                                        item["portfolio_id"]
-                                    ].portfolio_type.portfolio_class.id,
-                                    "name": portfolio_map[
-                                        item["portfolio_id"]
-                                    ].portfolio_type.portfolio_class.name,
-                                    "user_code": portfolio_map[
-                                        item["portfolio_id"]
-                                    ].portfolio_type.portfolio_class.user_code,
-                                },
+        for item in builder.items:
+            if "portfolio_id" not in item:
+                _l.warning(f"missing portfolio_id item {item}")
+                continue
+
+            pid = item["portfolio_id"]
+            if pid not in reconcile_result:
+                portfolio = portfolio_map[pid]
+                reconcile_result[pid] = {
+                    "portfolio": pid,
+                    "portfolio_object": {
+                        "name": portfolio.name,
+                        "user_code": portfolio.user_code,
+                        "portfolio_type": portfolio.portfolio_type_id,
+                        "portfolio_type_object": {
+                            "name": portfolio.portfolio_type.name,
+                            "user_code": portfolio.portfolio_type.user_code,
+                            "portfolio_class": portfolio.portfolio_type.portfolio_class_id,
+                            "portfolio_class_object": {
+                                "id": portfolio.portfolio_type.portfolio_class.id,
+                                "name": portfolio.portfolio_type.portfolio_class.name,
+                                "user_code": portfolio.portfolio_type.portfolio_class.user_code,
                             },
                         },
-                        "position_size": 0,
-                        "items": {},
-                    }
+                    },
+                    "position_size": 0,
+                    "items": {},
+                }
 
-                reconcile_result[item["portfolio_id"]]["items"][
-                    item["user_code"]
-                ] = item["position_size"]
-                reconcile_result[item["portfolio_id"]]["position_size"] = (
-                    reconcile_result[item["portfolio_id"]]["position_size"]
-                    + item["position_size"]
-                )
+            reconcile_result[pid]["items"][item["user_code"]] = item["position_size"]
+            reconcile_result[pid]["position_size"] += item["position_size"]
 
-            else:
-                _l.info("missing portfolio_id item %s" % item)
-
-        _l.info("reconcile_result %s" % reconcile_result)
+        _l.info(f"reconcile_result {reconcile_result}")
 
         reference_portfolio = reconcile_result[position_portfolio_id]
 
@@ -1251,7 +1230,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         self.file_report = self.generate_json_report(report)
         self.save()
 
-        _l.info("report %s" % report)
+        _l.info(f"report {report}")
 
     def generate_json_report(self, content):
         # _l.debug('self.result %s' % self.result.__dict__)
