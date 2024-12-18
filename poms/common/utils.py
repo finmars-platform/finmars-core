@@ -559,34 +559,18 @@ def last_day_of_month(any_day):
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
+    if not date_from or not date_to or (date_to < date_from):
+        raise InvalidExpression("Date parameters must be set and valid")
 
-    if not date_from:
-        raise InvalidExpression("get_list_of_dates_between_two_dates.date_from is not set")
+    date_from = date_from if isinstance(date_from, datetime.date) else \
+        datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
 
-    if not date_to:
-        raise InvalidExpression("get_list_of_dates_between_two_dates.date_to is not set")
+    date_to = date_to if isinstance(date_to, datetime.date) else \
+        datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
 
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
+    dates = [date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)]
 
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-
-    if diff.days > 0:
-        for i in range(diff.days + 1):
-            day = date_from + timedelta(days=i)
-            if to_string:
-                result.append(str(day))
-            else:
-                result.append(day)
-
-    return result
+    return [str(date) for date in dates] if to_string else dates
 
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
