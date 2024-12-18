@@ -5030,6 +5030,23 @@ def _clean_str_val(
 _clean_str_val.evaluator = True
 
 
+def _get_issuer_country_of_ccy(evaluator, currency):
+    try:
+        currency = _safe_get_currency(evaluator, currency)
+        if not currency.country:
+            return None
+
+        from poms.instruments.serializers import CountrySerializer
+
+        return CountrySerializer(instance=currency.country, context=evaluator.context).data
+
+    except Exception:
+        return None
+
+
+_get_issuer_country_of_ccy.evaluator = True
+
+
 class SimpleEval2Def(object):
     def __init__(self, name, func):
         self.name = name
@@ -5225,4 +5242,5 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("run_transaction_import", _run_transaction_import),
     SimpleEval2Def("clean_str_val", _clean_str_val),
     SimpleEval2Def("if_valid_isin", _if_valid_isin),
+    SimpleEval2Def("get_issuer_country_of_ccy", _get_issuer_country_of_ccy),
 ]
