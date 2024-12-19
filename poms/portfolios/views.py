@@ -65,6 +65,35 @@ from poms.users.filters import OwnerByMasterUserFilter
 _l = getLogger("poms.portfolios")
 
 
+#################### FIXME #################################
+from rest_framework.permissions import BasePermission
+from rest_framework.authentication import BaseAuthentication
+from django.contrib.auth import get_user_model
+
+
+class DevSokolovAuthentication(BaseAuthentication):  # FIXME FAKE AUTH
+    def authenticate(self, request):
+        username = "gkuz"  # dev_dsokolov
+        user_model = get_user_model()
+        try:
+            user = user_model.objects.get(username=username)
+            return user, None
+        except user_model.DoesNotExist as e:
+            raise RuntimeError("User '{}' does not exist!") from e
+
+
+class DevSokolovPermission(BasePermission):  # FIXME FAKE PERMISSION
+    """
+    Custom permission class to activate a specific user by username
+    """
+
+    def has_permission(self, request, view):
+        return True
+
+
+############################################################
+
+
 class PortfolioClassViewSet(AbstractClassModelViewSet):
     queryset = PortfolioClass.objects
     serializer_class = PortfolioClassSerializer
@@ -198,6 +227,9 @@ class PortfolioFilterSet(FilterSet):
 
 
 class PortfolioViewSet(AbstractModelViewSet):
+    authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
+    permission_classes = [DevSokolovPermission]  # FIXME DEBUG
+
     queryset = Portfolio.objects.select_related(
         "master_user", "owner"
     ).prefetch_related(
@@ -725,7 +757,11 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 
 
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileGroup.objects.select_related("master_user")
+    authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
+    permission_classes = [DevSokolovPermission]  # FIXME DEBUG
+    queryset = PortfolioReconcileGroup.objects.select_related("master_user").order_by(
+        "user_code"
+    )
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioReconcileGroupFilterSet
@@ -750,10 +786,13 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
+    authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
+    permission_classes = [DevSokolovPermission]  # FIXME DEBUG
+
     queryset = PortfolioReconcileHistory.objects.select_related(
         "master_user",
         "portfolio_reconcile_group",
-    )
+    ).order_by("user_code")
     serializer_class = PortfolioReconcileHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -782,20 +821,20 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             member=request.user.member,
             verbose_name="Calculate Portfolio Reconcile History",
             type="calculate_portfolio_reconcile_history",
-            status=CeleryTask.STATUS_PENDING,
+            status=CeleryTask.STATUS_INIT,
         )
         task.options_object = serializer.validated_data
         task.save()
 
-        calculate_portfolio_reconcile_history.apply_async(
-            kwargs={
-                "task_id": task.id,
-                "context": {
-                    "space_code": task.master_user.space_code,
-                    "realm_code": task.master_user.realm_code,
-                },
+        kwargs = {
+            "task_id": task.id,
+            "context": {
+                "space_code": task.master_user.space_code,
+                "realm_code": task.master_user.realm_code,
             },
-        )
+        }
+        calculate_portfolio_reconcile_history.apply_async(kwargs=kwargs)
+
 
         return Response(
             {
