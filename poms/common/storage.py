@@ -318,29 +318,19 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
     Mixin adds FinmarsFile object support to the FinmarsStorage class.
     """
 
-    def save(self, path: str, content: Any, **kwargs) -> str:
-        from poms.explorer.tasks import start_update_create_path_in_storage
-
-        if path.endswith("/.init"):
-            # creates system directory with empty .init file
-            super().save(path, content, **kwargs)
-            return path
+    def save(self, path: str, content: Any, **kwargs):
+        super().save(path, content, **kwargs)
 
         size = len(content) if hasattr(content, "__len__") else 0
         _l.info(f"FinmarsStorageFileObjMixin.save {path} of size {size}")
-
-        super().save(path, content, **kwargs)
-
-        with contextlib.suppress(Exception):
-            start_update_create_path_in_storage(path, size)
+        return path
 
     def delete(self, path: str) -> None:
         from poms.explorer.models import StorageObject
 
-        _l.info(f"FinmarsStorageFileObjMixin.delete {path}")
-
         super().delete(path)
 
+        _l.info(f"FinmarsStorageFileObjMixin.deleted {path}")
         with contextlib.suppress(Exception):
             StorageObject.objects.filter(path=path).delete()
 
