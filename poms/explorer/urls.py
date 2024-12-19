@@ -65,9 +65,9 @@ router.register(
     "explorer_search",
 )
 router.register(
-    "set-access-policy",
-    explorer.StorageObjectAccessPolicyViewSet,
-    "explorer_set_access_policy",
+    "storage-object",
+    explorer.StorageObjectResourceGroupViewSet,
+    "explorer_storage_object",
 )
 router.register(
     "rename",

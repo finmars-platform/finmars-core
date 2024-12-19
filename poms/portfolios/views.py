@@ -3,6 +3,7 @@ from logging import getLogger
 import django_filters
 from django.conf import settings
 from django_filters.rest_framework import FilterSet
+from django_filters.filters import BaseInFilter
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -189,6 +190,7 @@ class PortfolioFilterSet(FilterSet):
     public_name = CharFilter()
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
+    client = BaseInFilter(field_name="client__user_code")
 
     class Meta:
         model = Portfolio
