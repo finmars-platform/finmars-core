@@ -1,5 +1,6 @@
 import json
 import traceback
+from datetime import datetime
 from logging import getLogger
 
 from django.core.files.base import ContentFile
@@ -7,7 +8,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.storage import get_storage
-from poms_app import settings
 
 storage = get_storage()
 
@@ -60,8 +60,8 @@ class FileReport(models.Model):
 
         try:
             encoded_text = text.encode("utf-8")
-            if storage is None:  # local dev case
-                with open(f"file_with_report_{master_user.space_code}.txt", "w") as f:
+            if storage is None:  # local development
+                with open(f"file_report_{datetime.now().date()}_{datetime.now().minute}.txt", "w") as f:
                     f.write(text)
             else:
                 storage.save(
