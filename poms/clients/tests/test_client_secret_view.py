@@ -84,12 +84,26 @@ class ClientViewTest(BaseTestCase):
 
     def test__get_filters(self):
         client_secret = self.create_client_secret(user_code="test_filter")
-        response = self.client.get(path=f"{self.url}?user_code={client_secret.user_code}")
+        response = self.client.get(
+            path=f"{self.url}?user_code={client_secret.user_code}"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
         response = self.client.get(path=f"{self.url}?user_code=xxxxxxx")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+        response = self.client.get(
+            path=f"{self.url}?client={client_secret.client.user_code}"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 2)
+
+        response = self.client.get(path=f"{self.url}?client=xxxxxxx")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)

@@ -41,22 +41,10 @@ class ClientsFilterSet(FilterSet):
 class ClientSecretFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
-    client = CharFilter()
-    query = CharFilter(method="query_search")
+    client = BaseInFilter(field_name="client__user_code")
+    provider = CharFilter()
+    portfolio = CharFilter()
 
     class Meta:
         model = ClientSecret
         fields = []
-
-    def query_search(self, queryset, _, value):
-        if value:
-            search_terms = value.split()
-            conditions = Q()
-            for term in search_terms:
-                conditions |= (
-                    Q(user_code__icontains=term)
-                    | Q(client__icontains=term)
-                )
-            queryset = queryset.filter(conditions)
-
-        return queryset
