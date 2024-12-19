@@ -331,9 +331,6 @@ class FinmarsStorageFileObjMixin(FinmarsStorageMixin):
 
         super().save(path, content, **kwargs)
 
-        with contextlib.suppress(Exception):
-            start_update_create_path_in_storage(path, size)
-
     def delete(self, path: str) -> None:
         from poms.explorer.models import StorageObject
 
