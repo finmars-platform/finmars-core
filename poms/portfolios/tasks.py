@@ -871,7 +871,6 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
         try:
             portfolio_history = PortfolioHistory.objects.get(user_code=user_code)
         except PortfolioHistory.DoesNotExist:
-
             if period_type == "daily":
                 d_date_from = get_last_business_day(d - timedelta(days=1))
             elif period_type == "mtd":
@@ -954,7 +953,6 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     date_to = task.options_object["date_to"]
     dates = get_list_of_dates_between_two_dates(date_from, date_to)
     count = 0
-
     for day in dates:
         try:
             task.update_progress(
@@ -968,14 +966,22 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
 
             user_code = f"portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{day}"
 
-            portfolio_reconcile_history, created = PortfolioReconcileHistory.objects.get_or_create(
+            (
+                portfolio_reconcile_history,
+                created,
+            ) = PortfolioReconcileHistory.objects.get_or_create(
                 master_user=task.master_user,
                 user_code=user_code,
-                portfolio_reconcile_group=portfolio_reconcile_group,
-                date=day,
+                defaults=dict(
+                    owner=task.member,
+                    portfolio_reconcile_group=portfolio_reconcile_group,
+                    date=day,
+                ),
             )
 
-            _l.info(f"portfolio_reconcile_history obj {user_code} {'created' if created else 'updated'}")
+            _l.info(
+                f"portfolio_reconcile_history obj {user_code} {'created' if created else 'updated'}"
+            )
 
             portfolio_reconcile_history.linked_task = task  # save task before calculate
             portfolio_reconcile_history.save()
