@@ -60,11 +60,14 @@ class FileReport(models.Model):
 
         try:
             encoded_text = text.encode("utf-8")
-
-            storage.save(
-                f"/{master_user.space_code}{file_url}",
-                ContentFile(encoded_text),
-            )
+            if storage is None:  # local dev case
+                with open(f"file_with_report_{master_user.space_code}.txt", "w") as f:
+                    f.write(text)
+            else:
+                storage.save(
+                    f"/{master_user.space_code}{file_url}",
+                    ContentFile(encoded_text),
+                )
 
         except Exception as e:
             _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
