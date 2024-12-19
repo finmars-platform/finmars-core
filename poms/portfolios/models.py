@@ -60,9 +60,7 @@ class PortfolioClass(AbstractClassModel):
         verbose_name_plural = gettext_lazy("portfolio classes")
 
 
-class PortfolioType(
-    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
-):
+class PortfolioType(NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel):
     """
     Meta Entity, part of Finmars Configuration
     Mostly used for extra fragmentation of Reports
@@ -291,16 +289,12 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
 
     @property
     def is_default(self):
-        return (
-            self.master_user.portfolio_id == self.id if self.master_user_id else False
-        )
+        return self.master_user.portfolio_id == self.id if self.master_user_id else False
 
     def save(self, *args, **kwargs):
         self.calculate_first_transactions_dates()
 
-        cache_key = (
-            f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
-        )
+        cache_key = f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
         cache.delete(cache_key)
 
         super().save(*args, **kwargs)
@@ -315,9 +309,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             )
             .first()
         )
-        self.first_transaction_date = (
-            first_transaction.accounting_date if first_transaction else None
-        )
+        self.first_transaction_date = first_transaction.accounting_date if first_transaction else None
 
         first_cash_flow_transaction = (
             Transaction.objects.filter(
@@ -331,11 +323,7 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             .order_by("accounting_date")
             .first()
         )
-        self.first_cash_flow_date = (
-            first_cash_flow_transaction.accounting_date
-            if first_cash_flow_transaction
-            else None
-        )
+        self.first_cash_flow_date = first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
 
         _l.info(
             f"calculate_first_transactions_dates succeed: "
@@ -351,14 +339,10 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         DEPRECATED: Try to return the 1st accounting date from PortfolioRegisterRecord
         """
         param = f"transaction__{date_field}"
-        return self.portfolioregisterrecord_set.aggregate(models.Min(param))[
-            f"{param}__min"
-        ]
+        return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
 
 
-class PortfolioRegister(
-    NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
-):
+class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     Portfolio Register
 
@@ -415,16 +399,11 @@ class PortfolioRegister(
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if (
-            self.linked_instrument
-            and not self.linked_instrument.has_linked_with_portfolio
-        ):
+        if self.linked_instrument and not self.linked_instrument.has_linked_with_portfolio:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
-        bundle, created = PortfolioBundle.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
+        bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code=self.user_code,
             defaults=dict(
@@ -433,17 +412,12 @@ class PortfolioRegister(
             ),
         )
         if created:
-            _l.info(
-                f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
-            )
+            _l.info(f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created")
             bundle.registers.set([self])
             bundle.save()
 
     def __str__(self):
-        return (
-            f"Portfolio Register {self.portfolio.user_code}. "
-            f"Linked Instrument {self.linked_instrument}"
-        )
+        return f"Portfolio Register {self.portfolio.user_code}. " f"Linked Instrument {self.linked_instrument}"
 
 
 class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
@@ -525,9 +499,7 @@ class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
     # Should be rename to previous record date
     nav_previous_register_record_day_valuation_currency = models.FloatField(
         default=0.0,
-        verbose_name=gettext_lazy(
-            "nav previous register record day valuation currency"
-        ),
+        verbose_name=gettext_lazy("nav previous register record day valuation currency"),
     )
     nav_previous_business_day_valuation_currency = models.FloatField(
         default=0.0,
@@ -599,10 +571,7 @@ class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
     #     super().save(*args, **kwargs)
 
     def __str__(self):
-        return (
-            f"{self.portfolio_register} {self.transaction_date} "
-            f"{self.transaction_class} {self.cash_amount}"
-        )
+        return f"{self.portfolio_register} {self.transaction_date} " f"{self.transaction_class} {self.cash_amount}"
 
 
 class PortfolioBundle(NamedModel, TimeStampedModel, ObjectStateModel):
@@ -658,45 +627,47 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
     )
 
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
     user_code = models.CharField(
         max_length=1024,
         unique=True,
         verbose_name=gettext_lazy("user code"),
-        help_text=gettext_lazy(
-            "Unique Code for this object. Used in Configuration and Permissions Logic"
-        ),
+        help_text=gettext_lazy("Unique Code for this object. Used in Configuration and Permissions Logic"),
     )
-
     date = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date"),
     )
     date_from = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date from")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date from"),
     )
-
     period_type = models.CharField(
         max_length=255,
         default=PERIOD_YTD,
         choices=PERIOD_CHOICES,
         verbose_name="period_type",
     )
-
     portfolio = models.ForeignKey(
-        Portfolio, on_delete=models.CASCADE, verbose_name=gettext_lazy("portfolio")
+        Portfolio,
+        on_delete=models.CASCADE,
+        verbose_name=gettext_lazy("portfolio"),
     )
-
     currency = models.ForeignKey(
-        Currency, on_delete=models.PROTECT, verbose_name=gettext_lazy("currency")
+        Currency,
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("currency"),
     )
     pricing_policy = models.ForeignKey(
         PricingPolicy,
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("pricing policy"),
     )
-
     cost_method = models.ForeignKey(
         CostMethod,
         on_delete=models.CASCADE,
@@ -709,11 +680,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         choices=PERFORMANCE_METHOD_CHOICES,
         verbose_name="performance method",
     )
-
     benchmark = models.CharField(
-        max_length=255, blank=True, default="", verbose_name=gettext_lazy("benchmark")
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("benchmark"),
     )
-
     nav = models.FloatField(
         default=0.0,
         null=True,
@@ -729,15 +701,23 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         help_text="Gross Asset Value",
     )
     cash_flow = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("cash flow")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("cash flow"),
     )
     cash_inflow = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("cash inflow")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("cash inflow"),
     )
     cash_outflow = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("cash outflow")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("cash outflow"),
     )
-
     total = models.FloatField(
         default=0.0,
         null=True,
@@ -745,7 +725,6 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         verbose_name=gettext_lazy("total"),
         help_text="Total Value of the Portfolio from P&L Report",
     )
-
     cumulative_return = models.FloatField(
         default=0.0,
         null=True,
@@ -771,7 +750,10 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         verbose_name=gettext_lazy("annualized portfolio volatility"),
     )
     sharpe_ratio = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("sharpe_ratio")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("sharpe_ratio"),
     )
     max_annualized_drawdown = models.FloatField(
         default=0.0,
@@ -780,13 +762,22 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         verbose_name=gettext_lazy("max_annualized_drawdown"),
     )
     betta = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("betta")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("betta"),
     )
     alpha = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("alpha")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("alpha"),
     )
     correlation = models.FloatField(
-        default=0.0, null=True, blank=True, verbose_name=gettext_lazy("correlation")
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("correlation"),
     )
     weighted_duration = models.FloatField(
         default=0.0,
@@ -794,14 +785,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         blank=True,
         verbose_name=gettext_lazy("weighted_duration"),
     )
-
     error_message = models.TextField(
         null=True,
         blank=True,
         verbose_name=gettext_lazy("error_message"),
         help_text="Error message if any",
     )
-
     status = models.CharField(
         max_length=255,
         default=STATUS_OK,
@@ -867,9 +856,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         from poms.reports.common import PerformanceReport
 
         try:
-            portfolio_register = PortfolioRegister.objects.filter(
-                portfolio=self.portfolio
-            )[0]
+            portfolio_register = PortfolioRegister.objects.filter(portfolio=self.portfolio)[0]
 
             instance = PerformanceReport(
                 master_user=self.master_user,
@@ -899,8 +886,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             return 0
 
         _l.info(
-            "get_annualized_return.years_from_first_transaction %s"
-            % days_from_first_transaction
+            f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}"
         )
 
         annualized_return = round(
@@ -926,25 +912,20 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         nav = 0
         gav = 0
         for item in self.balance_report.items:
-            if item["market_value"] is not None and round(
-                item["position_size"], settings.ROUND_NDIGITS
-            ):
+            if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
                 nav = nav + item["market_value"]
 
                 if item["market_value"] > 0:
                     gav = gav + item["market_value"]
             else:
                 self.error_message = (
-                    self.error_message + f'{item["name"]} has no market_value\n'
+                    f'{self.error_message} {item["name"]} has no market_value\n'
                 )
                 has_nav_error = True
 
         if has_nav_error:
             _l.info("PortfolioHistory.calculate has_nav_error")
-            self.error_message = (
-                self.error_message
-                + "NAV is wrong, some positions has no market value\n"
-            )
+            self.error_message = self.error_message + " NAV is wrong, some positions has no market value\n"
 
         total = 0
         for item in self.pl_report.items:
@@ -952,17 +933,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             if item["total"] is not None:
                 total = total + item["total"]
             else:
-                self.error_message = (
-                    self.error_message + f'{item["name"]} has no total value\n'
-                )
+                self.error_message = self.error_message + f'{item["name"]} has no total value\n'
                 _l.info("PortfolioHistory.calculate has_total_error")
                 has_total_error = True
 
         if has_total_error:
-            self.error_message = (
-                self.error_message
-                + "Total is wrong, some positions has no total value\n"
-            )
+            self.error_message = self.error_message + "Total is wrong, some positions has no total value\n"
 
         self.nav = nav
         self.gav = gav
@@ -974,9 +950,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             try:
                 self.performance_report = performance_report
 
-                self.cumulative_return = round(
-                    self.performance_report.grand_return, settings.ROUND_NDIGITS
-                )
+                self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
                 self.cash_flow = self.performance_report.grand_cash_flow
                 self.cash_inflow = self.performance_report.grand_cash_inflow
                 self.cash_outflow = self.performance_report.grand_cash_outflow
@@ -993,17 +967,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
                 self.error_message = self.error_message + str(e) + "\n"
         else:
             self.error_message = (
-                self.error_message
-                + "Calculate error. Portfolio has not Portfolio Register"
-                + "\n"
+                f"{self.error_message}Calculate error. Portfolio has not Portfolio Register\n"
             )
 
-        _l.info("error_message %s" % self.error_message)
+        _l.info(f"error_message {self.error_message}")
 
-        if self.error_message:
-            self.status = self.STATUS_ERROR
-        else:
-            self.status = self.STATUS_OK
+        self.status = self.STATUS_ERROR if self.error_message else self.STATUS_OK
 
         self.save()
 
@@ -1015,7 +984,6 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     portfolios = models.ManyToManyField(
         Portfolio,
         verbose_name=gettext_lazy("portfolios"),
@@ -1039,48 +1007,43 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
     )
 
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-
     user_code = models.CharField(
         max_length=1024,
         unique=True,
         verbose_name=gettext_lazy("user code"),
-        help_text=gettext_lazy(
-            "Unique Code for this object. Used in Configuration and Permissions Logic"
-        ),
+        help_text=gettext_lazy("Unique Code for this object. Used in Configuration and Permissions Logic"),
     )
-
     date = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date"),
     )
-
     portfolio_reconcile_group = models.ForeignKey(
         PortfolioReconcileGroup,
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("portfolio reconcile group"),
     )
-
     error_message = models.TextField(
         null=True,
         blank=True,
         verbose_name=gettext_lazy("error_message"),
         help_text="Error message if any",
     )
-
     verbose_result = models.TextField(
         null=True,
         blank=True,
         verbose_name=gettext_lazy("verbose result"),
     )
-
     status = models.CharField(
         max_length=255,
         default=STATUS_OK,
         choices=STATUS_CHOICES,
         verbose_name="status",
     )
-
     linked_task = models.ForeignKey(
         "celery_tasks.CeleryTask",
         on_delete=models.SET_NULL,
@@ -1088,7 +1051,6 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         blank=True,
         verbose_name=gettext_lazy("linked task"),
     )
-
     file_report = models.ForeignKey(
         FileReport,
         null=True,
@@ -1114,31 +1076,27 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                     reference_size = reference_items.get(user_code, 0)
 
                     # Prepare report entry
+                    # "Position Portfolio": reference_size,
+                    # "General Portfolio": position_size,
                     report_entry = {
                         "user_code": user_code,
-                        # "Position Portfolio": reference_size,
-                        # "General Portfolio": position_size,
                         "status": "ok",
                         "message": "ok",
                         "diff": 0,
+                        reference_portfolio["portfolio_object"]["user_code"]: reference_size,
+                        portfolio["portfolio_object"]["user_code"]: position_size,
                     }
-
-                    report_entry[
-                        reference_portfolio["portfolio_object"]["user_code"]
-                    ] = reference_size
-                    report_entry[
-                        portfolio["portfolio_object"]["user_code"]
-                    ] = position_size
-
                     # Check for discrepancies
                     if position_size != reference_size:
                         discrepancy = abs(reference_size - position_size)
-                        report_entry["status"] = "error"
-                        report_entry[
-                            "message"
-                        ] = f"{portfolio['portfolio_object']['user_code']} is {'missing' if position_size < reference_size else 'over by'} {discrepancy} units"
+                        message = (
+                            f"{portfolio['portfolio_object']['user_code']} is "
+                            f"{'missing' if position_size < reference_size else 'over by'} "
+                            f"{discrepancy} units"
+                        )
                         report_entry["diff"] = discrepancy
-
+                        report_entry["message"] = message
+                        report_entry["status"] = "error"
                         has_reconcile_error = True
 
                     report.append(report_entry)
@@ -1149,9 +1107,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         from poms.reports.common import Report
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 
-        ecosystem_defaults = EcosystemDefault.objects.filter(
-            master_user=self.master_user
-        ).first()
+        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
 
         report = Report(master_user=self.master_user)
         report.master_user = self.master_user
@@ -1177,9 +1133,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                 position_portfolio_id = portfolio.id
 
         if not position_portfolio_id:
-            raise RuntimeError(
-                "Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group"
-            )
+            raise RuntimeError("Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group")
 
         for item in builder.items:
             if "portfolio_id" not in item:
@@ -1217,15 +1171,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         reference_portfolio = reconcile_result[position_portfolio_id]
 
-        report, has_reconcile_error = self.compare_portfolios(
-            reference_portfolio, reconcile_result
-        )
+        report, has_reconcile_error = self.compare_portfolios(reference_portfolio, reconcile_result)
 
         if has_reconcile_error:
             self.status = self.STATUS_ERROR
-            self.error_message = (
-                "Reconciliation Error. Please check the report for details"
-            )
+            self.error_message = "Reconciliation Error. Please check the report for details"
 
         self.file_report = self.generate_json_report(report)
         self.save()
@@ -1238,9 +1188,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = (
-            f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
-        )
+        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
 
@@ -1250,9 +1198,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
-        file_report.name = (
-            f"Reconciliation {current_date_time} (Task {self.linked_task_id}).json"
-        )
+        file_report.name = f"Reconciliation {current_date_time} (Task {self.linked_task_id}).json"
         file_report.file_name = file_name
         file_report.type = "simple_import.import"
         file_report.notes = "System File"
