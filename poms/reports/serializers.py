@@ -870,11 +870,16 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     begin_date = serializers.DateField(
         required=False,
         allow_null=True,
-        initial=date_now() - timedelta(days=365),
-        default=date_now() - timedelta(days=365),
     )
     end_date = serializers.DateField(
-        required=False, allow_null=True, initial=date_now, default=date_now
+        required=True,
+        allow_null=False,
+    )
+    period_type = serializers.ChoiceField(
+        allow_null=True,
+        choices=Report.PERIOD_TYPE_CHOICES,
+        allow_blank=True,
+        required=False,
     )
     portfolios = PortfolioField(
         many=True, required=False, allow_null=True, allow_empty=True
@@ -982,6 +987,23 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def validate(self, attrs):
+        begin_date = attrs.get('begin_date')
+        period_type = attrs.get('period_type')
+
+        if not begin_date and not period_type:
+            raise serializers.ValidationError(
+                "begin_date and period_type are not provided. "
+                "Provide either begin_date or period_type."
+            )
+        if begin_date and period_type:
+            raise serializers.ValidationError(
+                "begin_date and period_type are both provided. "
+                "Provide either begin_date or period_type, not both."
+            )
+
+        return attrs
 
     def create(self, validated_data):
         return TransactionReport(**validated_data)

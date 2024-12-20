@@ -2,9 +2,7 @@ import logging
 import time
 import traceback
 from datetime import timedelta
-
 from django.db import connection
-from django.views.generic.dates import timezone_today
 
 from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Counterparty, Responsible
@@ -18,6 +16,13 @@ from poms.reports.sql_builders.helpers import dictfetchall, \
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionClass, ComplexTransactionStatus
 from poms.users.models import EcosystemDefault
+from poms.common.utils import (
+    get_last_business_day,
+    get_last_business_day_of_previous_year,
+    get_last_business_day_in_previous_quarter,
+    get_last_business_day_of_previous_month,
+)
+
 
 _l = logging.getLogger('poms.reports')
 
@@ -36,11 +41,30 @@ class TransactionReportBuilderSql:
         _l.debug('self.instance begin_date %s' % self.instance.begin_date)
         _l.debug('self.instance end_date %s' % self.instance.end_date)
 
-        if not self.instance.begin_date:
-            self.instance.begin_date = timezone_today() - timedelta(days=365)
-
-        if not self.instance.end_date:
-            self.instance.end_date = timezone_today()
+        if self.instance.period_type:
+            if self.instance.period_type == 'inception':
+                # TODO wtf is first transaction when multi portfolios?
+                # TODO ask oleg what to do with inception
+                first_portfolio = self.instance.portfolios.first()
+                self.instance.begin_date = get_last_business_day(
+                    first_portfolio.first_transaction_date - timedelta(days=1),
+                )
+            elif self.instance.period_type == 'ytd':
+                self.instance.begin_date = get_last_business_day_of_previous_year(
+                    self.instance.end_date
+                )
+            elif self.instance.period_type == 'qtd':
+                self.instance.begin_date = get_last_business_day_in_previous_quarter(
+                    self.instance.end_date
+                )
+            elif self.instance.period_type == 'mtd':
+                self.instance.begin_date = get_last_business_day_of_previous_month(
+                    self.instance.end_date
+                )
+            elif self.instance.period_type == 'daily':
+                self.instance.begin_date = get_last_business_day(
+                    self.instance.end_date
+                )
 
         # TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object
         #  he has no access to we should throw error'''
