@@ -876,7 +876,6 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
         allow_null=False,
     )
     period_type = serializers.ChoiceField(
-        allow_null=True,
         choices=Report.PERIOD_TYPE_CHOICES,
         allow_blank=True,
         required=False,
