@@ -1064,59 +1064,53 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
     @staticmethod
     def compare_portfolios(reference_portfolio, portfolios, precision: float = 1.0):
         report = []
+        has_reconcile_error = False
         reference_items = reference_portfolio["items"]
 
-        has_reconcile_error = False
-
         for portfolio_id, portfolio in portfolios.items():
-            if portfolio_id != reference_portfolio["portfolio"]:
-                for user_code, position_size in portfolio["items"].items():
-                    # Initialize with reference position size; default to 0 if not found
-                    reference_size = reference_items.get(user_code, 0)
+            if portfolio_id == reference_portfolio["portfolio"]:
+                continue
 
-                    # Prepare report entry
-                    # "Position Portfolio": reference_size,
-                    # "General Portfolio": position_size,
-                    report_entry = {
-                        "user_code": user_code,
-                        "status": "ok",
-                        "message": "ok",
-                        "diff": 0,
-                        reference_portfolio["portfolio_object"]["user_code"]: reference_size,
-                        portfolio["portfolio_object"]["user_code"]: position_size,
-                    }
-                    # Check for discrepancies
-                    if position_size != reference_size:
-                        discrepancy = abs(reference_size - position_size)
-                        equal_with_precision = discrepancy <= precision
+            for user_code, position_size in portfolio["items"].items():
+                # Initialize with reference position size; default to 0 if not found
+                reference_size = reference_items.get(user_code, 0)
 
-                        if not equal_with_precision:
-                            message = (
-                                f"{portfolio['portfolio_object']['user_code']} is "
-                                f"{'missing' if position_size < reference_size else 'over by'} "
-                                f"{discrepancy} units"
-                            )
-                            report_entry["diff"] = discrepancy
-                            report_entry["message"] = message
-                            report_entry["status"] = "error"
-                            has_reconcile_error = True
+                # Prepare report entry
+                # "Position Portfolio": reference_size,
+                # "General Portfolio": position_size,
+                report_entry = {
+                    "user_code": user_code,
+                    "status": "ok",
+                    "message": "ok",
+                    "diff": 0,
+                    reference_portfolio["portfolio_object"]["user_code"]: reference_size,
+                    portfolio["portfolio_object"]["user_code"]: position_size,
+                }
+                # Check for discrepancies
+                if position_size != reference_size:
+                    discrepancy = abs(reference_size - position_size)
+                    equal_with_precision = discrepancy <= precision
 
-                        else:
-                            message = (
-                                f"{portfolio['portfolio_object']['user_code']} is "
-                                f"{position_size} is equal to {reference_size}"
-                                f"within given precision {precision} ({discrepancy} units)"
-                            )
-                            report_entry = {
-                                "user_code": user_code,
-                                "status": "ok",
-                                "diff": discrepancy,
-                                reference_portfolio["portfolio_object"]["user_code"]: reference_size,
-                                portfolio["portfolio_object"]["user_code"]: position_size,
-                                "message": message,
-                            }
+                    if equal_with_precision:
+                        message = (
+                            f"{portfolio['portfolio_object']['user_code']} is "
+                            f"{position_size} is equal to {reference_size}"
+                            f"within given precision {precision} ({discrepancy} units)"
+                        )
+                        report_entry["message"] = message
+                        report_entry["diff"] = discrepancy
+                    else:
+                        message = (
+                            f"{portfolio['portfolio_object']['user_code']} is "
+                            f"{'missing' if position_size < reference_size else 'over by'} "
+                            f"{discrepancy} units"
+                        )
+                        report_entry["status"] = "error"
+                        report_entry["diff"] = discrepancy
+                        report_entry["message"] = message
+                        has_reconcile_error = True
 
-                    report.append(report_entry)
+                report.append(report_entry)
 
         return report, has_reconcile_error
 
