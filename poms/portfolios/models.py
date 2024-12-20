@@ -990,11 +990,18 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         blank=True,
         related_name="portfolio_reconcile_groups",
     )
+    precision = models.FloatField(
+        default=0,
+        verbose_name=gettext_lazy("precision to compare"),
+    )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio reconcile group")
         verbose_name_plural = gettext_lazy("portfolio reconcile groups")
         index_together = [["master_user", "user_code"]]
+
+    def values_equal_with_precision(self, a: float, b: float) -> bool:
+        return abs(a - b) <= self.precision
 
 
 class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
