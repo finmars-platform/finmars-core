@@ -63,7 +63,7 @@ class TransactionReportBuilderSql:
                 )
             elif self.instance.period_type == 'daily':
                 self.instance.begin_date = get_last_business_day(
-                    self.instance.end_date
+                    self.instance.end_date - timedelta(days=1)
                 )
 
         # TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object
