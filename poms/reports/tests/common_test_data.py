@@ -256,6 +256,7 @@ REQUEST_PAYLOAD = {
     "date_field": "transaction_date",
     "depth_level": "entry",
     "end_date": "2023-10-04",
+    "period_type": None,
     "expression_iterations_count": 1,
     "filters": [
         {
