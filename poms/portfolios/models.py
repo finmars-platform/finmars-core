@@ -885,9 +885,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         if days_from_first_transaction == 0:
             return 0
 
-        _l.info(
-            f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}"
-        )
+        _l.info(f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}")
 
         annualized_return = round(
             (1 + self.cumulative_return) ** (365 / days_from_first_transaction) - 1,
@@ -918,9 +916,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
                 if item["market_value"] > 0:
                     gav = gav + item["market_value"]
             else:
-                self.error_message = (
-                    f'{self.error_message} {item["name"]} has no market_value\n'
-                )
+                self.error_message = f'{self.error_message} {item["name"]} has no market_value\n'
                 has_nav_error = True
 
         if has_nav_error:
@@ -966,9 +962,7 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             except Exception as e:
                 self.error_message = self.error_message + str(e) + "\n"
         else:
-            self.error_message = (
-                f"{self.error_message}Calculate error. Portfolio has not Portfolio Register\n"
-            )
+            self.error_message = f"{self.error_message}Calculate error. Portfolio has not Portfolio Register\n"
 
         _l.info(f"error_message {self.error_message}")
 
@@ -991,17 +985,14 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         related_name="portfolio_reconcile_groups",
     )
     precision = models.FloatField(
-        default=0,
-        verbose_name=gettext_lazy("precision to compare"),
+        default=1.0,
+        verbose_name=gettext_lazy("compare precision"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio reconcile group")
         verbose_name_plural = gettext_lazy("portfolio reconcile groups")
         index_together = [["master_user", "user_code"]]
-
-    def values_equal_with_precision(self, a: float, b: float) -> bool:
-        return abs(a - b) <= self.precision
 
 
 class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
@@ -1070,7 +1061,8 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             ["master_user", "user_code"],
         ]
 
-    def compare_portfolios(self, reference_portfolio, portfolios):
+    @staticmethod
+    def compare_portfolios(reference_portfolio, portfolios, precision: float = 1.0):
         report = []
         reference_items = reference_portfolio["items"]
 
@@ -1096,15 +1088,33 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                     # Check for discrepancies
                     if position_size != reference_size:
                         discrepancy = abs(reference_size - position_size)
-                        message = (
-                            f"{portfolio['portfolio_object']['user_code']} is "
-                            f"{'missing' if position_size < reference_size else 'over by'} "
-                            f"{discrepancy} units"
-                        )
-                        report_entry["diff"] = discrepancy
-                        report_entry["message"] = message
-                        report_entry["status"] = "error"
-                        has_reconcile_error = True
+                        equal_with_precision = discrepancy <= precision
+
+                        if not equal_with_precision:
+                            message = (
+                                f"{portfolio['portfolio_object']['user_code']} is "
+                                f"{'missing' if position_size < reference_size else 'over by'} "
+                                f"{discrepancy} units"
+                            )
+                            report_entry["diff"] = discrepancy
+                            report_entry["message"] = message
+                            report_entry["status"] = "error"
+                            has_reconcile_error = True
+
+                        else:
+                            message = (
+                                f"{portfolio['portfolio_object']['user_code']} is "
+                                f"{position_size} is equal to {reference_size}"
+                                f"within given precision {precision} ({discrepancy} units)"
+                            )
+                            report_entry = {
+                                "user_code": user_code,
+                                "status": "ok",
+                                "diff": discrepancy,
+                                reference_portfolio["portfolio_object"]["user_code"]: reference_size,
+                                portfolio["portfolio_object"]["user_code"]: position_size,
+                                "message": message,
+                            }
 
                     report.append(report_entry)
 
@@ -1178,7 +1188,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         reference_portfolio = reconcile_result[position_portfolio_id]
 
-        report, has_reconcile_error = self.compare_portfolios(reference_portfolio, reconcile_result)
+        report, has_reconcile_error = self.compare_portfolios(
+            reference_portfolio,
+            reconcile_result,
+            self.portfolio_reconcile_group.precision,
+        )
 
         if has_reconcile_error:
             self.status = self.STATUS_ERROR
