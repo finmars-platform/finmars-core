@@ -787,6 +787,12 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         validators=[MinValueValidator(0.00)],
     )
 
+    def validate(self, attrs):
+        portfolios = attrs["portfolio"]
+        if len(portfolios) != len(set(portfolios)):
+            raise serializers.ValidationError("Duplicate portfolios")
+        return attrs
+
     class Meta:
         model = PortfolioReconcileGroup
         fields = [
