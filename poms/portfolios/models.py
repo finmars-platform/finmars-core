@@ -1088,14 +1088,14 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                 }
                 # Check for discrepancies
                 if position_size != reference_size:
-                    discrepancy = abs(reference_size - position_size)
+                    discrepancy = round(abs(reference_size - position_size), 3)
                     equal_with_precision = discrepancy <= precision
 
                     if equal_with_precision:
                         message = (
                             f"{portfolio['portfolio_object']['user_code']} is "
                             f"{position_size} is equal to {reference_size} "
-                            f"with precision {precision} ({round(discrepancy, 2)} units)"
+                            f"with precision {precision} ({discrepancy} units)"
                         )
                         report_entry["message"] = message
                         report_entry["diff"] = discrepancy
