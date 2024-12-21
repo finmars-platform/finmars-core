@@ -14,28 +14,12 @@ class ClientsFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    query = CharFilter(method="query_search")
-    portfolios = BaseInFilter(field_name="portfolios__id")
+    portfolios = BaseInFilter(field_name="portfolios__user_code")
+    client_secrets = BaseInFilter(field_name="client_secrets__user_code")
 
     class Meta:
         model = Client
         fields = []
-
-    def query_search(self, queryset, _, value):
-        if value:
-            search_terms = value.split()
-            conditions = Q()
-            for term in search_terms:
-                conditions |= (
-                    Q(user_code__icontains=term)
-                    | Q(name__icontains=term)
-                    | Q(short_name__icontains=term)
-                    | Q(public_name__icontains=term)
-                    | Q(portfolios__user_code__icontains=term)
-                )
-            queryset = queryset.filter(conditions)
-
-        return queryset
 
 
 class ClientSecretFilterSet(FilterSet):
@@ -44,6 +28,8 @@ class ClientSecretFilterSet(FilterSet):
     client = BaseInFilter(field_name="client__user_code")
     provider = CharFilter()
     portfolio = CharFilter()
+    path_to_secret = CharFilter()
+    notes = CharFilter()
 
     class Meta:
         model = ClientSecret

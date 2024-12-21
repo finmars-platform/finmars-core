@@ -72,6 +72,16 @@ class ClientSecret(OwnerModel):
         null=True,
         blank=True,
     )
+    path_to_secret = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    notes = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
     class Meta(NamedModel.Meta):
         verbose_name = gettext_lazy("client secret")

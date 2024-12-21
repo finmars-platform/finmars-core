@@ -17,6 +17,8 @@ EXPECTED_CLIENT = {
     "deleted_user_code": None,
     "portfolios": [],
     "portfolios_object": [],
+    "client_secrets": [],
+    "client_secrets_object": [],
     "owner": {
         "id": 1318,
         "username": "finmars_bot"
@@ -113,7 +115,7 @@ class ClientViewTest(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
 
-        response = self.client.get(path=f"{self.url}?portfolios={portfolio.id}")
+        response = self.client.get(path=f"{self.url}?portfolios={portfolio.user_code}")
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
         client = response_json["results"][0]

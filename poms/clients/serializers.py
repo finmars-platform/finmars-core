@@ -26,6 +26,13 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         source="portfolios", many=True, read_only=True
     )
 
+    client_secrets = serializers.PrimaryKeyRelatedField(
+        queryset=ClientSecret.objects.all(), many=True, required=False
+    )
+    client_secrets_object = serializers.PrimaryKeyRelatedField(
+        source="client_secrets", many=True, read_only=True
+    )
+
     class Meta:
         model = Client
         fields = [
@@ -43,6 +50,8 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
 
             "portfolios",
             "portfolios_object",
+            "client_secrets",
+            "client_secrets_object",
         ]
         extra_kwargs = {
             'telephone': {
@@ -64,8 +73,14 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         self.fields["portfolios_object"] = PortfolioViewSerializer(
             source="portfolios", many=True, read_only=True
         )
+        self.fields["client_secrets_object"] = ClientSecretLightSerializer(
+            source="client_secrets", many=True, read_only=True,
+        )
 
     def validate_telephone(self, value):
+        if value is None:
+            return
+
         validator = RegexValidator(
             regex=r'^\+?\d{5,15}$',
             message=(
@@ -74,11 +89,13 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
             ),
         )
         validator(value)
+
         return value
 
 
 class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
     master_user = MasterUserField()
+
     client = serializers.SlugRelatedField(
         slug_field="user_code",
         queryset=Client.objects.all(),
@@ -96,6 +113,8 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
             "user_code",
             "provider",
             "portfolio",
+            "path_to_secret",
+            "notes",
 
             "client",
             "client_object",
@@ -144,3 +163,20 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
         )
 
         return instance
+
+
+class ClientSecretLightSerializer(ModelMetaSerializer, ModelOwnerSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = ClientSecret
+        fields = [
+            "id",
+            "master_user",
+            "client",
+            "user_code",
+            "provider",
+            "portfolio",
+            "path_to_secret",
+            "notes",
+        ]
