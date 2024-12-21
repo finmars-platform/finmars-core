@@ -1,11 +1,8 @@
 from django.conf import settings
-from django.test import override_settings
 
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.configuration.utils import get_default_configuration_code
-from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioReconcileGroup
-
+from poms.configuration.utils import get_default_configuration_code
 
 class PortfolioReconcileGroupViewTest(BaseTestCase):
     databases = "__all__"
@@ -20,26 +17,17 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    def test_create(self):
-
-        response = self.client.post(self.url, data=self.pr_data, format="json")
+    def test_simple_create(self):
+        user_code = get_default_configuration_code()
+        name = self.random_string()
+        precision = self.random_integer(1, 100)
+        create_data = {
+            "name": name,
+            "user_code": user_code,
+            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "precision": precision,
+        }
+        response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
-        pr = PortfolioRegister.objects.filter(name="name").first()
-        self.assertIsNotNone(pr)
-
-    def test_no_create_with_invalid_new_instrument(self):
-        new_instrument = self.db_data.instruments["Tesla B."]
-        new_pr_data = {
-            **self.pr_data,
-            "new_linked_instrument": {
-                "name": new_instrument.name,
-                "short_name": new_instrument.short_name,
-                "user_code": new_instrument.user_code,
-                "public_name": new_instrument.public_name,
-                "instrument_type": self.random_int(),
-            },
-        }
-
-        response = self.client.post(self.url, data=new_pr_data, format="json")
-        self.assertEqual(response.status_code, 400, response.content)
+        print(response.json())
