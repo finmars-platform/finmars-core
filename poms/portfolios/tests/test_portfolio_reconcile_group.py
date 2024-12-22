@@ -1,11 +1,11 @@
-from django.conf import settings
-
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup
 from poms.configuration.utils import get_default_configuration_code
 
+
 class PortfolioReconcileGroupViewTest(BaseTestCase):
     databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -20,7 +20,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     def test_simple_create(self):
         user_code = get_default_configuration_code()
         name = self.random_string()
-        precision = self.random_integer(1, 100)
+        precision = self.random_int(1, 100)
         create_data = {
             "name": name,
             "user_code": user_code,
@@ -33,19 +33,32 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_data = response.json()
         self.assertEqual(group_data["name"], name)
         self.assertEqual(group_data["precision"], precision)
-        self.assertEqual(group_data["User_code"], user_code)
+        self.assertEqual(group_data["user_code"], user_code)
 
-    def test_update_create(self):
+        group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
+        self.assertIsNotNone(group)
+
+    def test_update_patch(self):
         user_code = get_default_configuration_code()
         name = self.random_string()
-        precision = self.random_integer(1, 100)
-        create_data = {
-            "name": name,
-            "user_code": user_code,
-            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
-            "precision": precision,
-        }
-        response = self.client.post(self.url, data=create_data, format="json")
-        self.assertEqual(response.status_code, 201, response.content)
+        precision = self.random_int(1, 100)
+        group = PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            name=name,
+            user_code=user_code,
+            precision=precision,
+        )
 
-        print(response.json())
+        patch_data = {
+            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+        }
+        response = self.client.patch(f"{self.url}{group.id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        group_data = response.json()
+
+        self.assertEqual(
+            set(group_data["portfolios"]),
+            {self.portfolio_1.id, self.portfolio_2.id},
+        )
