@@ -50,46 +50,35 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertIsNotNone(history)
         self.assertIsNotNone(history.id, history_data["id"])
 
-    # def test_update_patch(self):
-    #     create_data = self.create_data()
-    #     create_data.pop("portfolios")
-    #     group = PortfolioReconcileGroup.objects.create(
-    #         master_user=self.master_user,
-    #         owner=self.member,
-    #         **create_data,
-    #     )
-    #
-    #     patch_data = {
-    #         "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
-    #     }
-    #     response = self.client.patch(f"{self.url}{group.id}/", data=patch_data, format="json")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     group_data = response.json()
-    #
-    #     self.assertEqual(
-    #         set(group_data["portfolios"]),
-    #         {self.portfolio_1.id, self.portfolio_2.id},
-    #     )
-    #
-    # def test_delete(self):
-    #     create_data = self.create_data()
-    #     create_data.pop("portfolios")
-    #     group = PortfolioReconcileGroup.objects.create(
-    #         master_user=self.master_user,
-    #         owner=self.member,
-    #         **create_data,
-    #     )
-    #     response = self.client.delete(f"{self.url}{group.id}/")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     group = PortfolioReconcileGroup.objects.filter(id=group.id).first()
-    #     self.assertIsNotNone(group)
-    #     self.assertTrue(group.is_deleted)
-    #
-    # def test_validation_error(self):
-    #     create_data = self.create_data()
-    #     create_data["precision"] = -1
-    #
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
+    def test_update_patch(self):
+        create_data = self.create_data()
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        history_data = response.json()
+        patch_data = {
+            "date": self.yesterday().strftime("%Y-%m-%d"),
+        }
+        response = self.client.patch(f"{self.url}{history_data['id']}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        new_history_data = response.json()
+
+        self.assertEqual(new_history_data["date"], self.yesterday().strftime("%Y-%m-%d"))
+
+    def test_delete(self):
+        create_data = self.create_data()
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        history_data = response.json()
+
+        response = self.client.delete(f"{self.url}{history_data['id']}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        history = PortfolioReconcileHistory.objects.filter(id=history_data["id"]).first()
+        self.assertIsNone(history)
+
+    def test_validation_error(self):
+        create_data = self.create_data()
+        create_data["portfolio_reconcile_group"] = self.random_int(100000, 3000000)
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
