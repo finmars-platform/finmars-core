@@ -30,4 +30,22 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
+        group_data = response.json()
+        self.assertEqual(group_data["name"], name)
+        self.assertEqual(group_data["precision"], precision)
+        self.assertEqual(group_data["User_code"], user_code)
+
+    def test_update_create(self):
+        user_code = get_default_configuration_code()
+        name = self.random_string()
+        precision = self.random_integer(1, 100)
+        create_data = {
+            "name": name,
+            "user_code": user_code,
+            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "precision": precision,
+        }
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
         print(response.json())
