@@ -13,41 +13,41 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
 
-    def test_check_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
-
-    def test_simple_create(self):
+    def create_data(self) -> dict:
         user_code = get_default_configuration_code()
         name = self.random_string()
         precision = self.random_int(1, 100)
-        create_data = {
+        return {
             "name": name,
             "user_code": user_code,
             "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
             "precision": precision,
         }
+
+    def test_check_url(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test_simple_create(self):
+        create_data = self.create_data()
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
         group_data = response.json()
-        self.assertEqual(group_data["name"], name)
-        self.assertEqual(group_data["precision"], precision)
-        self.assertEqual(group_data["user_code"], user_code)
+        self.assertEqual(group_data["name"], create_data["name"])
+        self.assertEqual(group_data["precision"], create_data["precision"])
+        self.assertEqual(group_data["user_code"], create_data["user_code"])
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
 
     def test_update_patch(self):
-        user_code = get_default_configuration_code()
-        name = self.random_string()
-        precision = self.random_int(1, 100)
+        create_data = self.create_data()
+        create_data.pop("portfolios")
         group = PortfolioReconcileGroup.objects.create(
             master_user=self.master_user,
             owner=self.member,
-            name=name,
-            user_code=user_code,
-            precision=precision,
+            **create_data,
         )
 
         patch_data = {
@@ -62,3 +62,24 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             set(group_data["portfolios"]),
             {self.portfolio_1.id, self.portfolio_2.id},
         )
+
+    def test_delete(self):
+        create_data = self.create_data()
+        create_data.pop("portfolios")
+        group = PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            **create_data,
+        )
+        response = self.client.delete(f"{self.url}{group.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        group = PortfolioReconcileGroup.objects.filter(id=group.id).first()
+        self.assertIsNone(group)
+
+    def test_validation_error(self):
+        create_data = self.create_data()
+        create_data["precision"] = -1
+
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
