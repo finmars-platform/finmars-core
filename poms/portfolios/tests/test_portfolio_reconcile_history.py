@@ -1,27 +1,25 @@
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup
+from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.configuration.utils import get_default_configuration_code
 
 
-class PortfolioReconcileGroupViewTest(BaseTestCase):
+class PortfolioReconcileHistoryViewTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-group/"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-history/"
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
 
     def create_data(self) -> dict:
         user_code = get_default_configuration_code()
         name = self.random_string()
-        precision = self.random_int(1, 100)
         return {
             "name": name,
             "user_code": user_code,
-            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
-            "precision": precision,
+            "date": self.today(),
         }
 
     def test_check_url(self):
