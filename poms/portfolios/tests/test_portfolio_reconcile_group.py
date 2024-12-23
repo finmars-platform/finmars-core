@@ -37,6 +37,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["precision"], create_data["precision"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
+        self.assertEqual(group_data["report_params"], {})
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
