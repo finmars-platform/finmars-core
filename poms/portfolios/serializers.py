@@ -808,6 +808,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             "is_deleted",
             "is_enabled",
             "precision",
+            "report_params",
         ]
 
 
