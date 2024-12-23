@@ -988,6 +988,10 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         default=1.0,
         verbose_name=gettext_lazy("compare precision"),
     )
+    report_params = models.JSONField(
+        default=dict,
+        verbose_name=gettext_lazy("report params"),
+    )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio reconcile group")
