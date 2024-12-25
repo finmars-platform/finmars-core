@@ -14,6 +14,10 @@ class ClientsFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
+    first_name = CharFilter()
+    last_name = CharFilter()
+    telephone = CharFilter()
+    email = CharFilter()
     portfolios = CharFilter(
         field_name="portfolios__user_code", lookup_expr="icontains"
     )
