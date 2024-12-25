@@ -83,10 +83,10 @@ class ClientSecret(OwnerModel):
         blank=True,
     )
 
-    class Meta(NamedModel.Meta):
+    class Meta:
         verbose_name = gettext_lazy("client secret")
         verbose_name_plural = gettext_lazy("client secrets")
-        unique_together = [["master_user", "user_code"]]
+        unique_together = [["user_code", "client"]]
         ordering = ["user_code"]
 
     def __str__(self):

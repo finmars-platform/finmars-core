@@ -14,8 +14,12 @@ class ClientsFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    portfolios = BaseInFilter(field_name="portfolios__user_code")
-    client_secrets = BaseInFilter(field_name="client_secrets__user_code")
+    portfolios = CharFilter(
+        field_name="portfolios__user_code", lookup_expr="icontains"
+    )
+    client_secrets = CharFilter(
+        field_name="client_secrets__user_code", lookup_expr="icontains"
+    )
 
     class Meta:
         model = Client
@@ -25,7 +29,9 @@ class ClientsFilterSet(FilterSet):
 class ClientSecretFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
-    client = BaseInFilter(field_name="client__user_code")
+    client = CharFilter(
+        field_name="client__user_code", lookup_expr="icontains"
+    )
     provider = CharFilter()
     portfolio = CharFilter()
     path_to_secret = CharFilter()
