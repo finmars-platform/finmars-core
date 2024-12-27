@@ -19,7 +19,10 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             owner=self.member,
             user_code=get_default_configuration_code(),
             name=self.random_string(),
-            precision=self.random_int(1, 100),
+            report_params={
+                "precision": 1,
+                "only_errors": False,
+            }
         )
 
     def create_data(self) -> dict:

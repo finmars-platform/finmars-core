@@ -779,13 +779,18 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
 
 
-class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
-    master_user = MasterUserField()
+class ReportParamsSerializer(serializers.Serializer):
+    only_errors = serializers.BooleanField(required=False, default=False)
     precision = serializers.FloatField(
         required=False,
         default=1.0,
         validators=[MinValueValidator(0.00)],
     )
+
+
+class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    report_params = ReportParamsSerializer()
 
     def validate(self, attrs):
         portfolios = attrs["portfolios"]
@@ -807,7 +812,6 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             "portfolios",
             "is_deleted",
             "is_enabled",
-            "precision",
             "report_params",
         ]
 
