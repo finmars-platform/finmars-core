@@ -14,49 +14,33 @@ class ClientsFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    query = CharFilter(method="query_search")
-    portfolios = BaseInFilter(field_name="portfolios__id")
+    first_name = CharFilter()
+    last_name = CharFilter()
+    telephone = CharFilter()
+    email = CharFilter()
+    portfolios = CharFilter(
+        field_name="portfolios__user_code", lookup_expr="icontains"
+    )
+    client_secrets = CharFilter(
+        field_name="client_secrets__user_code", lookup_expr="icontains"
+    )
 
     class Meta:
         model = Client
         fields = []
 
-    def query_search(self, queryset, _, value):
-        if value:
-            search_terms = value.split()
-            conditions = Q()
-            for term in search_terms:
-                conditions |= (
-                    Q(user_code__icontains=term)
-                    | Q(name__icontains=term)
-                    | Q(short_name__icontains=term)
-                    | Q(public_name__icontains=term)
-                    | Q(portfolios__user_code__icontains=term)
-                )
-            queryset = queryset.filter(conditions)
-
-        return queryset
-
 
 class ClientSecretFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
-    client = CharFilter()
-    query = CharFilter(method="query_search")
+    client = CharFilter(
+        field_name="client__user_code", lookup_expr="icontains"
+    )
+    provider = CharFilter()
+    portfolio = CharFilter()
+    path_to_secret = CharFilter()
+    notes = CharFilter()
 
     class Meta:
         model = ClientSecret
         fields = []
-
-    def query_search(self, queryset, _, value):
-        if value:
-            search_terms = value.split()
-            conditions = Q()
-            for term in search_terms:
-                conditions |= (
-                    Q(user_code__icontains=term)
-                    | Q(client__icontains=term)
-                )
-            queryset = queryset.filter(conditions)
-
-        return queryset

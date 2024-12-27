@@ -10,6 +10,8 @@ EXPECTED_DATA = {
     "provider": "",
     "portfolio": "",
     "client": "test",
+    "path_to_secret": "test",
+    "notes": None,
     "client_object": {
         "id": 3,
         "user_code": "test",
@@ -82,14 +84,20 @@ class ClientViewTest(BaseTestCase):
         client = response_json["results"][0]
         self.assertEqual(client.keys(), EXPECTED_DATA.keys())
 
-    def test__get_filters(self):
-        client_secret = self.create_client_secret(user_code="test_filter")
-        response = self.client.get(path=f"{self.url}?user_code={client_secret.user_code}")
+    @BaseTestCase.cases(
+        ("user_code", "user_code", "test_filter", 1),
+        ("client", "client", "test", 2),
+    )
+    def test__get_filters(self, field, value, quantity):
+        self.create_client_secret(user_code="test_filter")
+        response = self.client.get(
+            path=f"{self.url}?{field}={value}"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(response_json["count"], quantity)
 
-        response = self.client.get(path=f"{self.url}?user_code=xxxxxxx")
+        response = self.client.get(path=f"{self.url}?{field}=xxxxxxx")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)

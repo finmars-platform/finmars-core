@@ -190,7 +190,9 @@ class PortfolioFilterSet(FilterSet):
     public_name = CharFilter()
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
-    client = BaseInFilter(field_name="client__user_code")
+    client = CharFilter(
+        field_name="client__user_code", lookup_expr="icontains"
+    )
 
     class Meta:
         model = Portfolio
