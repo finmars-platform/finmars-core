@@ -72,11 +72,21 @@ class ClientSecret(OwnerModel):
         null=True,
         blank=True,
     )
+    path_to_secret = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    notes = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
-    class Meta(NamedModel.Meta):
+    class Meta:
         verbose_name = gettext_lazy("client secret")
         verbose_name_plural = gettext_lazy("client secrets")
-        unique_together = [["master_user", "user_code"]]
+        unique_together = [["user_code", "client"]]
         ordering = ["user_code"]
 
     def __str__(self):
