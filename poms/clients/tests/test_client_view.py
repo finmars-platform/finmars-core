@@ -110,23 +110,6 @@ class ClientViewTest(BaseTestCase):
 
         client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
         self.assertTrue(client_secrets.exists())
-        
-    def test__create(self):
-        client_secrets_uc = ["secret01", "secret02",]
-        client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
-        self.assertFalse(client_secrets.exists())
-
-        client = Client.objects.filter(user_code=CREATE_DATA["user_code"])
-        self.assertFalse(client.exists())
-
-        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
-        self.assertEqual(response.status_code, 201, response.content)
-
-        client = Client.objects.filter(user_code=CREATE_DATA["user_code"])
-        self.assertTrue(client.exists())
-
-        client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
-        self.assertTrue(client_secrets.exists())
 
     def test__update_patch(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
