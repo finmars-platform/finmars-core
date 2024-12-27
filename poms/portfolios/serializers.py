@@ -781,6 +781,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
 
 class ReportParamsSerializer(serializers.Serializer):
     only_errors = serializers.BooleanField(required=False, default=False)
+    round_digits = serializers.IntegerField(required=False, default=2)
     precision = serializers.FloatField(
         required=False,
         default=1.0,

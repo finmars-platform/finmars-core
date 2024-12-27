@@ -804,7 +804,6 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     filter_class = PortfolioReconcileHistoryFilterSet
     ordering_fields = []
 
-    # TODO Refactor
     @action(
         detail=False,
         methods=["post"],

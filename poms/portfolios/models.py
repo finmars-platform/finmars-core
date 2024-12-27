@@ -1062,10 +1062,13 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         ]
 
     @staticmethod
-    def compare_portfolios(reference_portfolio, portfolios, precision: float = 1.0):
+    def compare_portfolios(reference_portfolio, portfolios, report_params: dict):
         report = []
         has_reconcile_error = False
         reference_items = reference_portfolio["items"]
+        precision = report_params.get("precision", 1)
+        only_errors = report_params.get("only_errors", False)
+        round_digits = report_params.get("round_digits", 2)
 
         for portfolio_id, portfolio in portfolios.items():
             if portfolio_id == reference_portfolio["portfolio"]:
@@ -1088,7 +1091,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                 }
                 # Check for discrepancies
                 if position_size != reference_size:
-                    discrepancy = round(abs(reference_size - position_size), 3)
+                    discrepancy = round(abs(reference_size - position_size), round_digits)
                     equal_with_precision = discrepancy <= precision
 
                     if equal_with_precision:
@@ -1110,7 +1113,8 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                         report_entry["message"] = message
                         has_reconcile_error = True
 
-                report.append(report_entry)
+                if not only_errors:
+                    report.append(report_entry)
 
         return report, has_reconcile_error
 
@@ -1185,7 +1189,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         report, has_reconcile_error = self.compare_portfolios(
             reference_portfolio,
             reconcile_result,
-            self.portfolio_reconcile_group.precision,
+            self.portfolio_reconcile_group.report_params,
         )
 
         if has_reconcile_error:

@@ -23,6 +23,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             "report_params": {
                 "precision": 1,
                 "only_errors": False,
+                "round_digits": 2,
             },
         }
 
