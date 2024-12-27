@@ -984,10 +984,6 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         blank=True,
         related_name="portfolio_reconcile_groups",
     )
-    precision = models.FloatField(
-        default=1.0,
-        verbose_name=gettext_lazy("compare precision"),
-    )
     report_params = models.JSONField(
         default=dict,
         verbose_name=gettext_lazy("report params"),
