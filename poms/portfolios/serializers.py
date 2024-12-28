@@ -787,6 +787,7 @@ class ReportParamsSerializer(serializers.Serializer):
         default=1.0,
         validators=[MinValueValidator(0.00)],
     )
+    emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
 
 
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
