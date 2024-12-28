@@ -183,27 +183,37 @@ class TransactionTypeViewSetTest(BaseTestCase):
 
         self.assertEqual(response_dict.keys(), TRANSACTION_TYPE_WITH_INPUTS_DICT.keys())
 
-    def test__get_filters(self):  # sourcery skip: extract-duplicate-method
-        transaction_type = self.get_transaction_type()
-        response = self.client.get(path=f"{self.url}?name={transaction_type.name}")
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json["count"], 1)
-        self.assertEqual(
-            response_json["results"][0]["name"],
-            transaction_type.name,
-        )
+    def _validate_get_filter(self, transaction_type, field_name, query_parameter=None):
+
+        if not query_parameter:
+            query_parameter = field_name
+
+        field_value = getattr(transaction_type, field_name)
 
         response = self.client.get(
-            path=f"{self.url}?short_name={transaction_type.short_name}"
+            path=f"{self.url}?{query_parameter}={field_value}"
         )
+
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
+
         self.assertEqual(response_json["count"], 1)
+
         self.assertEqual(
-            response_json["results"][0]["short_name"],
-            transaction_type.short_name,
+            response_json["results"][0][field_name],
+            field_value
         )
+
+    def test__get_filters(self):  # sourcery skip: extract-duplicate-method
+        transaction_type = self.get_transaction_type()
+
+        self._validate_get_filter(transaction_type, "name")
+
+        self._validate_get_filter(transaction_type, "short_name")
+
+        self._validate_get_filter(transaction_type, "user_code")
+
+        self._validate_get_filter(transaction_type, "user_code", "user_code__exact")
 
     def test__update_patch(self):
         transaction_type = self.get_transaction_type()
