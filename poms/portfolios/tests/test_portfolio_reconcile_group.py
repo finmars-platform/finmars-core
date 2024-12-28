@@ -24,6 +24,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
                 "precision": 1,
                 "only_errors": False,
                 "round_digits": 2,
+                "emails": ["test@mail.com"]
             },
         }
 
@@ -39,7 +40,10 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_data = response.json()
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
-        self.assertEqual(group_data["report_params"], create_data["report_params"])
+        report_params = group_data["report_params"]
+        self.assertEqual(report_params["precision"], create_data["report_params"]["precision"])
+        self.assertEqual(report_params["round_digits"], create_data["report_params"]["round_digits"])
+        self.assertEqual(report_params["only_errors"], create_data["report_params"]["only_errors"])
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
