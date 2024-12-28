@@ -1,6 +1,4 @@
 import json
-import traceback
-from datetime import datetime
 from logging import getLogger
 
 from django.conf import settings
@@ -58,9 +56,8 @@ class FileReport(models.Model):
         return self.name
 
     def upload_file(self, file_name, text, master_user):
-        file_url = self._get_path(file_name)
         encoded_text = text.encode("utf-8")
-
+        file_url = self._get_path(file_name)
         try:
             if storage:
                 storage.save(
@@ -69,37 +66,32 @@ class FileReport(models.Model):
                 )
 
             else:  # local mode
-                file_name = f"report_{self.name}_{datetime.now().date()}_{datetime.now().minute}.txt"
                 with open(file_name, "w") as f:
                     f.write(text)
 
         except Exception as e:
-            _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
+            _l.error(f"upload_file {file_name} {file_url} error {repr(e)}")
+            return ""
 
         self.file_url = file_url
-
-        # _l.info(f"FileReport.upload_file.file_url {file_url}")
-
         return file_url
 
     def upload_json_as_local_file(self, file_name, dict_to_json, master_user):
         file_url = self._get_path(file_name)
-
         try:
             if storage:
                 with storage.open(f"/{master_user.space_code}{file_url}", "w") as fp:
                     json.dump(dict_to_json, fp, indent=4, default=str)
 
             else:
-                file_name = f"report_{self.name}_{datetime.now().date()}_{datetime.now().minute}.json"
-                with open(file_name, "w") as fp:
-                    json.dump(dict_to_json, fp, indent=4, default=str)
+                with open(file_name, "w", encoding='utf-8') as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str, ensure_ascii=False,)
 
         except Exception as e:
-            _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
+            _l.error(f"upload_file {file_url} error {repr(e)}")
+            return ""
 
         self.file_url = file_url
-
         return file_url
 
     def get_file(self):
@@ -141,3 +133,4 @@ class FileReport(models.Model):
         )
 
         content = self.get_file()
+        email.attach(filename="report.txt", content=content)
