@@ -48,6 +48,18 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
 
+    def test_create_with_report_params(self):
+        create_data = self.create_data()
+        create_data["report_params"]["only_errors"] = True
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        group_data = response.json()
+        self.assertTrue(group_data["report_params"]["only_errors"])
+
+        group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
+        self.assertTrue(group.report_params["only_errors"])
+
     def test_update_patch(self):
         create_data = self.create_data()
         create_data.pop("portfolios")
@@ -99,14 +111,13 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
-    def test_create_with_report_params(self):
+    @BaseTestCase.cases(
+        ("int", 11111),
+        ("url", "test/api/v1/portfolios/portfolio-reconcile-group/"),
+        ("str", "dicembre"),
+    )
+    def test_create_with_invalid_emails(self, invalid_email):
         create_data = self.create_data()
-        create_data["report_params"]["only_errors"] = True
+        create_data["report_params"]["emails"] = [invalid_email]
         response = self.client.post(self.url, data=create_data, format="json")
-        self.assertEqual(response.status_code, 201, response.content)
-
-        group_data = response.json()
-        self.assertTrue(group_data["report_params"]["only_errors"])
-
-        group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
-        self.assertTrue(group.report_params["only_errors"])
+        self.assertEqual(response.status_code, 400, response.content)
