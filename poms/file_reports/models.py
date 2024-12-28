@@ -3,7 +3,9 @@ import traceback
 from datetime import datetime
 from logging import getLogger
 
+from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -56,18 +58,20 @@ class FileReport(models.Model):
         return self.name
 
     def upload_file(self, file_name, text, master_user):
-        file_url = self._get_path(master_user, file_name)
+        file_url = self._get_path(file_name)
+        encoded_text = text.encode("utf-8")
 
         try:
-            encoded_text = text.encode("utf-8")
-            if storage is None:  # local development
-                with open(f"file_report_{datetime.now().date()}_{datetime.now().minute}.txt", "w") as f:
-                    f.write(text)
-            else:
+            if storage:
                 storage.save(
                     f"/{master_user.space_code}{file_url}",
                     ContentFile(encoded_text),
                 )
+
+            else:  # local mode
+                file_name = f"report_{self.name}_{datetime.now().date()}_{datetime.now().minute}.txt"
+                with open(file_name, "w") as f:
+                    f.write(text)
 
         except Exception as e:
             _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
@@ -79,18 +83,22 @@ class FileReport(models.Model):
         return file_url
 
     def upload_json_as_local_file(self, file_name, dict_to_json, master_user):
-        file_url = self._get_path(master_user, file_name)
+        file_url = self._get_path(file_name)
 
         try:
-            with storage.open(f"/{master_user.space_code}{file_url}", "w") as fp:
-                json.dump(dict_to_json, fp, indent=4, default=str)
+            if storage:
+                with storage.open(f"/{master_user.space_code}{file_url}", "w") as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str)
+
+            else:
+                file_name = f"report_{self.name}_{datetime.now().date()}_{datetime.now().minute}.json"
+                with open(file_name, "w") as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str)
 
         except Exception as e:
             _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
 
         self.file_url = file_url
-
-        # _l.info(f"FileReport.upload_file.file_url {file_url}")
 
         return file_url
 
@@ -117,9 +125,19 @@ class FileReport(models.Model):
 
         return result
 
-    def _get_path(self, master_user, file_name):
+    @staticmethod
+    def _get_path(file_name):
         return f"/.system/file_reports/{file_name}"
 
     def send_emails(self, emails: list):
-        # TODO send emails with report
-        pass
+        if not emails:
+            return
+
+        email = EmailMessage(
+            subject=f"Report {self.name}",
+            body=f"Please find the attached report {self.name}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=emails,
+        )
+
+        content = self.get_file()
