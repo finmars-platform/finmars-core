@@ -84,8 +84,8 @@ class FileReport(models.Model):
                     json.dump(dict_to_json, fp, indent=4, default=str)
 
             else:
-                with open(file_name, "w", encoding='utf-8') as fp:
-                    json.dump(dict_to_json, fp, indent=4, default=str, ensure_ascii=False,)
+                with open(file_name, "w") as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str)
 
         except Exception as e:
             _l.error(f"upload_file {file_url} error {repr(e)}")
@@ -97,23 +97,24 @@ class FileReport(models.Model):
     def get_file(self):
         result = None
 
-        # print(f"get_file self.file_url {self.file_url}")
+        if storage:
+            path = self.file_url
+            if not path:
+                path = self.master_user.space_code
+            elif path[0] == "/":
+                path = self.master_user.space_code + path
+            else:
+                path = f"{self.master_user.space_code}/{path}"
+            try:
+                with storage.open(path, "rb") as f:
+                    result = f.read()
 
-        path = self.file_url
+            except Exception as e:
+                _l.error(f"Cant open file {self.file_name} {self.file_url} due to {repr(e)}")
 
-        if not path:
-            path = self.master_user.space_code
-        elif path[0] == "/":
-            path = self.master_user.space_code + path
-        else:
-            path = f"{self.master_user.space_code}/{path}"
-
-        try:
-            with storage.open(path, "rb") as f:
+        else:  # local mode
+            with open(self.file_name, "rt") as f:
                 result = f.read()
-
-        except Exception as e:
-            print(f"Cant open file Exception: {repr(e)}")
 
         return result
 
@@ -126,11 +127,13 @@ class FileReport(models.Model):
             return
 
         email = EmailMessage(
-            subject=f"Report {self.name}",
-            body=f"Please find the attached report {self.file_name} of {self.name}.",
+            subject=f"Report {self.name} file {self.file_name}",
+            body=f"Please find the attached report {self.name} file {self.file_name}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=emails,
         )
 
         content = self.get_file()
-        email.attach(filename=self.file_name, content=content)
+        if content:
+            email.attach(filename=self.file_name, content=content)
+            email.send(fail_silently=True)
