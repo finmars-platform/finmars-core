@@ -119,3 +119,7 @@ class FileReport(models.Model):
 
     def _get_path(self, master_user, file_name):
         return f"/.system/file_reports/{file_name}"
+
+    def send_emails(self, emails: list):
+        # TODO send emails with report
+        pass

@@ -1185,11 +1185,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         _l.info(f"reconcile_result {reconcile_result}")
 
         reference_portfolio = reconcile_result[position_portfolio_id]
-
+        report_params = self.portfolio_reconcile_group.report_params
         report, has_reconcile_error = self.compare_portfolios(
             reference_portfolio,
             reconcile_result,
-            self.portfolio_reconcile_group.report_params,
+            report_params,
         )
 
         if has_reconcile_error:
@@ -1198,6 +1198,10 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         self.file_report = self.generate_json_report(report)
         self.save()
+
+        emails = report_params.get("emails")
+        if emails:
+            self.file_report.send_emails(emails)
 
         _l.info(f"report {report}")
 
