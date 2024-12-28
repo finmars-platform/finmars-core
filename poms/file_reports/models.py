@@ -127,10 +127,10 @@ class FileReport(models.Model):
 
         email = EmailMessage(
             subject=f"Report {self.name}",
-            body=f"Please find the attached report {self.name}",
+            body=f"Please find the attached report {self.file_name} of {self.name}.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=emails,
         )
 
         content = self.get_file()
-        email.attach(filename="report.txt", content=content)
+        email.attach(filename=self.file_name, content=content)
