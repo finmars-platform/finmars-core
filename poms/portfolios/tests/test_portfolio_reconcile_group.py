@@ -139,6 +139,6 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     )
     def test_create_with_invalid_notification(self, invalid_notification):
         create_data = self.create_data()
-        create_data["params"]["notification"] = [invalid_notification]
+        create_data["params"]["notifications"] = [invalid_notification]
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
