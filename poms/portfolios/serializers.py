@@ -779,7 +779,23 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
 
 
-class ReportParamsSerializer(serializers.Serializer):
+REPORT_PERIODICITY_CHOICES = (
+    "daily",
+    "weekly",
+    "monthly",
+)
+
+
+class ParamsSerializer(serializers.Serializer):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    PERIODICITY_CHOICES = (
+        (DAILY, "Each working day"),
+        (WEEKLY, "Last business day of the week"),
+        (MONTHLY, "Last business day of the month"),
+    )
+
     only_errors = serializers.BooleanField(required=False, default=False)
     round_digits = serializers.IntegerField(required=False, default=2)
     precision = serializers.FloatField(
@@ -788,13 +804,13 @@ class ReportParamsSerializer(serializers.Serializer):
         validators=[MinValueValidator(0.00)],
     )
     emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
-    periodicity = serializers.CharField(required=False, default="")
-    notifications = serializers.BooleanField(required=False, default=False)
+    periodicity = serializers.ChoiceField(required=False, default=MONTHLY, choices=PERIODICITY_CHOICES)
+    notifications = serializers.DictField(required=False, default={})
 
 
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    params = ReportParamsSerializer()
+    params = ParamsSerializer()
 
     def validate(self, attrs):
         portfolios = attrs["portfolios"]
