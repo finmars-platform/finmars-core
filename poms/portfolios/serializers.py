@@ -788,11 +788,13 @@ class ReportParamsSerializer(serializers.Serializer):
         validators=[MinValueValidator(0.00)],
     )
     emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
+    periodicity = serializers.CharField(required=False, default="")
+    notifications = serializers.BooleanField(required=False, default=False)
 
 
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    report_params = ReportParamsSerializer()
+    params = ReportParamsSerializer()
 
     def validate(self, attrs):
         portfolios = attrs["portfolios"]
@@ -814,7 +816,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             "portfolios",
             "is_deleted",
             "is_enabled",
-            "report_params",
+            "params",
         ]
 
 

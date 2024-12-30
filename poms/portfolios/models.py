@@ -984,9 +984,9 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         blank=True,
         related_name="portfolio_reconcile_groups",
     )
-    report_params = models.JSONField(
+    params = models.JSONField(
         default=dict,
-        verbose_name=gettext_lazy("report params"),
+        verbose_name=gettext_lazy("calculation & reporting parameters"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -1062,13 +1062,13 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         ]
 
     @staticmethod
-    def compare_portfolios(reference_portfolio, portfolios, report_params: dict):
+    def compare_portfolios(reference_portfolio, portfolios, params: dict):
         report = []
         has_reconcile_error = False
         reference_items = reference_portfolio["items"]
-        precision = report_params.get("precision", 1)
-        only_errors = report_params.get("only_errors", False)
-        round_digits = report_params.get("round_digits", 2)
+        precision = params.get("precision", 1)
+        only_errors = params.get("only_errors", False)
+        round_digits = params.get("round_digits", 2)
 
         for portfolio_id, portfolio in portfolios.items():
             if portfolio_id == reference_portfolio["portfolio"]:
@@ -1185,11 +1185,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         _l.info(f"reconcile_result {reconcile_result}")
 
         reference_portfolio = reconcile_result[position_portfolio_id]
-        report_params = self.portfolio_reconcile_group.report_params
+        params = self.portfolio_reconcile_group.params
         report, has_reconcile_error = self.compare_portfolios(
             reference_portfolio,
             reconcile_result,
-            report_params,
+            params,
         )
 
         if has_reconcile_error:
@@ -1199,7 +1199,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         self.file_report = self.generate_json_report(report)
         self.save()
 
-        emails = report_params.get("emails")
+        emails = params.get("emails")
         if emails:
             self.file_report.send_emails(emails)
 

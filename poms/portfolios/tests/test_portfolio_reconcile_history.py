@@ -19,7 +19,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             owner=self.member,
             user_code=get_default_configuration_code(),
             name=self.random_string(),
-            report_params={
+            params={
                 "precision": 1,
                 "only_errors": False,
             }

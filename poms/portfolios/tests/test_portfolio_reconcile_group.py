@@ -20,7 +20,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             "name": name,
             "user_code": user_code,
             "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
-            "report_params": {
+            "params": {
                 "precision": 1,
                 "only_errors": False,
                 "round_digits": 2,
@@ -40,25 +40,25 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_data = response.json()
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
-        report_params = group_data["report_params"]
-        self.assertEqual(report_params["precision"], create_data["report_params"]["precision"])
-        self.assertEqual(report_params["round_digits"], create_data["report_params"]["round_digits"])
-        self.assertEqual(report_params["only_errors"], create_data["report_params"]["only_errors"])
+        params = group_data["params"]
+        self.assertEqual(params["precision"], create_data["params"]["precision"])
+        self.assertEqual(params["round_digits"], create_data["params"]["round_digits"])
+        self.assertEqual(params["only_errors"], create_data["params"]["only_errors"])
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
 
-    def test_create_with_report_params(self):
+    def test_create_with_params(self):
         create_data = self.create_data()
-        create_data["report_params"]["only_errors"] = True
+        create_data["params"]["only_errors"] = True
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
         group_data = response.json()
-        self.assertTrue(group_data["report_params"]["only_errors"])
+        self.assertTrue(group_data["params"]["only_errors"])
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
-        self.assertTrue(group.report_params["only_errors"])
+        self.assertTrue(group.params["only_errors"])
 
     def test_update_patch(self):
         create_data = self.create_data()
@@ -99,14 +99,14 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
     def test_precision_validation_error(self):
         create_data = self.create_data()
-        create_data["report_params"]["precision"] = -1
+        create_data["params"]["precision"] = -1
 
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_only_errors_validation_error(self):
         create_data = self.create_data()
-        create_data["report_params"]["only_errors"] = -1
+        create_data["params"]["only_errors"] = -1
 
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
@@ -118,6 +118,6 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     )
     def test_create_with_invalid_emails(self, invalid_email):
         create_data = self.create_data()
-        create_data["report_params"]["emails"] = [invalid_email]
+        create_data["params"]["emails"] = [invalid_email]
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
