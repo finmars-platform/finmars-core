@@ -1,5 +1,5 @@
-import datetime
 import json
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 import jwt
@@ -18,12 +18,10 @@ class AuthorizerService:
     def create_jwt_token():
         payload = {
             "some": "payload",
-            "exp": datetime.datetime.utcnow()
-            + datetime.timedelta(days=1),  # Expires in 1 day
+            "exp": datetime.now(timezone.utc) + timedelta(days=1),
         }
         secret_key = settings.SECRET_KEY
-        token = jwt.encode(payload, secret_key, algorithm="HS256")
-        return token
+        return jwt.encode(payload, secret_key, algorithm="HS256")
 
     @staticmethod
     def prepare_refresh_token() -> RefreshToken:
