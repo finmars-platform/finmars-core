@@ -94,7 +94,7 @@ class AuthorizerService:
             raise ValidationError(f"Authorizer-API validation error {response.text}")
 
         raise RuntimeError(
-            f"Kicking member resulted in status {status_code} error {response.text}"
+            f"kick_member resulted in status {status_code} error {response.text}"
         )
 
     def update_member(self, member, realm_code, space_code, **kwargs):
