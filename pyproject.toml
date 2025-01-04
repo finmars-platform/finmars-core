@@ -11,6 +11,7 @@ known_django=[
     "django_filters",
     "django_redis",
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_spectacular",
     "drf_yasg",
     "factory",

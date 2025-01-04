@@ -2,9 +2,11 @@ import json
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
+from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
+
 import jwt
 import requests
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from poms_app import settings
 
@@ -76,18 +78,24 @@ class AuthorizerService:
             "base_api_url": space_code,  # deprecated, but, be sure that authorizer not using it
             "username": member.username,
         }
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/kick-member/"
-            f"?space_code={space_code}"
-        )
+        url = f"{settings.AUTHORIZER_URL}/api/v1/internal/kick-member/"
 
         _l.info(f"kick_member url={url} data={data}")
 
         response = requests.post(
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
-        if response.status_code != 200:
-            raise RuntimeError(f"Error kicking member {response.text}")
+
+        status_code = response.status_code
+        if status_code == 200:
+            return
+
+        if status_code == 400:
+            raise ValidationError(f"Authorizer-API validation error {response.text}")
+
+        raise RuntimeError(
+            f"Kicking member resulted in status {status_code} error {response.text}"
+        )
 
     def update_member(self, member, realm_code, space_code, **kwargs):
         headers = self.prepare_headers()
