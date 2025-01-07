@@ -927,7 +927,7 @@ class MasterUser(models.Model):
 
 
 class EcosystemDefault(CacheModel):
-    cache_timeout = 3600 * 24 * 7
+    _cache_timeout = 3600 * 24 * 7
     cache = GlobalCacheByMasterUserManager()
 
     master_user = models.ForeignKey(
