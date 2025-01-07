@@ -13,7 +13,11 @@ from django.core.cache import cache
 
 import pytz
 
-from poms.common.models import FakeDeletableModel
+from poms.common.models import (
+    FakeDeletableModel,
+    CacheModel,
+    GlobalCacheByMasterUserManager,
+)
 from poms.common.utils import get_content_type_by_name
 
 AVAILABLE_APPS = [
@@ -921,39 +925,11 @@ class MasterUser(models.Model):
                     )
 
 
-class EcosystemDefaultManager(models.Manager):
-    def get_cache(self, *args, **kwargs):
-        """
-        Returns Ecosystem Default object from the cache. If it is not in the cache, 
-        it caches it and return object from BD.
-        :param master_user: required argument, it can be MasterUser object or him ID.
-        :return: EcosystemDefault object.
-        """
-        master_user = kwargs.get('master_user', None)
 
-        if not master_user or not isinstance(master_user, (MasterUser, int)):
-            raise ValueError(
-                "EcosystemDefaultManager.get_cache: Missed "
-                "MasterUser or received value not correct"
-            )
+class EcosystemDefault(CacheModel):
+    cache_timeout = 3600 * 24 * 7
+    cache = GlobalCacheByMasterUserManager()
 
-        if isinstance(master_user, MasterUser):
-            master_user_id = master_user.id
-
-        cache_key = EcosystemDefault.get_cache_key(master_user_id)
-        ecosystem_default = cache.get(cache_key)
-        if not ecosystem_default:
-            ecosystem_default = self.get(master_user__id=master_user_id)
-            ecosystem_default.create_cache()
-            _l.info(
-                f"EcosystemDefaultManager.get_cache: Updated cache "
-                f"EcosystemDefault by MasterUser: ID [{master_user_id}]"
-            )
-
-        return ecosystem_default
-
-
-class EcosystemDefault(models.Model):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="ecosystem_default",
@@ -1165,23 +1141,6 @@ class EcosystemDefault(models.Model):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("pricing condition"),
     )
-
-    objects = EcosystemDefaultManager()
-
-    @staticmethod
-    def get_cache_key(master_user_id):
-        return f"master_user_ecosystem_default_{master_user_id}"
-
-    def create_cache(self):
-        cache_key = self.get_cache_key(self.master_user.id)
-        if not cache.get(cache_key):
-            cache.set(cache_key, self, timeout=CACHE_TIMEOUT)
-
-    def save(self, *args, **kwargs):
-        cache_key = self.get_cache_key(self.master_user.id)
-        cache.delete(cache_key)
-
-        return super().save(*args, **kwargs)
 
 
 class Member(FakeDeletableModel):
