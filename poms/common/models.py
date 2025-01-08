@@ -357,16 +357,19 @@ class BaseCacheManager(models.Manager):
         """
         return obj.pk
 
-    def _get_obj_from_db(self, pk):
+    def _get_obj_from_db(self, pk:int):
         """
         Getting an object from the database. Redefine this method for non-standard identifiers.
         """
         return self.model.objects.get(pk=pk)
 
-    def get_cache_key(self, pk):
-        return f"{self.model.__name__.lower()}_{pk}"
+    def get_cache_key(self, pk:int):
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
 
-    def get_cache(self, pk):
+        return f"{app_label}_{model_name}_{pk}"
+
+    def get_cache(self, pk:int):
         key = self.get_cache_key(pk)
         obj = cache.get(key)
         if not obj:
@@ -377,7 +380,7 @@ class BaseCacheManager(models.Manager):
     def set_cache(self, obj):
         identifier = self._get_identifier_from_obj(obj)
         key = self.get_cache_key(identifier)
-        cache.set(key, obj, timeout=obj._cache_timeout)
+        cache.set(key, obj, timeout=obj.cache_timeout)
 
     def delete_cache(self, obj):
         identifier = self._get_identifier_from_obj(obj)
@@ -385,16 +388,20 @@ class BaseCacheManager(models.Manager):
         cache.delete(key)
 
 
-class GlobalCacheByMasterUserManager(BaseCacheManager):
+class CacheByMasterUserManager(BaseCacheManager):
     """
-    Global cache manager that uses master_user as the identifier.
+    Global cache manager that uses master_user ID as the identifier.
+    The model must have a link to `MasterUser`.
     This manager should be used in the `CacheModel`.
     """
     def _get_identifier_from_obj(cls, obj):
         return obj.master_user.pk
 
-    def _get_obj_from_db(self, pk):
+    def _get_obj_from_db(self, pk:int):
         return self.model.objects.get(master_user__pk=pk)
+
+    def get_cache(self, master_user_pk:int):
+        return super().get_cache(pk=master_user_pk)
 
 
 class CacheModel(models.Model):
@@ -411,7 +418,7 @@ class CacheModel(models.Model):
         `cache`:
             Custom manager for handling caching logic. Redefine to the required manager.
     """
-    _cache_timeout = 3600
+    cache_timeout = 3600
     objects = models.Manager()
     cache = BaseCacheManager()
 

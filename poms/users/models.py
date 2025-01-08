@@ -9,14 +9,13 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
-from django.core.cache import cache
 
 import pytz
 
 from poms.common.models import (
     FakeDeletableModel,
     CacheModel,
-    GlobalCacheByMasterUserManager,
+    CacheByMasterUserManager,
 )
 from poms.common.utils import get_content_type_by_name
 
@@ -36,7 +35,6 @@ LANGUAGE_MAX_LENGTH = 5
 TIMEZONE_MAX_LENGTH = 20
 TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
-CACHE_TIMEOUT = 3600 * 168 # 1 week
 
 _l = logging.getLogger("poms.users")
 
@@ -927,8 +925,8 @@ class MasterUser(models.Model):
 
 
 class EcosystemDefault(CacheModel):
-    _cache_timeout = 3600 * 24 * 7
-    cache = GlobalCacheByMasterUserManager()
+    cache_timeout = 3600 * 24 * 7
+    cache = CacheByMasterUserManager()
 
     master_user = models.ForeignKey(
         MasterUser,
