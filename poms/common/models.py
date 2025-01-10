@@ -357,19 +357,19 @@ class BaseCacheManager(models.Manager):
         """
         return obj.pk
 
-    def _get_obj_from_db(self, pk:int):
+    def _get_obj_from_db(self, pk):
         """
         Getting an object from the database. Redefine this method for non-standard identifiers.
         """
         return self.model.objects.get(pk=pk)
 
-    def get_cache_key(self, pk:int):
+    def get_cache_key(self, pk):
         app_label = self.model._meta.app_label
         model_name = self.model._meta.model_name
 
         return f"{app_label}_{model_name}_{pk}"
 
-    def get_cache(self, pk:int):
+    def get_cache(self, pk):
         key = self.get_cache_key(pk)
         obj = cache.get(key)
         if not obj:
@@ -397,11 +397,14 @@ class CacheByMasterUserManager(BaseCacheManager):
     def _get_identifier_from_obj(cls, obj):
         return obj.master_user.pk
 
-    def _get_obj_from_db(self, pk:int):
+    def _get_obj_from_db(self, pk):
         return self.model.objects.get(master_user__pk=pk)
 
-    def get_cache(self, master_user_pk:int):
+    def get_cache(self, master_user_pk):
         return super().get_cache(pk=master_user_pk)
+
+    def get_cache_key(self, master_user_pk):
+        return super().get_cache_key(pk=master_user_pk)
 
 
 class CacheModel(models.Model):
@@ -426,8 +429,8 @@ class CacheModel(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
+        self.__class__.cache.delete_cache(self)
         super().save(*args, **kwargs)
-        self.__class__.cache.set_cache(self)
 
     def delete(self, *args, **kwargs):
         self.__class__.cache.delete_cache(self)

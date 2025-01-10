@@ -1294,7 +1294,9 @@ class InstrumentExternalAPIViewSet(APIView):
 
         context = {"request": request, "master_user": master_user}
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )

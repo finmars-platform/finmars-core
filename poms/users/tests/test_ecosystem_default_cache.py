@@ -13,12 +13,18 @@ class EcosystemDefaultCacheTest(BaseTestCase):
         cache.clear()
 
     def get_ed_from_cache(self):
-        cache_key = EcosystemDefault.cache.get_cache_key(self.ed.master_user.pk)
+        cache_key = EcosystemDefault.cache.get_cache_key(
+            master_user_pk=self.ed.master_user.pk
+        )
         return cache.get(cache_key)
 
     def check_ed_is_not_in_cache(self):
         ed_cheched = self.get_ed_from_cache() 
         self.assertIsNone(ed_cheched)
+
+    def check_ed_is_in_cache(self):
+        ed_cheched = self.get_ed_from_cache()
+        self.assertIsNotNone(ed_cheched)
 
     def test__set_cache(self):
         self.check_ed_is_not_in_cache()
@@ -32,7 +38,9 @@ class EcosystemDefaultCacheTest(BaseTestCase):
     def test__get_cache_with_updating_cache(self):
         self.check_ed_is_not_in_cache()
 
-        ed_cheched = EcosystemDefault.cache.get_cache(self.ed.master_user.pk)
+        ed_cheched = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.ed.master_user.pk
+        )
         self.assertIsNotNone(ed_cheched)
 
         ed_cheched = self.get_ed_from_cache()
@@ -43,10 +51,11 @@ class EcosystemDefaultCacheTest(BaseTestCase):
         self.check_ed_is_not_in_cache()
 
         EcosystemDefault.cache.set_cache(self.ed)
-        ed_cheched = self.get_ed_from_cache()
-        self.assertIsNotNone(ed_cheched)
+        self.check_ed_is_in_cache()
 
-        ed_cheched = EcosystemDefault.cache.get_cache(self.ed.master_user.pk)
+        ed_cheched = ed_cheched = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.ed.master_user.pk
+        )
         self.assertIsNotNone(ed_cheched)
         self.assertEqual(self.ed, ed_cheched)
 
@@ -58,12 +67,19 @@ class EcosystemDefaultCacheTest(BaseTestCase):
         self.check_ed_is_not_in_cache()
 
         EcosystemDefault.cache.set_cache(self.ed)
-        ed_cheched = self.get_ed_from_cache()
-        self.assertIsNotNone(ed_cheched)
+        self.check_ed_is_in_cache()
 
         EcosystemDefault.cache.delete_cache(self.ed)
-        ed_cheched = self.get_ed_from_cache()
-        self.assertIsNone(ed_cheched)
+        self.check_ed_is_not_in_cache()
+
+    def test__update_model(self):
+        self.check_ed_is_not_in_cache()
+
+        EcosystemDefault.cache.set_cache(self.ed)
+        self.check_ed_is_in_cache()
+
+        self.ed.save()
+        self.check_ed_is_not_in_cache()
 
     def test__incorrect_pk(self):
         master_users_pk = [ms.pk for ms in MasterUser.objects.all()]

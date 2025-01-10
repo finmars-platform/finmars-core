@@ -3502,8 +3502,8 @@ class Transaction(models.Model):
             return 0
 
     def calculate_ytm(self) -> float:
-        ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.instrument.master_user
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instrument.master_user.pk
         )
 
         try:

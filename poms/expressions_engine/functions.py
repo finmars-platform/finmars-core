@@ -348,7 +348,9 @@ def _calculate_balance_report(
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -424,7 +426,9 @@ def _calculate_pl_report(
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -3198,7 +3202,9 @@ def _get_principal_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3312,7 +3318,9 @@ def _get_principal_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3433,7 +3441,9 @@ def _get_transactions_amounts_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3657,7 +3667,9 @@ def _get_instrument_report_data(
 
         instrument = _safe_get_instrument(evaluator, instrument)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -3839,7 +3851,7 @@ def _get_default_portfolio(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.portfolio
 
@@ -3862,7 +3874,7 @@ def _get_default_instrument(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.instrument
 
@@ -3885,7 +3897,7 @@ def _get_default_account(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.account
 
@@ -3908,7 +3920,7 @@ def _get_default_currency(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.currency
 
@@ -3931,7 +3943,7 @@ def _get_default_transaction_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.transaction_type
 
@@ -3954,7 +3966,7 @@ def _get_default_instrument_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.instrument_type
 
@@ -3977,7 +3989,7 @@ def _get_default_account_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.account_type
 
@@ -4000,7 +4012,7 @@ def _get_default_pricing_policy(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.pricing_policy
 
@@ -4023,7 +4035,7 @@ def _get_default_responsible(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.responsible
 
@@ -4046,7 +4058,7 @@ def _get_default_counterparty(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.counterparty
 
@@ -4069,7 +4081,7 @@ def _get_default_strategy1(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy1
 
@@ -4092,7 +4104,7 @@ def _get_default_strategy2(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy2
 
@@ -4115,7 +4127,7 @@ def _get_default_strategy3(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy3
 

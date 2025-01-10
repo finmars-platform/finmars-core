@@ -3046,8 +3046,8 @@ class PriceHistory(TimeStampedModel):
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
 
-        ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.instrument.master_user
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instrument.master_user.pk
         )
 
         try:

@@ -1146,9 +1146,9 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
     def calculate(self):
         from poms.reports.common import Report
 
-        ecosystem_defaults = EcosystemDefault.objects.filter(
-            master_user=self.master_user
-        ).first()
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.master_user.pk
+        )
 
         default_currency = ecosystem_defaults.currency
         default_pricing_policy = ecosystem_defaults.pricing_policy

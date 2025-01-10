@@ -1426,7 +1426,9 @@ class ReportSummary:
         member,
         context,
     ):
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.context = context
         self.master_user = master_user

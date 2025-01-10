@@ -136,7 +136,9 @@ class SystemPricingPolicyDefault:
 
         self.set_context(serializer_field)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return ecosystem_default.pricing_policy
 

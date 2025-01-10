@@ -34,7 +34,9 @@ class StatsHandler():
 
         _l.info('StatsHandler date or yesterday %s ' % self.date)
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if not currency_id:
             self.currency = self.ecosystem_default.currency

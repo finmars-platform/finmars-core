@@ -40,7 +40,9 @@ class Strategy1GroupDefault(object):
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy1_group
 
@@ -59,7 +61,9 @@ class Strategy1SubgroupDefault(object):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy1_subgroup
 
@@ -76,7 +80,9 @@ class Strategy1Default(object):
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy1
 
@@ -100,7 +106,9 @@ class Strategy2GroupDefault(Strategy1GroupDefault):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy2_group
 
@@ -110,7 +118,9 @@ class Strategy2SubgroupDefault(Strategy1SubgroupDefault):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy2_subgroup
 
@@ -120,7 +130,9 @@ class Strategy2Default(Strategy1Default):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy2
 
@@ -145,7 +157,9 @@ class Strategy3GroupDefault(Strategy1GroupDefault):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy3_group
 
@@ -155,7 +169,9 @@ class Strategy3SubgroupDefault(Strategy1SubgroupDefault):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy3_subgroup
 
@@ -165,6 +181,8 @@ class Strategy3Default(Strategy1Default):
         self.set_context(serializer_field)
 
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
+        )
 
         return self.ecosystem_defaults.strategy3

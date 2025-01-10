@@ -2209,8 +2209,8 @@ class ComplexTransactionImportSchemeSerializer(
     def save_rule_scenarios(self, instance, rules):
         pk_set = []
 
-        default_transaction_type = EcosystemDefault.objects.get(
-            master_user=instance.master_user
+        default_transaction_type = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
         ).transaction_type
 
         for rule_values in rules:
