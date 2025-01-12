@@ -817,3 +817,6 @@ INSTRUMENT_TYPE_PREFIX = ENV_STR(
 )
 
 MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 10000)
+
+# TODO: - change the URL to the actual URL of the notification service
+NOTIFICATION_SERVICE_BASE_URL = f"http://localhost:8010/{REALM_CODE}/{{space_code}}/api/v1/"
