@@ -22,9 +22,11 @@ from poms.common.filters import (
     AttributeFilter,
     CharExactFilter,
     CharFilter,
+    GlobalTableSearchFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter, ModelExtUserCodeMultipleChoiceFilter, GlobalTableSearchFilter,
+    ModelExtUserCodeMultipleChoiceFilter,
+    NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import (
@@ -221,9 +223,10 @@ class TransactionTypeEvFilterSet(FilterSet):
 
 
 class TransactionTypeViewSet(AbstractModelViewSet):
-    queryset = TransactionType.objects.select_related('master_user','owner',
-                                                      ).prefetch_related('instrument_types',
-                                                                                      'attributes', 'portfolios')
+    queryset = TransactionType.objects.select_related(
+        "master_user",
+        "owner",
+    ).prefetch_related("instrument_types", "attributes", "portfolios")
     serializer_class = TransactionTypeSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -732,10 +735,11 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         recalculate_user_fields.apply_async(
             kwargs={
-                "task_id": celery_task.id, 'context': {
-                    'space_code': celery_task.master_user.space_code,
-                    'realm_code': celery_task.master_user.realm_code
-                }
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
             }
         )
 
@@ -1201,7 +1205,9 @@ class ComplexTransactionFilterSet(FilterSet):
     is_deleted = django_filters.BooleanFilter()
 
     transactions__accounting_date = django_filters.DateFromToRangeFilter()
-    transactions__portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
+    transactions__portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(
+        model=Portfolio
+    )
 
     global_table_search = GlobalTableSearchFilter(label="Global table search")
 
@@ -1224,7 +1230,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         "date",
         "code",
         "is_deleted",
-        "transactions__accounting_date"
+        "transactions__accounting_date",
     ]
 
     def create(self, request, *args, **kwargs):
