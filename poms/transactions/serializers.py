@@ -2739,9 +2739,8 @@ class TransactionTypeSerializer(
         representation = super().to_representation(instance)
 
         try:
-            instance = TransactionTypeGroup.objects.get(
-                id=representation["group"]
-            )  # should be already converted to id
+            # should be already converted to id
+            instance = TransactionTypeGroup.objects.get(id=representation["group"])
 
             s = TransactionTypeGroupViewSerializer(
                 instance=instance, read_only=True, context=self.context
