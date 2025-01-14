@@ -3,9 +3,10 @@ from rest_framework import routers
 import poms.ui.views as ui
 
 router = routers.DefaultRouter()
+
 router.register(
-    r"portal-interface-access",
-    ui.PortalInterfaceAccessViewSet,
+    r"user-interface-access",
+    ui.UserInterfaceAccessModelViewSet,
 )
 router.register(
     r"list-layout",
@@ -85,4 +86,10 @@ router.register(
 router.register(
     r"list-layout-light",
     ui.ListLayoutLightViewSet,
+)
+
+#TODO DEPRECATED delete in 1.15.0-rc
+router.register(
+    r"portal-interface-access",
+    ui.PortalInterfaceAccessViewSet,
 )

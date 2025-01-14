@@ -52,6 +52,7 @@ from poms.ui.models import (
     PortalInterfaceAccessModel,
     TemplateLayout,
     TransactionUserField,
+    UserInterfaceAccessModel,
 )
 from poms.ui.serializers import (
     BookmarkSerializer,
@@ -74,6 +75,7 @@ from poms.ui.serializers import (
     PortalInterfaceAccessModelSerializer,
     TemplateLayoutSerializer,
     TransactionUserFieldSerializer,
+    UserInterfaceAccessModelSerializer,
 )
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
@@ -112,6 +114,26 @@ class LayoutContentTypeFilter(django_filters.CharFilter):
 class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
     queryset = PortalInterfaceAccessModel.objects
     serializer_class = PortalInterfaceAccessModelSerializer
+    pagination_class = None
+
+
+class UserInterfaceAccessModelFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+    role = CharFilter()
+    user_code = CharFilter()
+    configuration_code = CharFilter()
+    owner = CharFilter(field_name="owner__username")
+
+    class Meta:
+        model = UserInterfaceAccessModel
+        fields = []
+
+
+class UserInterfaceAccessModelViewSet(AbstractModelViewSet):
+    queryset = UserInterfaceAccessModel.objects.all()
+    serializer_class = UserInterfaceAccessModelSerializer
+    filter_class = UserInterfaceAccessModelFilterSet
     pagination_class = None
 
 
