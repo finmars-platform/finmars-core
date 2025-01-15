@@ -95,7 +95,7 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - coverage run manage.py test
+    - coverage run --parallel-mode manage.py test --parallel
     - coverage combine && coverage report && coverage html
   artifacts:
     paths:
