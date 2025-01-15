@@ -8,9 +8,11 @@ stages:
   - pushVersion
 
 default:
-  image: docker:20.10.16
+  image: docker:27.5.0
   services:
-    - docker:20.10.16-dind
+    - name: docker:27.5.0-dind
+      alias: docker
+      command: [ "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false" ]
   before_script:
     - docker info
 
@@ -35,17 +37,16 @@ variables:
   # Kubernetes executor connects services to the job container
   # DOCKER_HOST: tcp://localhost:2375
   #
-  DOCKER_HOST: tcp://docker:2375
+  # DOCKER_HOST: tcp://docker:2375
   #
   # This instructs Docker not to start over TLS.
   DOCKER_TLS_CERTDIR: ""
 
 
-
 Test:
   stage: test
   image:
-    name: python:3.10-bullseye  # adjust the Python version as necessary
+    name: python:3.11-bookworm # adjust the Python version as necessary
     pull_policy: if-not-present # available: always, if-not-present,
 
   services:
@@ -94,8 +95,7 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-#    - coverage run manage.py test --parallel=6
-    - coverage run manage.py test
+    - coverage run --parallel-mode manage.py test --parallel
     - coverage combine && coverage report && coverage html
   artifacts:
     paths:
@@ -105,7 +105,7 @@ Test:
 # This new job will handle the versioning mechanism
 Versioning:
   image:
-    name: python:3.9
+    name: python:3.11-bookworm
     pull_policy: if-not-present # available: always, if-not-present,
   stage: versioning
   before_script:
@@ -136,7 +136,7 @@ Versioning:
 Push Version:
   stage: pushVersion
   image:
-    name: python:3.9
+    name: python:3.11-bookworm
     pull_policy: if-not-present # available: always, if-not-present,
   before_script:
     - apt install curl git
@@ -149,7 +149,6 @@ Push Version:
       else
           CHANNEL="unknown"
       fi
-
 
       # Create the JSON payload
       NOTES=$(git log -1 --pretty=%f)
