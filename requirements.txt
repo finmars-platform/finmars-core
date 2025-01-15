@@ -63,8 +63,8 @@ pandas==2.2.3
 paramiko==3.3.2
 prometheus-client==0.15.0
 prompt-toolkit==3.0.33
-psutil==5.9.4
-psycopg2==2.9.4
+psutil==6.1.1
+psycopg2-binary==2.9.9
 pyasn1==0.4.8
 pycparser==2.21
 pycryptodome==3.19.1
