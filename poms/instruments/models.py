@@ -6,26 +6,26 @@ from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
-from poms.common.fields import ResourceGroupsField
-from django.core.cache import cache
 
 from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
+from poms.common.fields import ResourceGroupsField
 from poms.common.formula_accruals import get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
-    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
     ObjectStateModel,
+    TimeStampedModel,
 )
 from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
@@ -350,6 +350,7 @@ class AccrualCalculationModel(AbstractClassModel):
     @staticmethod
     def get_quantlib_day_count(finmars_accrual_calculation_model):
         import QuantLib as Ql
+
         from poms.instruments.finmars_quantlib import Actual365A, Actual365L
 
         default_day_counter = Ql.SimpleDayCounter()
@@ -1352,12 +1353,16 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
 class InstrumentTypePricingPolicy(TimeStampedModel):
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
-    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE, related_name="pricing_policies")
+    instrument_type = models.ForeignKey(
+        InstrumentType, on_delete=models.CASCADE, related_name="pricing_policies"
+    )
     target_pricing_schema_user_code = models.CharField(
         max_length=1024,
-        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond",
     )
-    options = models.JSONField(default=dict, help_text="options populated from module form")
+    options = models.JSONField(
+        default=dict, help_text="options populated from module form"
+    )
 
     class Meta:
         unique_together = ("pricing_policy", "instrument_type")
@@ -2447,9 +2452,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return res.factor_value if res else 1
 
     def generate_instrument_system_attributes(self):
-        #from django.contrib.contenttypes.models import ContentType
+        # from django.contrib.contenttypes.models import ContentType
 
-       # from poms.configuration.utils import get_default_configuration_code
+        # from poms.configuration.utils import get_default_configuration_code
         #
         # content_type = ContentType.objects.get(
         #     app_label="instruments", model="instrument"
@@ -2654,7 +2659,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         super().save(*args, **kwargs)
 
-        cache_key = f"{self.master_user.space_code}_serialized_report_instrument_{self.id}"
+        cache_key = (
+            f"{self.master_user.space_code}_serialized_report_instrument_{self.id}"
+        )
         cache.delete(cache_key)
 
         try:
@@ -2666,12 +2673,16 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
 class InstrumentPricingPolicy(TimeStampedModel):
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE)
-    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE, related_name="pricing_policies")
+    instrument = models.ForeignKey(
+        Instrument, on_delete=models.CASCADE, related_name="pricing_policies"
+    )
     target_pricing_schema_user_code = models.CharField(
         max_length=1024,
-        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond"
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond",
     )
-    options = models.JSONField(default=dict, help_text="options populated from module form")
+    options = models.JSONField(
+        default=dict, help_text="options populated from module form"
+    )
 
     class Meta:
         unique_together = ("pricing_policy", "instrument")
@@ -2807,12 +2818,16 @@ class AccrualCalculationSchedule(models.Model):
         if isinstance(self.accrual_start_date, date):
             self.accrual_start_date = self.accrual_start_date.strftime(DATE_FORMAT)
         else:
-            self.accrual_start_date = parse(self.accrual_start_date).strftime(DATE_FORMAT)
+            self.accrual_start_date = parse(self.accrual_start_date).strftime(
+                DATE_FORMAT
+            )
 
         if isinstance(self.first_payment_date, date):
             self.first_payment_date = self.first_payment_date.strftime(DATE_FORMAT)
         else:
-            self.first_payment_date = parse(self.first_payment_date).strftime(DATE_FORMAT)
+            self.first_payment_date = parse(self.first_payment_date).strftime(
+                DATE_FORMAT
+            )
 
         if not self.id:
             # New object, check if the record already exists
@@ -3082,7 +3097,11 @@ class PriceHistory(TimeStampedModel):
         except Exception as e:
             self.handle_err(f"calculate_ytm error {repr(e)}")
 
-        if "factor" in recalculate_inputs or not recalculate_inputs and self.factor in {None, AUTO_CALCULATE}:
+        if (
+            "factor" in recalculate_inputs
+            or not recalculate_inputs
+            and self.factor in {None, AUTO_CALCULATE}
+        ):
             if self.error_message:  # reset error messages
                 self.error_message = ""
             try:
@@ -3091,7 +3110,11 @@ class PriceHistory(TimeStampedModel):
                 self.handle_err(f"get_factor error {repr(e)}")
                 self.factor = 1
 
-        if "accrued_price" in recalculate_inputs or not recalculate_inputs and self.accrued_price in {None, AUTO_CALCULATE}:
+        if (
+            "accrued_price" in recalculate_inputs
+            or not recalculate_inputs
+            and self.accrued_price in {None, AUTO_CALCULATE}
+        ):
             if self.error_message:  # reset error messages
                 self.error_message = ""
             try:
@@ -3719,12 +3742,11 @@ class GeneratedEvent(models.Model):
             return "<InvalidExpression>"
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        from poms.system_messages.handlers import send_system_message
 
+        super().save(*args, **kwargs)
         try:
             if self.status == GeneratedEvent.NEW:
-                from poms.system_messages.handlers import send_system_message
-
                 send_system_message(
                     master_user=self.master_user,
                     title="Event",
@@ -3817,4 +3839,32 @@ class InstrumentAttachment(models.Model):
     file = models.ForeignKey(
         "explorer.StorageObject",
         on_delete=models.CASCADE,
+    )
+
+
+class Accrual(models.Model):
+    instrument = models.ForeignKey(
+        Instrument,
+        db_index=True,
+        related_name="accruals",
+        verbose_name="Instrument",
+        on_delete=models.CASCADE,
+    )
+    user_code = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("User code"),
+    )
+    date = models.DateField(
+        verbose_name=gettext_lazy("Accrual value date"),
+    )
+    size = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("Accrual size"),
+    )
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="Notes",
     )
