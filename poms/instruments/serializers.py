@@ -17,11 +17,11 @@ from poms.common.serializers import (
     ModelWithUserCodeSerializer,
     PomsClassSerializer,
 )
-from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.models import CurrencyPricingPolicy
 from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.fields import (
     AUTO_CALCULATE,
     AccrualCalculationModelField,
@@ -1880,7 +1880,7 @@ class PriceHistoryRecalculateSerializer(PriceHistorySerializer):
     recalculate_inputs = serializers.MultipleChoiceField(
         required=False,
         default=[],
-        choices=["accrued_price", "factor", "ytm", "modified_duration"]
+        choices=["accrued_price", "factor", "ytm", "modified_duration"],
     )
 
     class Meta(PriceHistorySerializer.Meta):
@@ -1889,7 +1889,9 @@ class PriceHistoryRecalculateSerializer(PriceHistorySerializer):
     def validate(self, attrs: dict) -> dict:
         if "accrued_price" in attrs.get("recalculate_inputs"):
             if not attrs.get("date"):
-                raise ValidationError("To calculate 'accrued_price' valid 'date' must be provided")
+                raise ValidationError(
+                    "To calculate 'accrued_price' valid 'date' must be provided"
+                )
             attrs["accrued_price"] = None
 
         if "factor" in attrs.get("recalculate_inputs"):
