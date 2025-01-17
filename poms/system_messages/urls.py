@@ -20,6 +20,18 @@ router.register(
     basename='channel',
 )
 
+router.register(
+    r'categories',
+    views.CategoryViewSet,
+    basename='category'
+)
+
+router.register(
+    r'statuses',
+    views.CurrentStatusViewSet,
+    basename='status'
+)
+
 # app_name = 'system_messages'
 
 urlpatterns = [

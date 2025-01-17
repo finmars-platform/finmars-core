@@ -14,9 +14,22 @@ from poms.system_messages.filters import (
     OwnerBySystemMessageMember,
     SystemMessageOnlyNewFilter,
 )
-from poms.system_messages.handlers import forward_create_notification_to_service, forward_update_notification_to_service, forward_get_user_notifications, forward_partial_update_notification_to_service
-from poms.system_messages.handlers import forward_get_user_subscriptions_to_service, forward_update_user_subscriptions_to_service, forward_get_all_subscription_types_to_service
-from poms.system_messages.handlers import forward_create_channel_to_service, forward_join_channel_to_service, forward_leave_channel_to_service, forward_user_subscribed_channels_to_service
+from poms.system_messages.handlers import (
+    forward_create_notification_to_service,
+    forward_update_notification_to_service,
+    forward_get_user_notifications,
+    forward_partial_update_notification_to_service,
+    forward_get_user_subscriptions_to_service,
+    forward_update_user_subscriptions_to_service,
+    forward_get_all_subscription_types_to_service,
+    forward_create_channel_to_service,
+    forward_join_channel_to_service,
+    forward_leave_channel_to_service,
+    forward_user_subscribed_channels_to_service,
+    forward_get_all_channels_to_service,
+    forward_get_categories_to_service,
+    forward_get_statuses_to_service,
+)
 from poms.system_messages.models import SystemMessage, SystemMessageComment
 from poms.system_messages.serializers import (
     SystemMessageActionSerializer,
@@ -603,4 +616,22 @@ class ChannelViewSet(ViewSet):
     @action(detail=False, methods=["get"])
     def user_subscribed_channels(self, request, *args, **kwargs):
         response = forward_user_subscribed_channels_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+    
+    # Channel 5: List all channels (GET)
+    @action(detail=False, methods=["get"], url_path="all_channels")
+    def all_channels(self, request, *args, **kwargs):
+        response = forward_get_all_channels_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+    
+
+class CategoryViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        response = forward_get_categories_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class CurrentStatusViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        response = forward_get_statuses_to_service(request)
         return Response(response, status=status.HTTP_200_OK)

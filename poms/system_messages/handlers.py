@@ -271,3 +271,45 @@ def forward_user_subscribed_channels_to_service(request):
     except requests.exceptions.RequestException as e:
         _l.error(f"Failed to channels user subscribed: {e}") # Log the error and raise it
         raise
+
+
+def forward_get_categories_to_service(request):
+    """Forward request to get all notification categories from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}categories/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get categories: {e}")
+        raise
+
+
+def forward_get_statuses_to_service(request):
+    """Forward request to get all notification statuses from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}statuses/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get statuses: {e}")
+        raise
+
+
+def forward_get_all_channels_to_service(request):
+    """Forward request to get all channels from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}channels/all_channels/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get all channels: {e}")
+        raise
