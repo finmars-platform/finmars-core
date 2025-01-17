@@ -439,7 +439,9 @@ def create_instrument_from_finmars_database(data, master_user, member):
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )
@@ -498,7 +500,9 @@ def create_instrument_cbond(data, master_user, member):
     from poms.instruments.serializers import InstrumentSerializer
 
     try:
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )
@@ -728,8 +732,8 @@ def download_instrument_cbond(
                 if not instrument_name:
                     instrument_name = instrument_code
 
-                ecosystem_defaults = EcosystemDefault.objects.get(
-                    master_user=master_user
+                ecosystem_defaults = EcosystemDefault.cache.get_cache(
+                    master_user_pk=master_user.pk
                 )
 
                 instrument = Instrument.objects.create(
@@ -1048,8 +1052,8 @@ def download_unified_data(
 
                 context = {"request": proxy_request}
 
-                ecosystem_defaults = EcosystemDefault.objects.get(
-                    master_user=master_user
+                ecosystem_defaults = EcosystemDefault.cache.get_cache(
+                    master_user_pk=master_user.pk
                 )
 
                 record = None
@@ -2060,8 +2064,8 @@ def complex_transaction_csv_file_import(
 
             v = None
 
-            ecosystem_default = EcosystemDefault.objects.get(
-                master_user=instance.master_user
+            ecosystem_default = EcosystemDefault.cache.get_cache(
+                master_user_pk=instance.master_user.pk
             )
 
             # _l.info('key %s' % key)
@@ -3194,8 +3198,8 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
 
             v = None
 
-            ecosystem_default = EcosystemDefault.objects.get(
-                master_user=instance.master_user
+            ecosystem_default = EcosystemDefault.cache.get_cache(
+                master_user_pk=instance.master_user.pk
             )
 
             # _l.info('key %s' % key)

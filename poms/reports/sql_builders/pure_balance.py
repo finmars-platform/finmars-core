@@ -52,8 +52,8 @@ class PureBalanceReportBuilderSql:
 
         self.instance.allocation_mode = Report.MODE_IGNORE
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self.instance.master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
         )
 
         _l.debug(

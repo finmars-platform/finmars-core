@@ -1,6 +1,6 @@
 import logging
 
-# from django.core.cache import cache
+from django.core.cache import cache
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -341,6 +341,100 @@ class ObjectStateModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+# ^_^ Cache ^_^ #
+class BaseCacheManager(models.Manager):
+    """
+    Base cache manager for processing the logic of caching model instances by ID.
+    Override `_get_identifier_from_obj` and `_get_obj_from_db` for custom behavior.
+    This manager should be used in the `CacheModel`.
+    Attention! Global responsibility, not linked to space_code.
+    """
+    def _get_identifier_from_obj(cls, obj):
+        """
+        Getting the identificators for the cache. Redefine for non-standard identifiers.
+        """
+        return obj.pk
+
+    def _get_obj_from_db(self, pk):
+        """
+        Getting an object from the database. Redefine this method for non-standard identifiers.
+        """
+        return self.model.objects.get(pk=pk)
+
+    def get_cache_key(self, pk):
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+
+        return f"{app_label}_{model_name}_{pk}"
+
+    def get_cache(self, pk):
+        key = self.get_cache_key(pk)
+        obj = cache.get(key)
+        if not obj:
+            obj = self._get_obj_from_db(pk)
+            self.set_cache(obj)
+        return obj
+
+    def set_cache(self, obj):
+        identifier = self._get_identifier_from_obj(obj)
+        key = self.get_cache_key(identifier)
+        cache.set(key, obj, timeout=obj.cache_timeout)
+
+    def delete_cache(self, obj):
+        identifier = self._get_identifier_from_obj(obj)
+        key = self.get_cache_key(identifier)
+        cache.delete(key)
+
+
+class CacheByMasterUserManager(BaseCacheManager):
+    """
+    Global cache manager that uses master_user ID as the identifier.
+    The model must have a link to `MasterUser`.
+    This manager should be used in the `CacheModel`.
+    """
+    def _get_identifier_from_obj(cls, obj):
+        return obj.master_user.pk
+
+    def _get_obj_from_db(self, pk):
+        return self.model.objects.get(master_user__pk=pk)
+
+    def get_cache(self, master_user_pk):
+        return super().get_cache(pk=master_user_pk)
+
+    def get_cache_key(self, master_user_pk):
+        return super().get_cache_key(pk=master_user_pk)
+
+
+class CacheModel(models.Model):
+    """
+    Abstract base model for integrating caching logic into Django models.
+    This class provides functionality for caching model instances using a  
+    custom cache manager `BaseCacheManager` or the managers inherited from it.
+
+    Attrs:
+        `cache_timeout`:
+            Specifies the default timeout (in seconds) for cached instances.
+        `objects`:
+            Default Django manager for standard database operations.
+        `cache`:
+            Custom manager for handling caching logic. Redefine to the required manager.
+    """
+    cache_timeout = 3600
+    objects = models.Manager()
+    cache = BaseCacheManager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.__class__.cache.delete_cache(self)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.__class__.cache.delete_cache(self)
+        super().delete(*args, **kwargs)
 
 
 # These models need to create custom context, that could be passed to serializers
