@@ -241,7 +241,9 @@ class FullDataCloner(object):
 
     def _ecosystem_defaults(self):
 
-        source_ecosystem_default = EcosystemDefault.objects.get(master_user=self._source_master_user)
+        source_ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._source_master_user.pk
+        )
         target_ecosystem_default = EcosystemDefault()
 
         target_ecosystem_default.master_user = self._target_master_user

@@ -36,7 +36,9 @@ class PLReportBuilderSql:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
+        )
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
@@ -3228,7 +3230,9 @@ class PLReportBuilderSql:
     @staticmethod
     def get_query_for_first_date(instance):
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
+        )
 
         report_fx_rate = get_report_fx_rate(instance, instance.pl_first_date)
 
@@ -3271,7 +3275,9 @@ class PLReportBuilderSql:
     def get_query_for_second_date(instance):
 
         report_fx_rate = get_report_fx_rate(instance, instance.report_date)
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
+        )
 
         _l.debug('report_fx_rate %s' % report_fx_rate)
 

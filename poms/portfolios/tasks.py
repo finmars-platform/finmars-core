@@ -220,7 +220,9 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         count = 0
         total = len(transactions)
-        ecosystem = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         default_currency_id = ecosystem.currency_id
         transactions_dict = {}
         for item in transactions:

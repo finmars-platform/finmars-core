@@ -12,7 +12,11 @@ from django.utils.translation import gettext_lazy
 
 import pytz
 
-from poms.common.models import FakeDeletableModel
+from poms.common.models import (
+    FakeDeletableModel,
+    CacheModel,
+    CacheByMasterUserManager,
+)
 from poms.common.utils import get_content_type_by_name
 
 AVAILABLE_APPS = [
@@ -919,7 +923,11 @@ class MasterUser(models.Model):
                     )
 
 
-class EcosystemDefault(models.Model):
+
+class EcosystemDefault(CacheModel):
+    cache_timeout = 3600 * 24 * 7
+    cache = CacheByMasterUserManager()
+
     master_user = models.ForeignKey(
         MasterUser,
         related_name="ecosystem_default",

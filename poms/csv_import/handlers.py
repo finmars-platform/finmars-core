@@ -660,8 +660,8 @@ class SimpleImportProcess:
 
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
-        self.ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.master_user
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.master_user.pk
         )
 
         self.result = SimpleImportResult()

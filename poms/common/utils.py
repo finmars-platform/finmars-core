@@ -22,7 +22,7 @@ from poms_app import settings
 
 _l = logging.getLogger("poms.common")
 
-VALID_FREQUENCY = {"D", "W", "M", "Q", "Y"}
+VALID_FREQUENCY = {"D", "W", "M", "Q", "Y", "C"}
 
 FORWARD = 1
 
@@ -796,10 +796,13 @@ def split_date_range(
     :param start_date: Start date in YYYY-MM-DD format.
     :param end_date: End date in YYYY-MM-DD format.
     :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom).
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param is_only_bday: Whether to adjust the dates to business days.
     :return: A list of tuples[str], each containing the start and end of a frequency.
     """
+    if frequency == "C":
+        return [start_date, end_date]
+
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
     freq_start = frequency
@@ -852,11 +855,14 @@ def pick_dates_from_range(
     :param start_date: Start date in YYYY-MM-DD format.
     :param end_date: End date in YYYY-MM-DD format.
     :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly).
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param is_only_bday: Whether to adjust the dates to business days.
     :param start: The beginning of frequency, if False end of frequency.
     :return: A list, containing the start or end of a each frequency.
     """
+    if frequency == "C":
+        return [start_date, end_date]
+
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
     frequency = frequency if start else "E" + frequency
@@ -865,6 +871,10 @@ def pick_dates_from_range(
         start=start_date, end=end_date, freq=frequency_map[frequency]()
     )
     dates = [d.date() for d in dates]
+
+    # don't meets conditions
+    if not len(dates):
+        return []
 
     # pd.date_range - adds dates that fall completely within
     # the frequency. Adding in list uneven areas of date
@@ -908,12 +918,15 @@ def calculate_period_date(
 
     :param date: A string in YYYY-MM-DD ISO format representing the current date.
     :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly).
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param shift: Indicating how many periods to shift (-N for backward, +N for forward).
     :param is_only_bday: Whether to adjust the dates to business days.
     :param start: The beginning of frequency, if False end of frequency.
     :return: The calculated date in YYYY-MM-DD format.
     """
+    if frequency == "C":
+        return date
+
     frequency = frequency if start else "E" + frequency
     date = get_validated_date(date)
     if "W" in frequency:
