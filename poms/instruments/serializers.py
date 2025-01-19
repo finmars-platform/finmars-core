@@ -36,6 +36,7 @@ from poms.instruments.fields import (
     PricingPolicyField,
 )
 from poms.instruments.models import (
+    Accrual,
     AccrualCalculationModel,
     AccrualCalculationSchedule,
     CostMethod,
@@ -645,9 +646,13 @@ class InstrumentTypeSerializer(
         self.fields["regular_event_object"] = TransactionTypeSimpleViewSerializer(
             source="regular_event", read_only=True
         )
-        self.fields["factor_same_object"] = TransactionTypeSimpleViewSerializer(source="factor_same", read_only=True)
+        self.fields["factor_same_object"] = TransactionTypeSimpleViewSerializer(
+            source="factor_same", read_only=True
+        )
         self.fields["factor_up_object"] = TransactionTypeSimpleViewSerializer(source="factor_up", read_only=True)
-        self.fields["factor_down_object"] = TransactionTypeSimpleViewSerializer(source="factor_down", read_only=True)
+        self.fields["factor_down_object"] = TransactionTypeSimpleViewSerializer(
+            source="factor_down", read_only=True
+        )
 
     def validate(self, attrs):
         instrument_class = attrs.get("instrument_class", None)
@@ -920,6 +925,18 @@ class InstrumentTypeViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
+class AccrualSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Accrual
+        fields = [
+            "instrument",
+            "date",
+            "size",
+            "user_code",
+            "notes",
+        ]
+
+
 class InstrumentSerializer(
     ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
@@ -928,29 +945,17 @@ class InstrumentSerializer(
     ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
-
     pricing_currency = CurrencyField()
-
     accrued_currency = CurrencyField()
-
     instrument_type = InstrumentTypeField()
-
     co_directional_exposure_currency = CurrencyField()
-
     counter_directional_exposure_currency = CurrencyField()
-
     long_underlying_instrument = InstrumentField(required=False, allow_null=True)
-
     short_underlying_instrument = InstrumentField(required=False, allow_null=True)
-
     pricing_condition = PricingConditionField(required=False, allow_null=True)
-
     payment_size_detail = PaymentSizeDetailField(required=False, allow_null=True)
-
     daily_pricing_model = DailyPricingModelField(required=False, allow_null=True)
-
     country = CountryField(required=False, allow_null=True)
-
     first_transaction_date = serializers.ReadOnlyField()
 
     # ==== Objects below ====
@@ -977,7 +982,6 @@ class InstrumentSerializer(
     daily_pricing_model_object = DailyPricingModelSerializer(source="daily_pricing_model", read_only=True)
     pricing_condition_object = PricingConditionSerializer(source="pricing_condition", read_only=True)
     country_object = CountrySerializer(source="country", read_only=True)
-
     identifier = serializers.JSONField(allow_null=False)
 
     class Meta:
@@ -1041,7 +1045,7 @@ class InstrumentSerializer(
             "country_object",
             "files",
             "first_transaction_date",
-            # 'attributes'
+            "accruals",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -1064,10 +1068,15 @@ class InstrumentSerializer(
         self.fields["accrual_calculation_schedules"] = AccrualCalculationScheduleSerializer(
             many=True, required=False, allow_null=True
         )
-        self.fields["factor_schedules"] = InstrumentFactorScheduleSerializer(many=True, required=False, allow_null=True)
+        self.fields["factor_schedules"] = InstrumentFactorScheduleSerializer(
+            many=True, required=False, allow_null=True
+        )
         self.fields["event_schedules"] = EventScheduleSerializer(many=True, required=False, allow_null=True)
-        self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(many=True, required=False, allow_null=True)
+        self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
+            many=True, required=False, allow_null=True
+        )
         self.fields["files"] = FinmarsFileSerializer(many=True, read_only=True)
+        self.fields["accruals"] = AccrualSerializer(many=True, required=False, allow_null=True)
 
     def create(self, validated_data: dict) -> Instrument:
         func = f"{self.__class__.__name__}.create"
@@ -1724,7 +1733,9 @@ class PriceHistorySerializer(ModelMetaSerializer):
             section="prices",
             type="success",
             title="New Price (manual)",
-            description=(f"{instance.instrument.user_code} {str(instance.date)} " f"{str(instance.principal_price)}"),
+            description=(
+                f"{instance.instrument.user_code} {str(instance.date)} " f"{str(instance.principal_price)}"
+            ),
         )
 
         return instance
@@ -1745,7 +1756,9 @@ class PriceHistorySerializer(ModelMetaSerializer):
             section="prices",
             type="warning",
             title="Edit Price (manual)",
-            description=(f"{instance.instrument.user_code} {str(instance.date)}" f" {str(instance.principal_price)}"),
+            description=(
+                f"{instance.instrument.user_code} {str(instance.date)}" f" {str(instance.principal_price)}"
+            ),
         )
 
         return instance
@@ -1891,7 +1904,9 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
         self.fields["instrument_type"] = serializers.PrimaryKeyRelatedField(read_only=True)
         self.fields["instrument"] = serializers.SerializerMethodField(required=False, allow_null=True)
 
-        self.fields["instrument_type_object"] = InstrumentTypeViewSerializer(source="instrument_type", read_only=True)
+        self.fields["instrument_type_object"] = InstrumentTypeViewSerializer(
+            source="instrument_type", read_only=True
+        )
 
     def get_instrument(self, obj):
         return obj.instrument
@@ -2008,9 +2023,13 @@ class InstrumentTypeEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeSta
         self.fields["regular_event_object"] = TransactionTypeSimpleViewSerializer(
             source="regular_event", read_only=True
         )
-        self.fields["factor_same_object"] = TransactionTypeSimpleViewSerializer(source="factor_same", read_only=True)
+        self.fields["factor_same_object"] = TransactionTypeSimpleViewSerializer(
+            source="factor_same", read_only=True
+        )
         self.fields["factor_up_object"] = TransactionTypeSimpleViewSerializer(source="factor_up", read_only=True)
-        self.fields["factor_down_object"] = TransactionTypeSimpleViewSerializer(source="factor_down", read_only=True)
+        self.fields["factor_down_object"] = TransactionTypeSimpleViewSerializer(
+            source="factor_down", read_only=True
+        )
 
 
 class InstrumentTypeApplySerializer(serializers.Serializer):

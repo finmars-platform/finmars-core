@@ -418,9 +418,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
-        ecosystem_default = EcosystemDefault.cache.get_cache(
-            master_user_pk=master_user.pk
-        )
+        ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
         content_type = ContentType.objects.get(model="instrument", app_label="instruments")
         attribute_types = GenericAttributeType.objects.filter(master_user=master_user, content_type=content_type)
         object_data = handler_instrument_object(
@@ -471,9 +469,7 @@ def create_instrument_cbond(data, master_user, member):
     from poms.instruments.serializers import InstrumentSerializer
 
     try:
-        ecosystem_defaults = EcosystemDefault.cache.get_cache(
-            master_user_pk=master_user.pk
-        )
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
         content_type = ContentType.objects.get(model="instrument", app_label="instruments")
 
         proxy_user = ProxyUser(member, master_user)
@@ -615,7 +611,8 @@ def download_instrument_cbond(
             )
         else:
             options["callback_url"] = (
-                f"https://{settings.DOMAIN_NAME}/{master_user.space_code}" f"/api/instruments/fdb-create-from-callback/"
+                f"https://{settings.DOMAIN_NAME}/{master_user.space_code}"
+                f"/api/instruments/fdb-create-from-callback/"
             )
 
         options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
@@ -1887,8 +1884,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
             v = None
 
-            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk
-            )
+            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk)
 
             # _l.info('key %s' % key)
             # _l.info('value %s' % value)
@@ -1929,7 +1925,9 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                 except Exception:
                     try:
-                        v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
+                        v = model_map_class.objects.get(
+                            master_user=instance.master_user, value=value
+                        ).content_object
 
                     except Exception:
                         v = None
@@ -2090,7 +2088,9 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
             reader = []
 
-            if ".csv" in instance.file_path or (execution_context and execution_context["started_by"] == "procedure"):
+            if ".csv" in instance.file_path or (
+                execution_context and execution_context["started_by"] == "procedure"
+            ):
                 delimiter = instance.delimiter.encode("utf-8").decode("unicode_escape")
 
                 reader = csv.reader(
@@ -2931,8 +2931,7 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
 
             v = None
 
-            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk
-            )
+            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk)
 
             # _l.info('key %s' % key)
             # _l.info('value %s' % value)
@@ -3304,7 +3303,9 @@ def complex_transaction_csv_file_import_validate(self, task_id, *args, **kwargs)
                                         field_value.name
                                     )
                                 else:
-                                    error_rows["error_data"]["data"]["executed_input_expressions"].append(field_value)
+                                    error_rows["error_data"]["data"]["executed_input_expressions"].append(
+                                        field_value
+                                    )
 
                             except (Exception, ValueError, formula.InvalidExpression):
                                 _l.info(
@@ -3752,7 +3753,8 @@ def complex_transaction_csv_file_import_by_procedure(
                     options_object["total_rows"] = total_rows
 
                     _l.debug(
-                        "complex_transaction_csv_file_import_by_procedure total_rows %s" % options_object["total_rows"]
+                        "complex_transaction_csv_file_import_by_procedure total_rows %s"
+                        % options_object["total_rows"]
                     )
 
                     celery_task = CeleryTask.objects.create(
@@ -3816,7 +3818,9 @@ def complex_transaction_csv_file_import_by_procedure(
 
 
 @finmars_task(name="integrations.complex_transaction_csv_file_import_by_procedure_json", bind=True)
-def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id, *args, **kwargs):
+def complex_transaction_csv_file_import_by_procedure_json(
+    self, procedure_instance_id, celery_task_id, *args, **kwargs
+):
     _l.info(
         f"complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id "
         f"{procedure_instance_id} celery_task_id {celery_task_id}"
@@ -4043,7 +4047,9 @@ def handle_currency_and_instrument_api_data(
         task.member,
     )
 
-    _l.info(f"{log} successfully created/updated instrument={instrument.user_code} " f"currency={currency.user_code}")
+    _l.info(
+        f"{log} successfully created/updated instrument={instrument.user_code} " f"currency={currency.user_code}"
+    )
 
     return instrument
 
