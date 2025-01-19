@@ -51,6 +51,7 @@ from poms.expressions_engine.formula import ExpressionEvalError
 from poms.file_reports.models import FileReport
 from poms.instruments.models import (
     AccrualCalculationModel,
+    Country,
     DailyPricingModel,
     Instrument,
     InstrumentType,
@@ -58,7 +59,6 @@ from poms.instruments.models import (
     Periodicity,
     PriceHistory,
     PricingCondition,
-    Country,
 )
 from poms.integrations.database_client import DatabaseService, get_backend_callback_url
 from poms.integrations.models import (
@@ -424,7 +424,9 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{short_type}"
+        instrument_type_user_code_full = (
+            f"{settings.INSTRUMENT_TYPE_PREFIX}:{short_type}"
+        )
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -936,7 +938,9 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         return instrument
 
     type_user_type = options_data["type_user_code"]
-    instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{type_user_type}"
+    instrument_type_user_code_full = (
+        f"{settings.INSTRUMENT_TYPE_PREFIX}:{type_user_type}"
+    )
     try:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
