@@ -1087,21 +1087,18 @@ class InstrumentSerializer(
         factor_schedules = validated_data.pop("factor_schedules", None)
         event_schedules = validated_data.pop("event_schedules", None)
         pricing_policies = validated_data.pop("pricing_policies", [])
+        accruals = validated_data.pop("accruals", [])
 
         instance = super().create(validated_data)
         _l.info(f"{func} created instrument.user_code={instance.user_code}")
 
         # created all related objects of the instance
-
         self.save_manual_pricing_formulas(instance, True, manual_pricing_formulas)
         self.save_accrual_calculation_schedules(instance, True, accrual_calculation_schedules)
         self.save_factor_schedules(instance, True, factor_schedules)
-        self.save_event_schedules(
-            instance,
-            True,
-            event_schedules,
-        )
+        self.save_event_schedules(instance, True, event_schedules)
         self.save_pricing_policies(instance, pricing_policies)
+        self.save_accruals(instance, True, accruals)
 
         return instance
 
@@ -1115,6 +1112,7 @@ class InstrumentSerializer(
         factor_schedules = validated_data.pop("factor_schedules", None)
         event_schedules = validated_data.pop("event_schedules", None)
         pricing_policies = validated_data.pop("pricing_policies", [])
+        accruals = validated_data.pop("accruals", [])
 
         instance = super().update(instance, validated_data)
         _l.info(f"{func} updated instrument.user_code={instance.user_code}")
@@ -1122,31 +1120,17 @@ class InstrumentSerializer(
         # created or update all related objects of the instance
 
         if manual_pricing_formulas:
-            self.save_manual_pricing_formulas(
-                instance,
-                False,
-                manual_pricing_formulas,
-            )
+            self.save_manual_pricing_formulas(instance, False, manual_pricing_formulas)
         if accrual_calculation_schedules:
-            self.save_accrual_calculation_schedules(
-                instance,
-                False,
-                accrual_calculation_schedules,
-            )
+            self.save_accrual_calculation_schedules(instance, False, accrual_calculation_schedules)
         if factor_schedules:
-            self.save_factor_schedules(
-                instance,
-                False,
-                factor_schedules,
-            )
+            self.save_factor_schedules(instance, False, factor_schedules)
         if event_schedules:
-            self.save_event_schedules(
-                instance,
-                False,
-                event_schedules,
-            )
+            self.save_event_schedules(instance, False, event_schedules)
 
         self.save_pricing_policies(instance, pricing_policies)
+        if accruals:
+            self.save_accruals(instance, False, accruals)
 
         try:  # can be set after in import
             self.calculate_prices_accrued_price(instance, False)
@@ -1304,6 +1288,15 @@ class InstrumentSerializer(
             instrument.rebuild_event_schedules()
         except ValueError as e:
             raise ValidationError({"instrument_type": f"{repr(e)}"}) from e
+
+    def save_accruals(self, instrument, created, accruals):
+        self.save_instr_related(
+            instrument,
+            created,
+            "accruals",
+            Accrual,
+            accruals,
+        )
 
 
 class InstrumentLightSerializer(ModelWithUserCodeSerializer):
