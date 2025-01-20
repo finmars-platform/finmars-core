@@ -86,7 +86,7 @@ from poms.integrations.models import (
 )
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.providers.base import (
-    AbstractProvider,
+    # AbstractProvider,
     get_provider,
     parse_date_iso,
 )
@@ -1312,63 +1312,63 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
 
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
-def _create_instrument_manual_prices(options, instruments):
-    _l.debug("create_instrument_manual_prices: instruments=%s", instruments)
-
-    date_from = parse_date_iso(options["date_from"])
-    date_to = parse_date_iso(options["date_to"])
-    is_yesterday = options["is_yesterday"]
-    fill_days = options["fill_days"]
-
-    errors = {}
-    prices = []
-
-    if is_yesterday:
-        for i in Instrument.objects.filter(pk__in=instruments):
-            for mf in i.manual_pricing_formulas.all():
-                if mf.expr:
-                    values = {"d": date_to}
-                    try:
-                        principal_price = formula.safe_eval(mf.expr, names=values)
-                    except formula.InvalidExpression:
-                        AbstractProvider.fail_manual_pricing_formula(errors, mf, values)
-                        continue
-                    price = PriceHistory(
-                        instrument=i,
-                        pricing_policy=mf.pricing_policy,
-                        date=date_to,
-                        principal_price=principal_price,
-                    )
-                    prices.append(price)
-    else:
-        days = (date_to - date_from).days + 1
-
-        for i in Instrument.objects.filter(pk__in=instruments):
-            safe_instrument = {
-                "id": i.id,
-            }
-            for mf in i.manual_pricing_formulas.all():
-                if mf.expr:
-                    for dt in rrule(freq=DAILY, count=days, dtstart=date_from):
-                        d = dt.date()
-                        values = {
-                            "d": d,
-                            "instrument": safe_instrument,
-                        }
-                        try:
-                            principal_price = formula.safe_eval(mf.expr, names=values)
-                        except formula.InvalidExpression:
-                            AbstractProvider.fail_manual_pricing_formula(errors, mf, values)
-                            continue
-                        price = PriceHistory(
-                            instrument=i,
-                            pricing_policy=mf.pricing_policy,
-                            date=d,
-                            principal_price=principal_price,
-                        )
-                        prices.append(price)
-
-    return prices, errors
+# def _create_instrument_manual_prices(options, instruments):
+#     _l.debug("create_instrument_manual_prices: instruments=%s", instruments)
+#
+#     date_from = parse_date_iso(options["date_from"])
+#     date_to = parse_date_iso(options["date_to"])
+#     is_yesterday = options["is_yesterday"]
+#     fill_days = options["fill_days"]
+#
+#     errors = {}
+#     prices = []
+#
+#     if is_yesterday:
+#         for i in Instrument.objects.filter(pk__in=instruments):
+#             for mf in i.manual_pricing_formulas.all():
+#                 if mf.expr:
+#                     values = {"d": date_to}
+#                     try:
+#                         principal_price = formula.safe_eval(mf.expr, names=values)
+#                     except formula.InvalidExpression:
+#                         AbstractProvider.fail_manual_pricing_formula(errors, mf, values)
+#                         continue
+#                     price = PriceHistory(
+#                         instrument=i,
+#                         pricing_policy=mf.pricing_policy,
+#                         date=date_to,
+#                         principal_price=principal_price,
+#                     )
+#                     prices.append(price)
+#     else:
+#         days = (date_to - date_from).days + 1
+#
+#         for i in Instrument.objects.filter(pk__in=instruments):
+#             safe_instrument = {
+#                 "id": i.id,
+#             }
+#             for mf in i.manual_pricing_formulas.all():
+#                 if mf.expr:
+#                     for dt in rrule(freq=DAILY, count=days, dtstart=date_from):
+#                         d = dt.date()
+#                         values = {
+#                             "d": d,
+#                             "instrument": safe_instrument,
+#                         }
+#                         try:
+#                             principal_price = formula.safe_eval(mf.expr, names=values)
+#                         except formula.InvalidExpression:
+#                             AbstractProvider.fail_manual_pricing_formula(errors, mf, values)
+#                             continue
+#                         price = PriceHistory(
+#                             instrument=i,
+#                             pricing_policy=mf.pricing_policy,
+#                             date=d,
+#                             principal_price=principal_price,
+#                         )
+#                         prices.append(price)
+#
+#     return prices, errors
 
 
 def test_certificate(master_user=None, member=None, task=None):

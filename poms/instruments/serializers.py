@@ -929,10 +929,9 @@ class AccrualSerializer(serializers.ModelSerializer):
     class Meta:
         model = Accrual
         fields = [
-            "instrument",
+            "user_code",
             "date",
             "size",
-            "user_code",
             "notes",
         ]
 

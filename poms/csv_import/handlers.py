@@ -556,8 +556,9 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         _l.info("Setting up accrual events. Overwrite Existing")
         object_data["accruals"] = []
         for accrual in source_data["accruals"]:
-            accrual.pop("id")  # remove id of finmars_database accrual object
-            accrual.pop("source")  # remove source.id of finmars_database accrual object
+            accrual.pop("id", None)  # remove id of accrual object
+            accrual.pop("instrument", None)  # remove instrument.id of accrual object
+            accrual.pop("source", None)  # remove source.id of accrual object
             object_data["accruals"].append(accrual)
 
     if "name" not in object_data and "user_code" in object_data:

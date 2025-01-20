@@ -3868,3 +3868,14 @@ class Accrual(models.Model):
         default="",
         verbose_name="Notes",
     )
+
+    class Meta:
+        verbose_name = gettext_lazy("Accrual")
+        verbose_name_plural = gettext_lazy("Accruals")
+        ordering = ["instrument", "date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["instrument", "date"],
+                name="unique_instrument_accrual_date",
+            )
+        ]

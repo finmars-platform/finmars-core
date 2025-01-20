@@ -878,12 +878,11 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
     accrued_currency = CurrencyField(default=CurrencyDefault())
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source="accrued_currency", read_only=True)
     payment_size_detail_object = serializers.PrimaryKeyRelatedField(source="payment_size_detail", read_only=True)
-
     accrual_calculation_schedules = serializers.SerializerMethodField()
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-
     pricing_condition = PricingConditionField()
+    accruals = serializers.SerializerMethodField()
 
     class Meta:
         model = Instrument
@@ -922,6 +921,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
             # 'attributes',
             "co_directional_exposure_currency",
             "counter_directional_exposure_currency",
+            "accruals",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -977,6 +977,12 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
         l = obj._attributes if hasattr(obj, "_attributes") else obj.attributes.all()
 
         return GenericAttributeSerializer(instance=l, many=True, read_only=True, context=self.context).data
+
+    def get_accruals(self, obj):
+        from poms.instruments.serializers import AccrualSerializer
+
+        all_accruals = obj.acruals.all()
+        return AccrualSerializer(instance=all_accruals, many=True, read_only=True, context=self.context).data
 
 
 class ImportInstrumentEntry(object):
