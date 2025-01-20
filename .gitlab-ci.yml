@@ -8,9 +8,9 @@ stages:
   - pushVersion
 
 default:
-  image: docker:27.5.0
+  image: docker:27
   services:
-    - name: docker:27.5.0-dind
+    - name: docker:27-dind
       alias: docker
       command: [ "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false" ]
   before_script:
@@ -95,7 +95,7 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - coverage run --parallel-mode manage.py test --parallel
+    - coverage run --parallel-mode manage.py test --parallel auto
     - coverage combine && coverage report && coverage html
   artifacts:
     paths:
