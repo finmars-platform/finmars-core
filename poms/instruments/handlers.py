@@ -91,8 +91,8 @@ class InstrumentTypeProcess(object):
         self.instrument_type = instrument_type
         self.context = context
 
-        self.ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.instrument_type.master_user
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instrument_type.master_user.pk
         )
 
         self.instrument_object = {"instrument_type": instrument_type.id, "identifier": {}}

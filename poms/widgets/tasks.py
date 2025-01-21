@@ -604,7 +604,9 @@ def calculate_historical(self, task_id, *args, **kwargs):
         # dates = [bday_yesterday]
         dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         report_currency_id = ecosystem_default.currency_id
         pricing_policy_id = ecosystem_default.pricing_policy_id

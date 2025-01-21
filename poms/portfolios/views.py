@@ -583,6 +583,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
 
 class PortfolioRegisterRecordFilterSet(FilterSet):
     id = NoOpFilter()
+    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)    
 
     class Meta:
         model = PortfolioRegisterRecord
