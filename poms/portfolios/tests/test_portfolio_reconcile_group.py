@@ -40,6 +40,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_data = response.json()
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
+        self.assertIsNone(group_data["last_calculated_at"])
         params = group_data["params"]
         self.assertEqual(params["precision"], create_data["params"]["precision"])
         self.assertEqual(params["round_digits"], create_data["params"]["round_digits"])

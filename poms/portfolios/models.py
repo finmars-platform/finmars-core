@@ -987,6 +987,11 @@ class PortfolioReconcileGroup(NamedModel, FakeDeletableModel, TimeStampedModel):
         default=dict,
         verbose_name=gettext_lazy("calculation & reporting parameters"),
     )
+    last_calculated_at = models.DateTimeField(
+        null=True,
+        default=None,
+        verbose_name=gettext_lazy("last time calculation was done"),
+    )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio reconcile group")

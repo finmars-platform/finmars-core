@@ -71,7 +71,7 @@ from rest_framework.authentication import BaseAuthentication
 from django.contrib.auth import get_user_model
 
 
-class DevSokolovAuthentication(BaseAuthentication):  # FIXME FAKE AUTH
+class DevSokolovAuthentication(BaseAuthentication):  # FIXME DEBUG
     def authenticate(self, request):
         username = "gkuz"  # dev_dsokolov
         user_model = get_user_model()
@@ -82,7 +82,7 @@ class DevSokolovAuthentication(BaseAuthentication):  # FIXME FAKE AUTH
             raise RuntimeError("User '{}' does not exist!") from e
 
 
-class DevSokolovPermission(BasePermission):  # FIXME FAKE PERMISSION
+class DevSokolovPermission(BasePermission):  # FIXME DEBUG
     """
     Custom permission class to activate a specific user by username
     """
@@ -583,7 +583,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
 
 class PortfolioRegisterRecordFilterSet(FilterSet):
     id = NoOpFilter()
-    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)    
+    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
 
     class Meta:
         model = PortfolioRegisterRecord
