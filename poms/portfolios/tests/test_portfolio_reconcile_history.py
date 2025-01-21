@@ -48,6 +48,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertEqual(history_data["user_code"], create_data["user_code"])
         self.assertEqual(history_data["portfolio_reconcile_group"], create_data["portfolio_reconcile_group"])
         self.assertEqual(history_data["date"], create_data["date"])
+        self.assertEqual(history_data["report_ttl"], 90)  # default value
 
         history = PortfolioReconcileHistory.objects.filter(user_code=create_data["user_code"]).first()
         self.assertIsNotNone(history)
