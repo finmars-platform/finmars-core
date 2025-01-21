@@ -1,8 +1,9 @@
 from datetime import date
+import random
 
 from django.conf import settings
 
-from poms.common.common_base_test import BIG, BaseTestCase
+from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.portfolios.models import PortfolioRegisterRecord
 from poms.transactions.models import TransactionClass
 
@@ -21,7 +22,7 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.portfolio = self.db_data.portfolios[BIG]
         self.prr_data = None
 
-    def create_prr_data(self, trade_price=1., t_class=0):
+    def create_prr_data(self, trade_price=1., t_class=0, use_default_portfolio=True):
         complex_transaction, transaction = self.db_data.cash_in_transaction(
             self.portfolio
         )
@@ -39,7 +40,7 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             user_code=self.random_string(),
         )
         self.prr_data = {
-            "portfolio": self.portfolio.id,
+            "portfolio": self.portfolio.id if use_default_portfolio else self.db_data.portfolios[SMALL].id,
             "instrument": instrument.id,
             "transaction_class": trans_class.id,
             "transaction_code": self.random_int(1_000, 10_000),
@@ -57,17 +58,35 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self,
         trade_price: float = 0,
         t_class: int = 0,
+        use_default_portfolio=True,
     ):
-        self.create_prr_data(trade_price, t_class)
+        self.create_prr_data(trade_price, t_class, use_default_portfolio)
 
         response = self.client.post(self.url, data=self.prr_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
         return response.json()
 
-    def test_check_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
+    # def create_portfolio_register_record_by_factory(self):
+    #     complex_transaction, transaction = self.db_data.cash_in_transaction(
+    #         self.portfolio
+    #     )
+    #     instrument = self.db_data.instruments["Apple"]
+    #     portfolio_register = self.db_data.create_portfolio_register(
+    #         self.portfolio,
+    #         instrument,
+    #         user_code=self.random_string(),
+    #     )
+    #     PortfolioRegisterRecordFactory(
+    #         master_user=self.master_user.id,
+    #         portfolio=self.portfolio.id,
+    #         instrument=instrument.id,
+    #         currency=self.db_data.usd.id,
+    #         valuation_currency=self.db_data.usd.id,
+    #         transaction=transaction.id,
+    #         complex_transaction=complex_transaction.id,
+    #         portfolio_register=portfolio_register.id,
+    #     )
 
     def test_created_prr_has_new_field_automatic(self):
         resp_data = self.create_portfolio_register_record(trade_price=0)
@@ -92,3 +111,15 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             resp_data["share_price_calculation_type"],
             PortfolioRegisterRecord.AUTOMATIC,
         )
+
+    def test_get_list(self):
+        self.create_portfolio_register_record()
+        self.create_portfolio_register_record(use_default_portfolio=False)
+
+        response = self.client.get(path=f"{self.url}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json().get("count"), 2)
+
+        response = self.client.get(path=f"{self.url}?portfolio__user_code={self.portfolio.user_code}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json().get("count"), 1)
