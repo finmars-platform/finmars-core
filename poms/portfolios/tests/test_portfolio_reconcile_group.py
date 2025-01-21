@@ -125,17 +125,6 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     @BaseTestCase.cases(
         ("int", 11111),
         ("str", "dicembre"),
-        ("dict", {}),
-    )
-    def test_create_with_invalid_periodicity(self, invalid_period):
-        create_data = self.create_data()
-        create_data["params"]["periodicity"] = [invalid_period]
-        response = self.client.post(self.url, data=create_data, format="json")
-        self.assertEqual(response.status_code, 400, response.content)
-
-    @BaseTestCase.cases(
-        ("int", 11111),
-        ("str", "dicembre"),
     )
     def test_create_with_invalid_notification(self, invalid_notification):
         create_data = self.create_data()

@@ -781,23 +781,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
 
 
-REPORT_PERIODICITY_CHOICES = (
-    "daily",
-    "weekly",
-    "monthly",
-)
-
-
 class ParamsSerializer(serializers.Serializer):
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    PERIODICITY_CHOICES = (
-        (DAILY, "Each working day"),
-        (WEEKLY, "Last business day of the week"),
-        (MONTHLY, "Last business day of the month"),
-    )
-
     only_errors = serializers.BooleanField(required=False, default=False)
     round_digits = serializers.IntegerField(required=False, default=2)
     precision = serializers.FloatField(
@@ -806,7 +790,6 @@ class ParamsSerializer(serializers.Serializer):
         validators=[MinValueValidator(0.00)],
     )
     emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
-    periodicity = serializers.ChoiceField(required=False, default=MONTHLY, choices=PERIODICITY_CHOICES)
     notifications = serializers.DictField(required=False, default={})
 
 
