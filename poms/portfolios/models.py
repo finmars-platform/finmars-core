@@ -8,7 +8,6 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 from django.core.cache import cache
 
-
 from poms.clients.models import Client
 from poms.common.fields import ResourceGroupsField
 from poms.common.models import (
@@ -1052,8 +1051,12 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
     file_report = models.ForeignKey(
         FileReport,
         null=True,
-        verbose_name=gettext_lazy("file report"),
         on_delete=models.SET_NULL,
+        verbose_name=gettext_lazy("file report"),
+    )
+    report_ttl = models.PositiveIntegerField(
+        default=90,
+        verbose_name=gettext_lazy("number of days until report expires"),
     )
 
     class Meta:

@@ -838,6 +838,7 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
             "file_report",
             # "file_report_object",
             "is_enabled",
+            "report_ttl",
         ]
 
     def __init__(self, *args, **kwargs):
