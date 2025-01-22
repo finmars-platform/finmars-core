@@ -1,9 +1,9 @@
+from datetime import datetime, timezone
 from logging import getLogger
 
 import django_filters
 from django.conf import settings
 from django_filters.rest_framework import FilterSet
-from django_filters.filters import BaseInFilter
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -827,6 +827,11 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         )
         task.options_object = serializer.validated_data
         task.save()
+
+        pk = serializer.validated_data["portfolio_reconcile_group"]
+        reconcile_group = PortfolioReconcileGroup.objects.get(pk=pk)
+        reconcile_group.last_calculated_date = datetime.now(timezone.utc)
+        reconcile_group.save()
 
         kwargs = {
             "task_id": task.id,

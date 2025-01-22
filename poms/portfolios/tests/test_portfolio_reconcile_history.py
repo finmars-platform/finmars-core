@@ -1,3 +1,5 @@
+from unittest import mock
+
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.configuration.utils import get_default_configuration_code
@@ -86,3 +88,22 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         create_data["portfolio_reconcile_group"] = self.random_int(100000, 3000000)
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
+
+    @mock.patch("poms.portfolios.tasks.calculate_portfolio_reconcile_history.apply_async")
+    def test_calculate(self, apply_async):
+        create_data = self.create_data()
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        history_data = response.json()
+        history_id = history_data["id"]
+        calculate_data = {
+            "portfolio_reconcile_group": history_id,
+            "date_from": self.yesterday().strftime("%Y-%m-%d"),
+            "date_to": self.today().strftime("%Y-%m-%d"),
+        }
+        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_data = response.json()
+
+        apply_async.assert_called()
