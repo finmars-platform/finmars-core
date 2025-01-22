@@ -14,6 +14,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-history/"
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
+        self.group = self.create_reconcile_group()
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -34,7 +35,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             "name": name,
             "user_code": user_code,
             "date": self.today().strftime("%Y-%m-%d"),
-            "portfolio_reconcile_group": self.create_reconcile_group().id,
+            "portfolio_reconcile_group": self.group.id,
         }
 
     def test_check_url(self):
@@ -95,6 +96,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
+        self.assertIsNone(self.group.last_calculated_at)
         history_data = response.json()
         history_id = history_data["id"]
         calculate_data = {
@@ -106,4 +108,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_data = response.json()
 
+        from pprint import pprint
+        pprint(response_data)
+
         apply_async.assert_called()
+        self.group.refresh_from_db()
+        self.assertIsNotNone(self.group.last_calculated_at)
