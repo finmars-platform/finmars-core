@@ -828,8 +828,8 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         task.options_object = serializer.validated_data
         task.save()
 
-        reconcile_group = serializer.validated_data["portfolio_reconcile_group"]
-        reconcile_group.last_calculated_date = datetime.now(timezone.utc)
+        reconcile_group: PortfolioReconcileGroup = serializer.validated_data["portfolio_reconcile_group"]
+        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
         reconcile_group.save()
 
         kwargs = {

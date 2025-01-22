@@ -108,9 +108,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_data = response.json()
 
-        from pprint import pprint
-        pprint(response_data)
-
         apply_async.assert_called()
         self.group.refresh_from_db()
         self.assertIsNotNone(self.group.last_calculated_at)
+        self.assertEqual(response_data["task_options"]["portfolio_reconcile_group"], self.group.user_code)
+        self.assertEqual(response_data["task_options"]["status"], "I")
