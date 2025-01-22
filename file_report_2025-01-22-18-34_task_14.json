@@ -1,0 +1,89 @@
+{
+    "error_message": null,
+    "file_name": null,
+    "items": [
+        {
+            "conversion_inputs": {
+                "country": "Albania",
+                "default_fx_rate": "1",
+                "name": "Albanian Lek",
+                "notes": "No notes",
+                "pricing_condition": "RUN_VALUATION_IF_OPEN",
+                "public_name": "Public 1",
+                "reference_for_pricing": "Reference",
+                "short_name": "ALL",
+                "user_code": "ALL"
+            },
+            "error_message": "",
+            "file_inputs": {
+                "country": "ALB",
+                "default_fx_rate": "1",
+                "name": "Albanian Lek",
+                "notes": "No notes",
+                "pricing_condition": "RUN_VALUATION_IF_OPEN",
+                "public_name": "Public 1",
+                "reference_for_pricing": "Reference",
+                "short_name": "ALL",
+                "user_code": "ALL"
+            },
+            "final_inputs": {
+                "country": "Albania",
+                "default_fx_rate": "1",
+                "name": "Albanian Lek",
+                "notes": "No notes",
+                "pricing_condition": "RUN_VALUATION_IF_OPEN",
+                "public_name": "Public 1",
+                "reference_for_pricing": "Reference",
+                "short_name": "ALL",
+                "user_code": "ALL"
+            },
+            "imported_items": [
+                {
+                    "id": 165,
+                    "user_code": "ALL"
+                }
+            ],
+            "inputs": {
+                "country": "Albania",
+                "default_fx_rate": "1",
+                "name": "Albanian Lek",
+                "notes": "No notes",
+                "pricing_condition": "RUN_VALUATION_IF_OPEN",
+                "public_name": "Public 1",
+                "reference_for_pricing": "Reference",
+                "short_name": "ALL",
+                "user_code": "ALL"
+            },
+            "message": "Item Imported ALL",
+            "raw_inputs": {
+                "country": "ALB",
+                "default_fx_rate": "1",
+                "name": "Albanian Lek",
+                "notes": "No notes",
+                "pricing_condition": "RUN_VALUATION_IF_OPEN",
+                "public_name": "Public 1",
+                "reference_for_pricing": "Reference",
+                "short_name": "ALL",
+                "user_code": "ALL"
+            },
+            "row_number": 1,
+            "status": "success"
+        }
+    ],
+    "processed_rows": 1,
+    "reports": null,
+    "scheme": {
+        "delimiter": ",",
+        "error_handler": "continue",
+        "id": 5,
+        "missing_data_handler": "throw_error",
+        "name": "STD - Currencies (from File)",
+        "user_code": "com.finmars.standard-import-from-file:currencies.currency:currencies_from_file"
+    },
+    "task": {
+        "id": 14,
+        "status": "P",
+        "type": "simple_import"
+    },
+    "total_rows": 1
+}

@@ -132,3 +132,15 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         create_data["params"]["notifications"] = [invalid_notification]
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
+
+    def test_create_with_1_portfolio(self):
+        create_data = self.create_data()
+        create_data["portfolios"] = [self.portfolio_1.id]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_create_with_duplicate_portfolio(self):
+        create_data = self.create_data()
+        create_data["portfolios"] += [self.portfolio_1.id]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)

@@ -1,0 +1,87 @@
+{
+    "error_message": null,
+    "file_name": null,
+    "items": [
+        {
+            "conversion_inputs": {
+                "accrued_price": null,
+                "date": "2024-01-05",
+                "factor": null,
+                "instrument": "USP37341AA50",
+                "is_temporary_price": 0.0,
+                "long_delta": 1.1,
+                "modified_duration": 1.1,
+                "principal_price": 109.72,
+                "short_delta": 1.1,
+                "ytm": null
+            },
+            "error_message": "",
+            "file_inputs": {
+                "Date": "2024-01-05",
+                "Instrument": "USP37341AA50",
+                "Is Temporary Price": false,
+                "Long Delta": 1.1,
+                "Modified Duration": 1.1,
+                "Principal Price": 109.72,
+                "Short Delta": 1.1,
+                "YTM": null
+            },
+            "final_inputs": {
+                "accrued_price": 0,
+                "date": "2024-01-05",
+                "factor": 1,
+                "instrument": "USP37341AA50",
+                "is_temporary_price": 0.0,
+                "long_delta": 1.1,
+                "modified_duration": 1.1,
+                "pricing_policy": "com.finmars.standard-pricing:standard",
+                "principal_price": 109.72,
+                "short_delta": 1.1
+            },
+            "imported_items": null,
+            "inputs": {
+                "accrued_price": "None",
+                "date": "2024-01-05",
+                "factor": "None",
+                "instrument": "USP37341AA50",
+                "is_temporary_price": "0.0",
+                "long_delta": "1.1",
+                "modified_duration": "1.1",
+                "principal_price": "109.72",
+                "short_delta": "1.1",
+                "ytm": "None"
+            },
+            "message": "",
+            "raw_inputs": {
+                "accrued_price": null,
+                "date": "2024-01-05",
+                "factor": null,
+                "instrument": "USP37341AA50",
+                "is_temporary_price": false,
+                "long_delta": 1.1,
+                "modified_duration": 1.1,
+                "principal_price": 109.72,
+                "short_delta": 1.1,
+                "ytm": null
+            },
+            "row_number": 1,
+            "status": "init"
+        }
+    ],
+    "processed_rows": 1,
+    "reports": null,
+    "scheme": {
+        "delimiter": ",",
+        "error_handler": "continue",
+        "id": 15,
+        "missing_data_handler": "throw_error",
+        "name": "STD - Prices (from File)",
+        "user_code": "com.finmars.standard-import-from-file:instruments.pricehistory:price_from_file"
+    },
+    "task": {
+        "id": 26,
+        "status": "P",
+        "type": "simple_import"
+    },
+    "total_rows": 1
+}

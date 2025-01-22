@@ -1,0 +1,10 @@
+Type, Simple Import
+Scheme, com.finmars.standard-import-from-file:instruments.accrualcalculationschedule:accrued_schedule
+Error handle, continue
+Import Rules - if object is not found throw_error
+Rows total, 1
+Rows success import, 1
+Rows fail import, 0
+Rows skipped import, 0
+"Row Number","Status","Message"
+"1","success","Item Imported 2017-11-22"

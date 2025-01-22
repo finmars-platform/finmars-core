@@ -1,0 +1,10 @@
+Type, Simple Import
+Scheme, com.finmars.standard-import-from-file:currencies.currency:currencies_from_file
+Error handle, continue
+Import Rules - if object is not found throw_error
+Rows total, 1
+Rows success import, 0
+Rows fail import, 1
+Rows skipped import, 0
+"Row Number","Status","Message"
+"1","error"," ==== Overwrite Exception Currency matching query does not exist."

@@ -1,0 +1,10 @@
+Type, Transaction Import
+Scheme, local.poms.space00000:bjnjc
+Error handle, break
+Uniqueness settings, 1
+Import Rules - if object is not found, throw_error
+Rows total, None
+Rows success import, 0
+Rows fail import, 0
+Rows skipped import, 0
+"Row Number","Status","Message"

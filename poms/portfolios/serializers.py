@@ -802,6 +802,9 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         if len(portfolios) != len(set(portfolios)):
             raise serializers.ValidationError("Duplicated portfolios")
 
+        if len(portfolios) != 2:
+            raise serializers.ValidationError("Must me exactly 2 portfolios")
+
         return attrs
 
     class Meta:

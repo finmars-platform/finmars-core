@@ -1,0 +1,53 @@
+{
+    "error_message": null,
+    "file_name": null,
+    "items": [
+        {
+            "conversion_inputs": {
+                "portfolio_type": "com.finmars.test_01",
+                "temp_portfolio": "Test"
+            },
+            "error_message": " ==== Overwrite Exception {'client': [ErrorDetail(string='This field may not be null.', code='null')]}",
+            "file_inputs": {
+                "Portfolio": "Test",
+                "portfolio_type": "com.finmars.test_01"
+            },
+            "final_inputs": {
+                "name": "Test",
+                "notes": "-",
+                "portfolio_type": "com.finmars.test_01",
+                "public_name": "Test",
+                "short_name": "Test",
+                "user_code": "Test"
+            },
+            "imported_items": [],
+            "inputs": {
+                "portfolio_type": "com.finmars.test_01",
+                "temp_portfolio": "Test"
+            },
+            "message": "",
+            "raw_inputs": {
+                "portfolio_type": "com.finmars.test_01",
+                "temp_portfolio": "Test"
+            },
+            "row_number": 1,
+            "status": "error"
+        }
+    ],
+    "processed_rows": 1,
+    "reports": null,
+    "scheme": {
+        "delimiter": ",",
+        "error_handler": "continue",
+        "id": 9,
+        "missing_data_handler": "throw_error",
+        "name": "STD - Portfolios (from File)",
+        "user_code": "com.finmars.standard-import-from-file:portfolios.portfolio:portfolios_from_file"
+    },
+    "task": {
+        "id": 19,
+        "status": "P",
+        "type": "simple_import"
+    },
+    "total_rows": 1
+}
