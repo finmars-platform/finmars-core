@@ -112,4 +112,4 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.group.refresh_from_db()
         self.assertIsNotNone(self.group.last_calculated_at)
         self.assertEqual(response_data["task_options"]["portfolio_reconcile_group"], self.group.user_code)
-        self.assertEqual(response_data["task_options"]["task_status"], "I")
+        self.assertEqual(response_data["task_status"], "I")
