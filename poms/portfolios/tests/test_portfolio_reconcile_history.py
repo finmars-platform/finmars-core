@@ -98,9 +98,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         self.assertIsNone(self.group.last_calculated_at)
         history_data = response.json()
-        history_id = history_data["id"]
+
         calculate_data = {
-            "portfolio_reconcile_group": history_id,
+            "portfolio_reconcile_group": history_data["user_code"],
             "date_from": self.yesterday().strftime("%Y-%m-%d"),
             "date_to": self.today().strftime("%Y-%m-%d"),
         }
@@ -112,4 +112,4 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.group.refresh_from_db()
         self.assertIsNotNone(self.group.last_calculated_at)
         self.assertEqual(response_data["task_options"]["portfolio_reconcile_group"], self.group.user_code)
-        self.assertEqual(response_data["task_options"]["status"], "I")
+        self.assertEqual(response_data["task_options"]["task_status"], "I")
