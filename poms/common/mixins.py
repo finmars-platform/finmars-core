@@ -182,23 +182,24 @@ class BulkRestoreModelMixin(DestroyModelMixin):
         data = serializer.validated_data
         queryset = self.queryset
 
-        try:
-            if getattr(queryset.model, 'deleted_user_code', None):
-                codes_to_restore = queryset.filter(id__in=data["ids"]).values_list('deleted_user_code', flat=True)
-                if existing_codes := queryset.filter(user_code__in=codes_to_restore).values_list('user_code', flat=True):
-                    raise FinmarsBaseException(
-                        error_key="field_unique_constraint_violation",
-                        message=f"Codes '{', '.join(existing_codes)}' already exist",
-                        status_code=409
-                    )
-                elif missing_ids := [str(id) for id in data["ids"] if not queryset.filter(id=id).exists()]:
-                    raise FinmarsBaseException(
-                        error_key="value_does_not_exist",
-                        message=f"IDs '{', '.join(missing_ids)}' don`t exist",
-                        status_code=404
-                    )
-        except FinmarsBaseException as e:
-            return Response(status=400, data={"error": str(e), "error_key": e.error_key})
+        if getattr(queryset.model, 'deleted_user_code', None):
+            codes_to_restore = queryset.filter(id__in=data["ids"]).values_list('deleted_user_code', flat=True)
+            if existing_codes := queryset.filter(user_code__in=codes_to_restore).values_list('user_code', flat=True):
+                return Response(
+                    status=409,
+                    data={
+                        "error": f"Codes '{', '.join(existing_codes)}' already exist",
+                        "error_key": "field_unique_constraint_violation"
+                    }
+                )
+            if missing_ids := [str(id) for id in data["ids"] if not queryset.filter(id=id).exists()]:
+                return Response(
+                    status=404,
+                    data={
+                        "error": f"IDs '{', '.join(missing_ids)}' don`t exist",
+                        "error_key": "value_does_not_exist"
+                    }
+                )
 
         content_type = ContentType.objects.get(app_label=queryset.model._meta.app_label, model=queryset.model._meta.model_name)
         content_type_key = f"{content_type.app_label}.{content_type.model}"

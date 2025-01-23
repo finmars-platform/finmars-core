@@ -21,6 +21,7 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
 
     @mock.patch("poms.common.models.get_request")
     def test__bulk_restore(self, get_request):
+        # Mock for get_request in fake_delete method
         get_request.return_value.user.member = self.member
         self.currency.fake_delete()
 
@@ -38,7 +39,7 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         response = self.client.post(
             path=f"{self.url}/bulk-restore/", data=data
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         response_data = response.json()
 
         self.assertEqual(
@@ -48,6 +49,7 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
 
     @mock.patch("poms.common.models.get_request")
     def test__bulk_restore_existing_user_code(self, get_request):
+        # Mock for get_request in fake_delete method
         get_request.return_value.user.member = self.member
 
         user_code = self.currency.user_code
@@ -58,7 +60,7 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         response = self.client.post(
             path=f"{self.url}/bulk-restore/", data=data
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
         response_data = response.json()
 
         self.assertEqual(response_data["error"], "Codes 'TEST01' already exist")
