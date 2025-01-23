@@ -1352,10 +1352,9 @@ class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
 
     @allowed_items.setter
     def allowed_items(self, val):
-        if val:
-            try:
-                self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-            except (ValueError, TypeError):
-                pass
-
-        self.json_data = '[]'
+        try:
+            self.json_data = json.dumps(
+                val, cls=DjangoJSONEncoder, sort_keys=True
+            ) if val else "[]"
+        except (ValueError, TypeError):
+            self.json_data = "[]"
