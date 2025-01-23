@@ -14,6 +14,7 @@ from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
+from poms.common.http_client import HttpClient
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
@@ -164,18 +165,17 @@ def import_configuration(self, task_id, *args, **kwargs):
         }
     )
 
-    index = 1
+    index = 0
 
-    stats = {"configuration": {}}
+    stats = {"configuration": {}, "workflow": {}}
 
     for json_file in json_files:
+        index = index + 1
+
         if "manifest.json" in json_file:
-            index = index + 1
             continue
 
-        if "workflows" in json_file:  # skip all json files that workflows
-            index = index + 1
-            continue
+        json_data = read_json_file(json_file)
 
         task.update_progress(
             {
@@ -186,82 +186,108 @@ def import_configuration(self, task_id, *args, **kwargs):
             }
         )
 
-        try:
-            json_data = read_json_file(json_file)
+        if "workflows" in json_file:  # skip all json files that workflows
+            if not (version:= json_data.get("version")) or version != 2 or json_data.get("workflow"):
+                continue 
 
-            content_type = json_data["meta"]["content_type"]
-            user_code = json_data.get("user_code")
-            SerializerClass = get_serializer(content_type)
+            # create workflow template
+            try:
+                user_code = json_data["workflow"]["user_code"]
+                _l.info(f"Create Workflow Template for workflow v2 {user_code}")
 
-            Model = SerializerClass.Meta.model
+                workflow_template_data = {
+                    "name": json_data["workflow"].get("name"),
+                    "user_code": user_code,
+                    "notes": None,
+                    "data": json_data
+                }
 
-            if user_code is not None:
-                # Check if the instance already exists
+                http_client = HttpClient()
+                base_url = f"https://{settings.DOMAIN_NAME}/{task.master_user.realm_code}/{task.master_user.space_code}"
 
-                try:  # if member specific entity
-                    Model.objects.model._meta.get_field("member")
-                    instance = Model.objects.filter(
-                        user_code=user_code, member=task.member
-                    ).first()
-                except FieldDoesNotExist:
-                    instance = Model.objects.filter(user_code=user_code).first()
-            else:
-                instance = None
+                http_client.post(
+                    f"{base_url}/workflow/api/v1/workflow-template/",
+                    data=workflow_template_data,
+                    headers={"Authorization": f"Token {task.master_user.api_key}"},
+                )
+                description = f"WorkflowTemplate created {json_file}"
+                stats["workflow"][json_file] = {"status": "success"}
 
-            serializer = SerializerClass(
-                instance=instance, data=json_data, context=context
-            )
-
-            if serializer.is_valid():
-                # Perform any desired actions, such as saving the data to the database
-                serializer.save()
-
-                stats["configuration"][json_file] = {"status": "success"}
-
+            except Exception as e:
+                _l.error(f"create Workflow Template for workflow v2 {e}")
+                description = f"Error {json_file}"
+                stats["workflow"][json_file] = {
+                    "status": "error",
+                    "error_message": str(e),
+                }
+            finally:
                 task.update_progress(
                     {
                         "current": index,
                         "total": len(json_files),
                         "percent": round(index / (len(json_files) / 100)),
-                        "description": f"Imported {json_file}",
+                        "description": description,
                     }
                 )
 
-            else:
+        else:
+            try:
+                content_type = json_data["meta"]["content_type"]
+                user_code = json_data.get("user_code")
+                SerializerClass = get_serializer(content_type)
+
+                Model = SerializerClass.Meta.model
+
+                if user_code is not None:
+                    # Check if the instance already exists
+
+                    try:  # if member specific entity
+                        Model.objects.model._meta.get_field("member")
+                        instance = Model.objects.filter(
+                            user_code=user_code, member=task.member
+                        ).first()
+                    except FieldDoesNotExist:
+                        instance = Model.objects.filter(user_code=user_code).first()
+                else:
+                    instance = None
+
+                serializer = SerializerClass(
+                    instance=instance, data=json_data, context=context
+                )
+
+                if serializer.is_valid():
+                    # Perform any desired actions, such as saving the data to the database
+                    serializer.save()
+                    stats["configuration"][json_file] = {"status": "success"}
+                    description = f"Imported {json_file}"
+
+                else:
+                    stats["configuration"][json_file] = {
+                        "status": "error",
+                        "error_message": str(serializer.errors),
+                    }
+                    _l.error(f"Invalid data in {json_file}: {serializer.errors}")
+                    description = f"Error {json_file}"
+
+            except Exception as e:
+                _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
+
                 stats["configuration"][json_file] = {
                     "status": "error",
-                    "error_message": str(serializer.errors),
+                    "error_message": str(e),
                 }
+                description = f"Error {json_file}"
 
-                _l.error(f"Invalid data in {json_file}: {serializer.errors}")
-
+            finally:
                 task.update_progress(
                     {
                         "current": index,
                         "total": len(json_files),
                         "percent": round(index / (len(json_files) / 100)),
-                        "description": f"Error {json_file}",
+                        "description": description,
                     }
                 )
 
-        except Exception as e:
-            _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
-
-            stats["configuration"][json_file] = {
-                "status": "error",
-                "error_message": str(e),
-            }
-
-            task.update_progress(
-                {
-                    "current": index,
-                    "total": len(json_files),
-                    "percent": round(index / (len(json_files) / 100)),
-                    "description": f"Error {json_file}",
-                }
-            )
-
-        index = index + 1
 
     # Import Workflows
 
