@@ -123,7 +123,6 @@ class UserInterfaceAccessModelFilterSet(FilterSet):
     role = CharFilter()
     user_code = CharFilter()
     configuration_code = CharFilter()
-    owner = CharFilter(field_name="owner__username")
 
     class Meta:
         model = UserInterfaceAccessModel

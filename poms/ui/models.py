@@ -1339,3 +1339,20 @@ class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
         unique_together = [
             ["member", "user_code"],
         ]
+
+    @property
+    def allowed_items(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @allowed_items.setter
+    def allowed_items(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
