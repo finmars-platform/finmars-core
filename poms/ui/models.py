@@ -1346,13 +1346,16 @@ class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
             try:
                 return json.loads(self.json_data)
             except (ValueError, TypeError):
-                return None
-        else:
-            return None
+                pass
+
+        return []
 
     @allowed_items.setter
     def allowed_items(self, val):
         if val:
-            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.json_data = None
+            try:
+                self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+            except (ValueError, TypeError):
+                pass
+
+        self.json_data = []
