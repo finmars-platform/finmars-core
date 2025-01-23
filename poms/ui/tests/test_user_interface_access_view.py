@@ -8,7 +8,12 @@ EXPECTED_DATA = {
     "role": "com.finmars.standard-iam:base-data-manager",
     "user_code": "local.poms.space00000:data_manager_access_menu",
     "configuration_code": "local.poms.space00000",
-    "json_data": "\"allowed_items\": [\"dashboard\", \"transaction\", \"portfolio\"]",
+    "allowed_items": [
+        "dashboard",
+        "transaction",
+        "portfolio",
+        "transaction_type"
+    ],
     "created_at": "2024-10-28T09:25:17.140606Z",
     "modified_at": "2024-10-28T09:25:17.140615Z",
     "owner": {
@@ -30,8 +35,12 @@ CREATE_DATA = {
     "role": "com.finmars.standard-iam:base-data-manager",
     "user_code": "local.poms.space00000:data_manager_access_menu",
     "configuration_code": "local.poms.space00000",
-    "json_data": "\"allowed_items\": [\"dashboard\", \"transaction\", \"portfolio\"]",
-    "owner": "finmars_bot",
+    "allowed_items": [
+        "dashboard",
+        "transaction",
+        "portfolio",
+        "transaction_type"
+    ],
 }
 
 
@@ -42,7 +51,6 @@ class MemberLayoutViewSetTest(BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/ui/user-interface-access/"
-        CREATE_DATA["owner"] = self.member.pk
         
     def prepare_data(self, user_code):
         UserInterfaceAccessModel.objects.create(
@@ -73,8 +81,6 @@ class MemberLayoutViewSetTest(BaseTestCase):
 
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
         self.assertEqual(response.status_code, 201, response.content)
-        
-        print(f"### {response.content}")
 
         access = UserInterfaceAccessModel.objects.filter(
             user_code=EXPECTED_DATA["user_code"]
