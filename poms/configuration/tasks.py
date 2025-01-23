@@ -167,7 +167,7 @@ def import_configuration(self, task_id, *args, **kwargs):
 
     index = 0
 
-    stats = {"configuration": {}, "workflow": {}}
+    stats = {"configuration": {}, "workflow": {}, "manifest": {}}
 
     for json_file in json_files:
         index = index + 1
