@@ -1358,4 +1358,4 @@ class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
             except (ValueError, TypeError):
                 pass
 
-        self.json_data = []
+        self.json_data = '[]'
