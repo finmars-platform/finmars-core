@@ -188,7 +188,7 @@ def import_configuration(self, task_id, *args, **kwargs):
         )
 
         if "workflows" in json_file:
-            if not (version:= json_data.get("version")) or version != 2 or not json_data.get("workflow"):
+            if not (version:= json_data.get("version")) or version != "2" or not json_data.get("workflow"):
                 stats["workflow"][json_file] = {"status": "skip"}
                 continue 
 
