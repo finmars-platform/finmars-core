@@ -60,7 +60,6 @@ class UserInterfaceAccessModelSerializer(ModelWithUserCodeSerializer):
             "json_data",
             "created_at",
             "modified_at",
-            "owner",
             "member",
         ]
 
