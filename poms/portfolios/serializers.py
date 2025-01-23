@@ -145,8 +145,12 @@ class PortfolioPortfolioRegisterSerializer(
 
         super().__init__(*args, **kwargs)
 
-        self.fields["valuation_currency_object"] = CurrencyViewSerializer(source="valuation_currency", read_only=True)
-        self.fields["linked_instrument_object"] = InstrumentViewSerializer(source="linked_instrument", read_only=True)
+        self.fields["valuation_currency_object"] = CurrencyViewSerializer(
+            source="valuation_currency", read_only=True
+        )
+        self.fields["linked_instrument_object"] = InstrumentViewSerializer(
+            source="linked_instrument", read_only=True
+        )
         self.fields["valuation_pricing_policy_object"] = PricingPolicySerializer(
             source="valuation_pricing_policy", read_only=True
         )
@@ -221,7 +225,9 @@ class PortfolioSerializer(
         super().__init__(*args, **kwargs)
 
         self.fields["accounts_object"] = AccountViewSerializer(source="accounts", many=True, read_only=True)
-        self.fields["responsibles_object"] = ResponsibleViewSerializer(source="responsibles", many=True, read_only=True)
+        self.fields["responsibles_object"] = ResponsibleViewSerializer(
+            source="responsibles", many=True, read_only=True
+        )
         self.fields["counterparties_object"] = CounterpartyViewSerializer(
             source="counterparties", many=True, read_only=True
         )
@@ -241,9 +247,7 @@ class PortfolioSerializer(
             )
 
         except Exception:
-            ecosystem_default = EcosystemDefault.cache.get_cache(
-                master_user_pk=master_user.pk
-            )
+            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
             # TODO maybe create new instr instead of existing?
             try:
@@ -418,9 +422,13 @@ class PortfolioRegisterSerializer(
 
         super().__init__(*args, **kwargs)
 
-        self.fields["valuation_currency_object"] = CurrencyViewSerializer(source="valuation_currency", read_only=True)
+        self.fields["valuation_currency_object"] = CurrencyViewSerializer(
+            source="valuation_currency", read_only=True
+        )
         self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
-        self.fields["linked_instrument_object"] = InstrumentViewSerializer(source="linked_instrument", read_only=True)
+        self.fields["linked_instrument_object"] = InstrumentViewSerializer(
+            source="linked_instrument", read_only=True
+        )
         self.fields["valuation_pricing_policy_object"] = PricingPolicySerializer(
             source="valuation_pricing_policy", read_only=True
         )
@@ -530,8 +538,12 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
         super().__init__(*args, **kwargs)
 
         self.fields["cash_currency_object"] = CurrencyViewSerializer(source="cash_currency", read_only=True)
-        self.fields["valuation_currency_object"] = CurrencyViewSerializer(source="valuation_currency", read_only=True)
-        self.fields["transaction_class_object"] = TransactionClassSerializer(source="transaction_class", read_only=True)
+        self.fields["valuation_currency_object"] = CurrencyViewSerializer(
+            source="valuation_currency", read_only=True
+        )
+        self.fields["transaction_class_object"] = TransactionClassSerializer(
+            source="transaction_class", read_only=True
+        )
         self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
         # self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
         #     source="complex_transaction", read_only=True
@@ -798,12 +810,19 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
     params = ParamsSerializer()
 
     def validate(self, attrs):
-        portfolios = attrs["portfolios"]
+        portfolios = attrs.get("portfolios")
+        if not portfolios:
+            return attrs
+
+        view = self.context.get("view")
+        if view and view.action in ("update", "partial_update"):
+            raise ValidationError({"portfolios": "You can't update list of portfolios"})
+
         if len(portfolios) != len(set(portfolios)):
-            raise serializers.ValidationError("Duplicated portfolios")
+            raise serializers.ValidationError({"portfolios": "Duplicated portfolios"})
 
         if len(portfolios) != 2:
-            raise serializers.ValidationError("Must me exactly 2 portfolios")
+            raise serializers.ValidationError({"portfolios": "Must me exactly 2 portfolios"})
 
         return attrs
 

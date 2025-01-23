@@ -24,7 +24,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
                 "precision": 1,
                 "only_errors": False,
                 "round_digits": 2,
-                "emails": ["test@mail.com"]
+                "emails": ["test@mail.com"],
             },
         }
 
@@ -49,39 +49,28 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
 
-    def test_create_with_params(self):
+    def test_update_by_patch(self):
         create_data = self.create_data()
-        create_data["params"]["only_errors"] = True
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
-
         group_data = response.json()
-        self.assertTrue(group_data["params"]["only_errors"])
+        group_id = group_data["id"]
 
-        group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
-        self.assertTrue(group.params["only_errors"])
+        patch_data = {"params": {"only_errors": True}}
+        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
 
-    def test_update_patch(self):
+    def test_try_update_portfolios(self):
         create_data = self.create_data()
-        create_data.pop("portfolios")
-        group = PortfolioReconcileGroup.objects.create(
-            master_user=self.master_user,
-            owner=self.member,
-            **create_data,
-        )
-
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        group_data = response.json()
+        group_id = group_data["id"]
         patch_data = {
             "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
         }
-        response = self.client.patch(f"{self.url}{group.id}/", data=patch_data, format="json")
-        self.assertEqual(response.status_code, 200, response.content)
-
-        group_data = response.json()
-
-        self.assertEqual(
-            set(group_data["portfolios"]),
-            {self.portfolio_1.id, self.portfolio_2.id},
-        )
+        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
 
     def test_delete(self):
         create_data = self.create_data()

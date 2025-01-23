@@ -219,9 +219,7 @@ class PortfolioFilterSet(FilterSet):
     public_name = CharFilter()
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
-    client = CharFilter(
-        field_name="client__user_code", lookup_expr="icontains"
-    )
+    client = CharFilter(field_name="client__user_code", lookup_expr="icontains")
 
     class Meta:
         model = Portfolio
@@ -232,9 +230,7 @@ class PortfolioViewSet(AbstractModelViewSet):
     authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
     permission_classes = [DevSokolovPermission]  # FIXME DEBUG
 
-    queryset = Portfolio.objects.select_related(
-        "master_user", "owner"
-    ).prefetch_related(
+    queryset = Portfolio.objects.select_related("master_user", "owner").prefetch_related(
         get_attributes_prefetch(),
     )
     serializer_class = PortfolioSerializer
@@ -267,9 +263,7 @@ class PortfolioViewSet(AbstractModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         # trigger recalc after book properly
@@ -381,9 +375,7 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = self.get_object()
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
-            .order_by("transaction_date")
-            .first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
         )
 
         if first_record:
@@ -467,9 +459,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        serializer = PrCalculateRecordsRequestSerializer(
-            data=request.data, context=self.get_serializer_context()
-        )
+        serializer = PrCalculateRecordsRequestSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -509,9 +499,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         serializer_class=PrCalculatePriceHistoryRequestSerializer,
     )
     def calculate_price_history(self, request, realm_code=None, space_code=None):
-        _l.info(
-            f"{self.__class__.__name__}.calculate_price_history data={request.data}"
-        )
+        _l.info(f"{self.__class__.__name__}.calculate_price_history data={request.data}")
         serializer = PrCalculatePriceHistoryRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -524,12 +512,8 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         )
         task.options_object = {
             "portfolios": serializer.validated_data.get("portfolios"),
-            "date_to": serializer.validated_data["date_to"].strftime(
-                settings.API_DATE_FORMAT
-            ),
-            "date_from": serializer.validated_data["date_from"].strftime(
-                settings.API_DATE_FORMAT
-            )
+            "date_to": serializer.validated_data["date_to"].strftime(settings.API_DATE_FORMAT),
+            "date_from": serializer.validated_data["date_from"].strftime(settings.API_DATE_FORMAT)
             if serializer.validated_data.get("date_from")
             else None,
         }
@@ -632,9 +616,7 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
         obj = self.get_object()
         queryset = obj.registers.all()
         page = self.paginator.post_paginate_queryset(queryset, request)
-        serializer = PortfolioRegisterSerializer(
-            page, many=True, context=self.get_serializer_context()
-        )
+        serializer = PortfolioRegisterSerializer(page, many=True, context=self.get_serializer_context())
         return self.get_paginated_response(serializer.data)
 
 
@@ -683,9 +665,7 @@ class PortfolioHistoryFilterSet(FilterSet):
 
     portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
     currency__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Currency)
-    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(
-        model=PricingPolicy
-    )
+    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PricingPolicy)
 
     date = django_filters.DateFromToRangeFilter()
 
@@ -715,9 +695,7 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
     )
     def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = CalculatePortfolioHistorySerializer(
-            data=request.data, context=self.get_serializer_context()
-        )
+        serializer = CalculatePortfolioHistorySerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -762,9 +740,7 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
     authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
     permission_classes = [DevSokolovPermission]  # FIXME DEBUG
-    queryset = PortfolioReconcileGroup.objects.select_related("master_user").order_by(
-        "user_code"
-    )
+    queryset = PortfolioReconcileGroup.objects.select_related("master_user").order_by("user_code")
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioReconcileGroupFilterSet
@@ -777,9 +753,7 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
     user_code = CharFilter()
     status = CharFilter()
 
-    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(
-        model=PortfolioReconcileGroup
-    )
+    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
 
     date = django_filters.DateFromToRangeFilter()
 
