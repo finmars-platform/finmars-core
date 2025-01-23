@@ -173,6 +173,7 @@ def import_configuration(self, task_id, *args, **kwargs):
         index = index + 1
 
         if "manifest.json" in json_file:
+            stats["manifest"][json_file] = {"status": "skip"}
             continue
 
         json_data = read_json_file(json_file)
@@ -186,8 +187,9 @@ def import_configuration(self, task_id, *args, **kwargs):
             }
         )
 
-        if "workflows" in json_file:  # skip all json files that workflows
-            if not (version:= json_data.get("version")) or version != 2 or json_data.get("workflow"):
+        if "workflows" in json_file:
+            if not (version:= json_data.get("version")) or version != 2 or not json_data.get("workflow"):
+                stats["workflows"][json_file] = {"status": "skip"}
                 continue 
 
             # create workflow template
