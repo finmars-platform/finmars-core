@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup
+from poms.portfolios.models import PortfolioReconcileGroup, PortfolioType, PortfolioClass
 from poms.configuration.utils import get_default_configuration_code
 
 
@@ -12,6 +12,14 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-group/"
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
+        self.portfolio_1.portfolio_type =self.create_portfolio_type(PortfolioClass.GENERAL)
+        self.portfolio_2.portfolio_type = self.create_portfolio_type(PortfolioClass.POSITION)
+
+    def create_portfolio_type(self, portfolio_class) -> PortfolioType:
+        return PortfolioType(
+            master_user=self.master_user,
+            portfolio_class=portfolio_class,
+        )
 
     def create_data(self) -> dict:
         user_code = get_default_configuration_code()

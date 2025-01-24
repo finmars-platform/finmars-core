@@ -824,6 +824,12 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         if len(portfolios) != 2:
             raise serializers.ValidationError({"portfolios": "Must me exactly 2 portfolios"})
 
+        portfolio_classes = [p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type]
+        if len(set(portfolio_classes)) < 2:
+            raise serializers.ValidationError({"portfolios": "Duplicated portfolio classes"})
+        if PortfolioClass.POSITION not in portfolio_classes:
+            raise serializers.ValidationError({"portfolios": "One portfolio class must be POSITION"})
+
         return attrs
 
     class Meta:
