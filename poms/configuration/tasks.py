@@ -25,6 +25,7 @@ from poms.configuration.handlers import (
 from poms.configuration.models import Configuration
 from poms.configuration.utils import (
     list_json_files,
+    post_workflow_template,
     read_json_file,
     run_workflow,
     save_json_to_file,
@@ -194,24 +195,8 @@ def import_configuration(self, task_id, *args, **kwargs):
 
             # create workflow template
             try:
-                user_code = json_data["workflow"]["user_code"]
-                _l.info(f"Create Workflow Template for workflow v2 {user_code}")
+                post_workflow_template(task.master_user, json_data)
 
-                workflow_template_data = {
-                    "name": json_data["workflow"].get("name"),
-                    "user_code": user_code,
-                    "notes": None,
-                    "data": json_data
-                }
-
-                http_client = HttpClient()
-                base_url = f"https://{settings.DOMAIN_NAME}/{task.master_user.realm_code}/{task.master_user.space_code}"
-
-                http_client.post(
-                    f"{base_url}/workflow/api/v1/workflow-template/",
-                    data=workflow_template_data,
-                    headers={"Authorization": f"Token {task.master_user.api_key}"},
-                )
                 description = f"WorkflowTemplate created {json_file}"
                 stats["workflow"][json_file] = {"status": "success"}
 
