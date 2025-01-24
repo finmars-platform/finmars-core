@@ -338,7 +338,7 @@ def unzip_to_directory(input_zipfile, output_directory):
         zf.extractall(path=output_directory)
 
 
-def list_json_files(directory):
+def list_json_files(directory: str) -> list[str]:
     json_files = []
 
     for root, _, files in os.walk(directory):
