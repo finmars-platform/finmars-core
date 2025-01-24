@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import time
+from typing import Any
 import zipfile
 
 import requests
@@ -12,6 +13,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.core.files.base import ContentFile
 from django.http import FileResponse
 
+from poms.common.http_client import HttpClient
 from poms.common.storage import get_storage
 from poms.common.utils import get_content_type_by_name, get_serializer
 from poms.auth_tokens.utils import get_refresh_token
@@ -336,7 +338,7 @@ def unzip_to_directory(input_zipfile, output_directory):
         zf.extractall(path=output_directory)
 
 
-def list_json_files(directory):
+def list_json_files(directory: str) -> list[str]:
     json_files = []
 
     for root, _, files in os.walk(directory):
@@ -460,3 +462,37 @@ def get_default_configuration_code():
     master_user = MasterUser.objects.all().first()
 
     return f"local.poms.{master_user.space_code}"
+
+
+def post_workflow_template(platform, json_data: dict[str, Any]):
+    from django.contrib.auth import get_user_model
+
+    from poms_app import settings
+
+    user_code = json_data["workflow"]["user_code"]
+    _l.info(f"Create Workflow Template for workflow v2 {user_code}")
+
+    http_client = HttpClient()
+
+    User = get_user_model()
+    bot = User.objects.get(username="finmars_bot")
+    refresh = get_refresh_token(bot, platform)
+
+    base_url = f"https://{settings.DOMAIN_NAME}/{platform.realm_code}/{platform.space_code}"
+
+    workflow_template_data = {
+        "name": json_data["workflow"].get("name"),
+        "user_code": user_code,
+        "notes": json_data["workflow"].get("notes"),
+        "data": json_data
+    }
+
+    http_client.post(
+        f"{base_url}/workflow/api/v1/workflow-template/",
+        json=workflow_template_data,
+        headers={
+            "Content-type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {refresh.access_token}",
+        },
+    )    

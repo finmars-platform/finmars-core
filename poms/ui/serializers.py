@@ -48,6 +48,7 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
 
 class UserInterfaceAccessModelSerializer(ModelWithUserCodeSerializer):
     member = HiddenMemberField()
+    allowed_items = serializers.ListField(allow_null=False)
 
     class Meta:
         model = UserInterfaceAccessModel
@@ -57,10 +58,9 @@ class UserInterfaceAccessModelSerializer(ModelWithUserCodeSerializer):
             "role",
             "user_code",
             "configuration_code",
-            "json_data",
+            "allowed_items",
             "created_at",
             "modified_at",
-            "owner",
             "member",
         ]
 
