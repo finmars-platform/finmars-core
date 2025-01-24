@@ -66,7 +66,7 @@ def _run_action(task: CeleryTask, action: dict):
 
 
 @finmars_task(name="configuration.import_configuration", bind=True)
-def import_configuration(self, task_id, *args, **kwargs):
+def import_configuration(self, task_id: int, *args, **kwargs) -> None:
     _l.info("import_configuration")
     _l.info(f"import_configuration {task_id}")
 
@@ -168,42 +168,45 @@ def import_configuration(self, task_id, *args, **kwargs):
 
     index = 0
 
-    stats = {"configuration": {}, "workflow": {}, "manifest": {}}
+    stats = {"configuration": {}, "workflow": {}, "manifest": {}, "other": {}}
 
-    for json_file in json_files:
+    for json_file_path in json_files:
         index = index + 1
-
-        if "manifest.json" in json_file:
-            stats["manifest"][json_file] = {"status": "skip"}
-            continue
-
-        json_data = read_json_file(json_file)
 
         task.update_progress(
             {
                 "current": index,
                 "total": len(json_files),
                 "percent": round(index / (len(json_files) / 100)),
-                "description": f"Going to import {json_file}",
+                "description": f"Going to import {json_file_path}",
             }
         )
 
-        if "workflows" in json_file:
-            if not (version:= json_data.get("version")) or version != "2" or not json_data.get("workflow"):
-                stats["workflow"][json_file] = {"status": "skip"}
+        if json_file_path.endswith("manifest.json"):
+            stats["manifest"][json_file_path] = {"status": "skip"}
+            continue
+
+        json_data = read_json_file(json_file_path)
+
+        if "workflows" in json_file_path:
+            if not json_file_path.endswith("workflow.json"):
+                stats["other"][json_file_path] = {"status": "skip"}
+                continue
+            
+            if not isinstance(json_data, dict) or not (version:= json_data.get("version")) or version != "2" or not json_data.get("workflow"):
+                stats["workflow"][json_file_path] = {"status": "skip", "reason": "not template format"}
                 continue 
 
-            # create workflow template
             try:
                 post_workflow_template(task.master_user, json_data)
 
-                description = f"WorkflowTemplate created {json_file}"
-                stats["workflow"][json_file] = {"status": "success"}
+                description = f"WorkflowTemplate created {json_file_path}"
+                stats["workflow"][json_file_path] = {"status": "success"}
 
             except Exception as e:
                 _l.error(f"create Workflow Template for workflow v2 {e}")
-                description = f"Error {json_file}"
-                stats["workflow"][json_file] = {
+                description = f"Error {json_file_path}"
+                stats["workflow"][json_file_path] = {
                     "status": "error",
                     "error_message": str(e),
                 }
@@ -245,25 +248,25 @@ def import_configuration(self, task_id, *args, **kwargs):
                 if serializer.is_valid():
                     # Perform any desired actions, such as saving the data to the database
                     serializer.save()
-                    stats["configuration"][json_file] = {"status": "success"}
-                    description = f"Imported {json_file}"
+                    stats["configuration"][json_file_path] = {"status": "success"}
+                    description = f"Imported {json_file_path}"
 
                 else:
-                    stats["configuration"][json_file] = {
+                    stats["configuration"][json_file_path] = {
                         "status": "error",
                         "error_message": str(serializer.errors),
                     }
-                    _l.error(f"Invalid data in {json_file}: {serializer.errors}")
-                    description = f"Error {json_file}"
+                    _l.error(f"Invalid data in {json_file_path}: {serializer.errors}")
+                    description = f"Error {json_file_path}"
 
             except Exception as e:
                 _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
 
-                stats["configuration"][json_file] = {
+                stats["configuration"][json_file_path] = {
                     "status": "error",
                     "error_message": str(e),
                 }
-                description = f"Error {json_file}"
+                description = f"Error {json_file_path}"
 
             finally:
                 task.update_progress(
