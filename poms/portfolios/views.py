@@ -567,7 +567,8 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
 
 class PortfolioRegisterRecordFilterSet(FilterSet):
     id = NoOpFilter()
-    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)transaction_date = django_filters.DateFromToRangeFilter()
+    portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
+    transaction_date = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = PortfolioRegisterRecord
