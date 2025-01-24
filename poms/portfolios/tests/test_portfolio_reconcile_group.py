@@ -12,8 +12,10 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-group/"
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
-        self.portfolio_1.portfolio_type =self.create_portfolio_type(PortfolioClass.GENERAL)
-        self.portfolio_2.portfolio_type = self.create_portfolio_type(PortfolioClass.POSITION)
+        general = PortfolioClass.objects.get(id=PortfolioClass.GENERAL)
+        position = PortfolioClass.objects.get(id=PortfolioClass.POSITION)
+        self.portfolio_1.portfolio_type = self.create_portfolio_type(general)
+        self.portfolio_2.portfolio_type = self.create_portfolio_type(position)
 
     def create_portfolio_type(self, portfolio_class) -> PortfolioType:
         return PortfolioType(
