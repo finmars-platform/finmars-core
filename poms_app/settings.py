@@ -562,7 +562,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 # =================
 # = SMTP Settings =
 # =================
-
+if SERVER_TYPE == "local":
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = ENV_STR(
     "DEFAULT_FROM_EMAIL", '"Finmars Notifications" <no-reply@finmars.com>'
 )

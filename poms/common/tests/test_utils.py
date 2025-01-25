@@ -1,13 +1,15 @@
-from django.test import SimpleTestCase
 import datetime
 
+from django.test import SimpleTestCase
+
 from poms.common.utils import (
-    get_last_business_day_of_previous_year,
-    get_last_business_day_of_previous_month,
-    get_last_business_day_in_previous_quarter,
-    split_date_range,
-    pick_dates_from_range,
     calculate_period_date,
+    get_last_business_day_in_previous_quarter,
+    get_last_business_day_of_previous_month,
+    get_last_business_day_of_previous_year,
+    get_list_of_dates_between_two_dates,
+    pick_dates_from_range,
+    split_date_range,
 )
 
 
@@ -57,18 +59,41 @@ class TestBusinessDayFunctions(SimpleTestCase):
         ]
 
         expected = [
-            [('2024-09-16', '2024-09-22'), ('2024-09-23', '2024-09-29'), ('2024-09-30', '2024-10-06')],
-            [('2024-08-01', '2024-08-31'), ('2024-09-01', '2024-09-30'), ('2024-10-01', '2024-10-31')],
-            [('2024-09-02', '2024-09-02'), ('2024-09-03', '2024-09-03'), ('2024-09-04', '2024-09-04'), 
-                ('2024-09-05', '2024-09-05'), ('2024-09-06', '2024-09-06')],
-            [("2024-08-01", "2024-08-30"), ("2024-09-02", "2024-09-30"), ("2024-10-01", "2024-10-31")],
-            [("2022-01-03", "2022-12-30"), ("2023-01-02", "2023-12-29"), ("2024-01-01", "2024-12-31")],
+            [
+                ("2024-09-16", "2024-09-22"),
+                ("2024-09-23", "2024-09-29"),
+                ("2024-09-30", "2024-10-06"),
+            ],
+            [
+                ("2024-08-01", "2024-08-31"),
+                ("2024-09-01", "2024-09-30"),
+                ("2024-10-01", "2024-10-31"),
+            ],
+            [
+                ("2024-09-02", "2024-09-02"),
+                ("2024-09-03", "2024-09-03"),
+                ("2024-09-04", "2024-09-04"),
+                ("2024-09-05", "2024-09-05"),
+                ("2024-09-06", "2024-09-06"),
+            ],
+            [
+                ("2024-08-01", "2024-08-30"),
+                ("2024-09-02", "2024-09-30"),
+                ("2024-10-01", "2024-10-31"),
+            ],
+            [
+                ("2022-01-03", "2022-12-30"),
+                ("2023-01-02", "2023-12-29"),
+                ("2024-01-01", "2024-12-31"),
+            ],
             [("2024-01-01", "2024-03-31")],
             [("2024-01-01", "2024-03-29")],
         ]
- 
+
         for i, test_case in enumerate(test_cases):
-            dates = split_date_range(test_case[0], test_case[1], test_case[2], test_case[3])
+            dates = split_date_range(
+                test_case[0], test_case[1], test_case[2], test_case[3]
+            )
             self.assertEqual(dates, expected[i])
 
     def test_pick_dates_from_range(self):
@@ -78,7 +103,13 @@ class TestBusinessDayFunctions(SimpleTestCase):
             (datetime.date(2024, 8, 31), datetime.date(2024, 10, 1), "W", True, True),
             (datetime.date(2024, 8, 31), datetime.date(2024, 10, 1), "W", False, True),
             (datetime.date(2022, 12, 15), datetime.date(2024, 12, 3), "Y", False, True),
-            (datetime.date(2022, 12, 15), datetime.date(2024, 12, 14), "Y", True, False),
+            (
+                datetime.date(2022, 12, 15),
+                datetime.date(2024, 12, 14),
+                "Y",
+                True,
+                False,
+            ),
             (datetime.date(2024, 9, 1), datetime.date(2024, 9, 5), "D", True, False),
             (datetime.date(2024, 1, 1), datetime.date(2024, 5, 1), "Q", False, True),
             (datetime.date(2023, 12, 15), datetime.date(2024, 4, 1), "Q", False, True),
@@ -99,7 +130,9 @@ class TestBusinessDayFunctions(SimpleTestCase):
         ]
 
         for i, test_case in enumerate(test_cases):
-            dates = pick_dates_from_range(test_case[0], test_case[1], test_case[2], test_case[3], test_case[4])
+            dates = pick_dates_from_range(
+                test_case[0], test_case[1], test_case[2], test_case[3], test_case[4]
+            )
             self.assertEqual(dates, expected[i])
 
     def test_get_calc_period_date(self):
@@ -115,7 +148,7 @@ class TestBusinessDayFunctions(SimpleTestCase):
         ]
 
         expected = [
-            "2024-09-30", 
+            "2024-09-30",
             "2025-03-03",
             "2024-09-09",
             "2024-09-13",
@@ -126,5 +159,18 @@ class TestBusinessDayFunctions(SimpleTestCase):
         ]
 
         for i, test_case in enumerate(test_cases):
-            date = calculate_period_date(test_case[0], test_case[1], test_case[2], test_case[3], test_case[4])
+            date = calculate_period_date(
+                test_case[0], test_case[1], test_case[2], test_case[3], test_case[4]
+            )
             self.assertEqual(date, expected[i])
+
+
+class TestListDates(SimpleTestCase):
+    def test_same_day(self):
+        today = datetime.date.today()
+        self.assertEqual(len(get_list_of_dates_between_two_dates(today, today)), 1)
+
+    def test_two_days(self):
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        self.assertEqual(len(get_list_of_dates_between_two_dates(today, tomorrow)), 2)
