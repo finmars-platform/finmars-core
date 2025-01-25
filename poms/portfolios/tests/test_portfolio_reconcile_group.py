@@ -21,12 +21,12 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.portfolio_2.portfolio_type = self.create_portfolio_type(self.position)
         self.portfolio_2.save()
 
-    def create_portfolio_type(self, portfolio_class) -> PortfolioType:
+    def create_portfolio_type(self, portfolio_class: PortfolioClass) -> PortfolioType:
         return PortfolioType.objects.create(
             master_user=self.master_user,
             owner=self.member,
             portfolio_class=portfolio_class,
-            user_code=get_default_configuration_code(),
+            user_code=self.random_string(16),
         )
 
     def create_data(self) -> dict:
