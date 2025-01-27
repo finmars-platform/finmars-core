@@ -46,7 +46,6 @@ from poms.portfolios.serializers import (
     PortfolioLightSerializer,
     PortfolioReconcileGroupSerializer,
     PortfolioReconcileHistorySerializer,
-    PortfolioReconcileStatusSerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
@@ -368,7 +367,9 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = Portfolio.objects.get(user_code=user_code)
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
         )
 
         if first_record:
@@ -785,17 +786,5 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
                 "task_type": task.type,
                 "task_options": task.options_object,
             },
-            status=status.HTTP_200_OK,
-        )
-
-    @action(
-        detail=False,
-        methods=["get"],
-        url_path="status",
-        serializer_class=PortfolioReconcileStatusSerializer,
-    )
-    def status(self, request, realm_code=None, space_code=None):
-        return Response(
-            {},
             status=status.HTTP_200_OK,
         )
