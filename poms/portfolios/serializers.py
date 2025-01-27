@@ -883,8 +883,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
 class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
-
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=True)
