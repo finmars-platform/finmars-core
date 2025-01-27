@@ -886,3 +886,9 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=True)
+
+
+class PortfolioReconcileStatusSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    portfolios = serializers.ListField(child=serializers.CharField(), required=True, read_only=True)
