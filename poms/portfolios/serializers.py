@@ -876,15 +876,20 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
             source="portfolio_reconcile_group", read_only=True
         )
-
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
 class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
+    date_from = serializers.DateField(required=True)
+    date_to = serializers.DateField(required=True)
 
+
+class PortfolioReconcileStatusSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=True)
