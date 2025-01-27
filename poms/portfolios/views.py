@@ -797,7 +797,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         serializer_class=PortfolioReconcileStatusSerializer,
     )
     def status(self, request, realm_code=None, space_code=None):
-        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer = self.get_serializer(data=request.query_params, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         return Response(

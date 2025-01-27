@@ -1,5 +1,3 @@
-from unittest import mock
-
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.configuration.utils import get_default_configuration_code
@@ -30,5 +28,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
 
     def test_check_url(self):
-        response = self.client.get(path=self.url)
+        portfolios = {"portfolios": [self.portfolio_1.id, self.portfolio_2.id]}
+        response = self.client.get(path=self.url, data=portfolios)
         self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        print(response_json)

@@ -891,4 +891,4 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    portfolios = serializers.ListField(child=serializers.CharField(), read_only=True)
+    portfolios = serializers.ListField(child=serializers.IntegerField(min_value=1), required=True)
