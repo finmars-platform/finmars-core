@@ -31,6 +31,12 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response = self.client.get(path=self.url, data=portfolios)
         self.assertEqual(response.status_code, 200, response.content)
 
+        response_json = response.json()
+        result_1 = response_json[0]
+        self.assertIn(int(result_1.keys()[0]), [self.portfolio_1.id, self.portfolio_2.id])
+        result_2 = response_json[1]
+        self.assertIn(int(result_2.keys()[0]), [self.portfolio_1.id, self.portfolio_2.id])
+
     def test__no_portfolios(self):
         portfolios = {"portfolios": []}
         response = self.client.get(path=self.url, data=portfolios)

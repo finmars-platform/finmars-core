@@ -902,5 +902,25 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
         if not portfolios:
             raise serializers.ValidationError({"portfolios": f"No portfolios with ids {portfolios_ids}"})
 
-        attrs["portfolios"] = portfolios
+        self.context["portfolios"] = portfolios
         return attrs
+
+    def get_reconcile_groups(self) -> list[dict]:
+        result = []
+        queryset = PortfolioReconcileGroup.objects.filter(master_user=self.context.get("master_user"))
+        for portfolio in self.context.get("portfolios"):
+            groups = queryset.filter(portfolios=portfolio).values_list("last_calculated_at", flat=True)
+            if not groups:
+                result.append({portfolio.id: "isn't member of any reconcile group"})
+                continue
+
+            times = list(filter(None, groups))
+            if not times:
+                result.append({portfolio.id: "reconciliation didn't start yet"})
+                continue
+
+            times.sort()
+
+            result.append({portfolio.id: times[-1]})
+
+        return result

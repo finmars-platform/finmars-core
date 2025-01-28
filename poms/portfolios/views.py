@@ -801,7 +801,6 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         return Response(
-            {
-            },
+            serializer.get_reconcile_groups(),
             status=status.HTTP_200_OK,
         )
