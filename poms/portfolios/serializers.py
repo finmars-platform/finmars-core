@@ -892,3 +892,15 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     portfolios = serializers.ListField(child=serializers.IntegerField(min_value=1), required=True)
+
+    def validate(self, attrs: dict) -> dict:
+        portfolios_ids = attrs.get("portfolios", [])
+        if not portfolios_ids:
+            raise serializers.ValidationError({"portfolios": "Can't be empty"})
+
+        portfolios = list(Portfolio.objects.filter(id__in=portfolios_ids))
+        if not portfolios:
+            raise serializers.ValidationError({"portfolios": f"No portfolios with ids {portfolios_ids}"})
+
+        attrs["portfolios"] = portfolios
+        return attrs

@@ -26,11 +26,17 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             }
         )
 
-
     def test_check_url(self):
         portfolios = {"portfolios": [self.portfolio_1.id, self.portfolio_2.id]}
         response = self.client.get(path=self.url, data=portfolios)
         self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
 
-        print(response_json)
+    def test__no_portfolios(self):
+        portfolios = {"portfolios": []}
+        response = self.client.get(path=self.url, data=portfolios)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test__invalid_portfolios(self):
+        portfolios = {"portfolios": [self.random_int(10000, 20000), self.random_int(10000, 20000)]}
+        response = self.client.get(path=self.url, data=portfolios)
+        self.assertEqual(response.status_code, 400, response.content)
