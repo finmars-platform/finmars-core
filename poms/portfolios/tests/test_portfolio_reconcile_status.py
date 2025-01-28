@@ -1,6 +1,5 @@
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup
-from poms.configuration.utils import get_default_configuration_code
 
 
 class PortfolioReconcileHistoryViewTest(BaseTestCase):
@@ -13,12 +12,13 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
         self.group = self.create_reconcile_group()
+        self.portfolios = (self.portfolio_1.id, self.portfolio_2.id)
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
             master_user=self.master_user,
             owner=self.member,
-            user_code=get_default_configuration_code(),
+            user_code=self.random_string(),
             name=self.random_string(),
             params={
                 "precision": 1,
@@ -26,23 +26,44 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             }
         )
 
-    def test_check_url(self):
-        portfolios = {"portfolios": [self.portfolio_1.id, self.portfolio_2.id]}
-        response = self.client.get(path=self.url, data=portfolios)
+    def test_check_is_not_member(self):
+        data = {"portfolios": self.portfolios}
+        response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
+
         result_1 = response_json[0]
-        self.assertIn(int(list(result_1.keys())[0]), [self.portfolio_1.id, self.portfolio_2.id])
+        self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_1.values())[0], "isn't member of any reconcile group")
         result_2 = response_json[1]
-        self.assertIn(int(list(result_2.keys())[0]), [self.portfolio_1.id, self.portfolio_2.id])
+        self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_2.values())[0], "isn't member of any reconcile group")
+
+    def test_check_not_run_yet(self):
+        self.group.portfolios.add(self.portfolios)
+        self.group.save()
+
+        data = {"portfolios": self.portfolios}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        result_1 = response_json[0]
+        self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_1.values())[0], "reconciliation didn't start yet")
+        result_2 = response_json[1]
+        self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
+
 
     def test__no_portfolios(self):
-        portfolios = {"portfolios": []}
-        response = self.client.get(path=self.url, data=portfolios)
+        data = {"portfolios": []}
+        response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 400, response.content)
 
     def test__invalid_portfolios(self):
-        portfolios = {"portfolios": [self.random_int(10000, 20000), self.random_int(10000, 20000)]}
-        response = self.client.get(path=self.url, data=portfolios)
+        data = {"portfolios": [self.random_int(10000, 20000), self.random_int(10000, 20000)]}
+        response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 400, response.content)
