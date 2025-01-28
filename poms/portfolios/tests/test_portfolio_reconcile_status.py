@@ -26,6 +26,16 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             }
         )
 
+    def test__no_portfolios(self):
+        data = {"portfolios": []}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test__invalid_portfolios(self):
+        data = {"portfolios": [self.random_int(10000, 20000), self.random_int(10000, 20000)]}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 400, response.content)
+
     def test_check_is_not_member(self):
         data = {"portfolios": self.portfolios}
         response = self.client.get(path=self.url, data=data)
@@ -57,14 +67,3 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         result_2 = response_json[1]
         self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
         self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
-
-
-    def test__no_portfolios(self):
-        data = {"portfolios": []}
-        response = self.client.get(path=self.url, data=data)
-        self.assertEqual(response.status_code, 400, response.content)
-
-    def test__invalid_portfolios(self):
-        data = {"portfolios": [self.random_int(10000, 20000), self.random_int(10000, 20000)]}
-        response = self.client.get(path=self.url, data=data)
-        self.assertEqual(response.status_code, 400, response.content)

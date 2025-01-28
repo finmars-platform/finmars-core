@@ -907,9 +907,10 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
 
     def get_reconcile_groups(self) -> list[dict]:
         result = []
-        queryset = PortfolioReconcileGroup.objects.filter(master_user=self.context.get("master_user"))
-        for portfolio in self.context.get("portfolios"):
-            groups = queryset.filter(portfolios=portfolio).values_list("last_calculated_at", flat=True)
+        for portfolio in self.context["portfolios"]:
+            groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio).values_list(
+                "last_calculated_at", flat=True
+            )
             if not groups:
                 result.append({portfolio.id: "isn't member of any reconcile group"})
                 continue
