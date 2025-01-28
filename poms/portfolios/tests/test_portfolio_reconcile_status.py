@@ -1,5 +1,5 @@
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
+from poms.portfolios.models import PortfolioReconcileGroup
 from poms.configuration.utils import get_default_configuration_code
 
 
@@ -33,9 +33,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         response_json = response.json()
         result_1 = response_json[0]
-        self.assertIn(int(result_1.keys()[0]), [self.portfolio_1.id, self.portfolio_2.id])
+        self.assertIn(int(list(result_1.keys())[0]), [self.portfolio_1.id, self.portfolio_2.id])
         result_2 = response_json[1]
-        self.assertIn(int(result_2.keys()[0]), [self.portfolio_1.id, self.portfolio_2.id])
+        self.assertIn(int(list(result_2.keys())[0]), [self.portfolio_1.id, self.portfolio_2.id])
 
     def test__no_portfolios(self):
         portfolios = {"portfolios": []}
