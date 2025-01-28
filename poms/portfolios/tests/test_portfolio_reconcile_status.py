@@ -12,7 +12,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
         self.group = self.create_reconcile_group()
-        self.portfolios = (self.portfolio_1.id, self.portfolio_2.id)
+        self.portfolios = [self.portfolio_1.id, self.portfolio_2.id]
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -41,7 +41,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertEqual(list(result_2.values())[0], "isn't member of any reconcile group")
 
     def test_check_not_run_yet(self):
-        self.group.portfolios.add(self.portfolios)
+        for p in self.portfolios:
+            self.group.portfolios.add(p)
         self.group.save()
 
         data = {"portfolios": self.portfolios}
