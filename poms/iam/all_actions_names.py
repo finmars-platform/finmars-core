@@ -101,6 +101,14 @@ ALL_EXTRA_ACTIONS = {
     "update_secret",
     "update_status",
     "view_log",
+    "user_subscribed_channels",
+    "all_types",
+    "create_channel",
+    "leave_channel",
+    "subscriptions_of_user",
+    "all_channels",
+    "join_channel",
+    "subscriptions_update_for_user",
 }
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
