@@ -21,6 +21,7 @@ import poms.instruments.urls as instrument_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
 import poms.integrations.views as integrations
+import poms.notifications.views as notifications
 import poms.portfolios.urls as portfolio_router
 import poms.pricing.views as pricing
 import poms.procedures.urls as procedure_router
@@ -30,6 +31,7 @@ import poms.reports.urls as report_router
 import poms.schedules.views as schedules
 import poms.strategies.urls as strategy_router
 import poms.system.views as system
+import poms.system_messages.views as system_messages
 import poms.transactions.urls as transaction_router
 import poms.ui.urls as ui_router
 import poms.users.urls as users_router
@@ -320,6 +322,16 @@ router.register(
     PersonalAccessTokenViewSet,
     "PersonalAccessToken",
 )
+router.register(
+    r"system-messages/message",
+    system_messages.SystemMessageViewSet,
+    "SystemMessage"
+)
+router.register(
+    "notifications/notification",
+    notifications.NotificationViewSet,
+)
+
 
 urlpatterns = [
     re_path(r"^v1/system-notifications/", include("poms.system_messages.urls")),
