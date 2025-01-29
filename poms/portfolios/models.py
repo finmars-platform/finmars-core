@@ -340,6 +340,12 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         param = f"transaction__{date_field}"
         return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
 
+    def destroy_reconcile_history(self):
+        """
+        As portfolio's set of transactions has changed, so all reconcile history are not valid any more,
+        and has to ve removed
+        """
+
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
