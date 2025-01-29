@@ -48,6 +48,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         result_1 = response_json[0]
         self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
         self.assertEqual(list(result_1.values())[0], "isn't member of any reconcile group")
+
         result_2 = response_json[1]
         self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
         self.assertEqual(list(result_2.values())[0], "isn't member of any reconcile group")
@@ -66,24 +67,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         result_1 = response_json[0]
         self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
         self.assertEqual(list(result_1.values())[0], "reconciliation didn't start yet")
-        result_2 = response_json[1]
-        self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
-        self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
 
-    def test_check_not_run_yet(self):
-        for p in self.portfolios:
-            self.group.portfolios.add(p)
-        self.group.save()
-
-        data = {"portfolios": self.portfolios}
-        response = self.client.get(path=self.url, data=data)
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-
-        result_1 = response_json[0]
-        self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
-        self.assertEqual(list(result_1.values())[0], "reconciliation didn't start yet")
         result_2 = response_json[1]
         self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
         self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
@@ -105,5 +89,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         result_1 = response_json[0]
         self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_1.values())[0], str(now().date()))
+
         result_2 = response_json[1]
         self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
+        self.assertEqual(list(result_2.values())[0], str(now().date()))

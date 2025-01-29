@@ -922,6 +922,6 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
 
             times.sort()
 
-            result.append({portfolio.id: times[-1]})
+            result.append({portfolio.id: times[-1].date()})
 
         return result
