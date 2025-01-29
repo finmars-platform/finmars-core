@@ -185,6 +185,10 @@ FULL_ACCESS_ACTIONS = {
     "leave_channel",
     "join_channel",
     "subscriptions_update_for_user",
+    "user_subscribed_channels",
+    "all_types",
+    "subscriptions_of_user",
+    "all_channels",
 }
 READ_ACCESS_ACTIONS = {
     "data",
@@ -212,6 +216,10 @@ READ_ACCESS_ACTIONS = {
     "get_metadata",
     "get_secret",
     "health",
+    "create_channel",
+    "leave_channel",
+    "join_channel",
+    "subscriptions_update_for_user",
     "user_subscribed_channels",
     "all_types",
     "subscriptions_of_user",
