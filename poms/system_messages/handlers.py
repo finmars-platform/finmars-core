@@ -1,6 +1,8 @@
 import logging
+import requests
 import traceback
 
+from django.conf import settings
 from poms.system_messages.models import (
     SystemMessage,
     SystemMessageAttachment,
@@ -9,6 +11,7 @@ from poms.system_messages.models import (
 from poms.users.models import Member
 
 _l = logging.getLogger("poms.system_messages")
+service_url = settings.NOTIFICATION_SERVICE_BASE_URL
 
 
 def send_system_message(
@@ -105,3 +108,208 @@ def send_system_message(
             f"Error send system message: exception {repr(e)} "
             f"trace {traceback.format_exc()}"
         )
+
+
+'''
+========================================================
+# Methods to forward calls to the notification service
+========================================================
+'''
+def prepare_headers_for_service(request) -> dict:
+    headers = dict(request.headers)
+    headers['Accept'] = 'application/json'
+    headers['Content-Type'] = 'application/json'
+    return headers
+
+
+def forward_get_user_notifications(request):
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}notifications/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get notifications: {e}")
+        raise
+
+
+def forward_create_notification_to_service(payload, request):
+    try:
+        response = requests.post(
+            f"{service_url.format(space_code=request.space_code)}notifications/create/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to create notification: {e}") # Log the error and raise it
+        raise
+
+
+def forward_update_notification_to_service(user_code, payload, request):
+    try:
+        response = requests.put(
+            f"{service_url.format(space_code=request.space_code)}notifications/{user_code}/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to update notification: {e}") # Log the error and raise it
+        raise
+
+
+def forward_partial_update_notification_to_service(user_code, payload, request):
+    try:
+        response = requests.patch(
+            f"{service_url.format(space_code=request.space_code)}notifications/{user_code}/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to update notification: {e}") # Log the error and raise it
+        raise
+
+
+def forward_get_user_subscriptions_to_service(request):
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}subscriptions/",
+            headers=prepare_headers_for_service(request)
+        )
+
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to fetch user's subscriptions: {e}") # Log the error and raise it
+        raise
+
+
+def forward_update_user_subscriptions_to_service(request, payload):
+    try:
+        response = requests.post(
+            f"{service_url.format(space_code=request.space_code)}subscriptions/update/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to fetch subscription types: {e}") # Log the error and raise it
+        raise
+
+
+def forward_get_all_subscription_types_to_service(request):
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}subscriptions/types/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to fetch subscription types: {e}") # Log the error and raise it
+        raise
+
+
+def forward_create_channel_to_service(request, payload):
+    try:
+        response = requests.post(
+            f"{service_url.format(space_code=request.space_code)}channels/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to create new channel: {e}") # Log the error and raise it
+        raise
+
+
+def forward_join_channel_to_service(request, payload, user_code):
+    try:
+        response = requests.post(
+            f"{service_url.format(space_code=request.space_code)}channels/{user_code}/join/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to join channel: {e}") # Log the error and raise it
+        raise
+
+
+def forward_leave_channel_to_service(request, payload, user_code):
+    try:
+        response = requests.post(
+            f"{service_url.format(space_code=request.space_code)}channels/{user_code}/leave/",
+            json=payload,
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to leave channel: {e}") # Log the error and raise it
+        raise
+
+
+def forward_user_subscribed_channels_to_service(request):
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}channels/subscribed/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()  # Return the exact response from the microservice
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to channels user subscribed: {e}") # Log the error and raise it
+        raise
+
+
+def forward_get_categories_to_service(request):
+    """Forward request to get all notification categories from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}categories/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get categories: {e}")
+        raise
+
+
+def forward_get_statuses_to_service(request):
+    """Forward request to get all notification statuses from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}statuses/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get statuses: {e}")
+        raise
+
+
+def forward_get_all_channels_to_service(request):
+    """Forward request to get all channels from notification service"""
+    try:
+        response = requests.get(
+            f"{service_url.format(space_code=request.space_code)}channels/all_channels/",
+            headers=prepare_headers_for_service(request)
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        _l.error(f"Failed to get all channels: {e}")
+        raise
