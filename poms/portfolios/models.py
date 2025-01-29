@@ -3,10 +3,10 @@ from datetime import date
 from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-from django.core.cache import cache
 
 from poms.clients.models import Client
 from poms.common.fields import ResourceGroupsField
@@ -322,7 +322,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             .order_by("accounting_date")
             .first()
         )
-        self.first_cash_flow_date = first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        self.first_cash_flow_date = (
+            first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        )
 
         _l.info(
             f"calculate_first_transactions_dates succeed: "
@@ -340,11 +342,15 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         param = f"transaction__{date_field}"
         return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
 
-    def destroy_reconcile_history(self):
+    def destroy_reconcile_histories(self):
         """
-        As portfolio's set of transactions has changed, so all reconcile history are not valid any more,
-        and has to ve removed
+        As portfolio's set of transactions has changed, so all reconcile history objects are not valid anymore,
+        and has to be removed.
         """
+        groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
+        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group_id=groups)
+        histories.delete()
+        _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
