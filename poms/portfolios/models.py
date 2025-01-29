@@ -349,7 +349,10 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         """
         groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
         histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group_id=groups)
-        histories.delete()
+        for history in histories:
+            # TODO delete file report if any
+            history.delete()
+
         _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
 
 
