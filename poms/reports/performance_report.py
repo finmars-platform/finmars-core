@@ -42,8 +42,8 @@ class PerformanceReportBuilder:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self.instance.master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
         )
 
         _l.debug("self.instance master_user %s" % self.instance.master_user)

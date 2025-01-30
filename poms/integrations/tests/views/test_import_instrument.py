@@ -5,7 +5,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.database_client import get_backend_callback_url
 from poms.celery_tasks.models import CeleryTask
-from poms.instruments.models import Instrument
+from poms.instruments.models import Accrual, Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
@@ -14,8 +14,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/instrument/"
         self.task = self.create_task(
             name="Test",
@@ -107,8 +105,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     )
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
     def test__data_ready(self, type_code, mock_get_monad):
-        user_code = self.random_string(10)
+        user_code = self.random_string()
         currency_code = self.random_string(3)
+        accrual_code = f"{user_code}:{str(date.today())}"
         mock_get_monad.return_value = Monad(
             status=MonadStatus.DATA_READY,
             data={
@@ -128,6 +127,20 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": {
+                            "cbond_id": f"{self.random_int(_max=1000)}",
+                            "isin": self.random_string(12),
+                        },
+                        "factor_schedules": [],
+                        "accrual_calculation_schedules": [],
+                        "accruals": [
+                            {
+                                "user_code": accrual_code,
+                                "date": date.today(),
+                                "size": 100.0,
+                                "notes": "",
+                            },
+                        ],
                     },
                 ],
                 "currencies": [
@@ -167,7 +180,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNotNone(instrument.country)
         self.assertEqual(instrument.country.alpha_3, "USA")
 
-        self.assertIsNotNone(Instrument.objects.get(pk=response_json["result_id"]))
+        self.assertIsNotNone(Accrual.objects.filter(user_code=accrual_code).first())
 
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
     def test__error(self, mock_get_task):

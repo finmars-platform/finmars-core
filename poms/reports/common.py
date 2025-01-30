@@ -134,7 +134,9 @@ class Report(BaseReport):
             task_status=task_status,
         )
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_type = (
             report_type if report_type is not None else Report.TYPE_BALANCE
@@ -445,7 +447,9 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date
         self.end_date = end_date or d
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_currency = report_currency or self.ecosystem_default.currency
         self.pricing_policy = pricing_policy

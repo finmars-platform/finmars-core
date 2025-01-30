@@ -1,10 +1,10 @@
 [project]
 name = "finmars-backend"
-version = "1.1.0"
+version = "1.14.0"
 
 [tool.isort]
 profile="black"
-py_version=310
+py_version=311
 known_django=[
     "django",
     "django_celery_results",
@@ -21,12 +21,12 @@ skip=["__init__.py", ".gitignore", "templates"]
 skip_glob=["venv/*"]
 
 [tool.black]
-line-length = 88
-target-version = ["py310"]
+line-length = 116
+target-version = ["py311"]
 
 [tool.ruff]
 format = "grouped"
-line-length = 88
+line-length = 116
 ignore = ["E501", "F403", "F405"]
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
