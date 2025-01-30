@@ -824,4 +824,4 @@ NOTIFICATION_SERVICE_DOMAIN_NAME = ENV_STR(
 )
 
 # TODO: - change the URL to the actual URL of the notification service
-NOTIFICATION_SERVICE_BASE_URL = f"{DOMAIN_NAME}/{REALM_CODE}/{{space_code}}/notification-service/api/v1/"
+NOTIFICATION_SERVICE_BASE_URL = f"http://{DOMAIN_NAME}/{REALM_CODE}/{{space_code}}/notification-service/api/v1/"
