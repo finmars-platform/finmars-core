@@ -352,7 +352,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             "file_report"
         )
         for history in histories:
-            history.file_report.delete()
+            if history.file_report:
+                history.file_report.delete()
+
             history.delete()
 
         _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
