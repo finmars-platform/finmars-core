@@ -12,7 +12,6 @@ class DeleteReconcileHistoryTest(BaseTestCase):
         self.portfolio_2 = self.db_data.portfolios[SMALL]
         self.group = self.create_reconcile_group()
 
-
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
             master_user=self.master_user,
@@ -22,18 +21,26 @@ class DeleteReconcileHistoryTest(BaseTestCase):
             params={
                 "precision": 1,
                 "only_errors": False,
-            }
+            },
         )
 
     def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
+            owner=self.member,
             user_code=self.random_string(),
             date=self.random_future_date(),
             portfolio_reconcile_group=group,
         )
 
+    def test__delete_no_file_report(self):
+        group = self.create_reconcile_group()
+        group.portfolios.add(self.portfolio_1)
+        group.portfolios.add(self.portfolio_2)
+        history = self.create_reconcile_history(group)
 
-    def test_check_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIsNotNone(PortfolioReconcileHistory.objects.filter(pk=history.pk).first())
+
+        self.portfolio_1.destroy_reconcile_histories()
+
+        self.assertIsNone(PortfolioReconcileHistory.objects.filter(pk=history.pk).first())
