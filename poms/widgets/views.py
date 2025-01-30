@@ -54,7 +54,9 @@ class HistoryNavViewSet(AbstractViewSet):
             _l.info('date_from %s ' % date_from)
             _l.info('date_to %s ' % date_to)
 
-            ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+            ecosystem_default = EcosystemDefault.cache.get_cache(
+                master_user_pk=request.user.master_user.pk
+            )
 
             if not currency:
                 currency = ecosystem_default.currency_id
@@ -242,7 +244,9 @@ class HistoryPlViewSet(AbstractViewSet):
         _l.info('date_from %s ' % date_from)
         _l.info('date_to %s ' % date_to)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=request.user.master_user.pk
+        )
 
         if not currency:
             currency = ecosystem_default.currency_id
@@ -440,7 +444,9 @@ class CollectHistoryViewSet(AbstractViewSet):
         if not portfolio_id:
             raise ValidationError("Portfolio is required")
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=request.user.master_user.pk
+        )
 
         if not report_currency_id:
             report_currency_id = ecosystem_default.currency_id
@@ -521,7 +527,9 @@ class CollectBalanceHistoryViewSet(AbstractViewSet):
         if not portfolio_id:
             raise ValidationError("Portfolio is required")
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=request.user.master_user.pk
+        )
 
         if not report_currency_id:
             report_currency_id = ecosystem_default.currency_id
@@ -592,7 +600,9 @@ class CollectPlHistoryViewSet(AbstractViewSet):
         if not portfolio_id:
             raise ValidationError("Portfolio is required")
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=request.user.master_user.pk
+        )
 
         if not report_currency_id:
             report_currency_id = ecosystem_default.currency_id

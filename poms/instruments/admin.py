@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.admin import AbstractModelAdmin, ClassModelAdmin
 from poms.instruments.models import (
+    Accrual,
     AccrualCalculationModel,
     AccrualCalculationSchedule,
     CostMethod,
@@ -517,3 +518,13 @@ admin.site.register(Periodicity, ClassModelAdmin)
 admin.site.register(CostMethod, ClassModelAdmin)
 admin.site.register(Country, CountryAdmin)
 admin.site.register(PaymentSizeDetail, ClassModelAdmin)
+
+
+@admin.register(Accrual)
+class AccrualAdmin(admin.ModelAdmin):
+    model = Accrual
+    list_display = [
+        "instrument",
+        "date",
+        "size",
+    ]

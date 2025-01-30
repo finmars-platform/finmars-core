@@ -36,7 +36,9 @@ class TransactionReportBuilderSql:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
+        )
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance begin_date %s' % self.instance.begin_date)

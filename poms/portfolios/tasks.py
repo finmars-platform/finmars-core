@@ -2,9 +2,10 @@ import logging
 import traceback
 from datetime import date, datetime, timedelta
 
-from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.views.generic.dates import timezone_today
+
+from celery.utils.log import get_task_logger
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -28,10 +29,7 @@ from poms.portfolios.models import (
     PortfolioRegister,
     PortfolioRegisterRecord,
 )
-from poms.portfolios.utils import (
-    get_price_calculation_type,
-    update_price_histories,
-)
+from poms.portfolios.utils import get_price_calculation_type, update_price_histories
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -220,7 +218,9 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         count = 0
         total = len(transactions)
-        ecosystem = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         default_currency_id = ecosystem.currency_id
         transactions_dict = {}
         for item in transactions:
@@ -610,9 +610,9 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
             result[portfolio_register.user_code]["date_from"] = portfolio_date_from
             result[portfolio_register.user_code]["date_to"] = date_to
 
-            result[portfolio_register.user_code]["dates"] = (
-                get_list_of_dates_between_two_dates(portfolio_date_from, date_to)
-            )
+            result[portfolio_register.user_code][
+                "dates"
+            ] = get_list_of_dates_between_two_dates(portfolio_date_from, date_to)
 
             if not portfolio_register.linked_instrument:
                 result[portfolio_register.user_code]["error_message"] = (
@@ -825,7 +825,7 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
             message=f"invalid period_type={period_type}",
         )
 
-    _l.info("calculate_portfolio_history: date_from %s" % date_from)
+    _l.info(f"calculate_portfolio_history: date_from {date_from}")
 
     if not calculation_period_date_from:
         calculation_period_date_from = date_from
@@ -873,7 +873,6 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
         try:
             portfolio_history = PortfolioHistory.objects.get(user_code=user_code)
         except PortfolioHistory.DoesNotExist:
-
             if period_type == "daily":
                 d_date_from = get_last_business_day(d - timedelta(days=1))
             elif period_type == "mtd":
@@ -943,7 +942,6 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     task.status = CeleryTask.STATUS_PENDING
     if not task.notes:
         task.notes = ""
-
     task.save()
 
     _l.info(
@@ -953,60 +951,54 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
         user_code=task.options_object.get("portfolio_reconcile_group")
     )
-    date_from = task.options_object.get("date_from")
-    date_to = task.options_object.get("date_to")
-
+    date_from = task.options_object["date_from"]
+    date_to = task.options_object["date_to"]
     dates = get_list_of_dates_between_two_dates(date_from, date_to)
-
     count = 0
-
-    for date in dates:
+    for day in dates:
         try:
             task.update_progress(
                 {
                     "current": count,
                     "percent": round(count / (len(dates) / 100)),
                     "total": len(dates),
-                    "description": f"Reconciling {portfolio_reconcile_group} at {date}",
+                    "description": f"Reconciling {portfolio_reconcile_group.user_code} at {day}",
                 }
             )
 
-            user_code = f"portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{date}"
+            user_code = f"portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{day}"
 
-            try:
-                portfolio_reconcile_history = PortfolioReconcileHistory.objects.get(
-                    master_user=task.master_user,
-                    user_code=user_code,
-                    portfolio_reconcile_group=portfolio_reconcile_group,
-                    date=date,
-                )
-            except Exception as e:
-                portfolio_reconcile_history = PortfolioReconcileHistory.objects.create(
-                    master_user=task.master_user,
-                    user_code=user_code,
+            (
+                portfolio_reconcile_history,
+                created,
+            ) = PortfolioReconcileHistory.objects.get_or_create(
+                master_user=task.master_user,
+                user_code=user_code,
+                defaults=dict(
                     owner=task.member,
                     portfolio_reconcile_group=portfolio_reconcile_group,
-                    date=date,
-                )
+                    date=day,
+                ),
+            )
 
-            portfolio_reconcile_history.linked_task = task
+            _l.info(
+                f"portfolio_reconcile_history obj {user_code} {'created' if created else 'updated'}"
+            )
+
+            portfolio_reconcile_history.linked_task = task  # save task before calculate
             portfolio_reconcile_history.save()
-            # need to save task before calculate
 
             portfolio_reconcile_history.calculate()
-            # portfolio_reconcile_history.linked_task = task
             portfolio_reconcile_history.save()
 
             count = count + 1
 
         except Exception as e:
-            err_msg = "calculate_portfolio_reconcile_history.e %s" % e
-            _l.error(err_msg)
+            err_msg = f"Error {repr(e)}"
             _l.error(
-                "calculate_portfolio_reconcile_history.e %s" % traceback.format_exc()
+                f"calculate_portfolio_reconcile_history {err_msg} trace={traceback.format_exc()}"
             )
-
             task.status = CeleryTask.STATUS_ERROR
-            task.error_message = e
+            task.error_message = err_msg
             task.save()
             raise RuntimeError(err_msg) from e

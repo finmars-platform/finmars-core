@@ -30,6 +30,7 @@ from poms.ui.models import (
     PortalInterfaceAccessModel,
     TemplateLayout,
     TransactionUserField,
+    UserInterfaceAccessModel,
 )
 from poms.users.fields import HiddenMemberField, MasterUserField
 
@@ -42,6 +43,25 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
             "value",
             "user_code",
             "name",
+        ]
+
+
+class UserInterfaceAccessModelSerializer(ModelWithUserCodeSerializer):
+    member = HiddenMemberField()
+    allowed_items = serializers.ListField(allow_null=False)
+
+    class Meta:
+        model = UserInterfaceAccessModel
+        fields = [
+            "id",
+            "name",
+            "role",
+            "user_code",
+            "configuration_code",
+            "allowed_items",
+            "created_at",
+            "modified_at",
+            "member",
         ]
 
 

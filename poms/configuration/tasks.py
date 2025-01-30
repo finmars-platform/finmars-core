@@ -14,6 +14,7 @@ from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
+from poms.common.http_client import HttpClient
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
@@ -24,6 +25,7 @@ from poms.configuration.handlers import (
 from poms.configuration.models import Configuration
 from poms.configuration.utils import (
     list_json_files,
+    post_workflow_template,
     read_json_file,
     run_workflow,
     save_json_to_file,
@@ -64,7 +66,7 @@ def _run_action(task: CeleryTask, action: dict):
 
 
 @finmars_task(name="configuration.import_configuration", bind=True)
-def import_configuration(self, task_id, *args, **kwargs):
+def import_configuration(self, task_id: int, *args, **kwargs) -> None:
     _l.info("import_configuration")
     _l.info(f"import_configuration {task_id}")
 
@@ -164,104 +166,118 @@ def import_configuration(self, task_id, *args, **kwargs):
         }
     )
 
-    index = 1
+    index = 0
 
-    stats = {"configuration": {}}
+    stats = {"configuration": {}, "workflow": {}, "manifest": {}, "other": {}}
 
-    for json_file in json_files:
-        if "manifest.json" in json_file:
-            index = index + 1
-            continue
-
-        if "workflows" in json_file:  # skip all json files that workflows
-            index = index + 1
-            continue
+    for json_file_path in json_files:
+        index = index + 1
 
         task.update_progress(
             {
                 "current": index,
                 "total": len(json_files),
                 "percent": round(index / (len(json_files) / 100)),
-                "description": f"Going to import {json_file}",
+                "description": f"Going to import {json_file_path}",
             }
         )
 
-        try:
-            json_data = read_json_file(json_file)
+        if json_file_path.endswith("manifest.json"):
+            stats["manifest"][json_file_path] = {"status": "skip"}
+            continue
 
-            content_type = json_data["meta"]["content_type"]
-            user_code = json_data.get("user_code")
-            SerializerClass = get_serializer(content_type)
+        json_data = read_json_file(json_file_path)
 
-            Model = SerializerClass.Meta.model
+        if "workflows" in json_file_path:
+            if not json_file_path.endswith("workflow.json"):
+                stats["other"][json_file_path] = {"status": "skip"}
+                continue
+            
+            if not isinstance(json_data, dict) or not (version:= json_data.get("version")) or version != "2" or not json_data.get("workflow"):
+                stats["workflow"][json_file_path] = {"status": "skip", "reason": "not template format"}
+                continue 
 
-            if user_code is not None:
-                # Check if the instance already exists
+            try:
+                post_workflow_template(task.master_user, json_data)
 
-                try:  # if member specific entity
-                    Model.objects.model._meta.get_field("member")
-                    instance = Model.objects.filter(
-                        user_code=user_code, member=task.member
-                    ).first()
-                except FieldDoesNotExist:
-                    instance = Model.objects.filter(user_code=user_code).first()
-            else:
-                instance = None
+                description = f"WorkflowTemplate created {json_file_path}"
+                stats["workflow"][json_file_path] = {"status": "success"}
 
-            serializer = SerializerClass(
-                instance=instance, data=json_data, context=context
-            )
-
-            if serializer.is_valid():
-                # Perform any desired actions, such as saving the data to the database
-                serializer.save()
-
-                stats["configuration"][json_file] = {"status": "success"}
-
-                task.update_progress(
-                    {
-                        "current": index,
-                        "total": len(json_files),
-                        "percent": round(index / (len(json_files) / 100)),
-                        "description": f"Imported {json_file}",
-                    }
-                )
-
-            else:
-                stats["configuration"][json_file] = {
+            except Exception as e:
+                _l.error(f"create Workflow Template for workflow v2 {e}")
+                description = f"Error {json_file_path}"
+                stats["workflow"][json_file_path] = {
                     "status": "error",
-                    "error_message": str(serializer.errors),
+                    "error_message": str(e),
                 }
-
-                _l.error(f"Invalid data in {json_file}: {serializer.errors}")
-
+            finally:
                 task.update_progress(
                     {
                         "current": index,
                         "total": len(json_files),
                         "percent": round(index / (len(json_files) / 100)),
-                        "description": f"Error {json_file}",
+                        "description": description,
                     }
                 )
 
-        except Exception as e:
-            _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
+        else:
+            try:
+                content_type = json_data["meta"]["content_type"]
+                user_code = json_data.get("user_code")
+                SerializerClass = get_serializer(content_type)
 
-            stats["configuration"][json_file] = {
-                "status": "error",
-                "error_message": str(e),
-            }
+                Model = SerializerClass.Meta.model
 
-            task.update_progress(
-                {
-                    "current": index,
-                    "total": len(json_files),
-                    "percent": round(index / (len(json_files) / 100)),
-                    "description": f"Error {json_file}",
+                if user_code is not None:
+                    # Check if the instance already exists
+
+                    try:  # if member specific entity
+                        Model.objects.model._meta.get_field("member")
+                        instance = Model.objects.filter(
+                            user_code=user_code, member=task.member
+                        ).first()
+                    except FieldDoesNotExist:
+                        instance = Model.objects.filter(user_code=user_code).first()
+                else:
+                    instance = None
+
+                serializer = SerializerClass(
+                    instance=instance, data=json_data, context=context
+                )
+
+                if serializer.is_valid():
+                    # Perform any desired actions, such as saving the data to the database
+                    serializer.save()
+                    stats["configuration"][json_file_path] = {"status": "success"}
+                    description = f"Imported {json_file_path}"
+
+                else:
+                    stats["configuration"][json_file_path] = {
+                        "status": "error",
+                        "error_message": str(serializer.errors),
+                    }
+                    _l.error(f"Invalid data in {json_file_path}: {serializer.errors}")
+                    description = f"Error {json_file_path}"
+
+            except Exception as e:
+                _l.error(f"import_configuration {e} traceback {traceback.format_exc()}")
+
+                stats["configuration"][json_file_path] = {
+                    "status": "error",
+                    "error_message": str(e),
                 }
-            )
+                description = f"Error {json_file_path}"
 
-        index = index + 1
+            finally:
+                task.update_progress(
+                    {
+                        "current": index,
+                        "total": len(json_files),
+                        "percent": round(index / (len(json_files) / 100)),
+                        "description": description,
+                    }
+                )
+
 
     # Import Workflows
 

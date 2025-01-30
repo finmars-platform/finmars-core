@@ -15,6 +15,7 @@ from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member
 
 
+#TODO DEPRECATED delete in 1.15.0-rc
 class PortalInterfaceAccessModel(AbstractClassModel):
     DATA_PORTFOLIO = 6
     DATA_ACCOUNT = 3
@@ -395,6 +396,7 @@ class PortalInterfaceAccessModel(AbstractClassModel):
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("portal interface access")
         verbose_name_plural = gettext_lazy("portal interface accesses")
+# DEPRECATED #
 
 
 class EntityTooltip(models.Model):
@@ -1304,3 +1306,55 @@ class Draft(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
+    member = models.ForeignKey(
+        Member,
+        related_name="member_interface_access",
+        verbose_name=gettext_lazy("member"),
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name=gettext_lazy("name"),
+    )
+    user_code = models.CharField(
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
+    )
+    role = models.CharField(
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("role user code"),
+    )
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ["member", "user_code"],
+        ]
+
+    @property
+    def allowed_items(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                pass
+
+        return []
+
+    @allowed_items.setter
+    def allowed_items(self, val):
+        try:
+            self.json_data = json.dumps(
+                val, cls=DjangoJSONEncoder, sort_keys=True
+            ) if val else "[]"
+        except (ValueError, TypeError):
+            self.json_data = "[]"

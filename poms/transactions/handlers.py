@@ -123,7 +123,9 @@ class TransactionTypeProcess:
         )
 
         master_user = transaction_type.master_user
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.member = member
         self.transaction_type = transaction_type
@@ -602,8 +604,8 @@ class TransactionTypeProcess:
                     instrument = None
                     instrument_exists = False
 
-                    ecosystem_default = EcosystemDefault.objects.get(
-                        master_user=master_user
+                    ecosystem_default = EcosystemDefault.cache.get_cache(
+                        master_user_pk=master_user.pk
                     )
 
                     if user_code:
@@ -3263,8 +3265,8 @@ class TransactionTypeProcess:
                                     raise formula.InvalidExpression from e
 
                             except formula.InvalidExpression as e:
-                                ecosystem_default = EcosystemDefault.objects.get(
-                                    master_user=self.transaction_type.master_user
+                                ecosystem_default = EcosystemDefault.cache.get_cache(
+                                    master_user_pk=self.transaction_type.master_user.pk
                                 )
 
                                 _l.debug(f"error {repr(e)}")

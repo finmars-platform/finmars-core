@@ -52,8 +52,8 @@ class BalanceReportBuilderSql:
 
         self.instance.allocation_mode = Report.MODE_IGNORE
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self.instance.master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
         )
 
         _l.debug(
@@ -150,8 +150,8 @@ class BalanceReportBuilderSql:
             with connection.cursor() as cursor:
                 st = time.perf_counter()
 
-                ecosystem_defaults = EcosystemDefault.objects.get(
-                    master_user=celery_task.master_user
+                ecosystem_defaults = EcosystemDefault.cache.get_cache(
+                    master_user_pk=celery_task.master_user.pk
                 )
 
                 pl_query = PLReportBuilderSql.get_source_query(
@@ -1154,8 +1154,8 @@ def build(self, task_id, *args, **kwargs):
         with connection.cursor() as cursor:
             st = time.perf_counter()
 
-            ecosystem_defaults = EcosystemDefault.objects.get(
-                master_user=celery_task.master_user
+            ecosystem_defaults = EcosystemDefault.cache.get_cache(
+                master_user_pk=celery_task.master_user.pk
             )
 
             pl_query = PLReportBuilderSql.get_source_query(
