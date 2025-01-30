@@ -1,5 +1,6 @@
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
+from poms.file_reports.models import FileReport
 
 
 class DeleteReconcileHistoryTest(BaseTestCase):
@@ -33,6 +34,12 @@ class DeleteReconcileHistoryTest(BaseTestCase):
             portfolio_reconcile_group=group,
         )
 
+    def create_file_report(self) -> FileReport:
+        return FileReport.objects.create(
+            master_user=self.master_user,
+            file_name=self.random_string(),
+        )
+
     def test__delete_no_file_report(self):
         group = self.create_reconcile_group()
         group.portfolios.add(self.portfolio_1)
@@ -44,3 +51,20 @@ class DeleteReconcileHistoryTest(BaseTestCase):
         self.portfolio_1.destroy_reconcile_histories()
 
         self.assertIsNone(PortfolioReconcileHistory.objects.filter(pk=history.pk).first())
+
+    def test__delete_with_file_report(self):
+        group = self.create_reconcile_group()
+        group.portfolios.add(self.portfolio_1)
+        group.portfolios.add(self.portfolio_2)
+        history = self.create_reconcile_history(group)
+        file_report = self.create_file_report()
+        history.file_report = file_report
+        history.save()
+
+        self.assertIsNotNone(PortfolioReconcileHistory.objects.filter(pk=history.pk).first())
+        self.assertEqual(file_report.pk, history.file_report.pk)
+
+        self.portfolio_1.destroy_reconcile_histories()
+
+        self.assertIsNone(PortfolioReconcileHistory.objects.filter(pk=history.pk).first())
+        self.assertIsNone(FileReport.objects.filter(pk=history.pk).first())
