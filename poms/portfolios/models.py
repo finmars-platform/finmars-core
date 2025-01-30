@@ -1228,16 +1228,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         _l.info(f"report {report}")
 
-    def generate_json_report(self, content):
-        # _l.debug('self.result %s' % self.result.__dict__)
-
-        # _l.debug('generate_json_report.result %s' % result)
-
+    def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
         file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
-
         file_report.upload_file(
             file_name=file_name,
             text=json.dumps(content, indent=4, default=str),
