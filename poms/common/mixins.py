@@ -179,17 +179,26 @@ class BulkRestoreModelMixin(DestroyModelMixin):
 
         serializer = BulkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         data = serializer.validated_data
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.queryset
 
         if getattr(queryset.model, 'deleted_user_code', None):
             codes_to_restore = queryset.filter(id__in=data["ids"]).values_list('deleted_user_code', flat=True)
             if existing_codes := queryset.filter(user_code__in=codes_to_restore).values_list('user_code', flat=True):
-                raise FinmarsBaseException(
-                    error_key="field_unique_constraint_violation",
-                    message=f"Codes '{', '.join(existing_codes)}' already exist",
-                    status_code=409
+                return Response(
+                    status=409,
+                    data={
+                        "error": f"Codes '{', '.join(existing_codes)}' already exist",
+                        "error_key": "field_unique_constraint_violation"
+                    }
+                )
+            if missing_ids := [str(id) for id in data["ids"] if not queryset.filter(id=id).exists()]:
+                return Response(
+                    status=404,
+                    data={
+                        "error": f"IDs '{', '.join(missing_ids)}' don`t exist",
+                        "error_key": "value_does_not_exist"
+                    }
                 )
 
         content_type = ContentType.objects.get(app_label=queryset.model._meta.app_label, model=queryset.model._meta.model_name)

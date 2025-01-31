@@ -690,7 +690,9 @@ class PriceHistoryCheckerSql:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
+        )
 
     def process(self):
 
