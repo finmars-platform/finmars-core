@@ -1,12 +1,12 @@
-import logging
 import contextlib
+import logging
 import math
 import os
 import shutil
 import tempfile
 from io import BytesIO
+from typing import Any, Iterable
 from zipfile import ZipFile
-from typing import Any
 
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
@@ -19,6 +19,7 @@ from storages.backends.sftpstorage import SFTPStorage
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
+CHUNK_SIZE = 250
 
 
 def download_local_folder_as_zip(folder_path):
@@ -40,6 +41,16 @@ def pretty_size(file_size: int) -> str:
     p = math.pow(1024, i)
     s = round(file_size / p, 2)
     return f"{s} {size_name[i]}"
+
+
+def by_chunk(items: list, chunk_size: int = CHUNK_SIZE) -> Iterable:
+    chunk = []
+    for item in items:
+        if len(chunk) >= chunk_size:
+            yield chunk
+            chunk = []
+        chunk.append(item)
+    yield chunk
 
 
 class NamedBytesIO(BytesIO):
