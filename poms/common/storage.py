@@ -445,9 +445,11 @@ class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
             {"Key": obj.key}
             for obj in self.bucket.objects.filter(Prefix=directory_path)
         ]
-        # Delete files in the folder
+
+        # Delete files in the folder by chunks
         if objects_to_delete:
-            self.bucket.delete_objects(Delete={"Objects": objects_to_delete})
+            for chunk in by_chunk(objects_to_delete):
+                self.bucket.delete_objects(Delete={"Objects": chunk})
 
     def download_directory(self, directory_path, local_destination_path):
         _l.info("Starting download from S3 directory: %s", directory_path)
