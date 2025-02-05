@@ -12,8 +12,7 @@ class MoveViewSetTest(CreateUserMemberMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
+
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/explorer/move/"
 
         self.storage_patch = mock.patch(
