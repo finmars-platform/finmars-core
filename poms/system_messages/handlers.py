@@ -271,8 +271,12 @@ def forward_leave_channel_to_service(request, payload, user_code):
 
 def forward_user_subscribed_channels_to_service(request):
     try:
+        query_params = request.query_params.urlencode()
+        base_url = f"{service_url.format(space_code=request.space_code)}channels/subscribed/"
+        url = f"{base_url}?{query_params}" if query_params else base_url
+        
         response = requests.get(
-            f"{service_url.format(space_code=request.space_code)}channels/subscribed/",
+            url,
             headers=prepare_headers_for_service(request)
         )
         response.raise_for_status()
