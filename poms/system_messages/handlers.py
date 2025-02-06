@@ -124,8 +124,13 @@ def prepare_headers_for_service(request) -> dict:
 
 def forward_get_user_notifications(request):
     try:
+        query_params = request.query_params.urlencode()
+        
+        base_url = f"{service_url.format(space_code=request.space_code)}notifications/"
+        url = f"{base_url}?{query_params}" if query_params else base_url
+        
         response = requests.get(
-            f"{service_url.format(space_code=request.space_code)}notifications/",
+            url,
             headers=prepare_headers_for_service(request)
         )
         response.raise_for_status()
@@ -179,11 +184,15 @@ def forward_partial_update_notification_to_service(user_code, payload, request):
 
 def forward_get_user_subscriptions_to_service(request):
     try:
+        query_params = request.query_params.urlencode()
+        base_url = f"{service_url.format(space_code=request.space_code)}subscriptions/"
+        url = f"{base_url}?{query_params}" if query_params else base_url
+        
         response = requests.get(
-            f"{service_url.format(space_code=request.space_code)}subscriptions/",
+            url,
             headers=prepare_headers_for_service(request)
         )
-
+        
         response.raise_for_status()
         return response.json()  # Return the exact response from the microservice
     except requests.exceptions.RequestException as e:
@@ -304,8 +313,12 @@ def forward_get_statuses_to_service(request):
 def forward_get_all_channels_to_service(request):
     """Forward request to get all channels from notification service"""
     try:
+        query_params = request.query_params.urlencode()
+        base_url = f"{service_url.format(space_code=request.space_code)}channels/all_channels/"
+        url = f"{base_url}?{query_params}" if query_params else base_url
+        
         response = requests.get(
-            f"{service_url.format(space_code=request.space_code)}channels/all_channels/",
+            url,
             headers=prepare_headers_for_service(request)
         )
         response.raise_for_status()
