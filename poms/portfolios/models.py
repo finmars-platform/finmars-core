@@ -3,10 +3,10 @@ from datetime import date
 from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-from django.core.cache import cache
 
 from poms.clients.models import Client
 from poms.common.fields import ResourceGroupsField
@@ -322,7 +322,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             .order_by("accounting_date")
             .first()
         )
-        self.first_cash_flow_date = first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        self.first_cash_flow_date = (
+            first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        )
 
         _l.info(
             f"calculate_first_transactions_dates succeed: "
@@ -339,6 +341,23 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         """
         param = f"transaction__{date_field}"
         return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
+
+    def destroy_reconcile_histories(self):
+        """
+        As portfolio's set of transactions has changed, so all reconcile history objects are not valid anymore,
+        and has to be removed.
+        """
+        groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
+        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group__in=groups).select_related(
+            "file_report"
+        )
+        for history in histories:
+            if history.file_report:
+                history.file_report.delete()
+
+            history.delete()
+
+        _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
@@ -1213,16 +1232,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         _l.info(f"report {report}")
 
-    def generate_json_report(self, content):
-        # _l.debug('self.result %s' % self.result.__dict__)
-
-        # _l.debug('generate_json_report.result %s' % result)
-
+    def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
         file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
 
         file_report = FileReport()
-
         file_report.upload_file(
             file_name=file_name,
             text=json.dumps(content, indent=4, default=str),
