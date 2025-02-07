@@ -98,11 +98,7 @@ class ExplorerViewSet(AbstractViewSet):
 
         directories, files = storage.listdir(path)
 
-        members_usernames = set(
-            Member.objects.exclude(user=request.user).values_list(
-                "user__username", flat=True
-            )
-        )
+        members_usernames = set(Member.objects.exclude(user=request.user).values_list("user__username", flat=True))
 
         results = [
             {
@@ -110,9 +106,7 @@ class ExplorerViewSet(AbstractViewSet):
                 "name": dir_name,
             }
             for dir_name in directories
-            if path == f"{space_code}/"
-            and dir_name not in members_usernames
-            or path != f"{space_code}/"
+            if path == f"{space_code}/" and dir_name not in members_usernames or path != f"{space_code}/"
         ]
         for file in files:
             created_at = storage.get_created_time(f"{path}/{file}")
@@ -286,9 +280,6 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
         is_dir = serializer.validated_data["is_dir"]
-
-        # TODO validate path that either public/import/system or user home directory
-
         try:
             _l.info(f"going to delete {path}")
 
@@ -451,9 +442,7 @@ class DownloadViewSet(AbstractViewSet):
         try:
             with storage.open(path, "rb") as file:
                 response = FileResponse(file, content_type="application/octet-stream")
-                response[
-                    "Content-Disposition"
-                ] = f'attachment; filename="{os.path.basename(path)}"'
+                response["Content-Disposition"] = f'attachment; filename="{os.path.basename(path)}"'
 
         except Exception as e:
             _l.error(f"DownloadViewSet failed due to {repr(e)}")

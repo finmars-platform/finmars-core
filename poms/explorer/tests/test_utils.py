@@ -2,7 +2,7 @@ from unittest import mock
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.common.storage import FinmarsS3Storage
+from poms.common.storage import FinmarsS3Storage, by_chunk
 from poms.explorer.models import DIR_SUFFIX, StorageObject
 from poms.explorer.utils import (
     define_content_type,
@@ -235,3 +235,18 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(directory.parent.path, f"{self.space}{DIR_SUFFIX}")
 
         self.assertEqual(file.parent, directory)
+
+
+class ByChunkTest(BaseTestCase):
+
+    @BaseTestCase.cases(
+        ("1", [1,2,3,4,5,6,7,8,9,0], 2, 5),
+        ("2", [1,2,3,4,5,6,7,8,9,0], 3, 4),
+        ("3", [1,2,3,4,5,6,7,8,9,0], 4, 3),
+        ("4", [1,2,3,4,5,6,7,8,9,0], 8, 2),
+        ("5", [1,2,3,4,5,6,7,8,9,0], 10, 1),
+        ("6", [1,2,3,4,5,6,7,8,9,0], 1, 10),
+    )
+    def test_chunks(self, items, chunk_size, result):
+        count = sum(1 for _ in by_chunk(items, chunk_size))
+        self.assertEqual(count, result)
