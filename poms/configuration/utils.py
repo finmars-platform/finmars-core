@@ -385,6 +385,14 @@ def upload_directory_to_storage(local_directory, storage_directory):
                 storage.save(storage_file_path, ContentFile(content))
 
 
+def get_headers_with_token(token: str):
+    return {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {token}",
+    } 
+
+
 def run_workflow(user_code, payload, master_task):
     from django.contrib.auth import get_user_model
 
@@ -400,11 +408,7 @@ def run_workflow(user_code, payload, master_task):
 
     # _l.info('refresh %s' % refresh.access_token)
 
-    headers = {
-        "Content-type": "application/json",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {refresh.access_token}",
-    }
+    headers = get_headers_with_token(refresh.access_token)
 
     realm_code = master_task.master_user.realm_code
     space_code = master_task.master_user.space_code
@@ -432,11 +436,7 @@ def get_workflow(workflow_id: int, master_task):
 
     # _l.info('refresh %s' % refresh.access_token)
 
-    headers = {
-        "Content-type": "application/json",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {refresh.access_token}",
-    }
+    headers = get_headers_with_token(refresh.access_token)
 
     realm_code = master_task.master_user.realm_code
     space_code = master_task.master_user.space_code
@@ -464,21 +464,23 @@ def get_default_configuration_code():
     return f"local.poms.{master_user.space_code}"
 
 
-def post_workflow_template(platform, json_data: dict[str, Any]):
+def create_or_update_workflow_template(platform, json_data: dict[str, Any]):
     from django.contrib.auth import get_user_model
 
     from poms_app import settings
 
     user_code = json_data["workflow"]["user_code"]
-    _l.info(f"Create Workflow Template for workflow v2 {user_code}")
+    _l.info(f"Create or update Workflow Template for workflow v2 {user_code}")
 
     http_client = HttpClient()
 
     User = get_user_model()
     bot = User.objects.get(username="finmars_bot")
     refresh = get_refresh_token(bot, platform)
+    headers = get_headers_with_token(refresh.access_token)
 
     base_url = f"https://{settings.DOMAIN_NAME}/{platform.realm_code}/{platform.space_code}"
+    api_endpoint = "workflow/api/v1/workflow-template"
 
     workflow_template_data = {
         "name": json_data["workflow"].get("name"),
@@ -487,12 +489,22 @@ def post_workflow_template(platform, json_data: dict[str, Any]):
         "data": json_data
     }
 
-    http_client.post(
-        f"{base_url}/workflow/api/v1/workflow-template/",
-        json=workflow_template_data,
-        headers={
-            "Content-type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {refresh.access_token}",
-        },
-    )    
+    # check if workflow template exists
+    workflow_templates_response_data = http_client.get(
+        f"{base_url}/{api_endpoint}/?user_code={user_code}",
+        headers=headers,
+    )
+
+    if workflow_templates_response_data.get("count"):
+        workflow_template_id = workflow_templates_response_data["results"][0]["id"]
+        http_client.put(
+            f"{base_url}/{api_endpoint}/{workflow_template_id}/",
+            json=workflow_template_data,
+            headers=headers,
+        )
+    else:
+        http_client.post(
+            f"{base_url}/workflow/api/v1/workflow-template/",
+            json=workflow_template_data,
+            headers=headers,
+        )
