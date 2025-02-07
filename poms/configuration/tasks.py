@@ -14,7 +14,6 @@ from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
-from poms.common.http_client import HttpClient
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
@@ -24,8 +23,8 @@ from poms.configuration.handlers import (
 )
 from poms.configuration.models import Configuration
 from poms.configuration.utils import (
+    create_or_update_workflow_template,
     list_json_files,
-    post_workflow_template,
     read_json_file,
     run_workflow,
     save_json_to_file,
@@ -198,7 +197,7 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
                 continue 
 
             try:
-                post_workflow_template(task.master_user, json_data)
+                create_or_update_workflow_template(task.master_user, json_data)
 
                 description = f"WorkflowTemplate created {json_file_path}"
                 stats["workflow"][json_file_path] = {"status": "success"}
