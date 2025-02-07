@@ -280,9 +280,6 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
         is_dir = serializer.validated_data["is_dir"]
-
-        # TODO validate path that either public/import/system or user home directory
-
         try:
             _l.info(f"going to delete {path}")
 
