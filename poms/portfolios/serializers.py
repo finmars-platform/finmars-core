@@ -883,8 +883,45 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
 class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
-
     date_from = serializers.DateField(required=True)
     date_to = serializers.DateField(required=True)
+
+
+class PortfolioReconcileStatusSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    portfolios = serializers.ListField(child=serializers.IntegerField(min_value=1), required=True)
+
+    def validate(self, attrs: dict) -> dict:
+        portfolios_ids = attrs.get("portfolios", [])
+        if not portfolios_ids:
+            raise serializers.ValidationError({"portfolios": "Can't be empty"})
+
+        portfolios = list(Portfolio.objects.filter(id__in=portfolios_ids))
+        if not portfolios:
+            raise serializers.ValidationError({"portfolios": f"No portfolios with ids {portfolios_ids}"})
+
+        self.context["portfolios"] = portfolios
+        return attrs
+
+    def get_reconcile_groups(self) -> list[dict]:
+        result = []
+        for portfolio in self.context["portfolios"]:
+            groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio).values_list(
+                "last_calculated_at", flat=True
+            )
+            if not groups:
+                result.append({portfolio.id: "isn't member of any reconcile group"})
+                continue
+
+            times = list(filter(None, groups))
+            if not times:
+                result.append({portfolio.id: "reconciliation didn't start yet"})
+                continue
+
+            times.sort()
+
+            result.append({portfolio.id: times[-1].date()})
+
+        return result
