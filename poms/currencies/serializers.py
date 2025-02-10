@@ -155,7 +155,6 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         source="pricing_policy", read_only=True
     )
     fx_rate = FloatEvalField()
-
     procedure_modified_datetime = ReadOnlyField()
 
     class Meta:
