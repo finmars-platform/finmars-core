@@ -6,6 +6,11 @@ router = routers.DefaultRouter()
 
 router.register(
     r"client",
-    clients.ClietnsViewSet,
+    clients.ClientsViewSet,
     "client",
+)
+router.register(
+    r"client-secret",
+    clients.ClientSecretsViewSet,
+    "clientsecrets",
 )

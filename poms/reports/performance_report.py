@@ -28,6 +28,7 @@ from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegist
 from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+from poms.reports.sql_builders.pure_balance import PureBalanceReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import Transaction, TransactionClass
 from poms.users.models import EcosystemDefault
@@ -41,8 +42,8 @@ class PerformanceReportBuilder:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self.instance.master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
         )
 
         _l.debug("self.instance master_user %s" % self.instance.master_user)
@@ -189,7 +190,9 @@ class PerformanceReportBuilder:
 
         if not begin_date or begin_date <= self.instance.first_transaction_date:
 
-            begin_date = get_last_business_day(self.instance.first_transaction_date)
+            # szhitenev 2024-10-04
+            # before here was  begin_date = get_last_business_day(self.instance.first_transaction_date)
+            begin_date = self.instance.first_transaction_date
 
         self.instance.begin_date = begin_date
 
@@ -429,6 +432,9 @@ class PerformanceReportBuilder:
         dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
         # _l.debug('dates %s' % dates)
+
+        if len(dates) == 0:
+            return result
 
         if segmentation_type == "days":
             if date_from == date_to and is_business_day(date_from):
@@ -992,6 +998,31 @@ class PerformanceReportBuilder:
 
         return nav
 
+    def get_inception_date_cash_flow(self, portfolios, date, pricing_policy):
+
+        portfolio_registers = self.get_portfolio_registers()
+
+        portfolio_records = PortfolioRegisterRecord.objects.filter(
+            portfolio_register__in=portfolio_registers,
+            transaction_date__lte=date,  # 2023-12-29
+            transaction_class__in=[
+                TransactionClass.CASH_INFLOW,
+                TransactionClass.CASH_OUTFLOW,
+                TransactionClass.INJECTION,
+                TransactionClass.DISTRIBUTION,
+            ],
+        ).order_by("transaction_date")
+
+        cash_flow = 0
+
+        for record in portfolio_records:
+
+            fx_rate = self.get_record_fx_rate(record)
+
+            cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
+
+        return cash_flow
+
     def get_nav_by_date(self, portfolios, date, pricing_policy):
 
         balance_report = Report(master_user=self.instance.master_user)
@@ -1002,7 +1033,8 @@ class PerformanceReportBuilder:
         balance_report.portfolios = portfolios
         balance_report.report_currency = self.instance.report_currency
 
-        builder = BalanceReportBuilderSql(instance=balance_report)
+        # builder = BalanceReportBuilderSql(instance=balance_report)
+        builder = PureBalanceReportBuilderSql(instance=balance_report)
         balance_report = builder.build_balance_sync()
 
         nav = 0
@@ -1055,6 +1087,8 @@ class PerformanceReportBuilder:
         return fx_rate
 
     def build_modified_dietz(self, date_from, date_to):
+
+        start_time = time.perf_counter()
         _l.debug("performance_report.build_modified_dietz")
 
         portfolio_registers = self.get_portfolio_registers()
@@ -1065,10 +1099,23 @@ class PerformanceReportBuilder:
         # 2023-11-14 szhitenev
         pricing_policy = portfolio_registers[0].valuation_pricing_policy
 
+        begin_nav_start = time.perf_counter()
         begin_nav = self.get_nav_by_date(portfolios, date_from, pricing_policy)
+        _l.debug("Begin NAV calculated in: %s seconds", "{:3.3f}".format(time.perf_counter() - begin_nav_start))
+
+        end_nav_start = time.perf_counter()
         end_nav = self.get_nav_by_date(portfolios, date_to, pricing_policy)
+        _l.debug("End NAV calculated in: %s seconds", "{:3.3f}".format(time.perf_counter() - end_nav_start))
+
+        inception_cash_flow = 0
+        if date_from <= self.instance.first_transaction_date:
+            inception_cash_flow = self.get_inception_date_cash_flow(portfolios, date_from, pricing_policy)
+            date_from = self.instance.first_transaction_date - timedelta(days=1)
+            begin_nav = inception_cash_flow
+
 
         self.instance.execution_log = {"items": []}
+
 
         total_nav = begin_nav
         grand_cash_flow = 0
@@ -1107,6 +1154,7 @@ class PerformanceReportBuilder:
                     no_register_records.append(portfolio.user_code)
                     continue
 
+                #
                 portfolio_records = portfolio_records.filter(
                     transaction_date__gte=max(date_from, first_transaction_date), # 2023-10-30, 2023-09-29, # 2023-09-20
                 )
@@ -1149,6 +1197,10 @@ class PerformanceReportBuilder:
                         grand_cash_flow = 0
                         grand_cash_flow_weighted = 0
                         # total_nav += record_cash_flow
+                    elif record.transaction_date == self.instance.first_transaction_date:
+                        time_weight = 0
+                        grand_cash_flow = 0
+                        grand_cash_flow_weighted = 0
                     else:
                         time_weight = (date_to_n - (date_n-1)) / (date_to_n - date_from_n)
                         grand_cash_flow += record_cash_flow
@@ -1226,6 +1278,8 @@ class PerformanceReportBuilder:
         self.instance.end_nav = end_nav
 
         self.instance.grand_absolute_pl = end_nav - begin_nav - grand_cash_flow
+
+        _l.debug("performance_report.build_modified_dietz completed in: %s seconds", "{:3.3f}".format(time.perf_counter() - start_time))
 
     def check_can_calculate_annualized_report(self):
         if self.instance.bundle:

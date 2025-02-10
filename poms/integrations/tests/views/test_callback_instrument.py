@@ -5,7 +5,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
 from poms.csv_import.handlers import PERIODICITY_MAP
-from poms.instruments.models import AccrualCalculationSchedule, Instrument
+from poms.instruments.models import Accrual, AccrualCalculationSchedule, Instrument
 from poms.integrations.database_client import get_backend_callback_url
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
 
@@ -197,9 +197,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 2)
 
-        accruals = AccrualCalculationSchedule.objects.filter(
-            instrument=instrument
-        ).order_by("accrual_start_date")
+        accruals = AccrualCalculationSchedule.objects.filter(instrument=instrument).order_by("accrual_start_date")
         accrual_1 = accruals[0]
         self.assertIsNotNone(accrual_1)
         self.assertEqual(
@@ -287,12 +285,71 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)
 
-        accrual = AccrualCalculationSchedule.objects.filter(
-            instrument=instrument
-        ).first()
+        accrual = AccrualCalculationSchedule.objects.filter(instrument=instrument).first()
         self.assertIsNotNone(accrual)
         self.assertEqual(
             accrual.accrual_calculation_model.user_code,
             "DAY_COUNT_30_360_GERMAN",  # code 21
         )
         self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[1])
+
+    @skip("uncomment todo debug for local test")
+    def test__instrument_with_accruals_created(self):
+        instrument_code = self.random_string(11)
+        currency_code = self.random_string(3)
+        post_data = {
+            "request_id": self.task.id,
+            "task_id": None,
+            "data": {
+                "instruments": [
+                    {
+                        "instrument_type": {
+                            "user_code": "bond",
+                        },
+                        "user_code": instrument_code,
+                        "short_name": "test_short_name",
+                        "name": "test_name",
+                        "pricing_currency": {
+                            "code": currency_code,
+                        },
+                        "maturity_price": 100.0,
+                        "maturity_date": date.today(),
+                        "country": {
+                            "alpha_3": "USA",
+                        },
+                        "identifier": self.identifier,
+                        "factor_schedules": [],
+                        "accrual_calculation_schedules": [],
+                        "accruals": [
+                            {
+                                "user_code": f"{instrument_code}:{str(date.today())}",
+                                "date": date.today(),
+                                "size": 100.0,
+                                "notes": "",
+                            },
+                        ],
+                    },
+                ],
+                "currencies": [
+                    {
+                        "user_code": currency_code,
+                        "short_name": f"short_{currency_code}",
+                        "name": f"name_{currency_code}",
+                        "public_name": f"public_{currency_code}",
+                    }
+                ],
+            },
+        }
+
+        response = self.client.post(path=self.url, format="json", data=post_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument = self.validate_result_instrument(instrument_code)
+        self.assertEqual(len(instrument.accruals.all()), 1)
+
+        accrual = Accrual.objects.filter(instrument=instrument).first()
+        self.assertIsNotNone(accrual)
+        self.assertEqual(
+            accrual.user_code,
+            post_data["data"]["instruments"][0]["accruals"][0]["user_code"],
+        )

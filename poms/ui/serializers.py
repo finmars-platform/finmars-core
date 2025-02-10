@@ -1,38 +1,38 @@
-from __future__ import unicode_literals
-
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
-from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
+from mptt.utils import get_cached_trees
+
 from poms.common.serializers import (
-    ModelWithTimeStampSerializer,
     ModelMetaSerializer,
+    ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import (
-    ListLayout,
-    EditLayout,
     Bookmark,
-    ConfigurationExportLayout,
-    ComplexTransactionUserField,
-    InstrumentUserField,
-    PortalInterfaceAccessModel,
-    DashboardLayout,
-    TemplateLayout,
-    ContextMenuLayout,
-    EntityTooltip,
-    ColorPaletteColor,
     ColorPalette,
-    CrossEntityAttributeExtension,
+    ColorPaletteColor,
     ColumnSortData,
-    TransactionUserField,
-    MobileLayout,
-    MemberLayout,
+    ComplexTransactionUserField,
+    ConfigurationExportLayout,
+    ContextMenuLayout,
+    CrossEntityAttributeExtension,
+    DashboardLayout,
     Draft,
+    EditLayout,
+    EntityTooltip,
+    InstrumentUserField,
+    ListLayout,
+    MemberLayout,
+    MobileLayout,
+    PortalInterfaceAccessModel,
+    TemplateLayout,
+    TransactionUserField,
+    UserInterfaceAccessModel,
 )
-from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.users.fields import HiddenMemberField, MasterUserField
 
 
 class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
@@ -43,6 +43,25 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
             "value",
             "user_code",
             "name",
+        ]
+
+
+class UserInterfaceAccessModelSerializer(ModelWithUserCodeSerializer):
+    member = HiddenMemberField()
+    allowed_items = serializers.ListField(allow_null=False)
+
+    class Meta:
+        model = UserInterfaceAccessModel
+        fields = [
+            "id",
+            "name",
+            "role",
+            "user_code",
+            "configuration_code",
+            "allowed_items",
+            "created_at",
+            "modified_at",
+            "member",
         ]
 
 

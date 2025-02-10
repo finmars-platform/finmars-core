@@ -2,6 +2,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.expressions_engine import formula
 from poms.iam.models import ResourceGroup
 from poms.portfolios.models import Portfolio
+from poms.users.models import Member
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -13,6 +14,8 @@ PORTFOLIO_DATA_SHORT = {
     "is_deleted": False,
     "is_enabled": True,
     "registers": [],
+    "client": None,
+    "client_object": None,
     "deleted_user_code": None,
     "attributes": [],
     "accounts_object": [
@@ -168,6 +171,27 @@ PORTFOLIO_DATA_FULL = {
         "model_name": "portfolio",
         "space_code": "space00000",
     },
+    "client": "test",
+    "client_object": {
+        "id": 1,
+        "user_code": "test",
+        "name": "test",
+        "short_name": "test",
+        "public_name": "test",
+        "notes": "test",
+        "deleted_user_code": None,
+        "owner": {
+            "id": 1,
+            "username": "finmars_bot"
+        },
+        "meta": {
+            "content_type": "clients.client",
+            "app_label": "clients",
+            "model_name": "client",
+            "space_code": "space00000",
+            "realm_code": "realm00000"
+        }
+    },
 }
 
 
@@ -245,6 +269,8 @@ class PortfolioViewSetTest(BaseTestCase):
             name=name,
             user_code=name,
             description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
         )
 
     def test_add_resource_group(self):
@@ -361,3 +387,17 @@ class PortfolioViewSetTest(BaseTestCase):
         portfolio_data = response.json()
         self.assertEqual(len(portfolio_data["resource_groups"]), 0)
         self.assertEqual(portfolio_data["resource_groups"], [])
+
+    def test_update_client(self):
+        client = self.create_client_obj()
+
+        response = self.client.patch(
+            f"{self.url}{self.portfolio.id}/",
+            data={"client": client.pk},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        portfolio_data = response.json()
+        self.assertEqual(portfolio_data["client"], client.pk)
+        self.assertEqual(portfolio_data["client_object"]["user_code"], client.user_code)

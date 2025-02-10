@@ -3,12 +3,14 @@ import ipaddress
 import json
 import logging
 import re
+import socket
 import time
 import uuid
 from threading import local
-from django.db import connection
+
 from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
+from django.db import connection
 from django.http.response import JsonResponse
 from django.utils.cache import add_never_cache_headers, get_max_age, patch_cache_control
 from django.utils.deprecation import MiddlewareMixin
@@ -20,7 +22,6 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     PermissionDenied,
 )
-import socket
 
 from geoip2.errors import AddressNotFoundError
 from memory_profiler import profile
@@ -193,11 +194,19 @@ class KeycloakMiddleware:
         print(f"self.keycloak {self.keycloak}")
 
     def __call__(self, request):
-        return self.get_response(request)
+        response = self.get_response(request)
+
+        # If authentication timing is available, add it to the response headers
+        if hasattr(request, "keycloak_auth_time"):
+            response["X-Keycloak-Auth-Time"] = request.keycloak_auth_time
+
+        return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         # for now there is no role assigned yet
         request.roles = []
+        # Measure the time taken to authenticate with Keycloak
+        auth_start_time = time.perf_counter()
 
         # Checks the URIs (paths) that doesn't needs authentication
         if hasattr(settings, "KEYCLOAK_EXEMPT_URIS"):
@@ -254,6 +263,11 @@ class KeycloakMiddleware:
 
         # Add to userinfo to the view
         request.userinfo = self.keycloak.userinfo(token)
+
+        # Record authentication time
+        request.keycloak_auth_time = int((time.perf_counter() - auth_start_time) * 1000)
+
+        print('keycloak_auth_time %s' % request.keycloak_auth_time)
 
 
 class LogRequestsMiddleware:
@@ -316,58 +330,31 @@ class MemoryMiddleware(object):
 
 
 class ResponseTimeMiddleware(MiddlewareMixin):
-    @staticmethod
-    def response_can_be_updated(request, response) -> bool:
-        return bool(
-            getattr(request, "start_time")
-            and getattr(request, "request_id")
-            and hasattr(response, "accepted_media_type")
-            and response.accepted_media_type == "application/json"
-            and response.content
-        )
-
-    @staticmethod
-    def update_response_content(data_dict: dict, request, response):
-        execution_time = int((time.time() - request.start_time) * 1000)
-        # TODO szhitenev probably extra json convert too heavy for performance
-        # data_dict["meta"] = {
-        #     "execution_time": execution_time,
-        #     "request_id": request.request_id,
-        # }
-        # response.content = json.dumps(data_dict).encode()
-
-        # Update the content length
-        response["X-Execution-Time"] = execution_time
-        response["X-Request-Id"] = request.request_id
-        response["X-Worker"] = socket.gethostname()
-        response["Content-Length"] = len(response.content)
-
     def process_request(self, request):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
-    def process_response(self, request, response):
-        if self.response_can_be_updated(request, response):
-            try:
-                json_data = json.loads(response.content.decode("utf-8"))
-                if isinstance(json_data, dict):
-                    self.update_response_content(json_data, request, response)
 
-            except Exception as e:
-                _l.error(
-                    f"ResponseTimeMiddleware error: {repr(e)} "
-                    f"request_id: {request.request_id}"
-                )
+    def process_response(self, request, response):
+        # Check if we have the start_time attribute to calculate the time
+        if hasattr(request, "start_time"):
+            execution_time = int((time.time() - request.start_time) * 1000)  # in ms
+            response["X-Execution-Time"] = execution_time
+            response["X-Request-Id"] = request.request_id
+            response["X-Worker"] = socket.gethostname()
 
         return response
 
 def schema_exists(schema_name):
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT schema_name
             FROM information_schema.schemata
             WHERE schema_name = %s;
-        """, [schema_name])
+            """,
+            [schema_name],
+        )
         return cursor.fetchone() is not None
 
 
@@ -380,35 +367,34 @@ class RealmAndSpaceMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        from django.contrib.contenttypes.models import ContentType
+
         # Example URL pattern: /realm0abcd/space0xyzv/
 
         request.realm_code = None
         request.space_code = None
 
-        path_parts = request.path_info.split('/')
+        path_parts = request.path_info.split("/")
 
-        if 'realm' in path_parts[1]:
+        if "realm" in path_parts[1]:
             request.realm_code = path_parts[1]
             request.space_code = path_parts[2]
 
             if not schema_exists(request.space_code):
-
                 # Uncomment in 1.9.0 when there is no more legacy Spaces
                 # Handle the error (e.g., log it, return a 400 Bad Request, etc.)
                 # For demonstration, returning a simple HttpResponseBadRequest
                 # return HttpResponseBadRequest("Invalid space code.")
 
                 with connection.cursor() as cursor:
-                    cursor.execute(f"SET search_path TO public;")
+                    cursor.execute("SET search_path TO public;")
 
-            else: # REMOVE IN 1.9.0, PROBABLY SECURITY ISSUE
-
+            else:  # REMOVE IN 1.9.0, PROBABLY SECURITY ISSUE
                 # Setting the PostgreSQL search path to the tenant's schema
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO {request.space_code};")
 
             # fix PLAT-1001: cache might return data from another schema, clear it
-            from django.contrib.contenttypes.models import ContentType
             ContentType.objects.clear_cache()
 
         else:
@@ -422,13 +408,28 @@ class RealmAndSpaceMiddleware:
         response = self.get_response(request)
 
         if not response.streaming and "/admin/" in request.path_info:
-            response.content = response.content.replace(b"spacexxxxx", request.space_code.encode())
+            response.content = response.content.replace(
+                b"spacexxxxx", request.space_code.encode()
+            )
             if "location" in response:
-                response["location"] = response["location"].replace('spacexxxxx', request.space_code)
+                response["location"] = response["location"].replace(
+                    "spacexxxxx", request.space_code
+                )
 
         # Optionally, reset the search path to default after the request is processed
         # This can be important in preventing "leakage" of the schema setting across requests
         with connection.cursor() as cursor:
             cursor.execute("SET search_path TO public;")
 
+        return response
+
+
+class TimerMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        request.start_time = time.perf_counter()
+
+    def process_response(self, request, response):
+        if hasattr(request, "start_time"):
+            duration = time.perf_counter() - request.start_time
+            print(f"==== Request to {request.path} took {duration:.3f}s")
         return response

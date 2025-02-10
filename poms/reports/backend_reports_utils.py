@@ -1,5 +1,6 @@
 import logging
 import itertools
+import time
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -345,6 +346,12 @@ class BackendReportHelperService:
     def convert_report_items_to_full_items(self, data):
         original_items = []  # probably we missing user attributes
 
+        to_representation_st = time.perf_counter()
+
+        def log_with_time(message):
+            elapsed_time = time.perf_counter() - to_representation_st
+            _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
+
         helper_dicts = {
             "accrued_currency": self.convert_helper_dict(data["item_currencies"]),
             "pricing_currency": self.convert_helper_dict(data["item_currencies"]),
@@ -375,6 +382,8 @@ class BackendReportHelperService:
             "strategy3_cash": self.convert_helper_dict(data["item_strategies3"]),
         }
 
+        # log_with_time("helper dicts are created")
+
         if "item_counterparties" in data:
             helper_dicts["counterparty"] = self.convert_helper_dict(
                 data["item_counterparties"]
@@ -395,6 +404,8 @@ class BackendReportHelperService:
             content_type=content_type
         )
 
+        # log_with_time("data prepared to be flattened")
+
         # _l.debug('data helper_dicts %s' %  helper_dicts)
         # _l.debug('data items %s' % data['items'][0])
         for item in data["items"]:
@@ -409,6 +420,9 @@ class BackendReportHelperService:
                     ] = custom_field["value"]
 
             original_items.append(original_item)
+
+
+        # log_with_time("data flattening")
 
         return original_items
 
@@ -586,41 +600,44 @@ class BackendReportHelperService:
     # Methods for filter_table_rows
 
     def filter_by_groups_filters(self, items, options):
-        groups_types = options["groups_types"]
+        # Retrieve the group types and values from the options dictionary
+        groups_types = options.get("groups_types", [])
+        groups_values = options.get("groups_values", [])
 
-        # _l.debug('filter_by_groups_filters.groups_types %s' % groups_types)
-        # _l.debug('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
+        # Early exit: If there are no group types or values, return the original list without filtering
+        if not groups_types or not groups_values:
+            # _l.debug(f"filter_by_groups_filters after len {len(items)}")
+            return items
 
-        # _l.debug(f'filter_by_groups_filters before len {len(items)}')
+        # Validate that both lists have the same length
+        if len(groups_types) != len(groups_values):
+            _l.warning("Mismatch between groups_types and groups_values lengths")
+            # Optionally, handle this by truncating the longer list or raising an error
+            min_length = min(len(groups_types), len(groups_values))
+            groups_types = groups_types[:min_length]
+            groups_values = groups_values[:min_length]
 
-        if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
-            filtered_items = []
-            for item in items:
-                match = True
-                for i in range(len(options["groups_values"])):
-                    key = options["groups_types"][i]["key"]
-                    value = options["groups_values"][i]
-                    converted_key = self.convert_name_key_to_user_code_key(key)
+        # Filter the items based on group types and values
+        # We use a list comprehension for efficiency and readability
+        filtered_items = [
+            item  # Include item in the filtered list if it matches all criteria
+            for item in items
+            if all(  # `all` checks that every condition in the inner loop is True
+                self.get_filter_match(
+                    item,
+                    self.convert_name_key_to_user_code_key(groups_types[i]["key"]),
+                    groups_values[i]
+                )
+                for i in range(len(groups_types))  # Iterate over each index in group types
+            )
+        ]
 
-                    # _l.debug('filter_by_groups_filters.key %s' % key)
-                    # _l.debug('filter_by_groups_filters.value %s' % value)
+        # Log the final count of filtered items
+        # _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
 
-                    match = self.get_filter_match(item, converted_key, value)
+        # Return the filtered list
+        return filtered_items
 
-                    if not match:
-                        break
-                if match:
-                    filtered_items.append(item)
-
-            # _l.debug('filter_by_groups_filters.filtered_items %s' % filtered_items)
-
-            _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
-
-            return filtered_items
-
-        _l.debug(f"filter_by_groups_filters after len {len(items)}")
-
-        return items
 
     def filter_by_global_table_search(self, items, options):
         query = options.get("globalTableSearch", "")
@@ -646,19 +663,19 @@ class BackendReportHelperService:
         return list(filter(item_matches, items))
 
     def filter(self, items, options):
-        _l.debug(f"Before filter {len(items)}")
+        # _l.debug(f"Before filter {len(items)}")
 
         items = self.filter_by_global_table_search(items, options)
 
-        _l.debug(f"After filter_by_global_table_search {len(items)}")
+        # _l.debug(f"After filter_by_global_table_search {len(items)}")
 
         items = self.filter_table_rows(items, options)
 
-        _l.debug(f"After filter_table_rows {len(items)}")
+        # _l.debug(f"After filter_table_rows {len(items)}")
 
         # items = self.filter_by_groups_filters(items, options)
 
-        _l.debug(f"After filter_by_groups_filters {len(items)}")
+        # _l.debug(f"After filter_by_groups_filters {len(items)}")
 
         return items
 

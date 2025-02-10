@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.db.models import Q
+from django_filters import Filter
 from rest_framework.filters import BaseFilterBackend
 
 from poms.instruments.models import Instrument, InstrumentType
@@ -109,16 +110,14 @@ class InstrumentsUserCodeFilter(BaseFilterBackend):
         return queryset
 
 
-class IdentifierKeysValuesFilter(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        keys_values = request.query_params.get('identifier_keys_values', None)
-
-        if keys_values is None:
+class IdentifierKeysValuesFilter(Filter):
+    def filter(self, queryset, value):
+        if not value:
             return queryset
 
-        filter_data = json.loads(keys_values)
+        filter_data = json.loads(value)
         filter_q = Q()
-        for key, value in filter_data.items():
-            filter_q &= Q(**{f"identifier__{key}": value})
+        for key, val in filter_data.items():
+            filter_q &= Q(**{f"identifier__{key}": val})
 
         return queryset.filter(filter_q)

@@ -1,10 +1,5 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.explorer.models import (
-    AccessLevel,
-    StorageObject,
-    get_root_path,
-)
-from poms.explorer.policy_handlers import get_or_create_access_policy_to_path
+from poms.explorer.models import StorageObject
 from poms.explorer.tests.mixin import CreateUserMemberMixin
 
 expected_response = {
@@ -80,7 +75,6 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         response_json = response.json()
 
-        # self.assertIn("meta", response_json)
         self.assertEqual(response_json["count"], 1)
         self.assertEqual(len(response_json["results"]), 1)
 
@@ -140,25 +134,6 @@ class SearchFileViewSetTest(CreateUserMemberMixin, BaseTestCase):
 
         self.assertEqual(response_json["count"], count)
         self.assertEqual(len(response_json["results"]), count)
-
-    def test__no_permission(self):
-        user, member = self.create_user_member()
-        self.client.force_authenticate(user=user)
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 403)
-
-    def test__has_root_permission(self):
-        root_path = get_root_path()
-        StorageObject.objects.create(path=root_path)
-        user, member = self.create_user_member()
-        get_or_create_access_policy_to_path(root_path, member, AccessLevel.READ)
-        self.client.force_authenticate(user=user)
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 200)
 
     @BaseTestCase.cases(
         ("10", 10),

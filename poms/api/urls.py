@@ -5,6 +5,7 @@ from rest_framework import routers
 import poms.accounts.urls as account_router
 import poms.api.views as api
 import poms.celery_tasks.views as celery_tasks
+import poms.clients.urls as clients_router
 import poms.common.views as common
 import poms.complex_import.views as complex_import
 import poms.configuration.views as configuration
@@ -50,8 +51,6 @@ from poms.auth_tokens.views import (
     SetAuthToken,
 )
 from poms.explorer.views import ExplorerServerFileViewSet
-import poms.clients.urls as clients_router
-
 
 router = routers.DefaultRouter()
 
@@ -63,7 +62,7 @@ router.register(
 router.register(
     "system/whitelabel",
     system.WhitelabelViewSet,
-    "system-whitelabel",
+    "Whitelabel",
 )
 router.register(
     "reference-tables/reference-table",
@@ -108,10 +107,6 @@ router.register(
     r"specific-data/values-for-select",
     common.ValuesForSelectViewSet,
     "valuesforselect",
-)
-router.register(
-    "notifications/notification",
-    notifications.NotificationViewSet,
 )
 router.register(
     "data-provider/bloomberg/credential",
@@ -175,7 +170,7 @@ router.register(
 router.register(
     r"utils/date/calc-period-date",
     api.CalcPeriodDateViewSet,
-    "calc_period_date",
+    "calculate_period_date",
 )
 router.register(
     r"utils/date/last-business-day",
@@ -263,13 +258,10 @@ router.register(
     schedules.ScheduleViewSet,
     "schedule",
 )
-router.register(
-    r"system-messages/message",
-    system_messages.SystemMessageViewSet,
-)
 router.register(  # Probably deprecated
     r"credentials/credentials",
     credentials.CredentialsViewSet,
+    "Credentials"
 )
 router.register(  # Probably deprecated
     r"integrations/data-provider",
@@ -323,15 +315,26 @@ router.register(
 router.register(
     r"history/historical-record",
     history.HistoricalRecordViewSet,
-    "historical-record",
+    "HistoricalRecord",
 )
 router.register(
     r"auth-tokens/personal-access-token",
     PersonalAccessTokenViewSet,
-    "personal_access_token",
+    "PersonalAccessToken",
+)
+router.register(
+    r"system-messages/message",
+    system_messages.SystemMessageViewSet,
+    "SystemMessage"
+)
+router.register(
+    "notifications/notification",
+    notifications.NotificationViewSet,
 )
 
+
 urlpatterns = [
+    re_path(r"^v1/system-notifications/", include("poms.system_messages.urls")),
     re_path(r"^v1/users/", include(users_router.router.urls)),
     re_path(r"^v1/accounts/", include(account_router.router.urls)),
     re_path(r"^v1/portfolios/", include(portfolio_router.router.urls)),

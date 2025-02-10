@@ -17,39 +17,39 @@ from rest_framework.views import exception_handler
 
 import pandas as pd
 
+from poms.expressions_engine.exceptions import InvalidExpression
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
 
-VALID_FREQUENCY = {"D", "W", "M", "Q", "Y"}
+VALID_FREQUENCY = {"D", "W", "M", "Q", "Y", "C"}
 
 FORWARD = 1
 
 calc_shift_date_map = {
-        "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
-        "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
-        "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
-        "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
-        "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
-
-        "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
-        "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
-        "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
-        "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
-        "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
-    }
+    "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
+    "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
+    "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
+    "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
+    "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
+    "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
+    "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
+    "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
+    "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
+    "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
+}
 
 frequency_map = {
-        "D": lambda shift=1: pd.offsets.Day(shift),
-        "W": lambda shift=1: pd.offsets.Week(shift),
-        "M": lambda shift=1: pd.offsets.MonthBegin(shift),
-        "Q": lambda shift=1: pd.offsets.QuarterBegin(n=shift, startingMonth=1),
-        "Y": lambda shift=1: pd.offsets.YearBegin(shift),
-        "ED": lambda shift=1: pd.offsets.Day(shift),
-        "EW": lambda shift=1: pd.offsets.Week(shift),
-        "EM": lambda shift=1: pd.offsets.MonthEnd(shift),
-        "EQ": lambda shift=1: pd.offsets.QuarterEnd(n=shift, startingMonth=3),
-        "EY": lambda shift=1: pd.offsets.YearEnd(shift),
+    "D": lambda shift=1: pd.offsets.Day(shift),
+    "W": lambda shift=1: pd.offsets.Week(shift),
+    "M": lambda shift=1: pd.offsets.MonthBegin(shift),
+    "Q": lambda shift=1: pd.offsets.QuarterBegin(n=shift, startingMonth=1),
+    "Y": lambda shift=1: pd.offsets.YearBegin(shift),
+    "ED": lambda shift=1: pd.offsets.Day(shift),
+    "EW": lambda shift=1: pd.offsets.Week(shift),
+    "EM": lambda shift=1: pd.offsets.MonthEnd(shift),
+    "EQ": lambda shift=1: pd.offsets.QuarterEnd(n=shift, startingMonth=3),
+    "EY": lambda shift=1: pd.offsets.YearEnd(shift),
 }
 
 
@@ -71,9 +71,7 @@ def db_class_check_data(model, verbosity, using):
             if verbosity >= 2:
                 print(f"create {model._meta.verbose_name} class -> {id}:{name}")
             with contextlib.suppress(IntegrityError, ProgrammingError):
-                model.objects.using(using).create(
-                    pk=id, user_code=code, short_name=name, name=name, description=name
-                )
+                model.objects.using(using).create(pk=id, user_code=code, short_name=name, name=name, description=name)
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
@@ -219,9 +217,7 @@ class MemorySavingQuerysetIterator(object):
             # By making a copy of the queryset and using that to actually access
             # the object, we ensure that there are only `max_obj_num` objects in
             # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[
-                i : i + self.max_obj_num
-            ]
+            smaller_queryset = copy.deepcopy(self._base_queryset)[i : i + self.max_obj_num]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
             yield from smaller_queryset.iterator()
 
@@ -290,9 +286,7 @@ def get_first_transaction(portfolio_instance) -> object:
     """
     from poms.transactions.models import Transaction
 
-    return Transaction.objects.filter(portfolio=portfolio_instance).order_by(
-        "accounting_date"
-    )[0]
+    return Transaction.objects.filter(portfolio=portfolio_instance).order_by("accounting_date")[0]
 
 
 def str_to_date(d):
@@ -366,6 +360,7 @@ def get_serializer(content_type_key):
     from poms.iam.serializers import (
         AccessPolicySerializer,
         GroupSerializer,
+        ResourceGroupSerializer,
         RoleSerializer,
     )
     from poms.instruments.serializers import (
@@ -466,6 +461,7 @@ def get_serializer(content_type_key):
         "iam.group": GroupSerializer,
         "iam.role": RoleSerializer,
         "iam.accesspolicy": AccessPolicySerializer,
+        "iam.resourcegroup": ResourceGroupSerializer,
         "reference_tables.referencetable": ReferenceTableSerializer,
         "configuration.newmembersetupconfiguration": NewMemberSetupConfigurationSerializer,
         "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,
@@ -555,32 +551,32 @@ def last_day_of_month(any_day):
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
+    if not (date_from and date_to):
+        raise ValueError("Both parameters 'date_from' & 'date_to' must be set")
 
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+    date_from = (
+        date_from
+        if isinstance(date_from, datetime.date)
+        else datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+    )
 
-    diff = date_to - date_from
+    date_to = (
+        date_to
+        if isinstance(date_to, datetime.date)
+        else datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+    )
 
-    result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-        if to_string:
-            result.append(str(day))
-        else:
-            result.append(day)
+    if date_from > date_to:
+        raise ValueError(f"Parameter 'date_from' {date_from} must be less or equal 'date_to' {date_to}")
 
-    return result
+    dates = [date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)]
+
+    return [str(date) for date in dates] if to_string else dates
 
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
+        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
 
     if not isinstance(date_to, datetime.date):
         date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
@@ -602,9 +598,7 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
+        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
 
     if not isinstance(date_to, datetime.date):
         date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
@@ -675,9 +669,7 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
         else:
             if to_string:
-                end_of_months.append(
-                    last_business_day.strftime(settings.API_DATE_FORMAT)
-                )
+                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
             else:
                 end_of_months.append(last_business_day)
 
@@ -766,7 +758,7 @@ def shift_to_bday(date, shift):
     return date
 
 
-def get_validated_date(date) -> datetime.datetime:
+def get_validated_date(date) -> datetime.date:
     if not isinstance(date, datetime.date):
         return datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
 
@@ -782,11 +774,14 @@ def split_date_range(
     """
     :param start_date: Start date in YYYY-MM-DD format.
     :param end_date: End date in YYYY-MM-DD format.
-    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) / 
-    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom).
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param is_only_bday: Whether to adjust the dates to business days.
     :return: A list of tuples[str], each containing the start and end of a frequency.
     """
+    if frequency == "C":
+        return [start_date, end_date]
+
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
     freq_start = frequency
@@ -837,17 +832,24 @@ def pick_dates_from_range(
     :param start_date: Start date in YYYY-MM-DD format.
     :param end_date: End date in YYYY-MM-DD format.
     :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly).
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param is_only_bday: Whether to adjust the dates to business days.
     :param start: The beginning of frequency, if False end of frequency.
     :return: A list, containing the start or end of a each frequency.
     """
+    if frequency == "C":
+        return [start_date, end_date]
+
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
     frequency = frequency if start else "E" + frequency
 
     dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
     dates = [d.date() for d in dates]
+
+    # don't meets conditions
+    if not len(dates):
+        return []
 
     # pd.date_range - adds dates that fall completely within
     # the frequency. Adding in list uneven areas of date
@@ -878,25 +880,28 @@ def pick_dates_from_range(
     return pick_dates
 
 
-def calc_period_date(
+def calculate_period_date(
     date: str | datetime.date,
     frequency: str,
     shift: int,
-    is_only_bday: bool,
-    start: bool,
+    is_only_bday=False,
+    start=False,
 ) -> str:
     """
     Calculates the start or end date of a certain time period,
     with the possibility of shifting forward or backward by several periods.
-    
+
     :param date: A string in YYYY-MM-DD ISO format representing the current date.
     :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly).
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
     :param shift: Indicating how many periods to shift (-N for backward, +N for forward).
     :param is_only_bday: Whether to adjust the dates to business days.
     :param start: The beginning of frequency, if False end of frequency.
     :return: The calculated date in YYYY-MM-DD format.
     """
+    if frequency == "C":
+        return date
+
     frequency = frequency if start else "E" + frequency
     date = get_validated_date(date)
     if "W" in frequency:
@@ -911,6 +916,7 @@ def calc_period_date(
             date = shift_to_bday(date, -1)
 
     return str(date.strftime(settings.API_DATE_FORMAT))
+
 
 # endregion Dates
 
@@ -1008,7 +1014,7 @@ class FinmarsNestedObjects(NestedObjects):
             ret["related"] = children
         return ret
 
-    def nested(self):
+    def nested(self, *args, **kwargs):
         seen = set()
         roots = []
         for root in self.edges.get(None, ()):

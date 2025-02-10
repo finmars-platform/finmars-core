@@ -10,11 +10,18 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
-from poms.iam.models import AccessPolicy, Group, ResourceGroup, Role
+from poms.iam.models import (
+    AccessPolicy,
+    Group,
+    ResourceGroup,
+    ResourceGroupAssignment,
+    Role,
+)
 from poms.iam.permissions import FinmarsAccessPolicy
 from poms.iam.serializers import (
     AccessPolicySerializer,
     GroupSerializer,
+    ResourceGroupAssignmentSerializer,
     ResourceGroupSerializer,
     RoleSerializer,
 )
@@ -201,7 +208,7 @@ class ResourceGroupViewSet(ModelViewSet):
     A viewset for viewing and editing ResourceGroup instances.
     """
 
-    queryset = ResourceGroup.objects.all()
+    queryset = ResourceGroup.objects.prefetch_related("assignments")
     serializer_class = ResourceGroupSerializer
 
     def destroy(self, request, *args, **kwargs):
@@ -209,3 +216,12 @@ class ResourceGroupViewSet(ModelViewSet):
         instance.destroy_assignments()
         instance.delete()
         return Response(status=HTTP_204_NO_CONTENT)
+
+
+class ResourceGroupAssignmentViewSet(ModelViewSet):
+    """
+    A viewset for viewing and editing ResourceGroupAssignment instances.
+    """
+
+    queryset = ResourceGroupAssignment.objects.select_related("resource_group")
+    serializer_class = ResourceGroupAssignmentSerializer

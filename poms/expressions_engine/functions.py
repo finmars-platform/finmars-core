@@ -16,7 +16,7 @@ from django.utils import numberformat
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
-from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose
+from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose, calculate_period_date
 from poms.expressions_engine.exceptions import ExpressionEvalError, InvalidExpression
 
 _l = logging.getLogger("poms.formula")
@@ -166,6 +166,25 @@ def _add_days(date, days):
     if not isinstance(days, datetime.timedelta):
         days = datetime.timedelta(days=int(days))
     return date + days
+
+def _days_diff(date_1, date_2):
+    """
+    Calculate the difference in days between two dates.
+    :param date_1: First date (datetime or string in YYYY-MM-DD format).
+    :param date_2: Second date (datetime or string in YYYY-MM-DD format).
+    :return: Integer difference in days.
+    """
+    # If the dates are strings, convert them to datetime objects
+    if isinstance(date_1, str):
+        date_1 = datetime.datetime.strptime(date_1, "%Y-%m-%d")
+    if isinstance(date_2, str):
+        date_2 = datetime.datetime.strptime(date_2, "%Y-%m-%d")
+
+    # Calculate the difference
+    diff = date_2 - date_1
+
+    # Return the absolute difference in days
+    return diff.days
 
 
 def _add_weeks(date, weeks):
@@ -329,7 +348,9 @@ def _calculate_balance_report(
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -405,7 +426,9 @@ def _calculate_pl_report(
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -644,6 +667,25 @@ def _get_date_last_year_end_business(date):
     offset = BYearEnd()
 
     return offset.rollback(date).date()
+
+
+def _calculate_period_date(
+    date: str | datetime.date,
+    frequency: str,
+    shift: int,
+    is_only_bday=False,
+    start=False,
+) -> str:
+    """
+    To get information refer to docstring for the `calculate_period_date` function
+    
+    :param date: A string in YYYY-MM-DD ISO format representing the current date / date / a string that is 
+    another expression that evaluates to date.
+    
+    """
+    date = _parse_date(date)
+
+    return calculate_period_date(date, frequency, shift, is_only_bday, start)
 
 
 def _format_date2(date, format_=None, locale=None):
@@ -3160,7 +3202,9 @@ def _get_principal_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3274,7 +3318,9 @@ def _get_principal_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3395,7 +3441,9 @@ def _get_transactions_amounts_on_date(
 
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         if report_currency:
             report_currency = _safe_get_currency(evaluator, report_currency)
@@ -3619,7 +3667,9 @@ def _get_instrument_report_data(
 
         instrument = _safe_get_instrument(evaluator, instrument)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         currency = _safe_get_currency(evaluator, report_currency)
         if pricing_policy:
@@ -3801,7 +3851,7 @@ def _get_default_portfolio(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.portfolio
 
@@ -3824,7 +3874,7 @@ def _get_default_instrument(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.instrument
 
@@ -3847,7 +3897,7 @@ def _get_default_account(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.account
 
@@ -3870,7 +3920,7 @@ def _get_default_currency(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.currency
 
@@ -3893,7 +3943,7 @@ def _get_default_transaction_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.transaction_type
 
@@ -3916,7 +3966,7 @@ def _get_default_instrument_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.instrument_type
 
@@ -3939,7 +3989,7 @@ def _get_default_account_type(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.account_type
 
@@ -3962,7 +4012,7 @@ def _get_default_pricing_policy(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.pricing_policy
 
@@ -3985,7 +4035,7 @@ def _get_default_responsible(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.responsible
 
@@ -4008,7 +4058,7 @@ def _get_default_counterparty(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.counterparty
 
@@ -4031,7 +4081,7 @@ def _get_default_strategy1(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy1
 
@@ -4054,7 +4104,7 @@ def _get_default_strategy2(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy2
 
@@ -4077,7 +4127,7 @@ def _get_default_strategy3(evaluator):
     from poms.users.models import EcosystemDefault
 
     try:
-        item = EcosystemDefault.objects.get(master_user=master_user)
+        item = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
 
         return item.strategy3
 
@@ -4992,6 +5042,23 @@ def _clean_str_val(
 _clean_str_val.evaluator = True
 
 
+def _get_issuer_country_of_ccy(evaluator, currency):
+    try:
+        currency = _safe_get_currency(evaluator, currency)
+        if not currency.country:
+            return None
+
+        from poms.instruments.serializers import CountrySerializer
+
+        return CountrySerializer(instance=currency.country, context=evaluator.context).data
+
+    except Exception:
+        return None
+
+
+_get_issuer_country_of_ccy.evaluator = True
+
+
 class SimpleEval2Def(object):
     def __init__(self, name, func):
         self.name = name
@@ -5043,6 +5110,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("weeks", _weeks),
     SimpleEval2Def("months", _months),
     SimpleEval2Def("timedelta", _timedelta),
+    SimpleEval2Def("days_diff", _days_diff),
     SimpleEval2Def("add_days", _add_days),
     SimpleEval2Def("add_weeks", _add_weeks),
     SimpleEval2Def("add_workdays", _add_workdays),
@@ -5068,6 +5136,7 @@ FINMARS_FUNCTIONS = [
         "get_date_last_quarter_end_business", _get_date_last_quarter_end_business
     ),
     SimpleEval2Def("get_date_last_year_end_business", _get_date_last_year_end_business),
+    SimpleEval2Def("calculate_period_date", _calculate_period_date),
     SimpleEval2Def("format_number", _format_number),
     SimpleEval2Def("parse_number", _parse_number),
     SimpleEval2Def("join", _join),
@@ -5185,4 +5254,5 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("run_transaction_import", _run_transaction_import),
     SimpleEval2Def("clean_str_val", _clean_str_val),
     SimpleEval2Def("if_valid_isin", _if_valid_isin),
+    SimpleEval2Def("get_issuer_country_of_ccy", _get_issuer_country_of_ccy),
 ]

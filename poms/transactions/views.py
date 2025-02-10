@@ -180,7 +180,8 @@ class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
 class TransactionTypeFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
-    user_code = CharExactFilter()
+    user_code = CharFilter()
+    user_code__exact = CharExactFilter(field_name="user_code")
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
@@ -775,7 +776,7 @@ class TransactionFilterSet(FilterSet):
     transaction_class = django_filters.ModelMultipleChoiceFilter(
         queryset=TransactionClass.objects
     )
-    transaction_code = django_filters.RangeFilter()
+    transaction_code = django_filters.NumberFilter()
     transaction_currency = ModelExtMultipleChoiceFilter(model=Currency)
     position_size_with_sign = django_filters.RangeFilter()
     settlement_currency = ModelExtMultipleChoiceFilter(model=Currency)
@@ -1195,7 +1196,7 @@ class ComplexTransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
 
 class ComplexTransactionFilterSet(FilterSet):
     id = NoOpFilter()
-    code = django_filters.RangeFilter()
+    code = django_filters.NumberFilter()
     date = django_filters.DateFromToRangeFilter()
     is_deleted = django_filters.BooleanFilter()
 
@@ -1619,14 +1620,13 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         if request.method.lower() == "get":
             return self.list(request)
 
-        data = request.data
+        ids = request.data.get("ids")
+        if not ids:
+            raise ValidationError("'ids' parameter is empty or missing")
 
-        queryset = self.filter_queryset(self.get_queryset())
+        _l.info(f'bulk_restore {ids}')
 
-        _l.info(f'bulk_restore {data["ids"]}')
-
-        complex_transactions = ComplexTransaction.objects.filter(id__in=data["ids"])
-
+        complex_transactions = ComplexTransaction.objects.filter(id__in=ids)
         for complex_transaction in complex_transactions:
             if complex_transaction.deleted_transaction_unique_code:
                 used = ComplexTransaction.objects.filter(
@@ -1645,9 +1645,9 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 complex_transaction.is_deleted = False
                 complex_transaction.save()
 
-            for transaction in complex_transaction.transactions.all():
-                transaction.is_deleted = False
-                transaction.save()
+            for trans in complex_transaction.transactions.all():
+                trans.is_deleted = False
+                trans.save()
 
         return Response({"message": "ok"})
 

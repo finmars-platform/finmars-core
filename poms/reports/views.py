@@ -1,8 +1,10 @@
+import json
 import logging
 import time
 from datetime import timedelta
 
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -1149,44 +1151,18 @@ class PerformanceReportViewSet(AbstractViewSet):
         instance.task_id = 1
         instance.task_status = "SUCCESS"
 
+        # Timing the serialization to representation
+        serialization_start_time = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
+        serialized_data = serializer.data
+        _l.debug("Serialization (serializer.data) done in: %s seconds", "{:3.3f}".format(time.perf_counter() - serialization_start_time))
 
-        # DEPRECATED
-        # key = generate_report_unique_hash(
-        #     "report",
-        #     "performance",
-        #     request.data,
-        #     request.user.master_user,
-        #     request.user.member,
-        # )
-        #
-        # cached_data = cache.get(key)
-        #
-        # if not cached_data:
-        #     _l.debug("Could not find in cache")
-        #
-        #     serializer = self.get_serializer(data=request.data)
-        #     serializer.is_valid(raise_exception=True)
-        #     instance = serializer.save()
-        #
-        #     builder = PerformanceReportBuilder(instance=instance)
-        #     instance = builder.build_report()
-        #
-        #     instance.task_id = 1
-        #     instance.task_status = "SUCCESS"
-        #
-        #     serializer = self.get_serializer(instance=instance, many=False)
-        #
-        #     _l.debug(
-        #         "Performance Report done: %s"
-        #         % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        #     )
-        #
-        #     cached_data = serializer.data
-        #
-        #     cache.set(key, cached_data)
+        # # Timing JSON conversion
+        # json_conversion_start_time = time.perf_counter()
+        # json_data = json.dumps(serialized_data)
+        # _l.debug("JSON conversion (dumps) done in: %s seconds", "{:3.3f}".format(time.perf_counter() - json_conversion_start_time))
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serialized_data)
 
 
 class BackendBalanceReportViewSet(AbstractViewSet):
@@ -1197,6 +1173,8 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serializer_class=BackendBalanceReportGroupsSerializer,
     )
     def groups(self, request, *args, **kwargs):
+
+        serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -1206,31 +1184,41 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         instance.portfolios = transform_to_allowed_portfolios(instance)
         instance.accounts = transform_to_allowed_accounts(instance)
 
-        settings, unique_key = generate_unique_key(instance, "balance")
+        # settings, unique_key = generate_unique_key(instance, "balance")
 
-        _l.info("unique_key %s" % unique_key)
+        # _l.info("unique_key %s" % unique_key)
 
-        try:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-            balance_report_instance = BalanceReportInstance.objects.get(
-                unique_key=unique_key
-            )
+        # try:
+        #
+        #     if instance.ignore_cache:
+        #         raise ObjectDoesNotExist
+        #
+        #     balance_report_instance = BalanceReportInstance.objects.get(
+        #         unique_key=unique_key
+        #     )
+        #
+        # except ObjectDoesNotExist:
+        #
+        #     # Check to_representation comments to find why is that
+        #     builder = BalanceReportBuilderSql(instance=instance)
+        #     instance = builder.build_balance()
 
-        except BalanceReportInstance.DoesNotExist:
 
-            # Check to_representation comments to find why is that
-            builder = BalanceReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
-
-        serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
+
+
+
+        response = Response(serializer.data, status=status.HTTP_200_OK)
 
         _l.debug(
             "Balance Report done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return response
 
     @action(
         detail=False,
@@ -1248,21 +1236,27 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         instance.portfolios = transform_to_allowed_portfolios(instance)
         instance.accounts = transform_to_allowed_accounts(instance)
 
-        settings, unique_key = generate_unique_key(instance, "balance")
+        # settings, unique_key = generate_unique_key(instance, "balance")
+        #
+        # _l.info("unique_key %s" % unique_key)
 
-        _l.info("unique_key %s" % unique_key)
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-        try:
-
-            balance_report_instance = BalanceReportInstance.objects.get(
-                unique_key=unique_key
-            )
-
-        except BalanceReportInstance.DoesNotExist:
-
-            # Check to_representation comments to find why is that
-            builder = BalanceReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
+        # try:
+        #
+        #     if instance.ignore_cache:
+        #         raise ObjectDoesNotExist
+        #
+        #     balance_report_instance = BalanceReportInstance.objects.get(
+        #         unique_key=unique_key
+        #     )
+        #
+        # except ObjectDoesNotExist:
+        #
+        #     # Check to_representation comments to find why is that
+        #     builder = BalanceReportBuilderSql(instance=instance)
+        #     instance = builder.build_balance()
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
@@ -1302,11 +1296,14 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
             _l.debug("PL report if found, take from cache")
 
-        except PLReportInstance.DoesNotExist as e:
+        except ObjectDoesNotExist as e:
 
             _l.info("e %s" % e)
 
@@ -1347,9 +1344,12 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         try:
 
+            if instance.ignore_cache:
+                raise ObjectDoesNotExist
+
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
-        except PLReportInstance.DoesNotExist:
+        except ObjectDoesNotExist:
 
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
@@ -1383,14 +1383,11 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         builder = TransactionReportBuilderSql(instance=instance)
         instance = builder.build_transaction()
 
-        instance.task_id = 1  # deprecated, but not to remove
-        instance.task_status = "SUCCESS"  # deprecated, but not to remove
-
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
         _l.debug(
-            "Balance Report done: %s"
+            "BackendTransactionReportViewSet done: %s"
             % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
 
@@ -1412,9 +1409,6 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         # Check to_representation comments to find why is that
         builder = TransactionReportBuilderSql(instance=instance)
         instance = builder.build_transaction()
-
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)

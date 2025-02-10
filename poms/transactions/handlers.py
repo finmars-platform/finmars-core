@@ -6,7 +6,7 @@ import traceback
 from datetime import date, datetime
 
 from django.apps import apps
-from django.core.cache import cache
+# from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy
@@ -45,6 +45,7 @@ from poms.transactions.models import (
     TransactionType,
     TransactionTypeInput,
 )
+from poms.transactions.utils import generate_user_fields
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.transactions")
@@ -122,7 +123,9 @@ class TransactionTypeProcess:
         )
 
         master_user = transaction_type.master_user
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.member = member
         self.transaction_type = transaction_type
@@ -601,8 +604,8 @@ class TransactionTypeProcess:
                     instrument = None
                     instrument_exists = False
 
-                    ecosystem_default = EcosystemDefault.objects.get(
-                        master_user=master_user
+                    ecosystem_default = EcosystemDefault.cache.get_cache(
+                        master_user_pk=master_user.pk
                     )
 
                     if user_code:
@@ -2521,94 +2524,31 @@ class TransactionTypeProcess:
         for key, value in self.values.items():
             names[key] = value
 
-        fields = [
-            "user_text_1",
-            "user_text_2",
-            "user_text_3",
-            "user_text_4",
-            "user_text_5",
-            "user_text_6",
-            "user_text_7",
-            "user_text_8",
-            "user_text_9",
-            "user_text_10",
-            "user_text_11",
-            "user_text_12",
-            "user_text_13",
-            "user_text_14",
-            "user_text_15",
-            "user_text_16",
-            "user_text_17",
-            "user_text_18",
-            "user_text_19",
-            "user_text_20",
-            "user_number_1",
-            "user_number_2",
-            "user_number_3",
-            "user_number_4",
-            "user_number_5",
-            "user_number_6",
-            "user_number_7",
-            "user_number_8",
-            "user_number_9",
-            "user_number_10",
-            "user_number_11",
-            "user_number_12",
-            "user_number_13",
-            "user_number_14",
-            "user_number_15",
-            "user_number_16",
-            "user_number_17",
-            "user_number_18",
-            "user_number_19",
-            "user_number_20",
-            "user_date_1",
-            "user_date_2",
-            "user_date_3",
-            "user_date_4",
-            "user_date_5",
-        ]
-
         self.record_execution_progress("Calculating User Fields")
 
         _result_for_log = {}
+        for field_key in generate_user_fields():
 
-        for field_key in fields:
-            # _l.debug('field_key')
+            if not hasattr(self.complex_transaction.transaction_type, field_key):
+                continue
 
-            if getattr(self.complex_transaction.transaction_type, field_key):
-                try:
-                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+            field_value = getattr(self.complex_transaction.transaction_type, field_key)
+            try:
+                value = formula.safe_eval(
+                    field_value,
+                    names=names,
+                    context=self._context
+                )
+                setattr(self.complex_transaction, field_key, value)
+                _result_for_log[field_key] = value
 
-                    val = formula.safe_eval(
-                        getattr(self.complex_transaction.transaction_type, field_key),
-                        names=names,
-                        context=self._context,
-                    )
-
-                    setattr(self.complex_transaction, field_key, val)
-
-                    _result_for_log[field_key] = val
-
-                except Exception as e:
-                    # _l.error("User Field Expression Eval error expression %s" % getattr(
-                    #     self.complex_transaction.transaction_type, field_key))
-                    # _l.error("User Field Expression Eval error names %s" % names)
-                    # _l.error("User Field Expression Eval error %s" % e)
-
-                    if "number" in field_key:
-                        setattr(self.complex_transaction, field_key, None)
-                    else:
-                        try:
-                            setattr(
-                                self.complex_transaction,
-                                field_key,
-                                "<InvalidExpression>",
-                            )
-                            _result_for_log[field_key] = str(e)
-                        except Exception as e:
-                            setattr(self.complex_transaction, field_key, None)
-                            _result_for_log[field_key] = str(e)
+            except Exception as e:
+                _l.error(
+                    f"execute_user_fields_expressions: formula.safe_eval resulted in {repr(e)} "
+                    f"field {field_key} value {field_value} names {names} context {self._context}"
+                )
+                setattr(self.complex_transaction, field_key, None)
+                _result_for_log[field_key] = f"value {field_value} error {e}"
 
         self.record_execution_progress("==== USER FIELDS ====", _result_for_log)
 
@@ -2921,7 +2861,7 @@ class TransactionTypeProcess:
 
         try:
             if self.execution_context == "manual":
-                cache.clear()
+                # cache.clear()
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
                     date_from = None
@@ -3325,8 +3265,8 @@ class TransactionTypeProcess:
                                     raise formula.InvalidExpression from e
 
                             except formula.InvalidExpression as e:
-                                ecosystem_default = EcosystemDefault.objects.get(
-                                    master_user=self.transaction_type.master_user
+                                ecosystem_default = EcosystemDefault.cache.get_cache(
+                                    master_user_pk=self.transaction_type.master_user.pk
                                 )
 
                                 _l.debug(f"error {repr(e)}")

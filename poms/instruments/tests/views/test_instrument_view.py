@@ -2,10 +2,12 @@ from copy import deepcopy
 
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import AccrualCalculationSchedule, Instrument
+from poms.iam.models import ResourceGroup
 from poms.instruments.tests.common_test_data import (
     EXPECTED_INSTRUMENT,
     INSTRUMENT_CREATE_DATA,
 )
+from poms.users.models import Member
 
 
 class InstrumentViewSetTest(BaseTestCase):
@@ -123,7 +125,7 @@ class InstrumentViewSetTest(BaseTestCase):
         )
 
         # identifier_keys_values = {"cbonds_id": "id", "isin": "isin"} - without encoding characters look like
-        response = self.client.get(path=f"{self.url}?identifier_keys_values=%7B%22cbonds_id%22%3A%22id%22%2C%22isin%22%3A%22isin%22%7D")
+        response = self.client.get(path=f"{self.url}?identifier=%7B%22cbonds_id%22%3A%22id%22%2C%22isin%22%3A%22isin%22%7D")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
@@ -251,3 +253,135 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(file_data["path"], file.path)
         self.assertEqual(file_data["size"], file.size)
         self.assertEqual(file_data["extension"], ".pdf")
+
+    def test__list_by_post_attributes_filter(self):  # sourcery skip: extract-duplicate-method
+        self.create_instrument()
+        filter_data = {
+            "groups_types": [
+                "attributes.",
+            ],
+            "groups_values": [
+                "12345",
+            ]
+        }
+        response = self.client.post(path=f"{self.url}ev-group/", data=filter_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def create_group(self, name: str = "test") -> ResourceGroup:
+        return ResourceGroup.objects.create(
+            name=name,
+            user_code=name,
+            description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
+        )
+
+    def test_add_resource_group(self):
+        rg_name = self.random_string()
+        rg = self.create_group(name=rg_name)
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": [rg_name]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertIn("resource_groups", instrument_data)
+        self.assertEqual(instrument_data["resource_groups"], [rg_name])
+
+        self.assertIn("resource_groups_object", instrument_data)
+        resource_group = instrument_data["resource_groups_object"][0]
+        self.assertEqual(resource_group["user_code"], rg.user_code)
+        self.assertNotIn("assignments", resource_group)
+
+    def test_update_resource_groups(self):
+        name_1 = self.random_string()
+        self.create_group(name=name_1)
+        name_2 = self.random_string()
+        self.create_group(name=name_2)
+
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": [name_1, name_2]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 2)
+        self.assertEqual(len(instrument_data["resource_groups_object"]), 2)
+
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": [name_2]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 1)
+        self.assertEqual(instrument_data["resource_groups"], [name_2])
+
+        self.assertEqual(len(instrument_data["resource_groups_object"]), 1)
+
+    def test_remove_resource_groups(self):        
+        name_1 = self.random_string()
+        self.create_group(name=name_1)
+        name_3 = self.random_string()
+        self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": [name_1, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 2)
+        self.assertEqual(len(instrument_data["resource_groups_object"]), 2)
+
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": []},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 0)
+        self.assertEqual(instrument_data["resource_groups"], [])
+
+        self.assertEqual(len(instrument_data["resource_groups_object"]), 0)
+        self.assertEqual(instrument_data["resource_groups_object"], [])
+
+    def test_destroy_assignments(self):
+        name_1 = self.random_string()
+        rg_1 = self.create_group(name=name_1)
+        name_3 = self.random_string()
+        rg_3 = self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{self.instrument.id}/",
+            data={"resource_groups": [name_1, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 2)
+        self.assertEqual(len(instrument_data["resource_groups_object"]), 2)
+
+        url = f"/{self.realm_code}/{self.space_code}/api/v1/iam/resource-group/"
+        response = self.client.delete(f"{url}{rg_1.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.delete(f"{url}{rg_3.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.get(f"{self.url}{self.instrument.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertEqual(len(instrument_data["resource_groups"]), 0)
+        self.assertEqual(instrument_data["resource_groups"], [])

@@ -969,8 +969,10 @@ class TransactionReport(models.Model):
 
 class BalanceReportInstance(TimeStampedModel, NamedModel):
 
-    unique_key = models.TextField(
+    unique_key = models.CharField(
+        max_length=32,
         unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
         verbose_name=gettext_lazy("unique key"),
         help_text=gettext_lazy(
             "Unique Key. Used for getting Report by its Report Settings"
@@ -1048,8 +1050,10 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
 
 class PLReportInstance(TimeStampedModel, NamedModel):
 
-    unique_key = models.TextField(
+    unique_key = models.CharField(
+        max_length=32,
         unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
         verbose_name=gettext_lazy("unique key"),
         help_text=gettext_lazy(
             "Unique Key. Used for getting Report by its Report Settings"
@@ -1422,7 +1426,9 @@ class ReportSummary:
         member,
         context,
     ):
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.context = context
         self.master_user = master_user
@@ -1961,6 +1967,7 @@ class ReportInstanceModel:
         self.strategy2_mode = kwargs["strategy2_mode"]
         self.strategy3_mode = kwargs["strategy3_mode"]
         self.allocation_mode = kwargs["allocation_mode"]
+        self.calculate_pl = kwargs.get("calculate_pl", False)
 
         self.master_user = kwargs["master_user"]
 

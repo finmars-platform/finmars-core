@@ -8,7 +8,6 @@ router.register(
     "portfolio-class",
     portfolios.PortfolioClassViewSet,
 )
-
 router.register(
     "portfolio-type",
     portfolios.PortfolioTypeViewSet,
@@ -17,62 +16,58 @@ router.register(
     "portfolio-type-attribute-type",
     portfolios.PortfolioTypeAttributeTypeViewSet,
 )
-
 router.register(
-    r"portfolio-attribute-type",
+    "portfolio-attribute-type",
     portfolios.PortfolioAttributeTypeViewSet,
     "portfolioattributetype",
 )
 router.register(
-    r"portfolio-classifier",
+    "portfolio-classifier",
     portfolios.PortfolioClassifierViewSet,
     "portfolioclassifier",
 )
 router.register(
-    r"portfolio",
+    "portfolio",
     portfolios.PortfolioViewSet,
     "portfolio",
 )
 router.register(
-    r"portfolio-register-attribute-type",
+    "portfolio-register-attribute-type",
     portfolios.PortfolioRegisterAttributeTypeViewSet,
     "portfolioregisterattributetype",
 )
 router.register(
-    r"portfolio-register",
+    "portfolio-register",
     portfolios.PortfolioRegisterViewSet,
     "portfolioregister",
 )
 router.register(
-    r"portfolio-register-record",
+    "portfolio-register-record",
     portfolios.PortfolioRegisterRecordViewSet,
     "portfolioregisterrecord",
 )
 router.register(
-    r"portfolio-bundle",
+    "portfolio-bundle",
     portfolios.PortfolioBundleViewSet,
     "portfoliobundle",
 )
 router.register(
-    r"first-transaction-date",
+    "first-transaction-date",
     portfolios.PortfolioFirstTransactionViewSet,
     "firsttransactiondate",
 )
-
 router.register(
-    r"portfolio-history",
+    "portfolio-history",
     portfolios.PortfolioHistoryViewSet,
     "portfoliohistory",
 )
-
 router.register(
-    r"portfolio-reconcile-group",
+    "portfolio-reconcile-group",
     portfolios.PortfolioReconcileGroupViewSet,
     "portfolioreconcilegroup",
 )
-
 router.register(
-    r"portfolio-reconcile-history",
+    "portfolio-reconcile-history",
     portfolios.PortfolioReconcileHistoryViewSet,
     "portfolioreconcilehistory",
 )

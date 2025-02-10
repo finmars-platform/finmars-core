@@ -23,6 +23,7 @@ ALL_EXTRA_ACTIONS = {
     "dry_run",
     "error",
     "execute",
+    "relaunch",
     "export",
     "export_configuration",
     "filtered_list",
@@ -100,6 +101,14 @@ ALL_EXTRA_ACTIONS = {
     "update_secret",
     "update_status",
     "view_log",
+    "create_channel",
+    "leave_channel",
+    "join_channel",
+    "subscriptions_update_for_user",
+    "user_subscribed_channels",
+    "all_types",
+    "subscriptions_of_user",
+    "all_channels",
 }
 FULL_ACCESS_ACTIONS = {
     "abort_transaction_import",
@@ -125,6 +134,7 @@ FULL_ACCESS_ACTIONS = {
     "dry_run",
     "error",
     "execute",
+    "relaunch",
     "export",
     "filtered_list",
     "generate_code",
@@ -179,6 +189,10 @@ FULL_ACCESS_ACTIONS = {
     "unseal",
     "update_secret",
     "update_status",
+    "create_channel",
+    "leave_channel",
+    "join_channel",
+    "subscriptions_update_for_user",
 }
 READ_ACCESS_ACTIONS = {
     "data",
@@ -206,4 +220,8 @@ READ_ACCESS_ACTIONS = {
     "get_metadata",
     "get_secret",
     "health",
+    "user_subscribed_channels",
+    "all_types",
+    "subscriptions_of_user",
+    "all_channels",
 }

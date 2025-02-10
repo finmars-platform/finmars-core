@@ -116,8 +116,8 @@ class TransactionImportProcess(object):
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
 
-        self.ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.master_user
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.master_user.pk
         )
 
         self.find_default_rule_scenario()
@@ -474,7 +474,7 @@ class TransactionImportProcess(object):
                         'transaction_type_input': field.transaction_type_input,
                         'value': value
                     }
-                    
+                    raise BookException(code=400, error_message=item.error_message)
 
             return v
 
@@ -501,7 +501,7 @@ class TransactionImportProcess(object):
                     f"Traceback {traceback.format_exc()}"
                 )
 
-                # raise Exception(e) # Uncomment when apetrushkin will be ready
+                raise Exception(e)
 
         return fields
 
@@ -510,6 +510,9 @@ class TransactionImportProcess(object):
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
         try:
+            if item.status == "error":
+                raise BookException(code=400, error_message=item.error_message)
+
             fields = self.get_fields_for_item(item, rule_scenario)
 
             if error:

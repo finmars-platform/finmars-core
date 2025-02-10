@@ -37,6 +37,19 @@ def get_current_search_path():
         return search_path[0] if search_path else None
 
 
+def check_redis_connection():
+    from django.core.cache import caches
+
+    try:
+        cache = caches["default"]
+        cache.client.get_client().ping()
+        _l.info(f"Successfully connected to Redis at {settings.REDIS_URL}")
+        return True
+    except Exception as e:
+        _l.error(f"Couldn't connect to Redis at {settings.REDIS_URL} due to {repr(e)}")
+        return False
+
+
 class BootstrapConfig(AppConfig):
     name = "poms.bootstrap"
     verbose_name = gettext_lazy("Bootstrap")
@@ -111,6 +124,8 @@ class BootstrapConfig(AppConfig):
                 # self.create_iam_access_policies_templates() # TODO temporary not needed
             except Exception as e:
                 _l.error(f"bootstrap: failed for {current_space_code} due to {repr(e)}")
+
+        check_redis_connection()
 
     @staticmethod
     def create_finmars_bot():

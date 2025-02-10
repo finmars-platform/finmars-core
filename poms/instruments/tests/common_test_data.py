@@ -238,6 +238,9 @@ EXPECTED_INSTRUMENT = {
     "is_manual_locked": False,
     "is_locked": True,
     "first_transaction_date": None,
+    "resource_groups": [],
+    "resource_groups_object": [],
+    "accruals": [],
 }
 
 INSTRUMENT_CREATE_DATA = {

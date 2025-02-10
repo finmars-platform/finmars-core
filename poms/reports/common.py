@@ -79,6 +79,7 @@ class Report(BaseReport):
             task_status=None,
             report_instance_name=None,
             save_report=False,
+            ignore_cache=False,
             pl_first_date=None,
             report_type=TYPE_BALANCE,
             report_date=None,
@@ -110,7 +111,7 @@ class Report(BaseReport):
             date_field=None,
             custom_fields=None,
             custom_fields_to_calculate=None,
-            calculate_pl=True,
+            calculate_pl=False,
             only_numbers=False,
             items=None,
             execution_time=None,
@@ -133,7 +134,9 @@ class Report(BaseReport):
             task_status=task_status,
         )
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_type = (
             report_type if report_type is not None else Report.TYPE_BALANCE
@@ -147,6 +150,7 @@ class Report(BaseReport):
 
         self.report_instance_name = report_instance_name
         self.save_report = save_report
+        self.ignore_cache = ignore_cache
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode
@@ -260,6 +264,7 @@ class TransactionReport(BaseReport):
             member=None,
             begin_date=None,
             end_date=None,
+            period_type=None,
             portfolios=None,
             bundle=None,
             accounts=None,
@@ -295,6 +300,7 @@ class TransactionReport(BaseReport):
         self.has_errors = False
         self.begin_date = begin_date
         self.end_date = end_date
+        self.period_type = period_type
         self.portfolios = portfolios or []
         self.bundle = bundle or None
         self.accounts = accounts or []
@@ -441,7 +447,9 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date
         self.end_date = end_date or d
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_currency = report_currency or self.ecosystem_default.currency
         self.pricing_policy = pricing_policy

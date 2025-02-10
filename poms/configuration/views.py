@@ -1,5 +1,7 @@
 import logging
 
+import django_filters
+from django_filters.filters import BooleanFilter
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -36,6 +38,8 @@ class ConfigurationFilterSet(FilterSet):
     short_name = CharFilter()
     version = CharFilter()
     type = CharFilter()
+    is_primary = django_filters.BooleanFilter()
+    is_package = django_filters.BooleanFilter()
 
     class Meta:
         model = Configuration

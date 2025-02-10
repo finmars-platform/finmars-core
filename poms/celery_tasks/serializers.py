@@ -177,3 +177,6 @@ class CeleryWorkerSerializer(serializers.ModelSerializer):
                 "status": "unknown",
                 "error_message": None
             }
+
+class CeleryTaskRelaunchSerializer(serializers.Serializer):
+    options = serializers.JSONField(allow_null=True, required=False)
