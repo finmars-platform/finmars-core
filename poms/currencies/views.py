@@ -9,8 +9,8 @@ from rest_framework.response import Response
 
 from poms.common.filters import (
     AttributeFilter,
-    CharFilter,
     CharExactFilter,
+    CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
@@ -39,7 +39,6 @@ _l = logging.getLogger("poms.currencies")
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Currency
     target_model_serializer = CurrencySerializer
-
     permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
@@ -195,10 +194,9 @@ class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
     currency = ModelExtMultipleChoiceFilter(model=Currency)
-    pricing_policy = CharFilter(
-        field_name="pricing_policy__user_code", lookup_expr="icontains"
-    )
+    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
     fx_rate = django_filters.RangeFilter()
+    is_temporary_fx_rate = django_filters.BooleanFilter()
 
     class Meta:
         model = CurrencyHistory
@@ -206,9 +204,7 @@ class CurrencyHistoryFilterSet(FilterSet):
 
 
 class CurrencyHistoryViewSet(AbstractModelViewSet):
-    queryset = CurrencyHistory.objects.select_related(
-        "currency", "pricing_policy"
-    ).prefetch_related()
+    queryset = CurrencyHistory.objects.select_related("currency", "pricing_policy").prefetch_related()
     serializer_class = CurrencyHistorySerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
