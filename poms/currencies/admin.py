@@ -43,6 +43,7 @@ class CurrencyHistoryAdmin(AbstractModelAdmin):
         "pricing_policy",
         "date",
         "fx_rate",
+        "is_temporary_fx_rate",
     ]
     list_select_related = [
         "currency",
