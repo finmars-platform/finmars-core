@@ -807,6 +807,7 @@ class ParamsSerializer(serializers.Serializer):
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
+    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
 
     def validate(self, attrs):
         portfolios = attrs.get("portfolios")
@@ -825,9 +826,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
         portfolio_classes = [p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type]
         if len(set(portfolio_classes)) < 2:
-            raise serializers.ValidationError({"portfolios": "Duplicated portfolio classes"})
-        if PortfolioClass.POSITION not in portfolio_classes:
-            raise serializers.ValidationError({"portfolios": "One portfolio class must be POSITION"})
+            raise serializers.ValidationError({"portfolios": "Portfolios must be of different classes"})
 
         return attrs
 
@@ -842,11 +841,23 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             "public_name",
             "notes",
             "portfolios",
-            "is_deleted",
-            "is_enabled",
             "params",
             "last_calculated_at",
         ]
+
+    def create(self, validated_data):
+
+        from pprint import pprint
+
+        pprint(validated_data)
+
+        portfolios = validated_data.pop("portfolios")
+
+        group = super().create(**validated_data)
+
+        for portfolio in portfolios:
+            group.portfolios.add(portfolio)
+        group.save()
 
 
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
