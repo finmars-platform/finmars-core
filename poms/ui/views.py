@@ -133,7 +133,6 @@ class UserInterfaceAccessModelViewSet(AbstractModelViewSet):
     queryset = UserInterfaceAccessModel.objects.all()
     serializer_class = UserInterfaceAccessModelSerializer
     filter_class = UserInterfaceAccessModelFilterSet
-    pagination_class = None
 
 
 class ComplexTransactionUserFieldFilterSet(FilterSet):

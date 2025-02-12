@@ -70,7 +70,7 @@ class MemberLayoutViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        access = response_json[0]
+        access = response_json["results"][0]
         self.assertEqual(access.keys(), EXPECTED_DATA.keys())
 
     def test__create(self):

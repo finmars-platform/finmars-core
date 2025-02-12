@@ -46,6 +46,7 @@ from poms.portfolios.serializers import (
     PortfolioLightSerializer,
     PortfolioReconcileGroupSerializer,
     PortfolioReconcileHistorySerializer,
+    PortfolioReconcileStatusSerializer,
     PortfolioRegisterRecordSerializer,
     PortfolioRegisterSerializer,
     PortfolioSerializer,
@@ -786,5 +787,20 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
                 "task_type": task.type,
                 "task_options": task.options_object,
             },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="status",
+        serializer_class=PortfolioReconcileStatusSerializer,
+    )
+    def status(self, request, realm_code=None, space_code=None):
+        serializer = self.get_serializer(data=request.query_params, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            serializer.get_reconcile_groups(),
             status=status.HTTP_200_OK,
         )

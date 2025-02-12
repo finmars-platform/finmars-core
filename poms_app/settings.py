@@ -673,10 +673,10 @@ AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY", None)
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", None)
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
 AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_CLIENT_CONFIG = {"read_timeout": 180}
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
-
-AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
@@ -818,3 +818,10 @@ INSTRUMENT_TYPE_PREFIX = ENV_STR(
 )
 
 MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 10000)
+
+NOTIFICATION_SERVICE_DOMAIN_NAME = ENV_STR(
+    env_name="NOTIFICATION_SERVICE_DOMAIN_NAME", default="http://localhost:8010"
+)
+
+# TODO: - change the URL to the actual URL of the notification service
+NOTIFICATION_SERVICE_BASE_URL = f"https://{DOMAIN_NAME}/{REALM_CODE}/{{space_code}}/notification-service/api/v1/"

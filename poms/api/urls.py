@@ -109,10 +109,6 @@ router.register(
     "valuesforselect",
 )
 router.register(
-    "notifications/notification",
-    notifications.NotificationViewSet,
-)
-router.register(
     "data-provider/bloomberg/credential",
     integrations.BloombergDataProviderCredentialViewSet,
 )
@@ -262,11 +258,6 @@ router.register(
     schedules.ScheduleViewSet,
     "schedule",
 )
-router.register(
-    r"system-messages/message",
-    system_messages.SystemMessageViewSet,
-    "SystemMessage"
-)
 router.register(  # Probably deprecated
     r"credentials/credentials",
     credentials.CredentialsViewSet,
@@ -331,8 +322,19 @@ router.register(
     PersonalAccessTokenViewSet,
     "PersonalAccessToken",
 )
+router.register(
+    r"system-messages/message",
+    system_messages.SystemMessageViewSet,
+    "SystemMessage"
+)
+router.register(
+    "notifications/notification",
+    notifications.NotificationViewSet,
+)
+
 
 urlpatterns = [
+    re_path(r"^v1/system-notifications/", include("poms.system_messages.urls")),
     re_path(r"^v1/users/", include(users_router.router.urls)),
     re_path(r"^v1/accounts/", include(account_router.router.urls)),
     re_path(r"^v1/portfolios/", include(portfolio_router.router.urls)),

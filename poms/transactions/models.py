@@ -16,9 +16,9 @@ from poms.common.formula_accruals import f_xirr
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
-    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
+    TimeStampedModel,
 )
 from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
@@ -192,30 +192,22 @@ class NotificationClass(AbstractClassModel):
         (
             INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
             "INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE",
-            gettext_lazy(
-                "Inform on notification date & effective date (with reaction on effective date)"
-            ),
+            gettext_lazy("Inform on notification date & effective date (with reaction on effective date)"),
         ),
         (
             INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
             "INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE",
-            gettext_lazy(
-                "Inform on notification date & effective date (with reaction on notification date)"
-            ),
+            gettext_lazy("Inform on notification date & effective date (with reaction on notification date)"),
         ),
         (
             INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
             "INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE",
-            gettext_lazy(
-                "Inform on notification date & effective date (apply default on effective date)"
-            ),
+            gettext_lazy("Inform on notification date & effective date (apply default on effective date)"),
         ),
         (
             INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE,
             "INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE",
-            gettext_lazy(
-                "Inform on notification date & effective date (apply default on notification date)"
-            ),
+            gettext_lazy("Inform on notification date & effective date (apply default on notification date)"),
         ),
         (
             INFORM_ON_NDATE_AND_EDATE_DONT_REACT,
@@ -272,9 +264,7 @@ class NotificationClass(AbstractClassModel):
 
     @property
     def is_apply_default_on_effective_date(self):
-        return (
-            self.id in NotificationClass.get_apply_default_on_effective_date_classes()
-        )
+        return self.id in NotificationClass.get_apply_default_on_effective_date_classes()
 
     @staticmethod
     def get_apply_default_on_notification_date_classes():
@@ -286,10 +276,7 @@ class NotificationClass(AbstractClassModel):
 
     @property
     def is_apply_default_on_notification_date(self):
-        return (
-            self.id
-            in NotificationClass.get_apply_default_on_notification_date_classes()
-        )
+        return self.id in NotificationClass.get_apply_default_on_notification_date_classes()
 
     @staticmethod
     def get_need_reaction_on_effective_date_classes():
@@ -300,9 +287,7 @@ class NotificationClass(AbstractClassModel):
 
     @property
     def is_need_reaction_on_effective_date(self):
-        return (
-            self.id in NotificationClass.get_need_reaction_on_effective_date_classes()
-        )
+        return self.id in NotificationClass.get_need_reaction_on_effective_date_classes()
 
     @staticmethod
     def get_need_reaction_on_notification_date_classes():
@@ -313,10 +298,7 @@ class NotificationClass(AbstractClassModel):
 
     @property
     def is_need_reaction_on_notification_date(self):
-        return (
-            self.id
-            in NotificationClass.get_need_reaction_on_notification_date_classes()
-        )
+        return self.id in NotificationClass.get_need_reaction_on_notification_date_classes()
 
 
 class PeriodicityGroup(AbstractClassModel):
@@ -362,9 +344,7 @@ class PeriodicityGroup(AbstractClassModel):
         verbose_name_plural = gettext_lazy("periodicity group")
 
 
-class TransactionTypeGroup(
-    NamedModel, FakeDeletableModel, ConfigurationModel, TimeStampedModel
-):
+class TransactionTypeGroup(NamedModel, FakeDeletableModel, ConfigurationModel, TimeStampedModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="transaction_type_groups",
@@ -974,11 +954,7 @@ class TransactionType(
     @property
     def book_transaction_layout(self):
         try:
-            return (
-                json.loads(self.book_transaction_layout_json)
-                if self.book_transaction_layout_json
-                else None
-            )
+            return json.loads(self.book_transaction_layout_json) if self.book_transaction_layout_json else None
         except (ValueError, TypeError):
             return None
 
@@ -1154,9 +1130,7 @@ class TransactionTypeInput(models.Model):
     @button_data.setter
     def button_data(self, val):
         if val:
-            self.json_button_data = json.dumps(
-                val, cls=DjangoJSONEncoder, sort_keys=True
-            )
+            self.json_button_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_button_data = None
 
@@ -1177,9 +1151,7 @@ class TransactionTypeInput(models.Model):
         else:
             return f"{self.name}: {self.get_value_type_display()}"
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if not self.verbose_name:
             self.verbose_name = self.name
         super(TransactionTypeInput, self).save(
@@ -1950,12 +1922,8 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
     )
 
     class Meta:
-        verbose_name = gettext_lazy(
-            "transaction type action instrument factor schedule"
-        )
-        verbose_name_plural = gettext_lazy(
-            "transaction type action instrument factor schedules"
-        )
+        verbose_name = gettext_lazy("transaction type action instrument factor schedule")
+        verbose_name_plural = gettext_lazy("transaction type action instrument factor schedules")
 
     def __str__(self):
         return f"InstrumentFactor action #{self.order}"
@@ -2015,12 +1983,8 @@ class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction)
     )
 
     class Meta:
-        verbose_name = gettext_lazy(
-            "transaction type action instrument manual pricing formula"
-        )
-        verbose_name_plural = gettext_lazy(
-            "transaction type action instrument manual pricing formula"
-        )
+        verbose_name = gettext_lazy("transaction type action instrument manual pricing formula")
+        verbose_name_plural = gettext_lazy("transaction type action instrument manual pricing formula")
 
     def __str__(self):
         return f"InstrumentManualPricingFormula action #{self.order}"
@@ -2110,12 +2074,8 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
     )
 
     class Meta:
-        verbose_name = gettext_lazy(
-            "transaction type action instrument accrual calculation schedules"
-        )
-        verbose_name_plural = gettext_lazy(
-            "transaction type action instrument accrual calculation schedules"
-        )
+        verbose_name = gettext_lazy("transaction type action instrument accrual calculation schedules")
+        verbose_name_plural = gettext_lazy("transaction type action instrument accrual calculation schedules")
 
     def __str__(self):
         return f"InstrumentAccrualCalculationSchedules action #{self.order}"
@@ -2232,12 +2192,8 @@ class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
     )
 
     class Meta:
-        verbose_name = gettext_lazy(
-            "transaction type action instrument event schedules"
-        )
-        verbose_name_plural = gettext_lazy(
-            "transaction type action instrument event schedules"
-        )
+        verbose_name = gettext_lazy("transaction type action instrument event schedules")
+        verbose_name_plural = gettext_lazy("transaction type action instrument event schedules")
 
     def __str__(self):
         return f"TransactionTypeActionInstrumentEventSchedules action #{self.order}"
@@ -2297,17 +2253,11 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
     )
 
     class Meta:
-        verbose_name = gettext_lazy(
-            "transaction type action instrument event schedule action"
-        )
-        verbose_name_plural = gettext_lazy(
-            "transaction type action instrument event schedule actions"
-        )
+        verbose_name = gettext_lazy("transaction type action instrument event schedule action")
+        verbose_name_plural = gettext_lazy("transaction type action instrument event schedule actions")
 
     def __str__(self):
-        return (
-            f"TransactionTypeActionInstrumentEventScheduleAction action #{self.order}"
-        )
+        return f"TransactionTypeActionInstrumentEventScheduleAction action #{self.order}"
 
 
 class TransactionTypeActionExecuteCommand(TransactionTypeAction):
@@ -2320,9 +2270,7 @@ class TransactionTypeActionExecuteCommand(TransactionTypeAction):
 
     class Meta:
         verbose_name = gettext_lazy("transaction type action execute command action")
-        verbose_name_plural = gettext_lazy(
-            "transaction type action execute command actions"
-        )
+        verbose_name_plural = gettext_lazy("transaction type action execute command actions")
 
     def __str__(self):
         return f"TransactionTypeActionExecuteCommand action #{self.order}"
@@ -2779,9 +2727,7 @@ class ComplexTransaction(TimeStampedModel):
         if value is None:
             self.source_data = None
         else:
-            self.source_data = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
-            )
+            self.source_data = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
 
     class Meta:
         verbose_name = gettext_lazy("complex transaction")
@@ -2799,14 +2745,9 @@ class ComplexTransaction(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if self.code is None or self.code == 0:
-            self.code = FakeSequence.next_value(
-                self.transaction_type.master_user, "complex_transaction", d=100
-            )
+            self.code = FakeSequence.next_value(self.transaction_type.master_user, "complex_transaction", d=100)
 
-        _l.debug(
-            f"ComplexTransaction.save {self.code} {self.date} "
-            f"{self.transaction_unique_code}"
-        )
+        _l.debug(f"ComplexTransaction.save {self.code} {self.date} " f"{self.transaction_unique_code}")
 
         super().save(*args, **kwargs)
 
@@ -2825,9 +2766,7 @@ class ComplexTransaction(TimeStampedModel):
 
                 self.transaction_unique_code = None
 
-                fields_to_update.extend(
-                    ("deleted_transaction_unique_code", "transaction_unique_code")
-                )
+                fields_to_update.extend(("deleted_transaction_unique_code", "transaction_unique_code"))
 
             for tx in self.transactions.all():
                 tx.delete()
@@ -2915,7 +2854,7 @@ class ComplexTransactionInput(models.Model):
         verbose_name=gettext_lazy("responsible"),
     )
     portfolio = models.ForeignKey(
-        "portfolios.Portfolio",
+        Portfolio,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -3255,8 +3194,7 @@ class Transaction(models.Model):
         default=0.0,
         verbose_name=gettext_lazy("reference fx-rate"),
         help_text=gettext_lazy(
-            "FX rate to convert from Settlement ccy to Instrument "
-            "Ccy on Accounting Date (trade date)"
+            "FX rate to convert from Settlement ccy to Instrument " "Ccy on Accounting Date (trade date)"
         ),
         #     TODO need more explicit example
     )
@@ -3283,30 +3221,22 @@ class Transaction(models.Model):
     position_amount = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("position amount"),
-        help_text=gettext_lazy(
-            "Absolute value of Position with Sign (for calculations on the form)"
-        ),
+        help_text=gettext_lazy("Absolute value of Position with Sign (for calculations on the form)"),
     )
     principal_amount = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("principal amount"),
-        help_text=gettext_lazy(
-            "Absolute value of Principal with Sign (for calculations on the form)"
-        ),
+        help_text=gettext_lazy("Absolute value of Principal with Sign (for calculations on the form)"),
     )
     carry_amount = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("carry amount"),
-        help_text=gettext_lazy(
-            "Absolute value of Carry with Sign (for calculations on the form)"
-        ),
+        help_text=gettext_lazy("Absolute value of Carry with Sign (for calculations on the form)"),
     )
     overheads = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("overheads"),
-        help_text=gettext_lazy(
-            "Absolute value of overheads (for calculations on the form)"
-        ),
+        help_text=gettext_lazy("Absolute value of overheads (for calculations on the form)"),
     )
     notes = models.TextField(
         null=True,
@@ -3353,9 +3283,7 @@ class Transaction(models.Model):
         null=True,
         verbose_name=gettext_lazy("user date 1"),
     )
-    user_date_2 = models.DateField(
-        blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2")
-    )
+    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2"))
     user_date_3 = models.DateField(
         blank=True,
         db_index=True,
@@ -3419,11 +3347,7 @@ class Transaction(models.Model):
         return self.transaction_class_id == TransactionClass.CASH_OUTFLOW
 
     def get_instr_ytm_data_d0_v0(self, dt):
-        return dt, -(
-            self.trade_price
-            * self.instrument.price_multiplier
-            * self.instrument.get_factor(dt)
-        )
+        return dt, -(self.trade_price * self.instrument.price_multiplier * self.instrument.get_factor(dt))
 
     def get_instr_ytm_data(self, dt):
         if hasattr(self, "_instr_ytm_data"):
@@ -3434,11 +3358,7 @@ class Transaction(models.Model):
         if instr.maturity_date is None or instr.maturity_date == date.max:
             # _l.debug('get_instr_ytm_data: [], maturity_date rule')
             return []
-        if (
-            instr.maturity_price is None
-            or isnan(instr.maturity_price)
-            or isclose(instr.maturity_price, 0.0)
-        ):
+        if instr.maturity_price is None or isnan(instr.maturity_price) or isclose(instr.maturity_price, 0.0):
             # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
 
@@ -3449,9 +3369,7 @@ class Transaction(models.Model):
 
         data = [(d0, v0)]
 
-        for cpn_date, cpn_val in instr.get_future_coupons(
-            begin_date=d0, with_maturity=False
-        ):
+        for cpn_date, cpn_val in instr.get_future_coupons(begin_date=d0, with_maturity=False):
             try:
                 factor = instr.get_factor(cpn_date)
                 k = (
@@ -3465,10 +3383,7 @@ class Transaction(models.Model):
 
         prev_factor = None
         for factor in instr.factor_schedules.all():
-            if (
-                factor.effective_date < d0
-                or factor.effective_date > instr.maturity_date
-            ):
+            if factor.effective_date < d0 or factor.effective_date > instr.maturity_date:
                 prev_factor = factor
                 continue
 
@@ -3502,9 +3417,7 @@ class Transaction(models.Model):
             return 0
 
     def calculate_ytm(self) -> float:
-        ecosystem_default = EcosystemDefault.cache.get_cache(
-            master_user_pk=self.instrument.master_user.pk
-        )
+        ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=self.instrument.master_user.pk)
 
         try:
             return self._calculate_ytm_value(ecosystem_default)
@@ -3590,20 +3503,14 @@ class Transaction(models.Model):
         self.transaction_date = min(self.accounting_date, self.cash_date)
         if self.transaction_code is None or self.transaction_code == 0:
             if self.complex_transaction is None:
-                self.transaction_code = FakeSequence.next_value(
-                    self.master_user, "transaction"
-                )
+                self.transaction_code = FakeSequence.next_value(self.master_user, "transaction")
             else:
-                self.transaction_code = (
-                    self.complex_transaction.code + self.complex_transaction_order
-                )
+                self.transaction_code = self.complex_transaction.code + self.complex_transaction_order
 
         try:
             self.ytm_at_cost = self.calculate_ytm()
         except Exception as error:
-            _l.error(
-                f"Transaction.save: Cant calculate transaction ytm_at_cost {error}"
-            )
+            _l.error(f"Transaction.save: Cant calculate transaction ytm_at_cost {error}")
 
         if self.ytm_at_cost is None:
             self.ytm_at_cost = 0
@@ -3614,16 +3521,12 @@ class Transaction(models.Model):
 
         if self.portfolio:
             # force run of calculate_first_transactions_dates and update portfolio
-            _l.debug(
-                "Transaction.save: recalculate first_transactions_dates in portfolio"
-            )
+            _l.debug("Transaction.save: recalculate first_transactions_dates in portfolio")
             self.portfolio.save()
 
         if self.instrument:
             # force run of calculate_first_transactions_dates and update instrument
-            _l.debug(
-                "Transaction.save: recalculate first_transactions_dates in instrument"
-            )
+            _l.debug("Transaction.save: recalculate first_transactions_dates in instrument")
             self.instrument.save()
 
     def delete(self, *args, **kwargs):
@@ -3633,23 +3536,18 @@ class Transaction(models.Model):
 
         if self.portfolio:
             # force run of calculate_first_transactions_dates and update portfolio
-            _l.debug(
-                "Transaction.delete: recalculate first_transactions_dates in portfolio"
-            )
+            _l.debug("Transaction.delete: recalculate first_transactions_dates in portfolio")
             self.portfolio.save()
 
         if self.instrument:
             # force run of calculate_first_transactions_dates and update instrument
-            _l.debug(
-                "Transaction.save: recalculate first_transactions_dates in instrument"
-            )
+            _l.debug("Transaction.save: recalculate first_transactions_dates in instrument")
             self.instrument.save()
 
     def is_can_calc_cash_by_formulas(self):
         return (
             self.transaction_class_id in [TransactionClass.BUY, TransactionClass.SELL]
-            and self.instrument.instrument_type.instrument_class_id
-            == InstrumentClass.CONTRACT_FOR_DIFFERENCE
+            and self.instrument.instrument_type.instrument_class_id == InstrumentClass.CONTRACT_FOR_DIFFERENCE
         )
 
     def calc_cash_by_formulas(self, save=True):
