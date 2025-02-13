@@ -849,8 +849,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         portfolios = validated_data.pop("portfolios")
 
         group = super().create(validated_data)
-        for portfolio in portfolios:
-            group.portfolios.add(portfolio)
+        group.portfolios.set(portfolios)
 
         return group
 
