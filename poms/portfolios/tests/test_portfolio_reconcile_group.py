@@ -44,9 +44,9 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             },
         }
 
-    # def test_check_url(self):
-    #     response = self.client.get(path=self.url)
-    #     self.assertEqual(response.status_code, 200, response.content)
+    def test_check_url(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
 
     def test_simple_create(self):
         create_data = self.create_data()
