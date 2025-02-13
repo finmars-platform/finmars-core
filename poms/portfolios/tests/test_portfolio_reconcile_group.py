@@ -31,11 +31,13 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
     def create_data(self) -> dict:
         user_code = get_default_configuration_code()
-        name = self.random_string()
         return {
-            "name": name,
             "user_code": user_code,
             "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "name": self.random_string(),
+            "short_name": self.random_string(),
+            "public_name": self.random_string(),
+            "notes": self.random_string(),
             "params": {
                 "precision": 1,
                 "only_errors": False,
@@ -58,6 +60,10 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
         self.assertIsNone(group_data["last_calculated_at"])
+        self.assertEqual(group_data["short_name"], create_data["short_name"])
+        self.assertEqual(group_data["public_name"], create_data["public_name"])
+        self.assertEqual(group_data["notes"], create_data["notes"])
+
         params = group_data["params"]
         self.assertEqual(params["precision"], create_data["params"]["precision"])
         self.assertEqual(params["round_digits"], create_data["params"]["round_digits"])
