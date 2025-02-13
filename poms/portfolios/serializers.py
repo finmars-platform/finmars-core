@@ -847,7 +847,6 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
     def create(self, validated_data):
         portfolios = validated_data.pop("portfolios")
-
         group = super().create(validated_data)
         group.portfolios.set(portfolios)
 
@@ -869,7 +868,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
             "error_message",
             "status",
             "file_report",
-            # "file_report_object",
             "is_enabled",
             "report_ttl",
         ]
@@ -880,7 +878,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
             source="portfolio_reconcile_group", read_only=True
         )
-
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
