@@ -81,11 +81,11 @@ export GUNICORN_START_TIME=$(date +%s)
 
 if [ "$INSTANCE_TYPE" = "backend" ]; then
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migrating..."
-  python /var/app/manage.py migrate_all_schemes
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migration Done 💚"
+  # timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+  # echo "[${timestamp}] Migrating..."
+  # python /var/app/manage.py migrate_all_schemes
+  # timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+  # echo "[${timestamp}] Migration Done 💚"
 
   #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
