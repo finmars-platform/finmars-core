@@ -72,12 +72,10 @@ class PortfolioType(NamedModel, FakeDeletableModel, TimeStampedModel, Configurat
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
     )
-
     portfolio_class = models.ForeignKey(
         PortfolioClass,
         related_name="portfolio_types",
