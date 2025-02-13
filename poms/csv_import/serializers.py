@@ -317,6 +317,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "pricing_policy",
                 "date",
                 "fx_rate",
+                "is_temporary_fx_rate",
             ],
             "strategies.strategy1": [
                 "name",
