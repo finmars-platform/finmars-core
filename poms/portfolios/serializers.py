@@ -288,7 +288,7 @@ class PortfolioSerializer(
 
                 new_instrument = serializer.instance
 
-            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists " f"new_instrument={new_instrument}")
+            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}")
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
@@ -439,7 +439,7 @@ class PortfolioRegisterSerializer(
 
         new_linked_instrument = self.context["request"].data.get("new_linked_instrument")
         if new_linked_instrument and ("name" in new_linked_instrument):
-            _l.info(f"{self.__class__.__name__}.create new_linked_instrument=" f"{new_linked_instrument}")
+            _l.info(f"{self.__class__.__name__}.create new_linked_instrument={new_linked_instrument}")
             self.create_new_instrument(
                 instance.master_user,
                 new_linked_instrument,
@@ -801,13 +801,28 @@ class ParamsSerializer(serializers.Serializer):
         default=1.0,
         validators=[MinValueValidator(0.00)],
     )
-    emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
     notifications = serializers.DictField(required=False, default={})
 
 
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
+    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = [
+            "id",
+            "master_user",
+            "name",
+            "short_name",
+            "user_code",
+            "public_name",
+            "notes",
+            "portfolios",
+            "params",
+            "last_calculated_at",
+        ]
 
     def validate(self, attrs):
         portfolios = attrs.get("portfolios")
@@ -826,28 +841,18 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
         portfolio_classes = [p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type]
         if len(set(portfolio_classes)) < 2:
-            raise serializers.ValidationError({"portfolios": "Duplicated portfolio classes"})
-        if PortfolioClass.POSITION not in portfolio_classes:
-            raise serializers.ValidationError({"portfolios": "One portfolio class must be POSITION"})
+            raise serializers.ValidationError({"portfolios": "Portfolios must be of different classes"})
 
         return attrs
 
-    class Meta:
-        model = PortfolioReconcileGroup
-        fields = [
-            "id",
-            "master_user",
-            "name",
-            "short_name",
-            "user_code",
-            "public_name",
-            "notes",
-            "portfolios",
-            "is_deleted",
-            "is_enabled",
-            "params",
-            "last_calculated_at",
-        ]
+    def create(self, validated_data):
+        portfolios = validated_data.pop("portfolios")
+
+        group = super().create(validated_data)
+        for portfolio in portfolios:
+            group.portfolios.add(portfolio)
+
+        return group
 
 
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
