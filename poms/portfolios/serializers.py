@@ -809,6 +809,21 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
     params = ParamsSerializer()
     portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
 
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = [
+            "id",
+            "master_user",
+            "name",
+            "short_name",
+            "user_code",
+            "public_name",
+            "notes",
+            "portfolios",
+            "params",
+            "last_calculated_at",
+        ]
+
     def validate(self, attrs):
         portfolios = attrs.get("portfolios")
         if not portfolios:
@@ -830,34 +845,14 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
         return attrs
 
-    class Meta:
-        model = PortfolioReconcileGroup
-        fields = [
-            "id",
-            "master_user",
-            "name",
-            "short_name",
-            "user_code",
-            "public_name",
-            "notes",
-            "portfolios",
-            "params",
-            "last_calculated_at",
-        ]
-
     def create(self, validated_data):
-
-        from pprint import pprint
-
-        pprint(validated_data)
-
         portfolios = validated_data.pop("portfolios")
 
-        group = super().create(**validated_data)
-
+        group = super().create(validated_data)
         for portfolio in portfolios:
             group.portfolios.add(portfolio)
-        group.save()
+
+        return group
 
 
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):

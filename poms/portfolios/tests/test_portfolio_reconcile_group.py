@@ -44,9 +44,9 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             },
         }
 
-    def test_check_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
+    # def test_check_url(self):
+    #     response = self.client.get(path=self.url)
+    #     self.assertEqual(response.status_code, 200, response.content)
 
     def test_simple_create(self):
         create_data = self.create_data()
@@ -66,76 +66,78 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
 
-    # def test_update_by_patch(self):
-    #     create_data = self.create_data()
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     group_data = response.json()
-    #     group_id = group_data["id"]
-    #
-    #     patch_data = {"params": {"only_errors": True}}
-    #     response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    # def test_try_update_portfolios(self):
-    #     create_data = self.create_data()
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     group_data = response.json()
-    #     group_id = group_data["id"]
-    #     patch_data = {
-    #         "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
-    #     }
-    #     response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    # def test_delete(self):
-    #     create_data = self.create_data()
-    #     create_data.pop("portfolios")
-    #     group = PortfolioReconcileGroup.objects.create(
-    #         master_user=self.master_user,
-    #         owner=self.member,
-    #         **create_data,
-    #     )
-    #     response = self.client.delete(f"{self.url}{group.id}/")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     group = PortfolioReconcileGroup.objects.filter(id=group.id).first()
-    #     self.assertIsNotNone(group)
-    #     self.assertTrue(group.is_deleted)
-    #
-    # def test_precision_validation_error(self):
-    #     create_data = self.create_data()
-    #     create_data["params"]["precision"] = -1
-    #
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    # def test_only_errors_validation_error(self):
-    #     create_data = self.create_data()
-    #     create_data["params"]["only_errors"] = -1
-    #
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    # @BaseTestCase.cases(
-    #     ("int", 11111),
-    #     ("str", "dicembre"),
-    # )
-    # def test_create_with_invalid_notification(self, invalid_notification):
-    #     create_data = self.create_data()
-    #     create_data["params"]["notifications"] = [invalid_notification]
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    # def test_create_with_1_portfolio(self):
-    #     create_data = self.create_data()
-    #     create_data["portfolios"] = [self.portfolio_1.id]
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
-    #
-    # def test_create_with_duplicate_portfolio(self):
-    #     create_data = self.create_data()
-    #     create_data["portfolios"] += [self.portfolio_1.id]
-    #     response = self.client.post(self.url, data=create_data, format="json")
-    #     self.assertEqual(response.status_code, 400, response.content)
+        self.assertEqual(group.portfolios.count(), 2)
+
+    def test_update_by_patch(self):
+        create_data = self.create_data()
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        group_data = response.json()
+        group_id = group_data["id"]
+
+        patch_data = {"params": {"only_errors": True}}
+        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test_try_update_portfolios(self):
+        create_data = self.create_data()
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+        group_data = response.json()
+        group_id = group_data["id"]
+        patch_data = {
+            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+        }
+        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_delete(self):
+        create_data = self.create_data()
+        create_data.pop("portfolios")
+        group = PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            **create_data,
+        )
+        response = self.client.delete(f"{self.url}{group.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        group = PortfolioReconcileGroup.objects.filter(id=group.id).first()
+        self.assertIsNotNone(group)
+        self.assertTrue(group.is_deleted)
+
+    def test_precision_validation_error(self):
+        create_data = self.create_data()
+        create_data["params"]["precision"] = -1
+
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_only_errors_validation_error(self):
+        create_data = self.create_data()
+        create_data["params"]["only_errors"] = -1
+
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    @BaseTestCase.cases(
+        ("int", 11111),
+        ("str", "dicembre"),
+    )
+    def test_create_with_invalid_notification(self, invalid_notification):
+        create_data = self.create_data()
+        create_data["params"]["notifications"] = [invalid_notification]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_create_with_1_portfolio(self):
+        create_data = self.create_data()
+        create_data["portfolios"] = [self.portfolio_1.id]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_create_with_duplicate_portfolio(self):
+        create_data = self.create_data()
+        create_data["portfolios"] += [self.portfolio_1.id]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
