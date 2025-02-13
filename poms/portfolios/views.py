@@ -717,12 +717,9 @@ class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
 
 class PortfolioReconcileHistoryFilterSet(FilterSet):
     id = NoOpFilter()
-
     user_code = CharFilter()
     status = CharFilter()
-
     portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
-
     date = django_filters.DateFromToRangeFilter()
 
     class Meta:
