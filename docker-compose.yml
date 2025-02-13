@@ -1,36 +1,56 @@
 services:
-  app:
-    image: finmars
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
     environment:
-      DJANGO_SETTINGS_MODULE: poms_app.settings
-      DB_NAME: finmars_dev
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: database
-      DB_PORT: 5432
-      REDIS_HOST: redis
-      POMS_BLOOMBERG_SANDBOX: "True"
+      - GUNICORN_START_TIME=${GUNICORN_START_TIME:-$(date +%s)}
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+      - redis
+      - backend_migration
     ports:
       - 8080:8080
+    # command: CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]
+
+
+  backend_migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
     depends_on:
-      - database
-  database:
-    image: postgres:15-alpine
+      - db
+    command: python manage.py migrate_all_schemes
+
+
+  db:
+    image: postgres:13-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: finmars_dev
-    ports:
-      - "5432:5432"
+      POSTGRESQL_MAX_OPEN_CONNS: 500
     stdin_open: true
     tty: true
+    ports:
+      - "5434:5432"
+
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+    image: rabbitmq
     ports:
       - "5672:5672"
+    stdin_open: true
+    tty: true
+
   redis:
-      image: redis:7-alpine
-      ports:
-        - "6379:6379"
-      stdin_open: true
-      tty: true
+    image: redis
+    ports:
+      - "6379:6379"
+    stdin_open: true
+    tty: true
