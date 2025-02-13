@@ -33,7 +33,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         user_code = get_default_configuration_code()
         return {
             "user_code": user_code,
-            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "portfolios": [self.portfolio_1.user_code, self.portfolio_2.user_code],
             "name": self.random_string(),
             "short_name": self.random_string(),
             "public_name": self.random_string(),
