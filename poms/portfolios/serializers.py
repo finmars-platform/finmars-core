@@ -288,7 +288,7 @@ class PortfolioSerializer(
 
                 new_instrument = serializer.instance
 
-            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists " f"new_instrument={new_instrument}")
+            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}")
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
@@ -439,7 +439,7 @@ class PortfolioRegisterSerializer(
 
         new_linked_instrument = self.context["request"].data.get("new_linked_instrument")
         if new_linked_instrument and ("name" in new_linked_instrument):
-            _l.info(f"{self.__class__.__name__}.create new_linked_instrument=" f"{new_linked_instrument}")
+            _l.info(f"{self.__class__.__name__}.create new_linked_instrument={new_linked_instrument}")
             self.create_new_instrument(
                 instance.master_user,
                 new_linked_instrument,
