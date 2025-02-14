@@ -55,10 +55,31 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
-    def test_calculate_invalid_dates(self):
+    def test_calculate_empty_dates(self):
         calculate_data = {
             "portfolio_reconcile_group": self.group.user_code,
             "dates": [],
+        }
+        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_calculate_no_dates(self):
+        calculate_data = {
+            "portfolio_reconcile_group": self.group.user_code,
+        }
+        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    @BaseTestCase.cases(
+        ["0", "YYYY-MM-XX"],
+        ["1", "2025-43-17"],
+        ["2", "1234-12-37"],
+        ["3", "12-12-12"],
+    )
+    def test_calculate_invalid_dates(self, invalid_date):
+        calculate_data = {
+            "portfolio_reconcile_group": self.group.user_code,
+            "dates": [invalid_date, self.today().strftime("%Y-%m-%d")],
         }
         response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
