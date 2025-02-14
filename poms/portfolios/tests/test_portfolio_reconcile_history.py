@@ -1,7 +1,7 @@
 from unittest import mock
 
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
+from poms.portfolios.models import PortfolioReconcileGroup
 
 
 class PortfolioReconcileHistoryViewTest(BaseTestCase):
