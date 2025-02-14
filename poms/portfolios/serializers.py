@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from logging import getLogger
 from typing import Type
 
@@ -885,8 +885,17 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
-    date_from = serializers.DateField(required=True)
-    date_to = serializers.DateField(required=True)
+    dates = serializers.ListField(child=serializers.DateField(), required=True)
+
+    def validate_dates(self, dates):
+        if not dates:
+            raise serializers.ValidationError("'dates' can't be empty")
+
+        invalid_dates = [day for day in dates if not isinstance(day, date)]
+        if invalid_dates:
+            raise serializers.ValidationError(f"invalid dates provided: {invalid_dates}")
+
+        return dates
 
 
 class PortfolioReconcileStatusSerializer(serializers.Serializer):

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from logging import getLogger
 
 import django_filters
@@ -740,6 +740,13 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     ]
     filter_class = PortfolioReconcileHistoryFilterSet
     ordering_fields = []
+    http_method_names = ["get", "post"]
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Action 'CREATE' not allowed."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     @action(
         detail=False,
