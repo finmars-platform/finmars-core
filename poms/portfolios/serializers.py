@@ -891,14 +891,7 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
         if not dates:
             raise serializers.ValidationError("'dates' can't be empty")
 
-        invalid_dates = [day for day in dates if not isinstance(day, date)]
-        if invalid_dates:
-            raise serializers.ValidationError(f"invalid dates provided: {invalid_dates}")
-
-        return [day.strftime(settings.API_DATE_FORMAT) for day in dates]
-
-    def validate_portfolio_reconcile_group(self, group: PortfolioReconcileGroup) -> str:
-        return group.user_code
+        return dates
 
 
 class PortfolioReconcileStatusSerializer(serializers.Serializer):

@@ -768,13 +768,17 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             type="calculate_portfolio_reconcile_history",
             status=CeleryTask.STATUS_INIT,
         )
-        task.options_object = serializer.validated_data
-        task.save()
-
-        reconcile_group: PortfolioReconcileGroup = serializer.validated_data["portfolio_reconcile_group"]
+        task_data = serializer.validated_data
+        reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
         reconcile_group.last_calculated_at = datetime.now(timezone.utc)
         reconcile_group.save()
 
+        # Convert dates & task to scalar values expected in task
+        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
+        task_data["portfolio_reconcile_group"] = reconcile_group.user_code
+
+        task.options_object = task_data
+        task.save()
         kwargs = {
             "task_id": task.id,
             "context": {
