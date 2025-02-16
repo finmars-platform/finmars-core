@@ -78,6 +78,8 @@ class CalculateReconcileHistoryTest(BaseTestCase):
 
     @mock.patch("poms.portfolios.models.PortfolioReconcileHistory.calculate")
     def test__valid_task(self, calculate):
+        self.assertEqual(PortfolioReconcileHistory.objects.count(), 0)
+
         options = {
             "master_user": self.master_user,
             "member": self.member,

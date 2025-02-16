@@ -929,7 +929,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
 
             _l.info(f"portfolio_reconcile_history obj {user_code} {'created' if created else 'updated'}")
 
-            portfolio_reconcile_history.linked_task = task  # save task before calculate
+            portfolio_reconcile_history.linked_task = task  # save task before calculation starts
             portfolio_reconcile_history.save()
 
             portfolio_reconcile_history.calculate()
