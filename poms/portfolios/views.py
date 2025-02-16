@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from logging import getLogger
 
 import django_filters
