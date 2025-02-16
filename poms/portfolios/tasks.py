@@ -550,9 +550,9 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
                     .first()
                 )
                 if not first_transaction:
-                    result[portfolio_register.user_code]["error_message"] = (
-                        f"Portfolio {portfolio_register.portfolio.name} has no transactions"
-                    )
+                    result[portfolio_register.user_code][
+                        "error_message"
+                    ] = f"Portfolio {portfolio_register.portfolio.name} has no transactions"
                     result[portfolio_register.user_code]["dates"] = []
                     continue
 
@@ -566,9 +566,9 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
             )
 
             if not portfolio_register.linked_instrument:
-                result[portfolio_register.user_code]["error_message"] = (
-                    f"Portfolio {portfolio_register.portfolio.name} has no linked instrument"
-                )
+                result[portfolio_register.user_code][
+                    "error_message"
+                ] = f"Portfolio {portfolio_register.portfolio.name} has no linked instrument"
                 result[portfolio_register.user_code]["dates"] = []
                 continue
 
