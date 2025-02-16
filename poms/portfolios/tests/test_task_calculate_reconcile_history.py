@@ -1,13 +1,10 @@
-from unittest import mock  # , skip
-
-from django.conf import settings
+from unittest import mock
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.common_base_test import BIG, BaseTestCase, SMALL
+from poms.common.common_base_test import BIG, SMALL, BaseTestCase
+from poms.common.exceptions import FinmarsBaseException
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.portfolios.tasks import calculate_portfolio_reconcile_history
-from poms.common.exceptions import FinmarsBaseException
-
 
 
 class CalculateReconcileHistoryTest(BaseTestCase):
@@ -29,10 +26,10 @@ class CalculateReconcileHistoryTest(BaseTestCase):
             params={
                 "precision": 1,
                 "only_errors": False,
-            }
+            },
         )
 
-    def create_celery_task(self, options = None) -> CeleryTask:
+    def create_celery_task(self, options=None) -> CeleryTask:
         self.celery_task = CeleryTask.objects.create(
             master_user=self.master_user,
             member=self.member,
