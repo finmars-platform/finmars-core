@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from logging import getLogger
 from typing import Type
 
@@ -847,10 +847,8 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
     def create(self, validated_data):
         portfolios = validated_data.pop("portfolios")
-
         group = super().create(validated_data)
-        for portfolio in portfolios:
-            group.portfolios.add(portfolio)
+        group.portfolios.set(portfolios)
 
         return group
 
@@ -870,7 +868,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
             "error_message",
             "status",
             "file_report",
-            # "file_report_object",
             "is_enabled",
             "report_ttl",
         ]
@@ -881,7 +878,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
             source="portfolio_reconcile_group", read_only=True
         )
-
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
@@ -889,8 +885,13 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
-    date_from = serializers.DateField(required=True)
-    date_to = serializers.DateField(required=True)
+    dates = serializers.ListField(child=serializers.DateField(), required=True)
+
+    def validate_dates(self, dates: list) -> list:
+        if not dates:
+            raise serializers.ValidationError("'dates' can't be empty")
+
+        return dates
 
 
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
