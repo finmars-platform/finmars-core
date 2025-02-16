@@ -57,7 +57,7 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         system_message.assert_called_once()
 
     @mock.patch("poms.portfolios.tasks.send_system_message")
-    def test__invalid_portfolio_user_code(self, system_message):
+    def test__invalid_group_user_code(self, system_message):
         options = {
             "master_user": self.master_user,
             "member": self.member,
@@ -72,18 +72,21 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         self.assertEqual(celery_task.status, CeleryTask.STATUS_ERROR)
         system_message.assert_called_once()
 
-    # @mock.patch("poms.portfolios.tasks.send_system_message")
-    # def test__valid_portfolio_user_code(self, system_message):
-    #     self.create_portfolio_register()
-    #     options = {
-    #         "date_from": self.yesterday().strftime(settings.API_DATE_FORMAT),
-    #         "date_to": self.today().strftime(settings.API_DATE_FORMAT),
-    #         "portfolios": [self.user_code]
-    #     }
-    #     celery_task = self.create_celery_task(options=options)
-    #
-    #     calculate_portfolio_register_price_history(task_id=celery_task.id)
-    #
-    #     celery_task.refresh_from_db()
-    #     self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
-    #     self.assertEqual(system_message.call_count, 2)
+    @mock.patch("poms.portfolios.models.PortfolioReconcileHistory.calculate")
+    def test__valid_task(self, calculate):
+        options = {
+            "master_user": self.master_user,
+            "member": self.member,
+            "dates": [self.yesterday(), self.today()],
+            "portfolio_reconcile_group": [self.reconcile_group.user_code],
+        }
+        celery_task = self.create_celery_task(options=options)
+
+        calculate_portfolio_reconcile_history(task_id=celery_task.id)
+
+        celery_task.refresh_from_db()
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
+
+        self.assertEqual(calculate.call_count, 2)  # once per date
+
+        self.assertEqual(PortfolioReconcileHistory.objects.count(), 2)

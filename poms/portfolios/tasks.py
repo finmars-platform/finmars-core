@@ -856,11 +856,14 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     if not task:
         raise FinmarsBaseException(
             error_key="task_not_found",
-            message=f"calculate_portfolio_reconcile_history, no such task={task_id}",
+            message=f"calculate_portfolio_reconcile_history: no such task={task_id}",
         )
 
     if not task.options_object:
         err_msg = "No task options supplied"
+        task.error_message = err_msg
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
         send_system_message(
             master_user=task.master_user,
             action_status="required",
@@ -868,9 +871,6 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             title="Task Failed. Name: calculate_portfolio_reconcile_history",
             description=err_msg,
         )
-        task.error_message = err_msg
-        task.status = CeleryTask.STATUS_ERROR
-        task.save()
         return
 
     reconcile_group_user_code = task.options_object.get("portfolio_reconcile_group")
@@ -878,18 +878,18 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
             user_code=reconcile_group_user_code,
         )
-    except PortfolioReconcileGroup.DoesNotExist as e:
+    except PortfolioReconcileGroup.DoesNotExist:
         err_msg = f"Invalid PortfolioReconcileGroup user_code {reconcile_group_user_code}"
+        task.error_message = err_msg
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
         send_system_message(
             master_user=task.master_user,
-            action_status="invalid",
+            action_status="required",
             type="error",
             title="Task Failed. Name: calculate_portfolio_reconcile_history",
             description=err_msg,
         )
-        task.error_message = err_msg
-        task.status = CeleryTask.STATUS_ERROR
-        task.save()
         return
 
     task.celery_tasks_id = self.request.id
@@ -938,9 +938,16 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             count = count + 1
 
         except Exception as e:
-            err_msg = f"Error {repr(e)}"
-            _l.error(f"calculate_portfolio_reconcile_history {err_msg} trace={traceback.format_exc()}")
+            err_msg = f"{repr(e)}"
+            _l.error(f"calculate for day {day} resulted in {err_msg} trace {traceback.format_exc()}")
             task.status = CeleryTask.STATUS_ERROR
             task.error_message = err_msg
             task.save()
-            raise RuntimeError(err_msg) from e
+            send_system_message(
+                master_user=task.master_user,
+                action_status="required",
+                type="error",
+                title="Task Failed. Name: calculate_portfolio_reconcile_history",
+                description=err_msg,
+            )
+            return
