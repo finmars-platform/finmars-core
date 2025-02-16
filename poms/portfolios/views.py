@@ -36,8 +36,9 @@ from poms.portfolios.models import (
     PortfolioType,
 )
 from poms.portfolios.serializers import (
+    BulkCalculateReconcileHistorySerializer,
     CalculatePortfolioHistorySerializer,
-    CalculatePortfolioReconcileHistorySerializer,
+    CalculateReconcileHistorySerializer,
     FirstTransactionDateRequestSerializer,
     FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
@@ -750,13 +751,11 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         detail=False,
         methods=["post"],
         url_path="calculate",
-        serializer_class=CalculatePortfolioReconcileHistorySerializer,
+        serializer_class=CalculateReconcileHistorySerializer,
     )
     def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = CalculatePortfolioReconcileHistorySerializer(
-            data=request.data, context=self.get_serializer_context()
-        )
+        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -764,6 +763,54 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             member=request.user.member,
             verbose_name="Calculate Portfolio Reconcile History",
             type="calculate_portfolio_reconcile_history",
+            status=CeleryTask.STATUS_INIT,
+        )
+        task_data = serializer.validated_data
+        reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
+        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
+        reconcile_group.save()
+
+        # Convert dates & task to scalar values expected in task
+        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
+        task_data["portfolio_reconcile_group"] = reconcile_group.user_code
+
+        task.options_object = task_data
+        task.save()
+        kwargs = {
+            "task_id": task.id,
+            "context": {
+                "space_code": task.master_user.space_code,
+                "realm_code": task.master_user.realm_code,
+            },
+        }
+        calculate_portfolio_reconcile_history.apply_async(kwargs=kwargs)
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-calculate",
+        serializer_class=BulkCalculateReconcileHistorySerializer,
+    )
+    def bulk_calculate(self, request, realm_code=None, space_code=None):
+        _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
+        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Bulk Calculate Portfolio Reconcile History",
+            type="bulk_calculate_portfolio_reconcile_history",
             status=CeleryTask.STATUS_INIT,
         )
         task_data = serializer.validated_data
