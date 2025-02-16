@@ -1,10 +1,14 @@
 from unittest import mock
 
+from django.conf import settings
+
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.common.exceptions import FinmarsBaseException
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.portfolios.tasks import calculate_portfolio_reconcile_history
+
+DATE = settings.API_DATE_FORMAT
 
 
 class CalculateReconcileHistoryTest(BaseTestCase):
@@ -61,8 +65,8 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         options = {
             "master_user": self.master_user,
             "member": self.member,
-            "dates": [self.yesterday(), self.today()],
-            "portfolio_reconcile_group": [self.random_string()],
+            "dates": [self.yesterday().strftime(DATE), self.today().strftime(DATE)],
+            "portfolio_reconcile_group": self.random_string(),
         }
         celery_task = self.create_celery_task(options=options)
 
@@ -77,15 +81,15 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         options = {
             "master_user": self.master_user,
             "member": self.member,
-            "dates": [self.yesterday(), self.today()],
-            "portfolio_reconcile_group": [self.reconcile_group.user_code],
+            "dates": [self.yesterday().strftime(DATE), self.today().strftime(DATE)],
+            "portfolio_reconcile_group": self.reconcile_group.user_code,
         }
         celery_task = self.create_celery_task(options=options)
 
         calculate_portfolio_reconcile_history(task_id=celery_task.id)
 
         celery_task.refresh_from_db()
-        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE, celery_task.error_message)
 
         self.assertEqual(calculate.call_count, 2)  # once per date
 

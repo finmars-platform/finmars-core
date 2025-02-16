@@ -935,7 +935,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             portfolio_reconcile_history.calculate()
             portfolio_reconcile_history.save()
 
-            count = count + 1
+            count += 1
 
         except Exception as e:
             err_msg = f"{repr(e)}"
