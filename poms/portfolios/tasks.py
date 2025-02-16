@@ -871,22 +871,33 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         task.error_message = err_msg
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        raise FinmarsBaseException(
-            error_key="task_has_no_options",
-            message=err_msg,
+        return
+
+    reconcile_group_user_code = task.options_object.get("portfolio_reconcile_group")
+    try:
+        portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
+            user_code=reconcile_group_user_code,
         )
+    except PortfolioReconcileGroup.DoesNotExist as e:
+        err_msg = f"Invalid PortfolioReconcileGroup user_code {reconcile_group_user_code}"
+        send_system_message(
+            master_user=task.master_user,
+            action_status="invalid",
+            type="error",
+            title="Task Failed. Name: calculate_portfolio_reconcile_history",
+            description=err_msg,
+        )
+        task.error_message = err_msg
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
+        return
 
     task.celery_tasks_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
-    if not task.notes:
-        task.notes = ""
+    task.notes = task.notes or ""
     task.save()
 
     _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
-
-    portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
-        user_code=task.options_object.get("portfolio_reconcile_group")
-    )
 
     count = 0
     dates = task.options_object["dates"]
@@ -897,11 +908,11 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
                     "current": count,
                     "percent": round(count / (len(dates) / 100)),
                     "total": len(dates),
-                    "description": f"Reconciling {portfolio_reconcile_group.user_code} at {day}",
+                    "description": f"Reconciling {reconcile_group_user_code} at {day}",
                 }
             )
 
-            user_code = f"portfolio_reconcile_history_{portfolio_reconcile_group.user_code}_{day}"
+            user_code = f"portfolio_reconcile_history_{reconcile_group_user_code}_{day}"
 
             (
                 portfolio_reconcile_history,

@@ -18,7 +18,7 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         self.init_test_case()
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
-        self.group = self.create_reconcile_group()
+        self.reconcile_group = self.create_reconcile_group()
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -45,7 +45,6 @@ class CalculateReconcileHistoryTest(BaseTestCase):
 
         return self.celery_task
 
-    # @skip("temporally")
     def test__invalid_celery_task(self):
         with self.assertRaises(FinmarsBaseException):
             calculate_portfolio_reconcile_history(task_id=self.random_int())
@@ -54,29 +53,28 @@ class CalculateReconcileHistoryTest(BaseTestCase):
     def test__no_options_in_celery_task(self, system_message):
         celery_task = self.create_celery_task()
 
-        with self.assertRaises(FinmarsBaseException):
-            calculate_portfolio_reconcile_history(task_id=celery_task.id)
+        calculate_portfolio_reconcile_history(task_id=celery_task.id)
 
         celery_task.refresh_from_db()
         self.assertEqual(celery_task.status, CeleryTask.STATUS_ERROR)
         system_message.assert_called_once()
 
-    # # @skip("temporally")
-    # @mock.patch("poms.portfolios.tasks.send_system_message")
-    # def test__invalid_portfolio_user_code(self, system_message):
-    #     options = {
-    #         "date_from": self.yesterday().strftime(settings.API_DATE_FORMAT),
-    #         "date_to": self.today().strftime(settings.API_DATE_FORMAT),
-    #         "portfolios": [self.random_string(5)]
-    #     }
-    #     celery_task = self.create_celery_task(options=options)
-    #
-    #     calculate_portfolio_register_price_history(task_id=celery_task.id)
-    #
-    #     celery_task.refresh_from_db()
-    #     self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE)
-    #     self.assertEqual(system_message.call_count, 2)
-    #
+    @mock.patch("poms.portfolios.tasks.send_system_message")
+    def test__invalid_portfolio_user_code(self, system_message):
+        options = {
+            "master_user": self.master_user,
+            "member": self.member,
+            "dates": [self.yesterday(), self.today()],
+            "portfolio_reconcile_group": [self.random_string()],
+        }
+        celery_task = self.create_celery_task(options=options)
+
+        calculate_portfolio_reconcile_history(task_id=celery_task.id)
+
+        celery_task.refresh_from_db()
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_ERROR)
+        system_message.assert_called_once()
+
     # @mock.patch("poms.portfolios.tasks.send_system_message")
     # def test__valid_portfolio_user_code(self, system_message):
     #     self.create_portfolio_register()
