@@ -849,7 +849,6 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
 def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     """
     Right now trigger only by manual request
-
     """
     from poms.celery_tasks.models import CeleryTask
 
@@ -872,7 +871,10 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         task.error_message = err_msg
         task.status = CeleryTask.STATUS_ERROR
         task.save()
-        raise RuntimeError(err_msg)
+        raise FinmarsBaseException(
+            error_key="task_has_no_options",
+            message=err_msg,
+        )
 
     task.celery_tasks_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
@@ -885,10 +887,9 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
         user_code=task.options_object.get("portfolio_reconcile_group")
     )
-    date_from = task.options_object["date_from"]
-    date_to = task.options_object["date_to"]
-    dates = get_list_of_dates_between_two_dates(date_from, date_to)
+
     count = 0
+    dates = task.options_object["dates"]
     for day in dates:
         try:
             task.update_progress(

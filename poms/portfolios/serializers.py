@@ -887,7 +887,7 @@ class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
     dates = serializers.ListField(child=serializers.DateField(), required=True)
 
-    def validate_dates(self, dates):
+    def validate_dates(self, dates: list) -> list:
         if not dates:
             raise serializers.ValidationError("'dates' can't be empty")
 
