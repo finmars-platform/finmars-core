@@ -951,3 +951,14 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
                 description=err_msg,
             )
             return
+
+    task.update_progress(
+        {
+            "current": count,
+            "percent": 100,
+            "total": len(dates),
+            "description": f"Reconciliation of the group {reconcile_group_user_code} finished",
+        }
+    )
+    task.status = CeleryTask.STATUS_DONE
+    task.save()
