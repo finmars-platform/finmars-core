@@ -368,9 +368,7 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = Portfolio.objects.get(user_code=user_code)
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
-            .order_by("transaction_date")
-            .first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
         )
 
         if first_record:
