@@ -962,3 +962,8 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     )
     task.status = CeleryTask.STATUS_DONE
     task.save()
+
+
+@finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
+def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
+    pass

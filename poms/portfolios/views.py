@@ -57,6 +57,7 @@ from poms.portfolios.serializers import (
     PrCalculateRecordsRequestSerializer,
 )
 from poms.portfolios.tasks import (
+    bulk_calculate_reconcile_history,
     calculate_portfolio_history,
     calculate_portfolio_reconcile_history,
     calculate_portfolio_register_price_history,
@@ -770,7 +771,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         reconcile_group.last_calculated_at = datetime.now(timezone.utc)
         reconcile_group.save()
 
-        # Convert dates & task to scalar values expected in task
+        # Convert dates & groups to scalar values expected in task
         task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
         task_data["portfolio_reconcile_group"] = reconcile_group.user_code
 
@@ -810,17 +811,16 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             master_user=request.user.master_user,
             member=request.user.member,
             verbose_name="Bulk Calculate Portfolio Reconcile History",
-            type="bulk_calculate_portfolio_reconcile_history",
+            type="bulk_calculate_reconcile_history",
             status=CeleryTask.STATUS_INIT,
         )
         task_data = serializer.validated_data
-        reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
-        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
-        reconcile_group.save()
 
         # Convert dates & task to scalar values expected in task
         task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
-        task_data["portfolio_reconcile_group"] = reconcile_group.user_code
+        task_data["reconcile_groups"] = [
+            group.user_code for group in  task_data["reconcile_groups"]
+        ]
 
         task.options_object = task_data
         task.save()
@@ -831,7 +831,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
                 "realm_code": task.master_user.realm_code,
             },
         }
-        calculate_portfolio_reconcile_history.apply_async(kwargs=kwargs)
+        bulk_calculate_reconcile_history.apply_async(kwargs=kwargs)
 
         return Response(
             {
