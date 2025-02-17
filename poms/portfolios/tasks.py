@@ -933,7 +933,7 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     """
     from poms.celery_tasks.models import CeleryTask
 
-    task = CeleryTask.objects.get(id=task_id)  # Use .get() since task should exist
+    task = CeleryTask.objects.get(id=task_id)
     _handle_task_setup(task, "calculate_portfolio_reconcile_history", self)
 
     reconcile_group_user_code = task.options_object.get("portfolio_reconcile_group")
@@ -967,7 +967,7 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
     """
     from poms.celery_tasks.models import CeleryTask
 
-    task = CeleryTask.objects.get(id=task_id)  # Use .get() since task should exist
+    task = CeleryTask.objects.get(id=task_id)
     _handle_task_setup(task, "bulk_calculate_reconcile_history", self)
 
     failed_reconcile_groups = []
