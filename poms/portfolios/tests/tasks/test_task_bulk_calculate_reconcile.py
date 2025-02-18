@@ -99,3 +99,29 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         self.assertEqual(calculate.call_count, 2)  # once per date
 
         self.assertEqual(PortfolioReconcileHistory.objects.count(), 2)
+
+    @mock.patch("poms.portfolios.models.PortfolioReconcileHistory.calculate")
+    def test__calculation_failed(self, calculate):
+        options = {
+            "master_user": self.master_user,
+            "member": self.member,
+            "dates": [self.yesterday().strftime(DATE), self.today().strftime(DATE)],
+            "reconcile_groups": [self.reconcile_group.user_code],
+        }
+        celery_task = self.create_celery_task(options=options)
+        calculate.side_effect = FinmarsBaseException(error_key="test", message="error")
+
+        bulk_calculate_reconcile_history(task_id=celery_task.id)
+
+        celery_task.refresh_from_db()
+        self.assertEqual(celery_task.status, CeleryTask.STATUS_ERROR, celery_task.error_message)
+
+        messages = celery_task.error_message.split("\n")
+        self.assertEqual(len(messages), 2)
+
+        for msg in messages:
+            self.assertIn(self.reconcile_group.user_code, msg)
+
+        self.assertEqual(calculate.call_count, 2)  # once per date
+
+        self.assertEqual(PortfolioReconcileHistory.objects.count(), 2)

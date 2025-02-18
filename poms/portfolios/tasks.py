@@ -895,7 +895,7 @@ def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconc
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
 def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     """
-    Right now trigger only by manual request
+    Calculate portfolio reconcile history for one group, and for given dates
     """
     from poms.celery_tasks.models import CeleryTask
 
