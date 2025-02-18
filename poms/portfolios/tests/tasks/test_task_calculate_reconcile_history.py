@@ -29,7 +29,10 @@ class CalculateReconcileHistoryTest(BaseTestCase):
             name=self.random_string(),
             params={
                 "precision": 1,
+                "round_digits": 2,
                 "only_errors": False,
+                "report_ttl": 90,
+                "notifications": {},
             },
         )
 

@@ -921,9 +921,10 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
                 master_user=task.master_user,
                 user_code=user_code,
                 defaults=dict(
+                    date=day,
                     owner=task.member,
                     portfolio_reconcile_group=portfolio_reconcile_group,
-                    date=day,
+                    report_ttl=portfolio_reconcile_group.params.get("report_ttl", 90),
                 ),
             )
 
