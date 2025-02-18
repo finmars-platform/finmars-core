@@ -912,7 +912,7 @@ class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
     @staticmethod
     def validate_reconcile_groups(groups: list) -> list:
         if not groups:
-            raise serializers.ValidationError("'reconcile_groups can't be empty")
+            raise serializers.ValidationError("'reconcile_groups' can't be empty")
 
         return groups
 

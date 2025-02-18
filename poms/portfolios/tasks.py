@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.views.generic.dates import timezone_today
@@ -882,7 +882,10 @@ def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconc
     portfolio_reconcile_history.calculate()
     portfolio_reconcile_history.save()
 
-    _l.info(f"portfolio_reconcile_history {history_user_code} {day} calculated")
+    reconcile_group.last_calculated_at = datetime.now(timezone.utc)
+    reconcile_group.save(update_fields=["last_calculated_at"])
+
+    _l.info(f"portfolio_reconcile_history {history_user_code} {day} successfully calculated")
 
 
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
