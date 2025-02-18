@@ -1008,6 +1008,7 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
         }
     )
     if error_messages:
+        task.error_message = "\n".join(error_messages)
         task.status = CeleryTask.STATUS_ERROR
     else:
         task.status = CeleryTask.STATUS_DONE
