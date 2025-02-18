@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from logging import getLogger
 from typing import Type
 
@@ -795,7 +795,8 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
 
 class ParamsSerializer(serializers.Serializer):
     only_errors = serializers.BooleanField(required=False, default=False)
-    round_digits = serializers.IntegerField(required=False, default=2)
+    round_digits = serializers.IntegerField(required=False, min_value=0, default=2)
+    report_ttl = serializers.IntegerField(required=False, min_value=1, default=90)
     precision = serializers.FloatField(
         required=False,
         default=1.0,
@@ -881,17 +882,39 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
-class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
+class CalculateReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
     dates = serializers.ListField(child=serializers.DateField(), required=True)
 
-    def validate_dates(self, dates: list) -> list:
+    @staticmethod
+    def validate_dates(dates: list) -> list:
         if not dates:
             raise serializers.ValidationError("'dates' can't be empty")
 
         return dates
+
+
+class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    reconcile_groups = serializers.ListField(child=PortfolioReconcileGroupField(), required=True)
+    dates = serializers.ListField(child=serializers.DateField(), required=True)
+
+    @staticmethod
+    def validate_dates(dates: list) -> list:
+        if not dates:
+            raise serializers.ValidationError("'dates' can't be empty")
+
+        return dates
+
+    @staticmethod
+    def validate_reconcile_groups(groups: list) -> list:
+        if not groups:
+            raise serializers.ValidationError("'reconcile_groups can't be empty")
+
+        return groups
 
 
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
