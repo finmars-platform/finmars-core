@@ -903,6 +903,8 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         finish_task_as_error(task, "No task options supplied")
         return
 
+    _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
+
     group_user_code = task.options_object.get("portfolio_reconcile_group")
     try:
         reconcile_group = PortfolioReconcileGroup.objects.get(user_code=group_user_code)
@@ -915,15 +917,13 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     task.notes = task.notes or ""
     task.save()
 
-    _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
-
-    count = 0
     dates = task.options_object["dates"]
-    for day in dates:
+    days_number = len(dates) // 2
+    for count, day in enumerate(dates, start=1):
         task.update_progress(
             {
                 "current": count,
-                "percent": round(count / (len(dates) / 100)),
+                "percent": round(count / days_number / 100),
                 "total": len(dates),
                 "description": f"Reconciling {group_user_code} at {day}",
             }
@@ -934,25 +934,14 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             count += 1
 
         except Exception as e:
-            err_msg = f"{repr(e)}"
-            _l.error(f"calculate {group_user_code} day {day} resulted in {err_msg} trace {traceback.format_exc()}")
-            task.status = CeleryTask.STATUS_ERROR
-            task.error_message = err_msg
-            task.save()
-            send_system_message(
-                master_user=task.master_user,
-                action_status="required",
-                type="error",
-                title="Task Failed. Name: calculate_portfolio_reconcile_history",
-                description=err_msg,
-            )
+            finish_task_as_error(task, repr(e))
             return
 
     task.update_progress(
         {
-            "current": count,
+            "current": days_number,
             "percent": 100,
-            "total": len(dates),
+            "total": days_number,
             "description": f"Reconciliation of the group {group_user_code} finished",
         }
     )
