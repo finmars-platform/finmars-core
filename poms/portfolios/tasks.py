@@ -918,20 +918,19 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     task.save()
 
     dates = task.options_object["dates"]
-    days_number = len(dates) // 2
+    days_number = len(dates)
     for count, day in enumerate(dates, start=1):
         task.update_progress(
             {
                 "current": count,
                 "percent": round(count / days_number / 100),
-                "total": len(dates),
+                "total": days_number,
                 "description": f"Reconciling {group_user_code} at {day}",
             }
         )
 
         try:
             calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
-            count += 1
 
         except Exception as e:
             finish_task_as_error(task, repr(e))
@@ -956,33 +955,49 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
     """
     from poms.celery_tasks.models import CeleryTask
 
-    task = CeleryTask.objects.get(id=task_id)
-    # _handle_task_setup(task, "bulk_calculate_reconcile_history", self)
+    task = CeleryTask.objects.filter(id=task_id).first()
+    if not task:
+        raise FinmarsBaseException(
+            error_key="task_not_found",
+            message=f"bulk_calculate_reconcile_history: no such task={task_id}",
+        )
 
-    failed_reconcile_groups = []
-    groups_amount = len(task.options_object["reconcile_groups"])
-    count = 0
+    if not task.options_object:
+        finish_task_as_error(task, "No task options supplied")
+        return
 
-    for reconcile_group_user_code in task.options_object["reconcile_groups"]:
+    _l.info(f"bulk_calculate_reconcile_history: task_options={task.options_object}")
+
+    error_messages = []
+    dates = task.options_object.get("dates", [])
+    days_number = len(dates)
+    reconcile_groups = task.options_object.get("reconcile_groups", [])
+    groups_amount = len(reconcile_groups)
+    for count, group_user_code in enumerate(reconcile_groups):
+        task.update_progress(
+            {
+                "current": count,
+                "percent": round(count / groups_amount / 100),
+                "total": groups_amount,
+                "description": f"Reconciling {group_user_code} for {days_number} days",
+            }
+        )
+
         try:
-            portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
-                user_code=reconcile_group_user_code,
-            )
+            reconcile_group = PortfolioReconcileGroup.objects.get(user_code=group_user_code)
+
         except PortfolioReconcileGroup.DoesNotExist:
-            failed_reconcile_groups.append(reconcile_group_user_code)
+            error_messages.append(f"no such reconcile group {group_user_code}")
             continue
 
-        _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
-
-        # dates = task.options_object["dates"]
-        # for day in dates:
-        #     try:
-        #         count = _calculate_and_update_reconcile_history(
-        #             task, portfolio_reconcile_group, day, count, groups_amount
-        #         )
-        #     except Exception:
-        #         failed_reconcile_groups.append(reconcile_group_user_code)
-        #         continue
+        for day in dates:
+            try:
+                calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+            except Exception as e:
+                err_msg = f"group: {group_user_code} day: {day} err: {repr(e)}"
+                _l.error(f"Task {task.type} Id: {task.id} {err_msg}")
+                error_messages.append(err_msg)
+                continue
 
     task.update_progress(
         {
@@ -992,5 +1007,9 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
             "description": f"Reconciliation of all {groups_amount} groups finished",
         }
     )
-    task.status = CeleryTask.STATUS_DONE
+    if error_messages:
+        task.status = CeleryTask.STATUS_ERROR
+    else:
+        task.status = CeleryTask.STATUS_DONE
+
     task.save()
