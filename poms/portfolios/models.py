@@ -1224,10 +1224,6 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         self.file_report = self.generate_json_report(report)
         self.save()
 
-        emails = params.get("emails")
-        if emails:
-            self.file_report.send_emails(emails)
-
         _l.info(f"report {report}")
 
     def generate_json_report(self, content) -> FileReport:
