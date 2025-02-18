@@ -24,6 +24,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             params={
                 "precision": 1,
                 "only_errors": False,
+                "report_ttl": 45,
+                "round_digits": 2,
             }
         )
 
