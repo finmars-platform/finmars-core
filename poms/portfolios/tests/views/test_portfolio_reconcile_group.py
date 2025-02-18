@@ -1,6 +1,10 @@
-from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup, PortfolioType, PortfolioClass
+from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
+from poms.portfolios.models import (
+    PortfolioClass,
+    PortfolioReconcileGroup,
+    PortfolioType,
+)
 
 
 class PortfolioReconcileGroupViewTest(BaseTestCase):
@@ -139,7 +143,6 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], 0)
 
-
     def test_precision_validation_error(self):
         create_data = self.create_data()
         create_data["params"]["precision"] = -1
@@ -150,6 +153,13 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     def test_only_errors_validation_error(self):
         create_data = self.create_data()
         create_data["params"]["only_errors"] = -1
+
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_invalid_ttl(self):
+        create_data = self.create_data()
+        create_data["params"]["report_ttl"] = -1
 
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
