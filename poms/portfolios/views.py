@@ -698,8 +698,36 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
         )
 
 
+#################### FIXME #################################
+from rest_framework.permissions import BasePermission
+from rest_framework.authentication import BaseAuthentication
+from django.contrib.auth import get_user_model
+
+
+class DevSokolovAuthentication(BaseAuthentication):  # FIXME DEBUG
+    def authenticate(self, request):
+        username = "gkuz"  # dev_dsokolov
+        user_model = get_user_model()
+        try:
+            user = user_model.objects.get(username=username)
+            return user, None
+        except user_model.DoesNotExist as e:
+            raise RuntimeError("User '{}' does not exist!") from e
+
+
+class DevSokolovPermission(BasePermission):  # FIXME DEBUG
+    """
+    Custom permission class to activate a specific user by username
+    """
+
+    def has_permission(self, request, view):
+        return True
+
+
+
 class PortfolioReconcileGroupFilterSet(FilterSet):
     id = NoOpFilter()
+    user_code = CharFilter()
 
     class Meta:
         model = PortfolioReconcileGroup
@@ -707,6 +735,8 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 
 
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
+    authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
+    permission_classes = [DevSokolovPermission]  # FIXME DEBUG
     queryset = PortfolioReconcileGroup.objects.filter(is_deleted=False).order_by("user_code")
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
@@ -727,6 +757,8 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
+    authentication_classes = [DevSokolovAuthentication]  # FIXME DEBUG
+    permission_classes = [DevSokolovPermission]  # FIXME DEBUG
     queryset = PortfolioReconcileHistory.objects.select_related(
         "portfolio_reconcile_group",
     ).order_by("user_code")
