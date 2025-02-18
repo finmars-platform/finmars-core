@@ -921,9 +921,10 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
                 master_user=task.master_user,
                 user_code=user_code,
                 defaults=dict(
+                    date=day,
                     owner=task.member,
                     portfolio_reconcile_group=portfolio_reconcile_group,
-                    date=day,
+                    report_ttl=portfolio_reconcile_group.params.get("report_ttl", 90),
                 ),
             )
 
@@ -958,6 +959,53 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
             "percent": 100,
             "total": len(dates),
             "description": f"Reconciliation of the group {reconcile_group_user_code} finished",
+        }
+    )
+    task.status = CeleryTask.STATUS_DONE
+    task.save()
+
+
+@finmars_task(name="portfolios.bulk_calculate_reconcile_history", bind=True)
+def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
+    """
+    Bulk reconcile of many reconcile groups
+    """
+    from poms.celery_tasks.models import CeleryTask
+
+    task = CeleryTask.objects.get(id=task_id)
+    # _handle_task_setup(task, "bulk_calculate_reconcile_history", self)
+
+    failed_reconcile_groups = []
+    groups_amount = len(task.options_object["reconcile_groups"])
+    count = 0
+
+    for reconcile_group_user_code in task.options_object["reconcile_groups"]:
+        try:
+            portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
+                user_code=reconcile_group_user_code,
+            )
+        except PortfolioReconcileGroup.DoesNotExist:
+            failed_reconcile_groups.append(reconcile_group_user_code)
+            continue
+
+        _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
+
+        # dates = task.options_object["dates"]
+        # for day in dates:
+        #     try:
+        #         count = _calculate_and_update_reconcile_history(
+        #             task, portfolio_reconcile_group, day, count, groups_amount
+        #         )
+        #     except Exception:
+        #         failed_reconcile_groups.append(reconcile_group_user_code)
+        #         continue
+
+    task.update_progress(
+        {
+            "current": groups_amount,
+            "percent": 100,
+            "total": groups_amount,
+            "description": f"Reconciliation of all {groups_amount} groups finished",
         }
     )
     task.status = CeleryTask.STATUS_DONE
