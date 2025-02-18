@@ -708,7 +708,7 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 
 
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileGroup.objects.select_related("master_user").order_by("user_code")
+    queryset = PortfolioReconcileGroup.objects.filter(is_deleted=False).order_by("user_code")
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioReconcileGroupFilterSet
@@ -729,7 +729,6 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     queryset = PortfolioReconcileHistory.objects.select_related(
-        "master_user",
         "portfolio_reconcile_group",
     ).order_by("user_code")
     serializer_class = PortfolioReconcileHistorySerializer
@@ -818,9 +817,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
 
         # Convert dates & task to scalar values expected in task
         task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
-        task_data["reconcile_groups"] = [
-            group.user_code for group in  task_data["reconcile_groups"]
-        ]
+        task_data["reconcile_groups"] = [group.user_code for group in task_data["reconcile_groups"]]
 
         task.options_object = task_data
         task.save()
