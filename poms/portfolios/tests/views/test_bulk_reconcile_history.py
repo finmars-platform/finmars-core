@@ -41,6 +41,21 @@ class BulkReconcileHistoryViewTest(BaseTestCase):
         response = self.client.post(f"{self.url}bulk-calculate/", data=calculate_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
+    def test_no_groups(self):
+        calculate_data = {
+            "dates": [self.yesterday().strftime("%Y-%m-%d"), self.today().strftime("%Y-%m-%d")],
+        }
+        response = self.client.post(f"{self.url}bulk-calculate/", data=calculate_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_empty_groups(self):
+        calculate_data = {
+            "reconcile_groups": [],
+            "dates": [self.yesterday().strftime("%Y-%m-%d"), self.today().strftime("%Y-%m-%d")],
+        }
+        response = self.client.post(f"{self.url}bulk-calculate/", data=calculate_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
     def test_calculate_empty_dates(self):
         calculate_data = {
             "reconcile_groups": [self.group.user_code],
