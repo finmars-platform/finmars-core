@@ -845,6 +845,20 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
         count = count + 1
 
 
+def finish_task_as_error(task: CeleryTask, err_msg: str):
+    task.error_message = err_msg
+    task.status = CeleryTask.STATUS_ERROR
+    task.save()
+    send_system_message(
+        master_user=task.master_user,
+        action_status="required",
+        type="error",
+        title=f"Task Failed. Name: {task.type} Id: {task.id}",
+        description=err_msg,
+    )
+    _l.error(f"Task Failed. Name: {task.type} Id: {task.id} err_msg: {err_msg}")
+
+
 def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconcileGroup, task: CeleryTask):
     history_user_code = f"portfolio_reconcile_history_{reconcile_group.user_code}_{day}"
     (
@@ -869,20 +883,6 @@ def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconc
     portfolio_reconcile_history.save()
 
     _l.info(f"portfolio_reconcile_history {history_user_code} {day} calculated")
-
-
-def finish_task_as_error(task: CeleryTask, err_msg: str):
-    task.error_message = err_msg
-    task.status = CeleryTask.STATUS_ERROR
-    task.save()
-    send_system_message(
-        master_user=task.master_user,
-        action_status="required",
-        type="error",
-        title=f"Task Failed. Name: {task.type} Id: {task.id}",
-        description=err_msg,
-    )
-    _l.error(f"Task Failed. Name: {task.type} Id: {task.id} err_msg: {err_msg}")
 
 
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
