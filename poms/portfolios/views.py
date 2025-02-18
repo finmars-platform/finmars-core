@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from logging import getLogger
 
 import django_filters
@@ -767,8 +766,6 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         )
         task_data = serializer.validated_data
         reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
-        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
-        reconcile_group.save()
 
         # Convert dates & groups to scalar values expected in task
         task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]

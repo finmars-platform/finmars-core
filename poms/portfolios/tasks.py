@@ -1,6 +1,6 @@
 import logging
 import traceback
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.views.generic.dates import timezone_today
@@ -845,10 +845,57 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
         count = count + 1
 
 
+def _send_err_message(task: CeleryTask, err_msg: str):
+    send_system_message(
+        master_user=task.master_user,
+        action_status="required",
+        type="error",
+        title=f"Task Failed. Name: {task.type} Id: {task.id}",
+        description=err_msg,
+    )
+    _l.error(f"Task Failed. Name: {task.type} Id: {task.id} err_msg: {err_msg}")
+
+
+def _finish_task_as_error(task: CeleryTask, err_msg: str):
+    task.error_message = err_msg
+    task.status = CeleryTask.STATUS_ERROR
+    task.save()
+    _send_err_message(task, err_msg)
+
+
+def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconcileGroup, task: CeleryTask):
+    history_user_code = f"portfolio_reconcile_history_{reconcile_group.user_code}_{day}"
+    (
+        portfolio_reconcile_history,
+        created,
+    ) = PortfolioReconcileHistory.objects.get_or_create(
+        master_user=task.master_user,
+        user_code=history_user_code,
+        defaults=dict(
+            date=day,
+            owner=task.member,
+            portfolio_reconcile_group=reconcile_group,
+            report_ttl=reconcile_group.params.get("report_ttl", 90),
+        ),
+    )
+
+    _l.info(f"portfolio_reconcile_history {history_user_code} {day} {'created' if created else 'updated'}")
+
+    portfolio_reconcile_history.linked_task = task
+    portfolio_reconcile_history.save(update_fields=["linked_task"])
+    portfolio_reconcile_history.calculate()
+    portfolio_reconcile_history.save()
+
+    reconcile_group.last_calculated_at = datetime.now(timezone.utc)
+    reconcile_group.save(update_fields=["last_calculated_at"])
+
+    _l.info(f"portfolio_reconcile_history {history_user_code} {day} successfully calculated")
+
+
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
 def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     """
-    Right now trigger only by manual request
+    Calculate portfolio reconcile history for one group, and for given dates
     """
     from poms.celery_tasks.models import CeleryTask
 
@@ -860,36 +907,16 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         )
 
     if not task.options_object:
-        err_msg = "No task options supplied"
-        task.error_message = err_msg
-        task.status = CeleryTask.STATUS_ERROR
-        task.save()
-        send_system_message(
-            master_user=task.master_user,
-            action_status="required",
-            type="error",
-            title="Task Failed. Name: calculate_portfolio_reconcile_history",
-            description=err_msg,
-        )
+        _finish_task_as_error(task, "No task options supplied")
         return
 
-    reconcile_group_user_code = task.options_object.get("portfolio_reconcile_group")
+    _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
+
+    group_user_code = task.options_object.get("portfolio_reconcile_group")
     try:
-        portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
-            user_code=reconcile_group_user_code,
-        )
+        reconcile_group = PortfolioReconcileGroup.objects.get(user_code=group_user_code)
     except PortfolioReconcileGroup.DoesNotExist:
-        err_msg = f"Invalid PortfolioReconcileGroup user_code {reconcile_group_user_code}"
-        task.error_message = err_msg
-        task.status = CeleryTask.STATUS_ERROR
-        task.save()
-        send_system_message(
-            master_user=task.master_user,
-            action_status="required",
-            type="error",
-            title="Task Failed. Name: calculate_portfolio_reconcile_history",
-            description=err_msg,
-        )
+        _finish_task_as_error(task, f"No such reconcile group {group_user_code}")
         return
 
     task.celery_tasks_id = self.request.id
@@ -897,68 +924,31 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
     task.notes = task.notes or ""
     task.save()
 
-    _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
-
-    count = 0
     dates = task.options_object["dates"]
-    for day in dates:
+    days_number = len(dates)
+    for count, day in enumerate(dates, start=1):
+        task.update_progress(
+            {
+                "current": count,
+                "percent": round(count / days_number / 100),
+                "total": days_number,
+                "description": f"Reconciling {group_user_code} at {day}",
+            }
+        )
+
         try:
-            task.update_progress(
-                {
-                    "current": count,
-                    "percent": round(count / (len(dates) / 100)),
-                    "total": len(dates),
-                    "description": f"Reconciling {reconcile_group_user_code} at {day}",
-                }
-            )
-
-            user_code = f"portfolio_reconcile_history_{reconcile_group_user_code}_{day}"
-
-            (
-                portfolio_reconcile_history,
-                created,
-            ) = PortfolioReconcileHistory.objects.get_or_create(
-                master_user=task.master_user,
-                user_code=user_code,
-                defaults=dict(
-                    date=day,
-                    owner=task.member,
-                    portfolio_reconcile_group=portfolio_reconcile_group,
-                    report_ttl=portfolio_reconcile_group.params.get("report_ttl", 90),
-                ),
-            )
-
-            _l.info(f"portfolio_reconcile_history obj {user_code} {'created' if created else 'updated'}")
-
-            portfolio_reconcile_history.linked_task = task  # save task before calculation starts
-            portfolio_reconcile_history.save()
-
-            portfolio_reconcile_history.calculate()
-            portfolio_reconcile_history.save()
-
-            count += 1
+            calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
 
         except Exception as e:
-            err_msg = f"{repr(e)}"
-            _l.error(f"calculate for day {day} resulted in {err_msg} trace {traceback.format_exc()}")
-            task.status = CeleryTask.STATUS_ERROR
-            task.error_message = err_msg
-            task.save()
-            send_system_message(
-                master_user=task.master_user,
-                action_status="required",
-                type="error",
-                title="Task Failed. Name: calculate_portfolio_reconcile_history",
-                description=err_msg,
-            )
+            _finish_task_as_error(task, repr(e))
             return
 
     task.update_progress(
         {
-            "current": count,
+            "current": days_number,
             "percent": 100,
-            "total": len(dates),
-            "description": f"Reconciliation of the group {reconcile_group_user_code} finished",
+            "total": days_number,
+            "description": f"Reconciliation of the group {group_user_code} finished",
         }
     )
     task.status = CeleryTask.STATUS_DONE
@@ -968,37 +958,55 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
 @finmars_task(name="portfolios.bulk_calculate_reconcile_history", bind=True)
 def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
     """
-    Bulk reconcile of many reconcile groups
+    Bulk calculate of several reconcile groups
     """
     from poms.celery_tasks.models import CeleryTask
 
-    task = CeleryTask.objects.get(id=task_id)
-    # _handle_task_setup(task, "bulk_calculate_reconcile_history", self)
+    task = CeleryTask.objects.filter(id=task_id).first()
+    if not task:
+        raise FinmarsBaseException(
+            error_key="task_not_found",
+            message=f"bulk_calculate_reconcile_history: no such task={task_id}",
+        )
 
-    failed_reconcile_groups = []
-    groups_amount = len(task.options_object["reconcile_groups"])
-    count = 0
+    if not task.options_object:
+        _finish_task_as_error(task, "No task options supplied")
+        return
 
-    for reconcile_group_user_code in task.options_object["reconcile_groups"]:
+    _l.info(f"bulk_calculate_reconcile_history: task_options={task.options_object}")
+
+    error_messages = []
+    dates = task.options_object.get("dates", [])
+    days_number = len(dates)
+    reconcile_groups = task.options_object.get("reconcile_groups", [])
+    groups_amount = len(reconcile_groups)
+    for count, group_user_code in enumerate(reconcile_groups):
+        task.update_progress(
+            {
+                "current": count,
+                "percent": round(count / groups_amount / 100),
+                "total": groups_amount,
+                "description": f"Reconciling {group_user_code} for {days_number} days",
+            }
+        )
+
         try:
-            portfolio_reconcile_group = PortfolioReconcileGroup.objects.get(
-                user_code=reconcile_group_user_code,
-            )
+            reconcile_group = PortfolioReconcileGroup.objects.get(user_code=group_user_code)
+
         except PortfolioReconcileGroup.DoesNotExist:
-            failed_reconcile_groups.append(reconcile_group_user_code)
+            err_msg = f"No such reconcile group {group_user_code}"
+            _send_err_message(task, err_msg)
+            error_messages.append(err_msg)
             continue
 
-        _l.info(f"calculate_portfolio_reconcile_history: task_options={task.options_object}")
-
-        # dates = task.options_object["dates"]
-        # for day in dates:
-        #     try:
-        #         count = _calculate_and_update_reconcile_history(
-        #             task, portfolio_reconcile_group, day, count, groups_amount
-        #         )
-        #     except Exception:
-        #         failed_reconcile_groups.append(reconcile_group_user_code)
-        #         continue
+        for day in dates:
+            try:
+                calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+            except Exception as e:
+                err_msg = f"group: {group_user_code} day: {day} err: {repr(e)}"
+                _send_err_message(task, err_msg)
+                error_messages.append(err_msg)
+                continue
 
     task.update_progress(
         {
@@ -1008,5 +1016,10 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
             "description": f"Reconciliation of all {groups_amount} groups finished",
         }
     )
-    task.status = CeleryTask.STATUS_DONE
+    if error_messages:
+        task.error_message = "\n".join(error_messages)
+        task.status = CeleryTask.STATUS_ERROR
+    else:
+        task.status = CeleryTask.STATUS_DONE
+
     task.save()

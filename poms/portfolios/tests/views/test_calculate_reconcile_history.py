@@ -24,6 +24,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             params={
                 "precision": 1,
                 "only_errors": False,
+                "report_ttl": 45,
+                "round_digits": 2,
             }
         )
 
@@ -96,6 +98,5 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         apply_async.assert_called()
         self.group.refresh_from_db()
-        self.assertIsNotNone(self.group.last_calculated_at)
         self.assertEqual(response_data["task_options"]["portfolio_reconcile_group"], self.group.user_code)
         self.assertEqual(response_data["task_status"], "I")
