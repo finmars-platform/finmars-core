@@ -76,3 +76,19 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
+
+    def test__filter_in_status_ok(self):
+        response = self.client.get(
+            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
+
+    def test__filter_in_status_error(self):
+        response = self.client.get(
+            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)

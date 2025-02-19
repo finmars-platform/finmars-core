@@ -723,7 +723,12 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
     class Meta:
         model = PortfolioReconcileHistory
-        fields = ["date", "user_code", "status",]
+        fields = [
+            "date",
+            "user_code",
+            "status",
+            "portfolio_reconcile_group__user_code",
+        ]
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
