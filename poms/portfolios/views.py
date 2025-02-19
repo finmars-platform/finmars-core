@@ -700,7 +700,6 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
 
 class PortfolioReconcileGroupFilterSet(FilterSet):
     id = NoOpFilter()
-    user_code = CharFilter()
 
     class Meta:
         model = PortfolioReconcileGroup
