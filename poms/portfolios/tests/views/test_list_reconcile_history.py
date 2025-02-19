@@ -49,6 +49,30 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
     def test__retrieve(self):
         response = self.client.get(path=f"{self.url}{self.history.id}/")
         self.assertEqual(response.status_code, 200, response.content)
-
         response_json = response.json()
+
         self.assertEqual(response_json["id"], self.history.id)
+
+    def test__filter_out_date_range_2(self):
+        response = self.client.get(
+            path=self.url, data={"date_after": str(self.yesterday()), "date_before": str(self.yesterday())}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+    def test__filter_out_date_range_1(self):
+        response = self.client.get(
+            path=self.url, data={"date_before": str(self.yesterday())}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+    def test__filter_in_date_range(self):
+        response = self.client.get(
+            path=self.url, data={"date_after": str(self.yesterday())}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
