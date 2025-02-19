@@ -929,7 +929,8 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
 
         return attrs
 
-    def check_reconciliation_date(self, validated_data: dict) -> list[dict]:
+    @staticmethod
+    def check_reconciliation_date(validated_data: dict) -> list[dict]:
         result = []
         day = validated_data["date"]
         for portfolio in validated_data["portfolios"]:
