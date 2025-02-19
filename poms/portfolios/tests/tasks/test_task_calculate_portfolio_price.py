@@ -20,8 +20,6 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
         self.init_test_case()
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/"
         self.user_code = self.random_string(5)
         self.pricing_policy = PricingPolicy.objects.create(

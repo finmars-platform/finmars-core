@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from logging import getLogger
 
 import django_filters
@@ -36,8 +35,9 @@ from poms.portfolios.models import (
     PortfolioType,
 )
 from poms.portfolios.serializers import (
+    BulkCalculateReconcileHistorySerializer,
     CalculatePortfolioHistorySerializer,
-    CalculatePortfolioReconcileHistorySerializer,
+    CalculateReconcileHistorySerializer,
     FirstTransactionDateRequestSerializer,
     FirstTransactionDateResponseSerializer,
     PortfolioBundleSerializer,
@@ -56,6 +56,7 @@ from poms.portfolios.serializers import (
     PrCalculateRecordsRequestSerializer,
 )
 from poms.portfolios.tasks import (
+    bulk_calculate_reconcile_history,
     calculate_portfolio_history,
     calculate_portfolio_reconcile_history,
     calculate_portfolio_register_price_history,
@@ -368,9 +369,7 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = Portfolio.objects.get(user_code=user_code)
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
-            .order_by("transaction_date")
-            .first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
         )
 
         if first_record:
@@ -708,7 +707,7 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 
 
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileGroup.objects.select_related("master_user").order_by("user_code")
+    queryset = PortfolioReconcileGroup.objects.filter(is_deleted=False).order_by("user_code")
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioReconcileGroupFilterSet
@@ -717,12 +716,9 @@ class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
 
 class PortfolioReconcileHistoryFilterSet(FilterSet):
     id = NoOpFilter()
-
     user_code = CharFilter()
     status = CharFilter()
-
     portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
-
     date = django_filters.DateFromToRangeFilter()
 
     class Meta:
@@ -732,7 +728,6 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     queryset = PortfolioReconcileHistory.objects.select_related(
-        "master_user",
         "portfolio_reconcile_group",
     ).order_by("user_code")
     serializer_class = PortfolioReconcileHistorySerializer
@@ -743,18 +738,23 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     ]
     filter_class = PortfolioReconcileHistoryFilterSet
     ordering_fields = []
+    http_method_names = ["get", "post"]
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Action 'CREATE' not allowed."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     @action(
         detail=False,
         methods=["post"],
         url_path="calculate",
-        serializer_class=CalculatePortfolioReconcileHistorySerializer,
+        serializer_class=CalculateReconcileHistorySerializer,
     )
     def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = CalculatePortfolioReconcileHistorySerializer(
-            data=request.data, context=self.get_serializer_context()
-        )
+        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -764,13 +764,15 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             type="calculate_portfolio_reconcile_history",
             status=CeleryTask.STATUS_INIT,
         )
-        task.options_object = serializer.validated_data
+        task_data = serializer.validated_data
+        reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
+
+        # Convert dates & groups to scalar values expected in task
+        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
+        task_data["portfolio_reconcile_group"] = reconcile_group.user_code
+
+        task.options_object = task_data
         task.save()
-
-        reconcile_group: PortfolioReconcileGroup = serializer.validated_data["portfolio_reconcile_group"]
-        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
-        reconcile_group.save()
-
         kwargs = {
             "task_id": task.id,
             "context": {
@@ -779,6 +781,51 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             },
         }
         calculate_portfolio_reconcile_history.apply_async(kwargs=kwargs)
+
+        return Response(
+            {
+                "task_id": task.id,
+                "task_status": task.status,
+                "task_type": task.type,
+                "task_options": task.options_object,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-calculate",
+        serializer_class=BulkCalculateReconcileHistorySerializer,
+    )
+    def bulk_calculate(self, request, realm_code=None, space_code=None):
+        _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
+        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Bulk Calculate Portfolio Reconcile History",
+            type="bulk_calculate_reconcile_history",
+            status=CeleryTask.STATUS_INIT,
+        )
+        task_data = serializer.validated_data
+
+        # Convert dates & task to scalar values expected in task
+        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
+        task_data["reconcile_groups"] = [group.user_code for group in task_data["reconcile_groups"]]
+
+        task.options_object = task_data
+        task.save()
+        kwargs = {
+            "task_id": task.id,
+            "context": {
+                "space_code": task.master_user.space_code,
+                "realm_code": task.master_user.realm_code,
+            },
+        }
+        bulk_calculate_reconcile_history.apply_async(kwargs=kwargs)
 
         return Response(
             {

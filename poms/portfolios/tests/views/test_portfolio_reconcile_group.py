@@ -1,6 +1,10 @@
-from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup, PortfolioType, PortfolioClass
+from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
+from poms.portfolios.models import (
+    PortfolioClass,
+    PortfolioReconcileGroup,
+    PortfolioType,
+)
 
 
 class PortfolioReconcileGroupViewTest(BaseTestCase):
@@ -31,16 +35,19 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
     def create_data(self) -> dict:
         user_code = get_default_configuration_code()
-        name = self.random_string()
         return {
-            "name": name,
             "user_code": user_code,
-            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "portfolios": [self.portfolio_1.user_code, self.portfolio_2.user_code],
+            "name": self.random_string(),
+            "short_name": self.random_string(),
+            "public_name": self.random_string(),
+            "notes": self.random_string(),
             "params": {
                 "precision": 1,
                 "only_errors": False,
                 "round_digits": 2,
-                "emails": ["test@mail.com"],
+                "report_ttl": 45,
+                "notifications": {},
             },
         }
 
@@ -50,20 +57,28 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
     def test_simple_create(self):
         create_data = self.create_data()
+
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
-
         group_data = response.json()
+
         self.assertEqual(group_data["name"], create_data["name"])
         self.assertEqual(group_data["user_code"], create_data["user_code"])
         self.assertIsNone(group_data["last_calculated_at"])
+        self.assertEqual(group_data["short_name"], create_data["short_name"])
+        self.assertEqual(group_data["public_name"], create_data["public_name"])
+        self.assertEqual(group_data["notes"], create_data["notes"])
+
         params = group_data["params"]
         self.assertEqual(params["precision"], create_data["params"]["precision"])
         self.assertEqual(params["round_digits"], create_data["params"]["round_digits"])
         self.assertEqual(params["only_errors"], create_data["params"]["only_errors"])
+        self.assertEqual(params["report_ttl"], create_data["params"]["report_ttl"])
 
         group = PortfolioReconcileGroup.objects.filter(id=group_data["id"]).first()
         self.assertIsNotNone(group)
+
+        self.assertEqual(group.portfolios.count(), 2)
 
     def test_update_by_patch(self):
         create_data = self.create_data()
@@ -103,6 +118,31 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.assertIsNotNone(group)
         self.assertTrue(group.is_deleted)
 
+    def test_deleted_not_shown(self):
+        create_data = self.create_data()
+        create_data.pop("portfolios")
+        group = PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            **create_data,
+        )
+
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(response_json["results"][0]["name"], create_data["name"])
+
+        response = self.client.delete(f"{self.url}{group.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], 0)
+
     def test_precision_validation_error(self):
         create_data = self.create_data()
         create_data["params"]["precision"] = -1
@@ -117,14 +157,10 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
-    @BaseTestCase.cases(
-        ("int", 11111),
-        ("url", "test/api/v1/portfolios/portfolio-reconcile-group/"),
-        ("str", "dicembre"),
-    )
-    def test_create_with_invalid_emails(self, invalid_email):
+    def test_invalid_ttl(self):
         create_data = self.create_data()
-        create_data["params"]["emails"] = [invalid_email]
+        create_data["params"]["report_ttl"] = -1
+
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
 
