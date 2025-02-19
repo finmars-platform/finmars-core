@@ -69,45 +69,19 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0][user_code], ReconcileStatus.NO_GROUP.value )
 
+    @BaseTestCase.cases(
+        ("small", SMALL),
+        ("big", BIG),
+    )
+    def test__status_not_run_yet(self, user_code):
+        portfolio = self.db_data.portfolios[user_code]
+        self.group.portfolios.add(portfolio)
+        self.group.save()
 
-    # def test_check_not_run_yet(self):
-    #     for p in self.portfolios:
-    #         self.group.portfolios.add(p)
-    #     self.group.save()
-    #
-    #     data = {"portfolios": self.portfolios}
-    #     response = self.client.get(path=self.url, data=data)
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     result_1 = response_json[0]
-    #     self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
-    #     self.assertEqual(list(result_1.values())[0], "reconciliation didn't start yet")
-    #
-    #     result_2 = response_json[1]
-    #     self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
-    #     self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
+        data = {"portfolios": [user_code], "date": str(now().date())}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
 
-    # def test_check_has_last_time(self):
-    #     for p in self.portfolios:
-    #         self.group.portfolios.add(p)
-    #
-    #     self.group.last_calculated_at = now()
-    #     self.group.save()
-    #
-    #     data = {"portfolios": self.portfolios}
-    #     response = self.client.get(path=self.url, data=data)
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     print(response_json)
-    #
-    #     result_1 = response_json[0]
-    #     self.assertIn(int(list(result_1.keys())[0]), self.portfolios)
-    #     self.assertEqual(list(result_1.values())[0], str(now().date()))
-    #
-    #     result_2 = response_json[1]
-    #     self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
-    #     self.assertEqual(list(result_2.values())[0], str(now().date()))
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0][user_code], ReconcileStatus.NOT_RUN_YET.value )
