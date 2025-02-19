@@ -1,7 +1,7 @@
 from django.utils.timezone import now
 
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup
+from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.portfolios.fields import ReconcileStatus
 
 class PortfolioReconcileHistoryViewTest(BaseTestCase):
@@ -26,6 +26,15 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
                 "precision": 1,
                 "only_errors": False,
             }
+        )
+
+    def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
+        return PortfolioReconcileHistory.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            portfolio_reconcile_group=group,
+            date=now().date(),
         )
 
     def test__empty_portfolios(self):
@@ -85,3 +94,23 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0][user_code], ReconcileStatus.NOT_RUN_YET.value )
+
+    @BaseTestCase.cases(
+        ("small", SMALL),
+        ("big", BIG),
+    )
+    def test__status_error(self, user_code):
+        portfolio = self.db_data.portfolios[user_code]
+        self.group.portfolios.add(portfolio)
+        self.group.save()
+        history = self.create_reconcile_history(self.group)
+        history.status = PortfolioReconcileHistory.STATUS_ERROR
+        history.save()
+
+        data = {"portfolios": [user_code], "date": str(now().date())}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0][user_code], ReconcileStatus.ERROR.value )
