@@ -69,6 +69,14 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
+    def test__filter_out_date_range_0(self):
+        response = self.client.get(
+            path=self.url, data={"date_after": str(self.random_future_date())}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
     def test__filter_in_date_range(self):
         response = self.client.get(
             path=self.url, data={"date_after": str(self.yesterday())}
@@ -77,7 +85,7 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
-    def test__filter_in_status_ok(self):
+    def test__filter_status_ok(self):
         response = self.client.get(
             path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK}
         )
@@ -85,10 +93,26 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
-    def test__filter_in_status_error(self):
+    def test__filter_status_error(self):
         response = self.client.get(
             path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR}
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
+
+    def test__filter_wrong_user_code(self):
+        response = self.client.get(
+            path=self.url, data={"reconcile_group": "invalid_user_code"}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+    def test__filter_user_code(self):
+        response = self.client.get(
+            path=self.url, data={"reconcile_group": self.history.portfolio_reconcile_group.user_code}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
