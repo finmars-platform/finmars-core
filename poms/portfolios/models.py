@@ -1144,6 +1144,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         return report, has_reconcile_error
 
     def _finish_as_error(self, err_msg):
+        _l.error(err_msg)
         self.status = self.STATUS_ERROR
         self.error_message = err_msg
         self.save()
