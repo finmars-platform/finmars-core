@@ -1,0 +1,54 @@
+from datetime import date
+
+from poms.common.common_base_test import BaseTestCase
+from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
+
+
+class ListFilterReconcileHistoryTest(BaseTestCase):
+    databases = "__all__"
+
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-reconcile-history/"
+        self.group = self.create_reconcile_group()
+        self.history = self.create_reconcile_history(self.group, day=self.today())
+
+    def create_reconcile_group(self) -> PortfolioReconcileGroup:
+        return PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            name=self.random_string(),
+            params={
+                "precision": 1,
+                "only_errors": False,
+                "report_ttl": 45,
+                "round_digits": 2,
+            },
+        )
+
+    def create_reconcile_history(self, group: PortfolioReconcileGroup, day: date) -> PortfolioReconcileHistory:
+        return PortfolioReconcileHistory.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            portfolio_reconcile_group=group,
+            date=day,
+        )
+
+    def test__list(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(len(response_json["results"]), 1)
+        self.assertEqual(response_json["results"][0]["id"], self.history.id)
+
+    def test__retrieve(self):
+        response = self.client.get(path=f"{self.url}{self.history.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["id"], self.history.id)
