@@ -1209,7 +1209,10 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         _l.info(f"reconcile_result {reconcile_result}")
 
-        reference_portfolio = reconcile_result[position_portfolio_id]
+        reference_portfolio = reconcile_result.get(position_portfolio_id)
+        if not reference_portfolio:
+            raise RuntimeError("No Reference Portfolio in reconcile result")
+
         params = self.portfolio_reconcile_group.params
         report, has_reconcile_error = self.compare_portfolios(
             reference_portfolio,
