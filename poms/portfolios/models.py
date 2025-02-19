@@ -1206,12 +1206,13 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             reconcile_result[pid]["items"][item["user_code"]] = item["position_size"]
             reconcile_result[pid]["position_size"] += item["position_size"]
 
-        _l.info(f"reconcile_result {reconcile_result}")
+        _l.info(f"calculate: reconcile_result {reconcile_result}")
 
-        reference_portfolio = reconcile_result.get(position_portfolio_id)
-        if not reference_portfolio:
-            raise RuntimeError("No Reference Portfolio in reconcile result")
+        missing_keys = set(portfolio_map.keys()) - set(reconcile_result.keys())
+        if missing_keys:
+            raise RuntimeError(f"Reconcile result missing portfolios keys: {missing_keys}")
 
+        reference_portfolio = reconcile_result[position_portfolio_id]
         params = self.portfolio_reconcile_group.params
         report, has_reconcile_error = self.compare_portfolios(
             reference_portfolio,
@@ -1226,7 +1227,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         self.file_report = self.generate_json_report(report)
         self.save()
 
-        _l.info(f"report {report}")
+        _l.info(f"calculate: report {report}")
 
     def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
