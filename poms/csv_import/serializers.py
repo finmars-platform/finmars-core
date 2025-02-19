@@ -253,6 +253,14 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "notes",
                 "portfolio_type",
             ],
+            "portfolios.portfoliotype": [
+                "name",
+                "user_code",
+                "short_name",
+                "public_name",
+                "notes",
+                "portfolio_class",
+            ],
             "instruments.instrument": [
                 "name",
                 "user_code",
@@ -317,6 +325,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "pricing_policy",
                 "date",
                 "fx_rate",
+                "is_temporary_fx_rate",
             ],
             "strategies.strategy1": [
                 "name",

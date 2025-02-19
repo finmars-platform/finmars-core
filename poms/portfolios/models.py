@@ -72,12 +72,10 @@ class PortfolioType(NamedModel, FakeDeletableModel, TimeStampedModel, Configurat
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
     )
-
     portfolio_class = models.ForeignKey(
         PortfolioClass,
         related_name="portfolio_types",
@@ -1226,15 +1224,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         self.file_report = self.generate_json_report(report)
         self.save()
 
-        emails = params.get("emails")
-        if emails:
-            self.file_report.send_emails(emails)
-
         _l.info(f"report {report}")
 
     def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
+        file_name = f"{self.user_code}_{current_date_time}_#{self.linked_task_id}.json"
 
         file_report = FileReport()
         file_report.upload_file(
