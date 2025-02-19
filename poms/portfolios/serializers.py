@@ -930,15 +930,15 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
         return attrs
 
     @staticmethod
-    def check_reconciliation_date(validated_data: dict) -> list[dict]:
-        result = []
+    def check_reconciliation_date(validated_data: dict) -> dict:
+        result = {}
         day = validated_data["date"]
         portfolios = validated_data.pop("portfolios")
 
         for portfolio in portfolios:
             groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio)
             if not groups:
-                result.append({portfolio.user_code: ReconcileStatus.NO_GROUP.value})
+                result[portfolio.user_code] = ReconcileStatus.NO_GROUP.value
                 continue
 
             history = PortfolioReconcileHistory.objects.filter(
@@ -946,15 +946,13 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
                 date=day,
             ).first()
             if not history:
-                result.append({portfolio.user_code: ReconcileStatus.NOT_RUN_YET.value})
+                result[portfolio.user_code] = ReconcileStatus.NOT_RUN_YET.value
                 continue
 
-            result.append(
-                {
-                    portfolio.user_code: ReconcileStatus.OK.value
-                    if history.status == PortfolioReconcileHistory.STATUS_OK
-                    else ReconcileStatus.ERROR.value
-                }
+            result[portfolio.user_code] = (
+                ReconcileStatus.OK.value
+                if history.status == PortfolioReconcileHistory.STATUS_OK
+                else ReconcileStatus.ERROR.value
             )
 
         return result

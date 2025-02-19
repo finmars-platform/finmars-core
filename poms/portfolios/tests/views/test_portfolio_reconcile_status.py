@@ -4,6 +4,7 @@ from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 from poms.portfolios.fields import ReconcileStatus
 
+
 class PortfolioReconcileHistoryViewTest(BaseTestCase):
     databases = "__all__"
 
@@ -25,7 +26,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             params={
                 "precision": 1,
                 "only_errors": False,
-            }
+            },
         )
 
     def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
@@ -76,7 +77,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
-        self.assertEqual(response_json[0][user_code], ReconcileStatus.NO_GROUP.value )
+        self.assertEqual(response_json[user_code], ReconcileStatus.NO_GROUP.value)
 
     @BaseTestCase.cases(
         ("small", SMALL),
@@ -93,7 +94,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
-        self.assertEqual(response_json[0][user_code], ReconcileStatus.NOT_RUN_YET.value )
+        self.assertEqual(response_json[user_code], ReconcileStatus.NOT_RUN_YET.value)
 
     @BaseTestCase.cases(
         ("small", SMALL),
@@ -106,12 +107,13 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         _ = self.create_reconcile_history(self.group)
 
         data = {"portfolios": [user_code], "date": str(now().date())}
+
         response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
-        self.assertEqual(response_json[0][user_code], ReconcileStatus.OK.value )
+        self.assertEqual(response_json[user_code], ReconcileStatus.OK.value)
 
     @BaseTestCase.cases(
         ("small", SMALL),
@@ -131,4 +133,4 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
-        self.assertEqual(response_json[0][user_code], ReconcileStatus.ERROR.value )
+        self.assertEqual(response_json[user_code], ReconcileStatus.ERROR.value)
