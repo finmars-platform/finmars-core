@@ -863,7 +863,7 @@ def _finish_task_as_error(task: CeleryTask, err_msg: str):
     _send_err_message(task, err_msg)
 
 
-def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconcileGroup, task: CeleryTask):
+def _calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconcileGroup, task: CeleryTask):
     history_user_code = f"portfolio_reconcile_history_{reconcile_group.user_code}_{day}"
     (
         portfolio_reconcile_history,
@@ -884,12 +884,21 @@ def calculate_group_reconcile_history(day: str, reconcile_group: PortfolioReconc
     portfolio_reconcile_history.linked_task = task
     portfolio_reconcile_history.save(update_fields=["linked_task"])
     portfolio_reconcile_history.calculate()
-    portfolio_reconcile_history.save()
 
-    reconcile_group.last_calculated_at = datetime.now(timezone.utc)
-    reconcile_group.save(update_fields=["last_calculated_at"])
+    if portfolio_reconcile_history.status == PortfolioReconcileHistory.STATUS_OK:
+        reconcile_group.last_calculated_at = datetime.now(timezone.utc)
+        reconcile_group.save(update_fields=["last_calculated_at"])
 
-    _l.info(f"portfolio_reconcile_history {history_user_code} {day} successfully calculated")
+        _l.info(f"portfolio_reconcile_history {history_user_code} {day} successfully calculated")
+
+        return
+
+    err_msg = (
+        f"portfolio_reconcile_history {history_user_code} {day} failed due to {portfolio_reconcile_history.error_message}"
+    )
+    _l.error(err_msg)
+
+    return err_msg
 
 
 @finmars_task(name="portfolios.calculate_portfolio_reconcile_history", bind=True)
@@ -937,7 +946,10 @@ def calculate_portfolio_reconcile_history(self, task_id: int, *args, **kwargs):
         )
 
         try:
-            calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+            err_msg = _calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+            if err_msg:
+                _finish_task_as_error(task, err_msg)
+                return
 
         except Exception as e:
             _finish_task_as_error(task, repr(e))
@@ -1001,7 +1013,11 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
 
         for day in dates:
             try:
-                calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+                err_msg = _calculate_group_reconcile_history(day=day, reconcile_group=reconcile_group, task=task)
+                if err_msg:
+                    _send_err_message(task, err_msg)
+                    error_messages.append(err_msg)
+
             except Exception as e:
                 err_msg = f"group: {group_user_code} day: {day} err: {repr(e)}"
                 _send_err_message(task, err_msg)

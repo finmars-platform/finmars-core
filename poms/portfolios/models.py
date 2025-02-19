@@ -1143,6 +1143,11 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         return report, has_reconcile_error
 
+    def _finish_as_error(self, err_msg):
+        self.status = self.STATUS_ERROR
+        self.error_message = err_msg
+        self.save()
+
     def calculate(self):
         from poms.reports.common import Report
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -1154,9 +1159,10 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
                 position_portfolio_id = portfolio.id
         if not position_portfolio_id:
-            raise RuntimeError(
-                f"No Position portfolio in PortfolioReconcileGroup {self.portfolio_reconcile_group.user_code}",
+            err_msg = (
+                f"No Position portfolio in PortfolioReconcileGroup {self.portfolio_reconcile_group.user_code}"
             )
+            return self._finish_as_error(err_msg)
 
         ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
         report = Report(master_user=self.master_user)
@@ -1210,7 +1216,8 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         missing_keys = set(portfolio_map.keys()) - set(reconcile_result.keys())
         if missing_keys:
-            raise RuntimeError(f"Reconcile result missing portfolios keys: {missing_keys}")
+            err_msg =f"Reconcile result missing portfolios keys: {missing_keys}, no report created"
+            return self._finish_as_error(err_msg)
 
         reference_portfolio = reconcile_result[position_portfolio_id]
         params = self.portfolio_reconcile_group.params
@@ -1219,12 +1226,14 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             reconcile_result,
             params,
         )
+        self.file_report = self.generate_json_report(report)
 
         if has_reconcile_error:
-            self.status = self.STATUS_ERROR
-            self.error_message = "Reconciliation Error. Please check the report for details"
+            err_msg = "Reconciliation Error. Please check the report for details"
+            return self._finish_as_error(err_msg)
 
-        self.file_report = self.generate_json_report(report)
+        self.status = self.STATUS_OK
+        self.error_message = ''
         self.save()
 
         _l.info(f"calculate: report {report}")
