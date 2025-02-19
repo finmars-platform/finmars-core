@@ -33,7 +33,7 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
+from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField, ReconcileStatus
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -933,19 +933,28 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
     def check_reconciliation_date(validated_data: dict) -> list[dict]:
         result = []
         day = validated_data["date"]
-        for portfolio in validated_data["portfolios"]:
+        portfolios = validated_data.pop("portfolios")
+
+        for portfolio in portfolios:
             groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio)
             if not groups:
-                result.append({portfolio.user_code: "isn't member of any reconcile group"})
+                result.append({portfolio.user_code: ReconcileStatus.NO_GROUP.value})
                 continue
 
             history = PortfolioReconcileHistory.objects.filter(
                 portfolio_reconcile_group__in=groups,
                 date=day,
-            )
+            ).first()
             if not history:
-                result.append({portfolio.user_code: "reconciliation didn't start yet"})
+                result.append({portfolio.user_code: ReconcileStatus.NOT_RUN_YET.value})
                 continue
 
+            result.append(
+                {
+                    portfolio.user_code: ReconcileStatus.OK.value
+                    if history.status == PortfolioReconcileHistory.STATUS_OK
+                    else ReconcileStatus.ERROR.value
+                }
+            )
 
         return result
