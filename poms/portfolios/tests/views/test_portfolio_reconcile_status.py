@@ -2,7 +2,7 @@ from django.utils.timezone import now
 
 from poms.common.common_base_test import BIG, BaseTestCase, SMALL
 from poms.portfolios.models import PortfolioReconcileGroup
-
+from poms.portfolios.fields import ReconcileStatus
 
 class PortfolioReconcileHistoryViewTest(BaseTestCase):
     databases = "__all__"
@@ -14,7 +14,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.portfolio_1 = self.db_data.portfolios[BIG]
         self.portfolio_2 = self.db_data.portfolios[SMALL]
         self.group = self.create_reconcile_group()
-        self.portfolios = [self.portfolio_1.user_code, self.portfolio_2.user_code]
+        self.portfolios_list = [self.portfolio_1.user_code, self.portfolio_2.user_code]
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -46,10 +46,28 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 400, response.content)
 
-    def test_no_date(self):
-        data = {"portfolios": self.portfolios}
+    def test__no_date(self):
+        data = {"portfolios": self.portfolios_list}
         response = self.client.get(path=self.url, data=data)
         self.assertEqual(response.status_code, 400, response.content)
+
+    def test__invalid_date(self):
+        data = {"portfolios": self.portfolios_list, "date": "172671652"}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 400, response.content)
+
+    @BaseTestCase.cases(
+        ("small", SMALL),
+        ("big", BIG),
+    )
+    def test__status_no_group(self, user_code):
+        data = {"portfolios": [user_code], "date": str(now().date())}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0][user_code], ReconcileStatus.NO_GROUP.value )
 
 
     # def test_check_not_run_yet(self):
@@ -70,7 +88,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
     #     result_2 = response_json[1]
     #     self.assertIn(int(list(result_2.keys())[0]), self.portfolios)
     #     self.assertEqual(list(result_2.values())[0], "reconciliation didn't start yet")
-    #
+
     # def test_check_has_last_time(self):
     #     for p in self.portfolios:
     #         self.group.portfolios.add(p)

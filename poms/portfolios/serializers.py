@@ -920,7 +920,7 @@ class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    portfolios = serializers.ListField(child=PortfolioReconcileGroupField(), required=True)
+    portfolios = serializers.ListField(child=PortfolioField(), required=True)
     date = serializers.DateField(required=True)
 
     def validate(self, attrs: dict) -> dict:
