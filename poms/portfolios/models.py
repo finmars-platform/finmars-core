@@ -1228,7 +1228,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
     def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_{self.user_code}_{current_date_time}_#{self.linked_task_id}.json"
+        file_name = f"{self.user_code}_{current_date_time}_#{self.linked_task_id}.json"
 
         file_report = FileReport()
         file_report.upload_file(
