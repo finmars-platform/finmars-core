@@ -116,3 +116,40 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
+
+    def test__complex_filter_future(self):
+        response = self.client.get(
+            path=self.url,
+            data={
+                "reconcile_group": self.history.portfolio_reconcile_group.user_code,
+                "date_after": str(self.random_future_date()),
+            }
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+    def test__complex_filter_past(self):
+        response = self.client.get(
+            path=self.url,
+            data={
+                "reconcile_group": self.history.portfolio_reconcile_group.user_code,
+                "date_before": str(self.yesterday()),
+            }
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 0)
+
+    def test__complex_filter_now(self):
+        response = self.client.get(
+            path=self.url,
+            data={
+                "reconcile_group": self.history.portfolio_reconcile_group.user_code,
+                "date_after": str(self.yesterday()),
+                "date_before": str(self.random_future_date()),
+            }
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
