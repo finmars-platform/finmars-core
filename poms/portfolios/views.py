@@ -848,6 +848,6 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         return Response(
-            serializer.get_reconcile_groups(),
+            serializer.check_reconciliation_date(serializer.validated_data),
             status=status.HTTP_200_OK,
         )
