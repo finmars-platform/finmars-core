@@ -1147,37 +1147,36 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         from poms.reports.common import Report
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 
-        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
+        portfolio_map = {}
+        position_portfolio_id = None
+        for portfolio in self.portfolio_reconcile_group.portfolios.all():
+            portfolio_map[portfolio.id] = portfolio
+            if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
+                position_portfolio_id = portfolio.id
+        if not position_portfolio_id:
+            raise RuntimeError(
+                f"No Position portfolio in PortfolioReconcileGroup {self.portfolio_reconcile_group.user_code}",
+            )
 
+        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
         report = Report(master_user=self.master_user)
         report.master_user = self.master_user
         report.member = self.owner
         report.report_date = self.date
         report.pricing_policy = ecosystem_defaults.pricing_policy
-        report.portfolios = self.portfolio_reconcile_group.portfolios.all()
         report.report_currency = ecosystem_defaults.currency
+        report.portfolios = self.portfolio_reconcile_group.portfolios.all()
 
         builder_instance = BalanceReportBuilderSql(instance=report)
         builder = builder_instance.build_balance_sync()
 
-        _l.info(f"instance.items[0] {builder.items[0]}")
+        _l.info(f"calculate: builder.items[0] {builder.items[0]}")
 
-        portfolio_map = {}
         reconcile_result = {}
-        position_portfolio_id = None
-
-        for portfolio in self.portfolio_reconcile_group.portfolios.all():
-            portfolio_map[portfolio.id] = portfolio
-
-            if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
-                position_portfolio_id = portfolio.id
-
-        if not position_portfolio_id:
-            raise RuntimeError("Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group")
-
         for item in builder.items:
             if "portfolio_id" not in item:
-                _l.warning(f"missing portfolio_id item {item}")
+                # FIXME Possible better to raise error
+                _l.warning(f"calculate: missing 'portfolio_id' key in builder item {item}")
                 continue
 
             pid = item["portfolio_id"]
