@@ -718,18 +718,24 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
     status = CharFilter()
-    portfolio_reconcile_group__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PortfolioReconcileGroup)
     date = django_filters.DateFromToRangeFilter()
+    reconcile_group = CharFilter(
+        field_name="portfolio_reconcile_group__user_code",
+        lookup_expr="exact",
+    )
 
     class Meta:
         model = PortfolioReconcileHistory
-        fields = []
+        fields = [
+            "date",
+            "user_code",
+            "status",
+            "portfolio_reconcile_group__user_code",
+        ]
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileHistory.objects.select_related(
-        "portfolio_reconcile_group",
-    ).order_by("user_code")
+    queryset = PortfolioReconcileHistory.objects.select_related("portfolio_reconcile_group")
     serializer_class = PortfolioReconcileHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -848,6 +854,6 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         return Response(
-            serializer.get_reconcile_groups(),
+            serializer.check_reconciliation_date(serializer.validated_data),
             status=status.HTTP_200_OK,
         )

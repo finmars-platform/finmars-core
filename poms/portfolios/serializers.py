@@ -33,7 +33,7 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
+from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField, ReconcileStatus
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -920,37 +920,39 @@ class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    portfolios = serializers.ListField(child=serializers.IntegerField(min_value=1), required=True)
+    portfolios = serializers.ListField(child=PortfolioField(), required=True)
+    date = serializers.DateField(required=True)
 
     def validate(self, attrs: dict) -> dict:
-        portfolios_ids = attrs.get("portfolios", [])
-        if not portfolios_ids:
+        if not attrs["portfolios"]:
             raise serializers.ValidationError({"portfolios": "Can't be empty"})
 
-        portfolios = list(Portfolio.objects.filter(id__in=portfolios_ids))
-        if not portfolios:
-            raise serializers.ValidationError({"portfolios": f"No portfolios with ids {portfolios_ids}"})
-
-        self.context["portfolios"] = portfolios
         return attrs
 
-    def get_reconcile_groups(self) -> list[dict]:
-        result = []
-        for portfolio in self.context["portfolios"]:
-            groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio).values_list(
-                "last_calculated_at", flat=True
-            )
+    @staticmethod
+    def check_reconciliation_date(validated_data: dict) -> dict:
+        result = {}
+        day = validated_data["date"]
+        portfolios = validated_data.pop("portfolios")
+
+        for portfolio in portfolios:
+            groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio)
             if not groups:
-                result.append({portfolio.id: "isn't member of any reconcile group"})
+                result[portfolio.user_code] = ReconcileStatus.NO_GROUP.value
                 continue
 
-            times = list(filter(None, groups))
-            if not times:
-                result.append({portfolio.id: "reconciliation didn't start yet"})
+            history = PortfolioReconcileHistory.objects.filter(
+                portfolio_reconcile_group__in=groups,
+                date=day,
+            ).first()
+            if not history:
+                result[portfolio.user_code] = ReconcileStatus.NOT_RUN_YET.value
                 continue
 
-            times.sort()
-
-            result.append({portfolio.id: times[-1].date()})
+            result[portfolio.user_code] = (
+                ReconcileStatus.OK.value
+                if history.status == PortfolioReconcileHistory.STATUS_OK
+                else ReconcileStatus.ERROR.value
+            )
 
         return result
