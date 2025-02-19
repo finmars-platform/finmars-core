@@ -1217,7 +1217,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         missing_keys = set(portfolio_map.keys()) - set(reconcile_result.keys())
         if missing_keys:
-            err_msg =f"Reconcile result missing portfolios keys: {missing_keys}, no report created"
+            err_msg = f"Reconcile results missing portfolios with ids: {missing_keys}, no report created"
             return self._finish_as_error(err_msg)
 
         reference_portfolio = reconcile_result[position_portfolio_id]
