@@ -99,6 +99,24 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         ("small", SMALL),
         ("big", BIG),
     )
+    def test__status_ok(self, user_code):
+        portfolio = self.db_data.portfolios[user_code]
+        self.group.portfolios.add(portfolio)
+        self.group.save()
+        _ = self.create_reconcile_history(self.group)
+
+        data = {"portfolios": [user_code], "date": str(now().date())}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0][user_code], ReconcileStatus.OK.value )
+
+    @BaseTestCase.cases(
+        ("small", SMALL),
+        ("big", BIG),
+    )
     def test__status_error(self, user_code):
         portfolio = self.db_data.portfolios[user_code]
         self.group.portfolios.add(portfolio)
