@@ -677,11 +677,11 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_CLIENT_CONFIG = {
     "config": {
         "retries": {
-            "max_attempts": 5,
+            "max_attempts": 3,
             "mode": "standard",
         },
         "paginator_config": {
-            "PageSize": 100,
+            "PageSize": 500,
         },
         "connect_timeout": 30,
         "read_timeout": 180,
