@@ -538,22 +538,24 @@ class SyncViewSet(ContextMixin, AbstractViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
-        # TODO  IGNORE SYNC REQUESTS TO AVOID S3 OVERLOADING
-        # celery_task = CeleryTask.objects.create(
-        #     master_user=request.user.master_user,
-        #     member=request.user.member,
-        #     verbose_name="Sync files with database",
-        #     type="sync_storage_with_database",
-        #     options_object={},
-        # )
-        #
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Sync files with database",
+            type="sync_storage_with_database",
+            options_object={},
+            status=CeleryTask.STATUS_DONE,  # Fake task
+        )
+
+        # TODO IGNORE SYNC REQUESTS TO AVOID S3 OVERLOADING
         # sync_storage_with_database.apply_async(kwargs=self.default_kwargs(celery_task))
 
         return Response(
             TaskResponseSerializer(
                 {
                     "status": "ok",
-                    "task_id": 0,   # celery_task.id,
+                    "task_id": celery_task.id,
                 }
             ).data,
             status=status.HTTP_200_OK,
