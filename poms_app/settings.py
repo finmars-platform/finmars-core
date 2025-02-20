@@ -722,6 +722,18 @@ INTERNAL_IPS = [
     "localhost",
 ]
 
+SWAGGER_SETTINGS = {
+    # ...
+    'DEFAULT_SPEC_RENDERERS': [
+        # JSON only
+        'drf_yasg.renderers.SwaggerJSONRenderer',
+        'drf_yasg.renderers.OpenAPIRenderer',
+        # remove or comment out the YAML renderer
+        # 'drf_yasg.renderers.SwaggerYAMLRenderer',
+    ],
+    # ...
+}
+
 if USE_DEBUGGER:
     print("Warning. Debugger is activated, could lead to low performance")
     DEBUG_TOOLBAR_PANELS = [
