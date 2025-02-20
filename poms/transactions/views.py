@@ -1620,14 +1620,13 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         if request.method.lower() == "get":
             return self.list(request)
 
-        data = request.data
+        ids = request.data.get("ids")
+        if not ids:
+            raise ValidationError("'ids' parameter is empty or missing")
 
-        queryset = self.filter_queryset(self.get_queryset())
+        _l.info(f'bulk_restore {ids}')
 
-        _l.info(f'bulk_restore {data["ids"]}')
-
-        complex_transactions = ComplexTransaction.objects.filter(id__in=data["ids"])
-
+        complex_transactions = ComplexTransaction.objects.filter(id__in=ids)
         for complex_transaction in complex_transactions:
             if complex_transaction.deleted_transaction_unique_code:
                 used = ComplexTransaction.objects.filter(
@@ -1646,9 +1645,9 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 complex_transaction.is_deleted = False
                 complex_transaction.save()
 
-            for transaction in complex_transaction.transactions.all():
-                transaction.is_deleted = False
-                transaction.save()
+            for trans in complex_transaction.transactions.all():
+                trans.is_deleted = False
+                trans.save()
 
         return Response({"message": "ok"})
 

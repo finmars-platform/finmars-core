@@ -33,7 +33,7 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField
+from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField, ReconcileStatus
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -288,7 +288,7 @@ class PortfolioSerializer(
 
                 new_instrument = serializer.instance
 
-            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists " f"new_instrument={new_instrument}")
+            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}")
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
@@ -439,7 +439,7 @@ class PortfolioRegisterSerializer(
 
         new_linked_instrument = self.context["request"].data.get("new_linked_instrument")
         if new_linked_instrument and ("name" in new_linked_instrument):
-            _l.info(f"{self.__class__.__name__}.create new_linked_instrument=" f"{new_linked_instrument}")
+            _l.info(f"{self.__class__.__name__}.create new_linked_instrument={new_linked_instrument}")
             self.create_new_instrument(
                 instance.master_user,
                 new_linked_instrument,
@@ -795,19 +795,35 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
 
 class ParamsSerializer(serializers.Serializer):
     only_errors = serializers.BooleanField(required=False, default=False)
-    round_digits = serializers.IntegerField(required=False, default=2)
+    round_digits = serializers.IntegerField(required=False, min_value=0, default=2)
+    report_ttl = serializers.IntegerField(required=False, min_value=1, default=90)
     precision = serializers.FloatField(
         required=False,
         default=1.0,
         validators=[MinValueValidator(0.00)],
     )
-    emails = serializers.ListField(child=serializers.EmailField(), required=False, default=[])
     notifications = serializers.DictField(required=False, default={})
 
 
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
+    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = [
+            "id",
+            "master_user",
+            "name",
+            "short_name",
+            "user_code",
+            "public_name",
+            "notes",
+            "portfolios",
+            "params",
+            "last_calculated_at",
+        ]
 
     def validate(self, attrs):
         portfolios = attrs.get("portfolios")
@@ -826,28 +842,16 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
         portfolio_classes = [p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type]
         if len(set(portfolio_classes)) < 2:
-            raise serializers.ValidationError({"portfolios": "Duplicated portfolio classes"})
-        if PortfolioClass.POSITION not in portfolio_classes:
-            raise serializers.ValidationError({"portfolios": "One portfolio class must be POSITION"})
+            raise serializers.ValidationError({"portfolios": "Portfolios must be of different classes"})
 
         return attrs
 
-    class Meta:
-        model = PortfolioReconcileGroup
-        fields = [
-            "id",
-            "master_user",
-            "name",
-            "short_name",
-            "user_code",
-            "public_name",
-            "notes",
-            "portfolios",
-            "is_deleted",
-            "is_enabled",
-            "params",
-            "last_calculated_at",
-        ]
+    def create(self, validated_data):
+        portfolios = validated_data.pop("portfolios")
+        group = super().create(validated_data)
+        group.portfolios.set(portfolios)
+
+        return group
 
 
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
@@ -865,7 +869,6 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
             "error_message",
             "status",
             "file_report",
-            # "file_report_object",
             "is_enabled",
             "report_ttl",
         ]
@@ -876,15 +879,80 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
             source="portfolio_reconcile_group", read_only=True
         )
-
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
-class CalculatePortfolioReconcileHistorySerializer(serializers.Serializer):
+class CalculateReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-
     portfolio_reconcile_group = PortfolioReconcileGroupField(required=True)
+    dates = serializers.ListField(child=serializers.DateField(), required=True)
 
-    date_from = serializers.DateField(required=True)
-    date_to = serializers.DateField(required=True)
+    @staticmethod
+    def validate_dates(dates: list) -> list:
+        if not dates:
+            raise serializers.ValidationError("'dates' can't be empty")
+
+        return dates
+
+
+class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    reconcile_groups = serializers.ListField(child=PortfolioReconcileGroupField(), required=True)
+    dates = serializers.ListField(child=serializers.DateField(), required=True)
+
+    @staticmethod
+    def validate_dates(dates: list) -> list:
+        if not dates:
+            raise serializers.ValidationError("'dates' can't be empty")
+
+        return dates
+
+    @staticmethod
+    def validate_reconcile_groups(groups: list) -> list:
+        if not groups:
+            raise serializers.ValidationError("'reconcile_groups' can't be empty")
+
+        return groups
+
+
+class PortfolioReconcileStatusSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    portfolios = serializers.ListField(child=PortfolioField(), required=True)
+    date = serializers.DateField(required=True)
+
+    def validate(self, attrs: dict) -> dict:
+        if not attrs["portfolios"]:
+            raise serializers.ValidationError({"portfolios": "Can't be empty"})
+
+        return attrs
+
+    @staticmethod
+    def check_reconciliation_date(validated_data: dict) -> dict:
+        result = {}
+        day = validated_data["date"]
+        portfolios = validated_data.pop("portfolios")
+
+        for portfolio in portfolios:
+            groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio)
+            if not groups:
+                result[portfolio.user_code] = ReconcileStatus.NO_GROUP.value
+                continue
+
+            history = PortfolioReconcileHistory.objects.filter(
+                portfolio_reconcile_group__in=groups,
+                date=day,
+            ).first()
+            if not history:
+                result[portfolio.user_code] = ReconcileStatus.NOT_RUN_YET.value
+                continue
+
+            result[portfolio.user_code] = (
+                ReconcileStatus.OK.value
+                if history.status == PortfolioReconcileHistory.STATUS_OK
+                else ReconcileStatus.ERROR.value
+            )
+
+        return result

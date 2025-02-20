@@ -3,10 +3,10 @@ from datetime import date
 from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.cache import cache
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-from django.core.cache import cache
 
 from poms.clients.models import Client
 from poms.common.fields import ResourceGroupsField
@@ -72,12 +72,10 @@ class PortfolioType(NamedModel, FakeDeletableModel, TimeStampedModel, Configurat
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
     )
-
     portfolio_class = models.ForeignKey(
         PortfolioClass,
         related_name="portfolio_types",
@@ -322,7 +320,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             .order_by("accounting_date")
             .first()
         )
-        self.first_cash_flow_date = first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        self.first_cash_flow_date = (
+            first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+        )
 
         _l.info(
             f"calculate_first_transactions_dates succeed: "
@@ -339,6 +339,23 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         """
         param = f"transaction__{date_field}"
         return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
+
+    def destroy_reconcile_histories(self):
+        """
+        As portfolio's set of transactions has changed, so all reconcile history objects are not valid anymore,
+        and has to be removed.
+        """
+        groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
+        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group__in=groups).select_related(
+            "file_report"
+        )
+        for history in histories:
+            if history.file_report:
+                history.file_report.delete()
+
+            history.delete()
+
+        _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
@@ -1126,41 +1143,47 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         return report, has_reconcile_error
 
+    def _finish_as_error(self, err_msg):
+        _l.error(err_msg)
+        self.status = self.STATUS_ERROR
+        self.error_message = err_msg
+        self.save()
+
     def calculate(self):
         from poms.reports.common import Report
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 
-        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
+        portfolio_map = {}
+        position_portfolio_id = None
+        for portfolio in self.portfolio_reconcile_group.portfolios.all():
+            portfolio_map[portfolio.id] = portfolio
+            if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
+                position_portfolio_id = portfolio.id
+        if not position_portfolio_id:
+            err_msg = (
+                f"No Position portfolio in PortfolioReconcileGroup {self.portfolio_reconcile_group.user_code}"
+            )
+            return self._finish_as_error(err_msg)
 
+        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
         report = Report(master_user=self.master_user)
         report.master_user = self.master_user
         report.member = self.owner
         report.report_date = self.date
         report.pricing_policy = ecosystem_defaults.pricing_policy
-        report.portfolios = self.portfolio_reconcile_group.portfolios.all()
         report.report_currency = ecosystem_defaults.currency
+        report.portfolios = self.portfolio_reconcile_group.portfolios.all()
 
         builder_instance = BalanceReportBuilderSql(instance=report)
         builder = builder_instance.build_balance_sync()
 
-        _l.info(f"instance.items[0] {builder.items[0]}")
+        _l.info(f"calculate: builder.items[0] {builder.items[0]}")
 
-        portfolio_map = {}
         reconcile_result = {}
-        position_portfolio_id = None
-
-        for portfolio in self.portfolio_reconcile_group.portfolios.all():
-            portfolio_map[portfolio.id] = portfolio
-
-            if portfolio.portfolio_type.portfolio_class_id == PortfolioClass.POSITION:
-                position_portfolio_id = portfolio.id
-
-        if not position_portfolio_id:
-            raise RuntimeError("Could not reconcile. Position Portfolio is not Set in Portfolio Reconcile Group")
-
         for item in builder.items:
             if "portfolio_id" not in item:
-                _l.warning(f"missing portfolio_id item {item}")
+                # FIXME Possible better to raise error
+                _l.warning(f"calculate: missing 'portfolio_id' key in builder item {item}")
                 continue
 
             pid = item["portfolio_id"]
@@ -1190,7 +1213,12 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             reconcile_result[pid]["items"][item["user_code"]] = item["position_size"]
             reconcile_result[pid]["position_size"] += item["position_size"]
 
-        _l.info(f"reconcile_result {reconcile_result}")
+        _l.info(f"calculate: reconcile_result {reconcile_result}")
+
+        missing_keys = set(portfolio_map.keys()) - set(reconcile_result.keys())
+        if missing_keys:
+            err_msg = f"Reconcile results missing portfolios with ids: {missing_keys}, no report created"
+            return self._finish_as_error(err_msg)
 
         reference_portfolio = reconcile_result[position_portfolio_id]
         params = self.portfolio_reconcile_group.params
@@ -1199,30 +1227,23 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             reconcile_result,
             params,
         )
+        self.file_report = self.generate_json_report(report)
 
         if has_reconcile_error:
-            self.status = self.STATUS_ERROR
-            self.error_message = "Reconciliation Error. Please check the report for details"
+            err_msg = "Reconciliation Error. Please check the report for details"
+            return self._finish_as_error(err_msg)
 
-        self.file_report = self.generate_json_report(report)
+        self.status = self.STATUS_OK
+        self.error_message = ''
         self.save()
 
-        emails = params.get("emails")
-        if emails:
-            self.file_report.send_emails(emails)
+        _l.info(f"calculate: report {report}")
 
-        _l.info(f"report {report}")
-
-    def generate_json_report(self, content):
-        # _l.debug('self.result %s' % self.result.__dict__)
-
-        # _l.debug('generate_json_report.result %s' % result)
-
+    def generate_json_report(self, content) -> FileReport:
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        file_name = f"reconciliation_report_{current_date_time}_task_{self.linked_task_id}.json"
+        file_name = f"{self.user_code}_{current_date_time}_#{self.linked_task_id}.json"
 
         file_report = FileReport()
-
         file_report.upload_file(
             file_name=file_name,
             text=json.dumps(content, indent=4, default=str),

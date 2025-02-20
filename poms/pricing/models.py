@@ -1,12 +1,9 @@
-import contextlib
-import json
 import logging
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, TimeStampedModel, NamedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.common.utils import date_now
 from poms.configuration.models import ConfigurationModel
 from poms.procedures.models import PricingProcedureInstance
@@ -15,12 +12,11 @@ _l = logging.getLogger("poms.pricing")
 
 
 class CurrencyPricingScheme(models.Model):
-
     class Meta:
         abstract = True
 
-class InstrumentPricingScheme(models.Model):
 
+class InstrumentPricingScheme(models.Model):
     class Meta:
         abstract = True
 
@@ -108,31 +104,32 @@ class CurrencyHistoryError(TimeStampedModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     currency = models.ForeignKey(
         "currencies.Currency",
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("currency"),
     )
-
     pricing_policy = models.ForeignKey(
         "instruments.PricingPolicy",
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("pricing policy"),
     )
-
     date = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date"),
     )
-
     fx_rate = models.FloatField(
-        default=None, null=True, blank=True, verbose_name=gettext_lazy("fx rate")
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("fx rate"),
     )
-
     error_text = models.TextField(
-        blank=True, default="", verbose_name=gettext_lazy("error text")
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("error text"),
     )
-
     status = models.CharField(
         max_length=1,
         default=STATUS_ERROR,

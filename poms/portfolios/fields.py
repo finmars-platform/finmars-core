@@ -1,3 +1,5 @@
+from enum import Enum
+
 from poms.common.fields import UserCodeOrPrimaryKeyRelatedField
 from poms.portfolios.models import Portfolio, PortfolioReconcileGroup
 
@@ -17,10 +19,13 @@ class PortfolioDefault:
 class PortfolioField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Portfolio.objects
 
-    # Possibly Deprecated
-    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 class PortfolioReconcileGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioReconcileGroup.objects
+
+
+class ReconcileStatus(Enum):
+    NO_GROUP = "no_group"
+    NOT_RUN_YET = "not_run_yet"
+    ERROR = "error"
+    OK = "ok"
