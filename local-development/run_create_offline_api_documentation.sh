@@ -65,5 +65,7 @@ done
 
 echo "Updated links in $HTML_FILE"
 
+find api_docs/dist/ -type f -name "*.html" -exec sed -i '' 's|/realm00000/docs/api/v1/|/|g' {} +
+
 
 echo "🎉 Documentation generation complete!"
