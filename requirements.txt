@@ -84,7 +84,7 @@ s3transfer==0.7.0
 shellescape==3.8.1
 simplejson==3.18.0
 six==1.16.0
-sqlparse==0.4.4
+sqlparse==0.5.3
 tornado==6.4
 typing_extensions==4.6.0
 tzdata==2022.7
