@@ -85,7 +85,7 @@ shellescape==3.8.1
 simplejson==3.18.0
 six==1.16.0
 sqlparse==0.5.3
-tornado==6.4
+tornado==6.4.2
 typing_extensions==4.6.0
 tzdata==2022.7
 uritemplate==4.1.1
