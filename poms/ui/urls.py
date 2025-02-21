@@ -5,91 +5,111 @@ import poms.ui.views as ui
 router = routers.DefaultRouter()
 
 router.register(
-    r"user-interface-access",
+    "user-interface-access",
     ui.UserInterfaceAccessModelViewSet,
+    "user_interface_access",
 )
 router.register(
-    r"list-layout",
+    "list-layout",
     ui.ListLayoutViewSet,
+    "list_layout",
 )
 router.register(
-    r"template-layout",
+    "template-layout",
     ui.TemplateLayoutViewSet,
+    "template_layout",
 )
 router.register(
-    r"dashboard-layout",
+    "dashboard-layout",
     ui.DashboardLayoutViewSet,
+    "dashboard_layout",
 )
 router.register(
-    r"member-layout",
+    "member-layout",
     ui.MemberLayoutViewSet,
+    "member_layout",
 )
 router.register(
-    r"mobile-layout",
+    "mobile-layout",
     ui.MobileLayoutViewSet,
+    "mobile_layout",
 )
 router.register(
-    r"draft",
+    "draft",
     ui.DraftViewSet,
+    "draft",
 )
 router.register(
-    r"edit-layout",
+    "edit-layout",
     ui.EditLayoutViewSet,
+    "edit_layout",
 )
 router.register(
-    r"bookmark",
+    "bookmark",
     ui.BookmarkViewSet,
+    "bookmark",
 )
 router.register(
-    r"configuration-export-layout",
+    "configuration-export-layout",
     ui.ConfigurationExportLayoutViewSet,
+    "configuration_export_layout",
 )
 router.register(
-    r"complex-transaction-user-field",
+    "complex-transaction-user-field",
     ui.ComplexTransactionUserFieldViewSet,
+    "complex_transaction_user_field",
 )
 router.register(
-    r"transaction-user-field",
+    "transaction-user-field",
     ui.TransactionUserFieldViewSet,
+    "transaction_user_field",
 )
 router.register(
-    r"instrument-user-field",
+    "instrument-user-field",
     ui.InstrumentUserFieldViewSet,
+    "instrument_user_field",
 )
 router.register(
-    r"entity-tooltip",
+    "entity-tooltip",
     ui.EntityTooltipViewSet,
+    "entity_tooltip",
 )
 router.register(
-    r"context-menu-layout",
+    "context-menu-layout",
     ui.ContextMenuLayoutViewSet,
+    "context_menu_layout",
 )
 router.register(
-    r"color-palette",
+    "color-palette",
     ui.ColorPaletteViewSet,
+    "color_palette",
 )
 router.register(
-    r"cross-entity-attribute-extension",
+    "cross-entity-attribute-extension",
     ui.CrossEntityAttributeExtensionViewSet,
+    "cross_entity_attribute_extension",
 )
 router.register(
-    r"column-sort-data",
+    "column-sort-data",
     ui.ColumnSortDataViewSet,
+    "column_sort_data",
 )
 router.register(
-    r"system-attributes",
+    "system-attributes",
     ui.SystemAttributesViewSet,
-    basename="System attributes",
+    "system_attributes",
 )
 
 # DEPRECATED
 router.register(
-    r"list-layout-light",
+    "list-layout-light",
     ui.ListLayoutLightViewSet,
+    "list_layout_light",
 )
 
 #TODO DEPRECATED delete in 1.15.0-rc
 router.register(
-    r"portal-interface-access",
+    "portal-interface-access",
     ui.PortalInterfaceAccessViewSet,
+    "portal_interface_access",
 )
