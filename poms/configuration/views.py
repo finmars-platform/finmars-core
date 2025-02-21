@@ -216,75 +216,75 @@ class NewMemberSetupConfigurationFilterSet(FilterSet):
         fields = []
 
 
-class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
-    parser_classes = (MultiPartParser, FormParser, JSONParser)
-
-    queryset = NewMemberSetupConfiguration.objects
-    serializer_class = NewMemberSetupConfigurationSerializer
-    filter_class = NewMemberSetupConfigurationFilterSet
-    filter_backends = AbstractModelViewSet.filter_backends + []
-    permission_classes = AbstractModelViewSet.permission_classes + []
-
-    @action(detail=True, methods=["PUT"], url_path="install", serializer_class=None)
-    def install(self, request, pk=None, realm_code=None, space_code=None):
-        new_member_setup_configuration = self.get_object()
-
-        celery_task = None
-
-        # TODO refactor
-        if (
-            new_member_setup_configuration.target_configuration_code
-            and new_member_setup_configuration.target_configuration_code != "null"
-        ):
-            celery_task = CeleryTask.objects.create(
-                master_user=request.user.master_user,
-                member=request.user.member,
-                type="install_initial_configuration",
-            )
-
-            options_object = {
-                "configuration_code": new_member_setup_configuration.target_configuration_code,
-                "version": new_member_setup_configuration.target_configuration_version,
-                "channel": new_member_setup_configuration.target_configuration_channel,
-                "is_package": new_member_setup_configuration.target_configuration_is_package,
-                "access_token": get_access_token(request),
-            }
-
-            celery_task.options_object = options_object
-            celery_task.save()
-
-            if request.data.get("is_package", False):
-                install_package_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }}
-                )
-            else:
-                install_configuration_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }}
-                )
-
-        elif new_member_setup_configuration.file_url:
-            celery_task = CeleryTask.objects.create(
-                master_user=request.user.master_user,
-                member=request.user.member,
-                type="install_initial_configuration",
-            )
-
-            options_object = {
-                "file_path": new_member_setup_configuration.file_url,
-            }
-
-            celery_task.options_object = options_object
-            celery_task.save()
-
-            import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }})
-
-        return Response({"task_id": celery_task.id})
+# class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
+#     parser_classes = (MultiPartParser, FormParser, JSONParser)
+#
+#     queryset = NewMemberSetupConfiguration.objects
+#     serializer_class = NewMemberSetupConfigurationSerializer
+#     filter_class = NewMemberSetupConfigurationFilterSet
+#     filter_backends = AbstractModelViewSet.filter_backends + []
+#     permission_classes = AbstractModelViewSet.permission_classes + []
+#
+#     @action(detail=True, methods=["PUT"], url_path="install", serializer_class=None)
+#     def install(self, request, pk=None, realm_code=None, space_code=None):
+#         new_member_setup_configuration = self.get_object()
+#
+#         celery_task = None
+#
+#         # TODO refactor
+#         if (
+#             new_member_setup_configuration.target_configuration_code
+#             and new_member_setup_configuration.target_configuration_code != "null"
+#         ):
+#             celery_task = CeleryTask.objects.create(
+#                 master_user=request.user.master_user,
+#                 member=request.user.member,
+#                 type="install_initial_configuration",
+#             )
+#
+#             options_object = {
+#                 "configuration_code": new_member_setup_configuration.target_configuration_code,
+#                 "version": new_member_setup_configuration.target_configuration_version,
+#                 "channel": new_member_setup_configuration.target_configuration_channel,
+#                 "is_package": new_member_setup_configuration.target_configuration_is_package,
+#                 "access_token": get_access_token(request),
+#             }
+#
+#             celery_task.options_object = options_object
+#             celery_task.save()
+#
+#             if request.data.get("is_package", False):
+#                 install_package_from_marketplace.apply_async(
+#                     kwargs={"task_id": celery_task.id, 'context': {
+#                         'space_code': celery_task.master_user.space_code,
+#                         'realm_code': celery_task.master_user.realm_code
+#                     }}
+#                 )
+#             else:
+#                 install_configuration_from_marketplace.apply_async(
+#                     kwargs={"task_id": celery_task.id, 'context': {
+#                         'space_code': celery_task.master_user.space_code,
+#                         'realm_code': celery_task.master_user.realm_code
+#                     }}
+#                 )
+#
+#         elif new_member_setup_configuration.file_url:
+#             celery_task = CeleryTask.objects.create(
+#                 master_user=request.user.master_user,
+#                 member=request.user.member,
+#                 type="install_initial_configuration",
+#             )
+#
+#             options_object = {
+#                 "file_path": new_member_setup_configuration.file_url,
+#             }
+#
+#             celery_task.options_object = options_object
+#             celery_task.save()
+#
+#             import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
+#                 'space_code': celery_task.master_user.space_code,
+#                 'realm_code': celery_task.master_user.realm_code
+#             }})
+#
+#         return Response({"task_id": celery_task.id})

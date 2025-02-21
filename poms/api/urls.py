@@ -94,11 +94,11 @@ router.register(
     configuration.ConfigurationViewSet,
     "configuration",
 )
-router.register(
-    r"configuration/new-member-setup-configuration",
-    configuration.NewMemberSetupConfigurationViewSet,
-    "newmembersetupconfiguration",
-)
+# router.register(
+#     r"configuration/new-member-setup-configuration",
+#     configuration.NewMemberSetupConfigurationViewSet,
+#     "newmembersetupconfiguration",
+# )
 router.register(  # deprecated?
     r"transactions/bank-file",
     integrations.TransactionFileResultViewSet,

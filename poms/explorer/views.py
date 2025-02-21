@@ -60,13 +60,24 @@ storage = get_storage()
 class ContextMixin:
     def get_serializer_context(self) -> dict:
         context = super().get_serializer_context()
-        context.update(
-            {
-                "storage": storage,
-                "space_code": self.request.space_code,
-                "realm_code": self.request.realm_code,
-            },
-        )
+
+        if self.request:
+            context.update(
+                {
+                    "storage": storage,
+                    "space_code": self.request.space_code,
+                    "realm_code": self.request.realm_code,
+                },
+            )
+        else:
+            # for documentation
+            context.update(
+                {
+                    "storage": storage,
+                    "space_code": 'space00000',
+                    "realm_code": 'realm00000',
+                },
+            )
         return context
 
     def default_kwargs(self, celery_task) -> dict:
