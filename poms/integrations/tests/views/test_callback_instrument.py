@@ -3,8 +3,8 @@ from unittest import skip
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.currencies.models import Currency
 from poms.csv_import.handlers import PERIODICITY_MAP
+from poms.currencies.models import Currency
 from poms.instruments.models import Accrual, AccrualCalculationSchedule, Instrument
 from poms.integrations.database_client import get_backend_callback_url
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
