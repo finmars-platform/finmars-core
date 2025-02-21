@@ -38,7 +38,7 @@ from poms.explorer.tasks import (
     copy_directory_in_storage,
     move_directory_in_storage,
     rename_directory_in_storage,
-    sync_storage_with_database,
+    # sync_storage_with_database,
     unzip_file_in_storage,
 )
 from poms.explorer.utils import (
@@ -549,15 +549,18 @@ class SyncViewSet(ContextMixin, AbstractViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
+
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
             verbose_name="Sync files with database",
             type="sync_storage_with_database",
             options_object={},
+            status=CeleryTask.STATUS_DONE,  # Fake task
         )
 
-        sync_storage_with_database.apply_async(kwargs=self.default_kwargs(celery_task))
+        # TODO IGNORE SYNC REQUESTS TO AVOID S3 OVERLOADING
+        # sync_storage_with_database.apply_async(kwargs=self.default_kwargs(celery_task))
 
         return Response(
             TaskResponseSerializer(
