@@ -81,7 +81,7 @@ prometheus-client==0.15.0
 prompt-toolkit==3.0.33
 psutil==6.1.1
 psycopg2-binary==2.9.10
-pyOpenSSL==23.0.0
+pyOpenSSL==25.0.0
 pyasn1==0.4.8
 pycparser==2.21
 pycryptodome==3.19.1
