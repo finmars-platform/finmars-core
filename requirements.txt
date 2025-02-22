@@ -39,6 +39,7 @@ django-storages-azure==1.6.8
 django-timezone-field==5.0
 django-tinymce==3.5.0
 djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
 ecdsa==0.19.0
 et-xmlfile==1.1.0
 filtration==2.3.0
@@ -95,7 +96,6 @@ vine==5.1.0
 wcwidth==0.2.5
 websockets==10.4
 pexpect==4.8.0
-djangorestframework-simplejwt==5.4.0
 gunicorn==23.0.0
 whitenoise==6.9.0
 pygments==2.15.1
