@@ -207,45 +207,6 @@ python manage.py sqlsequencereset portfolios | python manage.py dbshell
 
 
 # Install all required libs
-pip install django
-pip install celery
-pip install colorlog
-pip install django-modeltranslation
-pip install django-filter # django-filter==2.4.0, latest version is not work
-pip install django-mptt
-pip install django-crispy-forms
-pip install djangorestframework
-pip install django-rest-swagger
-pip install django-cors-headers
-pip install django-celery-results
-pip install django-celery-beat
-pip install django-debug-toolbar
-pip install psycopg2
-pip install psycopg2-binary # for db connection
-pip install pandas # possibly can be removed
-pip install geoip2 # possibly can be removed
-pip install babel # possibly can be removed
-pip install croniter # used in formulas
-pip install django-storages # storages
-pip install django-storages-azure # storages
-pip install azure-storage-blob # storages
-pip install boto3 # storages 
-pip install paramiko # storages
-pip install scipy # possibly can be removed
-pip install websockets
-pip install filtration # used in import schemes
-pip install openpyxl # used in imports (load .xlsx files)
-pip install pycryptodome # used in decrypt files from external provider
-pip install python-jose # for jwt, possibly deprecated
-pip install psutil # for healthcheck
-pip install pyotp # possibly can be removed
-pip install uwsgi
-pip install django-cprofile-middleware
-pip install flower
-pip install deepdiff
-pip install pyopenssl
-pip install suds
-pip install drf_yasg
 
 ==== TODO ====
 Move generated documentation to another project

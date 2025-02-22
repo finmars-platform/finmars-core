@@ -116,5 +116,4 @@ uritemplate==4.1.1
 urllib3==2.3.0
 vine==5.1.0
 wcwidth==0.2.5
-websockets==10.4
 whitenoise==6.9.0
