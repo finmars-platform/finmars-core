@@ -1,6 +1,6 @@
 # Getting started (Local) 
 
-**Works for python 3.9.0**
+**Works for python 3.11**
 
 * Install NPM
 * Install Python 3.9
@@ -12,21 +12,9 @@
 
 * Create Virtual Environment (VENV)
 
-`python3.9 -m venv venv`
-
 * Activate VENV
 
-`source venv/bin/activate`
-
 * Install Dependencies
-
-`pip install "setuptools<58.0.0"
-pip install -U pip wheel uwsgitop
-pip install -U pip boto3
-pip install -U pip azure-storage-blob
-pip install -r requirements.txt
-pip install -U pip flower
-pip install -U pip uwsgi`
 
 * Create file for logs
 
