@@ -1,4 +1,4 @@
-amqp==5.1.1
+amqp==5.3.1
 azure-core==1.31.0
 azure-storage-blob==12.14.1
 Babel==2.11.0
@@ -58,8 +58,8 @@ python-jose==3.4.0
 pytz==2025.1
 QuantLib==1.37
 requests==2.32.3
-sentry-sdk==1.45.1
-sphinxcontrib-apidoc==0.3.0
-sphinxcontrib-django==2.0
+sentry-sdk==2.22.0
+sphinxcontrib-apidoc==0.5.0
+sphinxcontrib-django==2.5
 suds==1.1.2
 whitenoise==6.9.0
