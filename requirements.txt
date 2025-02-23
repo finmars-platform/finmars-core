@@ -1,5 +1,6 @@
 amqp==5.1.1
 azure-core==1.31.0
+azure-storage-blob==12.14.1
 Babel==2.11.0
 beautifulsoup4==4.12.3
 celery==5.4.0
