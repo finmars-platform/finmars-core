@@ -1,4 +1,5 @@
 amqp==5.1.1
+azure-core==1.31.0
 Babel==2.11.0
 beautifulsoup4==4.12.3
 celery==5.4.0
@@ -41,7 +42,7 @@ openpyxl==3.0.10
 pandas==2.2.3
 paramiko==3.3.2
 pexpect==4.8.0
-pillow==10.4.0
+pillow==11.1.0
 psutil==6.1.1
 psycopg2-binary==2.9.10
 pycryptodome==3.19.1
