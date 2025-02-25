@@ -177,7 +177,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
 
-        # print(response_json)
+        self.assertEqual(response_json[user_code]["final_status"], ReconcileStatus.OK.value)
 
     def test__status_ok_double(self):
         self.group.portfolios.add(self.portfolio_big)
@@ -192,7 +192,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 2)
 
-        # print(response_json)
+        for user_code, result in response_json.items():
+            self.assertEqual(result["final_status"], ReconcileStatus.OK.value)
 
     @BaseTestCase.cases(
         ("small", SMALL),
@@ -213,4 +214,22 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
 
-        print(response_json)
+        self.assertEqual(response_json[user_code]["final_status"], ReconcileStatus.ERROR.value)
+
+    def test__status_error_double(self):
+        self.group.portfolios.add(self.portfolio_big)
+        self.group.portfolios.add(self.portfolio_small)
+        self.group.save()
+        history = self.create_reconcile_history(self.group)
+        history.status = PortfolioReconcileHistory.STATUS_ERROR
+        history.save()
+
+        data = {"portfolios": [BIG, SMALL], "date": str(now().date())}
+        response = self.client.get(path=self.url, data=data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json), 2)
+
+        for user_code, result in response_json.items():
+            self.assertEqual(result["final_status"], ReconcileStatus.ERROR.value)
