@@ -369,12 +369,16 @@ class BaseCacheManager(models.Manager):
 
         return f"{app_label}_{model_name}_{pk}"
 
-    def get_cache(self, pk):
-        key = self.get_cache_key(pk)
-        obj = cache.get(key)
-        if not obj:
-            obj = self._get_obj_from_db(pk)
-            self.set_cache(obj)
+    def get_cache(self, master_user_pk):
+        key = self.get_cache_key(master_user_pk)
+        try:
+            obj = cache.get(key)
+            if obj is None:  # Cache miss
+                raise ValueError("Cache miss")
+        except Exception as e:
+            # Log the error if needed
+            obj = self._get_obj_from_db(master_user_pk)  # Fetch from DB
+            self.set_cache(obj)  # Store in cache again
         return obj
 
     def set_cache(self, obj):
