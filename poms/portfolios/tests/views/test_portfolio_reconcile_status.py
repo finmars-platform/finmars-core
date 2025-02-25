@@ -1,9 +1,8 @@
 from django.utils.timezone import now
 
-from poms.common.common_base_test import BIG, BaseTestCase, SMALL
-from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
+from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.portfolios.fields import ReconcileStatus
-
+from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 
 EXPECTED_RESPONSE = {
     "Big": {
@@ -18,26 +17,16 @@ EXPECTED_RESPONSE = {
                 "verbose_result": None,
                 "error_message": None,
                 "status": "ok",
-                "file_report": None,
-                "report_ttl": 90,
-                "created_at": "2025-02-24T19:44:46.255778Z",
-                "modified_at": "2025-02-24T19:44:46.255781Z",
-            }
-        ],
-    },
-    "Small": {
-        "final_status": "ok",
-        "history_objects": [
-            {
-                "id": 3,
-                "user_code": "YMFTBFBQTJ",
-                "name": "",
-                "portfolio_reconcile_group": "ZQLGGNQNVC",
-                "date": "2025-02-24",
-                "verbose_result": None,
-                "error_message": None,
-                "status": "ok",
-                "file_report": None,
+                "file_report": {
+                    "content_type": "application/json",
+                    "content_type_verbose": "json",
+                    "created_at": "2025-02-25T17:14:11.704773Z",
+                    "file_url": "/.system/file_reports/WUKYVOAUKF_2025-02-25-17-14_n.json",
+                    "id": 2,
+                    "name": "Reconciliation report " "2025-02-25-17-14 " "(Task None).json",
+                    "notes": "System File",
+                    "type": "simple_import.import",
+                },
                 "report_ttl": 90,
                 "created_at": "2025-02-24T19:44:46.255778Z",
                 "modified_at": "2025-02-24T19:44:46.255781Z",
@@ -167,7 +156,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         portfolio = self.db_data.portfolios[user_code]
         self.group.portfolios.add(portfolio)
         self.group.save()
-        _ = self.create_reconcile_history(self.group)
+        history = self.create_reconcile_history(self.group)
+        history.file_report = history.generate_json_report(b"report ok")
+        history.save()
 
         data = {"portfolios": [user_code], "date": str(now().date())}
 
@@ -205,6 +196,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.group.save()
         history = self.create_reconcile_history(self.group)
         history.status = PortfolioReconcileHistory.STATUS_ERROR
+        history.file_report = history.generate_json_report(b"report error")
         history.save()
 
         data = {"portfolios": [user_code], "date": str(now().date())}
