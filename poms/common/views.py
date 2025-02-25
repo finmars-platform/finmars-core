@@ -52,35 +52,45 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
         operation = super().get_operation(operation_keys)
 
-        splitted_dash_operation_keys = [
-            word for item in operation_keys for word in item.split("-")
-        ]
-        splitted_underscore_operation_keys = [
-            word for item in splitted_dash_operation_keys for word in item.split("_")
-        ]
+        # e.g. operation_keys might be ("api", "v1", "accounts", "account-attribute-type", "list")
+        # We skip the first two:
+        relevant = operation_keys[2:]  # e.g. ("accounts", "account-attribute-type", "list")
+        summary_words = operation_keys[4:]  # e.g. ("accounts", "account-attribute-type", "list")
 
-        capitalized_operation_keys = [
-            word.capitalize() for word in splitted_underscore_operation_keys
-        ]
+        # split on dashes and underscores
+        splitted = []
+        for item in relevant:
+            # split on dashes first
+            for part in item.split("-"):
+                # then split on underscores
+                splitted.extend(part.split("_"))
 
-        operation.operationId = " ".join(capitalized_operation_keys)
+        # capitalize each piece: e.g. "accounts" -> "Accounts", "list" -> "List"
+        capitalized = [word.capitalize() for word in splitted]
 
-        # operation.operationId = f"{self.view.queryset.model._meta.verbose_name.capitalize()} {operation_keys[-1].capitalize()}"
+        summary_capitalized = [" ".join(word.capitalize().split('_')) for word in summary_words]
+
+        # join with underscores so we get "Accounts_Account_Attribute_Type_List"
+        operation.operationId = "_".join(capitalized)
+        operation.summary = " ".join(summary_capitalized)
+
         return operation
 
+
     def get_tags(self, operation_keys=None):
-        tags = super().get_tags(operation_keys)
+        if not operation_keys:
+            return []
+        # The viewset name is one before last, e.g. in ("api", "v1", "accounts", "account-attribute-type", "list")
+        # it's "account-attribute-type"
+        viewset = operation_keys[-2]
+        # Split the viewset name on dashes and underscores, then capitalize each word
+        parts = []
+        for part in viewset.split("-"):
+            parts.extend(part.split("_"))
+        tag = " ".join(word.capitalize() for word in parts)
+        return [tag]
 
-        splitted_tags = [word.split("-") for word in tags]
 
-        result = []
-
-        for splitted_tag in splitted_tags:
-            capitalized_tag = [word.capitalize() for word in splitted_tag]
-
-            result.append(" ".join(capitalized_tag))
-
-        return result
 
 
 class AbstractApiView(APIView):

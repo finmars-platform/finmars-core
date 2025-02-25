@@ -41,13 +41,24 @@ class WhitelabelViewSet(AbstractModelViewSet):
 
     def get_serializer_context(self, *args, **kwargs):
         context = super().get_serializer_context()
-        context.update(
-            {
-                "realm_code": self.request.realm_code,
-                "space_code": self.request.space_code,
-                "host_url": settings.DOMAIN_NAME,
-            }
-        )
+
+        if self.request:
+            context.update(
+                {
+                    "realm_code": self.request.realm_code,
+                    "space_code": self.request.space_code,
+                    "host_url": settings.DOMAIN_NAME,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "realm_code": 'realm00000',
+                    "space_code": 'space00000',
+                    "host_url": settings.DOMAIN_NAME,
+                }
+            )
+
         return context
 
     def get_serializer_class(self):

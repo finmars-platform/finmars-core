@@ -183,6 +183,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
             master_user=master_user,
             portfolio_id__in=portfolio_ids,
             is_deleted=False,
+            is_canceled=False, # important update PLAT-1661
             transaction_class_id__in=[
                 TransactionClass.CASH_INFLOW,
                 TransactionClass.CASH_OUTFLOW,
