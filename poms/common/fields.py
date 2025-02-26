@@ -95,7 +95,7 @@ class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
     def to_internal_value(self, value):
         queryset = self.get_queryset()
         try:
-            if isinstance(value, int):
+            if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
                 return queryset.get(pk=int(value))
             else:
                 return queryset.get(user_code=value)

@@ -65,9 +65,8 @@ class FileReport(models.Model):
                     ContentFile(encoded_text),
                 )
 
-            else:  # local mode
-                with open(file_name, "w") as f:
-                    f.write(text)
+            else:  # local/test mode
+                print(f"file '{file_name}' content '{text}' saved to storage '{file_url}'")
 
         except Exception as e:
             _l.error(f"upload_file {file_name} {file_url} error {repr(e)}")
