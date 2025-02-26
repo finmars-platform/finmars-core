@@ -33,7 +33,11 @@ from poms.instruments.serializers import (
     PricingPolicySerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField, PortfolioReconcileGroupField, ReconcileStatus
+from poms.portfolios.fields import (
+    PortfolioField,
+    PortfolioReconcileGroupField,
+    ReconcileStatus,
+)
 from poms.portfolios.models import (
     Portfolio,
     PortfolioBundle,
@@ -917,6 +921,29 @@ class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
         return groups
 
 
+class ShortReconcileHistorySerializer(serializers.ModelSerializer):
+    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
+    file_report = FileReportSerializer()
+
+    class Meta:
+        model = PortfolioReconcileHistory
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "portfolio_reconcile_group",
+            "date",
+            "verbose_result",
+            "error_message",
+            "status",
+            "file_report",
+            "report_ttl",
+            "created_at",
+            "modified_at",
+        ]
+        read_only_fields = fields
+
+
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -930,29 +957,54 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
         return attrs
 
     @staticmethod
-    def check_reconciliation_date(validated_data: dict) -> dict:
+    def reconcile_status(history: dict) -> ReconcileStatus:
+        return (
+            ReconcileStatus.OK.value
+            if history["status"] == PortfolioReconcileHistory.STATUS_OK
+            else ReconcileStatus.ERROR.value
+        )
+
+    @staticmethod
+    def final_status(statuses) -> str:
+        strings = list(statuses)
+        if not strings:
+            return ReconcileStatus.ERROR.value
+
+        first_string = strings[0]
+        return first_string if all(s == first_string for s in strings) else ReconcileStatus.ERROR.value
+
+    def check_reconciliation_date(self, validated_data: dict) -> dict:
         result = {}
         day = validated_data["date"]
         portfolios = validated_data.pop("portfolios")
 
         for portfolio in portfolios:
+            portfolio_result = {
+                "final_status": "unknown",  # to be replaced by real status value
+                "all_statuses": {},
+                "history_objects": [],
+            }
             groups = PortfolioReconcileGroup.objects.filter(portfolios=portfolio)
             if not groups:
-                result[portfolio.user_code] = ReconcileStatus.NO_GROUP.value
+                portfolio_result["final_status"] = ReconcileStatus.NO_GROUP.value
+                result[portfolio.user_code] = portfolio_result
                 continue
 
-            history = PortfolioReconcileHistory.objects.filter(
+            histories = PortfolioReconcileHistory.objects.filter(
                 portfolio_reconcile_group__in=groups,
                 date=day,
-            ).first()
-            if not history:
-                result[portfolio.user_code] = ReconcileStatus.NOT_RUN_YET.value
+            )
+            if not histories:
+                portfolio_result["final_status"] = ReconcileStatus.NOT_RUN_YET.value
+                result[portfolio.user_code] = portfolio_result
                 continue
 
-            result[portfolio.user_code] = (
-                ReconcileStatus.OK.value
-                if history.status == PortfolioReconcileHistory.STATUS_OK
-                else ReconcileStatus.ERROR.value
-            )
+            history_objects = ShortReconcileHistorySerializer(histories, many=True).data
+            all_statuses = {history["user_code"]: self.reconcile_status(history) for history in history_objects}
+            final_status = self.final_status(all_statuses.values())
+            result[portfolio.user_code] = {
+                "final_status": final_status,
+                "history_objects": history_objects,
+            }
 
         return result

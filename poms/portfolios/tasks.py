@@ -997,9 +997,9 @@ def bulk_calculate_reconcile_history(self, task_id: int, *args, **kwargs):
         task.update_progress(
             {
                 "current": count,
-                "percent": round(count / groups_amount / 100),
+                "percent": round((count * 100) // groups_amount),
                 "total": groups_amount,
-                "description": f"Reconciling {group_user_code} for {days_number} days",
+                "description": f"Reconciling {group_user_code} group for {days_number} days",
             }
         )
 
