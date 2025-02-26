@@ -100,8 +100,9 @@ class CalculateReconcileHistoryTest(BaseTestCase):
 
         self.assertEqual(PortfolioReconcileHistory.objects.count(), 2)
 
+    @mock.patch("poms.celery_tasks.models.CeleryTask.update_progress")
     @mock.patch("poms.portfolios.models.PortfolioReconcileHistory.calculate")
-    def test__calculation_failed(self, calculate):
+    def test__calculation_failed(self, calculate, update_progress):
         options = {
             "master_user": self.master_user,
             "member": self.member,
@@ -123,5 +124,6 @@ class CalculateReconcileHistoryTest(BaseTestCase):
             self.assertIn(self.reconcile_group.user_code, msg)
 
         self.assertEqual(calculate.call_count, 2)  # once per date
+        self.assertEqual(update_progress.call_count, 2) # twice per reconcile_group
 
         self.assertEqual(PortfolioReconcileHistory.objects.count(), 2)
