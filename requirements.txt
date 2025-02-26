@@ -37,7 +37,6 @@ flower==1.2.0
 geoip2==5.0.1
 gunicorn==23.0.0
 haikunator==2.1.0
-kombu==5.4.2
 memory-profiler==0.61.0
 numpy==1.26.4
 openpyxl==3.0.10

@@ -1,18 +1,7 @@
 import os
-import platform
-import sys
 
 from celery import Celery
 from celery.signals import task_failure
-import resource
-from celery.signals import worker_ready
-# from django.conf import settings
-# from poms.common.kombu_serializers import register_pickle_signed
-# register_pickle_signed(salt='poms-pickle-signed', compress=True)
-# register_pickle_signed(salt='poms-pickle-signed', compress=False)
-from celery.signals import worker_process_init
-
-from poms_app import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
 
