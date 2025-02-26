@@ -83,8 +83,7 @@ class FileReport(models.Model):
                     json.dump(dict_to_json, fp, indent=4, default=str)
 
             else:
-                with open(file_name, "w") as fp:
-                    json.dump(dict_to_json, fp, indent=4, default=str)
+                print(f"file '{file_name}' json '{dict_to_json}' saved to storage '{file_url}'")
 
         except Exception as e:
             _l.error(f"upload_file {file_url} error {repr(e)}")
