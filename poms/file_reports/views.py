@@ -31,10 +31,6 @@ class FileReportViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
 
-    # permission_classes = AbstractModelViewSet.permission_classes + [
-    #     PomsConfigurationPermission
-    # ]
-
     @action(detail=True, methods=["get"], url_path="view")
     def view_file(self, request, pk=None, realm_code=None, space_code=None):
         master_user = request.user.master_user

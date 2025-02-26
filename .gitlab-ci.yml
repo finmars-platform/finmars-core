@@ -193,7 +193,7 @@ Build:
     - cat /etc/resolv.conf
     - cat /etc/hosts
     #
-    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
 
   script:
     # fetches the latest image (not failing if image is not found)
@@ -233,7 +233,7 @@ Release version:
     # We want this job to be run on tags only.
     - tags
   before_script:
-    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
   script:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
