@@ -1,42 +1,30 @@
 import os
-import platform
-import sys
 
 from celery import Celery
 from celery.signals import task_failure
-import resource
-from celery.signals import worker_ready
-# from django.conf import settings
-# from poms.common.kombu_serializers import register_pickle_signed
-# register_pickle_signed(salt='poms-pickle-signed', compress=True)
-# register_pickle_signed(salt='poms-pickle-signed', compress=False)
-from celery.signals import worker_process_init
-
-from poms_app import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
 
 app = Celery("poms_app")
-
 app.config_from_object("django.conf:settings", namespace="CELERY")
-
 app.autodiscover_tasks()
-
 app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
+
 
 @task_failure.connect
 def handle_task_failure(**kwargs):
-
     import logging
+
     from poms.celery_tasks.models import CeleryTask
-    _l = logging.getLogger('celery')
+
+    _l = logging.getLogger("celery")
 
     try:
-        exception = kwargs['exception']
-        task_id = kwargs['task_id']
-        args = kwargs['args']
-        kwargs = kwargs['kwargs']
-        einfo = kwargs.get('einfo')
+        exception = kwargs["exception"]
+        task_id = kwargs["task_id"]
+        args = kwargs["args"]
+        kwargs = kwargs["kwargs"]
+        einfo = kwargs.get("einfo")
 
         if not exception and einfo:
             exception = einfo.exception
@@ -56,6 +44,7 @@ def handle_task_failure(**kwargs):
 
     except Exception as e:
         _l.error("Could not handle task failure %s" % e)
+
 
 # Probably not needed, it also killing a workier, not a task
 # @worker_ready.connect
