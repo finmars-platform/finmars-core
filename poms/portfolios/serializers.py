@@ -262,16 +262,13 @@ class PortfolioSerializer(
         process = InstrumentTypeProcess(instrument_type=instrument_type)
 
         instrument_object = process.instrument
-
         instrument_object["name"] = new_linked_instrument["name"]
         instrument_object["short_name"] = new_linked_instrument["short_name"]
         instrument_object["user_code"] = new_linked_instrument["user_code"]
         instrument_object["public_name"] = new_linked_instrument["public_name"]
 
         serializer = InstrumentSerializer(data=instrument_object, context=self.context)
-
         is_valid = serializer.is_valid(raise_exception=True)
-
         if is_valid:
             serializer.save()
             new_instrument = serializer.instance
