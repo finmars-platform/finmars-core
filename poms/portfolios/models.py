@@ -342,13 +342,14 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
 
     def destroy_reconcile_histories(self):
         """
-        As portfolio's set of transactions has changed, so all reconcile history objects are not valid anymore,
-        and has to be removed.
+        As portfolio's set of transactions has changed, so all reconcile history
+        objects are not valid anymore, and has to be removed.
         """
         groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
-        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group__in=groups).select_related(
-            "file_report"
-        )
+        histories = PortfolioReconcileHistory.objects.filter(
+            portfolio_reconcile_group__in=groups,
+            date__lte=day,
+        ).select_related("file_report")
         for history in histories:
             if history.file_report:
                 history.file_report.delete()
@@ -903,12 +904,10 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
 
         _l.info(f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}")
 
-        annualized_return = round(
+        return round(
             (1 + self.cumulative_return) ** (365 / days_from_first_transaction) - 1,
             settings.ROUND_NDIGITS,
         )
-
-        return annualized_return
 
     def calculate(self):
         self.error_message = ""
@@ -945,12 +944,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             if item["total"] is not None:
                 total = total + item["total"]
             else:
-                self.error_message = self.error_message + f'{item["name"]} has no total value\n'
+                self.error_message = f'{self.error_message} {item["name"]} has no total value\n'
                 _l.info("PortfolioHistory.calculate has_total_error")
                 has_total_error = True
 
         if has_total_error:
-            self.error_message = self.error_message + "Total is wrong, some positions has no total value\n"
+            self.error_message = self.error_message + " Total is wrong, some positions has no total value\n"
 
         self.nav = nav
         self.gav = gav
