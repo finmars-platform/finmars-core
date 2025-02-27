@@ -346,10 +346,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         objects are not valid anymore, and has to be removed.
         """
         groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
-        histories = PortfolioReconcileHistory.objects.filter(
-            portfolio_reconcile_group__in=groups,
-            date__lte=day,
-        ).select_related("file_report")
+        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group__in=groups).select_related(
+            "file_report"
+        )
         for history in histories:
             if history.file_report:
                 history.file_report.delete()
