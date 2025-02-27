@@ -40,13 +40,13 @@ def handle_task_failure(**kwargs):
             task.save()
 
         except Exception as e:
-            _l.error("Task is not registered in CeleryTask %s" % e)
+            _l.error(f"Task is not registered in CeleryTask {e}")
 
     except Exception as e:
-        _l.error("Could not handle task failure %s" % e)
+        _l.error(f"Could not handle task failure {e}")
 
 
-# Probably not needed, it also killing a workier, not a task
+# Probably not needed, it also killing a worker, not a task
 # @worker_ready.connect
 # def configure_worker(sender=None, **kwargs):
 #
