@@ -16,8 +16,6 @@ class UpdatePriceHistoriesTest(BaseTestCase):
             owner=self.member,
             user_code=self.random_string(),
             configuration_code=get_default_configuration_code(),
-            # default_instrument_pricing_scheme=None,
-            # default_currency_pricing_scheme=None,
         )
         self.err_msg = self.random_string()
 
@@ -44,13 +42,11 @@ class UpdatePriceHistoriesTest(BaseTestCase):
     )
     def test__fields_updated_error_reset(self, amount):
         self.create_price_history(amount)
-        prices = PriceHistory.objects.all()
+        prices = list(PriceHistory.objects.all())
 
         utils.update_price_histories(prices, error_message=self.err_msg)
 
-        count = PriceHistory.objects.filter(
-            error_message__icontains=self.err_msg
-        ).count()
+        count = PriceHistory.objects.filter(error_message__icontains=self.err_msg).count()
         self.assertEqual(count, amount)
 
         value = self.random_int()

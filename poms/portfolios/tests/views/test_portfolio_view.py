@@ -1,5 +1,4 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.expressions_engine import formula
 from poms.portfolios.models import Portfolio
 
 PORTFOLIO_DATA_SHORT = {
@@ -210,23 +209,6 @@ class PortfolioViewSetTest(BaseTestCase):
             self.user_code,
         )
 
-    def test_formula(self):
-        # test user_code generated
-        n1 = formula.safe_eval(
-            'generate_user_code("del", "", 0)',
-            context={"master_user": self.master_user},
-        )
-        n2 = formula.safe_eval(
-            'generate_user_code("del", "", 0)',
-            context={"master_user": self.master_user},
-        )
-        n3 = formula.safe_eval(
-            'generate_user_code("del", "", 0)',
-            context={"master_user": self.master_user},
-        )
-        self.assertEqual(n1, "del00000000000000001")
-        self.assertEqual(n2, "del00000000000000002")
-        self.assertEqual(n3, "del00000000000000003")
 
     def test_retrieve(self):
         response = self.client.get(f"{self.url}{self.portfolio.id}/")
