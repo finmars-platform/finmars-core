@@ -320,3 +320,16 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
+
+    def test_update(self):
+        data={}
+        response = self.client.patch(f"{self.url}{self.portfolio.id}/", data=data, format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json["user_code"], self.user_code)
+        self.assertFalse(response_json["is_deleted"])
+        self.assertIn("resource_groups", response_json)
+        self.assertEqual(response_json["resource_groups"], [])
+        self.assertEqual(response_json["resource_groups_object"], [])
