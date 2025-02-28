@@ -1,7 +1,4 @@
 from datetime import date
-import random
-
-from django.conf import settings
 
 from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.portfolios.models import PortfolioRegisterRecord

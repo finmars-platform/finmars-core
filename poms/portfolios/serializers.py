@@ -572,7 +572,12 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
             transaction_class=valid_data["transaction_class"],
             transaction=valid_data["transaction"],
         )
-        return super().create(valid_data)
+        prr: PortfolioRegisterRecord = super().create(valid_data)
+        if prr:
+            # An instrument has been added to the portfolio, so all reconciliation histories became invalid
+            prr.portfolio.destroy_reconcile_histories()
+
+        return prr
 
 
 class CalculateRecordsSerializer(serializers.Serializer):
