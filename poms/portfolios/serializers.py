@@ -240,7 +240,6 @@ class PortfolioSerializer(
         )
         self.fields["client_object"] = ClientsSerializer(source="client", many=False, read_only=True)
 
-
     def _create_new_instrument(self, portfolio: Portfolio, ecosystem: EcosystemDefault) -> Optional[Instrument]:
         new_linked_instrument = {
             "name": portfolio.name,
