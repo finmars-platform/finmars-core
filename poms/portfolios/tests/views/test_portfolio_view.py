@@ -299,10 +299,6 @@ class PortfolioViewSetTest(BaseTestCase):
         self.assertEqual(response_json["resource_groups"], [])
         self.assertEqual(response_json["resource_groups_object"], [])
 
-        from pprint import pprint
-
-        pprint(response_json)
-
     def test_destroy(self):
         response = self.client.delete(f"{self.url}{self.portfolio.id}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
