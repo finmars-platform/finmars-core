@@ -1,4 +1,5 @@
 from datetime import date
+from unittest import mock
 
 from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.portfolios.models import PortfolioRegisterRecord
@@ -109,3 +110,12 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         response = self.client.get(path=f"{self.url}?transaction_date_after=2024-01-02")
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(response.json().get("count"), 2)
+
+    @mock.patch("poms.portfolios.models.Portfolio.destroy_reconcile_histories")
+    def test__destroy_reconciliation_was_called(self, destroy):
+        self.create_prr_data(trade_price=0.5)
+
+        response = self.client.post(self.url, data=self.prr_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
+
+        destroy.assert_called_once()
