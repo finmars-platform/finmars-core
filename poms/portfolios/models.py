@@ -433,7 +433,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, Object
             bundle.save()
 
     def __str__(self):
-        return f"Portfolio Register {self.portfolio.user_code}. " f"Linked Instrument {self.linked_instrument}"
+        return f"Portfolio Register {self.portfolio.user_code}. Linked Instrument {self.linked_instrument}"
 
 
 class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
@@ -512,7 +512,7 @@ class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
         default=0.0,
         verbose_name=gettext_lazy("nav valuation currency"),
     )
-    # Should be rename to previous record date
+    # Should be renamed to previous record date
     nav_previous_register_record_day_valuation_currency = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("nav previous register record day valuation currency"),
