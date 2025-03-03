@@ -1,6 +1,7 @@
 from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
+from poms.file_reports.models import FileReport
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 
 
@@ -28,6 +29,12 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
             },
         )
 
+    def create_file_report(self) -> FileReport:
+        return FileReport.objects.create(
+            master_user=self.master_user,
+            file_name=self.random_string(),
+        )
+
     def create_reconcile_history(self, group: PortfolioReconcileGroup, day: date) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
@@ -35,6 +42,7 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
             user_code=self.random_string(),
             portfolio_reconcile_group=group,
             date=day,
+            file_report=self.create_file_report(),
         )
 
     def test__list(self):
@@ -44,7 +52,13 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
 
         self.assertEqual(response_json["count"], 1)
         self.assertEqual(len(response_json["results"]), 1)
-        self.assertEqual(response_json["results"][0]["id"], self.history.id)
+
+        history_data = response_json["results"][0]
+        self.assertEqual(history_data["id"], self.history.id)
+        self.assertIsInstance(history_data["portfolio_reconcile_group_object"], dict)
+        self.assertIsInstance(history_data["file_report"], dict)
+
+        print(history_data)
 
     def test__retrieve(self):
         response = self.client.get(path=f"{self.url}{self.history.id}/")
@@ -62,49 +76,37 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_out_date_range_1(self):
-        response = self.client.get(
-            path=self.url, data={"date_before": str(self.yesterday())}
-        )
+        response = self.client.get(path=self.url, data={"date_before": str(self.yesterday())})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_out_date_range_0(self):
-        response = self.client.get(
-            path=self.url, data={"date_after": str(self.random_future_date())}
-        )
+        response = self.client.get(path=self.url, data={"date_after": str(self.random_future_date())})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_in_date_range(self):
-        response = self.client.get(
-            path=self.url, data={"date_after": str(self.yesterday())}
-        )
+        response = self.client.get(path=self.url, data={"date_after": str(self.yesterday())})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
     def test__filter_status_ok(self):
-        response = self.client.get(
-            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK}
-        )
+        response = self.client.get(path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
     def test__filter_status_error(self):
-        response = self.client.get(
-            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR}
-        )
+        response = self.client.get(path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_wrong_user_code(self):
-        response = self.client.get(
-            path=self.url, data={"reconcile_group": "invalid_user_code"}
-        )
+        response = self.client.get(path=self.url, data={"reconcile_group": "invalid_user_code"})
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
@@ -123,7 +125,7 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
             data={
                 "reconcile_group": self.history.portfolio_reconcile_group.user_code,
                 "date_after": str(self.random_future_date()),
-            }
+            },
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
@@ -135,7 +137,7 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
             data={
                 "reconcile_group": self.history.portfolio_reconcile_group.user_code,
                 "date_before": str(self.yesterday()),
-            }
+            },
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
@@ -148,7 +150,7 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
                 "reconcile_group": self.history.portfolio_reconcile_group.user_code,
                 "date_after": str(self.yesterday()),
                 "date_before": str(self.random_future_date()),
-            }
+            },
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
