@@ -1122,7 +1122,8 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                     if equal_with_precision:
                         message = (
                             f"{portfolio['portfolio_object']['user_code']} is "
-                            f"{position_size} is equal to {reference_size} "
+                            f"{round(position_size, round_digits)} is equal to "
+                            f"{round(reference_size, round_digits)} "
                             f"with precision {precision} ({discrepancy} units)"
                         )
                         report_entry["message"] = message
