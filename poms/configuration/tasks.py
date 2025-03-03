@@ -669,7 +669,7 @@ def finish_package_install(self, task_id, *args, **kwargs):
 
 @finmars_task(name="configuration.install_package_from_marketplace", bind=True)
 def install_package_from_marketplace(self, task_id, *args, **kwargs):
-    _l.info("install_configuration_from_marketplace")
+    _l.info("install_package_from_marketplace")
 
     parent_task = CeleryTask.objects.get(id=task_id)
     # task.celery_task_id = self.request.id
