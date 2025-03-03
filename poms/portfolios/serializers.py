@@ -860,6 +860,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
+    file_report = FileReportSerializer()
 
     class Meta:
         model = PortfolioReconcileHistory
