@@ -6,7 +6,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -41,12 +40,12 @@ class DestroyModelMixinExt(DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):
         try:
             return super().destroy(request, *args, **kwargs)
-        except ProtectedError:
+        except ProtectedError as e:
             raise FinmarsBaseException(
                 error_key=api_settings.NON_FIELD_ERRORS_KEY,
-                message="Cannot delete instance because they are referenced through a protected foreign key",
+                message="Can't delete instance because they are referenced through a protected foreign key",
                 status_code=409,
-            )
+            ) from e
 
 
 # noinspection PyUnresolvedReferences
@@ -116,18 +115,6 @@ class UpdateModelMixinExt(UpdateModelMixin):
             return Response(serializer.data)
 
         return response
-
-
-# TODO: may be delete later
-class DestroySystemicModelMixin(DestroyModelMixinExt):
-    def perform_destroy(self, instance):
-        if hasattr(instance, "is_systemic") and instance.is_systemic:
-            raise MethodNotAllowed(
-                "DELETE",
-                detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true',
-            )
-        else:
-            super().perform_destroy(instance)
 
 
 # noinspection PyUnresolvedReferences
