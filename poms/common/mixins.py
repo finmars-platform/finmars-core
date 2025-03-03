@@ -156,6 +156,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         return Response({"task_id": celery_task.id})
 
 
+# noinspection PyUnresolvedReferences
 class BulkRestoreModelMixin(DestroyModelMixin):
     @action(detail=False, methods=["post"], url_path="bulk-restore")
     def bulk_restore(self, request, realm_code=None, space_code=None):
