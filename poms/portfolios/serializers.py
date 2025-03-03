@@ -809,6 +809,20 @@ class ParamsSerializer(serializers.Serializer):
     notifications = serializers.DictField(required=False, default={})
 
 
+GROUP_FIELDS = [
+    "id",
+    "master_user",
+    "name",
+    "short_name",
+    "user_code",
+    "public_name",
+    "notes",
+    "portfolios",
+    "params",
+    "last_calculated_at",
+]
+
+
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
@@ -816,18 +830,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
     class Meta:
         model = PortfolioReconcileGroup
-        fields = [
-            "id",
-            "master_user",
-            "name",
-            "short_name",
-            "user_code",
-            "public_name",
-            "notes",
-            "portfolios",
-            "params",
-            "last_calculated_at",
-        ]
+        fields = GROUP_FIELDS
 
     def validate(self, attrs):
         portfolios = attrs.get("portfolios")
@@ -858,32 +861,56 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
         return group
 
 
+class SimplePortfolioReconcileGroupSerializer(serializers.ModelSerializer):
+    # Simple model serializer (do not use request, user, master_user & owner fields)
+    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+
+    class Meta:
+        model = PortfolioReconcileGroup
+        fields = GROUP_FIELDS
+        read_only_fields = fields
+
+
+HISTORY_FIELDS = [
+    "id",
+    "user_code",
+    "master_user",
+    "portfolio_reconcile_group",
+    "portfolio_reconcile_group_object",
+    "date",
+    "verbose_result",
+    "error_message",
+    "status",
+    "file_report",
+    "report_ttl",
+    "created_at",
+    "modified_at",
+]
+
+
 class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
+    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
+    portfolio_reconcile_group_object = PortfolioReconcileGroupSerializer(
+        source="portfolio_reconcile_group", read_only=True
+    )
+    file_report = FileReportSerializer(read_only=True)
 
     class Meta:
         model = PortfolioReconcileHistory
-        fields = [
-            "id",
-            "user_code",
-            "master_user",
-            "portfolio_reconcile_group",
-            "date",
-            "verbose_result",
-            "error_message",
-            "status",
-            "file_report",
-            "is_enabled",
-            "report_ttl",
-        ]
+        fields = HISTORY_FIELDS
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-        self.fields["portfolio_reconcile_group_object"] = PortfolioReconcileGroupSerializer(
-            source="portfolio_reconcile_group", read_only=True
-        )
-        self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
+class SimpleReconcileHistorySerializer(serializers.ModelSerializer):
+    # Simple model serializer (do not use request, user, master_user & owner fields)
+    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
+    portfolio_reconcile_group_object = SimplePortfolioReconcileGroupSerializer(source="portfolio_reconcile_group")
+    file_report = FileReportSerializer()
+
+    class Meta:
+        model = PortfolioReconcileHistory
+        fields = HISTORY_FIELDS
+        read_only_fields = fields
 
 
 class CalculateReconcileHistorySerializer(serializers.Serializer):
@@ -919,29 +946,6 @@ class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
             raise serializers.ValidationError("'reconcile_groups' can't be empty")
 
         return groups
-
-
-class ShortReconcileHistorySerializer(serializers.ModelSerializer):
-    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
-    file_report = FileReportSerializer()
-
-    class Meta:
-        model = PortfolioReconcileHistory
-        fields = [
-            "id",
-            "user_code",
-            "name",
-            "portfolio_reconcile_group",
-            "date",
-            "verbose_result",
-            "error_message",
-            "status",
-            "file_report",
-            "report_ttl",
-            "created_at",
-            "modified_at",
-        ]
-        read_only_fields = fields
 
 
 class PortfolioReconcileStatusSerializer(serializers.Serializer):
@@ -999,7 +1003,7 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
                 result[portfolio.user_code] = portfolio_result
                 continue
 
-            history_objects = ShortReconcileHistorySerializer(histories, many=True).data
+            history_objects = SimpleReconcileHistorySerializer(histories, many=True).data
             all_statuses = {history["user_code"]: self.reconcile_status(history) for history in history_objects}
             final_status = self.final_status(all_statuses.values())
             result[portfolio.user_code] = {
