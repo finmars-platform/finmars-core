@@ -11,14 +11,11 @@ profile="black"
 py_version=311
 known_django=[
     "django",
-    "django_celery_results",
     "django_filters",
-    "django_redis",
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_spectacular",
     "drf_yasg",
-    "factory",
-    "corsheaders"
 ]
 sections=["STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 skip=["__init__.py", ".gitignore", "templates"]
