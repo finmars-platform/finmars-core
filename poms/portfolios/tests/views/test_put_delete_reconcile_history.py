@@ -5,7 +5,7 @@ from poms.file_reports.models import FileReport
 from poms.portfolios.models import PortfolioReconcileGroup, PortfolioReconcileHistory
 
 
-class DummyUpdateReconcileHistoryTest(BaseTestCase):
+class DummyUpdateAndDeleteReconcileHistoryTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
@@ -52,3 +52,13 @@ class DummyUpdateReconcileHistoryTest(BaseTestCase):
 
         self.assertEqual(response_json["id"], self.history.id)
         self.assertEqual(response_json["user_code"], self.history.user_code)
+
+    def test__destroy(self):
+        file_report_id = self.history.file_report_id
+        response = self.client.delete(path=f"{self.url}{self.history.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        history = PortfolioReconcileHistory.objects.filter(id=self.history.id).first()
+        self.assertIsNone(history)
+        file_report = FileReport.objects.filter(id=file_report_id).first()
+        self.assertIsNone(file_report)

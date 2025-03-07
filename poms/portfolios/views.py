@@ -1,3 +1,4 @@
+import contextlib
 from logging import getLogger
 
 import django_filters
@@ -735,7 +736,7 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileHistory.objects.select_related("portfolio_reconcile_group")
+    queryset = PortfolioReconcileHistory.objects.select_related("portfolio_reconcile_group", "file_report")
     serializer_class = PortfolioReconcileHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -749,6 +750,13 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     def update(self, request, *args, **kwargs):
         """ Ignore update data, just return current object """
         return Response(SimpleReconcileHistorySerializer(instance=self.get_object()).data)
+
+    def destroy(self, request, *args, **kwargs):
+        history = self.get_object()
+        if history.file_report:
+            with contextlib.suppress(Exception):
+                history.file_report.delete()
+        return super().destroy(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         return Response(
