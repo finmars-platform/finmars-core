@@ -14,9 +14,8 @@ services:
       - redis
       - backend_migration
     ports:
-      - 8080:8080
+      - "8080:8080"
     # command: CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]
-
 
   backend_migration:
     build:
@@ -27,7 +26,6 @@ services:
     depends_on:
       - db
     command: python manage.py migrate_all_schemes
-
 
   db:
     image: postgres:13-alpine

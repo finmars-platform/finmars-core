@@ -53,7 +53,7 @@ from poms.portfolios.serializers import (
     PortfolioTypeLightSerializer,
     PortfolioTypeSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer,
+    PrCalculateRecordsRequestSerializer, SimpleReconcileHistorySerializer,
 )
 from poms.portfolios.tasks import (
     bulk_calculate_reconcile_history,
@@ -747,8 +747,8 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     http_method_names = ["get", "put", "post", "delete"]
 
     def update(self, request, *args, **kwargs):
-        history = self.get_object()
-        return Response(self.serializer_class(history))
+        """ Ignore update data, just return current object """
+        return Response(SimpleReconcileHistorySerializer(instance=self.get_object()).data)
 
     def create(self, request, *args, **kwargs):
         return Response(
