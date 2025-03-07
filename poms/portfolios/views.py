@@ -744,7 +744,11 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     ]
     filter_class = PortfolioReconcileHistoryFilterSet
     ordering_fields = []
-    http_method_names = ["get", "post"]
+    http_method_names = ["get", "put", "post", "delete"]
+
+    def update(self, request, *args, **kwargs):
+        history = self.get_object()
+        return Response(self.serializer_class(history))
 
     def create(self, request, *args, **kwargs):
         return Response(
