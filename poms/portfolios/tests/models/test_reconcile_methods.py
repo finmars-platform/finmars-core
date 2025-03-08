@@ -32,7 +32,8 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
             name=self.random_string(),
             params={
                 "precision": 1,
-                "only_errors": True,
+                "round_digits": 2,
+                "only_errors": False,
             },
         )
 
@@ -65,6 +66,48 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
     @patch("poms.reports.common.Report")
     @patch("poms.portfolios.models.EcosystemDefault.objects")
     def test_calculate_history_only_errors(
+        self,
+        mock_ecosystem_defaults,
+        mock_report_class,
+        mock_balance_builder,
+        mock_compare_portfolios,
+        mock_generate_json_report,
+    ):
+        mock_ecosystem_defaults.filter.return_value.first.return_value = MagicMock()
+        mock_report = MagicMock()
+        mock_report_class.return_value = mock_report
+        mock_balance_builder.return_value.build_balance_sync.return_value = MagicMock(
+            items=[
+                {"portfolio_id": 1, "user_code": "UC1", "position_size": 10},
+                {"portfolio_id": 2, "user_code": "UC1", "position_size": 10},
+            ]
+        )
+        mock_compare_portfolios.return_value = ([], False)
+        mock_generate_json_report.return_value = self.create_file_report()
+
+        group = self.create_reconcile_group()
+        group.portfolios.add(self.portfolio_1)
+        group.portfolios.add(self.portfolio_2)
+        group.params = {
+                "precision": 1,
+                "round_digits": 2,
+                "only_errors": True,
+            }
+        group.save()
+
+        history = self.create_reconcile_history(group)
+        history.calculate()
+
+        self.assertEqual(history.status, PortfolioReconcileHistory.STATUS_OK)
+        self.assertEqual(history.error_message, "")
+        mock_generate_json_report.assert_called_once_with([])
+
+    @patch("poms.portfolios.models.PortfolioReconcileHistory.generate_json_report")
+    @patch("poms.portfolios.models.PortfolioReconcileHistory.compare_portfolios")
+    @patch("poms.reports.sql_builders.balance.BalanceReportBuilderSql")
+    @patch("poms.reports.common.Report")
+    @patch("poms.portfolios.models.EcosystemDefault.objects")
+    def test_calculate_history_default(
         self,
         mock_ecosystem_defaults,
         mock_report_class,
