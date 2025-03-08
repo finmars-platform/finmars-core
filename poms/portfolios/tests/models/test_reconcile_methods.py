@@ -168,7 +168,6 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
     @patch("poms.portfolios.models.now")
     @patch("poms.portfolios.models.FileReport")
     def test_generate_json_report_full(self, mock_file_report, mock_now):
-
         report = [{"test": "data"}]
         mock_file_report_instance = MagicMock()
         mock_file_report.return_value = mock_file_report_instance
@@ -191,5 +190,32 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         mock_file_report_instance.upload_file.assert_called_once_with(
             file_name=expected_name,
             text=json.dumps(report, indent=4, default=str),
+            master_user=history.master_user,
+        )
+
+    @patch("poms.portfolios.models.now")
+    @patch("poms.portfolios.models.FileReport")
+    def test_generate_json_report_empty(self, mock_file_report, mock_now):
+        mock_file_report_instance = MagicMock()
+        mock_file_report.return_value = mock_file_report_instance
+        fake_time = "2025-03-08-10-00"
+        mock_now.return_value.strftime.return_value = fake_time
+
+        group = self.create_reconcile_group()
+        group.portfolios.set([self.portfolio_1, self.portfolio_2])
+
+        history = self.create_reconcile_history(group)
+        history.linked_task_id = 12345
+
+        file_report = history.generate_json_report([])
+
+        expected_name = f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        self.assertEqual(file_report.type, "reconciliation_report")
+        self.assertEqual(file_report.content_type, "application/json")
+        self.assertEqual(file_report.file_name, expected_name)
+
+        mock_file_report_instance.upload_file.assert_called_once_with(
+            file_name=expected_name,
+            text=json.dumps([{"message": "report has no errors"}], indent=4, default=str),
             master_user=history.master_user,
         )

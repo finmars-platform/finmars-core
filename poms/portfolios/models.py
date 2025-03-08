@@ -1241,7 +1241,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
 
     def generate_json_report(self, report: list[dict]) -> FileReport:
         if not report:
-            report=[{"message": "report has no errors"}]
+            report = [{"message": "report has no errors"}]
 
         current_time = now().strftime("%Y-%m-%d-%H-%M")
         task_id = self.linked_task_id or ""
