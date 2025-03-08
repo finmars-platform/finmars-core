@@ -16,13 +16,13 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.portfolio_1 = self.db_data.portfolios[BIG]
-        self.portfolio_1.portfolio_type = self.create_portfolio_type(PortfolioClass.GENERAL)
+        self.type_general = self.create_portfolio_type(PortfolioClass.GENERAL)
+        self.type_position = self.create_portfolio_type(PortfolioClass.POSITION)
+        self.portfolio_1.portfolio_type = self.type_general
         self.portfolio_1.save()
         self.portfolio_2 = self.db_data.portfolios[SMALL]
-        self.portfolio_2.portfolio_type = self.create_portfolio_type(PortfolioClass.POSITION)
+        self.portfolio_2.portfolio_type = self.type_position
         self.portfolio_2.save()
-
-        self.group = self.create_reconcile_group()
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -94,8 +94,7 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         mock_generate_json_report.return_value = self.create_file_report()
 
         group = self.create_reconcile_group()
-        group.portfolios.add(self.portfolio_1)
-        group.portfolios.add(self.portfolio_2)
+        group.portfolios.set([self.portfolio_1, self.portfolio_2])
         group.params = {
             "precision": 1,
             "round_digits": 2,
@@ -140,33 +139,32 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
                 },
             ]
         )
-        mock_compare_portfolios.return_value = ([], False)
+        mock_compare_portfolios.return_value = (["good report"], False)
         mock_generate_json_report.return_value = self.create_file_report()
 
         group = self.create_reconcile_group()
-        group.portfolios.add(self.portfolio_1)
-        group.portfolios.add(self.portfolio_2)
+        group.portfolios.set([self.portfolio_1, self.portfolio_2])
 
         history = self.create_reconcile_history(group)
         history.calculate()
 
         self.assertEqual(history.status, PortfolioReconcileHistory.STATUS_OK)
         self.assertEqual(history.error_message, "")
-        mock_generate_json_report.assert_called_once_with([])
+        mock_generate_json_report.assert_called_once_with(["good report"])
 
-    # @patch("poms.portfolios.models.PortfolioReconcileHistory._finish_as_error")
-    # def test_calculate_no_position_portfolio(self, mock_finish_as_error):
-    #     # Arrange
-    #     portfolio1 = PortfolioFactory.create(portfolio_type__portfolio_class=PortfolioClass.GENERAL)
-    #     portfolio2 = PortfolioFactory.create(portfolio_type__portfolio_class=PortfolioClass.GENERAL)
-    #     self.group.portfolios.set([portfolio1, portfolio2])
-    #
-    #     # Act
-    #     self.history.calculate()
-    #
-    #     # Assert
-    #     mock_finish_as_error.assert_called_once()
-    #
+    @patch("poms.portfolios.models.PortfolioReconcileHistory._finish_as_error")
+    def test_calculate_no_position_portfolio(self, mock_finish_as_error):
+        self.portfolio_2.portfolio_type = self.type_general
+        self.portfolio_2.save()
+
+        group = self.create_reconcile_group()
+        group.portfolios.set([self.portfolio_1, self.portfolio_2])
+
+        history = self.create_reconcile_history(group)
+        history.calculate()
+
+        mock_finish_as_error.assert_called_once()
+
     # @patch("poms.portfolios.models.now")
     # @patch("poms.portfolios.models.FileReport")
     # @patch("poms.portfolios.models.json")
