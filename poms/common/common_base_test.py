@@ -605,7 +605,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return instrument
 
-    def create_pricing_policy(self) -> GenericAttributeType:
+    def create_pricing_policy(self) -> PricingPolicy:
         name = "pricing_policy"
         return PricingPolicy.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
