@@ -564,7 +564,7 @@ class MasterUser(models.Model):
             Responsible,
             ResponsibleGroup,
         )
-        from poms.currencies.models import Currency, currencies_data
+        from poms.currencies.models import Currency
         from poms.instruments.models import (
             AccrualCalculationModel,
             EventScheduleConfig,
