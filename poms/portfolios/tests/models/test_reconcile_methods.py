@@ -93,6 +93,7 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
 
         self.assertEqual(history.status, PortfolioReconcileHistory.STATUS_OK)
         self.assertEqual(history.error_message, "")
+        mock_generate_json_report.assert_called_once_with([])
 
     # @patch("poms.portfolios.models.PortfolioReconcileHistory._finish_as_error")
     # def test_calculate_no_position_portfolio(self, mock_finish_as_error):
