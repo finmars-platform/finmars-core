@@ -165,25 +165,31 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
 
         mock_finish_as_error.assert_called_once()
 
-    # @patch("poms.portfolios.models.now")
-    # @patch("poms.portfolios.models.FileReport")
-    # @patch("poms.portfolios.models.json")
-    # def test_generate_json_report(self, mock_json, mock_file_report, mock_now):
-    #     # Arrange
-    #     report = [{"test": "data"}]
-    #     mock_now.return_value.strftime.return_value = "2024-12-08-10-00"
-    #     mock_file_report_instance = MagicMock()
-    #     mock_file_report.return_value = mock_file_report_instance
-    #     mock_json.dumps.return_value = json.dumps(report)
-    #     self.history.linked_task_id = "123"
-    #
-    #     # Act
-    #     result = self.history.generate_json_report(report)
-    #
-    #     # Assert
-    #     self.assertEqual(result, mock_file_report_instance)
-    #     mock_file_report_instance.upload_file.assert_called_once_with(
-    #         file_name=f"{self.history.user_code}_2024-12-08-10-00_n123.json",
-    #         text=mock_json.dumps.return_value,
-    #         master_user=self.history.master_user,
-    #     )
+    @patch("poms.portfolios.models.now")
+    @patch("poms.portfolios.models.FileReport")
+    def test_generate_json_report_full(self, mock_file_report, mock_now):
+
+        report = [{"test": "data"}]
+        mock_file_report_instance = MagicMock()
+        mock_file_report.return_value = mock_file_report_instance
+        fake_time = "2025-03-08-10-00"
+        mock_now.return_value.strftime.return_value = fake_time
+
+        group = self.create_reconcile_group()
+        group.portfolios.set([self.portfolio_1, self.portfolio_2])
+
+        history = self.create_reconcile_history(group)
+        history.linked_task_id = 12345
+
+        file_report = history.generate_json_report(report)
+
+        expected_name = f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        self.assertEqual(file_report.type, "reconciliation_report")
+        self.assertEqual(file_report.content_type, "application/json")
+        self.assertEqual(file_report.file_name, expected_name)
+
+        mock_file_report_instance.upload_file.assert_called_once_with(
+            file_name=expected_name,
+            text=json.dumps(report, indent=4, default=str),
+            master_user=history.master_user,
+        )
