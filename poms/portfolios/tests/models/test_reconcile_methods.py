@@ -57,7 +57,7 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
             master_user=self.master_user,
             owner=self.member,
             portfolio_class_id=class_id,
-            user_code=f"user_code_{class_id}"
+            user_code=f"user_code_{class_id}",
         )
 
     @patch("poms.portfolios.models.PortfolioReconcileHistory.generate_json_report")
@@ -78,8 +78,16 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         mock_report_class.return_value = mock_report
         mock_balance_builder.return_value.build_balance_sync.return_value = MagicMock(
             items=[
-                {"portfolio_id": 1, "user_code": "UC1", "position_size": 10},
-                {"portfolio_id": 2, "user_code": "UC1", "position_size": 10},
+                {
+                    "portfolio_id": self.portfolio_1.id,
+                    "user_code": self.portfolio_1.user_code,
+                    "position_size": 10,
+                },
+                {
+                    "portfolio_id": self.portfolio_2.id,
+                    "user_code": self.portfolio_2.user_code,
+                    "position_size": 10,
+                },
             ]
         )
         mock_compare_portfolios.return_value = ([], False)
@@ -89,10 +97,10 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         group.portfolios.add(self.portfolio_1)
         group.portfolios.add(self.portfolio_2)
         group.params = {
-                "precision": 1,
-                "round_digits": 2,
-                "only_errors": True,
-            }
+            "precision": 1,
+            "round_digits": 2,
+            "only_errors": True,
+        }
         group.save()
 
         history = self.create_reconcile_history(group)
@@ -120,8 +128,16 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
         mock_report_class.return_value = mock_report
         mock_balance_builder.return_value.build_balance_sync.return_value = MagicMock(
             items=[
-                {"portfolio_id": 1, "user_code": "UC1", "position_size": 10},
-                {"portfolio_id": 2, "user_code": "UC1", "position_size": 10},
+                {
+                    "portfolio_id": self.portfolio_1.id,
+                    "user_code": self.portfolio_1.user_code,
+                    "position_size": 10,
+                },
+                {
+                    "portfolio_id": self.portfolio_2.id,
+                    "user_code": self.portfolio_2.user_code,
+                    "position_size": 10,
+                },
             ]
         )
         mock_compare_portfolios.return_value = ([], False)
