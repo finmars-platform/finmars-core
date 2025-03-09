@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from poms.users.models import MasterUser, Member, EcosystemDefault
 
 
-class UserFactory(factory.django.DjangoModelFactory):
+class     UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
         django_get_or_create = ("username",)
@@ -21,8 +21,8 @@ class MasterUserFactory(factory.django.DjangoModelFactory):
         model = MasterUser
 
     name = factory.Sequence(lambda n: f"MasterUser {n}")
-    realm_code = "space00000"
-    space_code = "realm00000"
+    realm_code = "realm00000"
+    space_code = "space00000"
     description = factory.Faker("text")
     status = MasterUser.STATUS_ONLINE
     journal_status = MasterUser.JOURNAL_STATUS_DISABLED

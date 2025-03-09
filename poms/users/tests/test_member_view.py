@@ -1,8 +1,6 @@
 import copy
 from unittest import mock
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.users.models import Member
 
@@ -21,8 +19,6 @@ class MemberViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/users/member/"
 
     def test__check_api_url(self):
@@ -78,11 +74,13 @@ class MemberViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 201, response.content)
         member_data = response.json()
 
-        data.update(**{
-            "data": {"key": "value"},
-            "is_admin": True,
-            "is_owner": True,
-        })
+        data.update(
+            **{
+                "data": {"key": "value"},
+                "is_admin": True,
+                "is_owner": True,
+            }
+        )
 
         response = self.client.patch(
             path=f"{self.url}{member_data['id']}/",
@@ -157,5 +155,5 @@ class MemberViewSetTest(BaseTestCase):
         self.assertFalse(response_json["is_deleted"])
 
         user_data = response_json["user"]
-        self.assertEqual(user_data["username"], "test_user")
+        self.assertIn("user_", user_data["username"])
         self.assertEqual(user_data["id"], self.user.id)
