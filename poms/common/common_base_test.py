@@ -545,21 +545,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 ),
             )
 
-    # def create_currencies(self):
-    #     self.usd = CurrencyFactory(user_code="USD", default_fx_rate=1)
-    #     self.eur = CurrencyFactory(user_code="EUR", default_fx_rate=1.1)
-    #     for currency in CURRENCIES:
-    #         Currency.objects.using(settings.DB_DEFAULT).get_or_create(
-    #             master_user=self.master_user,
-    #             owner=self.member,
-    #             user_code=currency[0],
-    #             defaults=dict(
-    #                 name=currency[0],
-    #                 public_name=currency[0],
-    #                 default_fx_rate=currency[1],
-    #             ),
-    #         )
-
     def get_or_create_default_instrument(self):
         self.instrument_type, _ = InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
