@@ -1,12 +1,14 @@
 import factory
+from factory.django import DjangoModelFactory
 
 from django.contrib.auth.models import User
 
 from poms.currencies.models import Currency
+from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
-class UserFactory(factory.django.DjangoModelFactory):
+class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
         django_get_or_create = ("username",)
@@ -17,7 +19,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_superuser = True
 
 
-class MasterUserFactory(factory.django.DjangoModelFactory):
+class MasterUserFactory(DjangoModelFactory):
     class Meta:
         model = MasterUser
 
@@ -42,7 +44,7 @@ class MasterUserFactory(factory.django.DjangoModelFactory):
         return super()._create(model_class, *args, **kwargs)
 
 
-class MemberFactory(factory.django.DjangoModelFactory):
+class MemberFactory(DjangoModelFactory):
     class Meta:
         model = Member
 
@@ -61,7 +63,7 @@ class MemberFactory(factory.django.DjangoModelFactory):
         return super()._create(model_class, *args, **kwargs)
 
 
-class CurrencyFactory(factory.django.DjangoModelFactory):
+class CurrencyFactory(DjangoModelFactory):
     class Meta:
         model = Currency
 
@@ -77,7 +79,45 @@ class CurrencyFactory(factory.django.DjangoModelFactory):
         return super()._create(model_class, *args, **kwargs)
 
 
-class EcosystemDefaultFactory(factory.django.DjangoModelFactory):
+class InstrumentTypeFactory(DjangoModelFactory):
+    class Meta:
+        model = InstrumentType
+
+    master_user = factory.SubFactory(MasterUserFactory)
+    owner = factory.SubFactory(MemberFactory)  # default code
+    instrument_class_id = InstrumentClass.GENERAL
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        existing_instance = model_class.objects.filter(
+            user_code=kwargs.get("user_code"),
+            master_user=kwargs.get("master_user"),
+        ).first()
+        if existing_instance:
+            return existing_instance
+        return super()._create(model_class, *args, **kwargs)
+
+
+class InstrumentFactory(DjangoModelFactory):
+    class Meta:
+        model = Instrument
+
+    master_user = factory.SubFactory(MasterUserFactory)
+    owner = factory.SubFactory(MemberFactory)  # default code
+    instrument_class_id = InstrumentClass.GENERAL
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        existing_instance = model_class.objects.filter(
+            user_code=kwargs.get("user_code"),
+            master_user=kwargs.get("master_user"),
+        ).first()
+        if existing_instance:
+            return existing_instance
+        return super()._create(model_class, *args, **kwargs)
+
+
+class EcosystemDefaultFactory(DjangoModelFactory):
     class Meta:
         model = EcosystemDefault
 

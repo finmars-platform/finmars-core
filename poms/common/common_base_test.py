@@ -17,6 +17,7 @@ from poms.common.constants import SystemValueType
 from poms.common.factories import (
     CurrencyFactory,
     EcosystemDefaultFactory,
+    InstrumentTypeFactory,
     MasterUserFactory,
     MemberFactory,
     UserFactory,
@@ -87,13 +88,11 @@ TRANSACTIONS_TYPES = [
     INSTRUMENT_EXP,
     NON_INSTRUMENT_EXP,
 ]
-INITIAL_TYPE_PREFIX = "local.poms.space00000"
-INITIAL_INSTRUMENTS_TYPES = [
-    f"{INITIAL_TYPE_PREFIX}:bond",
-    f"{INITIAL_TYPE_PREFIX}:stock",
-]
-STANDARD_TYPE_BOND = f"{settings.INSTRUMENT_TYPE_PREFIX}:bond"
-STANDARD_TYPE_STOCK = f"{settings.INSTRUMENT_TYPE_PREFIX}:stock"
+
+STANDARD_TYPE_BOND = f"{settings.INSTRUMENT_TYPE_PREFIX}_bond"
+STANDARD_TYPE_STOCK = f"{settings.INSTRUMENT_TYPE_PREFIX}_stock"
+STANDARD_TYPE_DEFAULT = f"{settings.INSTRUMENT_TYPE_PREFIX}_default"
+INITIAL_INSTRUMENTS_TYPES = ['bond', 'stock']
 
 IDENTIFIERS = [
     {
@@ -546,25 +545,25 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             )
 
     def get_or_create_default_instrument(self):
-        self.instrument_type, _ = InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
-            master_user=self.master_user,
-            user_code=INITIAL_TYPE_PREFIX,
-            defaults=dict(
-                master_user=self.master_user,
-                owner=self.member,
-                instrument_class_id=InstrumentClass.GENERAL,
-                name="-",
-                short_name="-",
-                public_name="-",
-            ),
-        )
+        # self.instrument_type, _ = InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
+        #     master_user=self.master_user,
+        #     user_code=settings.INSTRUMENT_TYPE_PREFIX,
+        #     defaults=dict(
+        #         master_user=self.master_user,
+        #         owner=self.member,
+        #         instrument_class_id=InstrumentClass.GENERAL,
+        #         name="-",
+        #         short_name="-",
+        #         public_name="-",
+        #     ),
+        # )
 
         instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code="-",
             defaults=dict(
                 owner=self.member,
-                instrument_type=self.instrument_type,
+                instrument_type=self.default_instrument_type,
                 name="-",
                 short_name="-",
                 public_name="-",
@@ -618,19 +617,23 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.usd = CurrencyFactory(user_code="USD", default_fx_rate=1)
         self.eur = CurrencyFactory(user_code="EUR", default_fx_rate=1.1)
 
-        self.create_instruments_types()
+        self.bond_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_BOND)
+        self.stock_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_STOCK)
+        self.default_instrument_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_DEFAULT)
         self.default_instrument = self.get_or_create_default_instrument()
-        self.ecosystem, _ = EcosystemDefault.objects.using(settings.DB_DEFAULT).get_or_create(
-            master_user=self.master_user,
-            currency=self.usd,
-            instrument=self.default_instrument,
-        )
+
+        self.ecosystem = EcosystemDefaultFactory(currency=self.usd, instrument=self.default_instrument)
+
         self.account_type = self.create_account_type()
         self.account = self.create_account()
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
             ecosystem=self.ecosystem,
+            usd=self.usd,
+            bond_type=self.bond_type,
+            stock_type=self.stock_type,
+            default_type= self.default_instrument_type,
         )
 
         self.client = APIClient()
@@ -638,15 +641,18 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
 
 class DbInitializer:
-    def __init__(self, master_user, member, ecosystem):
+    def __init__(self, master_user, member, ecosystem, usd, bond_type, stock_type, default_type):
         self.master_user = master_user
         self.member = member
         self.default_ecosystem = ecosystem
+        self.usd = usd
+        self.bond_type = bond_type
+        self.stock_type = stock_type
+        self.default_type = default_type
 
         if settings.USE_DB_REPLICA:
             print_all_users("DbInitializer")
 
-        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
         self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(user_code="-")
 
         self.portfolios = self.create_accounts_and_portfolios()
@@ -663,32 +669,29 @@ class DbInitializer:
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id, identifier in INSTRUMENTS:
-            instrument_type, _ = InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                user_code=type_,
-                defaults=dict(
-                    owner=self.member,
-                    instrument_class_id=class_id,
-                    name=type_,
-                    short_name=type_,
-                    public_name=type_,
-                ),
-            )
-            instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                user_code=name,
-                defaults=dict(
-                    owner=self.member,
-                    instrument_type=instrument_type,
-                    name=name,
-                    short_name=name,
-                    identifier=identifier,
-                    public_name=name,
-                    accrued_currency=self.usd,
-                    pricing_currency=self.usd,
-                    maturity_date=BaseTestCase().random_future_date(),
-                ),
-            )
+            try:
+                instrument_type = self.bond_type if type_ == "bond" else self.stock_type
+                instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
+                    master_user=self.master_user,
+                    user_code=name,
+                    defaults=dict(
+                        owner=self.member,
+                        instrument_type=instrument_type,
+                        name=name,
+                        short_name=name,
+                        identifier=identifier,
+                        public_name=name,
+                        accrued_currency=self.usd,
+                        pricing_currency=self.usd,
+                        maturity_date=BaseTestCase().random_future_date(),
+                    ),
+                )
+            except Exception as e:
+                print(f"!!!!!!!!!!!!!!!!! ERROR {e} !!!!!!!!!!!!!!!!!!!!!!!")
+                print(f"{name=} {type_=} {class_id=}\n")
+                for it in InstrumentType.objects.all():
+                    print(f"{it.user_code=}\n")
+
             instruments[name] = instrument
         return instruments
 
