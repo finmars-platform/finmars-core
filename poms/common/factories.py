@@ -1,0 +1,55 @@
+import factory
+
+from django.contrib.auth.models import User
+
+from poms.users.models import MasterUser, Member, EcosystemDefault
+
+
+class UserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = User
+        django_get_or_create = ("username",)
+
+    username = factory.Sequence(lambda n: f"user_{n}")
+    email = factory.Sequence(lambda n: f"user_{n}@example.com")
+    is_staff = True
+    is_superuser = True
+
+
+class MasterUserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = MasterUser
+
+    name = factory.Sequence(lambda n: f"MasterUser {n}")
+    realm_code = "space00000"
+    space_code = "realm00000"
+    description = factory.Faker("text")
+    status = MasterUser.STATUS_ONLINE
+    journal_status = MasterUser.JOURNAL_STATUS_DISABLED
+    language = "en"
+    timezone = "UTC"
+    notification_business_days = 0
+    token = factory.Faker("hexify", text="^" * 32, upper=False)
+    unique_id = factory.Faker("hexify", text="^" * 32, upper=False)
+    journal_storage_policy = MasterUser.MONTH
+
+
+class MemberFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Member
+
+    user = factory.SubFactory(UserFactory)
+    master_user = factory.SubFactory(MasterUserFactory)
+    join_date = factory.Faker("date_time")
+    username = "finmars_bot"
+    is_admin=True
+    is_owner=True
+
+
+# class EcosystemDefaultFactory(factory.django.DjangoModelFactory):
+#     class Meta:
+#         model = EcosystemDefault
+#
+#     master_user=factory.SubFactory(MasterUserFactory)
+#     currency=self.usd,
+#     instrument=self.default_instrument,
