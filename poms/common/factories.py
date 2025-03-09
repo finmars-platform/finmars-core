@@ -46,10 +46,8 @@ class MemberFactory(factory.django.DjangoModelFactory):
     is_owner=True
 
 
-# class EcosystemDefaultFactory(factory.django.DjangoModelFactory):
-#     class Meta:
-#         model = EcosystemDefault
-#
-#     master_user=factory.SubFactory(MasterUserFactory)
-#     currency=self.usd,
-#     instrument=self.default_instrument,
+class EcosystemDefaultFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EcosystemDefault
+
+    master_user=factory.SubFactory(MasterUserFactory)
