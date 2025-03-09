@@ -14,7 +14,13 @@ from rest_framework.test import APIClient
 from poms.accounts.models import Account, AccountType
 from poms.clients.models import Client
 from poms.common.constants import SystemValueType
-from poms.common.factories import MasterUserFactory, MemberFactory, UserFactory
+from poms.common.factories import (
+    CurrencyFactory,
+    EcosystemDefaultFactory,
+    MasterUserFactory,
+    MemberFactory,
+    UserFactory,
+)
 from poms.counterparties.models import (
     Counterparty,
     CounterpartyGroup,
@@ -132,11 +138,9 @@ PORTFOLIOS = [BIG, SMALL]
 UNIFIED = "Unified"
 
 USD = "USD"
-USD2 = "USD"
 EUR = "EUR"
 CURRENCIES = [
     (USD, 1),
-    (USD2, 2),
     (EUR, 1.1),
 ]
 
@@ -541,18 +545,20 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 ),
             )
 
-    def create_currencies(self):
-        for currency in CURRENCIES:
-            Currency.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                owner=self.member,
-                user_code=currency[0],
-                defaults=dict(
-                    name=currency[0],
-                    public_name=currency[0],
-                    default_fx_rate=currency[1],
-                ),
-            )
+    # def create_currencies(self):
+    #     self.usd = CurrencyFactory(user_code="USD", default_fx_rate=1)
+    #     self.eur = CurrencyFactory(user_code="EUR", default_fx_rate=1.1)
+    #     for currency in CURRENCIES:
+    #         Currency.objects.using(settings.DB_DEFAULT).get_or_create(
+    #             master_user=self.master_user,
+    #             owner=self.member,
+    #             user_code=currency[0],
+    #             defaults=dict(
+    #                 name=currency[0],
+    #                 public_name=currency[0],
+    #                 default_fx_rate=currency[1],
+    #             ),
+    #         )
 
     def get_or_create_default_instrument(self):
         self.instrument_type, _ = InstrumentType.objects.using(settings.DB_DEFAULT).get_or_create(
@@ -625,11 +631,13 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.user = UserFactory()
         self.member = MemberFactory(user=self.user, master_user=self.master_user)
 
-        self.client = APIClient()
-        self.client.force_authenticate(self.user)
-        self.create_currencies()
-        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
-        self.eur = Currency.objects.using(settings.DB_DEFAULT).get(user_code=EUR)
+        self.usd = CurrencyFactory(
+            master_user=self.master_user, owner=self.member, user_code="USD", default_fx_rate=1
+        )
+        self.eur = CurrencyFactory(
+            master_user=self.master_user, owner=self.member, user_code="EUR", default_fx_rate=1.1
+        )
+
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()
         self.ecosystem, _ = EcosystemDefault.objects.using(settings.DB_DEFAULT).get_or_create(
@@ -644,6 +652,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             member=self.member,
             ecosystem=self.ecosystem,
         )
+
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
 
 class DbInitializer:

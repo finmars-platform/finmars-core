@@ -2,10 +2,11 @@ import factory
 
 from django.contrib.auth.models import User
 
-from poms.users.models import MasterUser, Member, EcosystemDefault
+from poms.currencies.models import Currency
+from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
-class     UserFactory(factory.django.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
         django_get_or_create = ("username",)
@@ -33,6 +34,13 @@ class MasterUserFactory(factory.django.DjangoModelFactory):
     unique_id = factory.Faker("hexify", text="^" * 32, upper=False)
     journal_storage_policy = MasterUser.MONTH
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        existing_instance = model_class.objects.filter(space_code=cls.space_code).first()
+        if existing_instance:
+            return existing_instance
+        return super()._create(model_class, *args, **kwargs)
+
 
 class MemberFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -42,12 +50,35 @@ class MemberFactory(factory.django.DjangoModelFactory):
     master_user = factory.SubFactory(MasterUserFactory)
     join_date = factory.Faker("date_time")
     username = "finmars_bot"
-    is_admin=True
-    is_owner=True
+    is_admin = True
+    is_owner = True
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        existing_instance = model_class.objects.filter(user_name=cls.username).first()
+        if existing_instance:
+            return existing_instance
+        return super()._create(model_class, *args, **kwargs)
+
+
+class CurrencyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Currency
+
+    master_user = factory.SubFactory(MasterUserFactory)
+    owner = factory.SubFactory(MemberFactory)
+    default_fx_rate = factory.Faker("pyfloat", min_value=1.0, max_value=2.0)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        existing_instance = model_class.objects.filter(user_code=kwargs.get("user_code")).first()
+        if existing_instance:
+            return existing_instance
+        return super()._create(model_class, *args, **kwargs)
 
 
 class EcosystemDefaultFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EcosystemDefault
 
-    master_user=factory.SubFactory(MasterUserFactory)
+    master_user = factory.SubFactory(MasterUserFactory)
