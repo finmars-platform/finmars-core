@@ -629,14 +629,9 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def init_test_case(self):
         self.master_user = MasterUserFactory()
         self.user = UserFactory()
-        self.member = MemberFactory(user=self.user, master_user=self.master_user)
-
-        self.usd = CurrencyFactory(
-            master_user=self.master_user, owner=self.member, user_code="USD", default_fx_rate=1
-        )
-        self.eur = CurrencyFactory(
-            master_user=self.master_user, owner=self.member, user_code="EUR", default_fx_rate=1.1
-        )
+        self.member = MemberFactory(user=self.user)
+        self.usd = CurrencyFactory(user_code="USD", default_fx_rate=1)
+        self.eur = CurrencyFactory(user_code="EUR", default_fx_rate=1.1)
 
         self.create_instruments_types()
         self.default_instrument = self.get_or_create_default_instrument()

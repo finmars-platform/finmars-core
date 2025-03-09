@@ -55,7 +55,7 @@ class MemberFactory(factory.django.DjangoModelFactory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        existing_instance = model_class.objects.filter(user_name=cls.username).first()
+        existing_instance = model_class.objects.filter(username=cls.username).first()
         if existing_instance:
             return existing_instance
         return super()._create(model_class, *args, **kwargs)
