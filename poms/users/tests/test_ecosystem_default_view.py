@@ -1,6 +1,4 @@
-from django.conf import settings
-
-from poms.common.common_base_test import BaseTestCase, BUY_SELL, BIG
+from poms.common.common_base_test import BIG, BUY_SELL, BaseTestCase
 from poms.users.models import EcosystemDefault
 from poms.users.tests.common_test_data import EXPECTED_RESPONSE_DATA
 
@@ -11,8 +9,6 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/users/ecosystem-default/"
 
     def test__list(self):
@@ -51,7 +47,7 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
             "counterparty": self.db_data.counter_party.id,
             "responsible_group": responsible.group_id,
             "responsible": responsible.id,
-            "instrument_type": self.instrument_type.id,
+            "instrument_type": self.default_instrument_type.id,
             "instrument": self.default_instrument.id,
             "portfolio": self.db_data.portfolios[BIG].id,
             "strategy1_group": self.db_data.strategy_groups[1].id,

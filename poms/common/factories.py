@@ -86,6 +86,10 @@ class InstrumentTypeFactory(DjangoModelFactory):
     master_user = factory.SubFactory(MasterUserFactory)
     owner = factory.SubFactory(MemberFactory)  # default code
     instrument_class_id = InstrumentClass.GENERAL
+    user_code = factory.Sequence(lambda n: f"instrument_type_{n}")
+    name = factory.LazyAttribute(lambda obj: obj.user_code)
+    short_name = factory.LazyAttribute(lambda obj: obj.user_code)
+    public_name = factory.LazyAttribute(lambda obj: obj.user_code)
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
