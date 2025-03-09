@@ -22,6 +22,7 @@ from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy
+from poms.file_reports.models import FileReport
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.portfolios.models import (
@@ -54,7 +55,8 @@ from poms.portfolios.serializers import (
     PortfolioTypeLightSerializer,
     PortfolioTypeSerializer,
     PrCalculatePriceHistoryRequestSerializer,
-    PrCalculateRecordsRequestSerializer, SimpleReconcileHistorySerializer,
+    PrCalculateRecordsRequestSerializer,
+    SimpleReconcileHistorySerializer,
 )
 from poms.portfolios.tasks import (
     bulk_calculate_reconcile_history,
@@ -482,9 +484,11 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         task.options_object = {
             "portfolios": serializer.validated_data.get("portfolios"),
             "date_to": serializer.validated_data["date_to"].strftime(settings.API_DATE_FORMAT),
-            "date_from": serializer.validated_data["date_from"].strftime(settings.API_DATE_FORMAT)
-            if serializer.validated_data.get("date_from")
-            else None,
+            "date_from": (
+                serializer.validated_data["date_from"].strftime(settings.API_DATE_FORMAT)
+                if serializer.validated_data.get("date_from")
+                else None
+            ),
         }
         task.save()
 
@@ -714,6 +718,15 @@ class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
     filter_class = PortfolioReconcileGroupFilterSet
     ordering_fields = []
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        histories = instance.portfolioreconcilehistory_set.all()
+        FileReport.objects.filter(portfolioreconcilehistory__in=histories).delete()
+        histories.delete()
+
+        return super().destroy(request, *args, **kwargs)
+
 
 class PortfolioReconcileHistoryFilterSet(FilterSet):
     id = NoOpFilter()
@@ -748,7 +761,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     http_method_names = ["get", "put", "post", "delete"]
 
     def update(self, request, *args, **kwargs):
-        """ Ignore update data, just return current object """
+        """Ignore update data, just return current object"""
         return Response(SimpleReconcileHistorySerializer(instance=self.get_object()).data)
 
     def destroy(self, request, *args, **kwargs):
@@ -756,6 +769,7 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         if history.file_report:
             with contextlib.suppress(Exception):
                 history.file_report.delete()
+
         return super().destroy(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
