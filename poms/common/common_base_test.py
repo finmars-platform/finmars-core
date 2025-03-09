@@ -642,7 +642,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.db_data = None
 
     def init_test_case(self):
-        self.client = APIClient()
 
         self.master_user, _ = MasterUser.objects.using(
             settings.DB_DEFAULT
@@ -658,7 +657,6 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             is_staff=True,
             is_superuser=True,
         )
-        self.client.force_authenticate(self.user)
 
         self.member, _ = Member.objects.using(settings.DB_DEFAULT).get_or_create(
             user=self.user,
@@ -670,6 +668,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             ),
         )
 
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
         self.create_currencies()
         self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
         self.eur = Currency.objects.using(settings.DB_DEFAULT).get(user_code=EUR)
