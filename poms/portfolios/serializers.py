@@ -10,6 +10,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.clients.models import Client
+from poms.common.fields import UserCodeField
 from poms.common.serializers import (
     ModelMetaSerializer,
     ModelWithObjectStateSerializer,
@@ -699,7 +700,6 @@ class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
 
 class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-
     portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
     cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects)
@@ -748,9 +748,7 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
         super().__init__(*args, **kwargs)
 
         self.fields["currency_object"] = CurrencyViewSerializer(source="currency", read_only=True)
-
         self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
-
         self.fields["pricing_policy_object"] = PricingPolicySerializer(source="pricing_policy", read_only=True)
 
 
@@ -788,7 +786,7 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         default=PortfolioHistory.PERIOD_YTD,
         choices=PortfolioHistory.PERIOD_CHOICES,
     )
-    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO)
+    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO,)
     performance_method = serializers.ChoiceField(
         required=False,
         default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
@@ -827,6 +825,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
     master_user = MasterUserField()
     params = ParamsSerializer()
     portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+    user_code = UserCodeField()
 
     class Meta:
         model = PortfolioReconcileGroup
@@ -862,7 +861,7 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
 
 
 class SimplePortfolioReconcileGroupSerializer(serializers.ModelSerializer):
-    # Simple model serializer (do not use request, user, master_user & owner fields)
+    # Simple model serializer (doesn't use request, user, master_user & owner fields)
     portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
 
     class Meta:
@@ -895,6 +894,7 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
         source="portfolio_reconcile_group", read_only=True
     )
     file_report = FileReportSerializer(read_only=True)
+    user_code = UserCodeField()
 
     class Meta:
         model = PortfolioReconcileHistory

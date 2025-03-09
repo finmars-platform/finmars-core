@@ -225,3 +225,10 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
 
         self.assertIsNone(PortfolioReconcileHistory.objects.filter(id=history.id).first())
         self.assertIsNone(FileReport.objects.filter(id=file_report.id).first())
+
+    def test_try_create_with_invalid_user_code(self):
+        create_data = self.create_data()
+        create_data["user_code"] = "7quwyteuqywte"
+
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
