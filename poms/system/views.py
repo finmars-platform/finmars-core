@@ -8,7 +8,6 @@ from poms.common.views import AbstractModelViewSet
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 from poms.system.serializers import (
     EcosystemConfigurationSerializer,
-    WhitelabelListSerializer,
     WhitelabelSerializer,
 )
 
@@ -41,36 +40,8 @@ class WhitelabelViewSet(AbstractModelViewSet):
 
     def get_serializer_context(self, *args, **kwargs):
         context = super().get_serializer_context()
-
-        if self.request:
-            context.update(
-                {
-                    "realm_code": self.request.realm_code,
-                    "space_code": self.request.space_code,
-                    "host_url": settings.DOMAIN_NAME,
-                }
-            )
-        else:
-            context.update(
-                {
-                    "realm_code": 'realm00000',
-                    "space_code": 'space00000',
-                    "host_url": settings.DOMAIN_NAME,
-                }
-            )
-
+        context.update({"space_code": self.request.space_code if self.request else "space00000"})
         return context
-
-    def get_serializer_class(self):
-        if self.action in {"list", "retrieve"}:
-            return WhitelabelListSerializer
-        else:
-            return WhitelabelSerializer
-
-    def get_serializer(self, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        kwargs["context"] = self.get_serializer_context()
-        return serializer_class(*args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

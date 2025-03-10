@@ -7,6 +7,7 @@ from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from poms.common.serializers import ModelMetaSerializer, ModelWithUserCodeSerializer
 from poms.common.storage import get_storage
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 
@@ -18,8 +19,8 @@ MAX_FILENAME_LENGTH = 1024
 
 CHARS_TO_AVOID = "&$@=;/:+,?\\{^}%`]><['\"~#|"
 
-UI_ROOT = ".system/ui/"
-URL_PREFIX = f"https://{{host_url}}/{{realm_code}}/{{space_code}}/api/storage/{UI_ROOT}"
+UI_ROOT = ".system/ui"
+URL_PREFIX = f"api/storage/{UI_ROOT}"
 
 
 class EcosystemConfigurationSerializer(serializers.ModelSerializer):
@@ -67,12 +68,12 @@ def validate_file_name(file: File):
     return file
 
 
-class WhitelabelSerializer(serializers.ModelSerializer):
+class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     theme_css_url = serializers.URLField(read_only=True)
     logo_dark_url = serializers.URLField(read_only=True)
     logo_light_url = serializers.URLField(read_only=True)
     favicon_url = serializers.URLField(read_only=True)
-    #
+    
     theme_css_file = serializers.FileField(
         required=False,
         validators=[
@@ -109,19 +110,25 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         model = WhitelabelModel
         fields = [
             "id",
-            "company_name",
-            "theme_code",
+            "name",
+            "is_enabled",
+            "user_code",
+            "configuration_code",
+
             "theme_css_url",
             "logo_dark_url",
             "logo_light_url",
             "favicon_url",
             "custom_css",
             "is_default",
-            #
+
             "theme_css_file",
             "logo_dark_image",
             "logo_light_image",
             "favicon_image",
+
+            "company_name",
+            "theme_code",
         ]
 
     def change_files_to_urls(self, validated_data: dict) -> dict:
@@ -139,11 +146,6 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             - The function assumes that the storage module has a save method
               that takes in a file path and a file object.
         """
-        api_prefix = URL_PREFIX.format(
-            host_url=self.context["host_url"],
-            realm_code=self.context["realm_code"],
-            space_code=self.context["space_code"],
-        )
         storage_prefix = f"{self.context['space_code']}/{UI_ROOT}"
 
         params_fields = [
@@ -157,7 +159,7 @@ class WhitelabelSerializer(serializers.ModelSerializer):
             file: Optional[File] = validated_data.pop(param_name, None)
             if file:
                 self.save_to_storage(
-                    api_prefix, storage_prefix, validated_data, file, model_field
+                    URL_PREFIX, storage_prefix, validated_data, file, model_field
                 )
 
         return validated_data
@@ -170,19 +172,13 @@ class WhitelabelSerializer(serializers.ModelSerializer):
         file: File,
         field: str,
     ):
-        storage.save(f"{storage_prefix}{file.name}", file)
-        validated_data[field] = f"{api_prefix}{quote(file.name)}"  # urlencoded filename
+        storage.save(f"{storage_prefix}/{file.name}", file)
+        validated_data[field] = f"{api_prefix}/{quote(file.name)}"  # urlencoded filename
 
     def create(self, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
-        return WhitelabelModel.objects.create(**validated_data)
+        return super().create(validated_data)
 
     def update(self, instance: WhitelabelModel, validated_data: dict):
         validated_data = self.change_files_to_urls(validated_data)
         return super().update(instance, validated_data)
-
-
-class WhitelabelListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WhitelabelModel
-        fields = "__all__"
