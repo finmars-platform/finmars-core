@@ -8,7 +8,7 @@ class Command(OriginalMigrateCommand):
         parser.add_argument("--space-code", help="Workspace code (DB schema)")
 
     def handle(self, *args, **options):
-        if options["space_code"]:
+        if space_code:= options.get("space_code"):
             with connection.cursor() as cursor:
-                cursor.execute(f"SET search_path TO {options['space_code']};")
+                cursor.execute(f"SET search_path TO {space_code};")
         super().handle(*args, **options)

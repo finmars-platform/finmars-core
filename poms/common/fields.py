@@ -119,6 +119,14 @@ class UserCodeField(CharField):
         kwargs["allow_blank"] = True
         super().__init__(**kwargs)
 
+    def to_internal_value(self, data: str) -> str:
+        validated_data = super().to_internal_value(data)
+
+        if validated_data and not validated_data[0].isalpha():
+            raise ValidationError("user_code must start with a letter")
+
+        return validated_data
+
 
 class DateTimeTzAwareField(DateTimeField):
     format = "%Y-%m-%dT%H:%M:%S%z"

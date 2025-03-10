@@ -2,6 +2,8 @@ import random
 import string
 from datetime import date, datetime, timedelta
 
+import dateutil.utils
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -9,10 +11,17 @@ from django.db import connection, models
 from django.test import TestCase  # TransactionTestCase
 from rest_framework.test import APIClient
 
-import dateutil.utils
-
 from poms.accounts.models import Account, AccountType
+from poms.clients.models import Client
 from poms.common.constants import SystemValueType
+from poms.common.factories import (
+    CurrencyFactory,
+    EcosystemDefaultFactory,
+    InstrumentTypeFactory,
+    MasterUserFactory,
+    MemberFactory,
+    UserFactory,
+)
 from poms.counterparties.models import (
     Counterparty,
     CounterpartyGroup,
@@ -39,18 +48,18 @@ from poms.instruments.models import (
 )
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import Portfolio, PortfolioRegister
+from poms.schedules.models import Schedule
 from poms.strategies.models import (
     Strategy1,
-    Strategy2,
-    Strategy3,
     Strategy1Group,
-    Strategy2Group,
-    Strategy3Group,
     Strategy1Subgroup,
+    Strategy2,
+    Strategy2Group,
     Strategy2Subgroup,
+    Strategy3,
+    Strategy3Group,
     Strategy3Subgroup,
 )
-
 from poms.transactions.models import (
     ComplexTransaction,
     Transaction,
@@ -58,9 +67,7 @@ from poms.transactions.models import (
     TransactionType,
     TransactionTypeGroup,
 )
-from poms.users.models import EcosystemDefault, MasterUser, Member
-from poms.clients.models import Client
-from poms.schedules.models import Schedule
+from poms.users.models import MasterUser, Member
 
 # TEST_CASE = TransactionTestCase  # if settings.USE_DB_REPLICA == True
 TEST_CASE = TestCase
@@ -81,13 +88,11 @@ TRANSACTIONS_TYPES = [
     INSTRUMENT_EXP,
     NON_INSTRUMENT_EXP,
 ]
-INITIAL_TYPE_PREFIX = "local.poms.space00000"
-INITIAL_INSTRUMENTS_TYPES = [
-    f"{INITIAL_TYPE_PREFIX}:bond",
-    f"{INITIAL_TYPE_PREFIX}:stock",
-]
-STANDARD_TYPE_BOND = f"{settings.INSTRUMENT_TYPE_PREFIX}:bond"
-STANDARD_TYPE_STOCK = f"{settings.INSTRUMENT_TYPE_PREFIX}:stock"
+
+STANDARD_TYPE_BOND = f"{settings.INSTRUMENT_TYPE_PREFIX}_bond"
+STANDARD_TYPE_STOCK = f"{settings.INSTRUMENT_TYPE_PREFIX}_stock"
+STANDARD_TYPE_DEFAULT = f"{settings.INSTRUMENT_TYPE_PREFIX}_default"
+INITIAL_INSTRUMENTS_TYPES = ["bond", "stock"]
 
 IDENTIFIERS = [
     {
@@ -132,11 +137,9 @@ PORTFOLIOS = [BIG, SMALL]
 UNIFIED = "Unified"
 
 USD = "USD"
-USD2 = "USD"
 EUR = "EUR"
 CURRENCIES = [
     (USD, 1),
-    (USD2, 2),
     (EUR, 1.1),
 ]
 
@@ -184,9 +187,7 @@ def print_patterns(patterns, namespace="rest_framework"):
     for pattern in patterns:
         if hasattr(pattern, "url_patterns"):
             # It's a URL pattern group, so recurse
-            new_namespace = (
-                namespace + pattern.namespace + ":" if pattern.namespace else ""
-            )
+            new_namespace = namespace + pattern.namespace + ":" if pattern.namespace else ""
             print_patterns(pattern.url_patterns, new_namespace)
         elif hasattr(pattern, "callback") and hasattr(pattern.callback, "__name__"):
             # It's a URL patter
@@ -203,8 +204,7 @@ def change_created_time(instance: models.Model, new_time: datetime):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            f"UPDATE {instance._meta.db_table} SET created_at='{new_time.isoformat()}' "
-            f"WHERE id={instance.id}",
+            f"UPDATE {instance._meta.db_table} SET created_at='{new_time.isoformat()}' " f"WHERE id={instance.id}",
         )
 
 
@@ -339,9 +339,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     @classmethod
     def random_string(cls, length: int = 10) -> str:
-        return "".join(
-            random.SystemRandom().choice(string.ascii_uppercase) for _ in range(length)
-        )
+        return "".join(random.SystemRandom().choice(string.ascii_uppercase) for _ in range(length))
 
     @classmethod
     def random_email(cls) -> str:
@@ -365,12 +363,8 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return random.choice(choices)
 
     @staticmethod
-    def get_instrument_type(
-        instrument_type: str = INITIAL_INSTRUMENTS_TYPES[0],
-    ) -> InstrumentType:
-        return InstrumentType.objects.using(settings.DB_DEFAULT).get(
-            user_code__contains=instrument_type
-        )
+    def get_instrument_type(instrument_type: str = "stock") -> InstrumentType:
+        return InstrumentType.objects.using(settings.DB_DEFAULT).get(user_code__contains=instrument_type)
 
     @staticmethod
     def get_currency(user_code: str = "EUR") -> Currency:
@@ -382,9 +376,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     @staticmethod
     def get_exposure_calculation(model_id=ExposureCalculationModel.MARKET_VALUE):
-        return ExposureCalculationModel.objects.using(settings.DB_DEFAULT).get(
-            id=model_id
-        )
+        return ExposureCalculationModel.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_payment_size(model_id=PaymentSizeDetail.PERCENT):
@@ -396,15 +388,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
 
     @staticmethod
     def get_long_under_exp(model_id=LongUnderlyingExposure.ZERO):
-        return LongUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(
-            id=model_id
-        )
+        return LongUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_short_under_exp(model_id=ShortUnderlyingExposure.ZERO):
-        return ShortUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(
-            id=model_id
-        )
+        return ShortUnderlyingExposure.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_country(name="Italy"):
@@ -414,9 +402,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
     def get_accrual_calculation_model(
         model_id=AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
     ):
-        return AccrualCalculationModel.objects.using(settings.DB_DEFAULT).get(
-            id=model_id
-        )
+        return AccrualCalculationModel.objects.using(settings.DB_DEFAULT).get(id=model_id)
 
     @staticmethod
     def get_periodicity(model_id=Periodicity.N_DAY):
@@ -487,8 +473,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         return GenericAttributeType.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            content_type=content_type
-            or ContentType.objects.using(settings.DB_DEFAULT).first(),
+            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             value_type=value_type,
@@ -499,13 +484,10 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             expr=self.random_string(),
         )
 
-    def create_attribute(
-        self, attribute_type=None, object_id=None, content_type=None
-    ) -> GenericAttribute:
+    def create_attribute(self, attribute_type=None, object_id=None, content_type=None) -> GenericAttribute:
         return GenericAttribute.objects.using(settings.DB_DEFAULT).create(
             attribute_type=attribute_type or self.create_attribute_type(),
-            content_type=content_type
-            or ContentType.objects.using(settings.DB_DEFAULT).first(),
+            content_type=content_type or ContentType.objects.using(settings.DB_DEFAULT).first(),
             object_id=object_id or self.random_int(),
             value_string=self.random_string(),
             value_float=self.random_int(),
@@ -532,7 +514,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return self._add_attributes(self.account)
 
-    def create_client_obj(self, user_code:str=None) -> Client:
+    def create_client_obj(self, user_code: str = None) -> Client:
         return Client.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
@@ -560,41 +542,13 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
                 ),
             )
 
-    def create_currencies(self):
-        for currency in CURRENCIES:
-            Currency.objects.using(settings.DB_DEFAULT).get_or_create(
-                master_user=self.master_user,
-                owner=self.member,
-                user_code=currency[0],
-                defaults=dict(
-                    name=currency[0],
-                    public_name=currency[0],
-                    default_fx_rate=currency[1],
-                ),
-            )
-
     def get_or_create_default_instrument(self):
-        self.instrument_type, _ = InstrumentType.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
-            master_user=self.master_user,
-            user_code=INITIAL_TYPE_PREFIX,
-            defaults=dict(
-                master_user=self.master_user,
-                owner=self.member,
-                instrument_class_id=InstrumentClass.GENERAL,
-                name="-",
-                short_name="-",
-                public_name="-",
-            ),
-        )
-
         instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code="-",
             defaults=dict(
                 owner=self.member,
-                instrument_type=self.instrument_type,
+                instrument_type=self.default_instrument_type,
                 name="-",
                 short_name="-",
                 public_name="-",
@@ -605,7 +559,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         )
         return instrument
 
-    def create_pricing_policy(self) -> GenericAttributeType:
+    def create_pricing_policy(self) -> PricingPolicy:
         name = "pricing_policy"
         return PricingPolicy.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
@@ -640,72 +594,55 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         self.account = None
         self.instrument_type = None
         self.db_data = None
-        self.realm_code = "realm0000"
-        self.space_code = "space0000"
 
     def init_test_case(self):
-        self.client = APIClient()
+        self.master_user = MasterUserFactory()
+        self.user = UserFactory()
+        self.member = MemberFactory(user=self.user)
+        self.usd = CurrencyFactory(user_code="USD", default_fx_rate=1)
+        self.eur = CurrencyFactory(user_code="EUR", default_fx_rate=1.1)
 
-        self.master_user, _ = MasterUser.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
-            space_code="space00000",
-            defaults=dict(
-                name=MASTER_USER,
-                journal_status="disabled",
-            ),
-        )
-        self.user, _ = User.objects.using(settings.DB_DEFAULT).get_or_create(
-            username=FINMARS_USER,
-            is_staff=True,
-            is_superuser=True,
-        )
-        self.client.force_authenticate(self.user)
-
-        self.member, _ = Member.objects.using(settings.DB_DEFAULT).get_or_create(
-            user=self.user,
-            master_user=self.master_user,
-            username=FINMARS_BOT,
-            defaults=dict(
-                is_admin=True,
-                is_owner=True,
-            ),
-        )
-
-        self.create_currencies()
-        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
-        self.eur = Currency.objects.using(settings.DB_DEFAULT).get(user_code=EUR)
-        self.create_instruments_types()
+        self.bond_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_BOND)
+        self.stock_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_STOCK)
+        self.default_instrument_type = InstrumentTypeFactory(user_code=STANDARD_TYPE_DEFAULT)
         self.default_instrument = self.get_or_create_default_instrument()
-        self.ecosystem, _ = EcosystemDefault.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
-            master_user=self.master_user,
+
+        self.ecosystem = EcosystemDefaultFactory(
             currency=self.usd,
+            instrument_type=self.default_instrument_type,
             instrument=self.default_instrument,
         )
+
         self.account_type = self.create_account_type()
         self.account = self.create_account()
         self.db_data = DbInitializer(
             master_user=self.master_user,
             member=self.member,
             ecosystem=self.ecosystem,
+            usd=self.usd,
+            bond_type=self.bond_type,
+            stock_type=self.stock_type,
+            default_type=self.default_instrument_type,
         )
+
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
 
 class DbInitializer:
-    def __init__(self, master_user, member, ecosystem):
+    def __init__(self, master_user, member, ecosystem, usd, bond_type, stock_type, default_type):
         self.master_user = master_user
         self.member = member
         self.default_ecosystem = ecosystem
+        self.usd = usd
+        self.bond_type = bond_type
+        self.stock_type = stock_type
+        self.default_type = default_type
 
         if settings.USE_DB_REPLICA:
             print_all_users("DbInitializer")
 
-        self.usd = Currency.objects.using(settings.DB_DEFAULT).get(user_code=USD)
-        self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(
-            user_code="-"
-        )
+        self.default_instrument = Instrument.objects.using(settings.DB_DEFAULT).get(user_code="-")
 
         self.portfolios = self.create_accounts_and_portfolios()
         self.counter_party = self.create_counter_party()
@@ -716,26 +653,12 @@ class DbInitializer:
         self.strategy_groups = self.create_strategy_groups()
         self.strategy_subgroups = self.create_strategy_subgroups()
 
-        print(
-            f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n"
-        )
+        print(f"\n{'-'*30} db initialized, master_user={self.master_user.id} {'-'*30}\n")
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id, identifier in INSTRUMENTS:
-            instrument_type, _ = InstrumentType.objects.using(
-                settings.DB_DEFAULT
-            ).get_or_create(
-                master_user=self.master_user,
-                user_code=type_,
-                defaults=dict(
-                    owner=self.member,
-                    instrument_class_id=class_id,
-                    name=type_,
-                    short_name=type_,
-                    public_name=type_,
-                ),
-            )
+            instrument_type = self.bond_type if type_ == "bond" else self.stock_type
             instrument, _ = Instrument.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 user_code=name,
@@ -805,9 +728,7 @@ class DbInitializer:
         return portfolios
 
     def create_unified_transaction_group(self):
-        group, _ = TransactionTypeGroup.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
+        group, _ = TransactionTypeGroup.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             owner=self.member,
             name=UNIFIED,
@@ -822,9 +743,7 @@ class DbInitializer:
         tr_group = self.create_unified_transaction_group()
         types = {}
         for name in TRANSACTIONS_TYPES:
-            types[name], _ = TransactionType.objects.using(
-                settings.DB_DEFAULT
-            ).get_or_create(
+            types[name], _ = TransactionType.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 owner=self.member,
                 user_code=name,
@@ -842,9 +761,7 @@ class DbInitializer:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
             name = f"transaction_class_{class_id}"
-            classes[class_id], _ = TransactionClass.objects.using(
-                settings.DB_DEFAULT
-            ).get_or_create(
+            classes[class_id], _ = TransactionClass.objects.using(settings.DB_DEFAULT).get_or_create(
                 id=class_id,
                 defaults=dict(
                     user_code=name,
@@ -870,9 +787,7 @@ class DbInitializer:
 
     def create_strategy_subgroups(self):
         sub_groups = {}
-        for i, model in enumerate(
-            [Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup], start=1
-        ):
+        for i, model in enumerate([Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup], start=1):
             sub_group, _ = model.objects.using(settings.DB_DEFAULT).get_or_create(
                 master_user=self.master_user,
                 owner=self.member,
@@ -898,9 +813,7 @@ class DbInitializer:
 
     def create_counterparty_group(self) -> CounterpartyGroup:
         group_name = "test_counterparty_group"
-        cp_group, _ = CounterpartyGroup.objects.using(
-            settings.DB_DEFAULT
-        ).get_or_create(
+        cp_group, _ = CounterpartyGroup.objects.using(settings.DB_DEFAULT).get_or_create(
             master_user=self.master_user,
             user_code=group_name,
             owner=self.member,
@@ -952,14 +865,10 @@ class DbInitializer:
         )
         return responsible
 
-    def cash_in_transaction(
-        self, portfolio: Portfolio, amount: int = 1000, day: date = None
-    ) -> tuple:
+    def cash_in_transaction(self, portfolio: Portfolio, amount: int = 1000, day: date = None) -> tuple:
         notes = f"Cash In {amount} {self.usd}"
         op_date = day or date.today()
-        complex_transaction = ComplexTransaction.objects.using(
-            settings.DB_DEFAULT
-        ).create(
+        complex_transaction = ComplexTransaction.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
             date=op_date,

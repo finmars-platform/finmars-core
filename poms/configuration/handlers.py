@@ -181,6 +181,15 @@ def export_configuration_to_directory(
 
         _l.info("Exported: schedules.schedule")
 
+        _l.info("Going to export: system.whitelabelmodel")
+        save_serialized_entity(
+            "system.whitelabelmodel",
+            configuration.configuration_code,
+            source_directory + "/whitelabelmodel",
+            context,
+        )
+        _l.info("Exported: system.whitelabelmodel")
+
         save_serialized_entity(
             "configuration.newmembersetupconfiguration",
             configuration.configuration_code,
