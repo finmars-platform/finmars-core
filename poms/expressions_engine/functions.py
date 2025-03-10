@@ -678,10 +678,10 @@ def _calculate_period_date(
 ) -> str:
     """
     To get information refer to docstring for the `calculate_period_date` function
-    
-    :param date: A string in YYYY-MM-DD ISO format representing the current date / date / a string that is 
+
+    :param date: A string in YYYY-MM-DD ISO format representing the current date / date / a string that is
     another expression that evaluates to date.
-    
+
     """
     date = _parse_date(date)
 
@@ -3758,7 +3758,7 @@ def _get_instrument_accrual_factor(evaluator, instrument, date):
         return 0.0
     instrument = _safe_get_instrument(evaluator, instrument)
     date = _parse_date(date)
-    val = instrument.get_accrual_factor(date)
+    val = instrument.get_accrual_schedule_factor(date)
     return _check_float(val)
 
 
