@@ -4,7 +4,15 @@ from factory.django import DjangoModelFactory
 from django.contrib.auth.models import User
 
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
+from poms.instruments.models import (
+    Accrual,
+    AccrualCalculationModel,
+    AccrualCalculationSchedule,
+    Instrument,
+    InstrumentClass,
+    InstrumentType,
+    Periodicity,
+)
 from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
@@ -126,3 +134,66 @@ class EcosystemDefaultFactory(DjangoModelFactory):
         model = EcosystemDefault
 
     master_user = factory.SubFactory(MasterUserFactory)
+
+
+class PeriodicityFactory(DjangoModelFactory):
+    class Meta:
+        model = Periodicity
+        abstract = True
+
+    class Params:
+        periodicity_type = Periodicity.QUARTERLY
+
+    id = factory.LazyAttribute(lambda obj: obj.periodicity_type)
+    user_code = factory.LazyAttribute(lambda obj: Periodicity.CLASSES[obj.periodicity_type - 1][1])
+    name = factory.LazyAttribute(lambda obj: Periodicity.CLASSES[obj.periodicity_type - 1][2])
+    short_name = factory.LazyAttribute(lambda obj: obj.user_code)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        if existing_obj := model_class.objects.filter(id=kwargs.get("id")).first():
+            return existing_obj
+
+        return model_class(*args, **kwargs)
+
+class AccrualCalculationModelFactory(DjangoModelFactory):
+    class Meta:
+        model = AccrualCalculationModel
+        abstract = True
+
+    class Params:
+        model_type = AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA
+
+    id = factory.LazyAttribute(lambda obj: obj.model_type)
+    user_code = factory.LazyAttribute(lambda obj: AccrualCalculationModel.CLASSES[obj.model_type - 1][1])
+    name = factory.LazyAttribute(lambda obj: AccrualCalculationModel.CLASSES[obj.model_type - 1][2])
+    short_name = factory.LazyAttribute(lambda obj: obj.user_code)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        if existing_obj := model_class.objects.filter(id=kwargs.get("id")).first():
+            return existing_obj
+
+        return model_class(*args, **kwargs)
+
+
+class AccrualCalculationScheduleFactory(DjangoModelFactory):
+    class Meta:
+        model = AccrualCalculationSchedule
+
+    instrument = factory.SubFactory(InstrumentFactory)
+    periodicity = factory.SubFactory(PeriodicityFactory)
+    accrual_calculation_model = factory.SubFactory(AccrualCalculationModelFactory)
+    accrual_start_date = factory.Faker("future_date")
+    first_payment_date = factory.LazyAttribute(lambda obj: obj.accrual_start_date)
+
+
+class AccrualFactory(DjangoModelFactory):
+    class Meta:
+        model = Accrual
+
+    instrument = factory.SubFactory(InstrumentFactory)
+    user_code = factory.Sequence(lambda n: f"accrual_{n}")
+    date = factory.Faker("future_date")
+    size = factory.Faker("pyfloat")
+    notes = factory.Faker("text")

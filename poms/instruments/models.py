@@ -267,9 +267,6 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
     DAY_COUNT_BD_252 = 20  # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
     DAY_COUNT_30_360_GERMAN = 21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
-    DAY_COUNT_30E_PLUS_360 = (
-        24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
-    )
     DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
     DAY_COUNT_ACT_365_FIXED = 27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
     DAY_COUNT_30E_360 = 28  # 30E/360: European version. Assumes 30 days per month, 360 days per year, but doesn't adjust end-month dates.
@@ -1093,6 +1090,7 @@ class InstrumentType(NamedModel, FakeDeletableModel, TimeStampedModel, Configura
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
+# DEPRECATED (possible)
 class InstrumentTypeAccrual(models.Model):
     instrument_type = models.ForeignKey(
         InstrumentType,
@@ -2154,9 +2152,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         # _l.debug('get_accrual_size.accrual %s' % accrual)
         return 0 if accrual is None else float(accrual.accrual_size)
 
-    def get_future_accrual_payments(self, d0, v0):
-        pass
-
     def get_accrual_factor(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
@@ -2312,7 +2307,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     # 2023-08-21
     def has_factor_schedules(self):
         factors = list(self.factor_schedules.all())
-
         return bool(len(factors))
 
     def get_factors(self):
