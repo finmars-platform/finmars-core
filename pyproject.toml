@@ -1,32 +1,46 @@
 [project]
 name = "finmars-backend"
-version = "1.14.0"
+version = "1.16.0"
+
+[tool.black]
+line-length = 116
+target-version = ["py311"]
 
 [tool.isort]
 profile="black"
 py_version=311
 known_django=[
     "django",
-    "django_celery_results",
     "django_filters",
-    "django_redis",
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_spectacular",
     "drf_yasg",
-    "factory",
-    "corsheaders"
 ]
-sections=["FUTURE", "STDLIB", "DJANGO",  "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+sections=["STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 skip=["__init__.py", ".gitignore", "templates"]
 skip_glob=["venv/*"]
 
-[tool.black]
-line-length = 116
-target-version = ["py311"]
-
 [tool.ruff]
-format = "grouped"
+target-version = "py311"
 line-length = 116
-ignore = ["E501", "F403", "F405"]
-[tool.ruff.per-file-ignores]
+lint.select = ["E4", "E7", "E9", "C90", "C901", "W", "F"]
+lint.ignore = ["E501", "F403", "F405", "W605"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 11
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.coverage.run]
+branch = true
+concurrency = ["multiprocessing"]
+source = ["poms"]
+
+[tool.coverage.report]
+ignore_errors = true
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+title = "Finmars Backend Coverage Report"

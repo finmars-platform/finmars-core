@@ -4,18 +4,18 @@ import logging
 import os
 import uuid
 
+import pytz
+
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-import pytz
-
 from poms.common.models import (
-    FakeDeletableModel,
-    CacheModel,
     CacheByMasterUserManager,
+    CacheModel,
+    FakeDeletableModel,
 )
 from poms.common.utils import get_content_type_by_name
 
@@ -55,9 +55,7 @@ class ResetPasswordToken(models.Model):
         settings.AUTH_USER_MODEL,
         related_name="password_reset_tokens",
         on_delete=models.CASCADE,
-        verbose_name=gettext_lazy(
-            "The User which is associated to this password reset token"
-        ),
+        verbose_name=gettext_lazy("The User which is associated to this password reset token"),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -449,9 +447,7 @@ class MasterUser(models.Model):
 
             for field in entity["fields"]:
                 try:
-                    item = EntityTooltip.objects.get(
-                        master_user=self, key=field["key"], content_type=content_type
-                    )
+                    item = EntityTooltip.objects.get(master_user=self, key=field["key"], content_type=content_type)
 
                     item.name = field["name"]
                     item.save()
@@ -568,7 +564,7 @@ class MasterUser(models.Model):
             Responsible,
             ResponsibleGroup,
         )
-        from poms.currencies.models import Currency, currencies_data
+        from poms.currencies.models import Currency
         from poms.instruments.models import (
             AccrualCalculationModel,
             EventScheduleConfig,
@@ -581,7 +577,6 @@ class MasterUser(models.Model):
             PricingPolicy,
         )
         from poms.portfolios.models import Portfolio
-
         from poms.strategies.models import (
             Strategy1,
             Strategy1Group,
@@ -611,21 +606,13 @@ class MasterUser(models.Model):
             except Exception as e:
                 user = User.objects.create(username="finmars_bot")
 
-            finmars_bot = Member.objects.create(
-                user=user, username="finmars_bot", master_user=self, is_admin=True
-            )
+            finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self, is_admin=True)
 
-        ccy = Currency.objects.create(
-            master_user=self, name="-", user_code="-", owner=finmars_bot
-        )
+        ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
         ccy_usd = self.create_defaults_currencies(finmars_bot)
 
-        account_type = AccountType.objects.create(
-            master_user=self, name="-", owner=finmars_bot
-        )
-        account = Account.objects.create(
-            master_user=self, type=account_type, name="-", owner=finmars_bot
-        )
+        account_type = AccountType.objects.create(master_user=self, name="-", owner=finmars_bot)
+        account = Account.objects.create(master_user=self, type=account_type, name="-", owner=finmars_bot)
 
         counterparty_group = CounterpartyGroup.objects.create(
             master_user=self,
@@ -654,9 +641,7 @@ class MasterUser(models.Model):
             name="-",
             owner=finmars_bot,
         )
-        instrument_general_class = InstrumentClass.objects.get(
-            pk=InstrumentClass.GENERAL
-        )
+        instrument_general_class = InstrumentClass.objects.get(pk=InstrumentClass.GENERAL)
         instrument_type = InstrumentType.objects.create(
             master_user=self,
             instrument_class=instrument_general_class,
@@ -804,21 +789,13 @@ class MasterUser(models.Model):
         ecosystem_defaults.pricing_policy = pricing_policy
         ecosystem_defaults.transaction_type = transaction_type
 
-        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(
-            pk=InstrumentClass.DEFAULT
+        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT)
+        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(
+            pk=AccrualCalculationModel.DAY_COUNT_SIMPLE
         )
-        ecosystem_defaults.accrual_calculation_model = (
-            AccrualCalculationModel.objects.get(
-                pk=AccrualCalculationModel.DAY_COUNT_SIMPLE
-            )
-        )
-        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(
-            pk=PaymentSizeDetail.DEFAULT
-        )
+        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
         ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT)
-        ecosystem_defaults.pricing_condition = PricingCondition.objects.get(
-            pk=PricingCondition.NO_VALUATION
-        )
+        ecosystem_defaults.pricing_condition = PricingCondition.objects.get(pk=PricingCondition.NO_VALUATION)
 
         ecosystem_defaults.save()
 
@@ -831,16 +808,11 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="complex_transaction")
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
-    def patch_currencies(
-        self, overwrite_name=False, overwrite_reference_for_pricing=False
-    ):
+    def patch_currencies(self, overwrite_name=False, overwrite_reference_for_pricing=False):
         from poms.currencies.models import Currency, currencies_data
         from poms.instruments.models import Country
 
-        ccys_existed = {
-            c.user_code: c
-            for c in Currency.objects.filter(master_user=self, is_deleted=False)
-        }
+        ccys_existed = {c.user_code: c for c in Currency.objects.filter(master_user=self, is_deleted=False)}
 
         ccys = {}
         for dc in currencies_data.values():
@@ -865,9 +837,9 @@ class MasterUser(models.Model):
                 if overwrite_name or not c1.public_name:
                     c1.public_name = dc_name
                     is_change = True
-                    
+
                 if overwrite_name or not c1.country:
-                    c1.country =  dc_country
+                    c1.country = dc_country
                     is_change = True
 
                 if overwrite_reference_for_pricing or not c1.reference_for_pricing:
@@ -897,10 +869,7 @@ class MasterUser(models.Model):
         ccys = {c.user_code: c for c in Currency.objects.filter(master_user=self)}
 
         mapping_existed = {
-            m.currency_id: m
-            for m in CurrencyMapping.objects.filter(
-                master_user=self, provider=bloomberg
-            )
+            m.currency_id: m for m in CurrencyMapping.objects.filter(master_user=self, provider=bloomberg)
         }
 
         for dc in currencies_data.values():
@@ -921,7 +890,6 @@ class MasterUser(models.Model):
                         value=dc_bloomberg,
                         currency=c,
                     )
-
 
 
 class EcosystemDefault(CacheModel):

@@ -1,8 +1,10 @@
 from poms.common.common_base_test import BIG, SMALL, BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
+from poms.file_reports.models import FileReport
 from poms.portfolios.models import (
     PortfolioClass,
     PortfolioReconcileGroup,
+    PortfolioReconcileHistory,
     PortfolioType,
 )
 
@@ -50,6 +52,21 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
                 "notifications": {},
             },
         }
+
+    def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
+        return PortfolioReconcileHistory.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            user_code=self.random_string(),
+            date=self.random_future_date(),
+            portfolio_reconcile_group=group,
+        )
+
+    def create_file_report(self) -> FileReport:
+        return FileReport.objects.create(
+            master_user=self.master_user,
+            file_name=self.random_string(),
+        )
 
     def test_check_url(self):
         response = self.client.get(path=self.url)
@@ -183,5 +200,35 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
     def test_create_with_duplicate_portfolio(self):
         create_data = self.create_data()
         create_data["portfolios"] += [self.portfolio_1.id]
+        response = self.client.post(self.url, data=create_data, format="json")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_delete_with_history_and_file_report(self):
+        create_data = self.create_data()
+        create_data.pop("portfolios")
+        group = PortfolioReconcileGroup.objects.create(
+            master_user=self.master_user,
+            owner=self.member,
+            **create_data,
+        )
+        history = self.create_reconcile_history(group)
+        file_report = self.create_file_report()
+        history.file_report = file_report
+        history.save()
+
+        response = self.client.delete(f"{self.url}{group.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        group = PortfolioReconcileGroup.objects.filter(id=group.id).first()
+        self.assertIsNotNone(group)
+        self.assertTrue(group.is_deleted)
+
+        self.assertIsNone(PortfolioReconcileHistory.objects.filter(id=history.id).first())
+        self.assertIsNone(FileReport.objects.filter(id=file_report.id).first())
+
+    def test_try_create_with_invalid_user_code(self):
+        create_data = self.create_data()
+        create_data["user_code"] = "7quwyteuqywte"
+
         response = self.client.post(self.url, data=create_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
