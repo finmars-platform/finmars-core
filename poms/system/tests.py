@@ -40,12 +40,13 @@ EXPECTED_RESPONSE = {
         "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
     },
 }
-API_PREFIX = "https://finmars.com/realm00000/space00000/api/storage/.system/ui/"
+API_PREFIX = "api/storage/.system/ui/"
 STORAGE_PREFIX = "space00000/.system/ui/"
 
 
 class WhitelabelViewSetTest(BaseTestCase):
     def setUp(self):
+        self.maxDiff = None
         super().setUp()
         self.init_test_case()
         self.realm_code = "realm00000"
@@ -60,10 +61,18 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.addCleanup(self.storage_patch.stop)
         self.image_content = get_image_content("logo_dark.png")
 
+    def _create_name_and_configuration_code(self):
+        name = f"{self.random_string()}-white-lable"
+        configuration_code = f"com.finmars.{name}"
+        return name, configuration_code
+
     def create_whitelabel(self, is_default=False):
+        name, configuration_code = self._create_name_and_configuration_code()
+
         return WhitelabelModel.objects.create(
-            company_name=self.random_string(),
-            theme_code="com.finmars.client-a",
+            configuration_code=configuration_code,
+            name=name,
+            owner=self.member,
             theme_css_url="https://example.com/theme.css",
             logo_dark_url="https://example.com/logo_dark.png",
             logo_light_url="https://example.com/logo_light.png",
@@ -81,7 +90,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json), 1)
         self.assertEqual(response_json[0]["id"], model.id)
         self.assertIn("company_name", response_json[0])
-        self.assertEqual(response_json[0]["theme_code"], "com.finmars.client-a")
+        self.assertIn("theme_code", response_json[0])
         self.assertEqual(
             response_json[0]["theme_css_url"], "https://example.com/theme.css"
         )
@@ -107,7 +116,7 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         self.assertEqual(response_json["id"], model.id)
         self.assertIn("company_name", response_json)
-        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
+        self.assertIn("theme_code", response_json)
         self.assertEqual(
             response_json["theme_css_url"], "https://example.com/theme.css"
         )
@@ -125,9 +134,12 @@ class WhitelabelViewSetTest(BaseTestCase):
         )
 
     def create_request_data(self):
+        name, configuration_code = self._create_name_and_configuration_code()
+
         return {
-            "company_name": "Test Company",
-            "theme_code": "com.finmars.client-a",
+            "user_code": configuration_code,
+            "configuration_code": configuration_code,
+            "name": name,
             "theme_css_file": SimpleUploadedFile(
                 "theme.css", CSS_CONTENT, content_type="text/css"
             ),
@@ -143,9 +155,9 @@ class WhitelabelViewSetTest(BaseTestCase):
             "custom_css": "body { background-color: #fff; }",
         }
 
-    def validate_response(self, response_json):
-        self.assertEqual(response_json["company_name"], "Test Company")
-        self.assertEqual(response_json["theme_code"], "com.finmars.client-a")
+    def validate_response(self, response_json, name: str, configuration_code: str):
+        self.assertEqual(response_json["configuration_code"], configuration_code)
+        self.assertEqual(response_json["name"], name)
         self.assertEqual(response_json["theme_css_url"], f"{API_PREFIX}theme.css")
         self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}dark.png")
         self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}light.png")
@@ -171,7 +183,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}favicon.png")
 
         response_json = response.json()
-        self.validate_response(response_json)
+        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
@@ -189,7 +201,7 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.validate_response(response_json)
+        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
         # should be old value
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #aaa; }"
@@ -206,7 +218,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.json())
 
         response_json = response.json()
-        self.validate_response(response_json)
+        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
@@ -285,8 +297,12 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertFalse(model_1.is_default)
 
     def create_request_with_utf8_names(self):
+        name, configuration_code = self._create_name_and_configuration_code()
+
         return {
-            "company_name": "UTF8 names",
+            "user_code": configuration_code,
+            "configuration_code": configuration_code,
+            "name": name,
             "theme_css_file": SimpleUploadedFile(
                 "theme 1.css", CSS_CONTENT, content_type="text/css"
             ),

@@ -4,6 +4,9 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.common.models import NamedModel
+from poms.configuration.models import ConfigurationModel
+
 MAX_NAME_LENGTH = 255
 MAX_URL_LENGTH = 512
 
@@ -54,9 +57,11 @@ class EcosystemConfiguration(models.Model):
         return self.name
 
 
-class WhitelabelModel(models.Model):
+class WhitelabelModel(NamedModel, ConfigurationModel):
     company_name = models.CharField(
         max_length=MAX_NAME_LENGTH,
+        blank=True,
+        null=True,
         verbose_name="Company Name",
     )
     theme_code = models.CharField(
