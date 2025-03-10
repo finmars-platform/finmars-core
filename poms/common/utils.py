@@ -468,7 +468,7 @@ def get_serializer(content_type_key):
         "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,
         "reports.plreportcustomfield": PLReportCustomFieldSerializer,
         "reports.transactionreportcustomfield": TransactionReportCustomFieldSerializer,
-        "system.whitelabel": WhitelabelSerializer,
+        "system.whitelabelmodel": WhitelabelSerializer,
     }
 
     return serializer_map[content_type_key]
