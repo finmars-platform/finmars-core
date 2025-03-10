@@ -2192,6 +2192,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return float(accrual.accrual_size) * factor
 
+    # DEPRECATED PROBABLY
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
         _l.info(f"get_coupon self.maturity_date {self.maturity_date}")
 
@@ -2259,6 +2260,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return 0.0, False
 
+    # DEPRECATED PROBABLY
     def get_future_coupons(self, begin_date=None, with_maturity=False, factor=False):
         res = []
         accruals = self.get_accrual_calculation_schedules_all()
