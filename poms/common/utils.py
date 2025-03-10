@@ -398,6 +398,7 @@ def get_serializer(content_type_key):
         TransactionReportCustomFieldSerializer,
     )
     from poms.schedules.serializers import ScheduleSerializer
+    from poms.system.serializers import WhitelabelSerializer
     from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer
     from poms.transactions.serializers import (
         TransactionTypeGroupSerializer,
@@ -467,6 +468,7 @@ def get_serializer(content_type_key):
         "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,
         "reports.plreportcustomfield": PLReportCustomFieldSerializer,
         "reports.transactionreportcustomfield": TransactionReportCustomFieldSerializer,
+        "system.whitelabel": WhitelabelSerializer,
     }
 
     return serializer_map[content_type_key]
