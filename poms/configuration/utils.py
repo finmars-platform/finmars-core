@@ -121,7 +121,7 @@ def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: 
         files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"] 
         for key in files_key:
             file_path = json_data.get(key)
-            src_file_path = os.path.join(storage.path, f"{space_code}/{file_path}")
+            src_file_path = os.path.join(space_code, file_path)
 
             with storage.open(src_file_path, "rb") as src_file:
                 dst_file_path = os.path.join(folder_path, src_file.name)
