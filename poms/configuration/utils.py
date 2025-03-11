@@ -127,8 +127,10 @@ def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: 
                 dst_file_path = os.path.join(folder_path, src_file.name)
 
                 content = src_file.read()
-                with storage.open(dst_file_path, "wb") as dst_file:
-                    dst_file.write(content)
+
+                storage.save(dst_file_path, ContentFile(content))
+                # with storage.open(dst_file_path, "w+b") as dst_file:
+                #     dst_file.write(content)
 
     except Exception as e:
         _l.error(f"save_whitelable_files to {folder_path}: {e}")
