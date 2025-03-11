@@ -17,6 +17,7 @@ from poms.common.http_client import HttpClient
 from poms.common.storage import get_storage
 from poms.common.utils import get_content_type_by_name, get_serializer
 from poms.auth_tokens.utils import get_refresh_token
+from poms.users.models import MasterUser
 
 _l = logging.getLogger("poms.configuration")
 
@@ -109,6 +110,33 @@ def model_has_field(model, field_name):
         return False
 
 
+def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: dict[str, Any]) -> None:
+    try:
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        master_user: MasterUser = context["master_user"]
+        space_code = master_user.space_code
+
+        files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"] 
+        for key in files_key:
+            file_path = json_data.get(key)
+            src_file_path = os.path.join(space_code, file_path)
+
+            with storage.open(src_file_path, "rb") as src_file:
+                dst_file_path = os.path.join(folder_path, src_file.name)
+
+                content = src_file.read()
+
+                storage.save(dst_file_path, ContentFile(content))
+                # with storage.open(dst_file_path, "w+b") as dst_file:
+                #     dst_file.write(content)
+
+    except Exception as e:
+        _l.error(f"save_whitelable_files to {folder_path}: {e}")
+        raise e
+
+
 def save_serialized_entity(content_type, configuration_code, source_directory, context):
     try:
         model = apps.get_model(content_type)
@@ -156,10 +184,11 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
             serialized_data.pop("modified_at")
 
         serialized_data = remove_object_keys(serialized_data)
+        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}"
+        save_json_to_file(f"{path}.json", serialized_data)
 
-        path = f"{source_directory}/{user_code_to_file_name(configuration_code, item.user_code)}.json"
-
-        save_json_to_file(path, serialized_data)
+        if content_type == "system.whitelabelmodel":
+            save_whitelable_files(path, serialized_data, context)
 
 
 def save_serialized_attribute_type(
@@ -370,6 +399,7 @@ def copy_directory(src_dir, dst_dir):
             storage.makedirs(dst_subdir)
 
         copy_directory(src_subdir, dst_subdir)
+
 
 
 def upload_directory_to_storage(local_directory, storage_directory):
