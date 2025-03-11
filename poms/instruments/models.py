@@ -2088,7 +2088,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
     def _accrual_date_is_valid(self, day: date) -> bool:
         if not isinstance(day, date):
-            raise ValueError(f"accrual_date_is_valid: d must be a date, not {type(d)}")
+            raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
 
         if self.maturity_date and (day >= self.maturity_date):
             return False
@@ -2159,11 +2159,30 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
 
+    def get_accrued_price(self, price_date: date) -> float:
+        from poms.common.formula_accruals import calculate_accrual_schedule_factor
+
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        if accrual_schedule is None:
+            return 0
+
+        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
+
+        _l.info(f"coupon_accrual_factor price_date {price_date}")
+
+        factor = calculate_accrual_schedule_factor(
+            accrual_calculation_schedule=accrual_schedule,
+            dt1=accrual_start_date,
+            dt2=price_date,
+            dt3=first_payment_date,
+        )
+
+        return float(accrual_schedule.accrual_size) * factor
+
     def get_accrual_size(self, price_date: date) -> float:
         if not self.maturity_date or (price_date >= self.maturity_date):
             return 0
-
-
 
         # accrual_schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
@@ -2187,27 +2206,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             dt2=price_date,
             dt3=accrual_schedule.first_payment_date,
         )
-
-    def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import calculate_accrual_schedule_factor
-
-        accrual_schedule = self.find_accrual_schedule(price_date)
-        if accrual_schedule is None:
-            return 0
-
-        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
-
-        _l.info(f"coupon_accrual_factor price_date {price_date}")
-
-        factor = calculate_accrual_schedule_factor(
-            accrual_calculation_schedule=accrual_schedule,
-            dt1=accrual_start_date,
-            dt2=price_date,
-            dt3=first_payment_date,
-        )
-
-        return float(accrual_schedule.accrual_size) * factor
 
     # DEPRECATED PROBABLY
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
