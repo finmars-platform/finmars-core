@@ -124,7 +124,8 @@ def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: 
             src_file_path = os.path.join(space_code, file_path)
 
             with storage.open(src_file_path, "rb") as src_file:
-                dst_file_path = os.path.join(folder_path, src_file.name)
+                file_name = os.path.basename(src_file.name)
+                dst_file_path = os.path.join(folder_path, file_name)
                 _l.info(f"Saving file {src_file.name} to {dst_file_path}")
                 content = src_file.read()
                 storage.save(dst_file_path, ContentFile(content))
