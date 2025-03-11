@@ -131,9 +131,9 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             "theme_code",
         ]
 
-    def change_files_to_urls(self, validated_data: dict) -> dict:
+    def change_files_to_path(self, validated_data: dict) -> dict:
         """
-        Change files to URLs in the validated data. Files will be saved, and their URLs
+        Change files to path in the validated data. Files will be saved, and their path
         in the Django storage will be inserted in the validated data.
         Args:
             validated_data (dict): The validated data containing
@@ -172,12 +172,12 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
         field: str,
     ):
         storage.save(f"{storage_prefix}/{file.name}", file)
-        validated_data[field] = f"{UI_ROOT}/{quote(file.name)}"  # urlencoded filename
+        validated_data[field] = f"{UI_ROOT}/{file.name}"  # urlencoded filename
 
     def create(self, validated_data: dict):
-        validated_data = self.change_files_to_urls(validated_data)
+        validated_data = self.change_files_to_path(validated_data)
         return super().create(validated_data)
 
     def update(self, instance: WhitelabelModel, validated_data: dict):
-        validated_data = self.change_files_to_urls(validated_data)
+        validated_data = self.change_files_to_path(validated_data)
         return super().update(instance, validated_data)
