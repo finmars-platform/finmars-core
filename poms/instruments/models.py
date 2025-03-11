@@ -2086,7 +2086,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accruals
 
-    def find_accrual_schedule(self, d: date) -> AccrualCalculationSchedule:
+    def find_accrual_schedule(self, d: date) -> "AccrualCalculationSchedule":
         if not isinstance(d, date):
             raise ValueError(f"find_accrual: d must be a date, not {type(d)}")
 
