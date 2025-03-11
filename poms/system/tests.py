@@ -40,8 +40,10 @@ EXPECTED_RESPONSE = {
         "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
     },
 }
-API_PREFIX = "api/storage/.system/ui/"
-STORAGE_PREFIX = "space00000/.system/ui/"
+
+UI_ROOT = ".system/ui"
+API_PREFIX = f"api/storage/{UI_ROOT}/"
+STORAGE_PREFIX = f"space00000/{UI_ROOT}/"
 
 
 class WhitelabelViewSetTest(BaseTestCase):
@@ -158,10 +160,10 @@ class WhitelabelViewSetTest(BaseTestCase):
     def validate_response(self, response_json, name: str, configuration_code: str):
         self.assertEqual(response_json["configuration_code"], configuration_code)
         self.assertEqual(response_json["name"], name)
-        self.assertEqual(response_json["theme_css_url"], f"{API_PREFIX}theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}light.png")
-        self.assertEqual(response_json["favicon_url"], f"{API_PREFIX}favicon.png")
+        self.assertEqual(response_json["theme_css_url"], f"{UI_ROOT}/theme.css")
+        self.assertEqual(response_json["logo_dark_url"], f"{UI_ROOT}/dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{UI_ROOT}/light.png")
+        self.assertEqual(response_json["favicon_url"], f"{UI_ROOT}/favicon.png")
 
     def test__create(self):
         request_data = self.create_request_data()
@@ -339,16 +341,16 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(
-            response_json["theme_css_url"], f"{API_PREFIX}{quote('theme 1.css')}"
+            response_json["theme_css_url"], f"{UI_ROOT}/{quote('theme 1.css')}"
         )
         self.assertEqual(
-            response_json["logo_dark_url"], f"{API_PREFIX}{quote('dark 2.png')}"
+            response_json["logo_dark_url"], f"{UI_ROOT}/{quote('dark 2.png')}"
         )
         self.assertEqual(
-            response_json["logo_light_url"], f"{API_PREFIX}{quote('пыжый 3.png')}"
+            response_json["logo_light_url"], f"{UI_ROOT}/{quote('пыжый 3.png')}"
         )
         self.assertEqual(
-            response_json["favicon_url"], f"{API_PREFIX}{quote('зюфьянка 4.png')}"
+            response_json["favicon_url"], f"{UI_ROOT}/{quote('зюфьянка 4.png')}"
         )
 
     @BaseTestCase.cases(
