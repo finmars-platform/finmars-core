@@ -146,7 +146,7 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             - The function assumes that the storage module has a save method
               that takes in a file path and a file object.
         """
-        storage_prefix = f"{self.context['space_code']}/{UI_ROOT}"
+        storage_prefix = f"{self.context['request'].user.master_user.space_code}/{UI_ROOT}"
 
         params_fields = [
             ("theme_css_file", "theme_css_url"),

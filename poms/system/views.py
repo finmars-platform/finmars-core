@@ -38,11 +38,6 @@ class WhitelabelViewSet(AbstractModelViewSet):
     pagination_class = None
     filter_class = IsDefaultFilterSet
 
-    def get_serializer_context(self, *args, **kwargs):
-        context = super().get_serializer_context()
-        context.update({"space_code": self.request.space_code if self.request else "space00000"})
-        return context
-
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()
         if obj.is_default:
