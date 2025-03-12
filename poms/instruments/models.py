@@ -2057,26 +2057,20 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             processed.append(old_event.id)
 
     def get_accrual_calculation_schedules_all(self):
+        """
+        Returns all accrual calculation schedules for the instrument, calculating end dates if necessary.
+        """
         accruals = list(self.accrual_calculation_schedules.all())
-        if not accruals:
+        if not accruals or hasattr(accruals[0], "accrual_end_date"):
             return accruals
 
-        if getattr(accruals[0], "accrual_end_date", None) is not None:
-            return accruals
+        accruals.sort(key=lambda x: x.accrual_start_date)
 
-        accruals = sorted(
-            accruals,
-            key=lambda x: datetime.strptime(x.accrual_start_date, DATE_FORMAT).date(),
-        )
+        for i in range(len(accruals) - 1):
+            accruals[i].accrual_end_date = accruals[i + 1].accrual_start_date
 
-        a = None
-        for next_a in accruals:
-            if a is not None:
-                a.accrual_end_date = next_a.accrual_start_date
-            a = next_a
-
-        if a and self.maturity_date:
-            a.accrual_end_date = self.maturity_date + timedelta(days=1)
+        if accruals and self.maturity_date:
+            accruals[-1].accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
 
