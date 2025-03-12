@@ -1,6 +1,7 @@
 import json
 import logging
 import traceback
+from typing import Optional
 from datetime import date, datetime, timedelta
 from math import isnan
 
@@ -2095,7 +2096,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return True
 
-    def find_accrual_schedule(self, d: date) -> "AccrualCalculationSchedule" | None:
+    def find_accrual_schedule(self, d: date) -> Optional["AccrualCalculationSchedule"]:
         if not self._accrual_date_is_valid(day=d):
             return None
 
@@ -2108,16 +2109,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accrual
 
-    def find_accrual_event(self, d: date) -> "Accrual" | None:
+    def find_accrual_event(self, d: date) -> Optional["Accrual"]:
         if not self._accrual_date_is_valid(day=d):
             return None
 
-        accruals = self.get_accrual_calculation_schedules_all()
-        # _l.debug('find_accrual.accruals %s' % accruals)
+        # TODO add logic
         accrual = None
-        for a in accruals:
-            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
-                accrual = a
 
         return accrual
 
@@ -2162,23 +2159,21 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     def get_accrued_price(self, price_date: date) -> float:
         from poms.common.formula_accruals import calculate_accrual_schedule_factor
 
+        # accrual_schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
         if accrual_schedule is None:
             return 0
-
         accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
         first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
-
-        _l.info(f"coupon_accrual_factor price_date {price_date}")
-
         factor = calculate_accrual_schedule_factor(
             accrual_calculation_schedule=accrual_schedule,
             dt1=accrual_start_date,
             dt2=price_date,
             dt3=first_payment_date,
         )
+        accrued_price = float(accrual_schedule.accrual_size) * factor
 
-        return float(accrual_schedule.accrual_size) * factor
+        return accrued_price
 
     def get_accrual_size(self, price_date: date) -> float:
         if not self.maturity_date or (price_date >= self.maturity_date):
