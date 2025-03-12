@@ -137,6 +137,7 @@ def save_whitelable_files_from_storage(folder_path: str, json_data: dict[str, An
 
 def load_file(filepath):
     try:
+        _l.info(f"load_file {filepath}")
         return File(open(filepath, "rb"), name=os.path.basename(filepath))
     except FileNotFoundError:
         return None
