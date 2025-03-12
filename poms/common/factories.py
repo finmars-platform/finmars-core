@@ -1,5 +1,6 @@
 import factory
 from factory.django import DjangoModelFactory
+from factory.fuzzy import FuzzyFloat, FuzzyInteger, FuzzyText
 
 from django.contrib.auth.models import User
 
@@ -188,12 +189,14 @@ class AccrualCalculationScheduleFactory(DjangoModelFactory):
     first_payment_date = factory.LazyAttribute(lambda obj: obj.accrual_start_date)
 
 
-class AccrualFactory(DjangoModelFactory):
+class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Accrual
 
     instrument = factory.SubFactory(InstrumentFactory)
-    user_code = factory.Sequence(lambda n: f"accrual_{n}")
-    date = factory.Faker("future_date")
-    size = factory.Faker("pyfloat")
-    notes = factory.Faker("text")
+    user_code = factory.LazyAttribute(lambda obj: f"{obj.instrument.user_code}:{obj.date}")
+    date = factory.Faker("date_object")
+    size = FuzzyFloat(100.0, 1000.0)
+    notes = FuzzyText(length=20)
+    accrual_calculation_model = factory.SubFactory(AccrualCalculationModelFactory)
+    periodicity_n = FuzzyInteger(90, 365)
