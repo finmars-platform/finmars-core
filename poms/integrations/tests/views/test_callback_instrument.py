@@ -325,7 +325,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "user_code": f"{instrument_code}:{str(date.today())}",
                                 "date": date.today(),
                                 "size": 100.0,
-                                "notes": "",
+                                "notes": "LPjfCDXEcNYeWdlNEBMY",
+                                "periodicity_n": 170,
+                                "accrual_calculation_model": 100,
                             },
                         ],
                     },
@@ -349,7 +351,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         accrual = Accrual.objects.filter(instrument=instrument).first()
         self.assertIsNotNone(accrual)
-        self.assertEqual(
-            accrual.user_code,
-            post_data["data"]["instruments"][0]["accruals"][0]["user_code"],
-        )
+
+        accrual_data: dict = post_data["data"]["instruments"][0]["accruals"][0]
+        self.assertEqual(accrual.user_code, accrual_data["user_code"])
+        self.assertEqual(accrual.periodicity_n, accrual_data["periodicity_n"])
+        self.assertEqual(accrual.accrual_calculation_model_id, accrual_data["accrual_calculation_model_id"])
+        self.assertEqual(accrual.size, accrual_data["size"])
