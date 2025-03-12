@@ -159,20 +159,21 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             file: Optional[File] = validated_data.pop(param_name, None)
             if file:
                 self.save_to_storage(
-                    storage_prefix, validated_data, file, model_field
+                    URL_PREFIX, storage_prefix, validated_data, file, model_field
                 )
 
         return validated_data
 
     @staticmethod
     def save_to_storage(
+        api_prefix: str,
         storage_prefix: str,
         validated_data: dict,
         file: File,
         field: str,
     ):
         storage.save(f"{storage_prefix}/{file.name}", file)
-        validated_data[field] = f"{UI_ROOT}/{file.name}"  # urlencoded filename
+        validated_data[field] = f"{api_prefix}/{quote(file.name)}"
 
     def create(self, validated_data: dict):
         validated_data = self.change_files_to_path(validated_data)

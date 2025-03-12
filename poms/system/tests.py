@@ -1,5 +1,4 @@
 from unittest import mock
-from urllib.parse import quote
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -42,7 +41,7 @@ EXPECTED_RESPONSE = {
 }
 
 UI_ROOT = ".system/ui"
-API_PREFIX = f"api/storage/{UI_ROOT}/"
+API_PREFIX = f"api/storage/{UI_ROOT}"
 STORAGE_PREFIX = f"space00000/{UI_ROOT}/"
 
 
@@ -139,7 +138,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         name, configuration_code = self._create_name_and_configuration_code()
 
         return {
-            "user_code": configuration_code,
+            "user_code": name,
             "configuration_code": configuration_code,
             "name": name,
             "theme_css_file": SimpleUploadedFile(
@@ -160,10 +159,10 @@ class WhitelabelViewSetTest(BaseTestCase):
     def validate_response(self, response_json, name: str, configuration_code: str):
         self.assertEqual(response_json["configuration_code"], configuration_code)
         self.assertEqual(response_json["name"], name)
-        self.assertEqual(response_json["theme_css_url"], f"{UI_ROOT}/theme.css")
-        self.assertEqual(response_json["logo_dark_url"], f"{UI_ROOT}/dark.png")
-        self.assertEqual(response_json["logo_light_url"], f"{UI_ROOT}/light.png")
-        self.assertEqual(response_json["favicon_url"], f"{UI_ROOT}/favicon.png")
+        self.assertEqual(response_json["theme_css_url"], f"{API_PREFIX}/theme.css")
+        self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}/dark.png")
+        self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}/light.png")
+        self.assertEqual(response_json["favicon_url"], f"{API_PREFIX}/favicon.png")
 
     def test__create(self):
         request_data = self.create_request_data()
@@ -341,16 +340,16 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(
-            response_json["theme_css_url"], f"{UI_ROOT}/theme 1.css"
+            response_json["theme_css_url"], f"{API_PREFIX}/theme%201.css"
         )
         self.assertEqual(
-            response_json["logo_dark_url"], f"{UI_ROOT}/dark 2.png"
+            response_json["logo_dark_url"], f"{API_PREFIX}/dark%202.png"
         )
         self.assertEqual(
-            response_json["logo_light_url"], f"{UI_ROOT}/пыжый 3.png"
+            response_json["logo_light_url"], f"{API_PREFIX}/%D0%BF%D1%8B%D0%B6%D1%8B%D0%B9%203.png"
         )
         self.assertEqual(
-            response_json["favicon_url"], f"{UI_ROOT}/зюфьянка 4.png"
+            response_json["favicon_url"], f"{API_PREFIX}/%D0%B7%D1%8E%D1%84%D1%8C%D1%8F%D0%BD%D0%BA%D0%B0%204.png"
         )
 
     @BaseTestCase.cases(
