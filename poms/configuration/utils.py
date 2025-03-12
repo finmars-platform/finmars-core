@@ -5,6 +5,7 @@ import os
 import re
 import time
 from typing import Any
+from urllib.parse import unquote
 import zipfile
 
 import requests
@@ -120,7 +121,8 @@ def save_whitelable_files_from_storage(folder_path: str, json_data: dict[str, An
 
         files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"] 
         for key in files_key:
-            file_path = json_data.get(key)
+            file_url: str = json_data.get(key)
+            file_path = unquote(file_url.lstrip("api/storage/"))
             src_file_path = os.path.join(space_code, file_path)
 
             with storage.open(src_file_path, "rb") as src_file:
