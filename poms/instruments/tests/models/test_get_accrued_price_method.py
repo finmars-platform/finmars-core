@@ -11,7 +11,6 @@ from poms.instruments.models import (
 
 class AccruedPriceMethodTest(BaseTestCase):
     databases = "__all__"
-    maxDiff = None
 
     def setUp(self):
         super().setUp()
