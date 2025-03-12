@@ -3688,6 +3688,17 @@ class Accrual(models.Model):
         default="",
         verbose_name="Notes",
     )
+    accrual_calculation_model = models.ForeignKey(
+        AccrualCalculationModel,
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("accrual calculation model"),
+    )
+    periodicity_n = models.IntegerField(
+        default=0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("days between coupons"),
+    )
 
     class Meta:
         verbose_name = gettext_lazy("Accrual")
