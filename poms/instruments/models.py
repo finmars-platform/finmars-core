@@ -2058,23 +2058,16 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
     def get_accrual_calculation_schedules_all(self):
         accruals = list(self.accrual_calculation_schedules.all())
-
-        # _l.info("get_accrual_calculation_schedules_all %s" % accruals)
-
         if not accruals:
             return accruals
 
         if getattr(accruals[0], "accrual_end_date", None) is not None:
             return accruals
 
-        # _l.info('get_accrual_calculation_schedules_all')
-
         accruals = sorted(
             accruals,
             key=lambda x: datetime.strptime(x.accrual_start_date, DATE_FORMAT).date(),
         )
-
-        # _l.info('get_accrual_calculation_schedules_all after sort')
 
         a = None
         for next_a in accruals:
