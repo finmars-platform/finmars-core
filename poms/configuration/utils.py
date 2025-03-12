@@ -10,7 +10,7 @@ import zipfile
 import requests
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.http import FileResponse
 
 from poms.common.http_client import HttpClient
@@ -110,7 +110,7 @@ def model_has_field(model, field_name):
         return False
 
 
-def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: dict[str, Any]) -> None:
+def save_whitelable_files_from_storage(folder_path: str, json_data: dict[str, Any], context: dict[str, Any]) -> None:
     try:
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -131,8 +131,15 @@ def save_whitelable_files(folder_path: str, json_data: dict[str, Any], context: 
                     dst_file.write(src_file.read())
 
     except Exception as e:
-        _l.error(f"save_whitelable_files to {folder_path}: {e}")
+        _l.error(f"save_whitelable_files_from_storage to {folder_path}: {e}")
         raise e
+
+
+def load_file(filepath):
+    try:
+        return File(open(filepath, "rb"), name=os.path.basename(filepath))
+    except FileNotFoundError:
+        return None
 
 
 def save_serialized_entity(content_type, configuration_code, source_directory, context):
@@ -186,7 +193,7 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
         save_json_to_file(f"{path}.json", serialized_data)
 
         if content_type == "system.whitelabelmodel":
-            save_whitelable_files(path, serialized_data, context)
+            save_whitelable_files_from_storage(path, serialized_data, context)
 
 
 def save_serialized_attribute_type(
