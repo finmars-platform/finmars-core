@@ -239,7 +239,7 @@ class PricingPolicySerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super(PricingPolicySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     # def create_instrument_type_pricing_policies(self, instance):
     #     from poms.pricing.models import InstrumentTypePricingPolicy
@@ -350,7 +350,7 @@ class PricingPolicySerializer(
     #                 _l.error(f"CurrencyPricingPolicy create error {e}")
 
     def create(self, validated_data):
-        instance = super(PricingPolicySerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         # print("Creating Pricing Policies For Entities")
 
@@ -361,7 +361,7 @@ class PricingPolicySerializer(
         return instance
 
     def update(self, instance, validated_data):
-        instance = super(PricingPolicySerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         # print("Creating Pricing Policies For Entities")
 
@@ -926,6 +926,11 @@ class InstrumentTypeViewSerializer(ModelWithUserCodeSerializer):
 
 
 class AccrualSerializer(serializers.ModelSerializer):
+    accrual_calculation_model = AccrualCalculationModelField()
+    accrual_calculation_model_object = AccrualCalculationModelSerializer(
+        source="accrual_calculation_model", read_only=True
+    )
+
     class Meta:
         model = Accrual
         fields = [
@@ -933,6 +938,9 @@ class AccrualSerializer(serializers.ModelSerializer):
             "date",
             "size",
             "notes",
+            "periodicity_n",
+            "accrual_calculation_model",
+            "accrual_calculation_model_object",
         ]
 
 

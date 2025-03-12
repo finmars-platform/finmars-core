@@ -1,5 +1,4 @@
 from datetime import date
-from unittest import skip
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
@@ -41,7 +40,6 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(instrument.identifier.keys(), self.identifier.keys())
         return instrument
 
-    @skip("uncomment todo debug for local test")
     def test__stock_with_currency_created(self):
         instrument_code = self.random_string()
         currency_code = self.random_choice(["USD", "EUR"])
@@ -93,7 +91,6 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
-    @skip("uncomment todo debug for local test")
     def test__bond_with_factor_and_accrual_schedules_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
@@ -214,7 +211,6 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.assertEqual(accrual_2.periodicity_id, PERIODICITY_MAP[2])
 
-    @skip("uncomment todo debug for local test")
     def test__instrument_with_periodicity_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
@@ -293,7 +289,6 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[1])
 
-    @skip("uncomment todo debug for local test")
     def test__instrument_with_accruals_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
@@ -327,7 +322,15 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "size": 100.0,
                                 "notes": "LPjfCDXEcNYeWdlNEBMY",
                                 "periodicity_n": 170,
-                                "accrual_calculation_model": 100,
+                                "accrual_calculation_model": 21,
+                                "accrual_calculation_model_object": {
+                                    "id": 21,
+                                    "name": "30/360 German",
+                                    "short_name": None,
+                                    "user_code": "30/360 German",
+                                    "public_name": None,
+                                    "notes": None,
+                                },
                             },
                         ],
                     },
@@ -355,5 +358,5 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         accrual_data: dict = post_data["data"]["instruments"][0]["accruals"][0]
         self.assertEqual(accrual.user_code, accrual_data["user_code"])
         self.assertEqual(accrual.periodicity_n, accrual_data["periodicity_n"])
-        self.assertEqual(accrual.accrual_calculation_model_id, accrual_data["accrual_calculation_model_id"])
+        self.assertEqual(accrual.accrual_calculation_model_id, accrual_data["accrual_calculation_model"])
         self.assertEqual(accrual.size, accrual_data["size"])
