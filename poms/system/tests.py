@@ -341,16 +341,16 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(
-            response_json["theme_css_url"], f"{UI_ROOT}/{quote('theme 1.css')}"
+            response_json["theme_css_url"], f"{UI_ROOT}/theme 1.css"
         )
         self.assertEqual(
-            response_json["logo_dark_url"], f"{UI_ROOT}/{quote('dark 2.png')}"
+            response_json["logo_dark_url"], f"{UI_ROOT}/dark 2.png"
         )
         self.assertEqual(
-            response_json["logo_light_url"], f"{UI_ROOT}/{quote('пыжый 3.png')}"
+            response_json["logo_light_url"], f"{UI_ROOT}/пыжый 3.png"
         )
         self.assertEqual(
-            response_json["favicon_url"], f"{UI_ROOT}/{quote('зюфьянка 4.png')}"
+            response_json["favicon_url"], f"{UI_ROOT}/зюфьянка 4.png"
         )
 
     @BaseTestCase.cases(
