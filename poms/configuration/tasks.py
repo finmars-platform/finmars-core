@@ -243,7 +243,7 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
 
                 if content_type == "system.whitelabelmodel":
                     model_name = content_type = json_data["meta"]["model_name"]
-                    directory_with_files = f"{output_directory}/{model_name}/{user_code}"
+                    directory_with_files = f"{output_directory}/{model_name}/{user_code.split(':')[-1]}"
 
                     files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"]
                     for key in files_key:

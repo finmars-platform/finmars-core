@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from django.conf import settings
 from django_filters.rest_framework import FilterSet
 from rest_framework.exceptions import ValidationError
 
