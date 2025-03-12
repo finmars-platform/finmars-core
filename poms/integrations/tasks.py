@@ -60,7 +60,7 @@ from poms.instruments.models import (
     PriceHistory,
     PricingCondition,
 )
-from poms.integrations.database_client import DatabaseService, get_backend_callback_url
+from poms.integrations.database_client import DatabaseService, get_backend_callback_urls
 from poms.integrations.models import (
     AccountMapping,
     AccrualCalculationModelMapping,
@@ -4167,9 +4167,9 @@ def import_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
         return
 
-    BACKEND_CALLBACK_URLS = get_backend_callback_url()
+    backend_callback_urls = get_backend_callback_urls()
 
-    if operation not in BACKEND_CALLBACK_URLS:
+    if operation not in backend_callback_urls:
         _l.error(f"{func} invalid operation {operation}")
         return
 
@@ -4177,7 +4177,7 @@ def import_from_database_task(task_id: int, operation: str):
         "data": task.options_object,
         "request_id": task.pk,
         "base_api_url": task.master_user.space_code,
-        "callback_url": BACKEND_CALLBACK_URLS[operation],
+        "callback_url": backend_callback_urls[operation],
     }
     task.options_object = options
     task.save()

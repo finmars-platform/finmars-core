@@ -5,7 +5,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
 from poms.csv_import.handlers import PERIODICITY_MAP
 from poms.instruments.models import Accrual, AccrualCalculationSchedule, Instrument
-from poms.integrations.database_client import get_backend_callback_url
+from poms.integrations.database_client import get_backend_callback_urls
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
 
 
@@ -19,7 +19,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Instrument From Finmars Database",
             func="import_instrument_finmars_database",
         )
-        backend_callback_urls = get_backend_callback_url()
+        backend_callback_urls = get_backend_callback_urls()
         self.url = backend_callback_urls["instrument"]
         self.identifier = {
             "cbond_id": f"{self.random_int(_max=1000)}",

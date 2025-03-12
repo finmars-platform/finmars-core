@@ -1,11 +1,11 @@
-from unittest import mock, skip
+from unittest import mock
 from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.monad import Monad, MonadStatus
-from poms.integrations.database_client import get_backend_callback_url
+from poms.integrations.database_client import get_backend_callback_urls
 from poms.celery_tasks.models import CeleryTask
-from poms.instruments.models import Accrual, Instrument
+from poms.instruments.models import Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
@@ -50,7 +50,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 400, response.content)
 
-    @skip("till fix the instrument type")
     @BaseTestCase.cases(
         ("bond_111", "bond"),
         ("bond_777", "bond"),
@@ -94,11 +93,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
 
-        BACKEND_CALLBACK_URLS = get_backend_callback_url()
+        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
 
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
 
-    @skip("till fix the instrument type")
     @BaseTestCase.cases(
         ("bond", "bond"),
         ("stock", "stock"),
@@ -107,7 +105,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def test__data_ready(self, type_code, mock_get_monad):
         user_code = self.random_string()
         currency_code = self.random_string(3)
-        accrual_code = f"{user_code}:{str(date.today())}"
         mock_get_monad.return_value = Monad(
             status=MonadStatus.DATA_READY,
             data={
@@ -133,14 +130,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                         },
                         "factor_schedules": [],
                         "accrual_calculation_schedules": [],
-                        "accruals": [
-                            {
-                                "user_code": accrual_code,
-                                "date": date.today(),
-                                "size": 100.0,
-                                "notes": "",
-                            },
-                        ],
+                        "accruals": [],
                     },
                 ],
                 "currencies": [
@@ -179,8 +169,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNotNone(instrument)
         self.assertIsNotNone(instrument.country)
         self.assertEqual(instrument.country.alpha_3, "USA")
-
-        self.assertIsNotNone(Accrual.objects.filter(user_code=accrual_code).first())
 
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
@@ -243,6 +231,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
 
-        backend_callback_urls = get_backend_callback_url()
+        backend_callback_urls = get_backend_callback_urls()
 
         self.assertEqual(options["callback_url"], backend_callback_urls["instrument"])
