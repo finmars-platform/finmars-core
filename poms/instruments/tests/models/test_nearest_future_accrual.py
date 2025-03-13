@@ -31,11 +31,12 @@ class NearestFutureAccrualTest(BaseTestCase):
         accrual = self.instrument.find_nearest_future_accrual(target_date)
         self.assertIsNotNone(accrual)
 
+
     @BaseTestCase.cases(
-        ("0", date(year=YEAR-1, month=2, day=1)),
+        ("0", date(year=YEAR-1, month=1, day=1)),
         ("1", date(year=YEAR-1, month=12, day=31)),
         ("2", date(year=YEAR+7, month=2, day=1)),
-        ("3", date(year=YEAR+7, month=2, day=1)),
+        ("3", date(year=YEAR+AMOUNT-1, month=1, day=2)),
     )
     def test__outside_list(self, target_date):
         self.create_accruals(AMOUNT)
