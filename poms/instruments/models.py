@@ -1,6 +1,7 @@
 import json
 import logging
 import traceback
+from bisect import bisect_left
 from typing import Optional
 from datetime import date, datetime, timedelta
 from math import isnan
@@ -2073,35 +2074,44 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             accruals[-1].accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
-
+    
     def _accrual_date_is_valid(self, day: date) -> bool:
         if not isinstance(day, date):
             raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
 
-        if self.maturity_date and (day >= self.maturity_date):
-            return False
+        return not self.maturity_date or day < self.maturity_date
 
-        return True
-
-    def find_accrual_schedule(self, d: date) -> Optional["AccrualCalculationSchedule"]:
-        if not self._accrual_date_is_valid(day=d):
+    def find_accrual_schedule(self, target_date: date) -> Optional["AccrualCalculationSchedule"]:
+        if not self._accrual_date_is_valid(day=target_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
         # _l.debug('find_accrual.accruals %s' % accruals)
         accrual = None
         for a in accruals:
-            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
+            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= target_date:
                 accrual = a
 
         return accrual
 
-    def find_accrual_event(self, d: date) -> Optional["Accrual"]:
-        if not self._accrual_date_is_valid(day=d):
+    def find_nearest_future_accrual(self, target_date: date) -> Optional[Accrual]:
+        """
+        Finds the nearest to target_date future accrual in the instrument's accruals.
+        """
+        sorted_accruals = list(self.accruals.order_by('date').all())
+        dates_list = [accrual.date for accrual in sorted_accruals]
+
+        pos = bisect_left(dates_list, target_date)
+
+        return sorted_accruals[pos] if pos < len(dates_list) else None
+
+    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
+        if not self._accrual_date_is_valid(day=target_date):
             return None
 
-        # TODO add logic
-        accrual = None
+        accrual = self.find_nearest_future_accrual(target_date)
+        
+        # TOD ADD LOGIC
 
         return accrual
 
