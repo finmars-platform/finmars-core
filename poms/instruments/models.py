@@ -2074,7 +2074,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             accruals[-1].accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
-    
+
     def _accrual_date_is_valid(self, day: date) -> bool:
         if not isinstance(day, date):
             raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
@@ -2094,7 +2094,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accrual
 
-    def find_nearest_future_accrual(self, target_date: date) -> Optional[Accrual]:
+    def find_nearest_future_accrual(self, target_date: date) -> Optional["Accrual"]:
         """
         Finds the nearest to target_date future accrual in the instrument's accruals.
         """
@@ -2110,7 +2110,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             return None
 
         accrual = self.find_nearest_future_accrual(target_date)
-        
+
         # TOD ADD LOGIC
 
         return accrual
