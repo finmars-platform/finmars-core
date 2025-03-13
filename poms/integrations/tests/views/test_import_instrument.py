@@ -56,7 +56,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         ("stock_333", "stock"),
         ("stock_999", "stock"),
     )
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__task_ready(self, type_code, mock_get_task):
         remote_task_id = self.random_int()
         mock_get_task.return_value = Monad(
@@ -93,15 +93,15 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
 
-        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
+        backend_callback_urls = get_backend_callback_urls()
 
-        self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
+        self.assertEqual(options["callback_url"], backend_callback_urls["instrument"])
 
     @BaseTestCase.cases(
         ("bond", "bond"),
         ("stock", "stock"),
     )
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__data_ready(self, type_code, mock_get_monad):
         user_code = self.random_string()
         currency_code = self.random_string(3)
@@ -170,7 +170,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNotNone(instrument.country)
         self.assertEqual(instrument.country.alpha_3, "USA")
 
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
         message = self.random_string()
         mock_get_task.return_value = Monad(
