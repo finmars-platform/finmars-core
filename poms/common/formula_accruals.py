@@ -17,7 +17,8 @@ class FormulaAccrualsError(FinmarsBaseException):
 
 
 
-def calculate_accrual_event_factor() -> float:
+def calculate_accrual_event_factor(accrual_event, payment_date: date) -> float:
+    from poms.instruments.models import Accrual, AccrualCalculationModel
 
     return 1.0
 

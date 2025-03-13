@@ -2121,6 +2121,45 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return sorted_accruals[pos] if pos < len(dates_list) else None
 
+    def get_accrued_price(self, price_date: date) -> float:
+        from poms.common.formula_accruals import (
+            calculate_accrual_event_factor,
+            calculate_accrual_schedule_factor,
+        )
+
+        accrual = self.find_accrual_event(price_date)
+        if accrual:  # accrual event path
+            if accrual.date == price_date:
+                return accrual.size
+
+            factor = calculate_accrual_event_factor(accrual, price_date)
+            return accrual.size * factor
+
+        # accrual schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        if not accrual_schedule:
+            return 0
+
+        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
+        factor = calculate_accrual_schedule_factor(
+            accrual_calculation_schedule=accrual_schedule,
+            dt1=accrual_start_date,
+            dt2=price_date,
+            dt3=first_payment_date,
+        )
+        return float(accrual_schedule.accrual_siz) * factor
+
+    def get_accrual_size(self, price_date: date) -> float:
+        if not self.maturity_date or (price_date >= self.maturity_date):
+            return 0
+
+        # accrual_schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
+
+        return accrual_size
+
     def calculate_prices_accrued_price(self, begin_date=None, end_date=None) -> None:
         existed_prices = PriceHistory.objects.filter(instrument=self, date__range=(begin_date, end_date))
 
@@ -2158,45 +2197,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                             accrued_price = 0
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
-
-    def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import (
-            calculate_accrual_event_factor,
-            calculate_accrual_schedule_factor,
-        )
-
-        accrual = self.find_accrual_event(price_date)
-        if accrual:  # accrual event path
-            if accrual.date == price_date:
-                return accrual.size
-
-            factor = calculate_accrual_event_factor()
-            return accrual.size * factor
-
-        # accrual schedule path
-        accrual_schedule = self.find_accrual_schedule(price_date)
-        if not accrual_schedule:
-            return 0
-
-        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
-        factor = calculate_accrual_schedule_factor(
-            accrual_calculation_schedule=accrual_schedule,
-            dt1=accrual_start_date,
-            dt2=price_date,
-            dt3=first_payment_date,
-        )
-        return float(accrual_schedule.accrual_size) * factor
-
-    def get_accrual_size(self, price_date: date) -> float:
-        if not self.maturity_date or (price_date >= self.maturity_date):
-            return 0
-
-        # accrual_schedule path
-        accrual_schedule = self.find_accrual_schedule(price_date)
-        accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
-
-        return accrual_size
 
     def get_accrual_schedule_factor(self, price_date: date):
         from poms.common.formula_accruals import calculate_accrual_schedule_factor
