@@ -60,7 +60,7 @@ from poms.instruments.models import (
     PriceHistory,
     PricingCondition,
 )
-from poms.integrations.database_client import DatabaseService, get_backend_callback_url
+from poms.integrations.database_client import DatabaseService, get_backend_callback_urls
 from poms.integrations.models import (
     AccountMapping,
     AccrualCalculationModelMapping,
@@ -208,7 +208,7 @@ def update_task_with_error(task: CeleryTask, err_msg: str):
 
 def task_done_with_instrument_info(instrument: Instrument, task: CeleryTask):
     if not instrument or not task:
-        _l.error(f"update_task_with_instrument error: missing task={task} or " f"instrument={instrument}!")
+        _l.error(f"update_task_with_instrument error: missing task={task} or instrument={instrument}!")
         return
 
     result = task.result_object or {}
@@ -376,7 +376,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
     instrument_data = {key: None if value == "null" else value for key, value in data.items()}
     short_type = instrument_data["instrument_type"]["user_code"]
     try:
-        if short_type in {"stocks", "stock"}:
+        if short_type == "stock":
             if (
                 "default_exchange" in instrument_data
                 and instrument_data["default_exchange"]
@@ -399,22 +399,17 @@ def create_instrument_from_finmars_database(data, master_user, member):
                         + instrument_data["default_currency_code"]
                     )
 
-                _l.info(f"{func} Reference for pricing updated " f"{instrument_data['reference_for_pricing']}")
+                _l.info(f"{func} Reference for pricing updated {instrument_data['reference_for_pricing']}")
 
             _l.info(f"{func} Overwrite Pricing Currency for stock")
 
             if "default_currency_code" in instrument_data:
                 instrument_data["pricing_currency"] = instrument_data["default_currency_code"]
 
-        instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{short_type}"
         try:
-            instrument_type = InstrumentType.objects.get(
-                master_user=master_user,
-                user_code=instrument_type_user_code_full,
-                # user_code__contains=short_type,  # TODO FOR DEBUG ONLY!
-            )
+            instrument_type = InstrumentType.objects.get(master_user=master_user, user_code__contains=short_type)
         except InstrumentType.DoesNotExist as e:
-            err_msg = f"{func} no such InstrumentType " f"user_code={instrument_type_user_code_full}"
+            err_msg = f"{func} no such InstrumentType user_code={short_type}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
@@ -639,7 +634,7 @@ def download_instrument_cbond(
             _l.info(f"data response.status_code {response.status_code} ")
 
         except requests.exceptions.Timeout:
-            _l.info(f"Finmars Database Timeout. Trying to create simple " f"instrument {instrument_code}")
+            _l.info(f"Finmars Database Timeout. Trying to create simple instrument {instrument_code}")
 
             try:
                 Instrument.objects.get(
@@ -647,7 +642,7 @@ def download_instrument_cbond(
                     user_code=instrument_code,
                 )
 
-                _l.info(f"Finmars Database Timeout. Simple instrument {instrument_code}" f" exist. Abort.")
+                _l.info(f"Finmars Database Timeout. Simple instrument {instrument_code} exist. Abort.")
 
             except Exception:
                 itype = None
@@ -872,16 +867,12 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         _l.warning(f"{func} instrument {options_data['user_code']} exists!")
         return instrument
 
-    type_user_type = options_data["type_user_code"]
-    instrument_type_user_code_full = f"{settings.INSTRUMENT_TYPE_PREFIX}:{type_user_type}"
     try:
         instrument_type = InstrumentType.objects.get(
-            master_user=task.master_user,
-            user_code=instrument_type_user_code_full,
-            # user_code__contains=type_user_type,  # TODO FOR DEBUG ONLY!
+            master_user=task.master_user, user_code__contains=options_data["type_user_code"]
         )
     except InstrumentType.DoesNotExist:
-        err_msg = f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
+        err_msg = f'{func} no such InstrumentType user_code={options_data["type_user_code"]}'
         return task_error(err_msg, task)
 
     process = InstrumentTypeProcess(instrument_type=instrument_type)
@@ -3858,7 +3849,7 @@ def complex_transaction_csv_file_import_by_procedure_json(
         celery_task.options_object = options_object
         celery_task.save()
 
-        text = f"Data File Procedure {procedure_instance.procedure.user_code}. " f"File is received. Importing JSON"
+        text = f"Data File Procedure {procedure_instance.procedure.user_code}. File is received. Importing JSON"
 
         send_system_message(
             master_user=procedure_instance.master_user,
@@ -3883,7 +3874,7 @@ def complex_transaction_csv_file_import_by_procedure_json(
     except Exception as e:
         _l.info(f"complex_transaction_csv_file_import_by_procedure_json err {e}")
 
-        text = f"Data File Procedure {procedure_instance.procedure.user_code}. " f"Can't import json, Error {e}"
+        text = f"Data File Procedure {procedure_instance.procedure.user_code}. Can't import json, Error {e}"
 
         send_system_message(
             master_user=procedure_instance.master_user,
@@ -4047,9 +4038,7 @@ def handle_currency_and_instrument_api_data(
         task.member,
     )
 
-    _l.info(
-        f"{log} successfully created/updated instrument={instrument.user_code} " f"currency={currency.user_code}"
-    )
+    _l.info(f"{log} successfully created/updated instrument={instrument.user_code} currency={currency.user_code}")
 
     return instrument
 
@@ -4178,9 +4167,9 @@ def import_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
         return
 
-    BACKEND_CALLBACK_URLS = get_backend_callback_url()
+    backend_callback_urls = get_backend_callback_urls()
 
-    if operation not in BACKEND_CALLBACK_URLS:
+    if operation not in backend_callback_urls:
         _l.error(f"{func} invalid operation {operation}")
         return
 
@@ -4188,7 +4177,7 @@ def import_from_database_task(task_id: int, operation: str):
         "data": task.options_object,
         "request_id": task.pk,
         "base_api_url": task.master_user.space_code,
-        "callback_url": BACKEND_CALLBACK_URLS[operation],
+        "callback_url": backend_callback_urls[operation],
     }
     task.options_object = options
     task.save()

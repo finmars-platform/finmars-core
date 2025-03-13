@@ -1,6 +1,8 @@
 import json
 import logging
 import traceback
+from bisect import bisect_left
+from typing import Optional
 from datetime import date, datetime, timedelta
 from math import isnan
 
@@ -259,16 +261,23 @@ class AccrualCalculationModel(AbstractClassModel):
     # DAY COUNT CONVENTION UPDATED ON 2023-09-07 AND CHECKED ON 2024-06-10
 
     DAY_COUNT_ACT_ACT_ICMA = 2  # Actual/Actual (ICMA): Used mainly for Eurobonds. Considers actual days in period and year fraction is # based on the actual number of days in the respective coupon period.
-    DAY_COUNT_ACT_ACT_ISDA = 3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
+    DAY_COUNT_ACT_ACT_ISDA = (
+        3  # Actual/Actual (ISDA): Actual days in the period. Uses 365 or 366 for year fraction. Defined by ISDA.
+    )
     DAY_COUNT_ACT_360 = 4  # Actual/360: Actual days in the period divided by 360.
-    DAY_COUNT_ACT_365L = 7  # Actual/365L: If the end day is in leap year then Day count basis = 366 else Day count basis = 365.
-    DAY_COUNT_30_360_ISDA = 11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
+    DAY_COUNT_ACT_365L = (
+        7  # Actual/365L: If the end day is in leap year then Day count basis = 366 else Day count basis = 365.
+    )
+    DAY_COUNT_30_360_ISDA = (
+        11  # 30/360 (30/360 ISDA): Assumes 30 days in a month and 360 days in a year. Used by ISDA for swaps.
+    )
     DAY_COUNT_NL_365 = 14  # NL/365: Uses actual days but assumes 365 days in year, even for leap years.
-    DAY_COUNT_30_360_US = 18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
+    DAY_COUNT_30_360_US = (
+        18  # 30/360 US: U.S. version of 30/360. Adjusts end-month dates, considers February with 30 days.
+    )
     DAY_COUNT_BD_252 = 20  # BD/252: Based on the number of business days in the period over a 252 business day year (common in Brazilian markets).
-    DAY_COUNT_30_360_GERMAN = 21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
-    DAY_COUNT_30E_PLUS_360 = (
-        24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
+    DAY_COUNT_30_360_GERMAN = (
+        21  # 30/360 German: German variation of 30/360. Specific rules for handling end-month and February dates.
     )
     DAY_COUNT_30E_PLUS_360 = 24  # 30E+/360: Similar to 30E/360, but with adjustments for end-of-month dates.
     DAY_COUNT_ACT_365_FIXED = 27  # Actual/365 (Actual/365F): Actual days in period over a fixed 365-day year.
@@ -281,10 +290,10 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_NONE = 1  # Probably dont used
     DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
     DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
-    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
-    DAY_COUNT_30_365 = (
-        32  # 30/365: Assumes 30 days in each month and 365 days in a year.
+    DAY_COUNT_ACT_ACT_AFB = (
+        26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
     )
+    DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     CLASSES = (
@@ -1093,6 +1102,7 @@ class InstrumentType(NamedModel, FakeDeletableModel, TimeStampedModel, Configura
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
+# DEPRECATED (possible)
 class InstrumentTypeAccrual(models.Model):
     instrument_type = models.ForeignKey(
         InstrumentType,
@@ -2058,62 +2068,70 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             processed.append(old_event.id)
 
     def get_accrual_calculation_schedules_all(self):
+        """
+        Returns all accrual calculation schedules for the instrument, calculating end dates if necessary.
+        """
         accruals = list(self.accrual_calculation_schedules.all())
-
-        # _l.info("get_accrual_calculation_schedules_all %s" % accruals)
-
-        if not accruals:
+        if not accruals or hasattr(accruals[0], "accrual_end_date"):
             return accruals
 
-        if getattr(accruals[0], "accrual_end_date", None) is not None:
-            return accruals
+        accruals.sort(key=lambda x: x.accrual_start_date)
 
-        # _l.info('get_accrual_calculation_schedules_all')
+        for i in range(len(accruals) - 1):
+            accruals[i].accrual_end_date = accruals[i + 1].accrual_start_date
 
-        accruals = sorted(
-            accruals,
-            key=lambda x: datetime.strptime(x.accrual_start_date, DATE_FORMAT).date(),
-        )
-
-        # _l.info('get_accrual_calculation_schedules_all after sort')
-
-        a = None
-        for next_a in accruals:
-            if a is not None:
-                a.accrual_end_date = next_a.accrual_start_date
-            a = next_a
-
-        if a and self.maturity_date:
-            a.accrual_end_date = self.maturity_date + timedelta(days=1)
+        if accruals and self.maturity_date:
+            accruals[-1].accrual_end_date = self.maturity_date + timedelta(days=1)
 
         return accruals
 
-    def find_accrual(self, d: date):
-        if not isinstance(d, date):
-            raise ValueError(f"find_accrual: d must be a date, not {type(d)}")
+    def _accrual_date_is_valid(self, day: date) -> bool:
+        if not isinstance(day, date):
+            raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
 
-        if self.maturity_date and (d >= self.maturity_date):
+        return not self.maturity_date or day < self.maturity_date
+
+    def find_accrual_schedule(self, target_date: date) -> Optional["AccrualCalculationSchedule"]:
+        if not self._accrual_date_is_valid(day=target_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
         # _l.debug('find_accrual.accruals %s' % accruals)
         accrual = None
         for a in accruals:
-            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= d:
+            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= target_date:
                 accrual = a
 
         return accrual
 
-    def calculate_prices_accrued_price(self, begin_date=None, end_date=None):
-        accruals = self.get_accrual_calculation_schedules_all()
+    def find_nearest_future_accrual(self, target_date: date) -> Optional["Accrual"]:
+        """
+        Finds the nearest to target_date future accrual in the instrument's accruals.
+        """
+        sorted_accruals = list(self.accruals.order_by("date").all())
+        dates_list = [accrual.date for accrual in sorted_accruals]
+        if target_date < dates_list[0]:
+            # target_date must within dates of accruals
+            return None
 
-        if not accruals:
-            return
+        pos = bisect_left(dates_list, target_date)
 
+        return sorted_accruals[pos] if pos < len(dates_list) else None
+
+    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
+        if not self._accrual_date_is_valid(day=target_date):
+            return None
+
+        accrual = self.find_nearest_future_accrual(target_date)
+
+        # TOD ADD LOGIC
+
+        return accrual
+
+    def calculate_prices_accrued_price(self, begin_date=None, end_date=None) -> None:
         existed_prices = PriceHistory.objects.filter(instrument=self, date__range=(begin_date, end_date))
 
         if begin_date is None and end_date is None:
-            # used from admin
             for price in existed_prices:
                 if price.date >= self.maturity_date:
                     continue
@@ -2130,8 +2148,10 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                     d = dt.date()
                     if d >= self.maturity_date:
                         continue
-                    price = existed_prices.get((pp.id, d), None)
+
                     accrued_price = self.get_accrued_price(d)
+
+                    price = existed_prices.get((pp.id, d))
                     if price is None:
                         if accrued_price is not None:
                             price = PriceHistory()
@@ -2146,55 +2166,53 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
 
-    def get_accrual_size(self, price_date):
-        if not self.maturity_date or (price_date >= self.maturity_date):
-            return 0
-
-        accrual = self.find_accrual(price_date)
-        # _l.debug('get_accrual_size.accrual %s' % accrual)
-        return 0 if accrual is None else float(accrual.accrual_size)
-
-    def get_future_accrual_payments(self, d0, v0):
-        pass
-
-    def get_accrual_factor(self, price_date):
-        from poms.common.formula_accruals import coupon_accrual_factor
-
-        if self.maturity_date and (price_date >= self.maturity_date):
-            return 0
-
-        accrual = self.find_accrual(price_date)
-        if accrual is None:
-            return 0
-
-        return coupon_accrual_factor(
-            accrual_calculation_schedule=accrual,
-            dt1=accrual.accrual_start_date,
-            dt2=price_date,
-            dt3=accrual.first_payment_date,
-        )
-
     def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import coupon_accrual_factor
+        from poms.common.formula_accruals import calculate_accrual_schedule_factor
 
-        accrual = self.find_accrual(price_date)
-        if accrual is None:
+        # accrual_schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        if accrual_schedule is None:
             return 0
-
-        accrual_start_date = datetime.strptime(accrual.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual.first_payment_date, DATE_FORMAT).date()
-
-        _l.info(f"coupon_accrual_factor price_date {price_date} ")
-
-        factor = coupon_accrual_factor(
-            accrual_calculation_schedule=accrual,
+        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
+        factor = calculate_accrual_schedule_factor(
+            accrual_calculation_schedule=accrual_schedule,
             dt1=accrual_start_date,
             dt2=price_date,
             dt3=first_payment_date,
         )
+        accrued_price = float(accrual_schedule.accrual_size) * factor
 
-        return float(accrual.accrual_size) * factor
+        return accrued_price
 
+    def get_accrual_size(self, price_date: date) -> float:
+        if not self.maturity_date or (price_date >= self.maturity_date):
+            return 0
+
+        # accrual_schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
+
+        return accrual_size
+
+    def get_accrual_schedule_factor(self, price_date: date):
+        from poms.common.formula_accruals import calculate_accrual_schedule_factor
+
+        if self.maturity_date and (price_date >= self.maturity_date):
+            return 0
+
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        if accrual_schedule is None:
+            return 0
+
+        return calculate_accrual_schedule_factor(
+            accrual_calculation_schedule=accrual_schedule,
+            dt1=accrual_schedule.accrual_start_date,
+            dt2=price_date,
+            dt3=accrual_schedule.first_payment_date,
+        )
+
+    # DEPRECATED PROBABLY
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
         _l.info(f"get_coupon self.maturity_date {self.maturity_date}")
 
@@ -2206,7 +2224,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         accruals = self.get_accrual_calculation_schedules_all()
 
-        _l.info(f"get_coupon len accruals {len(accruals)} ")
+        _l.info(f"get_coupon len accruals {len(accruals)}")
 
         for accrual in accruals:
             accrual_start_date = datetime.date(datetime.strptime(accrual.accrual_start_date, DATE_FORMAT))
@@ -2262,6 +2280,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return 0.0, False
 
+    # DEPRECATED PROBABLY
     def get_future_coupons(self, begin_date=None, with_maturity=False, factor=False):
         res = []
         accruals = self.get_accrual_calculation_schedules_all()
@@ -2312,7 +2331,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     # 2023-08-21
     def has_factor_schedules(self):
         factors = list(self.factor_schedules.all())
-
         return bool(len(factors))
 
     def get_factors(self):
@@ -3679,6 +3697,17 @@ class Accrual(models.Model):
         blank=True,
         default="",
         verbose_name="Notes",
+    )
+    accrual_calculation_model = models.ForeignKey(
+        AccrualCalculationModel,
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("accrual calculation model"),
+    )
+    periodicity_n = models.IntegerField(
+        default=0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("days between coupons"),
     )
 
     class Meta:
