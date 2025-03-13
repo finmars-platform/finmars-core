@@ -299,6 +299,7 @@ class TestMetaClass(type):
 
 
 class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
+    maxDiff = None
     client: APIClient = None
 
     @classmethod

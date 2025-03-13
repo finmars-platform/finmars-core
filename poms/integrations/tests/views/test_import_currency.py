@@ -2,7 +2,7 @@ from unittest import mock
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.integrations.database_client import get_backend_callback_url
+from poms.integrations.database_client import get_backend_callback_urls
 from poms.integrations.monad import Monad, MonadStatus
 from poms.currencies.models import Currency
 
@@ -53,7 +53,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
 
         options = celery_task.options_object
 
-        BACKEND_CALLBACK_URLS = get_backend_callback_url()
+        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["currency"])
         results = celery_task.result_object
         self.assertEqual(results["remote_task_id"], task_id)
