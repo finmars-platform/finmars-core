@@ -16,6 +16,12 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
+
+def calculate_accrual_event_factor() -> float:
+
+    return 1.0
+
+
 def calculate_accrual_schedule_factor(
     accrual_calculation_schedule=None,
     accrual_calculation_model=None,

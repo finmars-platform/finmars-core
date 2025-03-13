@@ -28,7 +28,7 @@ class NearestFutureAccrualTest(BaseTestCase):
     )
     def test__inside_list(self, target_date: date):
         self.create_accruals(AMOUNT)
-        accrual = self.instrument.find_nearest_future_accrual(target_date)
+        accrual = self.instrument.find_accrual_event(target_date)
         self.assertIsNotNone(accrual)
         self.assertEqual(accrual.date, date(year=target_date.year+1, month=1, day=1))
 
@@ -40,7 +40,7 @@ class NearestFutureAccrualTest(BaseTestCase):
     )
     def test__outside_list(self, target_date):
         self.create_accruals(AMOUNT)
-        accrual = self.instrument.find_nearest_future_accrual(target_date)
+        accrual = self.instrument.find_accrual_event(target_date)
         self.assertIsNone(accrual)
 
     @BaseTestCase.cases(
@@ -51,6 +51,6 @@ class NearestFutureAccrualTest(BaseTestCase):
     )
     def test__exact_date(self, target_date: date):
         self.create_accruals(AMOUNT)
-        accrual = self.instrument.find_nearest_future_accrual(target_date)
+        accrual = self.instrument.find_accrual_event(target_date)
         self.assertIsNotNone(accrual)
         self.assertEqual(accrual.date, target_date)

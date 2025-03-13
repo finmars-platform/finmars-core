@@ -2,9 +2,11 @@ import json
 import logging
 import traceback
 from bisect import bisect_left
-from typing import Optional
 from datetime import date, datetime, timedelta
 from math import isnan
+from typing import Optional
+
+from dateutil import relativedelta, rrule
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
@@ -15,8 +17,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
-
-from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.fields import ResourceGroupsField
@@ -2104,10 +2104,13 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accrual
 
-    def find_nearest_future_accrual(self, target_date: date) -> Optional["Accrual"]:
+    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
         """
-        Finds the nearest to target_date future accrual in the instrument's accruals.
+        Finds the nearest to target_date future accrual event in the instrument's accruals.
         """
+        if not self._accrual_date_is_valid(day=target_date):
+            return None
+
         sorted_accruals = list(self.accruals.order_by("date").all())
         dates_list = [accrual.date for accrual in sorted_accruals]
         if target_date < dates_list[0]:
@@ -2117,16 +2120,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         pos = bisect_left(dates_list, target_date)
 
         return sorted_accruals[pos] if pos < len(dates_list) else None
-
-    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
-        if not self._accrual_date_is_valid(day=target_date):
-            return None
-
-        accrual = self.find_nearest_future_accrual(target_date)
-
-        # TOD ADD LOGIC
-
-        return accrual
 
     def calculate_prices_accrued_price(self, begin_date=None, end_date=None) -> None:
         existed_prices = PriceHistory.objects.filter(instrument=self, date__range=(begin_date, end_date))
@@ -2167,12 +2160,24 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                         price.save(update_fields=["accrued_price"])
 
     def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import calculate_accrual_schedule_factor
+        from poms.common.formula_accruals import (
+            calculate_accrual_event_factor,
+            calculate_accrual_schedule_factor,
+        )
 
-        # accrual_schedule path
+        accrual = self.find_accrual_event(price_date)
+        if accrual:  # accrual event path
+            if accrual.date == price_date:
+                return accrual.size
+
+            factor = calculate_accrual_event_factor()
+            return accrual.size * factor
+
+        # accrual schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
-        if accrual_schedule is None:
+        if not accrual_schedule:
             return 0
+
         accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
         first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
         factor = calculate_accrual_schedule_factor(
@@ -2181,9 +2186,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             dt2=price_date,
             dt3=first_payment_date,
         )
-        accrued_price = float(accrual_schedule.accrual_size) * factor
-
-        return accrued_price
+        return float(accrual_schedule.accrual_size) * factor
 
     def get_accrual_size(self, price_date: date) -> float:
         if not self.maturity_date or (price_date >= self.maturity_date):
