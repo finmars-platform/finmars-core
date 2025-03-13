@@ -1,7 +1,7 @@
 import calendar
 import logging
 from datetime import date, timedelta
-
+from dateutil.relativedelta import relativedelta
 from dateutil import relativedelta, rrule
 
 from poms.common.exceptions import FinmarsBaseException
@@ -16,11 +16,53 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
+def calculate_accrual_event_factor(accrual_event, start_date: date) -> float:
+    from poms.instruments.models import AccrualCalculationModel
 
-def calculate_accrual_event_factor(accrual_event, payment_date: date) -> float:
-    from poms.instruments.models import Accrual, AccrualCalculationModel
+    if not accrual_event or not start_date or start_date > accrual_event.date:
+        raise FormulaAccrualsError(f"invalid params: accrual_event {accrual_event} start_date {start_date}")
 
-    return 1.0
+    day_count_convention: AccrualCalculationModel = accrual_event.accrual_calculation_model.id
+    coupon_period_days: int = accrual_event.periodicity_n
+    end_date = accrual_event.date
+
+    delta_days = (end_date - start_date).days
+    if delta_days == 0:
+        return 1.0
+
+    elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_360:
+        # Actual/360: Actual number of days over 360
+        return delta_days / 360.0
+
+    elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_365:
+        # Actual/365: Actual number of days over 365
+        return delta_days / 365.0
+
+    elif day_count_convention == AccrualCalculationModel.DAY_COUNT_30_360_ISMA:
+        # 30/360: Assumes 30 days in a month and 360 days in a year
+        start_day = min(start_date.day, 30)
+        end_day = min(end_date.day, 30)
+
+        delta_years = end_date.year - start_date.year
+        delta_months = end_date.month - start_date.month
+        delta_days = end_day - start_day
+        total_days = delta_years * 360 + delta_months * 30 + delta_days
+
+        return total_days / 360.0
+
+    elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA:
+        # Actual/Actual ICMA: Actual number of days in the period over the actual number of days in the coupon year
+        # Determine the coupon period (e.g., semi-annual, annual)
+        # Assuming payment_date is the next payment date after end_date
+        previous_payment_date = end_date - relativedelta(months=12)  # Adjust for annual coupon
+
+        # Calculate the number of days in the coupon period
+        coupon_period_days = (end_date - previous_payment_date).days
+        return delta_days / coupon_period_days
+
+    else:  # Use SIMPLE count day convention, when number of days are equal to coupon period days
+        _l.warning(f"used SIMPLE day count convention instead if unsupported: {day_count_convention}")
+        return delta_days / coupon_period_days
 
 
 def calculate_accrual_schedule_factor(
