@@ -31,12 +31,13 @@ def calculate_accrual_event_factor(accrual_event, start_date: date) -> float:
         return 1.0
 
     elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_360:
-        # Actual/360: Actual number of days over 360
         return delta_days / 360.0
 
     elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_365:
-        # Actual/365: Actual number of days over 365
         return delta_days / 365.0
+
+    elif day_count_convention == AccrualCalculationModel.DAY_COUNT_ACT_365A:
+        return (delta_days + 1) / 365
 
     elif day_count_convention == AccrualCalculationModel.DAY_COUNT_30_360_ISMA:
         # 30/360: Assumes 30 days in a month and 360 days in a year
