@@ -67,6 +67,7 @@ class PLReportBuilderSql:
                 self.instance.pl_first_date = get_last_business_day(
                     first_portfolio.first_transaction_date - timedelta(days=1),
                     )
+
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
@@ -120,7 +121,7 @@ class PLReportBuilderSql:
         pl_first_date = self.instance.pl_first_date
 
         if not pl_first_date or pl_first_date == date.min:
-            self.instance.pl_first_date = self.instance.first_transaction_date
+            self.instance.pl_first_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
         _l.debug('self.instance.report_date %s' % self.instance.report_date)
         _l.debug('self.instance.pl_first_date %s' % self.instance.pl_first_date)
