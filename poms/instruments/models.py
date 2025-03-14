@@ -2121,6 +2121,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             calculate_accrual_schedule_factor,
         )
 
+        if not self._target_date_is_valid(day=price_date):
+            return 0
+
         accrual = self.find_accrual_event(price_date)
         if accrual:  # accrual event path
             if accrual.date == price_date:
@@ -2145,8 +2148,10 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return float(accrual_schedule.accrual_siz) * factor
 
     def get_accrual_size(self, price_date: date) -> float:
-        if not self.maturity_date or (price_date >= self.maturity_date):
+        if not self._target_date_is_valid(day=price_date):
             return 0
+
+        # TODO ADD ACCRUAL EVENT PATH
 
         # accrual_schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
