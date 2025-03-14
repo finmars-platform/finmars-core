@@ -2085,14 +2085,15 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accruals
 
-    def _accrual_date_is_valid(self, day: date) -> bool:
+    def _target_date_is_valid(self, day: date) -> bool:
+        """ target date must be less that maturity date """
         if not isinstance(day, date):
             raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
 
         return not self.maturity_date or day < self.maturity_date
 
     def find_accrual_schedule(self, target_date: date) -> Optional["AccrualCalculationSchedule"]:
-        if not self._accrual_date_is_valid(day=target_date):
+        if not self._target_date_is_valid(day=target_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
@@ -2108,7 +2109,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         """
         Finds the nearest to target_date future accrual event in the instrument's accruals.
         """
-        if not self._accrual_date_is_valid(day=target_date):
+        if not self._target_date_is_valid(day=target_date):
             return None
 
         sorted_accruals = list(self.accruals.order_by("date").all())
