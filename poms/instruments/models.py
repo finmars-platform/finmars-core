@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 from math import isnan
 from typing import Optional
 
-import QuantLib as Ql
+import QuantLib as ql
 from dateutil import relativedelta, rrule
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -352,30 +352,30 @@ class AccrualCalculationModel(AbstractClassModel):
     )
 
     @staticmethod
-    def get_quantlib_day_count(finmars_accrual_calculation_model):
-        default_day_counter = Ql.SimpleDayCounter()
+    def get_quantlib_day_count(finmars_accrual_calculation_model: int):
+        default_day_counter = ql.SimpleDayCounter()
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
-            AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
             AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(ql.Actual365Fixed.NoLeap)
-            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
-            AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
+            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: Actual365A(),  # ql.Actual365Fixed()
-            AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
-            AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
+            AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
+            AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
-            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
-            AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
-            AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
         }
 
         return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
@@ -443,16 +443,16 @@ class Periodicity(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_periodicity(finmars_periodicity):
-        default_period = Ql.Period(12, Ql.Months)  # default semi-annually
+        default_period = ql.Period(12, ql.Months)  # default semi-annually
         period_mapping = {
             # TODO probably add mapping for other finmars periodicities
-            Periodicity.N_DAY: Ql.Period(1, Ql.Days),
-            Periodicity.WEEKLY: Ql.Period(1, Ql.Weeks),
-            Periodicity.MONTHLY: Ql.Period(1, Ql.Months),
-            Periodicity.BIMONTHLY: Ql.Period(2, Ql.Months),
-            Periodicity.QUARTERLY: Ql.Period(3, Ql.Months),
-            Periodicity.SEMI_ANNUALLY: Ql.Period(6, Ql.Months),
-            Periodicity.ANNUALLY: Ql.Period(12, Ql.Months),
+            Periodicity.N_DAY: ql.Period(1, ql.Days),
+            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
+            Periodicity.MONTHLY: ql.Period(1, ql.Months),
+            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
+            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
+            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
+            Periodicity.ANNUALLY: ql.Period(12, ql.Months),
         }
 
         return period_mapping.get(finmars_periodicity, default_period)
@@ -1748,44 +1748,44 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         # TODO OG commented: probably we need to add parameter notional
         bond = None
         face_value = 100  # probably self.default_price
-        calendar = Ql.TARGET()
+        calendar = ql.TARGET()
 
         if self.maturity_date:
             _l.info(f"get_quantlib_bond.self.type maturity_date {type(self.maturity_date)}")
             _l.info(f"get_quantlib_bond.self.maturity_date {self.maturity_date}")
             _l.info(f"get_quantlib_bond.self.date_pattern {self.date_pattern}")
 
-            maturity = Ql.Date(str(self.maturity_date), self.date_pattern)
+            maturity = ql.Date(str(self.maturity_date), self.date_pattern)
 
             if self.has_factor_schedules():
                 factor_schedules = self.get_factors()
 
-                factor_dates = [Ql.Date(str(item.effective_date), self.date_pattern) for item in factor_schedules]
+                factor_dates = [ql.Date(str(item.effective_date), self.date_pattern) for item in factor_schedules]
                 factor_values = [item.factor_value for item in factor_schedules]
 
                 # TODO OG commented: we need issue date
 
                 first_accrual = self.get_first_accrual()
 
-                business_convention = Ql.Following
+                business_convention = ql.Following
 
                 periodicity = Periodicity.get_quantlib_periodicity(first_accrual.periodicity)
 
-                start_date = Ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
+                start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
                 float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
                 day_count = AccrualCalculationModel.get_quantlib_day_count(first_accrual.accrual_calculation_model)
                 # build accrual schedule
                 # schedule = ql.MakeSchedule(start_date, maturity_date, period )
 
-                schedule = Ql.Schedule(
+                schedule = ql.Schedule(
                     start_date,
                     maturity,
                     periodicity,
                     calendar,
                     business_convention,
                     business_convention,
-                    Ql.DateGeneration.Backward,
+                    ql.DateGeneration.Backward,
                     False,
                 )
 
@@ -1798,7 +1798,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
                     notionals.append(val)
 
-                bond = Ql.AmortizingFixedRateBond(0, notionals, schedule, [float_accrual_size], day_count)
+                bond = ql.AmortizingFixedRateBond(0, notionals, schedule, [float_accrual_size], day_count)
 
             else:
                 first_accrual = self.get_first_accrual()
@@ -1806,12 +1806,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
                 if first_accrual:
                     try:
-                        start = Ql.Date(
+                        start = ql.Date(
                             str(first_accrual.accrual_start_date), self.date_pattern
                         )  # Start accrual date
                         periodicity = Periodicity.get_quantlib_periodicity(first_accrual.periodicity)
 
-                        schedule = Ql.MakeSchedule(start, maturity, periodicity)  # period - semiannual
+                        schedule = ql.MakeSchedule(start, maturity, periodicity)  # period - semiannual
 
                         float_accrual_size = float(first_accrual.accrual_size) / 100
                         day_count = AccrualCalculationModel.get_quantlib_day_count(
@@ -1820,12 +1820,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
                         coupons = [float_accrual_size]
 
-                        bond = Ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
+                        bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
                     except Exception as e:
                         _l.error(f"get_quantlib_bond Error {e}")
 
                 else:
-                    bond = Ql.ZeroCouponBond(
+                    bond = ql.ZeroCouponBond(
                         settlementDays=settlementDays,
                         calendar=calendar,
                         faceAmount=face_value,
@@ -1845,7 +1845,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         # _l.info('calculate_quantlib_ytm price %s ' % price)
 
         if bond:
-            Ql.Settings.instance().evaluationDate = Ql.Date(str(day), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(day), self.date_pattern)
 
             try:
                 frequency = bond.frequency()
@@ -1857,7 +1857,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
             _l.info(f"calculate_quantlib_ytm frequency {frequency} of type {type(frequency)}")
 
-            ytm = bond.bondYield(price, bond.dayCounter(), Ql.Compounded, frequency)
+            ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
 
         return ytm
 
@@ -1866,7 +1866,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         bond = self.get_quantlib_bond()
         if bond:
-            Ql.Settings.instance().evaluationDate = Ql.Date(str(day), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(day), self.date_pattern)
 
             try:
                 frequency = bond.frequency()
@@ -1882,13 +1882,13 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             # macaulay_duration = ql.BondFunctions.duration(amort_bond, ytm, day_count, ql.Compounded, frequency, ql.Duration.Macaulay)
 
             # Modified Duration
-            modified_duration = Ql.BondFunctions.duration(
+            modified_duration = ql.BondFunctions.duration(
                 bond,
                 ytm,
                 day_count_convention,
-                Ql.Compounded,
+                ql.Compounded,
                 frequency,
-                Ql.Duration.Modified,
+                ql.Duration.Modified,
             )
 
         return modified_duration
