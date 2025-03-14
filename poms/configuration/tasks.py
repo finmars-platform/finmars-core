@@ -1,4 +1,4 @@
-from email.quoprimime import unquote
+from urllib.parse import unquote
 import io
 import json
 import logging
