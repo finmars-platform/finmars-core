@@ -2145,7 +2145,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             dt2=price_date,
             dt3=first_payment_date,
         )
-        return float(accrual_schedule.accrual_siz) * factor
+        return float(accrual_schedule.accrual_size) * factor
 
     def get_accrual_size(self, price_date: date) -> float:
         if not self._target_date_is_valid(day=price_date):
@@ -3663,7 +3663,6 @@ class InstrumentAttachment(models.Model):
     """
     Intermediate model for many-to-many relation between instruments and files
     """
-
     instrument = models.ForeignKey(
         Instrument,
         on_delete=models.CASCADE,
