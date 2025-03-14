@@ -2113,8 +2113,10 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             return None
 
         sorted_accruals = list(self.accruals.order_by("date").all())
+        accrual_period = sorted_accruals[0].periodicity_n
         dates_list = [accrual.date for accrual in sorted_accruals]
-        if target_date < dates_list[0]:
+
+        if target_date < dates_list[0] - timedelta(days=accrual_period):
             # target_date must within dates of accruals
             return None
 

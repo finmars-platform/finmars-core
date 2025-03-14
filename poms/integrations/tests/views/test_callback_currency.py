@@ -11,17 +11,16 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.task = self.create_task(
+        self.url = get_backend_callback_urls()["currency"]
+
+    def test__currency_created(self):
+        task = self.create_task(
             name="Import Currency From Finmars Database",
             func="import_currency_finmars_database",
         )
-        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
-        self.url = BACKEND_CALLBACK_URLS["currency"]
-
-    def test__currency_created(self):
         user_code = self.random_string(3)
         post_data = {
-            "request_id": self.task.id,
+            "request_id":task.id,
             "task_id": None,
             "data": {
                 "id": self.random_int(),
