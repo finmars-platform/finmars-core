@@ -2113,6 +2113,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             return None
 
         sorted_accruals = list(self.accruals.order_by("date").all())
+        if not sorted_accruals:
+            return None
+
         accrual_period = sorted_accruals[0].periodicity_n
         dates_list = [accrual.date for accrual in sorted_accruals]
 

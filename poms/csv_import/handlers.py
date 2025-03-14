@@ -1516,7 +1516,7 @@ class SimpleImportProcess:
         their values are null, and update final_inputs dict
         """
         if model.lower() != "pricehistory" or not final_inputs:
-            return
+            return None
 
         _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
 
