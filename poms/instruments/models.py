@@ -352,7 +352,7 @@ class AccrualCalculationModel(AbstractClassModel):
     )
 
     @staticmethod
-    def get_quantlib_day_count(finmars_accrual_calculation_model: int):
+    def get_quantlib_day_count(finmars_calculation_model_id: int) -> ql.DayCounter:
         default_day_counter = ql.SimpleDayCounter()
         map_daycount_convention = {
             AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: ql.ActualActual(ql.ActualActual.ISMA),
@@ -378,7 +378,7 @@ class AccrualCalculationModel(AbstractClassModel):
             AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
         }
 
-        return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
+        return map_daycount_convention.get(finmars_calculation_model_id, default_day_counter)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -1774,7 +1774,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                 start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
                 float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
-                day_count = AccrualCalculationModel.get_quantlib_day_count(first_accrual.accrual_calculation_model)
+                day_count = AccrualCalculationModel.get_quantlib_day_count(first_accrual.accrual_calculation_model.id)
                 # build accrual schedule
                 # schedule = ql.MakeSchedule(start_date, maturity_date, period )
 
