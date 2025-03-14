@@ -3931,6 +3931,26 @@ class PLReportBuilderSql:
                     if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
                         has_opened_value = True
 
+                    # PLAT-1417
+
+                    if item["principal_fixed_opened"] is not None and item["principal_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fixed_opened"] is not None and item["carry_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fixed_opened"] is not None and item["overheads_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["principal_fx_opened"] is not None and item["principal_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fx_opened"] is not None and item["carry_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fx_opened"] is not None and item["overheads_fx_opened"] != 0:
+                        has_opened_value = True
+
                     has_closed_value = False
 
                     if item["principal_closed"] is not None and item["principal_closed"] != 0:
@@ -3941,6 +3961,26 @@ class PLReportBuilderSql:
 
                     if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
                         has_closed_value = True
+
+                    # PLAT-1417
+                    if item["principal_fixed_closed"] is not None and item["principal_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fixed_closed"] is not None and item["carry_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fixed_closed"] is not None and item["overheads_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["principal_fx_closed"] is not None and item["principal_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fx_closed"] is not None and item["carry_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fx_closed"] is not None and item["overheads_fx_closed"] != 0:
+                        has_closed_value = True
+
 
                     if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
                         result.append(result_item_opened)
