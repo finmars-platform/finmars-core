@@ -1,3 +1,4 @@
+from email.quoprimime import unquote
 import io
 import json
 import logging
@@ -249,7 +250,7 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
                     for key in files_key:
                         relative_file_path = json_data.get(key)
                         file_name = os.path.basename(relative_file_path)
-                        file_path = os.path.join(directory_with_files, file_name)
+                        file_path = os.path.join(directory_with_files, unquote(file_name))
 
                         if "css" in key:
                             data_key = key.replace("url", "file")
