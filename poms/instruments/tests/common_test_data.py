@@ -1,24 +1,3 @@
-from poms.instruments.models import AccrualCalculationModel
-
-ACCRUAL_MODELS_IDS = [
-    AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA,
-    AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
-    AccrualCalculationModel.DAY_COUNT_ACT_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365L,
-    AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
-    AccrualCalculationModel.DAY_COUNT_NL_365,
-    AccrualCalculationModel.DAY_COUNT_30_360_US,
-    AccrualCalculationModel.DAY_COUNT_BD_252,
-    AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
-    AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
-    AccrualCalculationModel.DAY_COUNT_30E_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365A,
-    AccrualCalculationModel.DAY_COUNT_ACT_366,
-    AccrualCalculationModel.DAY_COUNT_ACT_364,
-    AccrualCalculationModel.DAY_COUNT_SIMPLE,
-]
-
 EXPECTED_INSTRUMENT = {
     "id": 22,
     "instrument_type": 17,

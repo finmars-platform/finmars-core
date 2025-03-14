@@ -6,12 +6,11 @@ from poms.instruments.models import (
     AccrualCalculationSchedule,
     Instrument,
 )
-from poms.instruments.tests.common_test_data import ACCRUAL_MODELS_IDS
+from poms.common.factories import ACCRUAL_MODELS_IDS
 
 
 class AccrualCalculationScheduleModelTest(BaseTestCase):
     databases = "__all__"
-    maxDiff = None
 
     def setUp(self):
         super().setUp()

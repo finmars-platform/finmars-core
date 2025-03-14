@@ -15,8 +15,8 @@ class FormulaAccrualsError(FinmarsBaseException):
 
 
 def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
-    ql_day_counter = accrual_event.accrual_calcualation_model.get_quantlib_day_count(
-        accrual_event.accrual_calcualation_model.id
+    ql_day_counter = accrual_event.accrual_calculation_model.get_quantlib_day_count(
+        accrual_event.accrual_calculation_model.id
     )
     start_date = ql.Date(target_date.day, target_date.month, target_date.year)
     end_date = ql.Date(accrual_event.date.day, accrual_event.date.month, accrual_event.date.year)

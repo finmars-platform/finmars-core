@@ -292,44 +292,22 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_NONE = 1  # Probably dont used
     DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
     DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
-    DAY_COUNT_ACT_ACT_AFB = (
-        26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
-    )
+    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. Used for Euro bonds.
     DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     CLASSES = (
-        (
-            DAY_COUNT_ACT_ACT_ICMA,
-            "DAY_COUNT_ACT_ACT_ICMA",
-            gettext_lazy("Actual/Actual (ICMA)"),
-        ),
-        (
-            DAY_COUNT_ACT_ACT_ISDA,
-            "DAY_COUNT_ACT_ACT_ISDA",
-            gettext_lazy("Actual/Actual (ISDA)"),
-        ),
+        (DAY_COUNT_ACT_ACT_ICMA, "DAY_COUNT_ACT_ACT_ICMA", gettext_lazy("Actual/Actual (ICMA)")),
+        (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
         (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
         (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
-        (
-            DAY_COUNT_30_360_ISDA,
-            "DAY_COUNT_30_360_ISDA",
-            gettext_lazy("30/360 (30/360 ISDA)"),
-        ),
+        (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
         (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
         (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
         (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
-        (
-            DAY_COUNT_30_360_GERMAN,
-            "DAY_COUNT_30_360_GERMAN",
-            gettext_lazy("30/360 German"),
-        ),
-        (
-            DAY_COUNT_ACT_365_FIXED,
-            "DAY_COUNT_ACT_365_FIXED",
-            gettext_lazy("Actual/365 (Actual/365F)"),
-        ),
+        (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
+        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
         (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
@@ -337,19 +315,36 @@ class AccrualCalculationModel(AbstractClassModel):
         # CURRENTLY UNUSED BY CBOND
         (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
         (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
-        (
-            DAY_COUNT_30_360_ISMA,
-            "DAY_COUNT_30_360_ISMA",
-            gettext_lazy("30/360 (30/360 ISMA)"),
-        ),
-        (
-            DAY_COUNT_ACT_ACT_AFB,
-            "DAY_COUNT_ACT_ACT_AFB",
-            gettext_lazy("Actual/Actual (AFB)"),
-        ),
+        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
+        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
         (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
     )
+
+    CLASSES_DICT = {
+        DAY_COUNT_ACT_ACT_ICMA: "DAY_COUNT_ACT_ACT_ICMA",
+        DAY_COUNT_ACT_ACT_ISDA: "DAY_COUNT_ACT_ACT_ISDA",
+        DAY_COUNT_ACT_360: "DAY_COUNT_ACT_360",
+        DAY_COUNT_ACT_365L: "DAY_COUNT_ACT_365L",
+        DAY_COUNT_30_360_ISDA: "DAY_COUNT_30_360_ISDA",
+        DAY_COUNT_30E_PLUS_360: "DAY_COUNT_30E_PLUS_360",
+        DAY_COUNT_NL_365: "DAY_COUNT_NL_365",
+        DAY_COUNT_30_360_US: "DAY_COUNT_30_360_US",
+        DAY_COUNT_BD_252: "DAY_COUNT_BD_252",
+        DAY_COUNT_30_360_GERMAN: "DAY_COUNT_30_360_GERMAN",
+        DAY_COUNT_ACT_365_FIXED: "DAY_COUNT_ACT_365_FIXED",
+        DAY_COUNT_30E_360: "DAY_COUNT_30E_360",
+        DAY_COUNT_ACT_365A: "DAY_COUNT_ACT_365A",
+        DAY_COUNT_ACT_366: "DAY_COUNT_ACT_366",
+        DAY_COUNT_ACT_364: "DAY_COUNT_ACT_364",
+        # CURRENTLY UNUSED BY CBOND
+        DAY_COUNT_NONE: "NONE",
+        DAY_COUNT_ACT_365: "DAY_COUNT_ACT_365",
+        DAY_COUNT_30_360_ISMA: "DAY_COUNT_30_360_ISMA",
+        DAY_COUNT_ACT_ACT_AFB: "DAY_COUNT_ACT_ACT_AFB",
+        DAY_COUNT_30_365: "DAY_COUNT_30_365",
+        DAY_COUNT_SIMPLE: "DAY_COUNT_SIMPLE",
+    }
 
     @staticmethod
     def get_quantlib_day_count(finmars_calculation_model_id: int) -> ql.DayCounter:
@@ -1774,7 +1769,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                 start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
                 float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
-                day_count = AccrualCalculationModel.get_quantlib_day_count(first_accrual.accrual_calculation_model.id)
+                day_count = AccrualCalculationModel.get_quantlib_day_count(
+                    first_accrual.accrual_calculation_model.id
+                )
                 # build accrual schedule
                 # schedule = ql.MakeSchedule(start_date, maturity_date, period )
 
@@ -3663,6 +3660,7 @@ class InstrumentAttachment(models.Model):
     """
     Intermediate model for many-to-many relation between instruments and files
     """
+
     instrument = models.ForeignKey(
         Instrument,
         on_delete=models.CASCADE,
