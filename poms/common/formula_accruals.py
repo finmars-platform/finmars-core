@@ -15,6 +15,22 @@ class FormulaAccrualsError(FinmarsBaseException):
 
 
 def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
+    """
+    Calculate the accrual event factor for a given accrual event and target date.
+    This function computes the accrual factor by determining the ratio of days
+    between the accrual start date and the target date to the total number of
+    days in the accrual period.
+
+    Args:
+        accrual_event: The accrual event object.
+        target_date: The target date for calculating the factor.
+
+    Returns:
+        The calculated accrual event factor, rounded to 6 decimal places.
+
+    Raises:
+        ValueError: If the accrual period has zero days.
+    """
     accrual_start_date = accrual_event.date - timedelta(days=accrual_event.periodicity_n)
     ql_day_counter = accrual_event.accrual_calculation_model.get_quantlib_day_count(
         accrual_event.accrual_calculation_model.id
