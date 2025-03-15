@@ -14,14 +14,23 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
-def calculate_accrual_event_factor(accrual_event, target_date: date) -> tuple[int, float]:
+def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
+    accrual_start_date = accrual_event.date - timedelta(days=accrual_event.periodicity_n)
     ql_day_counter = accrual_event.accrual_calculation_model.get_quantlib_day_count(
         accrual_event.accrual_calculation_model.id
     )
-    start_date = ql.Date(target_date.day, target_date.month, target_date.year)
+    price_date = ql.Date(target_date.day, target_date.month, target_date.year)
+    start_date = ql.Date(accrual_start_date.day, accrual_start_date.month, accrual_start_date.year)
     end_date = ql.Date(accrual_event.date.day, accrual_event.date.month, accrual_event.date.year)
 
-    return 1 - ql_day_counter.yearFraction(start_date, end_date)
+    days_to_price = ql_day_counter.dayCount(start_date, price_date)
+    accrual_days = ql_day_counter.dayCount(start_date, end_date)
+    if accrual_days == 0:
+        raise ValueError("Accrual period has zero days, can't compute factor")
+
+    accrual_factor = days_to_price / accrual_days
+
+    return round(accrual_factor, 6)
 
 
 def calculate_accrual_schedule_factor(
