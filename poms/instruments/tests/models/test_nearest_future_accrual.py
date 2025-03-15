@@ -15,10 +15,16 @@ class NearestFutureAccrualTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.instrument = Instrument.objects.first()
+        self.instrument.maturity_date = date(year=YEAR+10, month=12, day=31)
+        self.instrument.save()
 
     def create_accruals(self, amount: int) -> None:
         for year in range(YEAR, YEAR + amount):
-            AccrualFactory(instrument=self.instrument, date=date(year=year, month=1, day=1))
+            AccrualFactory(
+                instrument=self.instrument,
+                date=date(year=year, month=1, day=1),
+                periodicity_n=360,
+            )
 
     @BaseTestCase.cases(
         ("0", date(year=YEAR+0, month=2, day=1)),
