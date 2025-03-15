@@ -14,18 +14,14 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
-def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
+def calculate_accrual_event_factor(accrual_event, target_date: date) -> tuple[int, float]:
     ql_day_counter = accrual_event.accrual_calculation_model.get_quantlib_day_count(
         accrual_event.accrual_calculation_model.id
     )
     start_date = ql.Date(target_date.day, target_date.month, target_date.year)
     end_date = ql.Date(accrual_event.date.day, accrual_event.date.month, accrual_event.date.year)
 
-    number_of_days = ql_day_counter.dayCount(start_date, end_date)
-
-    accrual_factor = ql_day_counter.yearFraction(start_date, end_date)
-
-    return accrual_factor
+    return 1 - ql_day_counter.yearFraction(start_date, end_date)
 
 
 def calculate_accrual_schedule_factor(
