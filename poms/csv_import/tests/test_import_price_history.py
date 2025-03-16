@@ -31,17 +31,13 @@ class ImportPriceHistoryTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm0000"
-        self.space_code = "space0000"
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
+
         self.scheme_20 = self.create_scheme_20()
         self.file_content = SimpleUploadedFile(FILE_NAME, FILE_CONTENT)
         self.storage = mock.Mock()
         self.storage.save.return_value = None
         self.storage.open.return_value = self.file_content
-        self.instrument = self.create_instrument_for_price_history(
-            isin=PRICE_HISTORY[0]["Instrument"]
-        )
+        self.instrument = self.create_instrument_for_price_history(isin=PRICE_HISTORY[0]["Instrument"])
         self.pricing_policy = PricingPolicy.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
@@ -51,6 +47,7 @@ class ImportPriceHistoryTest(BaseTestCase):
             short_name="Standard",
             is_enabled=True,
         )
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
 
     def create_scheme_20(self):
         content_type = ContentType.objects.using(settings.DB_DEFAULT).get(
@@ -65,9 +62,7 @@ class ImportPriceHistoryTest(BaseTestCase):
                 "owner_id": self.member.id,
             }
         )
-        scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(
-            **scheme_data
-        )
+        scheme = CsvImportScheme.objects.using(settings.DB_DEFAULT).create(**scheme_data)
 
         for field_data in SCHEME_20_FIELDS:
             field_data["scheme"] = scheme

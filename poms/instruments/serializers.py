@@ -925,7 +925,7 @@ class InstrumentTypeViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class AccrualSerializer(serializers.ModelSerializer):
+class AccrualEventSerializer(serializers.ModelSerializer):
     accrual_calculation_model = AccrualCalculationModelField()
     accrual_calculation_model_object = AccrualCalculationModelSerializer(
         source="accrual_calculation_model", read_only=True
@@ -935,12 +935,14 @@ class AccrualSerializer(serializers.ModelSerializer):
         model = AccrualEvent
         fields = [
             "user_code",
-            "date",
-            "size",
-            "notes",
+            "start_date",
+            "end_date",
+            "accrual_size",
+            "payment_date",
             "periodicity_n",
             "accrual_calculation_model",
             "accrual_calculation_model_object",
+            "notes",
         ]
 
 
@@ -1083,7 +1085,7 @@ class InstrumentSerializer(
             many=True, required=False, allow_null=True
         )
         self.fields["files"] = FinmarsFileSerializer(many=True, read_only=True)
-        self.fields["accruals"] = AccrualSerializer(many=True, required=False, allow_null=True)
+        self.fields["accrual_events"] = AccrualEventSerializer(many=True, required=False, allow_null=True)
 
     def create(self, validated_data: dict) -> Instrument:
         func = f"{self.__class__.__name__}.create"
@@ -1094,7 +1096,7 @@ class InstrumentSerializer(
         factor_schedules = validated_data.pop("factor_schedules", None)
         event_schedules = validated_data.pop("event_schedules", None)
         pricing_policies = validated_data.pop("pricing_policies", [])
-        accruals = validated_data.pop("accruals", [])
+        accrual_events = validated_data.pop("accrual_events", [])
 
         instance = super().create(validated_data)
         _l.info(f"{func} created instrument.user_code={instance.user_code}")
@@ -1105,7 +1107,7 @@ class InstrumentSerializer(
         self.save_factor_schedules(instance, True, factor_schedules)
         self.save_event_schedules(instance, True, event_schedules)
         self.save_pricing_policies(instance, pricing_policies)
-        self.save_accruals(instance, True, accruals)
+        self.save_accruals(instance, True, accrual_events)
 
         return instance
 
@@ -1119,7 +1121,7 @@ class InstrumentSerializer(
         factor_schedules = validated_data.pop("factor_schedules", None)
         event_schedules = validated_data.pop("event_schedules", None)
         pricing_policies = validated_data.pop("pricing_policies", [])
-        accruals = validated_data.pop("accruals", [])
+        accrual_events = validated_data.pop("accrual_events", [])
 
         instance = super().update(instance, validated_data)
         _l.info(f"{func} updated instrument.user_code={instance.user_code}")
@@ -1136,8 +1138,8 @@ class InstrumentSerializer(
             self.save_event_schedules(instance, False, event_schedules)
 
         self.save_pricing_policies(instance, pricing_policies)
-        if accruals:
-            self.save_accruals(instance, False, accruals)
+        if accrual_events:
+            self.save_accruals(instance, False, accrual_events)
 
         try:  # can be set after in import
             self.calculate_prices_accrued_price(instance, False)

@@ -979,10 +979,10 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
         return GenericAttributeSerializer(instance=l, many=True, read_only=True, context=self.context).data
 
     def get_accruals(self, obj):
-        from poms.instruments.serializers import AccrualSerializer
+        from poms.instruments.serializers import AccrualEventSerializer
 
         all_accruals = obj.acruals.all()
-        return AccrualSerializer(instance=all_accruals, many=True, read_only=True, context=self.context).data
+        return AccrualEventSerializer(instance=all_accruals, many=True, read_only=True, context=self.context).data
 
 
 class ImportInstrumentEntry(object):
