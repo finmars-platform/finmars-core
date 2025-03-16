@@ -1054,7 +1054,7 @@ class InstrumentSerializer(
             "country_object",
             "files",
             "first_transaction_date",
-            "accruals",
+            "accrual_events",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -1107,7 +1107,7 @@ class InstrumentSerializer(
         self.save_factor_schedules(instance, True, factor_schedules)
         self.save_event_schedules(instance, True, event_schedules)
         self.save_pricing_policies(instance, pricing_policies)
-        self.save_accruals(instance, True, accrual_events)
+        self.save_accrual_events(instance, True, accrual_events)
 
         return instance
 
@@ -1139,7 +1139,7 @@ class InstrumentSerializer(
 
         self.save_pricing_policies(instance, pricing_policies)
         if accrual_events:
-            self.save_accruals(instance, False, accrual_events)
+            self.save_accrual_events(instance, False, accrual_events)
 
         try:  # can be set after in import
             self.calculate_prices_accrued_price(instance, False)
@@ -1298,13 +1298,13 @@ class InstrumentSerializer(
         except ValueError as e:
             raise ValidationError({"instrument_type": f"{repr(e)}"}) from e
 
-    def save_accruals(self, instrument, created, accruals):
+    def save_accrual_events(self, instrument, created, accrual_events):
         self.save_instr_related(
             instrument,
             created,
-            "accruals",
+            "accrual_events",
             AccrualEvent,
-            accruals,
+            accrual_events,
         )
 
 
