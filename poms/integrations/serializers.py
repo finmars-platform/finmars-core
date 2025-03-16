@@ -882,7 +882,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
     pricing_condition = PricingConditionField()
-    accruals = serializers.SerializerMethodField()
+    accrual_events = serializers.SerializerMethodField()
 
     class Meta:
         model = Instrument
@@ -918,10 +918,10 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
             "accrual_calculation_schedules",
             "factor_schedules",
             "event_schedules",
+            "accrual_events",
             # 'attributes',
             "co_directional_exposure_currency",
             "counter_directional_exposure_currency",
-            "accruals",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -944,12 +944,6 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
         self.fields["event_schedules"] = EventScheduleSerializer(many=True, required=False, allow_null=True)
 
         self.fields["attributes"] = serializers.SerializerMethodField()
-
-        # self.fields.pop('manual_pricing_formulas')
-        # self.fields.pop('accrual_calculation_schedules')
-        # self.fields.pop('factor_schedules')
-        # self.fields.pop('event_schedules')
-        # self.fields.pop('attributes')
 
     def get_accrual_calculation_schedules(self, obj):
         from poms.instruments.serializers import AccrualCalculationScheduleSerializer
@@ -978,11 +972,13 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
 
         return GenericAttributeSerializer(instance=l, many=True, read_only=True, context=self.context).data
 
-    def get_accruals(self, obj):
+    def get_accrual_events(self, obj):
         from poms.instruments.serializers import AccrualEventSerializer
 
-        all_accruals = obj.acruals.all()
-        return AccrualEventSerializer(instance=all_accruals, many=True, read_only=True, context=self.context).data
+        accrual_events = obj.acrual_events.all()
+        return AccrualEventSerializer(
+            instance=accrual_events, many=True, read_only=True, context=self.context
+        ).data
 
 
 class ImportInstrumentEntry(object):
@@ -1708,7 +1704,8 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                     f"{instance.rule_scenario.transaction_type}"
                 )
                 _l.error(
-                    f"Error in to_representation instance.transaction_type_input: " f"{instance.transaction_type_input}"
+                    f"Error in to_representation instance.transaction_type_input: "
+                    f"{instance.transaction_type_input}"
                 )
                 _l.error(f"Error in to_representation: {e} trace {traceback.format_exc()}")
 
@@ -1955,7 +1952,8 @@ class ComplexTransactionImportSchemeSerializer(
     def save_rule_scenarios(self, instance, rules):
         pk_set = []
 
-        default_transaction_type = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk
+        default_transaction_type = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
         ).transaction_type
 
         for rule_values in rules:
@@ -1989,7 +1987,9 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
+                            scheme=instance, value=val
+                        )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
                         pass
@@ -2028,7 +2028,9 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
+                            scheme=instance, value=val
+                        )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
                         pass

@@ -330,11 +330,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 },
                                 "accrual_size": 0.523087370779387,
                                 "end_date": "2025-01-01",
-                                "instrument": 1,  # FIXME !!!!
                                 "notes": "cQoXedKAFbWwtOmBPSkV",
                                 "payment_date": "2025-01-03",
                                 "periodicity_n": 248,
-                                "source": 4,
                                 "start_date": "2024-04-28",
                                 "user_code": "VANGUARD:2025-01-01",
                             },
@@ -356,8 +354,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         instrument = self.validate_result_instrument(instrument_code)
-        self.assertEqual(len(instrument.accrual_events.all()), 1)
 
+        self.assertEqual(len(instrument.accrual_events.all()), 1)
         accrual_event = AccrualEvent.objects.filter(instrument=instrument).first()
         self.assertIsNotNone(accrual_event)
 

@@ -1136,17 +1136,17 @@ class InstrumentSerializer(
             self.save_factor_schedules(instance, False, factor_schedules)
         if event_schedules:
             self.save_event_schedules(instance, False, event_schedules)
-
-        self.save_pricing_policies(instance, pricing_policies)
         if accrual_events:
             self.save_accrual_events(instance, False, accrual_events)
+
+        self.save_pricing_policies(instance, pricing_policies)
 
         try:  # can be set after in import
             self.calculate_prices_accrued_price(instance, False)
         except Exception as e:
             _l.error(f"Could not calculate prices and accrued price {repr(e)}")
 
-        # needed to update data about accrual_calculation_schedules and event_schedules
+        # needed to update data about related objects
         instance.refresh_from_db()
 
         return instance
