@@ -79,7 +79,6 @@ Test:
     REDIS_PORT: 6379
 
   before_script:
-    # - apt-get update && apt-get install -y --no-install-recommends python3-dev && rm -rf /var/lib/apt/lists/*
     - pip install --upgrade pip && pip install -r requirements-test.txt
     - mkdir -p /var/log/finmars/backend
   script:
