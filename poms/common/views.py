@@ -91,8 +91,6 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         return [tag]
 
 
-
-
 class AbstractApiView(APIView):
     def perform_authentication(self, request):
         auth_st = time.perf_counter()

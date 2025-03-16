@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
-from poms.integrations.database_client import get_backend_callback_url
+from poms.integrations.database_client import get_backend_callback_urls
 
 from poms.counterparties.models import Counterparty
 
@@ -17,7 +17,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             func="import_company_finmars_database",
         )
 
-        BACKEND_CALLBACK_URLS = get_backend_callback_url()
+        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
 
         self.url = BACKEND_CALLBACK_URLS["company"]
 

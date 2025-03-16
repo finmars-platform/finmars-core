@@ -1,3 +1,4 @@
+from urllib.parse import unquote
 import io
 import json
 import logging
@@ -25,6 +26,7 @@ from poms.configuration.models import Configuration
 from poms.configuration.utils import (
     create_or_update_workflow_template,
     list_json_files,
+    load_file,
     read_json_file,
     run_workflow,
     save_json_to_file,
@@ -239,6 +241,23 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
                         instance = Model.objects.filter(user_code=user_code).first()
                 else:
                     instance = None
+
+                if content_type == "system.whitelabelmodel":
+                    model_name = content_type = json_data["meta"]["model_name"]
+                    directory_with_files = f"{output_directory}/{model_name}/{user_code.split(':')[-1]}"
+
+                    files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"]
+                    for key in files_key:
+                        relative_file_path = json_data.get(key)
+                        file_name = os.path.basename(relative_file_path)
+                        file_path = os.path.join(directory_with_files, unquote(file_name))
+
+                        if "css" in key:
+                            data_key = key.replace("url", "file")
+                        else:
+                            data_key = key.replace("url", "image")
+                        
+                        json_data[data_key] = load_file(file_path)
 
                 serializer = SerializerClass(
                     instance=instance, data=json_data, context=context

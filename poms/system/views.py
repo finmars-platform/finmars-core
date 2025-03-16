@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from django.conf import settings
 from django_filters.rest_framework import FilterSet
 from rest_framework.exceptions import ValidationError
 
@@ -37,11 +36,6 @@ class WhitelabelViewSet(AbstractModelViewSet):
     serializer_class = WhitelabelSerializer
     pagination_class = None
     filter_class = IsDefaultFilterSet
-
-    def get_serializer_context(self, *args, **kwargs):
-        context = super().get_serializer_context()
-        context.update({"space_code": self.request.space_code if self.request else "space00000"})
-        return context
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

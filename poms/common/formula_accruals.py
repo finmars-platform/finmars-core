@@ -2,10 +2,10 @@ import calendar
 import logging
 from datetime import date, timedelta
 
-from poms.common.exceptions import FinmarsBaseException
+import QuantLib as ql
 from dateutil import relativedelta, rrule
-# no need for scipy 2024-10-27 szhitenev
-# from scipy.optimize import newton
+
+from poms.common.exceptions import FinmarsBaseException
 
 _l = logging.getLogger("poms.common")
 
@@ -14,16 +14,47 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
-def coupon_accrual_factor(
+def calculate_accrual_event_factor(coupon, price_date: date) -> float:
+    """
+    Calculate the accrual event factor for a given accrual event and target date.
+    This function computes the accrual factor by determining the ratio of days
+    between the accrual start date and the target date to the total number of
+    days in the accrual period.
+
+    Args:
+        coupon: The accrual event object.
+        price_date: The target date for calculating the factor.
+
+    Returns:
+        The calculated accrual event factor, rounded to 6 decimal places.
+
+    Raises:
+        ValueError: If the accrual period has zero days.
+    """
+    ql_day_counter = coupon.accrual_calculation_model.get_quantlib_day_count(coupon.accrual_calculation_model_id)
+    price_date = ql.Date(price_date.day, price_date.month, price_date.year)
+    start_date = ql.Date(coupon.start_date.day, coupon.start_date.month, coupon.start_date.year)
+    end_date = ql.Date(coupon.end_date.day, coupon.end_date.month, coupon.end_date.year)
+
+    days_to_price = ql_day_counter.dayCount(start_date, price_date)
+    coupon_days = ql_day_counter.dayCount(start_date, end_date)
+    if coupon_days == 0:
+        raise ValueError("Coupon period has zero days, can't compute factor")
+
+    accrual_factor = days_to_price / coupon_days
+
+    return round(accrual_factor, 6)
+
+
+def calculate_accrual_schedule_factor(
     accrual_calculation_schedule=None,
     accrual_calculation_model=None,
     periodicity=None,
-    periodicity_n=None,
     dt1=None,
     dt2=None,
     dt3=None,
     maturity_date=None,
-):
+) -> float:
     from poms.instruments.models import AccrualCalculationModel
 
     # day_convention_code - accrual_calculation_model
@@ -34,11 +65,8 @@ def coupon_accrual_factor(
     # maturity_date - instrument.maturity_date
 
     if accrual_calculation_schedule:
-        accrual_calculation_model = (
-            accrual_calculation_schedule.accrual_calculation_model
-        )
+        accrual_calculation_model = accrual_calculation_schedule.accrual_calculation_model
         periodicity = accrual_calculation_schedule.periodicity
-        periodicity_n = accrual_calculation_schedule.periodicity_n
         if maturity_date is None:
             maturity_date = accrual_calculation_schedule.instrument.maturity_date
 
@@ -48,13 +76,7 @@ def coupon_accrual_factor(
     # if isinstance(periodicity, Periodicity):
     #     periodicity = periodicity.id
 
-    if (
-        accrual_calculation_model is None
-        or periodicity is None
-        or dt1 is None
-        or dt2 is None
-        or dt3 is None
-    ):
+    if accrual_calculation_model is None or periodicity is None or dt1 is None or dt2 is None or dt3 is None:
         return 0
 
     # k = 0
@@ -133,9 +155,7 @@ def coupon_accrual_factor(
         is_leap1 = calendar.isleap(dt1.year)
         is_leap2 = calendar.isleap(dt2.year)
         if is_leap1 != is_leap2:
-            return (date(dt2.year, 1, 1) - dt1).days / ndays1 + (
-                dt2 - date(dt2.year, 1, 1)
-            ).days / ndays2
+            return (date(dt2.year, 1, 1) - dt1).days / ndays1 + (dt2 - date(dt2.year, 1, 1)).days / ndays2
         else:
             return (dt2 - dt1).days / 365
 
@@ -163,9 +183,7 @@ def coupon_accrual_factor(
             # TODO: verify
             is_leap1 = calendar.isleap(dt1.year)
             is_leap2 = calendar.isleap(dt2.year)
-            if (is_leap1 or is_leap2) and dt1 <= (
-                date(dt1.year, 2, 28) + timedelta(days=1)
-            ) <= dt2:
+            if (is_leap1 or is_leap2) and dt1 <= (date(dt1.year, 2, 28) + timedelta(days=1)) <= dt2:
                 return ((dt2 - dt1).days + 1) / 366
             else:
                 return ((dt2 - dt1).days + 1) / 365
@@ -179,9 +197,7 @@ def coupon_accrual_factor(
     elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_US:
         return _accrual_factor_30_360(dt1, dt2)
 
-    elif (
-        accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_GERMAN
-    ):
+    elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_GERMAN:
         return _accrual_factor_30_360(dt1, dt2)
 
     elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_NL_365:  # 14
@@ -205,14 +221,13 @@ def coupon_accrual_factor(
         # Case 33  'BUS DAYS/252
         #     CouponAccrualFactor = (DateDiff("d", dt1, dt2) - DateDiff("ww", dt1, dt2, vbSaturday) - _
         #         DateDiff("ww", dt1, dt2, vbSunday)) / 252
-        return (
-            (dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)
-        ) / 252
+        return ((dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)) / 252
 
     elif (
         accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_ISDA
         or accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30E_360
-    ):  # 11 & 28
+    ):
+        # 11 & 28
         # Case 35  'GERMAN-30/360 (EOM)
         #     If IsNull(MaturityDate) Then
         #         CouponAccrualFactor = 0
@@ -233,9 +248,7 @@ def coupon_accrual_factor(
             d1 = 30
         if last_day2 and (dt2 != maturity_date or dt2.month != 2):
             d2 = 30
-        return (
-                (dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)
-        ) / 360
+        return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
 
     else:
         err_msg = f"unknown accrual_calculation_model.id={accrual_calculation_model.id}"
@@ -257,9 +270,7 @@ def _accrual_factor_30_360(dt1, dt2):
         d1 = 30
     if d2 == 31 and d1 in (30, 31):
         d2 = 30
-    return (
-        (dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)
-    ) / 360
+    return ((dt2.year - dt1.year) * 360 + (dt2.month - dt1.month) * 30 + (d2 - d1)) / 360
 
 
 def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
@@ -460,15 +471,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         #     Case 33  'BUS DAYS/252
         #         GetCoupon = CPN * (DateDiff("d", dt1, dt2) - DateDiff("ww", dt1, dt2, vbSaturday) - _
         #             DateDiff("d", dt1, dt2, vbSunday)) / 252
-        return (
-            cpn
-            * (
-                (dt2 - dt1).days
-                - weekday(dt1, dt2, rrule.SA)
-                - weekday(dt1, dt2, rrule.SU)
-            )
-            / 252
-        )
+        return cpn * ((dt2 - dt1).days - weekday(dt1, dt2, rrule.SA) - weekday(dt1, dt2, rrule.SU)) / 252
 
     elif accrual_calculation_model.id == AccrualCalculationModel.DAY_COUNT_30_360_ISDA:
         #     Case 35  'GERMAN-30/360 (EOM)
@@ -531,10 +534,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
         is_leap1 = calendar.isleap(dt1.year)
         is_leap2 = calendar.isleap(dt2.year)
         if is_leap1 != is_leap2:
-            return cpn * (
-                (date(dt2.year, 1, 1) - dt1).days / ndays1
-                + (dt2 - date(dt2.year, 1, 1)).days / ndays2
-            )
+            return cpn * ((date(dt2.year, 1, 1) - dt1).days / ndays1 + (dt2 - date(dt2.year, 1, 1)).days / ndays2)
         else:
             return cpn * (dt2 - dt1).days / 365
 
@@ -572,9 +572,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
             # TODO: verify
             is_leap1 = calendar.isleap(dt1.year)
             is_leap2 = calendar.isleap(dt2.year)
-            if (is_leap1 or is_leap2) and dt1 <= (
-                date(y1, 2, 28) + timedelta(days=1)
-            ) <= dt2:
+            if (is_leap1 or is_leap2) and dt1 <= (date(y1, 2, 28) + timedelta(days=1)) <= dt2:
                 return cpn * ((dt2 - dt1).days + 1) / 366
             else:
                 return cpn * ((dt2 - dt1).days + 1) / 365
@@ -611,53 +609,47 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
 
 
 def weekday(dt1, dt2, byweekday):
-    return sum(
-        1
-        for _ in rrule.rrule(
-            rrule.WEEKLY, dtstart=dt1, until=dt2, byweekday=byweekday
-        )
-    )
+    return sum(1 for _ in rrule.rrule(rrule.WEEKLY, dtstart=dt1, until=dt2, byweekday=byweekday))
 
 
-def f_xnpv(data, rate):
-    """Equivalent of Excel's XNPV function.
-    https://support.office.com/en-us/article/XNPV-function-1b42bbf6-370f-4532-a0eb-d67c16b664b7
+# OLD VERSION
+# def f_xnpv(data, rate):
+#     """Equivalent of Excel's XNPV function.
+#     https://support.office.com/en-us/article/XNPV-function-1b42bbf6-370f-4532-a0eb-d67c16b664b7
+#
+#     from datetime import date
+#     dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17),]
+#     values = [-90, 5, 5, 105, ]
+#     data = [(d, v) for d, v in zip(dates, values)]
+#     f_xnpv(0.09, data)
+#     16.7366702148651
+#     """
+#     # _l.debug('xnpv > rate=%s', rate)
+#     if not data:
+#         return 0.0
+#
+#     if rate <= -1.0:
+#         return float("inf")
+#     d0, v0 = data[0]  # or min(dates)
+#
+#     # for di, vi in data:
+#     #     _l.debug('f_xnpv: di=%s, vi=%s 1rate=%s, days=%s, exp=%s',
+#     #              di, vi, (1.0 + rate), (di - d0).days, ((di - d0).days / 365.0) )
+#     #     try:
+#     #         _l.debug('    res=%s', vi / ((1.0 + rate) ** ((di - d0).days / 365.0)))
+#     #     except Exception as e:
+#     #         _l.debug('    res=%s', repr(e))
+#
+#     try:
+#         return sum(vi / ((1.0 + rate) ** ((di - d0).days / 365.0)) for di, vi in data)
+#     except (OverflowError, ZeroDivisionError):
+#         return 0.0
 
-    from datetime import date
-    dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17),]
-    values = [-90, 5, 5, 105, ]
-    data = [(d, v) for d, v in zip(dates, values)]
-    f_xnpv(0.09, data)
-    16.7366702148651
-    """
-    # _l.debug('xnpv > rate=%s', rate)
-    if not data:
-        return 0.0
-
-    if rate <= -1.0:
-        return float("inf")
-    d0, v0 = data[0]  # or min(dates)
-
-    # for di, vi in data:
-    #     _l.debug('f_xnpv: di=%s, vi=%s 1rate=%s, days=%s, exp=%s',
-    #              di, vi, (1.0 + rate), (di - d0).days, ((di - d0).days / 365.0) )
-    #     try:
-    #         _l.debug('    res=%s', vi / ((1.0 + rate) ** ((di - d0).days / 365.0)))
-    #     except Exception as e:
-    #         _l.debug('    res=%s', repr(e))
-
-    try:
-        return sum(vi / ((1.0 + rate) ** ((di - d0).days / 365.0)) for di, vi in data)
-    except (OverflowError, ZeroDivisionError):
-        return 0.0
-
-
-from datetime import date
 
 def f_xnpv(data, rate):
     """Calculate the Net Present Value for irregular cash flows."""
     if rate == -1:
-        return float('inf')  # Avoid division by zero
+        return float("inf")  # Avoid division by zero
 
     npv = 0.0
     start_date = data[0][0]  # Use the first date as the base date
@@ -666,6 +658,7 @@ def f_xnpv(data, rate):
         npv += value / ((1 + rate) ** days)
     return npv
 
+
 def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
     """Calculate the XIRR (Internal Rate of Return) for irregular cash flows."""
     if not data:
@@ -673,10 +666,11 @@ def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
 
     # Newton-Raphson iteration
     rate = x0
-    for i in range(maxiter):
+    epsilon = 1e-5
+    for _ in range(maxiter):
         npv = f_xnpv(data, rate)
         # Calculate the derivative (approximate derivative using finite difference)
-        epsilon = 1e-5
+
         npv_derivative = (f_xnpv(data, rate + epsilon) - npv) / epsilon
 
         # Avoid division by zero if the derivative is very small
@@ -694,7 +688,6 @@ def f_xirr(data, x0=0.0, tol=0.000001, maxiter=100):
 
     # If the method fails to converge, return 0.0
     return 0.0
-
 
 
 # def f_duration(data, ytm=None):
@@ -868,9 +861,7 @@ if __name__ == "__main__":
         _l.debug("data: %s", [(str(d), v) for d, v in data])
         _l.debug("xirr: %s", f_xirr(data))
 
-        _l.debug(
-            "https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d"
-        )
+        _l.debug("https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d")
         dates = [
             date(2008, 1, 1),
             date(2008, 3, 1),
@@ -954,17 +945,11 @@ if __name__ == "__main__":
 
             _l.debug(
                 "get_future_coupons: %s",
-                [
-                    (str(d), v)
-                    for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))
-                ],
+                [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))],
             )
             _l.debug(
                 "get_future_coupons: %s",
-                [
-                    (str(d), v)
-                    for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))
-                ],
+                [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))],
             )
 
             for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1)):
@@ -1016,10 +1001,7 @@ if __name__ == "__main__":
 
             _l.debug(
                 "get_future_coupons: %s",
-                [
-                    (str(d), v)
-                    for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))
-                ],
+                [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))],
             )
         finally:
             transaction.set_rollback(True)
