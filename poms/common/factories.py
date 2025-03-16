@@ -209,12 +209,12 @@ class AccrualCalculationScheduleFactory(DjangoModelFactory):
     first_payment_date = factory.LazyAttribute(lambda obj: obj.accrual_start_date)
 
 
-class AccrualFactory(factory.django.DjangoModelFactory):
+class AccrualEventFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AccrualEvent
 
     instrument = factory.SubFactory(InstrumentFactory)
-    user_code = factory.LazyAttribute(lambda obj: f"{obj.instrument.reference}:{obj.end_date}")
+    user_code = factory.LazyAttribute(lambda obj: f"{obj.instrument.user_code}:{obj.end_date}")
     periodicity_n = FuzzyInteger(90, 365)
     end_date = factory.Faker("date_object")
     start_date = factory.LazyAttribute(lambda obj: obj.end_date - timedelta(days=obj.periodicity_n))

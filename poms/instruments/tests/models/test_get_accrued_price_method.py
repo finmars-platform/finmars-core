@@ -1,7 +1,7 @@
 from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
-from poms.common.factories import AccrualFactory, AccrualCalculationScheduleFactory
+from poms.common.factories import AccrualEventFactory, AccrualCalculationScheduleFactory
 from poms.instruments.models import (
     AccrualEvent,
     AccrualCalculationSchedule,
@@ -16,7 +16,7 @@ class AccruedPriceMethodTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.instrument = Instrument.objects.first()
-        self.accrual_event = AccrualFactory(instrument=self.instrument)
+        self.accrual_event = AccrualEventFactory(instrument=self.instrument)
         self.accrual_schedule = AccrualCalculationScheduleFactory(instrument=self.instrument)
 
     def test_init(self):

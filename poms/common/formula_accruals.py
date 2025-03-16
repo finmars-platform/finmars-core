@@ -14,7 +14,7 @@ class FormulaAccrualsError(FinmarsBaseException):
     pass
 
 
-def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
+def calculate_accrual_event_factor(coupon, price_date: date) -> float:
     """
     Calculate the accrual event factor for a given accrual event and target date.
     This function computes the accrual factor by determining the ratio of days
@@ -22,8 +22,8 @@ def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
     days in the accrual period.
 
     Args:
-        accrual_event: The accrual event object.
-        target_date: The target date for calculating the factor.
+        coupon: The accrual event object.
+        price_date: The target date for calculating the factor.
 
     Returns:
         The calculated accrual event factor, rounded to 6 decimal places.
@@ -31,20 +31,17 @@ def calculate_accrual_event_factor(accrual_event, target_date: date) -> float:
     Raises:
         ValueError: If the accrual period has zero days.
     """
-    accrual_start_date = accrual_event.date - timedelta(days=accrual_event.periodicity_n)
-    ql_day_counter = accrual_event.accrual_calculation_model.get_quantlib_day_count(
-        accrual_event.accrual_calculation_model.id
-    )
-    price_date = ql.Date(target_date.day, target_date.month, target_date.year)
-    start_date = ql.Date(accrual_start_date.day, accrual_start_date.month, accrual_start_date.year)
-    end_date = ql.Date(accrual_event.date.day, accrual_event.date.month, accrual_event.date.year)
+    ql_day_counter = coupon.accrual_calculation_model.get_quantlib_day_count(coupon.accrual_calculation_model_id)
+    price_date = ql.Date(price_date.day, price_date.month, price_date.year)
+    start_date = ql.Date(coupon.start_date.day, coupon.start_date.month, coupon.start_date.year)
+    end_date = ql.Date(coupon.end_date.day, coupon.end_date.month, coupon.end_date.year)
 
     days_to_price = ql_day_counter.dayCount(start_date, price_date)
-    accrual_days = ql_day_counter.dayCount(start_date, end_date)
-    if accrual_days == 0:
-        raise ValueError("Accrual period has zero days, can't compute factor")
+    coupon_days = ql_day_counter.dayCount(start_date, end_date)
+    if coupon_days == 0:
+        raise ValueError("Coupon period has zero days, can't compute factor")
 
-    accrual_factor = days_to_price / accrual_days
+    accrual_factor = days_to_price / coupon_days
 
     return round(accrual_factor, 6)
 

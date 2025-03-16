@@ -4,7 +4,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.factories import (
     AccrualCalculationModel,
     AccrualCalculationModelFactory,
-    AccrualFactory,
+    AccrualEventFactory,
 )
 from poms.common.formula_accruals import calculate_accrual_event_factor
 from poms.instruments.models import AccrualEvent
@@ -19,10 +19,10 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         self.init_test_case()
 
     def create_accrual_event(self, model_type: int, day: date) -> AccrualEvent:
-        return AccrualFactory(
+        return AccrualEventFactory(
             instrument=self.default_instrument,
             accrual_calculation_model=AccrualCalculationModelFactory(model_type=model_type),
-            date=day,
+            end_date=day,
             periodicity_n=PERIOD_DAYS,
         )
 

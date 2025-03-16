@@ -1,7 +1,7 @@
 from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
-from poms.common.factories import AccrualFactory
+from poms.common.factories import AccrualEventFactory
 from poms.instruments.models import Instrument
 
 YEAR = BaseTestCase.today().year
@@ -20,9 +20,9 @@ class NearestFutureAccrualTest(BaseTestCase):
 
     def create_accruals(self, amount: int) -> None:
         for year in range(YEAR, YEAR + amount):
-            AccrualFactory(
+            AccrualEventFactory(
                 instrument=self.instrument,
-                date=date(year=year, month=1, day=1),
+                end_date=date(year=year, month=1, day=1),
                 periodicity_n=360,
             )
 
