@@ -6,7 +6,7 @@ from poms.instruments.models import (
     Instrument,
 )
 
-class GetAccruedPriceMethodTest(BaseTestCase):
+class GetAccrualSizePriceMethodTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):

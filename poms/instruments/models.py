@@ -1531,12 +1531,10 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         blank=True,
         help_text="Files in the storage related to the instrument",
     )
-
     first_transaction_date = models.DateField(
         null=True,
         verbose_name=gettext_lazy("first transaction date"),
     )
-
     resource_groups = ResourceGroupsField(
         verbose_name=gettext_lazy("list of resource groups user_codes, to which instrument belongs"),
     )
@@ -2125,7 +2123,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             factor = calculate_accrual_event_factor(accrual_event, price_date)
             return accrual_event.accrual_size * factor
 
-        # use accrual schedule path
+        # take accrual schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
         if not accrual_schedule:
             return 0
@@ -2144,9 +2142,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         if not self._price_date_is_valid(day=price_date):
             return 0
 
-        # TODO ADD ACCRUAL EVENT PATH
+        # check accrual event path
+        accrual_event = self.find_accrual_event(price_date)
+        if accrual_event:
+            return accrual_event.accrual_size
 
-        # accrual_schedule path
+        # take accrual_schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
         accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
 
