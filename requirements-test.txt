@@ -1,0 +1,3 @@
+-r requirements.txt
+coverage==7.6.12
+factory-boy==3.3.3
