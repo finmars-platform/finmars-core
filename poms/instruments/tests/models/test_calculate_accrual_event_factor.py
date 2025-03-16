@@ -7,7 +7,7 @@ from poms.common.factories import (
     AccrualFactory,
 )
 from poms.common.formula_accruals import calculate_accrual_event_factor
-from poms.instruments.models import Accrual
+from poms.instruments.models import AccrualEvent
 
 PERIOD_DAYS = 365
 
@@ -18,7 +18,7 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
     def setUp(self):
         self.init_test_case()
 
-    def create_accrual_event(self, model_type: int, day: date) -> Accrual:
+    def create_accrual_event(self, model_type: int, day: date) -> AccrualEvent:
         return AccrualFactory(
             instrument=self.default_instrument,
             accrual_calculation_model=AccrualCalculationModelFactory(model_type=model_type),

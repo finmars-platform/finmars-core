@@ -2090,7 +2090,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accrual
 
-    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
+    def find_accrual_event(self, target_date: date) -> Optional["AccrualEvent"]:
         """
         Finds the nearest to target_date future accrual event in the instrument's accruals.
         """
@@ -3671,51 +3671,51 @@ class InstrumentAttachment(models.Model):
     )
 
 
-class Accrual(models.Model):
+class AccrualEvent(models.Model):
     instrument = models.ForeignKey(
         Instrument,
         db_index=True,
-        related_name="accruals",
+        related_name="accrual_events",
         verbose_name="Instrument",
         on_delete=models.CASCADE,
     )
     user_code = models.CharField(
         max_length=255,
-        blank=True,
-        default="",
         verbose_name=gettext_lazy("User code"),
     )
-    date = models.DateField(
+    start_date = models.DateField(
+        verbose_name=gettext_lazy("Accrual start date"),
+    )
+    end_date = models.DateField(
         verbose_name=gettext_lazy("Accrual value date"),
     )
-    size = models.FloatField(
-        default=0.0,
+    payment_date = models.DateField(
+        verbose_name=gettext_lazy("Accrual payment date"),
+    )
+    accrual_size = models.FloatField(
         verbose_name=gettext_lazy("Accrual size"),
+    )
+    accrual_calculation_model = models.ForeignKey(
+        AccrualCalculationModel,
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("Accrual calculation model"),
+    )
+    periodicity_n = models.IntegerField(
+        verbose_name=gettext_lazy("Days between coupons"),
     )
     notes = models.TextField(
         blank=True,
         default="",
         verbose_name="Notes",
     )
-    accrual_calculation_model = models.ForeignKey(
-        AccrualCalculationModel,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("accrual calculation model"),
-    )
-    periodicity_n = models.IntegerField(
-        default=0,
-        null=True,
-        blank=True,
-        verbose_name=gettext_lazy("days between coupons"),
-    )
 
     class Meta:
         verbose_name = gettext_lazy("Accrual")
         verbose_name_plural = gettext_lazy("Accruals")
-        ordering = ["instrument", "date"]
+        ordering = ["instrument", "end_date"]
         constraints = [
             models.UniqueConstraint(
-                fields=["instrument", "date"],
-                name="unique_instrument_accrual_date",
+                fields=["instrument", "end_date"],
+                name="unique_instrument_accrual_event_date",
             )
         ]

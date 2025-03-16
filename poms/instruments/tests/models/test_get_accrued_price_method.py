@@ -3,7 +3,7 @@ from datetime import date
 from poms.common.common_base_test import BaseTestCase
 from poms.common.factories import AccrualFactory, AccrualCalculationScheduleFactory
 from poms.instruments.models import (
-    Accrual,
+    AccrualEvent,
     AccrualCalculationSchedule,
     Instrument,
     DATE_FORMAT,
@@ -20,7 +20,7 @@ class AccruedPriceMethodTest(BaseTestCase):
         self.accrual_schedule = AccrualCalculationScheduleFactory(instrument=self.instrument)
 
     def test_init(self):
-        self.assertEqual(Accrual.objects.count(), 1)
+        self.assertEqual(AccrualEvent.objects.count(), 1)
         self.assertEqual(AccrualCalculationSchedule.objects.count(), 1)
 
     # @BaseTestCase.cases(

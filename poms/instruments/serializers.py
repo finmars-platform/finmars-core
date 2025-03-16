@@ -36,7 +36,7 @@ from poms.instruments.fields import (
     PricingPolicyField,
 )
 from poms.instruments.models import (
-    Accrual,
+    AccrualEvent,
     AccrualCalculationModel,
     AccrualCalculationSchedule,
     CostMethod,
@@ -932,7 +932,7 @@ class AccrualSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Accrual
+        model = AccrualEvent
         fields = [
             "user_code",
             "date",
@@ -1301,7 +1301,7 @@ class InstrumentSerializer(
             instrument,
             created,
             "accruals",
-            Accrual,
+            AccrualEvent,
             accruals,
         )
 

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import factory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyFloat, FuzzyInteger, FuzzyText, FuzzyChoice
@@ -6,7 +8,7 @@ from django.contrib.auth.models import User
 
 from poms.currencies.models import Currency
 from poms.instruments.models import (
-    Accrual,
+    AccrualEvent,
     AccrualCalculationModel,
     AccrualCalculationSchedule,
     Instrument,
@@ -209,12 +211,14 @@ class AccrualCalculationScheduleFactory(DjangoModelFactory):
 
 class AccrualFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Accrual
+        model = AccrualEvent
 
     instrument = factory.SubFactory(InstrumentFactory)
-    user_code = factory.LazyAttribute(lambda obj: f"{obj.instrument.user_code}:{obj.date}")
-    date = factory.Faker("date_object")
-    size = FuzzyFloat(100.0, 1000.0)
-    notes = FuzzyText(length=20)
-    accrual_calculation_model = factory.SubFactory(AccrualCalculationModelFactory)
+    user_code = factory.LazyAttribute(lambda obj: f"{obj.instrument.reference}:{obj.end_date}")
     periodicity_n = FuzzyInteger(90, 365)
+    end_date = factory.Faker("date_object")
+    start_date = factory.LazyAttribute(lambda obj: obj.end_date - timedelta(days=obj.periodicity_n))
+    payment_date = factory.LazyAttribute(lambda obj: obj.end_date + timedelta(days=2))
+    accrual_size = FuzzyFloat(0.1, 0.9)
+    accrual_calculation_model = factory.SubFactory(AccrualCalculationModelFactory)
+    notes = FuzzyText(length=20)

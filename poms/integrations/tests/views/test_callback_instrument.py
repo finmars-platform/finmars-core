@@ -4,7 +4,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
 from poms.csv_import.handlers import PERIODICITY_MAP
-from poms.instruments.models import Accrual, AccrualCalculationSchedule, Instrument
+from poms.instruments.models import AccrualEvent, AccrualCalculationSchedule, Instrument
 from poms.integrations.database_client import get_backend_callback_urls
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
 
@@ -352,7 +352,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         instrument = self.validate_result_instrument(instrument_code)
         self.assertEqual(len(instrument.accruals.all()), 1)
 
-        accrual = Accrual.objects.filter(instrument=instrument).first()
+        accrual = AccrualEvent.objects.filter(instrument=instrument).first()
         self.assertIsNotNone(accrual)
 
         accrual_data: dict = post_data["data"]["instruments"][0]["accruals"][0]
