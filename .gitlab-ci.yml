@@ -79,21 +79,8 @@ Test:
     REDIS_PORT: 6379
 
   before_script:
-    - |
-      apt-get update && apt-get install -y --no-install-recommends \
-      gcc \
-      musl-dev \
-      python3-dev \
-      libpq-dev \
-      libgnutls28-dev \
-      git \
-      && rm -rf /var/lib/apt/lists/*
-    - python -m pip install --upgrade pip
-    - pip install uwsgi
-    - pip install tblib
-    - pip install -r requirements.txt
-    - mkdir /var/log/finmars
-    - mkdir /var/log/finmars/backend
+    - pip install --upgrade pip && pip install -r requirements-test.txt
+    - mkdir -p /var/log/finmars/backend
   script:
     - coverage run --parallel-mode manage.py test --parallel auto
     - coverage combine && coverage report && coverage html

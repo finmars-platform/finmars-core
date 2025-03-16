@@ -7,90 +7,110 @@ router = routers.DefaultRouter()
 router.register(
     "instrument-class",
     instruments.InstrumentClassViewSet,
+    "instrument_class",
 )
 router.register(
     "daily-pricing-model",
     instruments.DailyPricingModelViewSet,
+    "daily_pricing_model",
 )
 router.register(
     "accrual-calculation-model",
     instruments.AccrualCalculationModelClassViewSet,
+    "accrual_calculation_model",
 )
 router.register(
     "payment-size-detail",
     instruments.PaymentSizeDetailViewSet,
+    "payment_size_detail",
 )
 router.register(
     "pricing-condition",
     instruments.PricingConditionViewSet,
+    "pricing_condition",
 )
 router.register(
     "country",
     instruments.CountryViewSet,
+    "country",
 )
 router.register(
     "exposure-calculation-model",
     instruments.ExposureCalculationModelViewSet,
+    "exposure_calculation_model",
 )
 router.register(
     "long-underlying-exposure",
     instruments.LongUnderlyingExposureViewSet,
+    "long_underlying_exposure",
 )
 router.register(
     "short-underlying-exposure",
     instruments.ShortUnderlyingExposureViewSet,
+    "short_underlying_exposure",
 )
 router.register(
     "periodicity",
     instruments.PeriodicityViewSet,
+    "periodicity",
 )
 router.register(
     "cost-method",
     instruments.CostMethodViewSet,
+    "cost_method",
 )
 router.register(
     "pricing-policy",
     instruments.PricingPolicyViewSet,
+    "pricing_policy",
 )
 router.register(
     "event-schedule-config",
     instruments.EventScheduleConfigViewSet,
+    "event_schedule_config",
 )
 router.register(
     "instrument-type",
     instruments.InstrumentTypeViewSet,
+    "instrument_type",
 )
 router.register(
     "instrument-type-attribute-type",
     instruments.InstrumentTypeAttributeTypeViewSet,
+    "instrument_type_attribute_type",
 )
 router.register(
     "instrument-attribute-type",
     instruments.InstrumentAttributeTypeViewSet,
-    "instrumentattributetype",
+    "instrument_attribute_type",
 )
 router.register(
     "instrument-classifie",
     instruments.InstrumentClassifierViewSet,
-    "instrumentclassifie",
+    "instrument_classifie",
 )
 router.register(
     "instrument",
     instruments.InstrumentViewSet,
+    "instrument",
 )
 router.register(
     "instrument-for-select",
     instruments.InstrumentForSelectViewSet,
+    "instrument_for_select",
 )
 router.register(
     "price-history",
     instruments.PriceHistoryViewSet,
+    "price_history",
 )
 router.register(
     "generated-event",
     instruments.GeneratedEventViewSet,
+    "generate_event",
 )
 router.register(
     "day-time-convention",
     instruments.DayTimeConventionViewSet,
+    "day_time_convention",
 )
