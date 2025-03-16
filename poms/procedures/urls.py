@@ -3,34 +3,39 @@ from rest_framework import routers
 import poms.procedures.views as procedures
 
 router = routers.DefaultRouter()
+
 router.register(
-    r"pricing-procedure",
+    "pricing-procedure",
     procedures.PricingProcedureViewSet,
     "pricing_procedure",
 )
 router.register(
-    r"pricing-procedure-instance",
+    "pricing-procedure-instance",
     procedures.PricingProcedureInstanceViewSet,
     "pricing_procedure_instance",
 )
 router.register(
-    r"pricing-parent-procedure-instance",
+    "pricing-parent-procedure-instance",
     procedures.PricingParentProcedureInstanceViewSet,
     "pricing_parent_procedure_instance",
 )
 router.register(
-    r"request-data-procedure",
+    "request-data-procedure",
     procedures.RequestDataFileProcedureViewSet,
+    "request_data_procedure",
 )
 router.register(
-    r"data-procedure",
+    "data-procedure",
     procedures.RequestDataFileProcedureViewSet,
+    "data_procedure",
 )
 router.register(
-    r"data-procedure-instance",
+    "data-procedure-instance",
     procedures.RequestDataFileProcedureInstanceViewSet,
+    "data_procedure_instance",
 )
 router.register(
-    r"expression-procedure",
+    "expression-procedure",
     procedures.ExpressionProcedureViewSet,
+    "expression_procedure",
 )
