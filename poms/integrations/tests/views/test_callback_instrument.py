@@ -4,7 +4,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
 from poms.csv_import.handlers import PERIODICITY_MAP
-from poms.instruments.models import Accrual, AccrualCalculationSchedule, Instrument
+from poms.instruments.models import AccrualEvent, AccrualCalculationSchedule, Instrument
 from poms.integrations.database_client import get_backend_callback_urls
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
 
@@ -174,6 +174,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "notes": "",
                             },
                         ],
+                        "accrual_events": [],
                     },
                 ],
                 "currencies": [
@@ -261,6 +262,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "notes": "",
                             },
                         ],
+                        "accrual_events": [],
                     },
                 ],
                 "currencies": [
@@ -289,7 +291,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.assertEqual(accrual.periodicity_id, PERIODICITY_MAP[1])
 
-    def test__instrument_with_accruals_created(self):
+    def test__instrument_with_accrual_events_created(self):
         instrument_code = self.random_string(11)
         currency_code = self.random_string(3)
         post_data = {
@@ -315,22 +317,24 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "identifier": self.identifier,
                         "factor_schedules": [],
                         "accrual_calculation_schedules": [],
-                        "accruals": [
+                        "accrual_events": [
                             {
-                                "user_code": f"{instrument_code}:{str(date.today())}",
-                                "date": date.today(),
-                                "size": 100.0,
-                                "notes": "LPjfCDXEcNYeWdlNEBMY",
-                                "periodicity_n": 170,
-                                "accrual_calculation_model": 21,
+                                "accrual_calculation_model": 100,
                                 "accrual_calculation_model_object": {
-                                    "id": 21,
-                                    "name": "30/360 German",
-                                    "short_name": None,
-                                    "user_code": "30/360 German",
-                                    "public_name": None,
+                                    "id": 100,
+                                    "name": "Simple",
                                     "notes": None,
+                                    "public_name": None,
+                                    "short_name": None,
+                                    "user_code": "Simple",
                                 },
+                                "accrual_size": 0.523087370779387,
+                                "end_date": "2025-01-01",
+                                "notes": "cQoXedKAFbWwtOmBPSkV",
+                                "payment_date": "2025-01-03",
+                                "periodicity_n": 248,
+                                "start_date": "2024-04-28",
+                                "user_code": "VANGUARD:2025-01-01",
                             },
                         ],
                     },
@@ -350,13 +354,17 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         instrument = self.validate_result_instrument(instrument_code)
-        self.assertEqual(len(instrument.accruals.all()), 1)
 
-        accrual = Accrual.objects.filter(instrument=instrument).first()
-        self.assertIsNotNone(accrual)
+        self.assertEqual(len(instrument.accrual_events.all()), 1)
+        accrual_event = AccrualEvent.objects.filter(instrument=instrument).first()
+        self.assertIsNotNone(accrual_event)
 
-        accrual_data: dict = post_data["data"]["instruments"][0]["accruals"][0]
-        self.assertEqual(accrual.user_code, accrual_data["user_code"])
-        self.assertEqual(accrual.periodicity_n, accrual_data["periodicity_n"])
-        self.assertEqual(accrual.accrual_calculation_model_id, accrual_data["accrual_calculation_model"])
-        self.assertEqual(accrual.size, accrual_data["size"])
+        event_data: dict = post_data["data"]["instruments"][0]["accrual_events"][0]
+        self.assertEqual(accrual_event.user_code, event_data["user_code"])
+        self.assertEqual(accrual_event.periodicity_n, event_data["periodicity_n"])
+        self.assertEqual(accrual_event.accrual_calculation_model_id, event_data["accrual_calculation_model"])
+        self.assertEqual(accrual_event.accrual_size, event_data["accrual_size"])
+        self.assertEqual(str(accrual_event.start_date), event_data["start_date"])
+        self.assertEqual(str(accrual_event.end_date), event_data["end_date"])
+        self.assertEqual(str(accrual_event.payment_date), event_data["payment_date"])
+        self.assertEqual(accrual_event.notes, event_data["notes"])

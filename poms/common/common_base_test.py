@@ -435,7 +435,7 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
         instrument_type: str = INITIAL_INSTRUMENTS_TYPES[0],
         currency_code: str = "EUR",
     ) -> Instrument:
-        currency = self.get_currency(user_code=currency_code)
+        currency = self.eur if currency_code == "EUR" else self.usd
         instrument = Instrument.objects.using(settings.DB_DEFAULT).create(
             # mandatory fields
             master_user=self.master_user,

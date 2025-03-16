@@ -1,3 +1,4 @@
+import contextlib
 import json
 import traceback
 from logging import getLogger
@@ -253,11 +254,6 @@ class InstrumentDownloadSchemeSerializer(
     price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-
-    # payment_size_detail = ExpressionField(allow_blank=True)
-    # default_price = ExpressionField(allow_blank=True)
-    # default_accrued = ExpressionField(allow_blank=True)
-    # price_download_mode = ExpressionField(allow_blank=True)
     maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
@@ -315,9 +311,9 @@ class InstrumentDownloadSchemeSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from poms.instruments.serializers import PaymentSizeDetailSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["payment_size_detail_object"] = PaymentSizeDetailSerializer(
             source="payment_size_detail", read_only=True
@@ -353,10 +349,8 @@ class InstrumentDownloadSchemeSerializer(
             input_id = input_values.pop("id", None)
             input0 = None
             if input_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     input0 = instance.inputs.get(pk=input_id)
-                except ObjectDoesNotExist:
-                    pass
             if input0 is None:
                 input0 = InstrumentDownloadSchemeInput(scheme=instance)
             for name, value in input_values.items():
@@ -882,7 +876,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
     pricing_condition = PricingConditionField()
-    accruals = serializers.SerializerMethodField()
+    accrual_events = serializers.SerializerMethodField()
 
     class Meta:
         model = Instrument
@@ -918,10 +912,10 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
             "accrual_calculation_schedules",
             "factor_schedules",
             "event_schedules",
+            "accrual_events",
             # 'attributes',
             "co_directional_exposure_currency",
             "counter_directional_exposure_currency",
-            "accruals",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -944,12 +938,6 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
         self.fields["event_schedules"] = EventScheduleSerializer(many=True, required=False, allow_null=True)
 
         self.fields["attributes"] = serializers.SerializerMethodField()
-
-        # self.fields.pop('manual_pricing_formulas')
-        # self.fields.pop('accrual_calculation_schedules')
-        # self.fields.pop('factor_schedules')
-        # self.fields.pop('event_schedules')
-        # self.fields.pop('attributes')
 
     def get_accrual_calculation_schedules(self, obj):
         from poms.instruments.serializers import AccrualCalculationScheduleSerializer
@@ -978,11 +966,13 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
 
         return GenericAttributeSerializer(instance=l, many=True, read_only=True, context=self.context).data
 
-    def get_accruals(self, obj):
-        from poms.instruments.serializers import AccrualSerializer
+    def get_accrual_events(self, obj):
+        from poms.instruments.serializers import AccrualEventSerializer
 
-        all_accruals = obj.acruals.all()
-        return AccrualSerializer(instance=all_accruals, many=True, read_only=True, context=self.context).data
+        accrual_events = obj.accrual_events.all()
+        return AccrualEventSerializer(
+            instance=accrual_events, many=True, read_only=True, context=self.context
+        ).data
 
 
 class ImportInstrumentEntry(object):
@@ -1411,7 +1401,6 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     entity_type = serializers.CharField(required=True, initial="-")
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
-
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
@@ -1510,7 +1499,7 @@ class ImportPricingEntry(object):
         if not self.is_yesterday:
             return []
         result = getattr(self.task_object, "result_object", {})
-        instrument_price_missed = result.get("instrument_price_missed", None)
+        instrument_price_missed = result.get("instrument_price_missed", [])
         if instrument_price_missed:
             instruments_pk = [instr_id for instr_id, _ in instrument_price_missed]
             existed_instrument_prices = {
@@ -1708,7 +1697,8 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                     f"{instance.rule_scenario.transaction_type}"
                 )
                 _l.error(
-                    f"Error in to_representation instance.transaction_type_input: " f"{instance.transaction_type_input}"
+                    f"Error in to_representation instance.transaction_type_input: "
+                    f"{instance.transaction_type_input}"
                 )
                 _l.error(f"Error in to_representation: {e} trace {traceback.format_exc()}")
 
@@ -1770,11 +1760,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         except Exception as e:
             _l.error(
-                "ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type %s"
-                % instance.transaction_type
-            )
-            _l.error(f"ComplexTransactionImportSchemeRuleScenarioSerializer.e {e} trace {traceback.format_exc()}")
-
+                f"ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type "
+                f"{instance.transaction_type} error {e} trace {traceback.format_exc()}")
             ret["transaction_type_object"] = None
 
         return ret
@@ -1808,12 +1795,9 @@ class ComplexTransactionImportSchemeSerializer(
         many=True, read_only=False, required=False
     )
     selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(many=True, read_only=False)
-
     rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(many=True, read_only=False)
     recon_scenarios = ComplexTransactionImportSchemeReconScenarioSerializer(many=True, read_only=False)
-
     recon_layout = serializers.JSONField(required=False, allow_null=True)
-
     delimiter = serializers.CharField(max_length=3, required=False, initial=",", default=",")
     column_matcher = serializers.CharField(max_length=255, required=False, initial="index", default="index")
 
@@ -1897,10 +1881,8 @@ class ComplexTransactionImportSchemeSerializer(
             selector0 = None
 
             if selector_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     selector0 = instance.selector_values.get(pk=selector_id)
-                except ObjectDoesNotExist:
-                    pass
             if selector0 is None:
                 selector0 = ComplexTransactionImportSchemeSelectorValue(scheme=instance)
             for name, value in selector_value.items():
@@ -1920,10 +1902,9 @@ class ComplexTransactionImportSchemeSerializer(
             input_id = input_values.pop("id", None)
             input0 = None
             if input_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     input0 = ComplexTransactionImportSchemeInput.objects.get(pk=input_id)
-                except ObjectDoesNotExist:
-                    pass
+
             if input0 is None:
                 input0 = ComplexTransactionImportSchemeInput(scheme=instance)
             for name, value in input_values.items():
@@ -1940,10 +1921,9 @@ class ComplexTransactionImportSchemeSerializer(
             input_id = input_values.pop("id", None)
             input0 = None
             if input_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     input0 = ComplexTransactionImportSchemeCalculatedInput.objects.get(pk=input_id)
-                except ObjectDoesNotExist:
-                    pass
+
             if input0 is None:
                 input0 = ComplexTransactionImportSchemeCalculatedInput(scheme=instance)
             for name, value in input_values.items():
@@ -1955,7 +1935,8 @@ class ComplexTransactionImportSchemeSerializer(
     def save_rule_scenarios(self, instance, rules):
         pk_set = []
 
-        default_transaction_type = EcosystemDefault.cache.get_cache(master_user_pk=instance.master_user.pk
+        default_transaction_type = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
         ).transaction_type
 
         for rule_values in rules:
@@ -1989,7 +1970,9 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
+                            scheme=instance, value=val
+                        )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
                         pass
@@ -2009,10 +1992,9 @@ class ComplexTransactionImportSchemeSerializer(
             recon_id = recon_values.pop("id", None)
             recon0 = None
             if recon_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     recon0 = instance.recon_scenarios.get(pk=recon_id)
-                except ObjectDoesNotExist:
-                    pass
+
             if recon0 is None:
                 recon0 = ComplexTransactionImportSchemeReconScenario(scheme=instance)
 
@@ -2028,7 +2010,9 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
+                            scheme=instance, value=val
+                        )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
                         pass
@@ -2080,10 +2064,9 @@ class ComplexTransactionImportSchemeSerializer(
                     field_id = field_values.pop("id", None)
                     field0 = None
                     if field_id:
-                        try:
+                        with contextlib.suppress(ObjectDoesNotExist):
                             field0 = rule_scenario.fields.get(pk=field_id)
-                        except ObjectDoesNotExist:
-                            pass
+
                     if field0 is None:
                         field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
 
