@@ -364,3 +364,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(accrual_event.periodicity_n, event_data["periodicity_n"])
         self.assertEqual(accrual_event.accrual_calculation_model_id, event_data["accrual_calculation_model"])
         self.assertEqual(accrual_event.accrual_size, event_data["accrual_size"])
+        self.assertEqual(str(accrual_event.start_date), event_data["start_date"])
+        self.assertEqual(str(accrual_event.end_date), event_data["end_date"])
+        self.assertEqual(str(accrual_event.payment_date), event_data["payment_date"])
+        self.assertEqual(accrual_event.notes, event_data["notes"])
