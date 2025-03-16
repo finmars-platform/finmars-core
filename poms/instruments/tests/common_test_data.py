@@ -240,7 +240,7 @@ EXPECTED_INSTRUMENT = {
     "first_transaction_date": None,
     "resource_groups": [],
     "resource_groups_object": [],
-    "accruals": [],
+    "accrual_events": [],
 }
 
 INSTRUMENT_CREATE_DATA = {

@@ -2,34 +2,15 @@ from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
 from poms.instruments.models import (
-    AccrualCalculationModel,
+    DATE_FORMAT,
     AccrualCalculationSchedule,
     Instrument,
-    DATE_FORMAT,
 )
-
-ACCRUAL_MODELS_IDS = [
-    AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA,
-    AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA,
-    AccrualCalculationModel.DAY_COUNT_ACT_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365L,
-    AccrualCalculationModel.DAY_COUNT_30_360_ISDA,
-    AccrualCalculationModel.DAY_COUNT_NL_365,
-    AccrualCalculationModel.DAY_COUNT_30_360_US,
-    AccrualCalculationModel.DAY_COUNT_BD_252,
-    AccrualCalculationModel.DAY_COUNT_30_360_GERMAN,
-    AccrualCalculationModel.DAY_COUNT_30E_PLUS_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED,
-    AccrualCalculationModel.DAY_COUNT_30E_360,
-    AccrualCalculationModel.DAY_COUNT_ACT_365A,
-    AccrualCalculationModel.DAY_COUNT_ACT_366,
-    AccrualCalculationModel.DAY_COUNT_ACT_364,
-]
+from poms.common.factories import ACCRUAL_MODELS_IDS
 
 
 class AccrualCalculationScheduleModelTest(BaseTestCase):
     databases = "__all__"
-    maxDiff = None
 
     def setUp(self):
         super().setUp()
@@ -124,6 +105,4 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
 
         old_accrual.refresh_from_db()
 
-        self.assertEqual(
-            old_accrual.first_payment_date, new_first_date.strftime(DATE_FORMAT)
-        )
+        self.assertEqual(old_accrual.first_payment_date, new_first_date.strftime(DATE_FORMAT))

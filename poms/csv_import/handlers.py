@@ -552,14 +552,14 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     else:
         set_default_accrual(object_data, instrument_type)
 
-    if "accruals" in source_data and source_data["accruals"]:
+    if "accrual_events" in source_data and source_data["accrual_events"]:
         _l.info("Setting up accrual events. Overwrite Existing")
-        object_data["accruals"] = []
-        for accrual in source_data["accruals"]:
+        object_data["accrual_events"] = []
+        for accrual in source_data["accrual_events"]:
             accrual.pop("id", None)  # remove id of accrual object
             accrual.pop("instrument", None)  # remove instrument.id of accrual object
             accrual.pop("source", None)  # remove source.id of accrual object
-            object_data["accruals"].append(accrual)
+            object_data["accrual_events"].append(accrual)
 
     if "name" not in object_data and "user_code" in object_data:
         object_data["name"] = object_data["user_code"]
@@ -1516,7 +1516,7 @@ class SimpleImportProcess:
         their values are null, and update final_inputs dict
         """
         if model.lower() != "pricehistory" or not final_inputs:
-            return
+            return None
 
         _l.info(f"calculate_null_fields: {model} final_inputs={final_inputs}")
 

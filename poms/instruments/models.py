@@ -2,9 +2,12 @@ import json
 import logging
 import traceback
 from bisect import bisect_left
-from typing import Optional
 from datetime import date, datetime, timedelta
 from math import isnan
+from typing import Optional
+
+import QuantLib as ql
+from dateutil import relativedelta, rrule
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
@@ -15,8 +18,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
-
-from dateutil import relativedelta, rrule
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.fields import ResourceGroupsField
@@ -33,6 +34,7 @@ from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
+from poms.instruments.finmars_quantlib import Actual365A, Actual365L
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.models import EcosystemDefault, MasterUser
 
@@ -290,44 +292,22 @@ class AccrualCalculationModel(AbstractClassModel):
     DAY_COUNT_NONE = 1  # Probably dont used
     DAY_COUNT_ACT_365 = 5  # Actual/365 : Assumes a fixed 365-day year.
     DAY_COUNT_30_360_ISMA = 16  # 30/360 (30/360 ISMA): Also known as 30/360 ICMA or 30/360 European. Assumes 30 days in each month and 360 days in a year
-    DAY_COUNT_ACT_ACT_AFB = (
-        26  # Actual/Actual (AFB): French version of Actual/Actual. It's commonly used for Euro denominated bonds.
-    )
+    DAY_COUNT_ACT_ACT_AFB = 26  # Actual/Actual (AFB): French version of Actual/Actual. Used for Euro bonds.
     DAY_COUNT_30_365 = 32  # 30/365: Assumes 30 days in each month and 365 days in a year.
     DAY_COUNT_SIMPLE = 100  # Simple: Interest is calculated on the principal amount, or on that portion of the principal amount which remains unpaid.
 
     CLASSES = (
-        (
-            DAY_COUNT_ACT_ACT_ICMA,
-            "DAY_COUNT_ACT_ACT_ICMA",
-            gettext_lazy("Actual/Actual (ICMA)"),
-        ),
-        (
-            DAY_COUNT_ACT_ACT_ISDA,
-            "DAY_COUNT_ACT_ACT_ISDA",
-            gettext_lazy("Actual/Actual (ISDA)"),
-        ),
+        (DAY_COUNT_ACT_ACT_ICMA, "DAY_COUNT_ACT_ACT_ICMA", gettext_lazy("Actual/Actual (ICMA)")),
+        (DAY_COUNT_ACT_ACT_ISDA, "DAY_COUNT_ACT_ACT_ISDA", gettext_lazy("Actual/Actual (ISDA)")),
         (DAY_COUNT_ACT_360, "DAY_COUNT_ACT_360", gettext_lazy("Actual/360")),
         (DAY_COUNT_ACT_365L, "DAY_COUNT_ACT_365L", gettext_lazy("Actual/365L")),
-        (
-            DAY_COUNT_30_360_ISDA,
-            "DAY_COUNT_30_360_ISDA",
-            gettext_lazy("30/360 (30/360 ISDA)"),
-        ),
+        (DAY_COUNT_30_360_ISDA, "DAY_COUNT_30_360_ISDA", gettext_lazy("30/360 (30/360 ISDA)")),
         (DAY_COUNT_30E_PLUS_360, "DAY_COUNT_30E_PLUS_360", gettext_lazy("30E+/360")),
         (DAY_COUNT_NL_365, "DAY_COUNT_NL_365", gettext_lazy("NL/365")),
         (DAY_COUNT_30_360_US, "DAY_COUNT_30_360_US", gettext_lazy("30/360 US")),
         (DAY_COUNT_BD_252, "DAY_COUNT_BD_252", gettext_lazy("BD/252")),
-        (
-            DAY_COUNT_30_360_GERMAN,
-            "DAY_COUNT_30_360_GERMAN",
-            gettext_lazy("30/360 German"),
-        ),
-        (
-            DAY_COUNT_ACT_365_FIXED,
-            "DAY_COUNT_ACT_365_FIXED",
-            gettext_lazy("Actual/365 (Actual/365F)"),
-        ),
+        (DAY_COUNT_30_360_GERMAN, "DAY_COUNT_30_360_GERMAN", gettext_lazy("30/360 German")),
+        (DAY_COUNT_ACT_365_FIXED, "DAY_COUNT_ACT_365_FIXED", gettext_lazy("Actual/365 (Actual/365F)")),
         (DAY_COUNT_30E_360, "DAY_COUNT_30E_360", gettext_lazy("30E/360")),
         (DAY_COUNT_ACT_365A, "DAY_COUNT_ACT_365A", gettext_lazy("Actual/365A")),
         (DAY_COUNT_ACT_366, "DAY_COUNT_ACT_366", gettext_lazy("Actual/366")),
@@ -335,52 +315,65 @@ class AccrualCalculationModel(AbstractClassModel):
         # CURRENTLY UNUSED BY CBOND
         (DAY_COUNT_NONE, "NONE", gettext_lazy("none")),
         (DAY_COUNT_ACT_365, "DAY_COUNT_ACT_365", gettext_lazy("Actual/365")),
-        (
-            DAY_COUNT_30_360_ISMA,
-            "DAY_COUNT_30_360_ISMA",
-            gettext_lazy("30/360 (30/360 ISMA)"),
-        ),
-        (
-            DAY_COUNT_ACT_ACT_AFB,
-            "DAY_COUNT_ACT_ACT_AFB",
-            gettext_lazy("Actual/Actual (AFB)"),
-        ),
+        (DAY_COUNT_30_360_ISMA, "DAY_COUNT_30_360_ISMA", gettext_lazy("30/360 (30/360 ISMA)")),
+        (DAY_COUNT_ACT_ACT_AFB, "DAY_COUNT_ACT_ACT_AFB", gettext_lazy("Actual/Actual (AFB)")),
         (DAY_COUNT_30_365, "DAY_COUNT_30_365", gettext_lazy("30/365")),
         (DAY_COUNT_SIMPLE, "DAY_COUNT_SIMPLE", gettext_lazy("Simple")),
     )
 
+    CLASSES_DICT = {
+        DAY_COUNT_ACT_ACT_ICMA: "DAY_COUNT_ACT_ACT_ICMA",
+        DAY_COUNT_ACT_ACT_ISDA: "DAY_COUNT_ACT_ACT_ISDA",
+        DAY_COUNT_ACT_360: "DAY_COUNT_ACT_360",
+        DAY_COUNT_ACT_365L: "DAY_COUNT_ACT_365L",
+        DAY_COUNT_30_360_ISDA: "DAY_COUNT_30_360_ISDA",
+        DAY_COUNT_30E_PLUS_360: "DAY_COUNT_30E_PLUS_360",
+        DAY_COUNT_NL_365: "DAY_COUNT_NL_365",
+        DAY_COUNT_30_360_US: "DAY_COUNT_30_360_US",
+        DAY_COUNT_BD_252: "DAY_COUNT_BD_252",
+        DAY_COUNT_30_360_GERMAN: "DAY_COUNT_30_360_GERMAN",
+        DAY_COUNT_ACT_365_FIXED: "DAY_COUNT_ACT_365_FIXED",
+        DAY_COUNT_30E_360: "DAY_COUNT_30E_360",
+        DAY_COUNT_ACT_365A: "DAY_COUNT_ACT_365A",
+        DAY_COUNT_ACT_366: "DAY_COUNT_ACT_366",
+        DAY_COUNT_ACT_364: "DAY_COUNT_ACT_364",
+        # CURRENTLY UNUSED BY CBOND
+        DAY_COUNT_NONE: "NONE",
+        DAY_COUNT_ACT_365: "DAY_COUNT_ACT_365",
+        DAY_COUNT_30_360_ISMA: "DAY_COUNT_30_360_ISMA",
+        DAY_COUNT_ACT_ACT_AFB: "DAY_COUNT_ACT_ACT_AFB",
+        DAY_COUNT_30_365: "DAY_COUNT_30_365",
+        DAY_COUNT_SIMPLE: "DAY_COUNT_SIMPLE",
+    }
+
     @staticmethod
-    def get_quantlib_day_count(finmars_accrual_calculation_model):
-        import QuantLib as Ql
-
-        from poms.instruments.finmars_quantlib import Actual365A, Actual365L
-
-        default_day_counter = Ql.SimpleDayCounter()
+    def get_quantlib_day_count(finmars_calculation_model_id: int) -> ql.DayCounter:
+        default_day_counter = ql.SimpleDayCounter()
         map_daycount_convention = {
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: Ql.ActualActual(Ql.ActualActual.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: Ql.ActualActual(Ql.ActualActual.ISDA),
-            AccrualCalculationModel.DAY_COUNT_ACT_360: Ql.Actual360(),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ICMA: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.DAY_COUNT_ACT_360: ql.Actual360(),
             AccrualCalculationModel.DAY_COUNT_ACT_365L: Actual365L(),  # ql.Actual365Fixed(ql.Actual365Fixed.NoLeap)
-            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: Ql.Thirty360(Ql.Thirty360.ISDA),
-            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: Ql.Thirty360(Ql.Thirty360.Italian),
-            AccrualCalculationModel.DAY_COUNT_NL_365: Ql.Actual365Fixed(Ql.Actual365Fixed.NoLeap),
-            AccrualCalculationModel.DAY_COUNT_30_360_US: Ql.Thirty360(Ql.Thirty360.USA),
-            AccrualCalculationModel.DAY_COUNT_BD_252: Ql.Business252(),
-            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: Ql.Thirty360(Ql.Thirty360.German),
-            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: Ql.Actual365Fixed(),
-            AccrualCalculationModel.DAY_COUNT_30E_360: Ql.Thirty360(Ql.Thirty360.European),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISDA: ql.Thirty360(ql.Thirty360.ISDA),
+            AccrualCalculationModel.DAY_COUNT_30E_PLUS_360: ql.Thirty360(ql.Thirty360.Italian),
+            AccrualCalculationModel.DAY_COUNT_NL_365: ql.Actual365Fixed(ql.Actual365Fixed.NoLeap),
+            AccrualCalculationModel.DAY_COUNT_30_360_US: ql.Thirty360(ql.Thirty360.USA),
+            AccrualCalculationModel.DAY_COUNT_BD_252: ql.Business252(),
+            AccrualCalculationModel.DAY_COUNT_30_360_GERMAN: ql.Thirty360(ql.Thirty360.German),
+            AccrualCalculationModel.DAY_COUNT_ACT_365_FIXED: ql.Actual365Fixed(),
+            AccrualCalculationModel.DAY_COUNT_30E_360: ql.Thirty360(ql.Thirty360.European),
             AccrualCalculationModel.DAY_COUNT_ACT_365A: Actual365A(),  # ql.Actual365Fixed()
-            AccrualCalculationModel.DAY_COUNT_ACT_366: Ql.Actual366(),
-            AccrualCalculationModel.DAY_COUNT_ACT_364: Ql.Actual364(),
+            AccrualCalculationModel.DAY_COUNT_ACT_366: ql.Actual366(),
+            AccrualCalculationModel.DAY_COUNT_ACT_364: ql.Actual364(),
             # CURRENTLY UNUSED BY CBOND
-            AccrualCalculationModel.DAY_COUNT_ACT_365: Ql.ActualActual(Ql.ActualActual.Actual365),
-            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: Ql.Thirty360(Ql.Thirty360.ISMA),
-            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: Ql.ActualActual(Ql.ActualActual.AFB),
-            AccrualCalculationModel.DAY_COUNT_30_365: Ql.Thirty365(),
-            AccrualCalculationModel.DAY_COUNT_SIMPLE: Ql.SimpleDayCounter(),
+            AccrualCalculationModel.DAY_COUNT_ACT_365: ql.ActualActual(ql.ActualActual.Actual365),
+            AccrualCalculationModel.DAY_COUNT_30_360_ISMA: ql.Thirty360(ql.Thirty360.ISMA),
+            AccrualCalculationModel.DAY_COUNT_ACT_ACT_AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.DAY_COUNT_30_365: ql.Thirty365(),
+            AccrualCalculationModel.DAY_COUNT_SIMPLE: ql.SimpleDayCounter(),
         }
 
-        return map_daycount_convention.get(finmars_accrual_calculation_model, default_day_counter)
+        return map_daycount_convention.get(finmars_calculation_model_id, default_day_counter)
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -445,19 +438,16 @@ class Periodicity(AbstractClassModel):
 
     @staticmethod
     def get_quantlib_periodicity(finmars_periodicity):
-        import QuantLib as Ql
-
-        default_period = Ql.Period(12, Ql.Months)  # default semi-annually
-
+        default_period = ql.Period(12, ql.Months)  # default semi-annually
         period_mapping = {
             # TODO probably add mapping for other finmars periodicities
-            Periodicity.N_DAY: Ql.Period(1, Ql.Days),
-            Periodicity.WEEKLY: Ql.Period(1, Ql.Weeks),
-            Periodicity.MONTHLY: Ql.Period(1, Ql.Months),
-            Periodicity.BIMONTHLY: Ql.Period(2, Ql.Months),
-            Periodicity.QUARTERLY: Ql.Period(3, Ql.Months),
-            Periodicity.SEMI_ANNUALLY: Ql.Period(6, Ql.Months),
-            Periodicity.ANNUALLY: Ql.Period(12, Ql.Months),
+            Periodicity.N_DAY: ql.Period(1, ql.Days),
+            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
+            Periodicity.MONTHLY: ql.Period(1, ql.Months),
+            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
+            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
+            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
+            Periodicity.ANNUALLY: ql.Period(12, ql.Months),
         }
 
         return period_mapping.get(finmars_periodicity, default_period)
@@ -1740,10 +1730,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return accruals[0] if len(accruals) else None
 
     def get_quantlib_bond(self):
-        import QuantLib as ql
 
-        def active_factor(date, factors, factor_dates):
-            tmp_list = {idate for idate in factor_dates if idate <= date}
+        def active_factor(day, factors, factor_dates):
+            tmp_list = {idate for idate in factor_dates if idate <= day}
             factor = 1
             if tmp_list:
                 active_date = max(tmp_list)
@@ -1780,7 +1769,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                 start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
                 float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
-                day_count = AccrualCalculationModel.get_quantlib_day_count(first_accrual.accrual_calculation_model)
+                day_count = AccrualCalculationModel.get_quantlib_day_count(
+                    first_accrual.accrual_calculation_model.id
+                )
                 # build accrual schedule
                 # schedule = ql.MakeSchedule(start_date, maturity_date, period )
 
@@ -1799,8 +1790,8 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                 schedule_dates = list(schedule.dates())
                 # we need notinals (factors) list to be of same length as accrual schedule
                 notionals = []
-                for date in schedule_dates:
-                    val = active_factor(date=date, factors=factor_values, factor_dates=factor_dates) * face_value
+                for day in schedule_dates:
+                    val = active_factor(day=day, factors=factor_values, factor_dates=factor_dates) * face_value
 
                     notionals.append(val)
 
@@ -1842,11 +1833,8 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return bond
 
     # 2023-08-21
-    def calculate_quantlib_ytm(self, date, price):
-        import QuantLib as ql
-
+    def calculate_quantlib_ytm(self, day, price):
         ytm = 0
-
         bond = self.get_quantlib_bond()
 
         # _l.info('calculate_quantlib_ytm %s ' % bond)
@@ -1854,7 +1842,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         # _l.info('calculate_quantlib_ytm price %s ' % price)
 
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(day), self.date_pattern)
 
             try:
                 frequency = bond.frequency()
@@ -1870,14 +1858,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return ytm
 
-    def calculate_quantlib_modified_duration(self, date, ytm):
-        import QuantLib as ql
-
+    def calculate_quantlib_modified_duration(self, day, ytm):
         modified_duration = 0
 
         bond = self.get_quantlib_bond()
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(day), self.date_pattern)
 
             try:
                 frequency = bond.frequency()
@@ -2085,48 +2071,86 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accruals
 
-    def _accrual_date_is_valid(self, day: date) -> bool:
+    def _price_date_is_valid(self, day: date) -> bool:
+        """target date must be less that maturity date"""
         if not isinstance(day, date):
             raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
 
         return not self.maturity_date or day < self.maturity_date
 
-    def find_accrual_schedule(self, target_date: date) -> Optional["AccrualCalculationSchedule"]:
-        if not self._accrual_date_is_valid(day=target_date):
+    def find_accrual_schedule(self, price_date: date) -> Optional["AccrualCalculationSchedule"]:
+        if not self._price_date_is_valid(day=price_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
-        # _l.debug('find_accrual.accruals %s' % accruals)
         accrual = None
         for a in accruals:
-            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= target_date:
+            if datetime.strptime(a.accrual_start_date, DATE_FORMAT).date() <= price_date:
                 accrual = a
 
         return accrual
 
-    def find_nearest_future_accrual(self, target_date: date) -> Optional["Accrual"]:
+    def find_accrual_event(self, price_date: date) -> Optional["AccrualEvent"]:
         """
-        Finds the nearest to target_date future accrual in the instrument's accruals.
+        Finds the nearest to target_date future accrual event in the instrument's accruals.
         """
-        sorted_accruals = list(self.accruals.order_by("date").all())
-        dates_list = [accrual.date for accrual in sorted_accruals]
-        if target_date < dates_list[0]:
-            # target_date must within dates of accruals
+        if not self._price_date_is_valid(day=price_date):
             return None
 
-        pos = bisect_left(dates_list, target_date)
-
-        return sorted_accruals[pos] if pos < len(dates_list) else None
-
-    def find_accrual_event(self, target_date: date) -> Optional["Accrual"]:
-        if not self._accrual_date_is_valid(day=target_date):
+        sorted_accrual_events = list(self.accrual_events.order_by("end_date").all())
+        if not sorted_accrual_events:
             return None
 
-        accrual = self.find_nearest_future_accrual(target_date)
+        if price_date < sorted_accrual_events[0].start_date:
+            # price_date must within dates of accrual events
+            return None
 
-        # TOD ADD LOGIC
+        end_dates = [event.end_date for event in sorted_accrual_events]
+        pos = bisect_left(end_dates, price_date)
 
-        return accrual
+        return sorted_accrual_events[pos] if pos < len(end_dates) else None
+
+    def get_accrued_price(self, price_date: date) -> float:
+        from poms.common.formula_accruals import (
+            calculate_accrual_event_factor,
+            calculate_accrual_schedule_factor,
+        )
+
+        if not self._price_date_is_valid(day=price_date):
+            return 0
+
+        # check accrual event path
+        accrual_event = self.find_accrual_event(price_date)
+        if accrual_event:
+            factor = calculate_accrual_event_factor(accrual_event, price_date)
+            return accrual_event.accrual_size * factor
+
+        # use accrual schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        if not accrual_schedule:
+            return 0
+
+        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
+        factor = calculate_accrual_schedule_factor(
+            accrual_calculation_schedule=accrual_schedule,
+            dt1=accrual_start_date,
+            dt2=price_date,
+            dt3=first_payment_date,
+        )
+        return float(accrual_schedule.accrual_size) * factor
+
+    def get_accrual_size(self, price_date: date) -> float:
+        if not self._price_date_is_valid(day=price_date):
+            return 0
+
+        # TODO ADD ACCRUAL EVENT PATH
+
+        # accrual_schedule path
+        accrual_schedule = self.find_accrual_schedule(price_date)
+        accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
+
+        return accrual_size
 
     def calculate_prices_accrued_price(self, begin_date=None, end_date=None) -> None:
         existed_prices = PriceHistory.objects.filter(instrument=self, date__range=(begin_date, end_date))
@@ -2165,35 +2189,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                             accrued_price = 0
                         price.accrued_price = accrued_price
                         price.save(update_fields=["accrued_price"])
-
-    def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import calculate_accrual_schedule_factor
-
-        # accrual_schedule path
-        accrual_schedule = self.find_accrual_schedule(price_date)
-        if accrual_schedule is None:
-            return 0
-        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
-        factor = calculate_accrual_schedule_factor(
-            accrual_calculation_schedule=accrual_schedule,
-            dt1=accrual_start_date,
-            dt2=price_date,
-            dt3=first_payment_date,
-        )
-        accrued_price = float(accrual_schedule.accrual_size) * factor
-
-        return accrued_price
-
-    def get_accrual_size(self, price_date: date) -> float:
-        if not self.maturity_date or (price_date >= self.maturity_date):
-            return 0
-
-        # accrual_schedule path
-        accrual_schedule = self.find_accrual_schedule(price_date)
-        accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
-
-        return accrual_size
 
     def get_accrual_schedule_factor(self, price_date: date):
         from poms.common.formula_accruals import calculate_accrual_schedule_factor
@@ -2918,13 +2913,13 @@ class PriceHistory(TimeStampedModel):
             self.handle_err(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
-    def calculate_ytm(self, date):
-        _l.debug(f"Calculating ytm for {self.instrument.name} for {date}")
+    def calculate_ytm(self, day):
+        _l.debug(f"Calculating ytm for {self.instrument.name} for {day}")
 
-        return self.instrument.calculate_quantlib_ytm(date=date, price=self.principal_price)
+        return self.instrument.calculate_quantlib_ytm(day=day, price=self.principal_price)
 
-    def calculate_duration(self, date, ytm):
-        return self.instrument.calculate_quantlib_modified_duration(date=date, ytm=ytm)
+    def calculate_duration(self, day, ytm):
+        return self.instrument.calculate_quantlib_modified_duration(day=day, ytm=ytm)
 
     def run_auto_calculation(self, recalculate_inputs=[]):
         from poms.instruments.fields import AUTO_CALCULATE
@@ -3672,51 +3667,51 @@ class InstrumentAttachment(models.Model):
     )
 
 
-class Accrual(models.Model):
+class AccrualEvent(models.Model):
     instrument = models.ForeignKey(
         Instrument,
         db_index=True,
-        related_name="accruals",
+        related_name="accrual_events",
         verbose_name="Instrument",
         on_delete=models.CASCADE,
     )
     user_code = models.CharField(
         max_length=255,
-        blank=True,
-        default="",
         verbose_name=gettext_lazy("User code"),
     )
-    date = models.DateField(
+    start_date = models.DateField(
+        verbose_name=gettext_lazy("Accrual start date"),
+    )
+    end_date = models.DateField(
         verbose_name=gettext_lazy("Accrual value date"),
     )
-    size = models.FloatField(
-        default=0.0,
+    payment_date = models.DateField(
+        verbose_name=gettext_lazy("Accrual payment date"),
+    )
+    accrual_size = models.FloatField(
         verbose_name=gettext_lazy("Accrual size"),
+    )
+    accrual_calculation_model = models.ForeignKey(
+        AccrualCalculationModel,
+        on_delete=models.PROTECT,
+        verbose_name=gettext_lazy("Accrual calculation model"),
+    )
+    periodicity_n = models.IntegerField(
+        verbose_name=gettext_lazy("Days between coupons"),
     )
     notes = models.TextField(
         blank=True,
         default="",
         verbose_name="Notes",
     )
-    accrual_calculation_model = models.ForeignKey(
-        AccrualCalculationModel,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("accrual calculation model"),
-    )
-    periodicity_n = models.IntegerField(
-        default=0,
-        null=True,
-        blank=True,
-        verbose_name=gettext_lazy("days between coupons"),
-    )
 
     class Meta:
         verbose_name = gettext_lazy("Accrual")
         verbose_name_plural = gettext_lazy("Accruals")
-        ordering = ["instrument", "date"]
+        ordering = ["instrument", "end_date"]
         constraints = [
             models.UniqueConstraint(
-                fields=["instrument", "date"],
-                name="unique_instrument_accrual_date",
+                fields=["instrument", "end_date"],
+                name="unique_instrument_accrual_event_date",
             )
         ]
