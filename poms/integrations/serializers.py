@@ -253,11 +253,6 @@ class InstrumentDownloadSchemeSerializer(
     price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-
-    # payment_size_detail = ExpressionField(allow_blank=True)
-    # default_price = ExpressionField(allow_blank=True)
-    # default_accrued = ExpressionField(allow_blank=True)
-    # price_download_mode = ExpressionField(allow_blank=True)
     maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
@@ -315,9 +310,9 @@ class InstrumentDownloadSchemeSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from poms.instruments.serializers import PaymentSizeDetailSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["payment_size_detail_object"] = PaymentSizeDetailSerializer(
             source="payment_size_detail", read_only=True
@@ -975,7 +970,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
     def get_accrual_events(self, obj):
         from poms.instruments.serializers import AccrualEventSerializer
 
-        accrual_events = obj.acrual_events.all()
+        accrual_events = obj.accrual_events.all()
         return AccrualEventSerializer(
             instance=accrual_events, many=True, read_only=True, context=self.context
         ).data
@@ -1407,7 +1402,6 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     entity_type = serializers.CharField(required=True, initial="-")
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
-
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
