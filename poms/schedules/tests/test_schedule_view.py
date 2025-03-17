@@ -177,3 +177,9 @@ class ScheduleViewSetTest(BaseTestCase):
 
         self.assertEqual(response.json(), {"status": "ok"})
         mock_process.assert_called_once()
+
+    def test__run_schedule_invalid_id(self):
+        run_schedule_url = f"{self.url}{self.random_int(10, 100)}/run-schedule/"
+
+        response = self.client.post(path=run_schedule_url)
+        self.assertEqual(response.status_code, 404, response.content)

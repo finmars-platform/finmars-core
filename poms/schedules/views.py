@@ -1,10 +1,8 @@
-import traceback
 from logging import getLogger
 
 from django_filters import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.status import HTTP_412_PRECONDITION_FAILED
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
@@ -36,16 +34,11 @@ class ScheduleViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="run-schedule")
     def run_schedule(self, request, *args, **kwargs):
-        try:
-            schedule = self.get_object()
-            process.apply_async(
-                kwargs={
-                    "schedule_user_code": schedule.user_code,
-                    "context": {"space_code": request.space_code, "realm_code": request.realm_code},
-                }
-            )
-            return Response({"status": "ok"})
-
-        except Exception as e:
-            _l.error(f"Exception {repr(e)} trace {traceback.format_exc()}")
-            return Response(repr(e), status= HTTP_412_PRECONDITION_FAILED)
+        schedule = self.get_object()
+        process.apply_async(
+            kwargs={
+                "schedule_user_code": schedule.user_code,
+                "context": {"space_code": request.space_code, "realm_code": request.realm_code},
+            }
+        )
+        return Response({"status": "ok"})
