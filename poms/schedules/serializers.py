@@ -5,28 +5,25 @@ from rest_framework.fields import empty
 
 from poms.common.fields import DateTimeTzAwareField
 from poms.common.serializers import ModelMetaSerializer
-from poms.schedules.models import ScheduleProcedure, Schedule
-from poms.users.fields import MasterUserField, HiddenMemberField
-from poms.users.utils import get_member_from_context, get_master_user_from_context
+from poms.schedules.models import Schedule, ScheduleProcedure
+from poms.users.fields import HiddenMemberField, MasterUserField
 
-_l = logging.getLogger('poms.schedules')
+_l = logging.getLogger("poms.schedules")
 
 
 class ScheduleProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScheduleProcedure
-        fields = [
-            'type', 'user_code', 'order'
-        ]
+        fields = ["type", "user_code", "order"]
 
 
 class RunScheduleSerializer(serializers.Serializer):
     schedules = serializers.CharField(allow_blank=False)
 
     def __init__(self, **kwargs):
-        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        kwargs["context"] = context = kwargs.get("context", {}) or {}
         super(RunScheduleSerializer, self).__init__(**kwargs)
-        context['instance'] = self.instance
+        context["instance"] = self.instance
 
 
 class ScheduleSerializer(ModelMetaSerializer):
@@ -41,20 +38,28 @@ class ScheduleSerializer(ModelMetaSerializer):
     class Meta:
         model = Schedule
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'notes',
-            'is_enabled', 'cron_expr', 'procedures',
-            'last_run_at', 'next_run_at', 'error_handler',
-            'data',
-            'configuration_code', 'owner'
+            "id",
+            "master_user",
+            "name",
+            "user_code",
+            "notes",
+            "is_enabled",
+            "cron_expr",
+            "procedures",
+            "last_run_at",
+            "next_run_at",
+            "error_handler",
+            "data",
+            "configuration_code",
+            "owner",
         ]
-        read_only_fields = ['last_run_at', 'next_run_at']
+        read_only_fields = ["last_run_at", "next_run_at"]
 
     def create(self, validated_data):
 
         _l.debug("create validated_data %s" % validated_data)
 
-        procedures = validated_data.pop('procedures', empty)
-
+        procedures = validated_data.pop("procedures", empty)
 
         instance = super(ScheduleSerializer, self).create(validated_data)
 
@@ -68,8 +73,7 @@ class ScheduleSerializer(ModelMetaSerializer):
         _l.debug("update instance %s" % instance)
         _l.debug("update validated_data %s" % validated_data)
 
-        procedures = validated_data.pop('procedures', empty)
-
+        procedures = validated_data.pop("procedures", empty)
 
         instance = super(ScheduleSerializer, self).update(instance, validated_data)
 
@@ -88,18 +92,18 @@ class ScheduleSerializer(ModelMetaSerializer):
         current_procedures = {i.id: i for i in instance.procedures.all()}
         new_procedures = []
 
-        _l.debug('procedures_data %s' % procedures_data)
+        _l.debug("procedures_data %s" % procedures_data)
 
         for order, procedure_data in enumerate(procedures_data):
 
-            pk = procedure_data.pop('id', None)
+            pk = procedure_data.pop("id", None)
             procedure = current_procedures.pop(pk, None)
 
-            _l.debug('procedure %s' % procedure)
+            _l.debug("procedure %s" % procedure)
 
             if procedure is None:
                 try:
-                    procedure = ScheduleProcedure.objects.get(schedule=instance, order=procedure_data['order'])
+                    procedure = ScheduleProcedure.objects.get(schedule=instance, order=procedure_data["order"])
                 except ScheduleProcedure.DoesNotExist:
                     procedure = ScheduleProcedure(schedule=instance)
 

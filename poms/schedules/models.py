@@ -2,15 +2,15 @@ import json
 import logging
 from datetime import datetime
 
+from croniter import croniter
+
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
-from croniter import croniter
-
-from poms.common.models import TimeStampedModel, NamedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -58,9 +58,7 @@ class Schedule(NamedModel, ConfigurationModel):
         default="",
         validators=[validate_crontab],
         verbose_name=gettext_lazy("cron expr"),
-        help_text=gettext_lazy(
-            'Format is "* * * * *" (minute / hour / day_month / month / day_week)'
-        ),
+        help_text=gettext_lazy('Format is "* * * * *" (minute / hour / day_month / month / day_week)'),
     )
     last_run_at = models.DateTimeField(
         default=timezone.now,
@@ -102,9 +100,7 @@ class Schedule(NamedModel, ConfigurationModel):
         else:
             self.json_data = None
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         from poms.schedules.utils import sync_schedules
 
         if self.is_enabled:
@@ -244,9 +240,7 @@ class ScheduleInstance(TimeStampedModel):
             ),
         )
 
-        self.current_processing_procedure_number = (
-            self.current_processing_procedure_number + 1
-        )
+        self.current_processing_procedure_number += 1
 
         _l.debug(
             f"run_next_procedure schedule {self.schedule} "
@@ -256,8 +250,7 @@ class ScheduleInstance(TimeStampedModel):
         for procedure in self.schedule.procedures.all():
             try:
                 if (
-                    self.status != ScheduleInstance.STATUS_ERROR
-                    or self.schedule.error_handler == "continue"
+                    self.status != ScheduleInstance.STATUS_ERROR or self.schedule.error_handler == "continue"
                 ) and procedure.order == self.current_processing_procedure_number:
                     self.save()
 
@@ -276,14 +269,15 @@ class ScheduleInstance(TimeStampedModel):
                         kwargs={
                             "procedure_id": procedure.id,
                             "master_user_id": self.master_user.id,
-                            "schedule_instance_id": self.id, 'context': {
-                                'space_code': self.master_user.space_code,
-                                'realm_code': self.master_user.realm_code
-                            }
+                            "schedule_instance_id": self.id,
+                            "context": {
+                                "space_code": self.master_user.space_code,
+                                "realm_code": self.master_user.realm_code,
+                            },
                         }
                     )
 
-            except Exception:
+            except Exception as e:
                 self.status = ScheduleInstance.STATUS_ERROR
                 self.save()
 
@@ -292,7 +286,7 @@ class ScheduleInstance(TimeStampedModel):
                     performed_by="system",
                     section="schedules",
                     description=(
-                        f"Schedule {self.schedule.name}. Error occurred at step "
+                        f"Schedule {self.schedule.name}. Error {repr(e)} occurred at step "
                         f"{self.current_processing_procedure_number}/{total_procedures}"
                     ),
                 )
