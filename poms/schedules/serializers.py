@@ -14,7 +14,11 @@ _l = logging.getLogger("poms.schedules")
 class ScheduleProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScheduleProcedure
-        fields = ["type", "user_code", "order"]
+        fields = [
+            "type",
+            "user_code",
+            "order",
+        ]
 
 
 class RunScheduleSerializer(serializers.Serializer):
@@ -22,7 +26,7 @@ class RunScheduleSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
         kwargs["context"] = context = kwargs.get("context", {}) or {}
-        super(RunScheduleSerializer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         context["instance"] = self.instance
 
 
@@ -31,7 +35,6 @@ class ScheduleSerializer(ModelMetaSerializer):
     owner = HiddenMemberField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)
-
     procedures = ScheduleProcedureSerializer(required=False, many=True)
     data = serializers.JSONField(required=False, allow_null=True)
 
@@ -59,8 +62,7 @@ class ScheduleSerializer(ModelMetaSerializer):
         _l.debug(f"create validated_data {validated_data}")
 
         procedures = validated_data.pop("procedures", empty)
-
-        instance = super(ScheduleSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         if procedures is not empty:
             self.save_procedures(instance, procedures)
@@ -71,13 +73,13 @@ class ScheduleSerializer(ModelMetaSerializer):
         _l.debug(f"update instance {instance} validated_data {validated_data}")
 
         procedures = validated_data.pop("procedures", empty)
-        instance = super(ScheduleSerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         if procedures is not empty:
             procedures = self.save_procedures(instance, procedures)
 
         if procedures is not empty:
-            instance.procedures.exclude(id__in=[i.id for i in procedures]).delete()
+            instance.procedures.exclude(id__in=[proc.id for proc in procedures]).delete()
 
         return instance
 
