@@ -3717,6 +3717,45 @@ class PLReportBuilderSql:
                     item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
                     # PLAT-1748
+
+                    if item["total_opened"] is not None:
+                        item['total_opened'] = round(item['total_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_opened_loc"] is not None:
+                        item['total_opened_loc'] = round(item['total_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_closed"] is not None:
+                        item['total_closed'] = round(item['total_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_closed_loc"] is not None:
+                        item['total_closed_loc'] = round(item['total_closed_loc'], settings.ROUND_NDIGITS)
+
+
+                    if item["total_fx_opened"] is not None:
+                        item['total_fx_opened'] = round(item['total_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_opened_loc"] is not None:
+                        item['total_fx_opened_loc'] = round(item['total_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_closed"] is not None:
+                        item['total_fx_closed'] = round(item['total_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_closed_loc"] is not None:
+                        item['total_fx_closed_loc'] = round(item['total_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_opened"] is not None:
+                        item['total_fixed_opened'] = round(item['total_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_opened_loc"] is not None:
+                        item['total_fixed_opened_loc'] = round(item['total_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_closed"] is not None:
+                        item['total_fixed_closed'] = round(item['total_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_closed_loc"] is not None:
+                        item['total_fixed_closed_loc'] = round(item['total_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+
                     if item["principal_opened"] is not None:
                         item['principal_opened'] = round(item['principal_opened'], settings.ROUND_NDIGITS)
 
@@ -4097,7 +4136,8 @@ class PLReportBuilderSql:
                     if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
                         result.append(result_item_opened)
 
-                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and (item["position_size"] != 0 or item["period_start_position_size"] != 0):
+                    # if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and (item["position_size"] != 0 or item["period_start_position_size"] != 0):
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_opened_value:
                         result.append(result_item_opened)
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
