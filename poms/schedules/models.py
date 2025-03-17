@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import datetime
 
 from croniter import croniter
 
@@ -100,6 +99,12 @@ class Schedule(NamedModel, ConfigurationModel):
         else:
             self.json_data = None
 
+    class Meta(NamedModel.Meta):
+        unique_together = ("user_code", "master_user")
+
+    def __str__(self):
+        return self.user_code
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         from poms.schedules.utils import sync_schedules
 
@@ -116,30 +121,18 @@ class Schedule(NamedModel, ConfigurationModel):
         sync_schedules()
 
     def schedule(self, save=False):
+        """Schedule the next run of the schedule based on the cron expression."""
         start_time = timezone.localtime(timezone.now())
-        cron = croniter(self.cron_expr, start_time)
+        try:
+            next_run_at = croniter(self.cron_expr, start_time).get_next()
+            if save:
+                self.next_run_at = next_run_at
+                self.save(update_fields=["next_run_at"])
 
-        _l.info(f"schedule cron_expr {self.cron_expr} start_time {start_time} ")
+            _l.info(f"schedule next_run_at {next_run_at} ")
 
-        next_run_at = cron.get_next(datetime)
-
-        _l.info(f"schedule next_run_at {next_run_at} ")
-
-        self.next_run_at = next_run_at
-
-        if save:
-            self.save(
-                update_fields=[
-                    "last_run_at",
-                    "next_run_at",
-                ]
-            )
-
-    class Meta(NamedModel.Meta):
-        unique_together = ("user_code", "master_user")
-
-    def __str__(self):
-        return self.user_code
+        except Exception as e:
+            _l.error(f"Error scheduling next run for {self.name}: {e}")
 
 
 class ScheduleProcedure(models.Model):
