@@ -106,7 +106,7 @@ class Schedule(NamedModel, ConfigurationModel):
         if self.is_enabled:
             self.schedule()
 
-        super(Schedule, self).save(
+        super().save(
             force_insert=force_insert,
             force_update=force_update,
             using=using,
