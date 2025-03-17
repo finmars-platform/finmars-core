@@ -569,11 +569,11 @@ class BaseTestCase(TEST_CASE, metaclass=TestMetaClass):
             name=name,
         )
 
-    def create_schedule(self, user_code=None, name=None, configuration_code=None, cron_expr=""):
+    def create_schedule(self, user_code=None, name=None, configuration_code=None, cron_expr=None):
         return Schedule.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
-            cron_expr=cron_expr,
+            cron_expr=cron_expr or "* * * * *",
             user_code=user_code or self.random_string(),
             short_name=name or self.random_string(),
             name=name or self.random_string(),

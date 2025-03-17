@@ -17,14 +17,11 @@ def handle_schedules(using=settings.DB_DEFAULT):
 
     for schedule in schedules:
         try:
-            periodic_task = PeriodicTask.objects.using(using).get(
-                name=schedule.user_code
-            )
+            periodic_task = PeriodicTask.objects.using(using).get(name=schedule.user_code)
         except PeriodicTask.DoesNotExist:
             periodic_task = PeriodicTask(name=schedule.user_code)
 
         cron_pieces = schedule.cron_expr.split(" ")
-
         crontab, _ = CrontabSchedule.objects.using(using).get_or_create(
             minute=cron_pieces[0],
             hour=cron_pieces[1],
