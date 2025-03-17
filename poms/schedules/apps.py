@@ -10,6 +10,7 @@ _l = logging.getLogger("provision")
 
 class SchedulesConfig(AppConfig):
     name = "poms.schedules"
+    verbose_name = "Schedules"
 
     def ready(self):
         post_migrate.connect(self.update_periodic_tasks, sender=self)

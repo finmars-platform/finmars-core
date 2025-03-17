@@ -185,7 +185,7 @@ class ScheduleInstance(TimeStampedModel):
     """
     Actual Instance of schedule
     Needs just to be control of Schedule Status
-    Its really important to keep track of Pricing Procedures/Data Procedures daily
+    It's really important to keep track of Pricing Procedures/Data Procedures daily
     External data feeds keeps our Reports in latest state. And we should be sure
     that schedules processed correctly
     """
