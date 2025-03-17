@@ -34,12 +34,10 @@ class ScheduleViewSet(AbstractModelViewSet):
     ]
     filter_class = ScheduleFilterSet
 
-    @action(detail=True, methods=["post"], url_path="run-schedule", serializer_class=ScheduleSerializer)
-    def run_schedule(self, request, pk=None, realm_code=None, space_code=None):
-        _l.info(f"Run Procedure {pk} data {request.data}")
-
+    @action(detail=True, methods=["post"], url_path="run-schedule")
+    def run_schedule(self, request, *args, **kwargs):
         try:
-            schedule = Schedule.objects.get(pk=pk)
+            schedule = self.get_object()
             process.apply_async(
                 kwargs={
                     "schedule_user_code": schedule.user_code,
