@@ -67,6 +67,7 @@ class PLReportBuilderSql:
                 self.instance.pl_first_date = get_last_business_day(
                     first_portfolio.first_transaction_date - timedelta(days=1),
                     )
+
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
@@ -120,7 +121,7 @@ class PLReportBuilderSql:
         pl_first_date = self.instance.pl_first_date
 
         if not pl_first_date or pl_first_date == date.min:
-            self.instance.pl_first_date = self.instance.first_transaction_date
+            self.instance.pl_first_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
         _l.debug('self.instance.report_date %s' % self.instance.report_date)
         _l.debug('self.instance.pl_first_date %s' % self.instance.pl_first_date)
@@ -3931,6 +3932,26 @@ class PLReportBuilderSql:
                     if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
                         has_opened_value = True
 
+                    # PLAT-1417
+
+                    if item["principal_fixed_opened"] is not None and item["principal_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fixed_opened"] is not None and item["carry_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fixed_opened"] is not None and item["overheads_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["principal_fx_opened"] is not None and item["principal_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fx_opened"] is not None and item["carry_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fx_opened"] is not None and item["overheads_fx_opened"] != 0:
+                        has_opened_value = True
+
                     has_closed_value = False
 
                     if item["principal_closed"] is not None and item["principal_closed"] != 0:
@@ -3941,6 +3962,26 @@ class PLReportBuilderSql:
 
                     if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
                         has_closed_value = True
+
+                    # PLAT-1417
+                    if item["principal_fixed_closed"] is not None and item["principal_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fixed_closed"] is not None and item["carry_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fixed_closed"] is not None and item["overheads_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["principal_fx_closed"] is not None and item["principal_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fx_closed"] is not None and item["carry_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fx_closed"] is not None and item["overheads_fx_closed"] != 0:
+                        has_closed_value = True
+
 
                     if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
                         result.append(result_item_opened)
