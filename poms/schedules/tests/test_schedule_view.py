@@ -1,5 +1,5 @@
-from celery.schedules import schedule
-from django.conf import settings
+# from celery.schedules import schedule
+# from django.conf import settings
 from poms.schedules.models import Schedule
 from poms.common.common_base_test import BaseTestCase
 
@@ -41,6 +41,15 @@ class ScheduleViewSetTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/schedules/schedule/"
 
+    def prepare_data(self, cron_expr: str = None) -> dict:
+        return dict(
+            cron_expr=cron_expr or "* * * * *",
+            user_code=self.random_string(),
+            short_name=self.random_string(),
+            name=self.random_string(),
+            configuration_code=self.random_string(),
+        )
+
     def test__api_url(self):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200)
@@ -65,8 +74,8 @@ class ScheduleViewSetTest(BaseTestCase):
         ("9", "0 1-5 * * *"),
         ("0", "0 0 * * MON-FRI"),
     )
-    def test__list(self, cron_str):
-        self.schedule = self.create_schedule(cron_expr=cron_str)
+    def test__list(self, cron_expr):
+        self.create_schedule(cron_expr=cron_expr)
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200)
         response_json = response.json()
@@ -77,9 +86,75 @@ class ScheduleViewSetTest(BaseTestCase):
         schedule_data = response_json["results"][0]
         actual_keys = schedule_data.keys()
         self.assertEqual(actual_keys, expected_keys)
-        self.assertEqual(schedule_data["cron_expr"], cron_str)
+        self.assertEqual(schedule_data["cron_expr"], cron_expr)
 
+    @BaseTestCase.cases(
+        ("2", "0 12 * * MON"),
+        ("3", "0 0,12 * * *"),
+        ("4", "0 */2 * * *"),
+        ("5", "0 0 1 * *"),
+    )
+    def test__retrieve(self, cron_expr):
+        test_schedule = self.create_schedule(cron_expr=cron_expr)
+        response = self.client.get(path=f"{self.url}{test_schedule.id}/")
+        self.assertEqual(response.status_code, 200)
+        schedule_data = response.json()
 
+        self.assertEqual(schedule_data["cron_expr"], test_schedule.cron_expr)
+
+    @BaseTestCase.cases(
+        ("1", "0 0 * * *"),
+        ("2", "0 12 * * MON"),
+        ("3", "0 0,12 * * *"),
+        ("4", "0 */2 * * *"),
+        ("5", "0 0 1 * *"),
+        ("6", "0 0 * * 0"),
+        ("7", "0 0 1,15 * *"),
+        ("8", "*/15 * * * *"),
+        ("9", "0 1-5 * * *"),
+        ("0", "0 0 * * MON-FRI"),
+    )
+    def test_create(self, cron_expr):
+        post_data = self.prepare_data(cron_expr)
+
+        response = self.client.post(path=self.url, data=post_data, format="json")
+        self.assertEqual(response.status_code, 201)
+        schedule_data = response.json()
+
+        self.assertEqual(schedule_data["cron_expr"], cron_expr)
+
+        test_schedule = Schedule.objects.get(pk=schedule_data["id"])
+        self.assertEqual(test_schedule.cron_expr, cron_expr)
+
+    @BaseTestCase.cases(
+        ("2", "1-60 * * * *"),
+        ("3", "0 24 * * *"),
+        ("4", "0 0 0 * *"),
+        ("5", "0 0 * JANU *"),
+    )
+    def test_invalid_cron_expr(self, cron_expr):
+        post_data = self.prepare_data(cron_expr)
+
+        response = self.client.post(path=self.url, data=post_data, format="json")
+        self.assertEqual(response.status_code, 400)
+
+    @BaseTestCase.cases(
+        ("2", "0 12 * * MON"),
+        ("3", "0 0,12 * * *"),
+        ("4", "0 */2 * * *"),
+        ("5", "0 0 1 * *"),
+    )
+    def test__update_patch(self, cron_expr):
+        test_schedule = self.create_schedule()  # create default schedule
+
+        patch_data = {"cron_expr": cron_expr}
+        response = self.client.patch(path=f"{self.url}{test_schedule.id}/", data=patch_data, format="json")
+        self.assertEqual(response.status_code, 200)
+        schedule_data = response.json()
+
+        self.assertEqual(schedule_data["cron_expr"], cron_expr)
+        test_schedule.refresh_from_db()
+        self.assertEqual(test_schedule.cron_expr, cron_expr)
 
     # def test__run_schedule(self):
     #     run_schedule_url = f"{self.url}{self.schedule.pk}run-schedule/"
