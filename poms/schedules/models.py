@@ -1,5 +1,7 @@
 import json
 import logging
+from datetime import datetime
+from typing import Optional
 
 from croniter import croniter
 
@@ -120,19 +122,22 @@ class Schedule(NamedModel, ConfigurationModel):
 
         sync_schedules()
 
-    def schedule(self, save=False):
+    def schedule(self, save=False) -> Optional[datetime]:
         """Schedule the next run of the schedule based on the cron expression."""
-        start_time = timezone.localtime(timezone.now())
+        start_time = timezone.now()
         try:
-            next_run_at = croniter(self.cron_expr, start_time).get_next()
+            next_run_time = croniter(self.cron_expr, start_time).get_next()
+            self.next_run_at = datetime.fromtimestamp(next_run_time, tz=timezone.utc)
             if save:
-                self.next_run_at = next_run_at
                 self.save(update_fields=["next_run_at"])
 
-            _l.info(f"schedule next_run_at {next_run_at} ")
+            _l.info(f"schedule next_run_time {self.next_run_at}")
+
+            return self.next_run_at
 
         except Exception as e:
             _l.error(f"Error scheduling next run for {self.name}: {e}")
+            return None
 
 
 class ScheduleProcedure(models.Model):
