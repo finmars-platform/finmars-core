@@ -457,7 +457,7 @@ class BackendReportHelperService:
             ):
                 return True
         elif isinstance(regular_filter_value, list):
-            if regular_filter_value and regular_filter_value[0]:
+            if (regular_filter_value and regular_filter_value[0]) or (regular_filter_value and regular_filter_value[0] == 0): # important to work with zero values in filter # PLAT-1749
                 return True
         return False
 

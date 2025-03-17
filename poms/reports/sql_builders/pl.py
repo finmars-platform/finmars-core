@@ -3716,6 +3716,108 @@ class PLReportBuilderSql:
                     item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
                     item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
+                    # PLAT-1748
+                    if item["principal_opened"] is not None:
+                        item['principal_opened'] = round(item['principal_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_opened"] is not None:
+                        item['carry_opened'] = round(item['carry_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_opened"] is not None:
+                        item['overheads_opened'] = round(item['overheads_opened'], settings.ROUND_NDIGITS)
+
+                    if item["principal_closed"] is not None:
+                        item['principal_closed'] = round(item['principal_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_closed"] is not None:
+                        item['carry_closed'] = round(item['carry_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_closed"] is not None:
+                        item['overheads_closed'] = round(item['overheads_closed'], settings.ROUND_NDIGITS)
+
+
+                    # FX
+
+                    if item["principal_fx_opened"] is not None:
+                        item['principal_fx_opened'] = round(item['principal_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_opened"] is not None:
+                        item['carry_fx_opened'] = round(item['carry_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_opened"] is not None:
+                        item['overheads_fx_opened'] = round(item['overheads_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fx_closed"] is not None:
+                        item['principal_fx_closed'] = round(item['principal_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_closed"] is not None:
+                        item['carry_fx_closed'] = round(item['carry_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_closed"] is not None:
+                        item['overheads_fx_closed'] = round(item['overheads_fx_closed'], settings.ROUND_NDIGITS)
+
+                    # FIXED
+
+                    if item["principal_fixed_opened"] is not None:
+                        item['principal_fixed_opened'] = round(item['principal_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_opened"] is not None:
+                        item['carry_fixed_opened'] = round(item['carry_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_opened"] is not None:
+                        item['overheads_fixed_opened'] = round(item['overheads_fixed_opened'], settings.ROUND_NDIGITS)
+
+
+                    if item["principal_fixed_closed"] is not None:
+                        item['principal_fixed_closed'] = round(item['principal_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_closed"] is not None:
+                        item['carry_fixed_closed'] = round(item['carry_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_closed"] is not None:
+                        item['overheads_fixed_closed'] = round(item['overheads_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    # FX LOC
+
+                    if item["principal_fx_opened_loc"] is not None:
+                        item['principal_fx_opened_loc'] = round(item['principal_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_opened_loc"] is not None:
+                        item['carry_fx_opened_loc'] = round(item['carry_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_opened_loc"] is not None:
+                        item['overheads_fx_opened_loc'] = round(item['overheads_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fx_closed_loc"] is not None:
+                        item['principal_fx_closed_loc'] = round(item['principal_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_closed_loc"] is not None:
+                        item['carry_fx_closed_loc'] = round(item['carry_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_closed_loc"] is not None:
+                        item['overheads_fx_closed_loc'] = round(item['overheads_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+
+                    # FIXED LOC
+
+                    if item["principal_fixed_opened_loc"] is not None:
+                        item['principal_fixed_opened_loc'] = round(item['principal_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_opened_loc"] is not None:
+                        item['carry_fixed_opened_loc'] = round(item['carry_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_opened_loc"] is not None:
+                        item['overheads_fixed_opened_loc'] = round(item['overheads_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fixed_closed_loc"] is not None:
+                        item['principal_fixed_closed_loc'] = round(item['principal_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_closed_loc"] is not None:
+                        item['carry_fixed_closed_loc'] = round(item['carry_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_closed_loc"] is not None:
+                        item['overheads_fixed_closed_loc'] = round(item['overheads_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
                     if item['item_type'] == ITEM_TYPE_MISMATCH:
                         if item['position_size'] and item['total_opened']:
                             if item['instrument_id'] != ecosystem_defaults.instrument_id:
