@@ -847,11 +847,12 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         from poms.reports.common import Report
         from poms.reports.sql_builders.pl import PLReportBuilderSql
 
+        # PLAT-1721
         instance = Report(
             master_user=self.master_user,
             member=self.owner,
             report_currency=self.currency,
-            pl_first_date=self.date_from,
+            period_type=self.period_type,
             report_date=self.date,
             cost_method=self.cost_method,
             portfolios=[self.portfolio],
