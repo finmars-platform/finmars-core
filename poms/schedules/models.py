@@ -18,12 +18,12 @@ from poms.users.models import MasterUser
 _l = logging.getLogger("poms.schedules")
 
 
-def validate_crontab(value):
+def validate_crontab(value: str) -> None:
     try:
         croniter(value, timezone.now())
 
-    except (ValueError, KeyError, TypeError) as e:
-        raise ValidationError(gettext_lazy("A valid cron string is required.")) from e
+    except Exception as e:
+        raise ValidationError(gettext_lazy(f"Invalid cron string {value} resulted in {repr(e)}")) from e
 
 
 class Schedule(NamedModel, ConfigurationModel):
@@ -104,7 +104,7 @@ class Schedule(NamedModel, ConfigurationModel):
         from poms.schedules.utils import sync_schedules
 
         if self.is_enabled:
-            self.schedule(save=False)
+            self.schedule()
 
         super(Schedule, self).save(
             force_insert=force_insert,
