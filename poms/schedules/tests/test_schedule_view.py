@@ -1,7 +1,5 @@
-# from celery.schedules import schedule
-# from django.conf import settings
-from poms.schedules.models import Schedule
 from poms.common.common_base_test import BaseTestCase
+from poms.schedules.models import Schedule
 
 EXPECTED_RESPONSE = {
     "count": 1,
@@ -155,6 +153,17 @@ class ScheduleViewSetTest(BaseTestCase):
         self.assertEqual(schedule_data["cron_expr"], cron_expr)
         test_schedule.refresh_from_db()
         self.assertEqual(test_schedule.cron_expr, cron_expr)
+
+    def test__delete(self):
+        test_schedule = self.create_schedule()
+        response = self.client.get(path=f"{self.url}{test_schedule.id}/")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.delete(path=f"{self.url}{test_schedule.id}/")
+        self.assertEqual(response.status_code, 204)
+
+        result = Schedule.objects.filter(pk=test_schedule.id).first()
+        self.assertIsNone(result)
 
     # def test__run_schedule(self):
     #     run_schedule_url = f"{self.url}{self.schedule.pk}run-schedule/"
