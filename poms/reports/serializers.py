@@ -506,15 +506,25 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     def process_custom_field(self, cf, value):
         expr = cf["expr"]
+
+        value = str(value)
+
         if expr and value:
             if cf["value_type"] == 10:
-                return self.evaluate_expression(
-                    "str(item)", names={"item": value}, context=self.context
-                )
+                return str(value)
             elif cf["value_type"] == 20:
-                return self.evaluate_expression(
-                    "float(item)", names={"item": value}, context=self.context
-                )
+
+                if value is not None and value is not 'Invalid expression':
+
+                    value =  float(value)
+                    value = round(
+                        value, settings.ROUND_NDIGITS
+                    )
+                elif value is 'Invalid expression':
+                    return None
+
+                return value
+
             elif cf["value_type"] == 40:
                 return self.evaluate_expression(
                     "parse_date(item, '%d/%m/%Y')",
