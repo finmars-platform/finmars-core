@@ -1,5 +1,5 @@
 # GitLab CI/CD pipeline for building, testing, and releasing the Finmars Backend Docker image.
-# The pipeline consists of five stages:
+# The pipeline consists of 5 stages:
 # 1. test: Runs unit tests and generates code coverage reports.
 # 2. versioning: Generates a unique version tag for the Docker image.
 # 3. build: Builds the Docker image with the generated version tag.
@@ -110,19 +110,16 @@ Push Version:
       # Create the JSON payload
       NOTES=$(git log -1 --pretty=%f)
       JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\", \"channel\": \"$CHANNEL\"  }"
-
-      echo "----- Build Payload -----"
-      echo "$JSON_PAYLOAD"
-      echo "-------------------------"
+      echo "JSON_PAYLOAD=$JSON_PAYLOAD"
       
-      status_code=$(curl -o /dev/null -s -w "%{http_code}" --request POST https://license.finmars.com/api/v1/version/ --header "Content-Type: application/json" --data "$JSON_PAYLOAD")
-      
+      # Push JSON to license service
+      status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
       if [[ "$status_code" -ne "201" ]]; then
         echo "Build failed. Status Code: $status_code"
-        exit 1
-      else
-        echo "Build succeeded."
+        exit 666
       fi
+      
+      echo "Push version succeeded."
   only:
     - /^.*-(rc|stable)$/
     - tags
