@@ -31,12 +31,13 @@ Test:
   stage: test
   image:
     python:3.11-bookworm # adjust the Python version as necessary
-
   services:
-    - postgres:15-alpine
-    - rabbitmq:3.13-management-alpine
-    - redis:7-alpine
-
+    - name: postgres:15-alpine
+      alias: postgres
+    - name: rabbitmq:3.13-management-alpine
+      alias: rabbitmq
+    - name: redis:7-alpine
+      alias: redis
   variables:
     DB_HOST: postgres
     DB_NAME: test_finmars
@@ -54,7 +55,6 @@ Test:
     RABBITMQ_PORT: 5672
     REDIS_HOST: redis
     REDIS_PORT: 6379
-
   before_script:
     - pip install --upgrade pip && pip install -r requirements-test.txt
     - mkdir -p /var/log/finmars/backend
