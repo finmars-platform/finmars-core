@@ -1,10 +1,10 @@
 # GitLab CI/CD pipeline for building, testing, and releasing the Finmars Backend Docker image.
 # The pipeline consists of 5 stages:
-# 1. test: Runs unit tests and generates code coverage reports.
-# 2. versioning: Generates a unique version tag for the Docker image.
-# 3. build: Builds the Docker image with the generated version tag.
-# 4. release: Tags and pushes the Docker image to the registry.
-# 5. push_version: Pushes the version information to the license server.
+# 1. test - Runs unit tests and generates code coverage reports.
+# 2. versioning - Generates a unique version tag for the Docker image.
+# 3. build - Builds the Docker image with the generated version tag.
+# 4. release - Tags and pushes the Docker image to the registry.
+# 5. push_version - Pushes the version information to the license server.
 
 stages:
   - test
