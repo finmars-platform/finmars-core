@@ -36,17 +36,11 @@ variables:
 Test:
   stage: test
   image:
-    python:3.11-bookworm # adjust the Python version as necessary
+    python:3.11-bookworm
   services:
-    - name: postgres:15-alpine
-      alias: postgres
-      pull_policy: if-not-present
-    - name: rabbitmq:3.13-management-alpine
-      alias: rabbitmq
-      pull_policy: if-not-present
-    - name: redis:7-alpine
-      alias: redis
-      pull_policy: if-not-present
+    - postgres:15-alpine
+    - rabbitmq:3.13-management-alpine
+    - redis:7-alpine
   variables:
     DB_HOST: postgres
     DB_NAME: test_finmars
@@ -138,10 +132,9 @@ Build:
   stage: build
   before_script:
     # to debug runner
-    - df
-    - cat /etc/resolv.conf
-    - cat /etc/hosts
-    #
+    # - df
+    # - cat /etc/resolv.conf
+    # - cat /etc/hosts
     - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
   script:
     - IMAGE_TAG=${IMAGE_TAG:-$CI_COMMIT_REF_NAME}
