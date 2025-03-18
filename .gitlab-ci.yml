@@ -30,12 +30,12 @@ variables:
 Test:
   stage: test
   image:
-    name: python:3.11-bookworm # adjust the Python version as necessary
+    python:3.11-bookworm # adjust the Python version as necessary
 
   services:
-    - name: postgres:15-alpine
-    - name: rabbitmq:3.13-management-alpine
-    - name: redis:7-alpine
+    - postgres:15-alpine
+    - rabbitmq:3.13-management-alpine
+    - redis:7-alpine
 
   variables:
     DB_HOST: postgres
@@ -69,7 +69,7 @@ Test:
 Versioning:
   stage: versioning
   image:
-    name: python:3.11-bookworm
+    python:3.11-bookworm
   before_script:
     - pip install haikunator
   script:
@@ -90,8 +90,7 @@ Versioning:
 Push Version:
   stage: push_version
   image:
-    name: python:3.11-bookworm
-    pull_policy: if-not-present # available: always, if-not-present,
+    python:3.11-bookworm
   before_script:
     - apt install curl git
   script:
