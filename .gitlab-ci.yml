@@ -23,7 +23,7 @@ default:
     - docker info
 
 variables:
-  DOCKER_HOST: tcp://docker:2375
+#  DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: "" # This instructs Docker not to start over TLS
 
 
@@ -34,10 +34,13 @@ Test:
   services:
     - name: postgres:15-alpine
       alias: postgres
+      pull_policy: if-not-present
     - name: rabbitmq:3.13-management-alpine
       alias: rabbitmq
+      pull_policy: if-not-present
     - name: redis:7-alpine
       alias: redis
+      pull_policy: if-not-present
   variables:
     DB_HOST: postgres
     DB_NAME: test_finmars
