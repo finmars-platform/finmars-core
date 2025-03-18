@@ -26,7 +26,7 @@ variables:
   RABBITMQ_DEFAULT_PASS: test_finmars_password
 
   # When using dind service, you must instruct docker to talk with the
-  # daemon started inside of the service. The daemon is available with
+  # daemon started inside the service. The daemon is available with
   # a network connection instead of the default /var/run/docker.sock socket.
   #
   # The 'docker' hostname is the alias of the service container as described at
@@ -141,18 +141,6 @@ Push Version:
       NOTES=$(git log -1 --pretty=%f)
       JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\", \"channel\": \"$CHANNEL\"  }"
 
-      # Pass the payload to curl
-      #      response=$(curl --request POST https://license.finmars.com/api/v1/version/ \
-      #      --header "Content-Type: application/json" \
-      #      --data "$JSON_PAYLOAD")
-      #
-      #      if [[ "$response" -ne 200 ]]; then
-      #        echo "Error detected. Failing the build."
-      #        exit 1
-      #      else
-      #        echo "Build succeeded."
-      #      fi
-      
       echo "----- Build Payload -----"
       echo "$JSON_PAYLOAD"
       echo "-------------------------"
@@ -183,10 +171,7 @@ Build:
     - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
 
   script:
-    # fetches the latest image (not failing if image is not found)
     - IMAGE_TAG=${IMAGE_TAG:-$CI_COMMIT_REF_NAME}
-#    - docker pull $CI_REGISTRY_IMAGE:latest || true
-#    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG .
     - docker build --pull --no-cache --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG .
     - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
   only:
