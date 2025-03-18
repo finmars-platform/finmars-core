@@ -115,8 +115,8 @@ Push Version:
       # Push JSON to license service
       status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
       if [[ "$status_code" -ne "201" ]]; then
-        echo "Build failed. Status Code: $status_code"
-        exit 666
+        echo "Push version failed, http status: $status_code"
+        exit 6
       fi
       
       echo "Push version succeeded."
