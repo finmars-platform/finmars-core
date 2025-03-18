@@ -2113,7 +2113,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return sorted_accrual_events[pos] if pos < len(end_dates) else None
 
     def get_accrued_price(self, price_date: date) -> float:
-
         if not self._price_date_is_valid(day=price_date):
             return 0
 
@@ -2170,19 +2169,19 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             existed_prices = {(p.pricing_policy_id, p.date): p for p in existed_prices}
             for pp in PricingPolicy.objects.filter(master_user=self.master_user):
                 for dt in rrule.rrule(rrule.DAILY, dtstart=begin_date, until=end_date):
-                    d = dt.date()
-                    if d >= self.maturity_date:
+                    day = dt.date()
+                    if day >= self.maturity_date:
                         continue
 
-                    accrued_price = self.get_accrued_price(d)
+                    accrued_price = self.get_accrued_price(day)
 
-                    price = existed_prices.get((pp.id, d))
+                    price = existed_prices.get((pp.id, day))
                     if price is None:
                         if accrued_price is not None:
                             price = PriceHistory()
                             price.instrument = self
                             price.pricing_policy = pp
-                            price.date = d
+                            price.date = day
                             price.accrued_price = accrued_price
                             price.save()
                     else:
