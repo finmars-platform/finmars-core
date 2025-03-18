@@ -34,4 +34,7 @@ class PriceDateIsValidTestCase(BaseTestCase):
         invalid_input = f"{YEAR}-10-01"  # A string instead of a date object
         with self.assertRaises(ValueError) as context:
             self.instrument._price_date_is_valid(invalid_input)
-        self.assertEqual(str(context.exception), "price_date_is_valid: day must be of type date, not <class 'str'>")
+        self.assertEqual(
+            str(context.exception),
+            "price_date_is_valid: day must be of type date, not <class 'str'>",
+        )
