@@ -25,21 +25,6 @@ CSS_CONTENT = """
 }""".encode()
 
 
-EXPECTED_RESPONSE = {
-    "id": 1,
-    "company_name": "Test Company",
-    "theme_code": "com.finmars.client-a",
-    "theme_css_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/theme.css",
-    "logo_dark_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/logo_dark.png",
-    "logo_light_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/logo_light.png",
-    "favicon_url": "https://testserver/realm00000/space00000/api/storage/.system/ui/favicon.png",
-    "custom_css": "body { background-color: #fff; }",
-    "meta": {
-        "execution_time": 28,
-        "request_id": "59db8db2-0815-4129-a14c-3d1475fc308c",
-    },
-}
-
 UI_ROOT = ".system/ui"
 API_PREFIX = f"api/storage/{UI_ROOT}"
 STORAGE_PREFIX = f"space00000/{UI_ROOT}/"
@@ -138,7 +123,6 @@ class WhitelabelViewSetTest(BaseTestCase):
         name, configuration_code = self._create_name_and_configuration_code()
 
         return {
-            "user_code": name,
             "configuration_code": configuration_code,
             "name": name,
             "theme_css_file": SimpleUploadedFile(
@@ -163,6 +147,9 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}/dark.png")
         self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}/light.png")
         self.assertEqual(response_json["favicon_url"], f"{API_PREFIX}/favicon.png")
+
+        inst_db = WhitelabelModel.objects.get(id=response_json["id"])
+        self.assertEqual(inst_db.is_enabled, True)
 
     def test__create(self):
         request_data = self.create_request_data()

@@ -111,7 +111,6 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
         fields = [
             "id",
             "name",
-            "is_enabled",
             "user_code",
             "configuration_code",
 
