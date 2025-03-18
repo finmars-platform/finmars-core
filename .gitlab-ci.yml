@@ -1,11 +1,9 @@
-# https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
-
 stages:
   - test
   - versioning
   - build
   - release
-  - pushVersion
+  - push_version
 
 default:
   image: docker:27
@@ -16,46 +14,20 @@ default:
   before_script:
     - docker info
 
-
 variables:
-  POSTGRES_DB: test_finmars
-  POSTGRES_USER: test_finmars_user
-  POSTGRES_PASSWORD: test_finmars_password
-
-  RABBITMQ_DEFAULT_USER: test_finmars_user
-  RABBITMQ_DEFAULT_PASS: test_finmars_password
-
-  # When using dind service, you must instruct docker to talk with the
-  # daemon started inside the service. The daemon is available with
-  # a network connection instead of the default /var/run/docker.sock socket.
-  #
-  # The 'docker' hostname is the alias of the service container as described at
-  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
-  #
-  # If you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
-  # the variable must be set to tcp://localhost:2375 because of how the
-  # Kubernetes executor connects services to the job container
-  # DOCKER_HOST: tcp://localhost:2375
-  #
-  # DOCKER_HOST: tcp://docker:2375
-  #
-  # This instructs Docker not to start over TLS.
-  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: "" # This instructs Docker not to start over TLS
 
 
 Test:
   stage: test
   image:
     name: python:3.11-bookworm # adjust the Python version as necessary
-    pull_policy: if-not-present # available: always, if-not-present,
 
   services:
     - name: postgres:15-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
     - name: rabbitmq:3.13-management-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
     - name: redis:7-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
 
   variables:
     DB_HOST: postgres
@@ -63,18 +35,15 @@ Test:
     DB_USER: test_finmars_user
     DB_PASSWORD: test_finmars_password
     DB_PORT: 5432
-
     REPLICA_DB_HOST: postgres
     REPLICA_DB_NAME: test_finmars
     REPLICA_DB_USER: test_finmars_user
     REPLICA_DB_PASSWORD: test_finmars_password
     REPLICA_DB_PORT: 5432
-
     RABBITMQ_HOST: rabbitmq
     RABBITMQ_USER: test_finmars_user
     RABBITMQ_PASSWORD: test_finmars_password
     RABBITMQ_PORT: 5672
-
     REDIS_HOST: redis
     REDIS_PORT: 6379
 
@@ -89,29 +58,19 @@ Test:
       - ./coverage_html_report
 
 
-# This new job will handle the versioning mechanism
 Versioning:
+  stage: versioning
   image:
     name: python:3.11-bookworm
-    pull_policy: if-not-present # available: always, if-not-present,
-  stage: versioning
   before_script:
     - pip install haikunator
   script:
     - |
       if [[ $CI_COMMIT_REF_NAME == *"-rc" || $CI_COMMIT_REF_NAME == *"-stable" ]]; then
-      
-        # Fancy Name Generation using Haikunator
         FANCY_NAME=$(python -c 'from haikunator import Haikunator; print(Haikunator().haikunate(token_length=0))')
-
-        # Construct full version name
         FULL_VERSION_NAME="$CI_COMMIT_REF_NAME-$CI_PIPELINE_ID-$FANCY_NAME"
-
-        echo "FULL_VERSION_NAME is $FULL_VERSION_NAME"
-
-        # Export the generated version name for later stages to use
+        echo "FULL_VERSION_NAME=$FULL_VERSION_NAME"
         echo "IMAGE_TAG=$(echo $FULL_VERSION_NAME)" >> build.env
-      
       fi
   artifacts:
     reports:
@@ -121,7 +80,7 @@ Versioning:
 
 
 Push Version:
-  stage: pushVersion
+  stage: push_version
   image:
     name: python:3.11-bookworm
     pull_policy: if-not-present # available: always, if-not-present,
@@ -161,7 +120,6 @@ Push Version:
 
 Build:
   stage: build
-
   before_script:
     # to debug runner
     - df
@@ -169,7 +127,6 @@ Build:
     - cat /etc/hosts
     #
     - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
-
   script:
     - IMAGE_TAG=${IMAGE_TAG:-$CI_COMMIT_REF_NAME}
     - docker build --pull --no-cache --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG .
@@ -177,12 +134,13 @@ Build:
   only:
     - /^.*-(rc|stable)$/
 
+
 Release latest:
+  stage: release
   variables:
     # We are just playing with Docker here.
     # We do not need GitLab to clone the source code.
     GIT_STRATEGY: none
-  stage: release
   only:
     # Only "master" should be tagged "latest"
     - master
@@ -197,11 +155,12 @@ Release latest:
     # And we push it.
     - docker push $CI_REGISTRY_IMAGE:latest
 
+
 Release version:
+  stage: release
   variables:
     # Again, we do not need the source code here. Just playing with Docker.
     GIT_STRATEGY: none
-  stage: release
   only:
     # We want this job to be run on tags only.
     - tags
