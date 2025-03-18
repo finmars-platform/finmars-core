@@ -12,7 +12,7 @@ class GetAccruedPriceMethodTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.instrument = Instrument.objects.first()
+        self.instrument = Instrument.objects.last()
         self.accrual_event = AccrualEventFactory(instrument=self.instrument)
         self.accrual_schedule = AccrualCalculationScheduleFactory(instrument=self.instrument)
 

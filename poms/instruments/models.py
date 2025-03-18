@@ -2072,7 +2072,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     def _price_date_is_valid(self, day: date) -> bool:
         """target date must be less that maturity date"""
         if not isinstance(day, date):
-            raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
+            raise ValueError(f"price_date_is_valid: day must be of type date, not {type(day)}")
 
         return not self.maturity_date or day < self.maturity_date
 
