@@ -21,7 +21,11 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.fields import ResourceGroupsField
-from poms.common.formula_accruals import get_coupon
+from poms.common.formula_accruals import (
+    calculate_accrual_event_factor,
+    calculate_accrual_schedule_factor,
+    get_coupon,
+)
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
@@ -2109,10 +2113,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return sorted_accrual_events[pos] if pos < len(end_dates) else None
 
     def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import (
-            calculate_accrual_event_factor,
-            calculate_accrual_schedule_factor,
-        )
 
         if not self._price_date_is_valid(day=price_date):
             return 0

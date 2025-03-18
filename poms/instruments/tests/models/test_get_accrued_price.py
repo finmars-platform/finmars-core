@@ -66,7 +66,7 @@ class GetAccruedPriceMethodTest(BaseTestCase):
 
         self.assertEqual(price, 0)
 
-    def test_get_accrued_price_no_accrual(self):
+    def test_get_accrued_price_no_any_accrual(self):
         price_date = date(YEAR, 6, 15)
 
         price = self.instrument.get_accrued_price(price_date)
