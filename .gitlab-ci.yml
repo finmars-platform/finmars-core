@@ -36,7 +36,7 @@ variables:
 Test:
   stage: test
   image:
-    python:3.11-bookworm
+    python:3.11-bookworm-slim
   services:
     - postgres:15-alpine
     - rabbitmq:3.13-management-alpine
@@ -73,7 +73,7 @@ Test:
 Versioning:
   stage: versioning
   image:
-    python:3.11-bookworm
+    python:3.11-bookworm-slim
   before_script:
     - pip install haikunator
   script:
