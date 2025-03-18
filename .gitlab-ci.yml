@@ -23,8 +23,14 @@ default:
     - docker info
 
 variables:
-#  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: "" # This instructs Docker not to start over TLS
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  # required to initialize postgres & rabbitmq services
+  POSTGRES_DB: test_finmars
+  POSTGRES_USER: test_finmars_user
+  POSTGRES_PASSWORD: test_finmars_password
+  RABBITMQ_DEFAULT_USER: test_finmars_user
+  RABBITMQ_DEFAULT_PASS: test_finmars_password
 
 
 Test:
@@ -67,6 +73,7 @@ Test:
   artifacts:
     paths:
       - ./coverage_html_report
+    expire_in: 1 week
 
 
 Versioning:
