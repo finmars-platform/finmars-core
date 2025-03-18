@@ -62,11 +62,25 @@ class PLReportBuilderSql:
                 # TODO ask oleg what to do with inception
                 # szhitenev 2023-12-04
 
-                first_portfolio = self.instance.portfolios.first()
+                transaction = (
+                    Transaction.objects.filter(
+                        portfolio__user_code__in=self.instance.portfolios,
+                    )
+                    .order_by("transaction_date")
+                    .first()
+                )
+
+                first_transaction_date =  transaction.transaction_date
+                
+                _l.info('inception.first_transaction_date %s ' % first_transaction_date)
+
+                # first_portfolio = self.instance.portfolios.first()
 
                 self.instance.pl_first_date = get_last_business_day(
-                    first_portfolio.first_transaction_date - timedelta(days=1),
+                    first_transaction_date - timedelta(days=1),
                     )
+
+                _l.info('inception.pl_first_date %s ' % self.instance.pl_first_date)
 
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
