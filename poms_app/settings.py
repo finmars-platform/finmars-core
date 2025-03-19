@@ -672,22 +672,9 @@ AWS_S3_ACCESS_KEY_ID = os.environ.get("AWS_S3_ACCESS_KEY_ID", None)
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY", None)
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", None)
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
-AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 AWS_S3_SIGNATURE_VERSION = "s3v4"
-# AWS_S3_CLIENT_CONFIG = {
-#     "signature_version": "s3v4",
-#     "config": {
-#         "retries": {
-#             "max_attempts": 3,
-#             "mode": "standard",
-#         },
-#         "paginator_config": {
-#             "PageSize": 500,
-#         },
-#         "connect_timeout": 30,
-#         "read_timeout": 180,
-#     },
-# }
+
+AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
 
