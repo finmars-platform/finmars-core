@@ -21,7 +21,11 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.fields import ResourceGroupsField
-from poms.common.formula_accruals import get_coupon
+from poms.common.formula_accruals import (
+    calculate_accrual_event_factor,
+    calculate_accrual_schedule_factor,
+    get_coupon,
+)
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
@@ -1531,12 +1535,10 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         blank=True,
         help_text="Files in the storage related to the instrument",
     )
-
     first_transaction_date = models.DateField(
         null=True,
         verbose_name=gettext_lazy("first transaction date"),
     )
-
     resource_groups = ResourceGroupsField(
         verbose_name=gettext_lazy("list of resource groups user_codes, to which instrument belongs"),
     )
@@ -2074,7 +2076,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     def _price_date_is_valid(self, day: date) -> bool:
         """target date must be less that maturity date"""
         if not isinstance(day, date):
-            raise ValueError(f"accrual_date_is_valid: day must be of type date date, not {type(d)}")
+            raise ValueError(f"price_date_is_valid: day must be of type date, not {type(day)}")
 
         return not self.maturity_date or day < self.maturity_date
 
@@ -2111,11 +2113,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return sorted_accrual_events[pos] if pos < len(end_dates) else None
 
     def get_accrued_price(self, price_date: date) -> float:
-        from poms.common.formula_accruals import (
-            calculate_accrual_event_factor,
-            calculate_accrual_schedule_factor,
-        )
-
         if not self._price_date_is_valid(day=price_date):
             return 0
 
@@ -2125,7 +2122,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             factor = calculate_accrual_event_factor(accrual_event, price_date)
             return accrual_event.accrual_size * factor
 
-        # use accrual schedule path
+        # take accrual schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
         if not accrual_schedule:
             return 0
@@ -2144,9 +2141,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         if not self._price_date_is_valid(day=price_date):
             return 0
 
-        # TODO ADD ACCRUAL EVENT PATH
+        # check accrual event path
+        accrual_event = self.find_accrual_event(price_date)
+        if accrual_event:
+            return accrual_event.accrual_size
 
-        # accrual_schedule path
+        # take accrual_schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
         accrual_size = float(accrual_schedule.accrual_size) if accrual_schedule else 0
 
@@ -2169,19 +2169,19 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             existed_prices = {(p.pricing_policy_id, p.date): p for p in existed_prices}
             for pp in PricingPolicy.objects.filter(master_user=self.master_user):
                 for dt in rrule.rrule(rrule.DAILY, dtstart=begin_date, until=end_date):
-                    d = dt.date()
-                    if d >= self.maturity_date:
+                    day = dt.date()
+                    if day >= self.maturity_date:
                         continue
 
-                    accrued_price = self.get_accrued_price(d)
+                    accrued_price = self.get_accrued_price(day)
 
-                    price = existed_prices.get((pp.id, d))
+                    price = existed_prices.get((pp.id, day))
                     if price is None:
                         if accrued_price is not None:
                             price = PriceHistory()
                             price.instrument = self
                             price.pricing_policy = pp
-                            price.date = d
+                            price.date = day
                             price.accrued_price = accrued_price
                             price.save()
                     else:

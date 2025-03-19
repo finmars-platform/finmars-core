@@ -1,11 +1,17 @@
-# https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
+# GitLab CI/CD pipeline for building, testing, and releasing the Finmars Backend Docker image.
+# The pipeline consists of 5 stages:
+# 1. test - Runs unit tests and generates code coverage reports.
+# 2. versioning - Generates a unique version tag for the Docker image.
+# 3. build - Builds the Docker image with the generated version tag.
+# 4. release - Tags and pushes the Docker image to the registry.
+# 5. push_version - Pushes the version information to the license server.
 
 stages:
   - test
   - versioning
   - build
   - release
-  - pushVersion
+  - push_version
 
 default:
   image: docker:27
@@ -16,68 +22,42 @@ default:
   before_script:
     - docker info
 
-
 variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  # Required to initialize postgres & rabbitmq services for testing
   POSTGRES_DB: test_finmars
   POSTGRES_USER: test_finmars_user
   POSTGRES_PASSWORD: test_finmars_password
-
   RABBITMQ_DEFAULT_USER: test_finmars_user
   RABBITMQ_DEFAULT_PASS: test_finmars_password
-
-  # When using dind service, you must instruct docker to talk with the
-  # daemon started inside of the service. The daemon is available with
-  # a network connection instead of the default /var/run/docker.sock socket.
-  #
-  # The 'docker' hostname is the alias of the service container as described at
-  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
-  #
-  # If you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
-  # the variable must be set to tcp://localhost:2375 because of how the
-  # Kubernetes executor connects services to the job container
-  # DOCKER_HOST: tcp://localhost:2375
-  #
-  # DOCKER_HOST: tcp://docker:2375
-  #
-  # This instructs Docker not to start over TLS.
-  DOCKER_TLS_CERTDIR: ""
 
 
 Test:
   stage: test
   image:
-    name: python:3.11-bookworm # adjust the Python version as necessary
-    pull_policy: if-not-present # available: always, if-not-present,
-
+    python:3.11-slim-bookworm
   services:
-    - name: postgres:15-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
-    - name: rabbitmq:3.13-management-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
-    - name: redis:7-alpine
-      pull_policy: if-not-present # available: always, if-not-present,
-
+    - postgres:15-alpine
+    - rabbitmq:3.13-management-alpine
+    - redis:7-alpine
   variables:
     DB_HOST: postgres
     DB_NAME: test_finmars
     DB_USER: test_finmars_user
     DB_PASSWORD: test_finmars_password
     DB_PORT: 5432
-
     REPLICA_DB_HOST: postgres
     REPLICA_DB_NAME: test_finmars
     REPLICA_DB_USER: test_finmars_user
     REPLICA_DB_PASSWORD: test_finmars_password
     REPLICA_DB_PORT: 5432
-
     RABBITMQ_HOST: rabbitmq
     RABBITMQ_USER: test_finmars_user
     RABBITMQ_PASSWORD: test_finmars_password
     RABBITMQ_PORT: 5672
-
     REDIS_HOST: redis
     REDIS_PORT: 6379
-
   before_script:
     - pip install --upgrade pip && pip install -r requirements-test.txt
     - mkdir -p /var/log/finmars/backend
@@ -87,31 +67,22 @@ Test:
   artifacts:
     paths:
       - ./coverage_html_report
+    expire_in: 1 day
 
 
-# This new job will handle the versioning mechanism
 Versioning:
-  image:
-    name: python:3.11-bookworm
-    pull_policy: if-not-present # available: always, if-not-present,
   stage: versioning
+  image:
+    python:3.11-slim-bookworm
   before_script:
     - pip install haikunator
   script:
     - |
       if [[ $CI_COMMIT_REF_NAME == *"-rc" || $CI_COMMIT_REF_NAME == *"-stable" ]]; then
-      
-        # Fancy Name Generation using Haikunator
         FANCY_NAME=$(python -c 'from haikunator import Haikunator; print(Haikunator().haikunate(token_length=0))')
-
-        # Construct full version name
         FULL_VERSION_NAME="$CI_COMMIT_REF_NAME-$CI_PIPELINE_ID-$FANCY_NAME"
-
-        echo "FULL_VERSION_NAME is $FULL_VERSION_NAME"
-
-        # Export the generated version name for later stages to use
+        echo "FULL_VERSION_NAME=$FULL_VERSION_NAME"
         echo "IMAGE_TAG=$(echo $FULL_VERSION_NAME)" >> build.env
-      
       fi
   artifacts:
     reports:
@@ -121,12 +92,11 @@ Versioning:
 
 
 Push Version:
-  stage: pushVersion
+  stage: push_version
   image:
-    name: python:3.11-bookworm
-    pull_policy: if-not-present # available: always, if-not-present,
+    debian:bookworm-slim
   before_script:
-    - apt install curl git
+    - apt-get update && apt-get install -y curl git
   script:
     - |
       if [[ "$CI_COMMIT_REF_NAME" == *"-rc" ]]; then
@@ -137,35 +107,19 @@ Push Version:
           CHANNEL="unknown"
       fi
 
-      # Create the JSON payload
+      # Create JSON payload
       NOTES=$(git log -1 --pretty=%f)
       JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\", \"channel\": \"$CHANNEL\"  }"
-
-      # Pass the payload to curl
-      #      response=$(curl --request POST https://license.finmars.com/api/v1/version/ \
-      #      --header "Content-Type: application/json" \
-      #      --data "$JSON_PAYLOAD")
-      #
-      #      if [[ "$response" -ne 200 ]]; then
-      #        echo "Error detected. Failing the build."
-      #        exit 1
-      #      else
-      #        echo "Build succeeded."
-      #      fi
+      echo "JSON_PAYLOAD=$JSON_PAYLOAD"
       
-      echo "----- Build Payload -----"
-      echo "$JSON_PAYLOAD"
-      echo "-------------------------"
-      
-      status_code=$(curl -o /dev/null -s -w "%{http_code}" --request POST https://license.finmars.com/api/v1/version/ --header "Content-Type: application/json" --data "$JSON_PAYLOAD")
-      
+      # Push JSON to license service
+      status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
       if [[ "$status_code" -ne "201" ]]; then
-        echo "Build failed. Status Code: $status_code"
-        exit 1
-      else
-        echo "Build succeeded."
+        echo "Push version failed, http status: $status_code"
+        exit 6
       fi
-
+      
+      echo "Push version succeeded."
   only:
     - /^.*-(rc|stable)$/
     - tags
@@ -173,31 +127,26 @@ Push Version:
 
 Build:
   stage: build
-
   before_script:
     # to debug runner
-    - df
-    - cat /etc/resolv.conf
-    - cat /etc/hosts
-    #
+    # - df
+    # - cat /etc/resolv.conf
+    # - cat /etc/hosts
     - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin git.finmars.com:5050
-
   script:
-    # fetches the latest image (not failing if image is not found)
     - IMAGE_TAG=${IMAGE_TAG:-$CI_COMMIT_REF_NAME}
-#    - docker pull $CI_REGISTRY_IMAGE:latest || true
-#    - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG .
     - docker build --pull --no-cache --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG .
     - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
   only:
     - /^.*-(rc|stable)$/
 
+
 Release latest:
+  stage: release
   variables:
     # We are just playing with Docker here.
     # We do not need GitLab to clone the source code.
     GIT_STRATEGY: none
-  stage: release
   only:
     # Only "master" should be tagged "latest"
     - master
@@ -212,11 +161,12 @@ Release latest:
     # And we push it.
     - docker push $CI_REGISTRY_IMAGE:latest
 
+
 Release version:
+  stage: release
   variables:
     # Again, we do not need the source code here. Just playing with Docker.
     GIT_STRATEGY: none
-  stage: release
   only:
     # We want this job to be run on tags only.
     - tags

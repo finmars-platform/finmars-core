@@ -1,36 +1,31 @@
 import os
 import warnings
 
-def ENV_BOOL(env_name, default):
 
+def ENV_BOOL(env_name, default):
     val = os.environ.get(env_name, default)
 
-    if not val:
+    if val is None:
         return default
 
-    if val == 'True' or val == True:
+    if isinstance(val, bool):
+        return val
+
+    if val.lower() == "true":
         return True
 
-    if val == 'False' or val == False:
+    if val.lower() == "false":
         return False
 
-    warnings.warn('Variable %s is not boolean. It is %s' % (env_name, val))
+    warnings.warn(f"Boolean var {env_name} has value {val}, return False")
+    return False
+
 
 def ENV_STR(env_name, default):
-
     val = os.environ.get(env_name, default)
+    return val or default
 
-    if not val:
-        return default
-
-    return val
 
 def ENV_INT(env_name, default):
-
     val = os.environ.get(env_name, default)
-
-    if not val:
-        return default
-
-    return int(val)
-
+    return int(val) if val else default
