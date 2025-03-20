@@ -113,6 +113,7 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             "name",
             "user_code",
             "configuration_code",
+            "notes",
 
             "theme_css_url",
             "logo_dark_url",
