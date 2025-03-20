@@ -105,7 +105,6 @@ class FixedRateBond:
         if not isinstance(day_count, ql.DayCounter):
             raise ValueError(f"day_count must be type ql.Counter, but not {type(day_count)}")
 
-        self.face_amount = face_amount
         self.issue_date = ql.Date(issue_date.day, issue_date.month, issue_date.year)
         self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
         self.coupon_rates = [coupon_rate]
@@ -117,6 +116,7 @@ class FixedRateBond:
         self.date_generation_rule = date_generation_rule
         self.end_of_month = end_of_month
         self.settlement_days = settlement_days
+        self.face_amount = face_amount
 
         try:
             self.schedule = ql.Schedule(
