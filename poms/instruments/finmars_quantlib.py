@@ -85,7 +85,7 @@ def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) ->
 
 
 @dataclass
-class FinmarsBond:
+class BondCalculation:
     """A dataclass representing a fixed-rate bond for QuantLib calculations.
 
     This class defines the essential attributes required to construct a `ql.FixedRateBond`
@@ -135,7 +135,7 @@ class FinmarsBond:
     date_generation_rule: int = ql.DateGeneration.Backward
     end_of_month: bool = False
 
-    def to_quantlib_bond(self) -> ql.Bond:
+    def to_ql_bond(self) -> ql.Bond:
         """Convert the dataclass to a QuantLib FixedRateBond object."""
         schedule = ql.Schedule(
             self.issue_date,
