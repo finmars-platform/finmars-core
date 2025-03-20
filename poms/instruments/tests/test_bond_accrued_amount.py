@@ -5,9 +5,9 @@ import QuantLib as ql
 
 from poms.instruments.finmars_quantlib import FixedRateBond
 
-ISSUE_DATE = date(day=1, month=1, year=2025)
-MATURITY_DATE = date(day=21, month=12, year=2025)
-RATE = 0.3  # 3% annual coupon
+ISSUE_DATE = date(day=1, month=1, year=2020)
+MATURITY_DATE = date(day=31, month=12, year=2030)
+RATE = 0.03  # 3% annual coupon
 
 
 class TestBond(unittest.TestCase):
@@ -72,7 +72,7 @@ class TestBond(unittest.TestCase):
 
     def test_accrued_amount_before_issue(self):
         """Test accrued amount before issue date (should be 0)."""
-        eval_date = date(2024, 12, 31)  # Day before issue
+        eval_date = date(2019, 12, 31)  # Day before issue
         accrued = self.bond.accrued_amount(eval_date)
         self.assertAlmostEqual(accrued, 0.0, places=2, msg="Accrued should be 0 before issue")
 
@@ -84,7 +84,7 @@ class TestBond(unittest.TestCase):
 
     def test_accrued_amount_maturity_date(self):
         """Test accrued amount on maturity date (end of final period)."""
-        eval_date = date(2030, 1, 1)  # Maturity date, end of last period
+        eval_date = date(2031, 1, 1)  # Maturity date, end of last period
         accrued = self.bond.accrued_amount(eval_date)
         # Last period: Jul 1, 2029 to Jan 1, 2030 = 180 days, full coupon = 15
         expected = 0.0
