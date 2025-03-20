@@ -46,44 +46,6 @@ class Actual365L(MixinYearFraction, ql.ActualActual):
         return 366 if ql.Date.isLeap(end_date.year()) else 365
 
 
-def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) -> ql.Period:
-    """
-    Convert a number of days in period into a QuantLib Period object (tenor) based on a day count convention.
-    It uses self.day_count value (ql.DayCounter) - Day count convention (e.g., 30E/360).
-
-    Args:
-        days (int): Number of days between coupon payments (e.g., 172).
-        day_count (ql.DayCounter): Day count convention (e.g., 30E/360).
-            Defaults to 30E/360, as it’s common for European bonds.
-
-    Returns:
-        ql.Period: The corresponding QuantLib Period (e.g., Annual, Semiannual, Quarterly).
-
-    Raises:
-        ValueError: If days is negative or cannot be reasonably mapped to a period.
-    """
-    if days <= 0:
-        raise ValueError("Days must be a positive integer.")
-
-    # Define standard periods and their day counts under the convention
-    year_days = 360 if isinstance(day_count, ql.Thirty360) else 365
-    periods = [
-        (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
-        (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
-        (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
-        (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
-        (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
-        (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
-        (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
-    ]
-
-    # Find the closest period by minimizing the absolute difference in days
-    closest_period = min(periods, key=lambda p: abs(p[1] - days))
-
-    # Return the corresponding ql.Period
-    return closest_period[0]
-
-
 class BondCalculation:
     """A class representing a fixed-rate bond for QuantLib calculations.
 
@@ -123,48 +85,93 @@ class BondCalculation:
 
     def __init__(
         self,
-        face_amount: float,
-        issue_date: ql.Date,
-        maturity_date: ql.Date,
+        # mandatory args
         coupon_rate: float,
+        issue_date: date,
+        maturity_date: date,
+        days_between_coupons: int,
         day_count: ql.DayCounter,
-        tenor: ql.Period,
-        settlement_days: int = 2,
-        calendar: ql.Calendar = ql.TARGET,
+        # optional args
+        calendar: ql.Calendar = ql.TARGET(),
         business_convention: int = ql.Following,
         termination_date_convention: int = ql.Following,
         date_generation_rule: int = ql.DateGeneration.Backward,
         end_of_month: bool = False,
+        settlement_days: int = 2,
+        face_amount: float = 1.0,
     ):
-        self.settlement_days = settlement_days
+        if not all([coupon_rate, issue_date, maturity_date, days_between_coupons, day_count]):
+            raise ValueError("all positional args to be provided")
+        if not isinstance(day_count, ql.DayCounter):
+            raise ValueError(f"day_count must be type ql.Counter, but not {type(day_count)}")
+
         self.face_amount = face_amount
-        self.issue_date = issue_date
-        self.maturity_date = maturity_date
+        self.issue_date = ql.Date(issue_date.day, issue_date.month, issue_date.year)
+        self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
         self.coupon_rates = [coupon_rate]
         self.day_count = day_count
+        self.tenor = self.convert_days_to_tenor(days_between_coupons, self.day_count)
         self.calendar = calendar
-        self.tenor = tenor
         self.business_convention = business_convention
         self.termination_date_convention = termination_date_convention
         self.date_generation_rule = date_generation_rule
         self.end_of_month = end_of_month
+        self.settlement_days = settlement_days
 
-        # Compute and store the schedule
-        self.schedule = ql.Schedule(
-            self.issue_date,
-            self.maturity_date,
-            self.tenor,
-            self.calendar,
-            self.business_convention,
-            self.termination_date_convention,
-            self.date_generation_rule,
-            self.end_of_month,
-        )
+        try:
+            self.schedule = ql.Schedule(
+                self.issue_date,
+                self.maturity_date,
+                self.tenor,
+                self.calendar,
+                self.business_convention,
+                self.termination_date_convention,
+                self.date_generation_rule,
+                self.end_of_month,
+            )
+        except Exception as e:
+            raise TypeError(f"Failed to create ql.Schedule: {repr(e)}") from e
 
         # Create and store the QuantLib bond object
         self.ql_bond = ql.FixedRateBond(
             self.settlement_days, self.face_amount, self.schedule, self.coupon_rates, self.day_count
         )
+
+    @staticmethod
+    def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) -> ql.Period:
+        """
+        Convert a number of days in period into a QuantLib Period object (tenor) based on a day count convention.
+        It uses self.day_count value (ql.DayCounter) - Day count convention (e.g., 30E/360).
+        Args:
+            days (int): Number of days between coupon payments (e.g., 172).
+            day_count (ql.DayCounter): Day count convention (e.g., 30E/360).
+                Defaults to 30E/360, as it’s common for European bonds.
+
+        Returns:
+            ql.Period: The corresponding QuantLib Period (e.g., Annual, Semiannual, Quarterly).
+        Raises:
+            ValueError: If days is negative or cannot be reasonably mapped to a period.
+        """
+        if days <= 0:
+            raise ValueError("Days must be a positive integer.")
+
+        # Define standard periods and their day counts under the convention
+        year_days = 360 if isinstance(day_count, ql.Thirty360) else 365
+        periods = [
+            (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
+            (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
+            (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
+            (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
+            (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
+            (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
+            (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
+        ]
+
+        # Find the closest period by minimizing the absolute difference in days
+        closest_period = min(periods, key=lambda p: abs(p[1] - days))
+
+        # Return the corresponding ql.Period
+        return closest_period[0]
 
     def accrued_amount(self, evaluation_date: date) -> float:
         """Calculate the accrued interest for a given evaluation date.
@@ -174,6 +181,10 @@ class BondCalculation:
             float: The accrued amount on the specified date.
         """
         ql_date = ql.Date(evaluation_date.day, evaluation_date.month, evaluation_date.year)
+
+        # Return 0 if evaluation_date is before issue_date, or after maturity date
+        if ql_date < self.issue_date or ql_date >= self.maturity_date:
+            return 0.0
 
         ql.Settings.instance().evaluationDate = ql_date
 
