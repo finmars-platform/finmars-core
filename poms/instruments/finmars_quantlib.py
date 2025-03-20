@@ -146,14 +146,13 @@ class FixedRateBond:
             days (int): Number of days between coupon payments (e.g., 172).
             day_count (ql.DayCounter): Day count convention (e.g., 30E/360).
                 Defaults to 30E/360, as it’s common for European bonds.
-
         Returns:
             ql.Period: The corresponding QuantLib Period (e.g., Annual, Semiannual, Quarterly).
         Raises:
             ValueError: If days is negative or cannot be reasonably mapped to a period.
         """
         if days <= 0:
-            raise ValueError("Days must be a positive integer.")
+            raise ValueError(f"days {days} must be a positive integer")
 
         # Define standard periods and their day counts under the convention
         year_days = 360 if isinstance(day_count, ql.Thirty360) else 365
