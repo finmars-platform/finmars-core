@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from datetime import date
 from typing import List
 
 import QuantLib as ql
@@ -84,9 +84,8 @@ def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) ->
     return closest_period[0]
 
 
-@dataclass
 class BondCalculation:
-    """A dataclass representing a fixed-rate bond for QuantLib calculations.
+    """A class representing a fixed-rate bond for QuantLib calculations.
 
     This class defines the essential attributes required to construct a `ql.FixedRateBond`
     object and compute properties like accrued interest via `ql.BondFunctions.accruedAmount`.
@@ -102,10 +101,10 @@ class BondCalculation:
             Typically, a single rate for fixed-rate bonds. Example: [0.03] for 3% annual coupon.
         day_count (ql.DayCounter): Convention for calculating year fractions between dates.
             Affects coupon and accrued interest amounts. Example: ql.Thirty360(ql.Thirty360.European).
-        settlement_days (int): Number of business days from trade date to settlement date.
-            Used to compute the settlement date, affecting accrued interest. Default: 2 (T+2) days.
         tenor (ql.Period): Frequency of coupon payments (e.g., annual, semiannual).
             Determines the coupon schedule. Example: ql.Period(ql.Semiannual) for 6-month intervals.
+        settlement_days (int): Number of business days from trade date to settlement date.
+            Used to compute the settlement date, affecting accrued interest. Default: 2 (T+2) days.
         calendar (ql.Calendar): Defines business days and holidays for date adjustments.
             Used in the schedule and settlement date. Example: ql.TARGET() for Eurozone.
         business_convention (int, optional): Business day convention for adjusting coupon dates.
@@ -122,22 +121,36 @@ class BondCalculation:
             Defaults to False (follows tenor strictly). Example: True for month-end aligned bonds.
     """
 
-    face_amount: float
-    issue_date: ql.Date
-    maturity_date: ql.Date
-    coupon_rates: List[float]
-    day_count: ql.DayCounter
-    tenor: ql.Period
-    settlement_days: int = 2
-    calendar: ql.Calendar = ql.TARGET()
-    business_convention: int = ql.Following
-    termination_date_convention: int = ql.Following
-    date_generation_rule: int = ql.DateGeneration.Backward
-    end_of_month: bool = False
+    def __init__(
+        self,
+        face_amount: float,
+        issue_date: ql.Date,
+        maturity_date: ql.Date,
+        coupon_rate: float,
+        day_count: ql.DayCounter,
+        tenor: ql.Period,
+        settlement_days: int = 2,
+        calendar: ql.Calendar = ql.TARGET,
+        business_convention: int = ql.Following,
+        termination_date_convention: int = ql.Following,
+        date_generation_rule: int = ql.DateGeneration.Backward,
+        end_of_month: bool = False,
+    ):
+        self.settlement_days = settlement_days
+        self.face_amount = face_amount
+        self.issue_date = issue_date
+        self.maturity_date = maturity_date
+        self.coupon_rates = [coupon_rate]
+        self.day_count = day_count
+        self.calendar = calendar
+        self.tenor = tenor
+        self.business_convention = business_convention
+        self.termination_date_convention = termination_date_convention
+        self.date_generation_rule = date_generation_rule
+        self.end_of_month = end_of_month
 
-    def to_ql_bond(self) -> ql.Bond:
-        """Convert the dataclass to a QuantLib FixedRateBond object."""
-        schedule = ql.Schedule(
+        # Compute and store the schedule
+        self.schedule = ql.Schedule(
             self.issue_date,
             self.maturity_date,
             self.tenor,
@@ -148,14 +161,20 @@ class BondCalculation:
             self.end_of_month,
         )
 
-        return ql.FixedRateBond(
-            self.settlement_days,
-            self.face_amount,
-            schedule,
-            self.coupon_rates,
-            self.day_count,
+        # Create and store the QuantLib bond object
+        self.ql_bond = ql.FixedRateBond(
+            self.settlement_days, self.face_amount, self.schedule, self.coupon_rates, self.day_count
         )
 
+    def accrued_amount(self, evaluation_date: date) -> float:
+        """Calculate the accrued interest for a given evaluation date.
+        Args:
+            evaluation_date (datetime.date): The date for which to calculate accrued interest.
+        Returns:
+            float: The accrued amount on the specified date.
+        """
+        ql_date = ql.Date(evaluation_date.day, evaluation_date.month, evaluation_date.year)
 
-def create_ql_bond():
-    pass
+        ql.Settings.instance().evaluationDate = ql_date
+
+        return ql.BondFunctions.accruedAmount(self.ql_bond)
