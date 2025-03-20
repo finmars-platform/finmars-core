@@ -65,6 +65,7 @@ class WhitelabelViewSetTest(BaseTestCase):
             favicon_url="https://example.com/favicon.png",
             custom_css="body { background-color: #aaa; }",
             is_default=is_default,
+            notes="some notes"
         )
 
     def test__list(self):
@@ -138,6 +139,7 @@ class WhitelabelViewSetTest(BaseTestCase):
                 "favicon.png", self.image_content, content_type="image/png"
             ),
             "custom_css": "body { background-color: #fff; }",
+            "notes": "some notes"
         }
 
     def validate_response(self, response_json, name: str, configuration_code: str):
@@ -147,6 +149,7 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}/dark.png")
         self.assertEqual(response_json["logo_light_url"], f"{API_PREFIX}/light.png")
         self.assertEqual(response_json["favicon_url"], f"{API_PREFIX}/favicon.png")
+        self.assertEqual(response_json["notes"], "some notes")
 
         inst_db = WhitelabelModel.objects.get(id=response_json["id"])
         self.assertEqual(inst_db.is_enabled, True)
