@@ -3,7 +3,7 @@ from datetime import date
 
 import QuantLib as ql
 
-from poms.instruments.finmars_quantlib import BondCalculation
+from poms.instruments.finmars_quantlib import Bond
 
 ISSUE_DATE = date(day=1, month=1, year=2025)
 MATURITY_DATE = date(day=31, month=12, year=2025)
@@ -15,7 +15,7 @@ class TestBond(unittest.TestCase):
 
     def setUp(self):
         """Set up a Bond instance for all tests."""
-        self.bond = BondCalculation(
+        self.bond = Bond(
             issue_date=ISSUE_DATE,
             maturity_date=MATURITY_DATE,
             coupon_rate=RATE,
