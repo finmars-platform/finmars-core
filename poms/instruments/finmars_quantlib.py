@@ -46,7 +46,7 @@ class Actual365L(MixinYearFraction, ql.ActualActual):
         return 366 if ql.Date.isLeap(end_date.year()) else 365
 
 
-class Bond:
+class FixedRateBond:
     """A class representing a fixed-rate bond for QuantLib calculations.
 
     This class defines the essential attributes required to construct a `ql.FixedRateBond`
