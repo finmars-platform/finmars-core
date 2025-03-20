@@ -148,7 +148,6 @@ class BondCalculation:
             self.end_of_month,
         )
 
-        # Create a FixedRateBond object
         return ql.FixedRateBond(
             self.settlement_days,
             self.face_amount,
@@ -156,3 +155,7 @@ class BondCalculation:
             self.coupon_rates,
             self.day_count,
         )
+
+
+def create_ql_bond():
+    pass
