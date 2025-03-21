@@ -36,7 +36,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertIsNotNone(instrument)
         self.assertIsNotNone(instrument.country)
         self.assertEqual(instrument.country.alpha_3, "USA")
-
+        self.assertIsNotNone(instrument.registration_date)
         self.assertEqual(instrument.identifier.keys(), self.identifier.keys())
         return instrument
 
@@ -64,6 +64,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                             "alpha_3": "USA",
                         },
                         "identifier": self.identifier,
+                        "registration_date": "2020-01-01",
                     },
                 ],
                 "currencies": [
@@ -175,6 +176,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                             },
                         ],
                         "accrual_events": [],
+                        "registration_date": "2020-01-01",
                     },
                 ],
                 "currencies": [
@@ -263,6 +265,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                             },
                         ],
                         "accrual_events": [],
+                        "registration_date": "2020-01-01",
                     },
                 ],
                 "currencies": [
@@ -337,6 +340,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                                 "user_code": "VANGUARD:2025-01-01",
                             },
                         ],
+                        "registration_date": "2020-01-01",
                     },
                 ],
                 "currencies": [

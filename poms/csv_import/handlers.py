@@ -473,6 +473,11 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         except Country.DoesNotExist:
             _l.error(f"{func} no such country {source_data['country']['alpha_3']}")
 
+    if "registration_date" in source_data and source_data["registration_date"] not in ("null", ""):
+        object_data["registration_date"] = source_data["registration_date"]
+    else:
+        object_data["registration_date"] = None
+
     try:
         if "sector" in source_data:
             sector_attribute = GenericAttributeType.objects.get(user_code="sector")
