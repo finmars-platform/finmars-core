@@ -992,6 +992,7 @@ class InstrumentSerializer(
     pricing_condition_object = PricingConditionSerializer(source="pricing_condition", read_only=True)
     country_object = CountrySerializer(source="country", read_only=True)
     identifier = serializers.JSONField(allow_null=False)
+    registration_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = Instrument
@@ -1055,6 +1056,7 @@ class InstrumentSerializer(
             "files",
             "first_transaction_date",
             "accrual_events",
+            "registration_date",
         ]
 
     def __init__(self, *args, **kwargs):

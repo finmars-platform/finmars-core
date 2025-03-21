@@ -241,6 +241,7 @@ EXPECTED_INSTRUMENT = {
     "resource_groups": [],
     "resource_groups_object": [],
     "accrual_events": [],
+    "registration_date": "2020-01-01",
 }
 
 INSTRUMENT_CREATE_DATA = {
