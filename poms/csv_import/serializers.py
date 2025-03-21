@@ -127,7 +127,6 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
             RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
         ],
     )
-
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     class Meta:

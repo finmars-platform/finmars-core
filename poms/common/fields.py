@@ -177,16 +177,6 @@ class FloatEvalField(FloatField):
                 raise ValidationError(gettext_lazy("Invalid expression.")) from e
 
 
-class ISINField(RegexField):
-    REGEX = "\S+ \S+"
-
-    def __init__(self, **kwargs):
-        super().__init__(ISINField.REGEX, **kwargs)
-
-    def to_representation(self, value):
-        return " ".join(value) if isinstance(value, (tuple, list)) else str(value)
-
-
 class ContentTypeOrPrimaryKeyRelatedField(RelatedField):
     queryset = ContentType.objects
 
