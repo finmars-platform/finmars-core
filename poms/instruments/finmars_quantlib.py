@@ -98,7 +98,7 @@ class FixedRateBond:
         date_generation_rule: int = ql.DateGeneration.Backward,
         end_of_month: bool = False,
         settlement_days: int = 2,
-        face_amount: float = 1.0,
+        face_amount: float = 100.0,
     ):
         if not all([coupon_rate, issue_date, maturity_date, days_between_coupons, day_count]):
             raise ValueError("all positional args to be provided")

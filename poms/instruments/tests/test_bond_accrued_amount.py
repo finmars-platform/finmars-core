@@ -21,7 +21,6 @@ class TestBond(unittest.TestCase):
             coupon_rate=RATE,
             days_between_coupons=180,
             day_count=ql.Thirty360(ql.Thirty360.European),  # 30E/360
-            face_amount=15,
         )
 
     def test_accrued_amount_one_third_period(self):
