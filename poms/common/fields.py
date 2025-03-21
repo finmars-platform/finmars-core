@@ -29,7 +29,12 @@ def default_empty_list():
     return []
 
 
-name_validator = RegexValidator(regex=r"\A[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z]\Z")
+name_validator = RegexValidator(
+    regex=r"\A[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z]\Z",
+    message=(
+        "Invalid name. Must start and end with a letter, contain only letters, digits, or underscores."
+    ),
+)
 
 
 class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
