@@ -1349,14 +1349,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("instrument type"),
     )
-
     identifier = models.JSONField(
         default=dict,
         blank=True,
         verbose_name=gettext_lazy("Identifier"),
         help_text="Dictionary of identifiers from different sources",
     )
-
     is_active = models.BooleanField(
         default=True,
         verbose_name=gettext_lazy("is active"),
@@ -1541,6 +1539,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
     )
     resource_groups = ResourceGroupsField(
         verbose_name=gettext_lazy("list of resource groups user_codes, to which instrument belongs"),
+    )
+    registration_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("Instrument registration date"),
+        help_text="When instrument was registered in markets",
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -3687,6 +3691,7 @@ class AccrualEvent(models.Model):
     )
     payment_date = models.DateField(
         verbose_name=gettext_lazy("Accrual payment date"),
+        help_text=gettext_lazy("Actual accrual payment date"),
     )
     accrual_size = models.FloatField(
         verbose_name=gettext_lazy("Accrual size"),
@@ -3695,9 +3700,11 @@ class AccrualEvent(models.Model):
         AccrualCalculationModel,
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("Accrual calculation model"),
+        help_text=gettext_lazy("Day count convention model used to calculate accruals"),
     )
     periodicity_n = models.IntegerField(
         verbose_name=gettext_lazy("Days between coupons"),
+        help_text = gettext_lazy("Number of days between coupon start and end dates"),
     )
     notes = models.TextField(
         blank=True,
@@ -3706,8 +3713,8 @@ class AccrualEvent(models.Model):
     )
 
     class Meta:
-        verbose_name = gettext_lazy("Accrual")
-        verbose_name_plural = gettext_lazy("Accruals")
+        verbose_name = gettext_lazy("Accrual Event")
+        verbose_name_plural = gettext_lazy("Accrual Events")
         ordering = ["instrument", "end_date"]
         constraints = [
             models.UniqueConstraint(

@@ -5,14 +5,13 @@ import time
 import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountDefault, AccountField
 from poms.accounts.models import Account
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, name_validator
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
     ModelMetaSerializer,
@@ -221,9 +220,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator],
     )
     content_type = TransactionTypeInputContentTypeField(
         required=False,
@@ -365,9 +362,7 @@ class TransactionTypeInputViewOnlySerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator]
     )
     content_type = TransactionTypeInputContentTypeField(
         required=False,
