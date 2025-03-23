@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, name_validator
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
     ModelWithTimeStampSerializer,
@@ -123,11 +123,8 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator],
     )
-
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     class Meta:
