@@ -1752,12 +1752,12 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         calendar = ql.TARGET()
 
         if self.maturity_date:
-            _l.info(f"get_quantlib_bond.self.type maturity_date {type(self.maturity_date)}")
-            _l.info(f"get_quantlib_bond.self.maturity_date {self.maturity_date}")
-            _l.info(f"get_quantlib_bond.self.date_pattern {self.date_pattern}")
+            _l.info(
+                f"get_quantlib_bond maturity_date {type(self.maturity_date)}/{self.maturity_date}"
+                f"date_pattern {self.date_pattern}"
+            )
 
             maturity = ql.Date(str(self.maturity_date), self.date_pattern)
-
             if self.has_factor_schedules():
                 factor_schedules = self.get_factors()
 
@@ -1767,7 +1767,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
                 # TODO OG commented: we need issue date
 
                 first_accrual = self.get_first_accrual()
-
                 business_convention = ql.Following
 
                 periodicity = Periodicity.get_quantlib_periodicity(first_accrual.periodicity)
@@ -1794,36 +1793,30 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
                 # cast to dates list
                 schedule_dates = list(schedule.dates())
-                # we need notinals (factors) list to be of same length as accrual schedule
-                notionals = []
+                # we need nationals (factors) list to be of same length as accrual schedule
+                nationals = []
                 for day in schedule_dates:
                     val = active_factor(day=day, factors=factor_values, factor_dates=factor_dates) * face_value
 
-                    notionals.append(val)
+                    nationals.append(val)
 
-                bond = ql.AmortizingFixedRateBond(0, notionals, schedule, [float_accrual_size], day_count)
+                bond = ql.AmortizingFixedRateBond(0, nationals, schedule, [float_accrual_size], day_count)
 
             else:
                 first_accrual = self.get_first_accrual()
                 settlementDays = 0
-
                 if first_accrual:
                     try:
-                        start = ql.Date(
-                            str(first_accrual.accrual_start_date), self.date_pattern
-                        )  # Start accrual date
+                        start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
                         periodicity = Periodicity.get_quantlib_periodicity(first_accrual.periodicity)
-
-                        schedule = ql.MakeSchedule(start, maturity, periodicity)  # period - semiannual
-
+                        schedule = ql.MakeSchedule(start_date, maturity, periodicity)  # period - semiannual
                         float_accrual_size = float(first_accrual.accrual_size) / 100
                         day_count = AccrualCalculationModel.get_quantlib_day_count(
-                            first_accrual.accrual_calculation_model
+                            first_accrual.accrual_calculation_model_id
                         )
-
                         coupons = [float_accrual_size]
-
                         bond = ql.FixedRateBond(settlementDays, face_value, schedule, coupons, day_count)
+
                     except Exception as e:
                         _l.error(f"get_quantlib_bond Error {e}")
 
@@ -1843,10 +1836,6 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         ytm = 0
         bond = self.get_quantlib_bond()
 
-        # _l.info('calculate_quantlib_ytm %s ' % bond)
-        # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
-        # _l.info('calculate_quantlib_ytm price %s ' % price)
-
         if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(day), self.date_pattern)
 
@@ -1855,9 +1844,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
             except Exception as e:
                 _l.error(f"Could not take frequency from bond {e}")
                 frequency = 1
-            # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
-            # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
-            # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
+
             _l.info(f"calculate_quantlib_ytm frequency {frequency} of type {type(frequency)}")
 
             ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
@@ -3704,7 +3691,7 @@ class AccrualEvent(models.Model):
     )
     periodicity_n = models.IntegerField(
         verbose_name=gettext_lazy("Days between coupons"),
-        help_text = gettext_lazy("Number of days between coupon start and end dates"),
+        help_text=gettext_lazy("Number of days between coupon start and end dates"),
     )
     notes = models.TextField(
         blank=True,
