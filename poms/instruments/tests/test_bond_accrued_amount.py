@@ -1,16 +1,16 @@
-import unittest
 from datetime import date
+from unittest import TestCase
 
 import QuantLib as ql
 
-from poms.instruments.finmars_quantlib import FixedRateBond
+from poms.instruments.finmars_quantlib import Actual365A, Actual365L, FixedRateBond
 
 ISSUE_DATE = date(day=1, month=1, year=2020)
 MATURITY_DATE = date(day=31, month=12, year=2030)
 RATE = 0.03  # 3% annual coupon
 
 
-class TestBond(unittest.TestCase):
+class TestBond(TestCase):
     """Unit tests for the Bond class."""
 
     def setUp(self):
@@ -89,3 +89,174 @@ class TestBond(unittest.TestCase):
         # Last period: Jul 1, 2029 to Jan 1, 2030 = 180 days, full coupon = 15
         expected = 0.0
         self.assertAlmostEqual(accrued, expected, places=2, msg="Accrued should be 15 on maturity")
+
+
+class TestBondAccruedAmount(TestCase):
+    def setUp(self):
+        self.bond_30E360 = FixedRateBond(
+            issue_date=ISSUE_DATE,
+            maturity_date=MATURITY_DATE,
+            coupon_rate=RATE,
+            days_between_coupons=180,
+            day_count=ql.Thirty360(ql.Thirty360.European),
+        )
+        self.bond_act365 = FixedRateBond(
+            issue_date=ISSUE_DATE,
+            maturity_date=MATURITY_DATE,
+            coupon_rate=RATE,
+            days_between_coupons=180,
+            day_count=ql.Actual365Fixed(),
+        )
+        self.bond_act360 = FixedRateBond(
+            issue_date=ISSUE_DATE,
+            maturity_date=MATURITY_DATE,
+            coupon_rate=RATE,
+            days_between_coupons=180,
+            day_count=ql.Actual360(),
+        )
+        self.bond_act365a = FixedRateBond(
+            issue_date=ISSUE_DATE,
+            maturity_date=MATURITY_DATE,
+            coupon_rate=RATE,
+            days_between_coupons=180,
+            day_count=Actual365A(),
+        )
+        self.bond_act365l = FixedRateBond(
+            issue_date=ISSUE_DATE,
+            maturity_date=MATURITY_DATE,
+            coupon_rate=RATE,
+            days_between_coupons=180,
+            day_count=Actual365L(),
+        )
+
+    def _test_accrued_amount(self, bond, eval_date, expected, places=2, msg=None):
+        accrued = bond.accrued_amount(eval_date)
+        self.assertAlmostEqual(accrued, expected, places=places, msg=msg)
+
+    def test_accrued_amount_one_third_period(self):
+        eval_date = date(2025, 3, 1)
+        self._test_accrued_amount(
+            self.bond_30E360, eval_date, 5.0, msg="30E/360: Accrued should be 5.0 at one-third"
+        )
+        self._test_accrued_amount(
+            self.bond_act365, eval_date, 4.93, msg="Act/365: Accrued should be 4.93 at one-third"
+        )
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 5.06, msg="Act/360: Accrued should be 5.06 at one-third"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 4.93, msg="Act/365A: Accrued should be 4.93 at one-third"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 4.93, msg="Act/365L: Accrued should be 4.93 at one-third"
+        )
+
+    def test_accrued_amount_mid_period(self):
+        eval_date = date(2025, 4, 1)
+        self._test_accrued_amount(
+            self.bond_30E360, eval_date, 7.5, msg="30E/360: Accrued should be 7.5 at mid-period"
+        )
+        self._test_accrued_amount(
+            self.bond_act365, eval_date, 7.397, msg="Act/365: Accrued should be 7.397 at mid-period"
+        )
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 7.59, msg="Act/360: Accrued should be 7.59 at mid-period"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 7.397, msg="Act/365A: Accrued should be 7.397 at mid-period"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 7.397, msg="Act/365L: Accrued should be 7.397 at mid-period"
+        )
+
+    def test_accrued_amount_specific_date(self):
+        eval_date = date(2025, 5, 1)
+        self._test_accrued_amount(self.bond_30E360, eval_date, 10.0, msg="30E/360: Accrued should be 10.0 on May 1")
+        self._test_accrued_amount(self.bond_act365, eval_date, 9.86, msg="Act/365: Accrued should be 9.86 on May 1")
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 10.12, msg="Act/360: Accrued should be 10.12 on May 1"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 9.86, msg="Act/365A: Accrued should be 9.86 on May 1"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 9.86, msg="Act/365L: Accrued should be 9.86 on May 1"
+        )
+
+    def test_accrued_amount_end_of_period(self):
+        eval_date = date(2025, 6, 30)
+        self._test_accrued_amount(
+            self.bond_30E360, eval_date, 15.0, msg="30E/360: Accrued should be 15.0 at period end"
+        )
+        self._test_accrued_amount(
+            self.bond_act365, eval_date, 14.79, msg="Act/365: Accrued should be 14.79 at period end"
+        )
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 15.18, msg="Act/360: Accrued should be 15.18 at period end"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 14.79, msg="Act/365A: Accrued should be 14.79 at period end"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 14.79, msg="Act/365L: Accrued should be 14.79 at period end"
+        )
+
+    def test_accrued_amount_start_of_second_period(self):
+        eval_date = date(2025, 7, 1)
+        self._test_accrued_amount(
+            self.bond_30E360, eval_date, 0.0, msg="30E/360: Accrued should be 0.0 at second period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365, eval_date, 0.0, msg="Act/365: Accrued should be 0.0 at second period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 0.0, msg="Act/360: Accrued should be 0.0 at second period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 0.0, msg="Act/365A: Accrued should be 0.0 at second period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 0.0, msg="Act/365L: Accrued should be 0.0 at second period start"
+        )
+
+    def test_accrued_amount_before_issue(self):
+        eval_date = date(2019, 12, 31)
+        self._test_accrued_amount(self.bond_30E360, eval_date, 0.0, msg="30E/360: Accrued should be 0 before issue")
+        self._test_accrued_amount(self.bond_act365, eval_date, 0.0, msg="Act/365: Accrued should be 0 before issue")
+        self._test_accrued_amount(self.bond_act360, eval_date, 0.0, msg="Act/360: Accrued should be 0 before issue")
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 0.0, msg="Act/365A: Accrued should be 0 before issue"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 0.0, msg="Act/365L: Accrued should be 0 before issue"
+        )
+
+    def test_accrued_amount_start_of_period(self):
+        eval_date = date(2025, 1, 1)
+        self._test_accrued_amount(
+            self.bond_30E360, eval_date, 0.0, msg="30E/360: Accrued should be 0 at period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365, eval_date, 0.0, msg="Act/365: Accrued should be 0 at period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act360, eval_date, 0.0, msg="Act/360: Accrued should be 0 at period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 0.0, msg="Act/365A: Accrued should be 0 at period start"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 0.0, msg="Act/365L: Accrued should be 0 at period start"
+        )
+
+    def test_accrued_amount_maturity_date(self):
+        eval_date = MATURITY_DATE
+        self._test_accrued_amount(self.bond_30E360, eval_date, 0.0, msg="30E/360: Accrued should be 0 on maturity")
+        self._test_accrued_amount(self.bond_act365, eval_date, 0.0, msg="Act/365: Accrued should be 0 on maturity")
+        self._test_accrued_amount(self.bond_act360, eval_date, 0.0, msg="Act/360: Accrued should be 0 on maturity")
+        self._test_accrued_amount(
+            self.bond_act365a, eval_date, 0.0, msg="Act/365A: Accrued should be 0 on maturity"
+        )
+        self._test_accrued_amount(
+            self.bond_act365l, eval_date, 0.0, msg="Act/365L: Accrued should be 0 on maturity"
+        )
