@@ -53,7 +53,7 @@ class TestBond(TestCase):
             print(day,  coupon.amount())
 
     def test_schedule(self):
-        print(self.bond.schedule)
+        print(list(self.bond.schedule))
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
