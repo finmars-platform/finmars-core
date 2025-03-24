@@ -154,7 +154,7 @@ class FixedRateBond:
             self.calendar,
             interpolation,
             self.compounding,
-            self.compounding_frequency,
+            self.tenor.frequency(),
         )
         self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
 

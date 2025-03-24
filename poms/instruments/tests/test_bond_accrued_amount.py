@@ -22,20 +22,34 @@ class TestBond(TestCase):
             coupon_rate=RATE,
             days_between_coupons=180,
             day_count=ql.Thirty360(ql.Thirty360.European),  # 30E/360
+            face_amount=FACE_AMOUNT,
         )
 
-    def test_null(self):
-        pass
 
-    # @staticmethod
-    # def rate_if_available(c):
-    #     c = ql.as_coupon(c)
-    #     return c or "-"
-    #
-    # # def test_cash_flows(self):
-    # #     for coupon in self.bond.cash_flows():
-    # #         print(coupon.date(),  coupon.amount())
-    #
+    def test_null(self):
+        year_days = 360
+        periods = (
+            (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
+            (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
+            (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
+            (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
+            (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
+            (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
+            (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
+        )
+
+        for p, d in periods:
+            p.frequency()
+
+    @staticmethod
+    def rate_if_available(c):
+        c = ql.as_coupon(c)
+        return c or "-"
+
+    def test_cash_flows(self):
+        for coupon in self.bond.cash_flows():
+            print(coupon.date(),  coupon.amount())
+
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
     #     eval_date = date(2025, 3, 1)  # 60 days from Jan 1 under 30E/360
