@@ -136,8 +136,27 @@ class FixedRateBond:
         self.coupon_rates = [coupon_rate]
         # Create and store the QuantLib bond object
         self.ql_bond = ql.FixedRateBond(
-            self.settlement_days, self.face_amount, self.schedule, self.coupon_rates, self.day_count
+            self.settlement_days,
+            self.face_amount,
+            self.schedule,
+            self.coupon_rates,
+            self.day_count,
         )
+        spot_dates = [self.issue_date, self.maturity_date]
+        spot_rates = [0.0, coupon_rate]
+        interpolation = ql.Linear()
+        self.compounding = ql.Compounded
+        self.compounding_frequency = self.tenor
+        self.spot_curve = ql.ZeroCurve(
+            spot_dates,
+            spot_rates,
+            self.day_count,
+            self.calendar,
+            interpolation,
+            self.compounding,
+            self.compounding_frequency,
+        )
+        self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
 
     def cash_flows(self):
         return self.ql_bond.cashflows()
@@ -162,13 +181,14 @@ class FixedRateBond:
         # Define standard periods and their day counts under the convention
         year_days = 360 if isinstance(day_count, ql.Thirty360) else 365
         periods = [
-            (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
-            (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
-            (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
-            (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
-            (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
-            (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
-            (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
+            (ql.Annual, year_days),  # 360 or 365 days
+            (ql.Semiannual, year_days / 2),  # 180 or 182.5 days
+            (ql.Quarterly, year_days / 4),  # 90 or 91.25 days
+            (ql.Bimonthly, year_days / 6),  # 60 or 60.833 days
+            (ql.Monthly, year_days / 12),  # 30 or 30.417 days
+            (ql.EveryFourthWeek, 28),  # 28 days (4 weeks)
+            (ql.Biweekly, 14),  # 14 days (2 weeks)
+            (ql.Weekly, 7),  # 14 days (2 weeks)
         ]
 
         # Find the closest period by minimizing the absolute difference in days
@@ -192,5 +212,5 @@ class FixedRateBond:
 
         ql.Settings.instance().evaluationDate = ql_date
 
-        return ql.BondFunctions.accruedAmount(self.ql_bond)
-        # return self.ql_bond.accruedAmount()
+        # return ql.BondFunctions.accruedAmount(self.ql_bond)
+        return self.ql_bond.accruedAmount()
