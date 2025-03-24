@@ -146,7 +146,7 @@ class FixedRateBond:
         spot_rates = [0.0, coupon_rate]
         interpolation = ql.Linear()
         self.compounding = ql.Compounded
-        self.compounding_frequency = self.tenor
+        self.compounding_frequency = self.tenor.frequency()
         self.spot_curve = ql.ZeroCurve(
             spot_dates,
             spot_rates,
@@ -154,7 +154,7 @@ class FixedRateBond:
             self.calendar,
             interpolation,
             self.compounding,
-            self.tenor.frequency(),
+            self.compounding_frequency,
         )
         self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
 

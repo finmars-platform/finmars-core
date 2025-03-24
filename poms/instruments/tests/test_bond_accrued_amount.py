@@ -48,7 +48,12 @@ class TestBond(TestCase):
 
     def test_cash_flows(self):
         for coupon in self.bond.cash_flows():
-            print(coupon.date(),  coupon.amount())
+            ql_date = coupon.date()
+            day = date(ql_date.year(), ql_date.month(), ql_date.dayOfMonth())
+            print(day,  coupon.amount())
+
+    def test_schedule(self):
+        print(self.bond.schedule)
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
