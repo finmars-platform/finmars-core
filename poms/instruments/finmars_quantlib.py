@@ -134,6 +134,7 @@ class FixedRateBond:
         # number_of_coupons = len(self.schedule) - 1
         # self.coupon_rates = [coupon_rate] * (number_of_coupons - 1) + [0.0]
         self.coupon_rates = [coupon_rate]
+
         # Create and store the QuantLib bond object
         self.ql_bond = ql.FixedRateBond(
             self.settlement_days,
@@ -157,6 +158,9 @@ class FixedRateBond:
             self.compounding_frequency,
         )
         self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
+
+        bond_engine = ql.DiscountingBondEngine(self.spot_curve_handle)
+        self.ql_bond.setPricingEngine(bond_engine)
 
     def cash_flows(self):
         return self.ql_bond.cashflows()

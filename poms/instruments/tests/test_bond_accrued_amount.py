@@ -8,7 +8,7 @@ from poms.instruments.finmars_quantlib import Actual365A, Actual365L, FixedRateB
 ISSUE_DATE = date(day=1, month=1, year=2020)
 MATURITY_DATE = date(day=31, month=12, year=2030)
 RATE = 0.03  # 3% annual coupon
-FACE_AMOUNT = 1000
+FACE_AMOUNT = 100
 
 
 class TestBond(TestCase):
@@ -41,11 +41,6 @@ class TestBond(TestCase):
         for p, d in periods:
             p.frequency()
 
-    @staticmethod
-    def rate_if_available(c):
-        c = ql.as_coupon(c)
-        return c or "-"
-
     def test_cash_flows(self):
         for coupon in self.bond.cash_flows():
             ql_date = coupon.date()
@@ -55,9 +50,18 @@ class TestBond(TestCase):
     def test_schedule(self):
         print(list(self.bond.schedule))
 
+    def test_prices(self):
+        print("NPV=", self.bond.ql_bond.NPV())
+        print("cleanPrice=", self.bond.ql_bond.cleanPrice())
+
+        for eval_date in [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1), date(2025, 4, 1), date(2025, 5, 1)]:
+            print("accruedAmount=", self.bond.accrued_amount(eval_date))
+
+        print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
+
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
-    #     eval_date = date(2025, 3, 1)  # 60 days from Jan 1 under 30E/360
+    #       # 60 days from Jan 1 under 30E/360
     #     accrued = self.bond.accrued_amount(eval_date)
     #     print(f"dirty_price={self.bond.ql_bond.dirty_price()}")
     #     print(
