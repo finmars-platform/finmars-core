@@ -107,7 +107,6 @@ class FixedRateBond:
 
         self.issue_date = ql.Date(issue_date.day, issue_date.month, issue_date.year)
         self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
-        self.coupon_rates = [coupon_rate]
         self.day_count = day_count
         self.tenor = self.convert_days_to_tenor(days_between_coupons, self.day_count)
         self.calendar = calendar
@@ -132,10 +131,16 @@ class FixedRateBond:
         except Exception as e:
             raise TypeError(f"Failed to create ql.Schedule: {repr(e)}") from e
 
+        # number_of_coupons = len(self.schedule) - 1
+        # self.coupon_rates = [coupon_rate] * (number_of_coupons - 1) + [0.0]
+        self.coupon_rates = [coupon_rate]
         # Create and store the QuantLib bond object
         self.ql_bond = ql.FixedRateBond(
             self.settlement_days, self.face_amount, self.schedule, self.coupon_rates, self.day_count
         )
+
+    def cash_flows(self):
+        return self.ql_bond.cashflows()
 
     @staticmethod
     def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) -> ql.Period:
@@ -188,3 +193,4 @@ class FixedRateBond:
         ql.Settings.instance().evaluationDate = ql_date
 
         return ql.BondFunctions.accruedAmount(self.ql_bond)
+        # return self.ql_bond.accruedAmount()
