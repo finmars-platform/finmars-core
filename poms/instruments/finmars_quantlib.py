@@ -108,7 +108,7 @@ class FixedRateBond:
         self.issue_date = ql.Date(issue_date.day, issue_date.month, issue_date.year)
         self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
         self.day_count = day_count
-        self.tenor = self.convert_days_to_tenor(days_between_coupons, self.day_count)
+        self.tenor = self.convert_days_to_tenor_period(days_between_coupons, self.day_count)
         self.calendar = calendar
         self.business_convention = business_convention
         self.termination_date_convention = termination_date_convention
@@ -162,34 +162,33 @@ class FixedRateBond:
         return self.ql_bond.cashflows()
 
     @staticmethod
-    def convert_days_to_tenor(days: int, day_count: ql.DayCounter = ql.Thirty360) -> ql.Period:
+    def convert_days_to_tenor_period(days: int, day_count: ql.DayCounter = ql.Thirty360) -> ql.Period:
         """
-        Convert a number of days in period into a QuantLib Period object (tenor) based on a day count convention.
-        It uses self.day_count value (ql.DayCounter) - Day count convention (e.g., 30E/360).
+        Convert days to a QuantLib Period object based on a day count convention.
+
         Args:
-            days (int): Number of days between coupon payments (e.g., 172).
-            day_count (ql.DayCounter): Day count convention (e.g., 30E/360).
-                Defaults to 30E/360, as it’s common for European bonds.
+            days (int): Number of days between coupon payments (e.g., 172)
+            day_count (ql.DayCounter): Day count convention (default: 30E/360)
         Returns:
-            ql.Period: The corresponding QuantLib Period (e.g., Annual, Semiannual, Quarterly).
+            ql.Period: Corresponding QuantLib Period (e.g., Annual, Semiannual)
         Raises:
-            ValueError: If days is negative or cannot be reasonably mapped to a period.
+            ValueError: If days is negative or zero
         """
-        if days <= 0:
+        if not isinstance(days, int) or days <= 0:
             raise ValueError(f"days {days} must be a positive integer")
 
-        # Define standard periods and their day counts under the convention
+        # Use a constant for base year days based on convention
         year_days = 360 if isinstance(day_count, ql.Thirty360) else 365
-        periods = [
-            (ql.Annual, year_days),  # 360 or 365 days
-            (ql.Semiannual, year_days / 2),  # 180 or 182.5 days
-            (ql.Quarterly, year_days / 4),  # 90 or 91.25 days
-            (ql.Bimonthly, year_days / 6),  # 60 or 60.833 days
-            (ql.Monthly, year_days / 12),  # 30 or 30.417 days
-            (ql.EveryFourthWeek, 28),  # 28 days (4 weeks)
-            (ql.Biweekly, 14),  # 14 days (2 weeks)
-            (ql.Weekly, 7),  # 14 days (2 weeks)
-        ]
+
+        periods = (
+            (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
+            (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
+            (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
+            (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
+            (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
+            (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
+            (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
+        )
 
         # Find the closest period by minimizing the absolute difference in days
         closest_period = min(periods, key=lambda p: abs(p[1] - days))
