@@ -25,7 +25,6 @@ class TestBond(TestCase):
             face_amount=FACE_AMOUNT,
         )
 
-
     def test_null(self):
         year_days = 360
         periods = (
@@ -45,19 +44,32 @@ class TestBond(TestCase):
         for coupon in self.bond.cash_flows():
             ql_date = coupon.date()
             day = date(ql_date.year(), ql_date.month(), ql_date.dayOfMonth())
-            print(day,  coupon.amount())
+            print(day, coupon.amount())
 
     def test_schedule(self):
         print(list(self.bond.schedule))
 
     def test_prices(self):
-        print("NPV=", self.bond.ql_bond.NPV())
-        print("cleanPrice=", self.bond.ql_bond.cleanPrice())
 
-        for eval_date in [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1), date(2025, 4, 1), date(2025, 5, 1)]:
+
+        for eval_date in [
+            date(2025, 1, 1),
+            date(2025, 2, 1),
+            date(2025, 3, 1),
+            date(2025, 4, 1),
+            date(2025, 5, 1),
+            date(2025, 6, 1),
+            date(2025, 7, 1),
+            date(2025, 8, 1),
+            date(2025, 9, 1),
+            date(2025, 10, 1),
+            date(2025, 11, 1),
+            date(2025, 12, 1),
+        ]:
+            print("NPV=", self.bond.ql_bond.NPV())
+            print("cleanPrice=", self.bond.ql_bond.cleanPrice())
             print("accruedAmount=", self.bond.accrued_amount(eval_date))
-
-        print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
+            print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
