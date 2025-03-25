@@ -25,32 +25,33 @@ class TestBond(TestCase):
             face_amount=FACE_AMOUNT,
         )
 
-    def test_null(self):
-        year_days = 360
-        periods = (
-            (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
-            (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
-            (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
-            (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
-            (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
-            (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
-            (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
-        )
-
-        for p, d in periods:
-            p.frequency()
-
-    def test_cash_flows(self):
-        for coupon in self.bond.cash_flows():
-            ql_date = coupon.date()
-            day = date(ql_date.year(), ql_date.month(), ql_date.dayOfMonth())
-            print(day, coupon.amount())
-
-    def test_schedule(self):
-        print(list(self.bond.schedule))
+    # def test_null(self):
+    #     year_days = 360
+    #     periods = (
+    #         (ql.Period(1, ql.Years), year_days),  # 360 or 365 days
+    #         (ql.Period(6, ql.Months), year_days / 2),  # 180 or 182.5 days
+    #         (ql.Period(3, ql.Months), year_days / 4),  # 90 or 91.25 days
+    #         (ql.Period(2, ql.Months), year_days / 6),  # 60 or 60.833 days
+    #         (ql.Period(1, ql.Months), year_days / 12),  # 30 or 30.417 days
+    #         (ql.Period(ql.EveryFourthWeek), 28),  # 28 days (4 weeks)
+    #         (ql.Period(ql.Biweekly), 14),  # 14 days (2 weeks)
+    #     )
+    #
+    #     for p, d in periods:
+    #         p.frequency()
+    #
+    # def test_cash_flows(self):
+    #     for coupon in self.bond.cash_flows():
+    #         ql_date = coupon.date()
+    #         day = date(ql_date.year(), ql_date.month(), ql_date.dayOfMonth())
+    #         print(day, coupon.amount())
 
     def test_prices(self):
-        for eval_date in [
+        start_date = ql.Date(1, 1, 2025)
+        end_date = ql.Date(30, 12, 2025)
+        coupon_days = self.bond.day_count.dayCount(start_date, end_date)
+
+        for i, eval_date in enumerate([
             date(2025, 1, 31),
             date(2025, 2, 27),
             date(2025, 3, 31),
@@ -63,14 +64,22 @@ class TestBond(TestCase):
             date(2025, 10, 31),
             date(2025, 11, 30),
             date(2025, 12, 28),
-        ]:
+        ], start=1):
             # print("NPV=", self.bond.ql_bond.NPV())
             # print("cleanPrice=", self.bond.ql_bond.cleanPrice())
             # print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
-            accrued_ratio = self.bond.accrued_amount(eval_date)
-            amount = self.bond.face_amount * RATE * accrued_ratio
-            print(f"{str(eval_date)} {accrued_ratio=}  {amount=}")
+            accrued_ratio = round(self.bond.accrued_amount(eval_date) / 100, 4)
+            amount_1 = self.bond.face_amount * accrued_ratio
 
+            price_date = ql.Date(eval_date.day, eval_date.month, eval_date.year)
+            days_to_price = self.bond.day_count.dayCount(start_date, price_date)
+            accrual_factor = round(RATE * (days_to_price / coupon_days), 4)
+            amount_2 = self.bond.face_amount * accrual_factor
+
+            amount_3 = self.bond.face_amount * round(i/12 * RATE, 4)
+
+            # print(f"{str(eval_date)} {accrued_ratio=} {amount_1=} <--> {accrual_factor=} {amount_2=}")
+            print(f"{str(eval_date)} {amount_1=} {amount_2=} {amount_3=}")
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
