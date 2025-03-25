@@ -319,8 +319,8 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             }
         )
 
-    @action(detail=False, methods=["get"], url_path="list-all-tasks")
-    def list_all_tasks(self, request, *args, **kwargs):
+    @action(detail=False, methods=["get"], url_path="list-all")
+    def list_all(self, request, *args, **kwargs):
         return Response(get_celery_task_names())
 
 
