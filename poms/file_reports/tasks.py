@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from django.utils.timezone import now
 
@@ -10,22 +11,7 @@ _l = logging.getLogger("poms.file_reports")
 
 @finmars_task(name="file_reports.clear_old_file_reports", bind=True)
 def clear_old_file_reports(self, *args, **kwargs):
-    _l.debug("File Reports: clear_old_file_reports")
+    ten_days_ago = now() - timedelta(days=10)
+    deleted_count, _ = FileReport.objects.filter(created_at__lt=ten_days_ago).delete()
 
-    today = now()
-
-    ids_to_delete = []
-
-    items = FileReport.objects.all()
-
-    for item in items:
-
-        diff = today - item.created_at
-
-        if diff.days > 10:
-            ids_to_delete.append(item.id)
-
-    if len(ids_to_delete):
-        FileReport.objects.filter(id__in=ids_to_delete).delete()
-
-    _l.debug(f"File Reports deletes {len(ids_to_delete)}")
+    _l.debug(f"clear_old_file_reports: delete {deleted_count} records")
