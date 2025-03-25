@@ -30,22 +30,25 @@ class CeleryTaskFilterSet(FilterSet):
     id = CharFilter()
     celery_task_id = CharFilter()
     status = CharFilter()
-    statuses = CharFilter(field_name='status', method='filter_status__in')
+    statuses = CharFilter(field_name="status", method="filter_status__in")
     type = CharFilter()
-    types = CharFilter(field_name='type', method='filter_type__in')
+    types = CharFilter(field_name="type", method="filter_type__in")
     created_at = CharFilter()
 
     class Meta:
         model = CeleryTask
-        fields = ["status", "type", ]
+        fields = [
+            "status",
+            "type",
+        ]
 
     @staticmethod
     def filter_status__in(queryset, _, value):
-        return queryset.filter(status__in=value.split(','))
+        return queryset.filter(status__in=value.split(","))
 
     @staticmethod
     def filter_type__in(queryset, _, value):
-        return queryset.filter(type__in=value.split(','))
+        return queryset.filter(type__in=value.split(","))
 
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
@@ -134,7 +137,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         return Response(result)
 
-    @action(detail=True, methods=["post"], url_path="update-status", serializer_class=CeleryTaskUpdateStatusSerializer)
+    @action(
+        detail=True, methods=["post"], url_path="update-status", serializer_class=CeleryTaskUpdateStatusSerializer
+    )
     def update_status(self, request, pk=None, *args, **kwargs):
         task = CeleryTask.objects.get(pk=pk)
         if task.status in (CeleryTask.STATUS_ERROR, CeleryTask.STATUS_CANCELED):
@@ -179,7 +184,16 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             options_object=options,
         )
 
-        result = celery_app.send_task(task_name, kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}})
+        result = celery_app.send_task(
+            task_name,
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "realm_code": celery_task.master_user.realm_code,
+                    "space_code": celery_task.master_user.space_code,
+                },
+            },
+        )
 
         _l.info(f"result {result}")
 
@@ -208,14 +222,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
-        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
-            "code", flat=True
-        )
+        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list("code", flat=True)
 
         complex_transactions_ids = list(
-            ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
-                "id", flat=True
-            )
+            ComplexTransaction.objects.filter(linked_import_task=pk).values_list("id", flat=True)
         )
 
         options_object = {
@@ -233,15 +243,19 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         celery_app.send_task(
             "celery_tasks.bulk_delete",
-            kwargs={"task_id": celery_task.id, "context": {"realm_code": celery_task.master_user.realm_code, "space_code": celery_task.master_user.space_code}},
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "realm_code": celery_task.master_user.realm_code,
+                    "space_code": celery_task.master_user.space_code,
+                },
+            },
             queue="backend-background-queue",
         )
 
         _l.info(f"{count} complex transactions were deleted")
 
-        task.notes = f"{count} Transactions were aborted \n" + (
-            ", ".join(str(x) for x in codes)
-        )
+        task.notes = f"{count} Transactions were aborted \n" + (", ".join(str(x) for x in codes))
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()
@@ -285,13 +299,13 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         new_celery_task = celery_app.send_task(
             full_task_name,
-            kwargs= {
+            kwargs={
                 "task_id": reloaded_task.id,
                 "context": {
                     "realm_code": reloaded_task.master_user.realm_code,
                     "space_code": reloaded_task.master_user.space_code,
-                }
-            }
+                },
+            },
         )
 
         _l.info(f"relaunch - result is {new_celery_task}")
