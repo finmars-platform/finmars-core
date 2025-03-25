@@ -12,6 +12,23 @@ app.autodiscover_tasks()
 app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
 
 
+def get_celery_task_names():
+    """Get all registered task names from the Celery app."""
+    return list(app.tasks.keys())
+
+
+def get_worker_task_names():
+    """Get task names currently known to connected workers."""
+    try:
+        inspect = app.control.inspect(timeout=1)  # Add timeout
+        registered_tasks = inspect.registered() or {}
+        return list(set().union(*registered_tasks.values()))
+
+    except Exception as e:
+        print(f"get_worker_task_names: failed due to {repr(e)}")
+        return []
+
+
 @task_failure.connect
 def handle_task_failure(**kwargs):
     from poms.celery_tasks.models import CeleryTask
