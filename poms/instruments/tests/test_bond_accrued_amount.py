@@ -8,7 +8,7 @@ from poms.instruments.finmars_quantlib import Actual365A, Actual365L, FixedRateB
 ISSUE_DATE = date(day=1, month=1, year=2020)
 MATURITY_DATE = date(day=31, month=12, year=2030)
 RATE = 0.03  # 3% annual coupon
-FACE_AMOUNT = 100
+FACE_AMOUNT = 1000
 
 
 class TestBond(TestCase):
@@ -20,7 +20,7 @@ class TestBond(TestCase):
             issue_date=ISSUE_DATE,
             maturity_date=MATURITY_DATE,
             coupon_rate=RATE,
-            days_between_coupons=180,
+            days_between_coupons=360,
             day_count=ql.Thirty360(ql.Thirty360.European),  # 30E/360
             face_amount=FACE_AMOUNT,
         )
@@ -50,26 +50,27 @@ class TestBond(TestCase):
         print(list(self.bond.schedule))
 
     def test_prices(self):
-
-
         for eval_date in [
-            date(2025, 1, 1),
-            date(2025, 2, 1),
-            date(2025, 3, 1),
-            date(2025, 4, 1),
-            date(2025, 5, 1),
-            date(2025, 6, 1),
-            date(2025, 7, 1),
-            date(2025, 8, 1),
-            date(2025, 9, 1),
-            date(2025, 10, 1),
-            date(2025, 11, 1),
-            date(2025, 12, 1),
+            date(2025, 1, 31),
+            date(2025, 2, 27),
+            date(2025, 3, 31),
+            date(2025, 4, 30),
+            date(2025, 5, 31),
+            date(2025, 6, 30),
+            date(2025, 7, 31),
+            date(2025, 8, 31),
+            date(2025, 9, 30),
+            date(2025, 10, 31),
+            date(2025, 11, 30),
+            date(2025, 12, 28),
         ]:
-            print("NPV=", self.bond.ql_bond.NPV())
-            print("cleanPrice=", self.bond.ql_bond.cleanPrice())
-            print("accruedAmount=", self.bond.accrued_amount(eval_date))
-            print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
+            # print("NPV=", self.bond.ql_bond.NPV())
+            # print("cleanPrice=", self.bond.ql_bond.cleanPrice())
+            # print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
+            accrued_ratio = self.bond.accrued_amount(eval_date)
+            amount = self.bond.face_amount * RATE * accrued_ratio
+            print(f"{str(eval_date)} {accrued_ratio=}  {amount=}")
+
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
