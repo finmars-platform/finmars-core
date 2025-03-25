@@ -143,24 +143,24 @@ class FixedRateBond:
             self.coupon_rates,
             self.day_count,
         )
-        spot_dates = [self.issue_date, self.maturity_date]
-        spot_rates = [0.0, coupon_rate]
-        interpolation = ql.Linear()
-        self.compounding = ql.Compounded
-        self.compounding_frequency = self.tenor.frequency()
-        self.spot_curve = ql.ZeroCurve(
-            spot_dates,
-            spot_rates,
-            self.day_count,
-            self.calendar,
-            interpolation,
-            self.compounding,
-            self.compounding_frequency,
-        )
-        self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
-
-        bond_engine = ql.DiscountingBondEngine(self.spot_curve_handle)
-        self.ql_bond.setPricingEngine(bond_engine)
+        # spot_dates = [self.issue_date, self.maturity_date]
+        # spot_rates = [0.0, coupon_rate]
+        # interpolation = ql.Linear()
+        # self.compounding = ql.Compounded
+        # self.compounding_frequency = self.tenor.frequency()
+        # self.spot_curve = ql.ZeroCurve(
+        #     spot_dates,
+        #     spot_rates,
+        #     self.day_count,
+        #     self.calendar,
+        #     interpolation,
+        #     self.compounding,
+        #     self.compounding_frequency,
+        # )
+        # self.spot_curve_handle = ql.YieldTermStructureHandle(self.spot_curve)
+        #
+        # bond_engine = ql.DiscountingBondEngine(self.spot_curve_handle)
+        # self.ql_bond.setPricingEngine(bond_engine)
 
     def cash_flows(self):
         return self.ql_bond.cashflows()

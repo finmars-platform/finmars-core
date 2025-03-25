@@ -69,14 +69,14 @@ class TestBond(TestCase):
             # print("cleanPrice=", self.bond.ql_bond.cleanPrice())
             # print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
             accrued_ratio = round(self.bond.accrued_amount(eval_date) / 100, 4)
-            amount_1 = self.bond.face_amount * accrued_ratio
+            amount_1 = round(self.bond.face_amount * accrued_ratio, 2)
 
             price_date = ql.Date(eval_date.day, eval_date.month, eval_date.year)
             days_to_price = self.bond.day_count.dayCount(start_date, price_date)
             accrual_factor = round(RATE * (days_to_price / coupon_days), 4)
-            amount_2 = self.bond.face_amount * accrual_factor
+            amount_2 = round(self.bond.face_amount * accrual_factor, 2)
 
-            amount_3 = self.bond.face_amount * round(i/12 * RATE, 4)
+            amount_3 = round(self.bond.face_amount * round(i/12 * RATE, 4), 2)
 
             # print(f"{str(eval_date)} {accrued_ratio=} {amount_1=} <--> {accrual_factor=} {amount_2=}")
             print(f"{str(eval_date)} {amount_1=} {amount_2=} {amount_3=}")
