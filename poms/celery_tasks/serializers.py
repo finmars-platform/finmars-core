@@ -25,7 +25,6 @@ class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
         from poms.file_reports.serializers import FileReportSerializer
 
         super().__init__(*args, **kwargs)
-
         self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
@@ -51,8 +50,9 @@ def _get_result_stats(instance):
         for item in instance.result_object["items"]:
             if item["status"] in ["success", "skip", "error"]:
                 key = f"{item['status']}_count"
-                result_stats[key] = result_stats[key] + 1
-            result_stats["total_count"] = result_stats["total_count"] + 1
+                result_stats[key] += 1
+
+            result_stats["total_count"] += 1
 
     return result_stats
 
@@ -103,7 +103,6 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
         from poms.users.serializers import MemberViewSerializer
 
         super().__init__(*args, **kwargs)
-
         self.fields["member_object"] = MemberViewSerializer(source="member", read_only=True)
 
 
@@ -146,7 +145,6 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
         from poms.users.serializers import MemberViewSerializer
 
         super().__init__(*args, **kwargs)
-
         self.fields["member_object"] = MemberViewSerializer(source="member", read_only=True)
 
 
@@ -168,7 +166,7 @@ class CeleryWorkerSerializer(serializers.ModelSerializer):
         try:
             return json.loads(instance.status)
         except Exception as e:
-            return {"status": "unknown", "error_message": None}
+            return {"status": "unknown", "error_message": repr(e)}
 
 
 class CeleryTaskRelaunchSerializer(serializers.Serializer):

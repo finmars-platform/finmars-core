@@ -210,7 +210,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None, realm_code=None, space_code=None):
         task = CeleryTask.objects.get(pk=pk)
-
         task.cancel()
 
         return Response({"status": "ok"})
@@ -273,7 +272,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         if not options:
             options = completed_task.options_object
 
-        full_task_name = None
         for registered_task_name in current_app.tasks.keys():
             if completed_task.type in registered_task_name:
                 full_task_name = registered_task_name
@@ -326,9 +324,6 @@ class CeleryStatsViewSet(AbstractViewSet):
         from poms_app.celery import app
 
         i = app.control.inspect()
-        # d = i.active()
-        # workers = list(d.keys()) if d else []
-
         stats = i.stats()
 
         return Response(stats)
@@ -360,7 +355,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["PUT"], url_path="create-worker")
     def create_worker(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
-
         worker.create_worker(request.realm_code)
 
         return Response({"status": "ok"})
@@ -368,7 +362,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["PUT"], url_path="start")
     def start(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
-
         worker.start(request.realm_code)
 
         return Response({"status": "ok"})
@@ -376,7 +369,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["PUT"], url_path="stop")
     def stop(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
-
         worker.stop(request.realm_code)
 
         return Response({"status": "ok"})
@@ -384,7 +376,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["PUT"], url_path="restart")
     def restart(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
-
         worker.restart(request.realm_code)
 
         return Response({"status": "ok"})
@@ -392,7 +383,6 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
     @action(detail=True, methods=["GET"], url_path="status")
     def status(self, request, pk=None, realm_code=None, space_code=None):
         worker = self.get_object()
-
         worker.get_status(request.realm_code)
 
         return Response({"status": "ok"})
@@ -401,10 +391,11 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         try:
             instance = self.get_object()
             self.perform_destroy(instance, request)
-        except Exception as e:
+        except Exception:
             pass
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_destroy(self, instance, request):
+    def perform_destroy(self, instance, request, *args, **kwargs):
         instance.delete_worker(request.realm_code)
-        return super(CeleryWorkerViewSet, self).perform_destroy(instance)
+        return super().perform_destroy(instance)
