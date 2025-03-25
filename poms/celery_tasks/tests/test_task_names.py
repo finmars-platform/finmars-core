@@ -20,8 +20,10 @@ class CeleryTaskTests(BaseTestCase):
         ("1", "configuration.import_configuration"),
         ("2", "csv_import.simple_import"),
         ("3", "explorer.tasks.move_directory_in_storage"),
-        ("4", "file_reports.clear_old_file_reports"),
+        # ("4", "file_reports.clear_old_file_reports"),  # task declared, but not imported/used
         ("5", "instruments.calculate_prices_accrued_price"),
+        ("6", "portfolios.calculate_portfolio_register_record"),
+        ("7", "reconciliation.process_bank_file_for_reconcile"),
     )
     def test__existing_tasks(self, task_name):
 
