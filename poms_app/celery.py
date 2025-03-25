@@ -28,7 +28,7 @@ def handle_task_failure(**kwargs):
             exception = einfo.exception
 
         # Handle the exception in any way you want. For example, you could log it:
-        _l.warning(f'CeleryTask {task_id} raised exception: {einfo.exception} trace: {einfo.traceback}')
+        _l.warning(f"CeleryTask {task_id} raised exception: {einfo.exception} trace: {einfo.traceback}")
 
         task = CeleryTask.objects.get(celery_task_id=task_id)
         task.error_message = exception
@@ -37,7 +37,6 @@ def handle_task_failure(**kwargs):
 
     except Exception as e:
         _l.error(f"Can't handle CeleryTask {task_id} exception {exception} due to {repr(e)}")
-
 
 
 # Probably not needed, it also killing a workier, not a task
