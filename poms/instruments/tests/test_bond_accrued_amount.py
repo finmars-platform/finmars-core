@@ -51,6 +51,11 @@ class TestBond(TestCase):
         end_date = ql.Date(30, 12, 2025)
         coupon_days = self.bond.day_count.dayCount(start_date, end_date)
 
+        print(f"face amount = {FACE_AMOUNT}")
+        print(f"coupon rate = {RATE}")
+        print("day count = 30E/360\n")
+        print("   date     method  manual   diff")
+
         for i, eval_date in enumerate([
             date(2025, 1, 31),
             date(2025, 2, 27),
@@ -76,10 +81,9 @@ class TestBond(TestCase):
             accrual_factor = round(RATE * (days_to_price / coupon_days), 4)
             amount_2 = round(self.bond.face_amount * accrual_factor, 2)
 
-            amount_3 = round(self.bond.face_amount * round(i/12 * RATE, 4), 2)
-
-            # print(f"{str(eval_date)} {accrued_ratio=} {amount_1=} <--> {accrual_factor=} {amount_2=}")
-            print(f"{str(eval_date)} {amount_1=} {amount_2=} {amount_3=}")
+            diff = round(amount_2 - amount_1, 2)
+            percent = int(round((diff / (RATE * FACE_AMOUNT)) * 100, 0))
+            print(f"{str(eval_date)}  {amount_1:5.2f}   {amount_2:5.2f}    {percent}%")
 
     # def test_accrued_amount_one_third_period(self):
     #     """Test accrued amount one-third through a coupon period (60/180 days)."""
