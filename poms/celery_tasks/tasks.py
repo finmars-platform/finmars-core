@@ -3,11 +3,10 @@ import logging
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from django.contrib.contenttypes.models import ContentType
-import django.db.utils
-from django.utils.timezone import now
-
 from celery.utils.log import get_task_logger
+
+from django.contrib.contenttypes.models import ContentType
+from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -56,16 +55,13 @@ def remove_old_tasks(self, *args, **kwargs):
 @finmars_task(name="celery_tasks.auto_cancel_task_by_ttl")
 def auto_cancel_task_by_ttl(*args, **kwargs):
     try:
-        tasks = CeleryTask.objects.filter(
-            status=CeleryTask.STATUS_PENDING, expiry_at__lte=now()
-        )
+        tasks = CeleryTask.objects.filter(status=CeleryTask.STATUS_PENDING, expiry_at__lte=now())
 
         for task in tasks:
             if not task.notes:
                 task.notes = ""
 
-            task.notes = task.notes + "Task was cancelled by TTL \n"
-
+            task.notes += " Task was cancelled by TTL \n"
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
 
@@ -80,9 +76,7 @@ def auto_cancel_task_by_ttl(*args, **kwargs):
             description=str(e),
         )
 
-        _l.error(
-            f"auto_cancel_task_by_ttl.exception {repr(e)} {traceback.format_exc()}"
-        )
+        _l.error(f"auto_cancel_task_by_ttl.exception {repr(e)} {traceback.format_exc()}")
 
 
 @finmars_task(name="celery_tasks.check_for_died_workers")
@@ -127,8 +121,6 @@ def check_for_died_workers(*args, **kwargs):
 
 @finmars_task(name="celery_tasks.bulk_delete", bind=True)
 def bulk_delete(self, task_id, *args, **kwargs):
-    # is_fake = bool(request.query_params.get('is_fake'))
-
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
     celery_task.status = CeleryTask.STATUS_PENDING
@@ -157,9 +149,7 @@ def bulk_delete(self, task_id, *args, **kwargs):
         }
     )
 
-    to_be_deleted_queryset = content_type.model_class().objects.filter(
-        id__in=options_object["ids"]
-    )
+    to_be_deleted_queryset = content_type.model_class().objects.filter(id__in=options_object["ids"])
 
     last_exception = None
     for count, instance in enumerate(to_be_deleted_queryset, start=1):
@@ -173,12 +163,14 @@ def bulk_delete(self, task_id, *args, **kwargs):
             last_exception = e
             description = f"Instance {instance.id} was not deleted"
 
-        celery_task.update_progress({
-            "current": count,
-            "total": len(options_object["ids"]),
-            "percent": round(count / (len(options_object["ids"]) / 100)),
-            "description": description,
-        })
+        celery_task.update_progress(
+            {
+                "current": count,
+                "total": len(options_object["ids"]),
+                "percent": round(count / (len(options_object["ids"]) / 100)),
+                "description": description,
+            }
+        )
     if last_exception:
         err_msg = f"bulk_delete exception {repr(last_exception)} {traceback.format_exception(last_exception)}"
         _l.info(err_msg)  # sentry detects it as error, but it maybe not
@@ -258,14 +250,12 @@ def import_item(item, context):
         raise ValueError("Meta is not found. Could not process JSON")
 
     if meta["content_type"] == "transactions.complextransaction":
-        transaction_type = TransactionType.objects.get(
-            user_code=item["transaction_type"]
-        )
+        transaction_type = TransactionType.objects.get(user_code=item["transaction_type"])
 
         values = {}
 
         for input in item["inputs"]:
-            if input["value_type"] == 10 :
+            if input["value_type"] == 10:
                 values[input["transaction_type_input"]] = input["value_string"]
 
             elif input["value_type"] == 20:
@@ -282,9 +272,7 @@ def import_item(item, context):
 
                 content_type = get_content_type_by_name(content_type_key)
                 with contextlib.suppress(Exception):
-                    values[
-                        input["transaction_type_input"]
-                    ] = content_type.model_class().objects.get(
+                    values[input["transaction_type_input"]] = content_type.model_class().objects.get(
                         user_code=input["value_relation"]
                     )
 
@@ -296,12 +284,10 @@ def import_item(item, context):
             source=item["source"],
             linked_import_task=context.get("task"),
         )
-
         process_instance.process()
 
     else:
         serializer_class = get_serializer(meta["content_type"])
-
         serializer = serializer_class(data=item, context=context)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -310,8 +296,6 @@ def import_item(item, context):
 @finmars_task(name="celery_tasks.universal_input", bind=True)
 def universal_input(self, task_id, *args, **kwargs):
     from poms.common.models import ProxyRequest, ProxyUser
-
-    # is_fake = bool(request.query_params.get('is_fake'))
 
     _l.info(f"universal_input.task_id {task_id}")
 
