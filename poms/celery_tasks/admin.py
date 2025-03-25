@@ -25,6 +25,7 @@ class CeleryTaskAdmin(admin.ModelAdmin):
         "master_user",
     ]
 
+
 @admin.register(CeleryWorker)
 class CeleryWorkerAdmin(AbstractModelAdmin):
     model = CeleryWorker
