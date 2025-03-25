@@ -1,8 +1,9 @@
 import json
 from logging import getLogger
 
-from celery.result import AsyncResult
 from celery import current_app
+from celery.result import AsyncResult
+
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -13,14 +14,15 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
+
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
 from .models import CeleryTask, CeleryWorker
 from .serializers import (
     CeleryTaskLightSerializer,
+    CeleryTaskRelaunchSerializer,
     CeleryTaskSerializer,
     CeleryTaskUpdateStatusSerializer,
     CeleryWorkerSerializer,
-    CeleryTaskRelaunchSerializer,
 )
 
 _l = getLogger("poms.celery_tasks")
@@ -215,8 +217,8 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
     def abort_transaction_import(self, request, pk=None, realm_code=None, space_code=None):
-        from poms_app import celery_app
         from poms.transactions.models import ComplexTransaction
+        from poms_app import celery_app
 
         task = CeleryTask.objects.get(pk=pk)
 
