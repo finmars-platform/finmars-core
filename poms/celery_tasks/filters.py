@@ -1,7 +1,7 @@
+from datetime import datetime, timedelta
+
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
-
-from datetime import datetime, timedelta
 
 
 class CeleryTaskQueryFilter(BaseFilterBackend):
@@ -29,9 +29,7 @@ class CeleryTaskDateRangeFilter(BaseFilterBackend):
             queryset = queryset.filter(created_at__gte=date_from)
 
         if date_to:
-            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(
-                days=1, microseconds=-1
-            )
+            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
 
             queryset = queryset.filter(created_at__lte=date_to)
 
