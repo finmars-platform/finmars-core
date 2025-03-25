@@ -4,8 +4,6 @@ import os
 from celery import Celery
 from celery.signals import task_failure
 
-from poms.celery_tasks.models import CeleryTask
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
 
 app = Celery("poms_app")
@@ -16,6 +14,8 @@ app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
 
 @task_failure.connect
 def handle_task_failure(**kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
     _l = logging.getLogger("celery")
 
     try:
