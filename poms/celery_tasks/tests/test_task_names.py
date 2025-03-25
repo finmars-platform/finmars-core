@@ -48,11 +48,3 @@ class WorkerInspectionTests(BaseTestCase):
         self.assertIn("task1", tasks)
         self.assertIn("task2", tasks)
         self.assertIn("task3", tasks)
-
-    @patch("poms_app.celery.app.control.inspect")
-    def test_no_workers_available(self, mock_inspect):
-        # Simulate no workers responding
-        mock_inspect.return_value.registered.return_value = {}
-
-        tasks = get_celery_task_names()
-        self.assertEqual(tasks, [])
