@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
+from poms_app.celery import get_celery_task_names
 
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
 from .models import CeleryTask, CeleryWorker
@@ -318,6 +319,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"], url_path="list-all-tasks")
+    def list_all_tasks(self, request, *args, **kwargs):
+        return Response(get_celery_task_names())
+
 
 class CeleryStatsViewSet(AbstractViewSet):
     def list(self, request, *args, **kwargs):
@@ -325,7 +330,6 @@ class CeleryStatsViewSet(AbstractViewSet):
 
         i = app.control.inspect()
         stats = i.stats()
-
         return Response(stats)
 
 
