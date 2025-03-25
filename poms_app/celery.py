@@ -18,30 +18,26 @@ def handle_task_failure(**kwargs):
 
     _l = logging.getLogger("celery")
 
-    try:
-        exception = kwargs["exception"]
-        task_id = kwargs["task_id"]
-        args = kwargs["args"]
-        kwargs = kwargs["kwargs"]
-        einfo = kwargs.get("einfo")
+    exception = kwargs.get("exception")
+    task_id = kwargs.get("task_id")
+    task_kwargs = kwargs.get("kwargs", {})
+    einfo = task_kwargs.get("einfo")
 
+    try:
         if not exception and einfo:
             exception = einfo.exception
 
         # Handle the exception in any way you want. For example, you could log it:
-        # _l.error(f'Task {task_id} raised exception: {einfo.exception} \n {einfo.traceback}')
+        _l.warning(f'CeleryTask {task_id} raised exception: {einfo.exception} trace: {einfo.traceback}')
 
-        try:
-            task = CeleryTask.objects.get(celery_task_id=task_id)
-            task.error_message = exception
-            task.status = CeleryTask.STATUS_ERROR
-            task.save()
-
-        except Exception as e:
-            _l.error(f"Task is not registered in CeleryTask {repr(e)}")
+        task = CeleryTask.objects.get(celery_task_id=task_id)
+        task.error_message = exception
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
 
     except Exception as e:
-        _l.error(f"Could not handle task failure {repr(e)}")
+        _l.error(f"Can't handle CeleryTask {task_id} exception {exception} due to {repr(e)}")
+
 
 
 # Probably not needed, it also killing a workier, not a task
