@@ -1,7 +1,12 @@
-from datetime import date
-from typing import List
+from datetime import date, datetime
+from typing import List, Optional
 
 import QuantLib as ql
+
+from django.conf import settings
+
+
+DATE_FORMAT = "%Y-%m-%d"
 
 
 class MixinYearFraction:
@@ -89,7 +94,6 @@ class FixedRateBond:
         coupon_rate: float,
         issue_date: date,
         maturity_date: date,
-        days_between_coupons: int,
         day_count: ql.DayCounter,
         # optional args
         calendar: ql.Calendar = ql.TARGET(),
@@ -99,16 +103,26 @@ class FixedRateBond:
         end_of_month: bool = False,
         settlement_days: int = 2,
         face_amount: float = 100.0,
+        days_between_coupons: Optional[int] = None,
+        periodicity: "Periodicity" = None,
     ):
-        if not all([coupon_rate, issue_date, maturity_date, days_between_coupons, day_count]):
+        if not all([coupon_rate, issue_date, maturity_date, day_count]):
             raise ValueError("all positional args to be provided")
         if not isinstance(day_count, ql.DayCounter):
             raise ValueError(f"day_count must be type ql.Counter, but not {type(day_count)}")
+        if days_between_coupons and periodicity:
+            raise ValueError("Only one of 'days_between_coupons' or 'periodicity' can be provided")
+
+        if days_between_coupons:
+            self.tenor = self.convert_days_to_tenor_period(days_between_coupons, day_count)
+        elif periodicity:
+            self.tenor = periodicity.get_quantlib_periodicity(periodicity.id)
+        else:
+            raise ValueError("Either 'days_between_coupons' or 'periodicity' must be provided")
 
         self.issue_date = ql.Date(issue_date.day, issue_date.month, issue_date.year)
         self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
         self.day_count = day_count
-        self.tenor = self.convert_days_to_tenor_period(days_between_coupons, self.day_count)
         self.calendar = calendar
         self.business_convention = business_convention
         self.termination_date_convention = termination_date_convention
@@ -215,11 +229,10 @@ class FixedRateBond:
 
         ql.Settings.instance().evaluationDate = ql_date
 
-        # return ql.BondFunctions.accruedAmount(self.ql_bond)
-        return self.ql_bond.accruedAmount()
+        return round(self.ql_bond.accruedAmount() / 100, settings.ROUND_NDIGITS)
 
 
-def calculate_accrual_event_factor(coupon, price_date: date) -> float:
+def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> float:
     """
     Calculate the accrual event factor for a given accrual event and target date.
     This function computes the accrual factor by determining the ratio of days
@@ -236,7 +249,9 @@ def calculate_accrual_event_factor(coupon, price_date: date) -> float:
     Raises:
         ValueError: If the accrual period has zero days.
     """
-    ql_day_counter = coupon.accrual_calculation_model.get_quantlib_day_count(coupon.accrual_calculation_model_id)
+    ql_day_counter = coupon.accrual_calculation_model.get_quantlib_day_count(
+        coupon.accrual_calculation_model_id,
+    )
     price_date = ql.Date(price_date.day, price_date.month, price_date.year)
     start_date = ql.Date(coupon.start_date.day, coupon.start_date.month, coupon.start_date.year)
     end_date = ql.Date(coupon.end_date.day, coupon.end_date.month, coupon.end_date.year)
@@ -251,6 +266,19 @@ def calculate_accrual_event_factor(coupon, price_date: date) -> float:
     return round(accrual_factor, 6)
 
 
-def calculate_fixed_accrual_schedule_factor():
+def calculate_fixed_accrual_schedule_factor(
+    accrual_schedule: "AccrualCalculationSchedule", maturity_date: date, price_date: date
+) -> float:
+    ql_day_counter = accrual_schedule.accrual_calculation_model.get_quantlib_day_count(
+        accrual_schedule.accrual_calculation_model_id,
+    )
+    issue_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+    bond = FixedRateBond(
+        issue_date=issue_date,
+        maturity_date=maturity_date,
+        coupon_rate=float(accrual_schedule.accrual_size),
+        day_count=ql_day_counter,
+        periodicity=accrual_schedule.periodicity,
+    )
 
-    return None
+    return bond.accrued_amount(price_date)

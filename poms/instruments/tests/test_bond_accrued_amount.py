@@ -20,9 +20,9 @@ class TestBond(TestCase):
             issue_date=ISSUE_DATE,
             maturity_date=MATURITY_DATE,
             coupon_rate=RATE,
-            days_between_coupons=360,
             day_count=ql.Thirty360(ql.Thirty360.European),  # 30E/360
             face_amount=FACE_AMOUNT,
+            days_between_coupons=360,
         )
 
     # def test_null(self):
@@ -73,7 +73,7 @@ class TestBond(TestCase):
             # print("NPV=", self.bond.ql_bond.NPV())
             # print("cleanPrice=", self.bond.ql_bond.cleanPrice())
             # print("dirtyPrice=", self.bond.ql_bond.dirtyPrice())
-            accrued_ratio = round(self.bond.accrued_amount(eval_date) / 100, 4)
+            accrued_ratio = self.bond.accrued_amount(eval_date)
             amount_1 = round(self.bond.face_amount * accrued_ratio, 2)
 
             price_date = ql.Date(eval_date.day, eval_date.month, eval_date.year)
