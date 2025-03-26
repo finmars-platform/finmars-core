@@ -2064,7 +2064,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
 
         return accruals
 
-    def _price_date_is_valid(self, day: date) -> bool:
+    def is_price_date_valid(self, day: date) -> bool:
         """target date must be less that maturity date"""
         if not isinstance(day, date):
             raise ValueError(f"price_date_is_valid: day must be of type date, not {type(day)}")
@@ -2072,7 +2072,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return not self.maturity_date or day < self.maturity_date
 
     def find_accrual_schedule(self, price_date: date) -> Optional["AccrualCalculationSchedule"]:
-        if not self._price_date_is_valid(day=price_date):
+        if not self.is_price_date_valid(day=price_date):
             return None
 
         accruals = self.get_accrual_calculation_schedules_all()
@@ -2087,7 +2087,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         """
         Finds the nearest to target_date future accrual event in the instrument's accruals.
         """
-        if not self._price_date_is_valid(day=price_date):
+        if not self.is_price_date_valid(day=price_date):
             return None
 
         sorted_accrual_events = list(self.accrual_events.order_by("end_date").all())
@@ -2104,7 +2104,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return sorted_accrual_events[pos] if pos < len(end_dates) else None
 
     def get_accrued_price(self, price_date: date) -> float:
-        if not self._price_date_is_valid(day=price_date):
+        if not self.is_price_date_valid(day=price_date):
             return 0
 
         # check accrual event path
@@ -2129,7 +2129,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         return float(accrual_schedule.accrual_size) * factor
 
     def get_accrual_size(self, price_date: date) -> float:
-        if not self._price_date_is_valid(day=price_date):
+        if not self.is_price_date_valid(day=price_date):
             return 0
 
         # check accrual event path
