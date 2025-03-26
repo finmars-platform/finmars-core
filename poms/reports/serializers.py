@@ -427,7 +427,11 @@ class ReportSerializer(ReportSerializerWithLogs):
     # strategies3_object = Strategy3ViewSerializer(
     #     source="strategies3", read_only=True, many=True
     # )
-    custom_fields_object = BalanceReportCustomFieldSerializer(source="custom_fields", read_only=True, many=True)
+    custom_fields_object = BalanceReportCustomFieldSerializer(
+        source="custom_fields",
+        read_only=True,
+        many=True,
+    )
     # transaction_classes_object = TransactionClassSerializer(
     #     source="transaction_classes", read_only=True, many=True
     # )
