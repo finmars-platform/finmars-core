@@ -786,7 +786,11 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         default=PortfolioHistory.PERIOD_YTD,
         choices=PortfolioHistory.PERIOD_CHOICES,
     )
-    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO,)
+    cost_method = CostMethodField(
+        required=False,
+        default=CostMethod.AVCO,
+        initial=CostMethod.AVCO,
+    )
     performance_method = serializers.ChoiceField(
         required=False,
         default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
@@ -821,10 +825,15 @@ GROUP_FIELDS = [
 ]
 
 
+class ReconcilePortfolioField(PortfolioField):
+    def to_representation(self, obj):
+        return getattr(obj, "user_code")
+
+
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
-    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+    portfolios = serializers.ListSerializer(child=ReconcilePortfolioField(required=True))
     user_code = UserCodeField()
 
     class Meta:
