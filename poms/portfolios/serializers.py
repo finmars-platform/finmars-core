@@ -786,7 +786,11 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         default=PortfolioHistory.PERIOD_YTD,
         choices=PortfolioHistory.PERIOD_CHOICES,
     )
-    cost_method = CostMethodField(required=False, default=CostMethod.AVCO, initial=CostMethod.AVCO,)
+    cost_method = CostMethodField(
+        required=False,
+        default=CostMethod.AVCO,
+        initial=CostMethod.AVCO,
+    )
     performance_method = serializers.ChoiceField(
         required=False,
         default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
