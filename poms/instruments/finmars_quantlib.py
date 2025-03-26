@@ -233,7 +233,7 @@ class FixedRateBond:
 
 def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> float:
     """
-    Calculate the accrual event factor for a given accrual event and target date.
+    Calculate the accrued factor for a given accrual event and target date.
     This function computes the accrual factor by determining the ratio of days
     between the accrual start date and the target date to the total number of
     days in the accrual period.
@@ -268,6 +268,18 @@ def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> 
 def calculate_fixed_accrual_factor(
     accrual_schedule: "AccrualCalculationSchedule", maturity_date: date, price_date: date
 ) -> float:
+    """
+        Calculates the accrued factor for a given fixed accrual schedule and maturity & price dates.
+        The function uses FixedRateBond class & method based on QuatLib model.
+
+        Args:
+            accrual_schedule: The accrual calculation schedule.
+            maturity_date: The maturity date of the instrument.
+            price_date: The date for which to calculate the factor.
+
+        Returns:
+            The accrued interest factor.
+    """
     ql_day_counter = accrual_schedule.accrual_calculation_model.get_quantlib_day_count(
         accrual_schedule.accrual_calculation_model_id,
     )
