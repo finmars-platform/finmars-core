@@ -6,7 +6,7 @@ from poms.common.factories import (
     AccrualCalculationModelFactory,
     AccrualEventFactory,
 )
-from poms.common.formula_accruals import calculate_accrual_event_factor
+from poms.instruments.finmars_quantlib import calculate_accrual_event_factor
 from poms.instruments.models import AccrualEvent
 
 PERIOD_DAYS = 365
