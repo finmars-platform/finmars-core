@@ -22,7 +22,6 @@ from django.utils.translation import gettext_lazy
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.fields import ResourceGroupsField
 from poms.common.formula_accruals import (
-    calculate_accrual_event_factor,
     calculate_accrual_schedule_factor,
     get_coupon,
 )
@@ -38,7 +37,7 @@ from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
-from poms.instruments.finmars_quantlib import Actual365A, Actual365L
+from poms.instruments.finmars_quantlib import Actual365A, Actual365L, calculate_accrual_event_factor
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.models import EcosystemDefault, MasterUser
 
