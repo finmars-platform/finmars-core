@@ -265,7 +265,7 @@ def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> 
     return round(accrual_factor, 6)
 
 
-def calculate_fixed_accrual_schedule_factor(
+def calculate_fixed_accrual_factor(
     accrual_schedule: "AccrualCalculationSchedule", maturity_date: date, price_date: date
 ) -> float:
     ql_day_counter = accrual_schedule.accrual_calculation_model.get_quantlib_day_count(
