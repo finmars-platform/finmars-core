@@ -825,10 +825,15 @@ GROUP_FIELDS = [
 ]
 
 
+class ReconcilePortfolioField(PortfolioField):
+    def to_representation(self, obj):
+        return getattr(obj, "user_code")
+
+
 class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     params = ParamsSerializer()
-    portfolios = serializers.ListSerializer(child=PortfolioField(required=True))
+    portfolios = serializers.ListSerializer(child=ReconcilePortfolioField(required=True))
     user_code = UserCodeField()
 
     class Meta:
