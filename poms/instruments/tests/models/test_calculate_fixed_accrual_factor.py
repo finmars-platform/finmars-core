@@ -14,7 +14,7 @@ class CalculateFixedAccrualFactorTests(TestCase):
         accrual_schedule = Mock()
         accrual_schedule.accrual_start_date = "2023-01-01"
         accrual_schedule.accrual_size = "0.05"  # 5% coupon rate
-        accrual_schedule.accrual_calculation_model.get_quantlib_day_count.return_value = ql.Thirty360()
+        accrual_schedule.accrual_calculation_model.get_quantlib_day_count.return_value = ql.Actual360()
         accrual_schedule.accrual_calculation_model_id = 1
         accrual_schedule.periodicity = Mock()
         accrual_schedule.periodicity.get_quantlib_periodicity.return_value = ql.Period(ql.Semiannual)
