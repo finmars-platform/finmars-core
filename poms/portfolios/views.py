@@ -21,8 +21,8 @@ from poms.common.filters import (
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
 from poms.currencies.models import Currency
-from poms.instruments.models import PricingPolicy
 from poms.file_reports.models import FileReport
+from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.portfolios.models import (
