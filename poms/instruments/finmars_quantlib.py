@@ -5,7 +5,6 @@ import QuantLib as ql
 
 from django.conf import settings
 
-
 DATE_FORMAT = "%Y-%m-%d"
 
 
