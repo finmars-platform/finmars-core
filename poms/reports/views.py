@@ -1299,9 +1299,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         instance = serializer.save()
 
         instance.auth_time = self.auth_time
-
         instance.pl_first_date = get_pl_first_date(instance)
-
         instance.portfolios = transform_to_allowed_portfolios(instance)
         instance.accounts = transform_to_allowed_accounts(instance)
 
