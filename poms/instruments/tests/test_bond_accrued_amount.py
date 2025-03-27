@@ -83,19 +83,14 @@ class TestBond(TestCase):
             percent = int(round((diff / (RATE * FACE_AMOUNT)) * 100, 0))
             print(f"{str(eval_date)}  {amount_1:5.2f}   {amount_2:5.2f}    {percent}%")
 
-    # def test_accrued_amount_one_third_period(self):
-    #     """Test accrued amount one-third through a coupon period (60/180 days)."""
-    #       # 60 days from Jan 1 under 30E/360
-    #     accrued = self.bond.accrued_amount(eval_date)
-    #     print(f"dirty_price={self.bond.ql_bond.dirty_price()}")
-    #     print(
-    #         f"yield={self.bond.ql_bond.bondYield(self.bond.day_count, self.bond.compounding, self.bond.compounding_frequency)}"
-    #     )
-    #
-    #     # Semiannual coupon = 1000 * 0.03 * 0.5 = 15
-    #     # 60/180 = 0.3333 of period, so 15 * 0.3333 = 5.0
-    #     expected = 5.0
-    #     self.assertAlmostEqual(accrued, expected, places=2, msg="Accrued should be 5.0 at one-third")
+    def test_accrued_amount_one_third_period(self):
+        """Test accrued amount one-third through a coupon period 60/360."""
+        # 60 days from Jan 1 under 30E/360
+        accrued = self.bond.accrued_amount(date(2025, 3, 31))
+        # Annual coupon = 1000 * 0.03 * 0.3 = 10
+        # 60/180 = 0.3333 of period, so 15 * 0.3333 = 5.0
+        expected = 5.0
+        self.assertAlmostEqual(accrued, expected, places=2, msg="Accrued should be 5.0 at one-third")
 
     # def test_accrued_amount_mid_period(self):
     #     """Test accrued amount halfway through a coupon period (90/180 days)."""
