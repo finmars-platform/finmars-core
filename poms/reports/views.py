@@ -1,9 +1,7 @@
-import json
 import logging
 import time
 from datetime import timedelta
 
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -16,12 +14,12 @@ from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.reports.light_builders.balance import BalanceReportLightBuilderSql
 from poms.reports.models import (
     BalanceReportCustomField,
+    BalanceReportInstance,
     PLReportCustomField,
+    PLReportInstance,
     ReportSummary,
     ReportSummaryInstance,
     TransactionReportCustomField,
-    BalanceReportInstance,
-    PLReportInstance,
 )
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import (
@@ -32,28 +30,27 @@ from poms.reports.serializers import (
     BackendTransactionReportGroupsSerializer,
     BackendTransactionReportItemsSerializer,
     BalanceReportCustomFieldSerializer,
+    BalanceReportInstanceSerializer,
+    BalanceReportLightSerializer,
     BalanceReportSerializer,
     PerformanceReportSerializer,
     PLReportCustomFieldSerializer,
+    PLReportInstanceSerializer,
     PLReportSerializer,
     PriceHistoryCheckSerializer,
     SummarySerializer,
     TransactionReportCustomFieldSerializer,
     TransactionReportSerializer,
-    BalanceReportLightSerializer,
-    BalanceReportInstanceSerializer,
-    PLReportInstanceSerializer,
 )
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.utils import (
-    generate_report_unique_hash,
     generate_unique_key,
     get_pl_first_date,
-    transform_to_allowed_portfolios,
     transform_to_allowed_accounts,
+    transform_to_allowed_portfolios,
 )
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
@@ -382,10 +379,7 @@ class BalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -647,10 +641,7 @@ class BalanceReportLightViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -829,20 +820,12 @@ class SummaryViewSet(AbstractViewSet):
                 "metrics": {
                     "nav": report_summary.get_nav(portfolio.id),
                     "pl_daily": report_summary.get_total_pl_daily(portfolio.id),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(
-                        portfolio.id
-                    ),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(portfolio.id),
                     "pl_mtd": report_summary.get_total_pl_mtd(portfolio.id),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(
-                        portfolio.id
-                    ),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(portfolio.id),
                     "pl_ytd": report_summary.get_total_pl_ytd(portfolio.id),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(
-                        portfolio.id
-                    ),
-                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(
-                        portfolio.id
-                    ),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(portfolio.id),
+                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(portfolio.id),
                     "pl_inception_to_date_percent": report_summary.get_total_position_return_pl_inception_to_date(
                         portfolio.id
                     ),
@@ -978,10 +961,7 @@ class PLReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "PL Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("PL Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1036,10 +1016,7 @@ class TransactionReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Transaction Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Transaction Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1095,10 +1072,7 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "PriceHistoryCheckerSql done: %s"
-            % "{:3.3f}".format(time.perf_counter() - st)
-        )
+        _l.debug("PriceHistoryCheckerSql done: %s" % "{:3.3f}".format(time.perf_counter() - st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1155,7 +1129,10 @@ class PerformanceReportViewSet(AbstractViewSet):
         serialization_start_time = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
         serialized_data = serializer.data
-        _l.debug("Serialization (serializer.data) done in: %s seconds", "{:3.3f}".format(time.perf_counter() - serialization_start_time))
+        _l.debug(
+            "Serialization (serializer.data) done in: %s seconds",
+            "{:3.3f}".format(time.perf_counter() - serialization_start_time),
+        )
 
         # # Timing JSON conversion
         # json_conversion_start_time = time.perf_counter()
@@ -1206,17 +1183,11 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         #     builder = BalanceReportBuilderSql(instance=instance)
         #     instance = builder.build_balance()
 
-
         serializer = self.get_serializer(instance=instance, many=False)
-
-
 
         response = Response(serializer.data, status=status.HTTP_200_OK)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return response
 
@@ -1261,10 +1232,7 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1315,10 +1283,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1357,10 +1322,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1387,8 +1349,7 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         serializer = self.get_serializer(instance=instance, many=False)
 
         _l.debug(
-            "BackendTransactionReportViewSet done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+            "BackendTransactionReportViewSet done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
         )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1413,10 +1374,7 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Balance Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
