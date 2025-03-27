@@ -1,6 +1,5 @@
 import itertools
 import logging
-import time
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -99,7 +98,7 @@ class BackendReportHelperService:
 
         return result_groups
 
-    def convert_helper_dict(self, helper_list):
+    def convert_helper_dict(self, helper_list: list) -> dict:
         return {entry["id"]: entry for entry in helper_list}
 
     def _get_attribute_value(self, attribute):
@@ -299,13 +298,12 @@ class BackendReportHelperService:
         return flattened_item
 
     def convert_report_items_to_full_items(self, data):
-        original_items = []  # probably we missing user attributes
+        original_items = []  # probably we're missing user attributes
 
-        to_representation_st = time.perf_counter()
-
-        def log_with_time(message):
-            elapsed_time = time.perf_counter() - to_representation_st
-            _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
+        # to_representation_st = time.perf_counter()
+        # def log_with_time(message):
+        #     elapsed_time = time.perf_counter() - to_representation_st
+        #     _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
 
         helper_dicts = {
             "accrued_currency": self.convert_helper_dict(data["item_currencies"]),
@@ -318,7 +316,6 @@ class BackendReportHelperService:
             "portfolio": self.convert_helper_dict(data["item_portfolios"]),
             "instrument": self.convert_helper_dict(data["item_instruments"]),
             "instrument_type": self.convert_helper_dict(data["item_instrument_types"]),
-            "country": self.convert_helper_dict(data["item_countries"]),
             "entry_instrument": self.convert_helper_dict(data["item_instruments"]),
             "allocation": self.convert_helper_dict(data["item_instruments"]),
             "allocation_balance": self.convert_helper_dict(data["item_instruments"]),
@@ -338,6 +335,9 @@ class BackendReportHelperService:
         }
 
         # log_with_time("helper dicts are created")
+
+        if "item_countries" in data:
+            helper_dicts["country"] = self.convert_helper_dict(data["item_countries"])
 
         if "item_counterparties" in data:
             helper_dicts["counterparty"] = self.convert_helper_dict(data["item_counterparties"])
