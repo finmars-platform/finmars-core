@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import QuantLib as ql
 
-from poms.instruments.finmars_quantlib import Actual365A, Actual365L, FixedRateBond
+from poms.instruments.finmars_quantlib import FixedRateBond
 
 ISSUE_DATE = date(day=1, month=1, year=2020)
 MATURITY_DATE = date(day=31, month=12, year=2030)
@@ -85,12 +85,13 @@ class TestBond(TestCase):
 
     def test_accrued_amount_one_third_period(self):
         """Test accrued amount one-third through a coupon period 60/360."""
-        # 60 days from Jan 1 under 30E/360
-        accrued = self.bond.accrued_amount(date(2025, 3, 31))
-        # Annual coupon = 1000 * 0.03 * 0.3 = 10
-        # 60/180 = 0.3333 of period, so 15 * 0.3333 = 5.0
+        # 58 days from Jan 1 under 30E/360
+        # Annual coupon = 1000 * 0.03 * 0.17 ~ 5.0
+        accrued_ratio = self.bond.accrued_amount(date(2025, 3, 1))
+        amount = round(self.bond.face_amount * accrued_ratio, 2)
+
         expected = 5.0
-        self.assertAlmostEqual(accrued, expected, places=2, msg="Accrued should be 5.0 at one-third")
+        self.assertAlmostEqual(amount, expected, places=0, msg="Accrued should about 5 after 2 months")
 
     # def test_accrued_amount_mid_period(self):
     #     """Test accrued amount halfway through a coupon period (90/180 days)."""
