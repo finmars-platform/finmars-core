@@ -37,7 +37,12 @@ from poms.common.utils import date_now, isclose
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
-from poms.instruments.finmars_quantlib import Actual365A, Actual365L, calculate_accrual_event_factor
+from poms.instruments.finmars_quantlib import (
+    Actual365A,
+    Actual365L,
+    calculate_accrual_event_factor,
+    calculate_fixed_accrual_factor,
+)
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.models import EcosystemDefault, MasterUser
 
@@ -2117,14 +2122,17 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         if not accrual_schedule:
             return 0
 
-        accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
-        first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
-        factor = calculate_accrual_schedule_factor(
-            accrual_calculation_schedule=accrual_schedule,
-            dt1=accrual_start_date,
-            dt2=price_date,
-            dt3=first_payment_date,
-        )
+        # accrual_start_date = datetime.strptime(accrual_schedule.accrual_start_date, DATE_FORMAT).date()
+        # first_payment_date = datetime.strptime(accrual_schedule.first_payment_date, DATE_FORMAT).date()
+        # factor = calculate_accrual_schedule_factor(
+        #     accrual_calculation_schedule=accrual_schedule,
+        #     dt1=accrual_start_date,
+        #     dt2=price_date,
+        #     dt3=first_payment_date,
+        # )
+
+        factor = calculate_fixed_accrual_factor(accrual_schedule, self.maturity_date, price_date)
+
         return float(accrual_schedule.accrual_size) * factor
 
     def get_accrual_size(self, price_date: date) -> float:
