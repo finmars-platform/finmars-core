@@ -123,6 +123,7 @@ class FixedRateBond:
         self.maturity_date = ql.Date(maturity_date.day, maturity_date.month, maturity_date.year)
         self.day_count = day_count
         self.calendar = calendar
+        self.coupon_rate = coupon_rate
         self.business_convention = business_convention
         self.termination_date_convention = termination_date_convention
         self.date_generation_rule = date_generation_rule
@@ -146,14 +147,14 @@ class FixedRateBond:
 
         # number_of_coupons = len(self.schedule) - 1
         # self.coupon_rates = [coupon_rate] * (number_of_coupons - 1) + [0.0]
-        self.coupon_rates = [coupon_rate]
+
 
         # Create and store the QuantLib bond object
         self.ql_bond = ql.FixedRateBond(
             self.settlement_days,
             self.face_amount,
             self.schedule,
-            self.coupon_rates,
+            [self.coupon_rate],
             self.day_count,
         )
         # spot_dates = [self.issue_date, self.maturity_date]
@@ -228,10 +229,27 @@ class FixedRateBond:
 
         ql.Settings.instance().evaluationDate = ql_date
 
-        return round(self.ql_bond.accruedAmount() / 100, settings.ROUND_NDIGITS)
+        return round(self.ql_bond.accruedAmount(), settings.ROUND_NDIGITS)
+
+    def accrued_ratio(self, evaluation_date: date) -> float:
+        """Calculate the accrued ratio for a given evaluation date.
+        Args:
+            evaluation_date (datetime.date): The date for which to calculate accrued interest.
+        Returns:
+            float: The accrued ratio on the specified date.
+        """
+        ql_date = ql.Date(evaluation_date.day, evaluation_date.month, evaluation_date.year)
+
+        # Return 0 if evaluation_date is before issue_date, or after maturity date
+        if ql_date < self.issue_date or ql_date >= self.maturity_date:
+            return 0.0
+
+        ql.Settings.instance().evaluationDate = ql_date
+
+        return round(self.ql_bond.accruedAmount() / (self.coupon_rate * 100), settings.ROUND_NDIGITS)
 
 
-def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> float:
+def calculate_accrual_event_ratio(coupon: "AccrualEvent", price_date: date) -> float:
     """
     Calculate the accrued factor for a given accrual event and target date.
     This function computes the accrual factor by determining the ratio of days
@@ -265,11 +283,11 @@ def calculate_accrual_event_factor(coupon: "AccrualEvent", price_date: date) -> 
     return round(accrual_factor, 6)
 
 
-def calculate_fixed_accrual_factor(
+def calculate_accrual_schedule_ratio(
     accrual_schedule: "AccrualCalculationSchedule", maturity_date: date, price_date: date
 ) -> float:
     """
-        Calculates the accrued factor for a given fixed accrual schedule and maturity & price dates.
+        Calculates the accrued factor/ratio for a given fixed accrual schedule and maturity & price dates.
         The function uses FixedRateBond class & method based on QuatLib model.
 
         Args:
@@ -292,4 +310,4 @@ def calculate_fixed_accrual_factor(
         periodicity=accrual_schedule.periodicity,
     )
 
-    return bond.accrued_amount(price_date)
+    return bond.accrued_ratio(price_date)

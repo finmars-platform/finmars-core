@@ -40,8 +40,8 @@ from poms.expressions_engine import formula
 from poms.instruments.finmars_quantlib import (
     Actual365A,
     Actual365L,
-    calculate_accrual_event_factor,
-    calculate_fixed_accrual_factor,
+    calculate_accrual_event_ratio,
+    calculate_accrual_schedule_ratio,
 )
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.models import EcosystemDefault, MasterUser
@@ -2114,8 +2114,8 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         # check accrual event path
         accrual_event = self.find_accrual_event(price_date)
         if accrual_event:
-            factor = calculate_accrual_event_factor(accrual_event, price_date)
-            return accrual_event.accrual_size * factor
+            ratio = calculate_accrual_event_ratio(accrual_event, price_date)
+            return accrual_event.accrual_size * ratio
 
         # take accrual schedule path
         accrual_schedule = self.find_accrual_schedule(price_date)
@@ -2131,9 +2131,9 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         #     dt3=first_payment_date,
         # )
 
-        factor = calculate_fixed_accrual_factor(accrual_schedule, self.maturity_date, price_date)
+        ratio = calculate_accrual_schedule_ratio(accrual_schedule, self.maturity_date, price_date)
 
-        return float(accrual_schedule.accrual_size) * factor
+        return float(accrual_schedule.accrual_size) * ratio
 
     def get_accrual_size(self, price_date: date) -> float:
         if not self.is_price_date_valid(day=price_date):

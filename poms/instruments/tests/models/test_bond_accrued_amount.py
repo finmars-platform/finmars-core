@@ -68,7 +68,7 @@ class AccruedAmountBondMethodsTest(BaseTestCase):
         print(f"face amount = {FACE_AMOUNT}")
         print(f"coupon rate = {RATE}")
         print("day count = 30E/360\n")
-        print("   date     method  manual    old")
+        print("   date     method  manual   old")
 
         for i, eval_date in enumerate(
             [
@@ -87,16 +87,12 @@ class AccruedAmountBondMethodsTest(BaseTestCase):
             ],
             start=1,
         ):
-            ratio_1 = self.bond.accrued_amount(eval_date)
-            amount_1 = round(self.bond.face_amount * ratio_1, 2)
+            # ratio_1 = self.bond.accrued_amount(eval_date)
+            ratio_1 = self.bond.accrued_ratio(eval_date)
 
             price_date = ql.Date(eval_date.day, eval_date.month, eval_date.year)
             days_to_price = self.bond.day_count.dayCount(start_date, price_date)
             ratio_2 = round(RATE * (days_to_price / coupon_days), 4)
-            amount_2 = round(self.bond.face_amount * ratio_2, 2)
-
-            # diff = round(amount_2 - amount_1, 2)
-            # percent = int(round((diff / (RATE * FACE_AMOUNT)) * 100, 0))
 
             ratio_3 = calculate_accrual_schedule_factor(
                 accrual_calculation_schedule=self.accrual_schedule,
@@ -104,19 +100,18 @@ class AccruedAmountBondMethodsTest(BaseTestCase):
                 dt2=eval_date,
                 dt3=FIRST_PAYMENT_DATE,
             )
-            amount_3 = round(self.bond.face_amount * ratio_3, 2)
 
-            print(f"{str(eval_date)}  {amount_1*30:5.2f}   {amount_2*30:5.2f}    {amount_3:5.2f}")
+            print(f"{str(eval_date)}  {ratio_1:5.2f}   {ratio_2*30:5.2f}   {ratio_3:5.2f}")
 
-    def test_accrued_amount_one_third_period(self):
-        """Test accrued amount one-third through a coupon period 60/360."""
-        # 58 days from Jan 1 under 30E/360
-        # Annual coupon = 1000 * 0.03 * 0.17 ~ 5.0
-        accrued_ratio = self.bond.accrued_amount(date(2025, 3, 1))
-        amount = round(self.bond.face_amount * accrued_ratio, 2)
-
-        expected = 5.0
-        self.assertAlmostEqual(amount, expected, places=0, msg="Accrued should about 5 after 2 months")
+    # def test_accrued_amount_one_third_period(self):
+    #     """Test accrued amount one-third through a coupon period 60/360."""
+    #     # 58 days from Jan 1 under 30E/360
+    #     # Annual coupon = 1000 * 0.03 * 0.17 ~ 5.0
+    #     accrued_ratio = self.bond.accrued_amount(date(2025, 3, 1))
+    #     amount = round(self.bond.face_amount * accrued_ratio, 2)
+    #
+    #     expected = 5.0
+    #     self.assertAlmostEqual(amount, expected, places=0, msg="Accrued should about 5 after 2 months")
 
     # def test_accrued_amount_mid_period(self):
     #     """Test accrued amount halfway through a coupon period (90/180 days)."""

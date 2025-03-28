@@ -6,7 +6,7 @@ from poms.common.factories import (
     AccrualCalculationModelFactory,
     AccrualEventFactory,
 )
-from poms.instruments.finmars_quantlib import calculate_accrual_event_factor
+from poms.instruments.finmars_quantlib import calculate_accrual_event_ratio
 from poms.instruments.models import AccrualEvent
 
 PERIOD_DAYS = 365
@@ -86,7 +86,7 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
     )
     def test_calculate_accrual_event_factor_june_1st(self, model_type):
         accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
-        accrual_factor = calculate_accrual_event_factor(accrual_event, date(2025, 6, 1))
+        accrual_factor = calculate_accrual_event_ratio(accrual_event, date(2025, 6, 1))
 
         self.assertLessEqual(accrual_factor, 0.43)
         self.assertGreaterEqual(accrual_factor, 0.404)
@@ -116,7 +116,7 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
     )
     def test_calculate_accrual_event_factor_december_31(self, model_type):
         accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
-        accrual_factor = calculate_accrual_event_factor(accrual_event, date(2025, 12, 31))
+        accrual_factor = calculate_accrual_event_ratio(accrual_event, date(2025, 12, 31))
 
         self.assertLessEqual(accrual_factor, 1.0)
         self.assertGreaterEqual(accrual_factor, 0.989)
@@ -146,7 +146,7 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
     )
     def test_calculate_accrual_event_factor_january_1(self, model_type):
         accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
-        accrual_factor = calculate_accrual_event_factor(accrual_event, date(2026, 1, 1))
+        accrual_factor = calculate_accrual_event_ratio(accrual_event, date(2026, 1, 1))
 
         self.assertEqual(accrual_factor, 1.0)
 
@@ -177,6 +177,6 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
 
         price_date = date(2026, 1, 1) - timedelta(days=PERIOD_DAYS)
-        accrual_factor = calculate_accrual_event_factor(accrual_event, price_date)
+        accrual_factor = calculate_accrual_event_ratio(accrual_event, price_date)
 
         self.assertEqual(accrual_factor, 0.0)

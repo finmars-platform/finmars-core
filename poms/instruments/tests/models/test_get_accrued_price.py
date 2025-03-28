@@ -36,7 +36,7 @@ class GetAccruedPriceMethodTest(BaseTestCase):
 
         price_date = date(YEAR, 6, 15)
         with patch(
-            "poms.instruments.models.calculate_accrual_event_factor",
+            "poms.instruments.models.calculate_accrual_event_ratio",
             return_value=0.5,
         ):
             price = self.instrument.get_accrued_price(price_date)
@@ -52,7 +52,7 @@ class GetAccruedPriceMethodTest(BaseTestCase):
         price_date = date(YEAR, 6, 15)
 
         with patch(
-            "poms.instruments.models.calculate_accrual_schedule_factor",
+            "poms.instruments.models.calculate_accrual_schedule_ratio",
             return_value=0.5,
         ):
             price = self.instrument.get_accrued_price(price_date)

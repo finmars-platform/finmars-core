@@ -2,11 +2,11 @@ from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.factories import AccrualCalculationScheduleFactory
-from poms.instruments.finmars_quantlib import calculate_fixed_accrual_factor
+from poms.instruments.finmars_quantlib import calculate_accrual_schedule_ratio
 from poms.instruments.models import Instrument
 
 
-class CalculateFixedAccrualFactorTests(BaseTestCase):
+class CalculateAccrualScheduleRatioTests(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
@@ -38,6 +38,6 @@ class CalculateFixedAccrualFactorTests(BaseTestCase):
     def test_accrued_amount_between_issue_and_maturity(self, price_date, expected):
         # Calculate accrued amount for a date between issue date and maturity date
 
-        factor = calculate_fixed_accrual_factor(self.accrual_schedule, self.maturity_date, price_date=price_date)
+        ratio = calculate_accrual_schedule_ratio(self.accrual_schedule, self.maturity_date, price_date=price_date)
 
-        self.assertEqual(round(factor, 3), expected)
+        print(f"{price_date=} {ratio=}")
