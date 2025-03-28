@@ -106,7 +106,7 @@ class AccruedAmountBondMethodsTest(BaseTestCase):
             )
             amount_3 = round(self.bond.face_amount * ratio_3, 2)
 
-            print(f"{str(eval_date)}  {amount_1:5.2f}   {amount_2:5.2f}    {amount_3:5.2f}")
+            print(f"{str(eval_date)}  {amount_1*30:5.2f}   {amount_2*30:5.2f}    {amount_3:5.2f}")
 
     def test_accrued_amount_one_third_period(self):
         """Test accrued amount one-third through a coupon period 60/360."""
