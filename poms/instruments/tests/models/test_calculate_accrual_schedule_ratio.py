@@ -22,22 +22,21 @@ class CalculateAccrualScheduleRatioTests(BaseTestCase):
         self.maturity_date = date(2030, 12, 30)
 
     @BaseTestCase.cases(
-        ("01", date(2025, 1, 31), 0.005),
-        ("02", date(2025, 2, 27), 0.009),
-        ("03", date(2025, 3, 31), 0.013),
-        ("04", date(2025, 4, 30), 0.018),
-        ("05", date(2025, 5, 31), 0.022),
-        ("06", date(2025, 6, 30), 0.026),
-        ("07", date(2025, 7, 30), 0.03),
-        ("08", date(2025, 8, 31), 0.034),
-        ("09", date(2025, 9, 30), 0.038),
-        ("10", date(2025, 10, 30), 0.043),
-        ("11", date(2025, 11, 30), 0.047),
-        ("12", date(2025, 12, 23), 0.051),
+        ("01", date(2025, 1, 31), 0.1),
+        ("02", date(2025, 2, 27), 0.175),
+        ("03", date(2025, 3, 31), 0.258),
+        ("04", date(2025, 4, 30), 0.35),
+        ("05", date(2025, 5, 31), 0.43),
+        ("06", date(2025, 6, 30), 0.511),
+        ("07", date(2025, 7, 30), 0.594),
+        ("08", date(2025, 8, 31), 0.683),
+        ("09", date(2025, 9, 30), 0.767),
+        ("10", date(2025, 10, 30), 0.855),
+        ("11", date(2025, 11, 30), 0.936),
+        ("12", date(2025, 12, 23), 1.01),
     )
     def test_accrued_amount_between_issue_and_maturity(self, price_date, expected):
         # Calculate accrued amount for a date between issue date and maturity date
 
         ratio = calculate_accrual_schedule_ratio(self.accrual_schedule, self.maturity_date, price_date=price_date)
-
-        print(f"{price_date=} {ratio=}")
+        self.assertAlmostEqual(ratio, expected, places=2, msg="ratio should be equal with 2 decimals")
