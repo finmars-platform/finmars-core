@@ -1,12 +1,12 @@
 from datetime import date
-from unittest import TestCase, mock
 
 import QuantLib as ql
 
-
+from poms.common.common_base_test import BaseTestCase
+from poms.common.factories import AccrualCalculationScheduleFactory
 from poms.common.formula_accruals import calculate_accrual_schedule_factor
 from poms.instruments.finmars_quantlib import FixedRateBond
-from poms.instruments.models import Periodicity
+from poms.instruments.models import Instrument, Periodicity
 
 ISSUE_DATE = date(day=1, month=1, year=2020)
 FIRST_PAYMENT_DATE = date(day=1, month=1, year=2021)
@@ -16,7 +16,7 @@ FACE_AMOUNT = 1000
 DAY_COUNT = ql.Thirty360(ql.Thirty360.European)
 
 
-class TestBond(TestCase):
+class AccruedAmountBondMethodsTest(BaseTestCase):
     """Unit tests for the Bond class."""
 
     def setUp(self):
@@ -29,20 +29,14 @@ class TestBond(TestCase):
             face_amount=FACE_AMOUNT,
             days_between_coupons=360,
         )
-
-    def create_accrual_schedule(self):
-
-        accrual_schedule = mock.Mock()
-        accrual_schedule.accrual_start_date = str(ISSUE_DATE)
-        accrual_schedule.accrual_size = "0.05"  # 5% coupon rate
-        accrual_schedule.accrual_calculation_model.get_quantlib_day_count.return_value = DAY_COUNT
-        accrual_schedule.accrual_calculation_model_id = 1
-        accrual_schedule.periodicity = Periodicity(id=Periodicity.ANNUALLY)
-        accrual_schedule.instrument.maturity_date.return_value = MATURITY_DATE
-        # accrual_schedule.periodicity.get_quantlib_periodicity.return_value = ql.Period(ql.Annual)
-        # accrual_schedule.periodicity.id = 1
-        # accrual_schedule.periodicity.to_freq.return_value = 1
-        return accrual_schedule
+        self.init_test_case()
+        self.accrual_schedule = AccrualCalculationScheduleFactory(
+            instrument=Instrument.objects.last(),
+            accrual_start_date=str(ISSUE_DATE),
+            accrual_size=str(RATE),  # 5% coupon rate
+            accrual_calculation_model_id=28,  # ql.Thirty360(ql.Thirty360.European)
+            periodicity_id=Periodicity.ANNUALLY,
+        )
 
     def test_null(self):
         year_days = 360
@@ -74,7 +68,7 @@ class TestBond(TestCase):
         print(f"face amount = {FACE_AMOUNT}")
         print(f"coupon rate = {RATE}")
         print("day count = 30E/360\n")
-        print("   date     method  manual   old")
+        print("   date     method  manual    old")
 
         for i, eval_date in enumerate(
             [
@@ -104,17 +98,15 @@ class TestBond(TestCase):
             # diff = round(amount_2 - amount_1, 2)
             # percent = int(round((diff / (RATE * FACE_AMOUNT)) * 100, 0))
 
-            accrual_schedule = self.create_accrual_schedule()
-
             ratio_3 = calculate_accrual_schedule_factor(
-                accrual_calculation_schedule=accrual_schedule,
+                accrual_calculation_schedule=self.accrual_schedule,
                 dt1=ISSUE_DATE,
                 dt2=eval_date,
                 dt3=FIRST_PAYMENT_DATE,
             )
             amount_3 = round(self.bond.face_amount * ratio_3, 2)
 
-            print(f"{str(eval_date)}  {amount_1:5.2f}   {amount_2:5.2f}    {amount_3}:5.2f")
+            print(f"{str(eval_date)}  {amount_1:5.2f}   {amount_2:5.2f}    {amount_3:5.2f}")
 
     def test_accrued_amount_one_third_period(self):
         """Test accrued amount one-third through a coupon period 60/360."""
