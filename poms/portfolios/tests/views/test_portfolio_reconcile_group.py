@@ -85,6 +85,8 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.assertEqual(group_data["short_name"], create_data["short_name"])
         self.assertEqual(group_data["public_name"], create_data["public_name"])
         self.assertEqual(group_data["notes"], create_data["notes"])
+        self.assertIn("portfolios", group_data)
+        self.assertEqual(set(group_data["portfolios"]), set(create_data["portfolios"]))
 
         params = group_data["params"]
         self.assertEqual(params["precision"], create_data["params"]["precision"])
@@ -115,7 +117,7 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_data = response.json()
         group_id = group_data["id"]
         patch_data = {
-            "portfolios": [self.portfolio_1.id, self.portfolio_2.id],
+            "portfolios": [self.portfolio_1.user_code, self.portfolio_2.user_code],
         }
         response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
         self.assertEqual(response.status_code, 400, response.content)
