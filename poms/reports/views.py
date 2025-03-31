@@ -1,9 +1,7 @@
-import json
 import logging
 import time
 from datetime import timedelta
 
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -49,7 +47,6 @@ from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.utils import (
-    generate_report_unique_hash,
     generate_unique_key,
     get_pl_first_date,
     transform_to_allowed_portfolios,
