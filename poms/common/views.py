@@ -458,19 +458,15 @@ class AbstractModelViewSet(
 
         # print('len after handle groups %s' % len(filtered_qs))
 
-        page = self.paginator.post_paginate_queryset(filtered_qs, request)
+        page = self.paginator.post_paginate_queryset(filtered_qs.order_by("id"), request)
 
         _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
 
-        if content_type.model == "transactiontype":  # TODO refactor someday
-            from poms.transactions.models import (  # TODO Really bad stuff here
-                TransactionTypeGroup,
-            )
-
-            """It happens because we change TransactionTypeGroup relation to user_code,
-                so its broke default relation group counting, and now we need to get group name separately
-                maybe we need to refactor this whole module, or just provide user_codes and frontend app will get names of groups
-            """
+        if content_type.model == "transactiontype":  # FIXME refactor someday
+            from poms.transactions.models import TransactionTypeGroup
+            # It happens because we change TransactionTypeGroup relation to user_code,
+            # so its broke default relation group counting, and now we need to get group name separately
+            # maybe we need to refactor this whole module, or just provide user_codes and frontend app will
 
             for item in page:
                 try:
