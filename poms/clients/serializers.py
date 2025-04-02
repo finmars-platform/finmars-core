@@ -16,6 +16,14 @@ from poms.users.utils import (
     get_member_from_context,
 )
 
+phone_number_validator = RegexValidator(
+    regex=r"^\+?\d{5,15}$",
+    message=(
+        "Enter a valid telephone number, valid format is +123456 "
+        "(symbol '+' is optional, length from 5 to 15 digits)"
+    ),
+)
+
 
 class ClientsSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
@@ -92,14 +100,7 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         if value is None:
             return
 
-        validator = RegexValidator(
-            regex=r"^\+?\d{5,15}$",
-            message=(
-                "Enter a valid telephone number, vadil format is +123456 "
-                "(symbol '+' is optional, length from 5 to 15 digits)"
-            ),
-        )
-        validator(value)
+        phone_number_validator(value)
 
         return value
 
@@ -235,9 +236,7 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
 
 class ClientSecretLightSerializer(ModelMetaSerializer, ModelOwnerSerializer):
     master_user = MasterUserField()
-    client = serializers.PrimaryKeyRelatedField(
-        read_only=True,
-    )
+    client = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = ClientSecret
