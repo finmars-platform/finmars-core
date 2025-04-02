@@ -16,8 +16,6 @@ class InstrumentViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = "realm00000"
-        self.space_code = "space00000"
         self.url = (
             f"/{self.realm_code}/{self.space_code}/api/v1/instruments/instrument/"
         )
@@ -325,7 +323,7 @@ class InstrumentViewSetTest(BaseTestCase):
 
         self.assertEqual(len(instrument_data["resource_groups_object"]), 1)
 
-    def test_remove_resource_groups(self):        
+    def test_remove_resource_groups(self):
         name_1 = self.random_string()
         self.create_group(name=name_1)
         name_3 = self.random_string()
