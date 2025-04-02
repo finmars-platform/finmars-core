@@ -1,9 +1,11 @@
 import json
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
+
 from poms.common.encrypted_field import EncryptedTextField
-from poms.common.models import TimeStampedModel, NamedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.users.models import MasterUser
 
 
