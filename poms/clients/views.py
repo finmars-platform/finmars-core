@@ -1,9 +1,10 @@
 from rest_framework.decorators import action
+
+from poms.clients.filters import ClientSecretFilterSet, ClientsFilterSet
+from poms.clients.models import Client, ClientSecret
+from poms.clients.serializers import ClientSecretSerializer, ClientsSerializer
 from poms.common.views import AbstractModelViewSet
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.clients.serializers import ClientsSerializer, ClientSecretSerializer
-from poms.clients.models import Client, ClientSecret
-from poms.clients.filters import ClientsFilterSet, ClientSecretFilterSet
 
 
 class ClientsViewSet(AbstractModelViewSet):

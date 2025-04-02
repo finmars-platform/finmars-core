@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.users.models import MasterUser
 from poms.common.models import NamedModel, OwnerModel
+from poms.users.models import MasterUser
 
 
 class Client(NamedModel):
@@ -52,9 +52,7 @@ class ClientSecret(OwnerModel):
     user_code = models.CharField(
         max_length=1024,
         verbose_name=gettext_lazy("user code"),
-        help_text=gettext_lazy(
-            "Unique Code for this object. Used in Configuration and Permissions Logic"
-        ),
+        help_text=gettext_lazy("Unique Code for this object. Used in Configuration and Permissions Logic"),
     )
     client = models.ForeignKey(
         Client,
