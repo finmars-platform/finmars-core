@@ -1,13 +1,10 @@
 import json
-from logging import getLogger
 
 from rest_framework import serializers
 
 from poms.users.fields import MasterUserField, MemberField
 
 from .models import CeleryTask, CeleryTaskAttachment, CeleryWorker
-
-_l = getLogger("poms.celery_tasks")
 
 
 class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):

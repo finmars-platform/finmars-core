@@ -1,3 +1,4 @@
+import contextlib
 import json
 from logging import getLogger
 
@@ -392,11 +393,9 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         return Response({"status": "ok"})
 
     def destroy(self, request, *args, **kwargs):
-        try:
+        with contextlib.suppress(Exception):
             instance = self.get_object()
             self.perform_destroy(instance, request)
-        except Exception:
-            pass
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
