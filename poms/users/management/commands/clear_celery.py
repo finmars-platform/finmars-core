@@ -31,7 +31,7 @@ class Command(BaseCommand):
     help = 'Clear celery tasks and procedures'
 
     def handle(self, *args, **options):
-        from poms_app.celery import app as celery_app
+        from poms_app import celery_app
 
         _l.info("Clearing celery tasks and procedures")
 
