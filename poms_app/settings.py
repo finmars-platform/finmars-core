@@ -540,7 +540,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": (
         "poms.common.renderers.CustomJSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
+        # "rest_framework.renderers.BrowsableAPIRenderer",
         "rest_framework.renderers.AdminRenderer",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
@@ -553,7 +553,7 @@ REST_FRAMEWORK = {
         "user": "500/min",
     },
 }
-
+CRISPY_TEMPLATE_PACK = "uni_form"
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
