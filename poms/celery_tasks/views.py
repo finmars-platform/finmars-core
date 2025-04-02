@@ -142,7 +142,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         return Response(result)
 
     @action(
-        detail=True, methods=["post"], url_path="update-status", serializer_class=CeleryTaskUpdateStatusSerializer
+        detail=True,
+        methods=["post"],
+        url_path="update-status",
+        serializer_class=CeleryTaskUpdateStatusSerializer,
     )
     def update_status(self, request, pk=None, *args, **kwargs):
         task = CeleryTask.objects.get(pk=pk)
@@ -327,9 +330,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
 class CeleryStatsViewSet(AbstractViewSet):
     def list(self, request, *args, **kwargs):
-        from poms_app.celery import app
+        from poms_app import celery_app
 
-        i = app.control.inspect()
+        i = celery_app.control.inspect()
         stats = i.stats()
         return Response(stats)
 
