@@ -7,6 +7,8 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
+import pandas as pd
+
 from django.conf import settings
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.contenttypes.models import ContentType
@@ -15,9 +17,6 @@ from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
-import pandas as pd
-
-from poms.expressions_engine.exceptions import InvalidExpression
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
@@ -71,7 +70,9 @@ def db_class_check_data(model, verbosity, using):
             if verbosity >= 2:
                 print(f"create {model._meta.verbose_name} class -> {id}:{name}")
             with contextlib.suppress(IntegrityError, ProgrammingError):
-                model.objects.using(using).create(pk=id, user_code=code, short_name=name, name=name, description=name)
+                model.objects.using(using).create(
+                    pk=id, user_code=code, short_name=name, name=name, description=name
+                )
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
@@ -398,8 +399,8 @@ def get_serializer(content_type_key):
         TransactionReportCustomFieldSerializer,
     )
     from poms.schedules.serializers import ScheduleSerializer
-    from poms.system.serializers import WhitelabelSerializer
     from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer
+    from poms.system.serializers import WhitelabelSerializer
     from poms.transactions.serializers import (
         TransactionTypeGroupSerializer,
         TransactionTypeSerializer,
@@ -668,12 +669,12 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
                 end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
             else:
                 end_of_months.append(d_date_to)
-
+                
+        elif to_string:
+            end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
+            
         else:
-            if to_string:
-                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
-            else:
-                end_of_months.append(last_business_day)
+            end_of_months.append(last_business_day)
 
     return end_of_months
 
@@ -787,12 +788,12 @@ def split_date_range(
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
     freq_start = frequency
-    freq_end = "E" + frequency
+    freq_end = f"E{frequency}"
 
     start_date = calc_shift_date_map[freq_start](start_date)
     ranges = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
 
-    date_pairs: list[tuple] = list()
+    date_pairs: list[tuple] = []
     for sd in ranges:
         ed = calc_shift_date_map[freq_end](sd)
 
@@ -815,11 +816,9 @@ def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
     Changes the day to the beginning/end of the week,
     taking into account the boundaries of the range
     """
-    if start and date > sdate:
+    if (start and date > sdate) or (not start and date < edate):
         date = calc_shift_date_map[freq](date)
-    elif not start and date < edate:
-        date = calc_shift_date_map[freq](date)
-
+        
     return date
 
 
@@ -844,7 +843,7 @@ def pick_dates_from_range(
 
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
-    frequency = frequency if start else "E" + frequency
+    frequency = frequency if start else f"E{frequency}"
 
     dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
     dates = [d.date() for d in dates]
@@ -860,7 +859,7 @@ def pick_dates_from_range(
     if not start and end_date != dates[-1]:
         dates.append(end_date)
 
-    pick_dates: list[str] = list()
+    pick_dates: list[str] = []
     for date in dates:
         if "W" in frequency:
             date = shift_to_week_boundary(date, start_date, end_date, start, frequency)
@@ -904,7 +903,7 @@ def calculate_period_date(
     if frequency == "C":
         return date
 
-    frequency = frequency if start else "E" + frequency
+    frequency = frequency if start else f"E{frequency}"
     date = get_validated_date(date)
     if "W" in frequency:
         date = calc_shift_date_map[frequency](date)
@@ -941,6 +940,7 @@ def attr_is_relation(content_type_key: str, attribute_key: str) -> bool:
         "currency",
         "instrument",
         "instrument_type",
+        "country",
         "group",
         "pricing_policy",
         "portfolio",
@@ -988,8 +988,7 @@ def set_schema(space_code):
 def get_current_schema():
     with connection.cursor() as cursor:
         cursor.execute("SELECT current_schema();")
-        current_schema = cursor.fetchone()[0]
-        return current_schema
+        return cursor.fetchone()[0]
 
 
 class FinmarsNestedObjects(NestedObjects):

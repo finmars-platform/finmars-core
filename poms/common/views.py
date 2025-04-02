@@ -5,6 +5,8 @@ import time
 import traceback
 from os.path import getsize
 
+from celery.result import AsyncResult
+
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
@@ -20,8 +22,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
-
-from celery.result import AsyncResult
 
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
@@ -68,14 +68,13 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         # capitalize each piece: e.g. "accounts" -> "Accounts", "list" -> "List"
         capitalized = [word.capitalize() for word in splitted]
 
-        summary_capitalized = [" ".join(word.capitalize().split('_')) for word in summary_words]
+        summary_capitalized = [" ".join(word.capitalize().split("_")) for word in summary_words]
 
         # join with underscores so we get "Accounts_Account_Attribute_Type_List"
         operation.operationId = "_".join(capitalized)
         operation.summary = " ".join(summary_capitalized)
 
         return operation
-
 
     def get_tags(self, operation_keys=None):
         if not operation_keys:
@@ -195,9 +194,7 @@ class AbstractEvGroupViewSet(
             else:
                 filtered_qs = filtered_qs.filter(is_deleted=False)
 
-        filtered_qs = handle_groups(
-            filtered_qs, request, self.get_queryset(), content_type
-        )
+        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
 
         page = self.paginate_queryset(filtered_qs)
 
@@ -234,9 +231,7 @@ class AbstractEvGroupViewSet(
 
         # print('len before handle filters %s' % len(filtered_qs))
 
-        filtered_qs = handle_filters(
-            filtered_qs, filter_settings, master_user, content_type
-        )
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
 
         if global_table_search:
             filtered_qs = handle_global_table_search(
@@ -302,10 +297,7 @@ class AbstractModelViewSet(
 ):
     # Seems order matters, szhitenev
     # 2024-10-21
-    permission_classes = [
-        IsAuthenticated,
-        *AbstractFinmarsAccessPolicyViewSet.permission_classes
-    ]
+    permission_classes = [IsAuthenticated, *AbstractFinmarsAccessPolicyViewSet.permission_classes]
     filter_backends = AbstractFinmarsAccessPolicyViewSet.filter_backends + [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
@@ -320,17 +312,13 @@ class AbstractModelViewSet(
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
         ordering = request.GET.get("ordering")
         master_user = request.user.master_user
 
         if ordering:
-            queryset = sort_by_dynamic_attrs(
-                queryset, ordering, master_user, content_type
-            )
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         try:
             queryset.model._meta.get_field("is_enabled")
@@ -385,9 +373,7 @@ class AbstractModelViewSet(
         _l.debug(f"ordering {ordering}")
 
         if ordering:
-            queryset = sort_by_dynamic_attrs(
-                queryset, ordering, master_user, content_type
-            )
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         if global_table_search:
             queryset = handle_global_table_search(
@@ -411,9 +397,7 @@ class AbstractModelViewSet(
         groups_values = request.data.get("groups_values", None)
         groups_order = request.data.get("groups_order", None)
         master_user = request.user.master_user
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
         ev_options = request.data.get("ev_options", "")
@@ -426,9 +410,7 @@ class AbstractModelViewSet(
 
         filtered_qs = filtered_qs.filter(id__in=qs)
 
-        filtered_qs = handle_filters(
-            filtered_qs, filter_settings, master_user, content_type
-        )
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
 
         if global_table_search:
             filtered_qs = handle_global_table_search(
@@ -476,19 +458,15 @@ class AbstractModelViewSet(
 
         # print('len after handle groups %s' % len(filtered_qs))
 
-        page = self.paginator.post_paginate_queryset(filtered_qs, request)
+        page = self.paginator.post_paginate_queryset(filtered_qs.order_by("id"), request)
 
         _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
 
-        if content_type.model == "transactiontype":  # TODO refactor someday
-            from poms.transactions.models import (  # TODO Really bad stuff here
-                TransactionTypeGroup,
-            )
-
-            """It happens because we change TransactionTypeGroup relation to user_code,
-                so its broke default relation group counting, and now we need to get group name separately
-                maybe we need to refactor this whole module, or just provide user_codes and frontend app will get names of groups
-            """
+        if content_type.model == "transactiontype":  # FIXME refactor someday
+            from poms.transactions.models import TransactionTypeGroup
+            # It happens because we change TransactionTypeGroup relation to user_code,
+            # so its broke default relation group counting, and now we need to get group name separately
+            # maybe we need to refactor this whole module, or just provide user_codes and frontend app will
 
             for item in page:
                 try:
@@ -518,9 +496,7 @@ class AbstractModelViewSet(
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
@@ -655,12 +631,7 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             filter_kw["is_deleted"] = False
 
     if value_type in {10, 20, 40}:
-        return (
-            model.objects.filter(**filter_kw)
-            .order_by(key)
-            .values_list(key, flat=True)
-            .distinct(key)
-        )
+        return model.objects.filter(**filter_kw).order_by(key).values_list(key, flat=True).distinct(key)
 
     elif value_type == "field":
         return (
@@ -758,9 +729,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
     # for item in full_items:
     #     if key in item and item[key] not in (None, ''):
     #         values.add(item[key])
-    values = {
-        item[key] for item in full_items if key in item and item[key] not in (None, "")
-    }
+    values = {item[key] for item in full_items if key in item and item[key] not in (None, "")}
 
     values = sorted(values)
     return values
@@ -851,16 +820,12 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         if is_report:
             report_system_attrs_keys_list = [
-                item["key"]
-                for item in model.get_system_attrs()
-                if item["value_type"] != "field"
+                item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
             ]
 
         if "attributes." in key:
             try:
-                results = _get_values_of_generic_attribute(
-                    master_user, value_type, content_type, key
-                )
+                results = _get_values_of_generic_attribute(master_user, value_type, content_type, key)
 
                 if "Cash & Equivalents" not in results:
                     results.append("Cash & Equivalents")
@@ -874,9 +839,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-        elif is_report and (
-            key in report_system_attrs_keys_list or "custom_fields." in key
-        ):
+        elif is_report and (key in report_system_attrs_keys_list or "custom_fields." in key):
             if report_instance_id is None:
                 return Response(
                     {
@@ -886,9 +849,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-            results = _get_values_from_report(
-                content_type_name, report_instance_id, key
-            )
+            results = _get_values_from_report(content_type_name, report_instance_id, key)
 
         elif content_type_name == "instruments.pricehistory":
             results = _get_values_for_select(
@@ -912,12 +873,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
             "transactions.transactionclass",
             "instruments.country",
         ]:
-            results = (
-                model.objects.all()
-                .order_by(key)
-                .values_list(key, flat=True)
-                .distinct(key)
-            )
+            results = model.objects.all().order_by(key).values_list(key, flat=True).distinct(key)
 
         else:
             results = _get_values_for_select(
@@ -1005,9 +961,7 @@ class RealmMigrateSchemeView(APIView):
             space_code = serializer.validated_data.get("space_code")
             realm_code = serializer.validated_data.get("realm_code")
 
-            apply_migration_to_space.apply_async(
-                kwargs={"space_code": space_code, "realm_code": realm_code}
-            )
+            apply_migration_to_space.apply_async(kwargs={"space_code": space_code, "realm_code": realm_code})
 
             # Optionally, reset the search path to default after migrating
             # with connection.cursor() as cursor:
@@ -1016,9 +970,6 @@ class RealmMigrateSchemeView(APIView):
             return Response({"status": "ok"})
 
         except Exception as e:
-            _l.error(
-                f"RealmMigrateSchemeView.exception: {str(e)} "
-                f"trace: {traceback.format_exc()}"
-            )
+            _l.error(f"RealmMigrateSchemeView.exception: {str(e)} " f"trace: {traceback.format_exc()}")
 
             return Response({"status": "error", "message": str(e)})
