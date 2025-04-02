@@ -1,7 +1,6 @@
-from poms.common.common_base_test import BaseTestCase
-
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
+from poms.common.common_base_test import BaseTestCase
 
 
 @finmars_task(name="task_wo_task_id")
@@ -16,7 +15,6 @@ def complex_task(task_id, *args, **kwargs):
     return
 
 
-# @skip("temporally")
 class FinmarsTaskTestCase(BaseTestCase):
     databases = "__all__"
 

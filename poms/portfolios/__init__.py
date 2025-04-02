@@ -1,3 +1,1 @@
-from __future__ import unicode_literals
-
-default_app_config = 'poms.portfolios.apps.PortfoliosConfig'
+default_app_config = "poms.portfolios.apps.PortfoliosConfig"

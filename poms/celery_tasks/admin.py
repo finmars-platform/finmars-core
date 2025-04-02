@@ -26,8 +26,7 @@ class CeleryTaskAdmin(admin.ModelAdmin):
     ]
 
 
-
-
+@admin.register(CeleryWorker)
 class CeleryWorkerAdmin(AbstractModelAdmin):
     model = CeleryWorker
     list_display = [
@@ -35,8 +34,5 @@ class CeleryWorkerAdmin(AbstractModelAdmin):
         "worker_name",
         "queue",
         "memory_limit",
-        "status"
+        "status",
     ]
-
-
-admin.site.register(CeleryWorker, CeleryWorkerAdmin)

@@ -1,3 +1,1 @@
-from __future__ import unicode_literals
-
-default_app_config = 'poms.file_reports.apps.FileReportsConfig'
+default_app_config = "poms.file_reports.apps.FileReportsConfig"
