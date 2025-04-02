@@ -14,7 +14,7 @@ class Command(BaseCommand):
         from poms.celery_tasks.models import CeleryTask
         from poms.configuration.tasks import install_package_from_marketplace
         from poms.users.models import MasterUser, Member
-        from poms_app.celery import app as celery_app
+        from poms_app import celery_app
 
         _l.info("Downloading init configuration")
 
@@ -25,9 +25,7 @@ class Command(BaseCommand):
         retry_count = 1
 
         while not i.stats() and retry_count < max_retries:
-            _l.info(
-                "Waiting for Celery worker(s) try %s/%s..." % (retry_count, max_retries)
-            )
+            _l.info("Waiting for Celery worker(s) try %s/%s..." % (retry_count, max_retries))
             time.sleep(5)
             retry_count = retry_count + 1
 
