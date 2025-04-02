@@ -12,7 +12,7 @@ app.autodiscover_tasks()
 app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
 
 
-def get_celery_task_names():
+def get_celery_task_names() -> list:
     """Get all registered task names from the Celery app."""
     return list(sorted(app.tasks.keys()))
 
