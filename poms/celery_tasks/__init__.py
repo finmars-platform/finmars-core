@@ -1,8 +1,7 @@
 from functools import partial
 
-from poms_app.celery import app
-
 from poms.celery_tasks.base import BaseTask
+from poms_app.celery import app
 
 default_app_config = "poms.celery_tasks.apps.CeleryTasksConfig"
 

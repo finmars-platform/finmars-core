@@ -1,12 +1,7 @@
-import cProfile
-import io
 import json
-import pstats
-import sys
 
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
-from django.utils.timezone import now
 
 logger = get_task_logger(__name__)
 
@@ -55,8 +50,6 @@ class BaseTask(_Task):
         return task
 
     def before_start(self, task_id, args, kwargs):
-        # logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
-
         if kwargs:
             self.finmars_task = self._update_celery_task_with_run_info(kwargs)
 
@@ -93,33 +86,24 @@ class BaseTask(_Task):
 
         self.finmars_task.status = CeleryTask.STATUS_DONE
         if not retval:
-            result_object = {
-                "message": f"Task {task_id} finished successfully. No results"
-            }
+            result_object = {"message": f"Task {task_id} finished successfully. No results"}
             self.finmars_task.result_object = result_object
         else:
             try:
                 if self.is_valid_json(retval):
                     self.finmars_task.result_object = json.loads(
-                        retval)  ## TODO strange logic, probably refactor # but we can pass only string in celery
+                        retval
+                    )  ## TODO strange logic, probably refactor # but we can pass only string in celery
                 else:
-                    result_object = {
-                        "message": f"Task {task_id} returned result is not JSON"
-                    }
+                    result_object = {"message": f"Task {task_id} returned result is not JSON"}
                     self.finmars_task.result_object = result_object
-            except Exception as e:
+            except Exception:
                 pass
-
-        # self.finmars_task.result_object = result_object
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()
 
     def on_success(self, retval, task_id, args, kwargs):
-        # logger.info(
-        #     f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
-        # )
-
         if self.finmars_task:
             self._update_celery_task_with_success(retval, task_id)
 

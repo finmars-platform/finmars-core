@@ -1,3 +1,4 @@
+import logging
 import os
 
 from celery import Celery
@@ -6,47 +7,56 @@ from celery.signals import task_failure
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
 
 app = Celery("poms_app")
-
 app.config_from_object("django.conf:settings", namespace="CELERY")
-
 app.autodiscover_tasks()
-
 app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
+
+
+def get_celery_task_names() -> list:
+    """Get all registered task names from the Celery app."""
+    return list(sorted(app.tasks.keys()))
+
+
+def get_worker_task_names():
+    """Get task names currently known to connected workers."""
+    try:
+        inspect = app.control.inspect(timeout=1)  # Add timeout
+        registered_tasks = inspect.registered() or {}
+        return list(set().union(*registered_tasks.values()))
+
+    except Exception as e:
+        print(f"get_worker_task_names: failed due to {repr(e)}")
+        return []
+
 
 @task_failure.connect
 def handle_task_failure(**kwargs):
-
-    import logging
     from poms.celery_tasks.models import CeleryTask
-    _l = logging.getLogger('celery')
+
+    _l = logging.getLogger("celery")
+
+    exception = kwargs.get("exception")
+    task_id = kwargs.get("task_id")
+    task_kwargs = kwargs.get("kwargs", {})
+    einfo = task_kwargs.get("einfo")
 
     try:
-        exception = kwargs['exception']
-        task_id = kwargs['task_id']
-        args = kwargs['args']
-        kwargs = kwargs['kwargs']
-        einfo = kwargs.get('einfo')
-
         if not exception and einfo:
             exception = einfo.exception
 
-        # Handle the exception in any way you want. For example, you could log it:
-        # _l.error(f'Task {task_id} raised exception: {einfo.exception} \n {einfo.traceback}')
+        # Handle the exception in any way you want.
+        _l.warning(f"CeleryTask {task_id} raised exception: {einfo.exception} trace: {einfo.traceback}")
 
-        try:
-
-            task = CeleryTask.objects.get(celery_task_id=task_id)
-            task.error_message = exception
-            task.status = CeleryTask.STATUS_ERROR
-            task.save()
-
-        except Exception as e:
-            _l.error("Task is not registered in CeleryTask %s" % e)
+        task = CeleryTask.objects.get(celery_task_id=task_id)
+        task.error_message = exception
+        task.status = CeleryTask.STATUS_ERROR
+        task.save()
 
     except Exception as e:
-        _l.error("Could not handle task failure %s" % e)
+        _l.error(f"Can't handle CeleryTask {task_id} exception {exception} due to {repr(e)}")
 
-# Probably not needed, it also killing a workier, not a task
+
+# Probably not needed, it's also killing a worker, not a task
 # @worker_ready.connect
 # def configure_worker(sender=None, **kwargs):
 #
