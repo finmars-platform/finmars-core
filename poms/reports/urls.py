@@ -5,104 +5,99 @@ import poms.reports.views as reports
 router = routers.DefaultRouter()
 
 router.register(
-    r"summary",
+    "summary",
     reports.SummaryViewSet,
     "Summary",
 )
 router.register(
-    r"backend-balance-report",
+    "backend-balance-report",
     reports.BackendBalanceReportViewSet,
     "BackendBalanceReport",
 )
 router.register(
-    r"balance-report",
+    "balance-report",
     reports.BalanceReportViewSet,
     "BalanceReport",
 )
-
-# seems deprecated, delete in 1.12.0
 router.register(
-    r"balance-report-light",
-    reports.BalanceReportLightViewSet,
-    "BalanceReportLight",
-)
-
-
-router.register(
-    r"balance-report-sql",
-    reports.BalanceReportViewSet,
-    "BalanceReportSyncSql",
-)  # deprecated
-router.register(
-    r"balance-report/custom-field",
+    "balance-report/custom-field",
     reports.BalanceReportCustomFieldViewSet,
     "BalanceReportCustomField",
 )
 router.register(
-    r"backend-pl-report",
+    "backend-pl-report",
     reports.BackendPLReportViewSet,
     "BackendPLReport",
 )
 router.register(
-    r"pl-report",
+    "pl-report",
     reports.PLReportViewSet,
     "PlReport",
 )
 router.register(
-    r"pl-report-sql",
-    reports.PLReportViewSet,
-    "PlReportSyncSql",
-)  # deprecated, delete soon
-router.register(
-    r"pl-report/custom-field",
+    "pl-report/custom-field",
     reports.PLReportCustomFieldViewSet,
     "PlReportCustomField",
 )
 router.register(
-    r"backend-transaction-report",
+    "backend-transaction-report",
     reports.BackendTransactionReportViewSet,
     "BackendTransactionReport",
 )
 router.register(
-    r"transaction-report",
+    "transaction-report",
     reports.TransactionReportViewSet,
     "TransactionReport",
 )
 router.register(
-    r"transaction-report-sql",
+    "transaction-report-sql",
     reports.TransactionReportViewSet,
     "TransactionReportSyncSql",
 )
 router.register(
-    r"transaction-report/custom-field",
+    "transaction-report/custom-field",
     reports.TransactionReportCustomFieldViewSet,
     "TransactionReportCustomField",
 )
 router.register(
-    r"performance-report",
+    "performance-report",
     reports.PerformanceReportViewSet,
     "PerformanceReport",
 )
 router.register(
-    r"price-history-check-sql",
-    reports.PriceHistoryCheckViewSet,
-    "PriceHistoryCheckSql",
-)  # deprecated
-router.register(
-    r"price-history-check",
+    "price-history-check",
     reports.PriceHistoryCheckViewSet,
     "priceHistoryCheck",
 )
-
-
 router.register(
-    r"balance-report-instance",
+    "balance-report-instance",
     reports.BalanceReportInstanceViewSet,
     "balanceReportInstance",
 )
-
 router.register(
-    r"pl-report-instance",
+    "pl-report-instance",
     reports.PLReportInstanceViewSet,
     "plReportInstance",
+)
+
+# DEPRECATED
+router.register(
+    "balance-report-light",
+    reports.BalanceReportLightViewSet,
+    "BalanceReportLight",
+)
+router.register(
+    "price-history-check-sql",
+    reports.PriceHistoryCheckViewSet,
+    "PriceHistoryCheckSql",
+)
+router.register(
+    "pl-report-sql",
+    reports.PLReportViewSet,
+    "PlReportSyncSql",
+)
+router.register(
+    "balance-report-sql",
+    reports.BalanceReportViewSet,
+    "BalanceReportSyncSql",
 )
