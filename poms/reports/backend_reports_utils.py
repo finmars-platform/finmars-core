@@ -1,11 +1,20 @@
 import itertools
 import logging
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
 from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger("poms.reports")
+
+
+def almost_equal_floats(a: float, b: float, round_digits=settings.ROUND_NDIGITS) -> bool:
+    """
+    Compare two flaat values with given precision
+    """
+    epsilon = 10 ** -round_digits
+    return abs(a - b) < epsilon
 
 
 class BackendReportHelperService:
@@ -416,7 +425,6 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
                 formatted_filter_by = filter_by.strip('"')
@@ -435,22 +443,40 @@ class BackendReportHelperService:
 
         elif operation_type == "does_not_contains":
             return filter_by not in value_to_filter
-        elif operation_type in ("equal", "selector"):
+
+        elif operation_type == "selector":
             return value_to_filter == filter_by
+
+        elif operation_type == "equal":
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter == filter_by
+
         elif operation_type == "not_equal":
-            return value_to_filter != filter_by
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return not almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter != filter_by
+
         elif operation_type == "greater":
             return value_to_filter > filter_by
+
         elif operation_type == "greater_equal":
             return value_to_filter >= filter_by
+
         elif operation_type == "less":
             return value_to_filter < filter_by
+
         elif operation_type == "less_equal":
             return value_to_filter <= filter_by
+
         elif operation_type == "from_to":
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
+
         elif operation_type == "out_of_range":
             return value_to_filter <= filter_by["min_value"] or value_to_filter >= filter_by["max_value"]
+
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
 
