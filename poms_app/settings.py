@@ -553,7 +553,6 @@ REST_FRAMEWORK = {
         "user": "500/min",
     },
 }
-CRISPY_TEMPLATE_PACK = "bootstrap3"
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
