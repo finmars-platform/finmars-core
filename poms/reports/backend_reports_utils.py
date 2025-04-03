@@ -510,13 +510,6 @@ class BackendReportHelperService:
                                     filter_argument = filter_argument[0]
 
                             elif value_type == 40:
-                                _l.debug(
-                                    "BackendReportHelperService.filter_table_rows"
-                                    f".match_item value_type=40 "
-                                    f"value_from_table={value_from_table} "
-                                    f"filter_argument={filter_argument}"
-                                )
-
                                 if filter_type not in {"from_to", "out_of_range", "date_tree"}:
                                     filter_argument = filter_argument[0]
 
@@ -524,14 +517,6 @@ class BackendReportHelperService:
                                 value_from_table, filter_argument, filter_type
                             ):
                                 return False
-
-                    # Strange logic migrated from front end. May be not needed.
-                    #
-                    # item_type 1 == "instrument"
-                    # elif exclude_empty_cells or (
-                    #         key_property in ["name", "instrument"]
-                    #         and item["item_type"] != 1
-                    # ):
 
                     elif filter_type != "empty" and filter_value_not_empty:
                         return False
