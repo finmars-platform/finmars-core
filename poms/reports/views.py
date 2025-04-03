@@ -1272,9 +1272,7 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         settings, unique_key = generate_unique_key(instance, "pnl")
 
-        _l.info("BackendPLReportViewSet.groups.unique_key %s" % unique_key)
-
-        _l.info("pnl.viewset %s" % instance.pl_first_date)
+        _l.info(f"BackendPLReportViewSet.groups.unique_key {unique_key} & {instance.pl_first_date}")
 
         try:
 
@@ -1287,7 +1285,7 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         except ObjectDoesNotExist as e:
 
-            _l.info("e %s" % e)
+            _l.error(repr(e))
 
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
