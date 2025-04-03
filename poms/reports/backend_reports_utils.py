@@ -1,11 +1,20 @@
 import itertools
 import logging
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
 from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger("poms.reports")
+
+
+def almost_equal_floats(a: float, b: float, round_digits=settings.ROUND_NDIGITS) -> bool:
+    """
+    Compare two flaat values with given precision
+    """
+    epsilon = 10 ** -round_digits
+    return abs(a - b) < epsilon
 
 
 class BackendReportHelperService:
@@ -219,8 +228,12 @@ class BackendReportHelperService:
 
                 if "currency.country.name" in flattened_item:
                     flattened_item["instrument.country.name"] = flattened_item["currency.country.name"]
-                    flattened_item["instrument.country.user_code"] = flattened_item["currency.country.user_code"]
-                    flattened_item["instrument.country.short_name"] = flattened_item["currency.country.short_name"]
+                    flattened_item["instrument.country.user_code"] = flattened_item[
+                        "currency.country.user_code"
+                    ]
+                    flattened_item["instrument.country.short_name"] = flattened_item[
+                        "currency.country.short_name"
+                    ]
 
                 flattened_item["instrument.instrument_type.name"] = "Cash & Equivalents"
                 flattened_item["instrument.instrument_type.user_code"] = "Cash & Equivalents"
@@ -229,7 +242,9 @@ class BackendReportHelperService:
             if item["item_type"] == 1 and "instrument.country.name" in flattened_item:
                 flattened_item["currency.country.name"] = flattened_item["instrument.country.name"]
                 flattened_item["currency.country.user_code"] = flattened_item["instrument.country.user_code"]
-                flattened_item["currency.country.short_name"] = flattened_item["instrument.country.short_name"]
+                flattened_item["currency.country.short_name"] = flattened_item[
+                    "instrument.country.short_name"
+                ]
 
             if item["item_type"] == 3:
                 for attribute_type in instrument_attribute_types:
@@ -410,7 +425,6 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
                 formatted_filter_by = filter_by.strip('"')
@@ -429,22 +443,40 @@ class BackendReportHelperService:
 
         elif operation_type == "does_not_contains":
             return filter_by not in value_to_filter
-        elif operation_type in ("equal", "selector"):
+
+        elif operation_type == "selector":
             return value_to_filter == filter_by
+
+        elif operation_type == "equal":
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter == filter_by
+
         elif operation_type == "not_equal":
-            return value_to_filter != filter_by
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return not almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter != filter_by
+
         elif operation_type == "greater":
             return value_to_filter > filter_by
+
         elif operation_type == "greater_equal":
             return value_to_filter >= filter_by
+
         elif operation_type == "less":
             return value_to_filter < filter_by
+
         elif operation_type == "less_equal":
             return value_to_filter <= filter_by
+
         elif operation_type == "from_to":
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
+
         elif operation_type == "out_of_range":
             return value_to_filter <= filter_by["min_value"] or value_to_filter >= filter_by["max_value"]
+
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
 
@@ -492,7 +524,6 @@ class BackendReportHelperService:
                             return False
 
                         if filter_value_not_empty:
-
                             value_from_table = item[key_property]
                             filter_argument = filter_value
 
@@ -501,31 +532,17 @@ class BackendReportHelperService:
                                 filter_argument = filter_argument[0].lower()
 
                             elif value_type == 20:
-
                                 if filter_type not in ("from_to", "out_of_range"):
                                     filter_argument = filter_argument[0]
 
                             elif value_type == 40:
-                                _l.debug(
-                                    "BackendReportHelperService.filter_table_rows"
-                                    f".match_item value_type=40 "
-                                    f"value_from_table={value_from_table} "
-                                    f"filter_argument={filter_argument}"
-                                )
-
                                 if filter_type not in {"from_to", "out_of_range", "date_tree"}:
                                     filter_argument = filter_argument[0]
 
-                            if not self.filter_value_from_table(value_from_table, filter_argument, filter_type):
+                            if not self.filter_value_from_table(
+                                value_from_table, filter_argument, filter_type
+                            ):
                                 return False
-
-                    # Strange logic migrated from front end. May be not needed.
-                    #
-                    # item_type 1 == "instrument"
-                    # elif exclude_empty_cells or (
-                    #         key_property in ["name", "instrument"]
-                    #         and item["item_type"] != 1
-                    # ):
 
                     elif filter_type != "empty" and filter_value_not_empty:
                         return False
@@ -781,19 +798,27 @@ class BackendReportSubtotalService:
             elif formula_id == 2:
                 return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value")
             elif formula_id == 3:
-                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value_percent")
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value_percent"
+                )
             elif formula_id == 4:
                 return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure")
             elif formula_id == 5:
-                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure_percent")
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure_percent"
+                )
             elif formula_id == 6:
-                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value")
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value"
+                )
             elif formula_id == 7:
                 return BackendReportSubtotalService.get_weighted_average_value(
                     items, column["key"], "market_value_percent"
                 )
             elif formula_id == 8:
-                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "exposure")
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure"
+                )
             elif formula_id == 9:
                 return BackendReportSubtotalService.get_weighted_average_value(
                     items, column["key"], "exposure_percent"

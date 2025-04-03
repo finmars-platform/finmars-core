@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -54,7 +55,6 @@ class CeleryTaskFilterSet(FilterSet):
     def filter_type__in(queryset, _, value):
         return queryset.filter(type__in=value.split(","))
 
-from rest_framework.renderers import JSONRenderer
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     queryset = CeleryTask.objects.select_related(
