@@ -219,8 +219,12 @@ class BackendReportHelperService:
 
                 if "currency.country.name" in flattened_item:
                     flattened_item["instrument.country.name"] = flattened_item["currency.country.name"]
-                    flattened_item["instrument.country.user_code"] = flattened_item["currency.country.user_code"]
-                    flattened_item["instrument.country.short_name"] = flattened_item["currency.country.short_name"]
+                    flattened_item["instrument.country.user_code"] = flattened_item[
+                        "currency.country.user_code"
+                    ]
+                    flattened_item["instrument.country.short_name"] = flattened_item[
+                        "currency.country.short_name"
+                    ]
 
                 flattened_item["instrument.instrument_type.name"] = "Cash & Equivalents"
                 flattened_item["instrument.instrument_type.user_code"] = "Cash & Equivalents"
@@ -229,7 +233,9 @@ class BackendReportHelperService:
             if item["item_type"] == 1 and "instrument.country.name" in flattened_item:
                 flattened_item["currency.country.name"] = flattened_item["instrument.country.name"]
                 flattened_item["currency.country.user_code"] = flattened_item["instrument.country.user_code"]
-                flattened_item["currency.country.short_name"] = flattened_item["instrument.country.short_name"]
+                flattened_item["currency.country.short_name"] = flattened_item[
+                    "instrument.country.short_name"
+                ]
 
             if item["item_type"] == 3:
                 for attribute_type in instrument_attribute_types:
@@ -492,7 +498,6 @@ class BackendReportHelperService:
                             return False
 
                         if filter_value_not_empty:
-
                             value_from_table = item[key_property]
                             filter_argument = filter_value
 
@@ -501,7 +506,6 @@ class BackendReportHelperService:
                                 filter_argument = filter_argument[0].lower()
 
                             elif value_type == 20:
-
                                 if filter_type not in ("from_to", "out_of_range"):
                                     filter_argument = filter_argument[0]
 
@@ -516,7 +520,9 @@ class BackendReportHelperService:
                                 if filter_type not in {"from_to", "out_of_range", "date_tree"}:
                                     filter_argument = filter_argument[0]
 
-                            if not self.filter_value_from_table(value_from_table, filter_argument, filter_type):
+                            if not self.filter_value_from_table(
+                                value_from_table, filter_argument, filter_type
+                            ):
                                 return False
 
                     # Strange logic migrated from front end. May be not needed.
@@ -781,19 +787,27 @@ class BackendReportSubtotalService:
             elif formula_id == 2:
                 return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value")
             elif formula_id == 3:
-                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value_percent")
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value_percent"
+                )
             elif formula_id == 4:
                 return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure")
             elif formula_id == 5:
-                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure_percent")
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure_percent"
+                )
             elif formula_id == 6:
-                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "market_value")
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value"
+                )
             elif formula_id == 7:
                 return BackendReportSubtotalService.get_weighted_average_value(
                     items, column["key"], "market_value_percent"
                 )
             elif formula_id == 8:
-                return BackendReportSubtotalService.get_weighted_average_value(items, column["key"], "exposure")
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure"
+                )
             elif formula_id == 9:
                 return BackendReportSubtotalService.get_weighted_average_value(
                     items, column["key"], "exposure_percent"
