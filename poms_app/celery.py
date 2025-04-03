@@ -14,7 +14,12 @@ app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
 
 def get_celery_task_names() -> list:
     """Get all registered task names from the Celery app."""
-    return list(sorted(app.tasks.keys()))
+    try:
+        return list(sorted(app.tasks.keys()))
+    except Exception as e:
+        import traceback
+
+        return ["error", repr(e), traceback.format_exc()]
 
 
 def get_worker_task_names():
