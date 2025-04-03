@@ -54,6 +54,7 @@ class CeleryTaskFilterSet(FilterSet):
     def filter_type__in(queryset, _, value):
         return queryset.filter(type__in=value.split(","))
 
+from rest_framework.renderers import JSONRenderer
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     queryset = CeleryTask.objects.select_related(
@@ -322,7 +323,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             }
         )
 
-    @action(detail=False, methods=["get"], url_path="list-all")
+    @action(detail=False, methods=["get"], url_path="list-all", renderer_classes=[JSONRenderer])
     def list_all(self, request, *args, **kwargs):
         return Response(get_celery_task_names())
 
