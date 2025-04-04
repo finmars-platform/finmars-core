@@ -64,7 +64,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     elif groups_order == "desc":
         qs = qs.order_by(F("group_name").desc())
 
-    _l.debug(f"get_root_dynamic_attr_group {time.time() - start_time} seconds ")
+    _l.info(f"get_root_dynamic_attr_group {time.time() - start_time} seconds ")
 
     return qs
 
@@ -217,27 +217,27 @@ def format_groups(group_type: str, master_user, content_type) -> str:
 
 
 def handle_groups(
-    qs,
+    query_set,
     groups_types,
     groups_values,
     groups_order,
     master_user,
-    original_qs,
     content_type,
 ):
     start_time = time.time()
 
     groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
-
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     if is_root_groups_configuration(groups_types, groups_values):
         if is_digit_attribute(groups_types[0]):
-            qs = get_root_dynamic_attr_group(qs, root_group=groups_types[0], groups_order=groups_order)
+            query_set = get_root_dynamic_attr_group(
+                query_set, root_group=groups_types[0], groups_order=groups_order
+            )
 
         else:
-            qs = get_root_system_attr_group(
-                qs,
+            query_set = get_root_system_attr_group(
+                query_set,
                 root_group=groups_types[0],
                 groups_order=groups_order,
                 content_type_key=content_type_key,
@@ -245,43 +245,42 @@ def handle_groups(
 
     else:
         Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
-
-        qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, Model)
+        query_set = filter_items_for_group(query_set, groups_types, groups_values, content_type_key, Model)
 
         if is_digit_attribute(groups_types[-1]):
-            qs = get_last_dynamic_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order)
+            query_set = get_last_dynamic_attr_group(
+                query_set, last_group=groups_types[-1], groups_order=groups_order
+            )
 
         else:
-            qs = get_last_system_attr_group(
-                qs,
+            query_set = get_last_system_attr_group(
+                query_set,
                 last_group=groups_types[-1],
                 groups_order=groups_order,
                 content_type_key=content_type_key,
             )
 
-    _l.debug(f"handle_groups {time.time() - start_time} seconds ")
+    _l.info(f"handle_groups {groups_types} took {time.time() - start_time} secs")
 
-    return qs
+    return query_set
 
 
 def count_groups(
-    qs,
+    query_set,
     groups_types,
     group_values,
     master_user,
-    original_qs,
     content_type,
     filter_settings,
     ev_options,
     global_table_search,
 ):
-    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
-
     start_time = time.time()
 
+    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
-    for item in qs:
+    for item in query_set:
         q = Q()
         index = 0
         for groups_type in groups_types:
@@ -302,17 +301,14 @@ def count_groups(
                 else:
                     value = item["group_identifier"]
 
-                result = []
-
                 attr_type_q = get_q_obj_for_attribute_type(attribute_type, value)
 
+                result = []
                 if attr_type_q != Q():
                     result = Model.objects.filter(q & attr_type_q).values_list("id", flat=True)
 
                 key = "id__in"
-
                 if len(result):
-                    # options[key] = result
                     q = q & Q(**{f"{key}": result})
 
             else:
@@ -322,45 +318,30 @@ def count_groups(
                     key = f"{key}__user_code"
 
                 if len(group_values) and index < len(group_values):
-                    # TODO: delete in 1.9.0
-                    # if group_values[index] == '-':
-                    #     q = q & get_q_obj_for_group_dash(content_type_key, Model, groups_type)
-                    #
-                    # else:
-                    #     q = q & Q(**{f"{key}": group_values[index]})
-
                     q = q & Q(**{f"{key}": group_values[index]})
-
                 else:
                     q = q & Q(**{f"{key}": item["group_identifier"]})
 
             index = index + 1
 
-        if content_type.model in ["currencyhistory", "currencyhistoryerror"]:
-            # options['currency__master_user_id'] = master_user.pk
+        if content_type.model in {"currencyhistory", "currencyhistoryerror"}:
             q = q & Q(currency__master_user_id=master_user.pk)
-        elif content_type.model in ["pricehistory", "pricehistoryerror"]:
-            # options['instrument__master_user_id'] = master_user.pk
+        elif content_type.model in {"pricehistory", "pricehistoryerror"}:
             q = q & Q(instrument__master_user_id=master_user.pk)
         else:
-            # options['master_user_id'] = master_user.pk
             q = q & Q(master_user_id=master_user.pk)
 
             if (
                 content_type.model
-                not in [
+                not in {
                     "portfolioregisterrecord",
                     "portfoliohistory",
                     "portfolioreconcilehistory",
-                ]
+                }
                 and ev_options["entity_filters"]
             ):
                 if (
-                    content_type.model
-                    not in [
-                        "objecthistory4entry",
-                        "generatedevent",
-                    ]
+                    content_type.model not in {"objecthistory4entry", "generatedevent"}
                     and "deleted" not in ev_options["entity_filters"]
                 ):
                     q = q & Q(is_deleted=False)
@@ -370,14 +351,12 @@ def count_groups(
                         "active" in ev_options["entity_filters"]
                         and "inactive" not in ev_options["entity_filters"]
                     ):
-                        # options['is_active'] = True
                         q = q & Q(is_active=True)
 
                     if (
                         "inactive" in ev_options["entity_filters"]
                         and "active" not in ev_options["entity_filters"]
                     ):
-                        # options['is_active'] = False
                         q = q & Q(is_active=False)
 
                 if (
@@ -387,11 +366,8 @@ def count_groups(
                     q = q & Q(is_enabled=True)
 
         if content_type.model in ["complextransaction"]:
-            # options['is_deleted'] = False
             q = q & Q(is_deleted=False)
 
-        # item['items_count'] = Model.objects.filter(Q(**options)).count()
-        # count_cs = Model.objects.filter(Q(**options))
         count_cs = Model.objects.filter(q)
 
         item["items_count_raw"] = count_cs.count()
@@ -400,6 +376,6 @@ def count_groups(
             count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
         item["items_count"] = count_cs.count()
 
-    _l.debug(f"count_groups {str(time.time() - start_time)} seconds ")
+    _l.info(f"count_groups {groups_types} took {str(time.time() - start_time)} secs")
 
-    return qs
+    return query_set

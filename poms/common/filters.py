@@ -259,17 +259,6 @@ def filter_items_for_group(
                     if q != Q():
                         queryset = queryset.filter(q)
 
-                # TODO: delete in 1.9.0
-                # elif groups_values[i] == "-":
-                #
-                #     q = get_q_obj_for_group_dash(
-                #         content_type_key,
-                #         model,
-                #         attr
-                #     )
-                #
-                #     queryset = queryset.filter(q)
-
                 else:
                     params = {}
 
