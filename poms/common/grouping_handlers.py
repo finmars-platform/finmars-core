@@ -64,7 +64,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     elif groups_order == "desc":
         qs = qs.order_by(F("group_name").desc())
 
-    _l.debug(f"get_root_dynamic_attr_group {time.time() - start_time} seconds ")
+    _l.info(f"get_root_dynamic_attr_group {time.time() - start_time} seconds ")
 
     return qs
 
@@ -259,7 +259,7 @@ def handle_groups(
                 content_type_key=content_type_key,
             )
 
-    _l.debug(f"handle_groups {time.time() - start_time} seconds ")
+    _l.info(f"handle_groups {groups_types} took {time.time() - start_time} secs")
 
     return query_set
 
@@ -383,6 +383,6 @@ def count_groups(
             count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
         item["items_count"] = count_cs.count()
 
-    _l.debug(f"count_groups {str(time.time() - start_time)} seconds ")
+    _l.info(f"count_groups {groups_types} took {str(time.time() - start_time)} secs")
 
     return query_set
