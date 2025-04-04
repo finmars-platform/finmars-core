@@ -69,12 +69,6 @@ router.register(
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",
 )
-router.register(  # DEPRECATED
-    "active_processes/active_processes",
-    celery_tasks.CeleryTaskViewSet,
-    "activeprocesses",
-
-)
 router.register(
     "tasks/task",
     celery_tasks.CeleryTaskViewSet,
@@ -190,16 +184,6 @@ router.register(
     api.LastDayOfMonthViewSet,
     "last_day_of_month",
 )
-router.register(  # Probably deprecated
-    "import/complex/scheme",
-    complex_import.ComplexImportSchemeViewSet,
-    "import_complex_scheme",
-)
-router.register(  # Probably deprecated
-    "import/complex",
-    complex_import.ComplexImportViewSet,
-    "import_complex",
-)
 router.register(
     "reconciliation/process-bank-file",
     reconciliation.ProcessBankFileForReconcileViewSet,
@@ -265,16 +249,6 @@ router.register(
     schedules.ScheduleViewSet,
     "schedule",
 )
-router.register(  # Probably deprecated
-    "credentials/credentials",
-    credentials.CredentialsViewSet,
-    "Credentials"
-)
-router.register(  # Probably deprecated
-    "integrations/data-provider",
-    integrations.DataProviderViewSet,
-    "integrations_data_provider",
-)
 router.register(
     "widgets/history/nav",
     widgets.HistoryNavViewSet,
@@ -310,11 +284,6 @@ router.register(
     widgets.CollectStatsViewSet,
     "widgets_collect_stats",
 )
-router.register(  # DEPRECATED
-    "debug/logs",
-    common.DebugLogViewSet,
-    "debug_log",
-)
 router.register(
     "errors/error",
     ErrorRecordViewSet,
@@ -339,6 +308,38 @@ router.register(
     "notifications/notification",
     notifications.NotificationViewSet,
     "Notification",
+)
+
+# DEPRECATED
+router.register(
+    "debug/logs",
+    common.DebugLogViewSet,
+    "debug_log",
+)
+router.register(
+    "credentials/credentials",
+    credentials.CredentialsViewSet,
+    "Credentials"
+)
+router.register(
+    "integrations/data-provider",
+    integrations.DataProviderViewSet,
+    "integrations_data_provider",
+)
+router.register(
+    "import/complex/scheme",
+    complex_import.ComplexImportSchemeViewSet,
+    "import_complex_scheme",
+)
+router.register(
+    "import/complex",
+    complex_import.ComplexImportViewSet,
+    "import_complex",
+)
+router.register(
+    "active_processes/active_processes",
+    celery_tasks.CeleryTaskViewSet,
+    "activeprocesses",
 )
 
 
