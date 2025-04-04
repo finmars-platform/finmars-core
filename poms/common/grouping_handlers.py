@@ -233,7 +233,9 @@ def handle_groups(
 
     if is_root_groups_configuration(groups_types, groups_values):
         if is_digit_attribute(groups_types[0]):
-            query_set = get_root_dynamic_attr_group(query_set, root_group=groups_types[0], groups_order=groups_order)
+            query_set = get_root_dynamic_attr_group(
+                query_set, root_group=groups_types[0], groups_order=groups_order
+            )
 
         else:
             query_set = get_root_system_attr_group(
@@ -249,7 +251,9 @@ def handle_groups(
         query_set = filter_items_for_group(query_set, groups_types, groups_values, content_type_key, Model)
 
         if is_digit_attribute(groups_types[-1]):
-            query_set = get_last_dynamic_attr_group(query_set, last_group=groups_types[-1], groups_order=groups_order)
+            query_set = get_last_dynamic_attr_group(
+                query_set, last_group=groups_types[-1], groups_order=groups_order
+            )
 
         else:
             query_set = get_last_system_attr_group(
@@ -336,11 +340,11 @@ def count_groups(
 
             if (
                 content_type.model
-                not in [
+                not in {
                     "portfolioregisterrecord",
                     "portfoliohistory",
                     "portfolioreconcilehistory",
-                ]
+                }
                 and ev_options["entity_filters"]
             ):
                 if (
