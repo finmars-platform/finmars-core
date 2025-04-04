@@ -97,7 +97,9 @@ class ScheduleSerializer(ModelMetaSerializer):
 
             if procedure is None:
                 try:
-                    procedure = ScheduleProcedure.objects.get(schedule=instance, order=procedure_data["order"])
+                    procedure = ScheduleProcedure.objects.get(
+                        schedule=instance, order=procedure_data["order"]
+                    )
                 except ScheduleProcedure.DoesNotExist:
                     procedure = ScheduleProcedure(schedule=instance)
 

@@ -49,9 +49,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
         file = validated_data.pop("file", None)
         file_name = file.name
 
-        file_path = os.path.join(
-            settings.BASE_DIR, f"public/import-configurations/{file_name}"
-        )
+        file_path = os.path.join(settings.BASE_DIR, f"public/import-configurations/{file_name}")
 
         storage.save(file_path, file)
 
@@ -60,9 +58,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
         return ConfigurationImport(file_path=file_path, file_name=file_name)
 
 
-class NewMemberSetupConfigurationSerializer(
-    ModelWithUserCodeSerializer, ModelMetaSerializer
-):
+class NewMemberSetupConfigurationSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     file = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
@@ -88,10 +84,7 @@ class NewMemberSetupConfigurationSerializer(
         space_code = get_space_code_from_context(self.context)
 
         if file:
-            file_path = (
-                f"{space_code}/.system/new-member-setup-configurations"
-                f"/{file.name}"
-            )
+            file_path = f"{space_code}/.system/new-member-setup-configurations" f"/{file.name}"
 
             storage.save(file_path, file)
             validated_data["file_url"] = file_path
@@ -105,10 +98,7 @@ class NewMemberSetupConfigurationSerializer(
         space_code = get_space_code_from_context(self.context)
 
         if file:
-            file_path = (
-                f"{space_code}/.system/new-member-setup-configurations"
-                f"/{file.name}"
-            )
+            file_path = f"{space_code}/.system/new-member-setup-configurations" f"/{file.name}"
 
             storage.save(file_path, file)
             validated_data["file_url"] = file_path

@@ -11,7 +11,6 @@ class FileReportSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_content_type_verbose(instance) -> str:
         content_type = getattr(instance, "content_type", None)
-
         return content_type.split("/")[1] if content_type else ""
 
     class Meta:
