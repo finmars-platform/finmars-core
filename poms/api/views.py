@@ -36,6 +36,7 @@ from poms.api.serializers import (
     TimezoneSerializer,
     UtilsDateSerializer,
 )
+from poms.common.renderers import FinmarsJSONRenderer
 from poms.common.storage import get_storage
 from poms.common.utils import (
     calculate_period_date,
@@ -985,6 +986,8 @@ class TablesSizeViewSet(AbstractViewSet):
 
 
 class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def get_queryset(self):
         from poms.transactions.models import ComplexTransaction
 
@@ -1004,6 +1007,16 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
         if date_to:
             date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
+        else:
+            date_to = timezone.now()
+
+        if date_from:
+            date_from = datetime.strptime(date_from, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
+        else:
+            date_from = date_to - timedelta(days=7)
+
+        if date_from >= date_to:
+            date_from = date_to - timedelta(days=7)
 
         qs = ComplexTransaction.objects.filter(
             is_deleted=True, modified_at__gte=date_from, modified_at__lte=date_to
