@@ -87,6 +87,7 @@ def get_timezones():
 
 class LanguageViewSet(AbstractViewSet):
     serializer_class = LanguageSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def list(self, request, *args, **kwargs):
         languages = _languages
@@ -96,6 +97,7 @@ class LanguageViewSet(AbstractViewSet):
 
 class TimezoneViewSet(AbstractViewSet):
     serializer_class = TimezoneSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def list(self, request, *args, **kwargs):
         timezones = get_timezones()
@@ -105,6 +107,7 @@ class TimezoneViewSet(AbstractViewSet):
 
 class EmailViewSet(AbstractViewSet):
     serializer_class = EmailSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def list(self, request, *args, **kwargs):
         return Response({"message": "not_implemented"}, status=status.HTTP_200_OK)
@@ -120,6 +123,7 @@ class EmailViewSet(AbstractViewSet):
 
 class ExpressionViewSet(AbstractViewSet):
     serializer_class = ExpressionSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data={"expression": "now()", "is_eval": True})
@@ -133,6 +137,8 @@ class ExpressionViewSet(AbstractViewSet):
 
 
 class StatsViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def get_first_transaction_date(self):
         from poms.transactions.models import Transaction
 
@@ -598,6 +604,8 @@ class StatsViewSet(AbstractViewSet):
 
 
 class SystemInfoViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def __vm_info(
         self,
     ):
@@ -907,6 +915,8 @@ class SystemInfoViewSet(AbstractViewSet):
 
 
 class SystemLogsViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def list(self, request, *args, **kwargs):
         result = {}
 
@@ -941,6 +951,8 @@ class SystemLogsViewSet(AbstractViewSet):
 
 
 class TablesSizeViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     @staticmethod
     def dictfetchall(cursor):
         """
@@ -1112,6 +1124,8 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
 
 class UniversalInputViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def create(self, request):
         if request.content_type == "application/json":
             data = request.data
@@ -1148,6 +1162,8 @@ class UniversalInputViewSet(AbstractViewSet):
 
 
 class CalendarEventsViewSet(AbstractViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def list(self, request, *args, **kwargs):
         """
         Method to create Events list for Finmars Web Interface Calendar Page
@@ -1473,6 +1489,7 @@ def serve_docs(request, path, **kwargs):
 
 class SplitDateRangeViewSet(AbstractViewSet):
     serializer_class = SplitDateRangeSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1489,6 +1506,7 @@ class SplitDateRangeViewSet(AbstractViewSet):
 
 class CalcPeriodDateViewSet(AbstractViewSet):
     serializer_class = CalcPeriodDateSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1506,6 +1524,7 @@ class CalcPeriodDateViewSet(AbstractViewSet):
 
 class PickDatesFromRangeViewSet(AbstractViewSet):
     serializer_class = PickDatesFromRangeSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1523,6 +1542,7 @@ class PickDatesFromRangeViewSet(AbstractViewSet):
 
 class LastBusinessDayViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1535,6 +1555,7 @@ class LastBusinessDayViewSet(AbstractViewSet):
 
 class IsBusinessDayViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1546,6 +1567,7 @@ class IsBusinessDayViewSet(AbstractViewSet):
 
 class LastDayOfMonthViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
