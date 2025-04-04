@@ -281,7 +281,6 @@ class AbstractModelViewSet(
             groups_values,
             groups_order,
             master_user,
-            None,
             content_type,
         )
 
@@ -290,7 +289,6 @@ class AbstractModelViewSet(
             groups_types,
             groups_values,
             master_user,
-            None,
             content_type,
             filter_settings,
             ev_options,
@@ -932,7 +930,6 @@ class AbstractEvGroupViewSet(
             groups_values,
             groups_order,
             master_user,
-            None,
             content_type,
         )
 
@@ -941,7 +938,6 @@ class AbstractEvGroupViewSet(
             groups_types,
             groups_values,
             master_user,
-            None,
             content_type,
             filter_settings,
             ev_options,

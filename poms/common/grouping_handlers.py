@@ -222,7 +222,6 @@ def handle_groups(
     groups_values,
     groups_order,
     master_user,
-    original_qs,
     content_type,
 ):
     start_time = time.time()
@@ -271,7 +270,6 @@ def count_groups(
     groups_types,
     group_values,
     master_user,
-    original_qs,
     content_type,
     filter_settings,
     ev_options,
