@@ -175,26 +175,6 @@ router.register(
     "last_day_of_month",
 )
 router.register(
-    "reconciliation/process-bank-file",
-    reconciliation.ProcessBankFileForReconcileViewSet,
-    "process_bank_file_for_reconcile",
-)
-router.register(
-    "reconciliation/bank-field",
-    reconciliation.ReconciliationBankFileFieldViewSet,
-    "bank_fields",
-)
-router.register(
-    "reconciliation/new-bank-field",
-    reconciliation.ReconciliationNewBankFileFieldViewSet,
-    "new_bank_fields",
-)
-router.register(
-    "reconciliation/complex-transaction-field",
-    reconciliation.ReconciliationComplexTransactionFieldViewSet,
-    "complex_transaction_fields",
-)
-router.register(
     "file-reports/file-report",
     file_reports.FileReportViewSet,
     "file_reports",
@@ -340,6 +320,26 @@ router.register(
     "data-provider/bloomberg/credential",
     integrations.BloombergDataProviderCredentialViewSet,
     "bloomberg_credential",
+)
+router.register(
+    "reconciliation/process-bank-file",
+    reconciliation.ProcessBankFileForReconcileViewSet,
+    "process_bank_file_for_reconcile",
+)
+router.register(
+    "reconciliation/bank-field",
+    reconciliation.ReconciliationBankFileFieldViewSet,
+    "bank_fields",
+)
+router.register(
+    "reconciliation/new-bank-field",
+    reconciliation.ReconciliationNewBankFileFieldViewSet,
+    "new_bank_fields",
+)
+router.register(
+    "reconciliation/complex-transaction-field",
+    reconciliation.ReconciliationComplexTransactionFieldViewSet,
+    "complex_transaction_fields",
 )
 
 

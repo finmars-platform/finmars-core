@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from poms.common.renderers import FinmarsJSONRenderer
 from poms.common.views import AbstractModelViewSet
 from poms.csv_import.filters import SchemeContentTypeFilter
 from poms.file_reports.models import FileReport
@@ -26,6 +27,7 @@ class FileReportFilterSet(FilterSet):
 class FileReportViewSet(AbstractModelViewSet):
     queryset = FileReport.objects
     serializer_class = FileReportSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = FileReportFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
