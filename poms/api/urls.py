@@ -94,20 +94,10 @@ router.register(
     configuration.NewMemberSetupConfigurationViewSet,
     "newmembersetupconfiguration",
 )
-router.register(  # deprecated?
-    "transactions/bank-file",
-    integrations.TransactionFileResultViewSet,
-    "transaction_bank_file",
-)
 router.register(
     "specific-data/values-for-select",
     common.ValuesForSelectViewSet,
     "valuesforselect",
-)
-router.register(
-    "data-provider/bloomberg/credential",
-    integrations.BloombergDataProviderCredentialViewSet,
-    "bloomberg_credential",
 )
 router.register(
     "utils/expression",
@@ -340,6 +330,16 @@ router.register(
     "active_processes/active_processes",
     celery_tasks.CeleryTaskViewSet,
     "activeprocesses",
+)
+router.register(
+    "transactions/bank-file",
+    integrations.TransactionFileResultViewSet,
+    "transaction_bank_file",
+)
+router.register(
+    "data-provider/bloomberg/credential",
+    integrations.BloombergDataProviderCredentialViewSet,
+    "bloomberg_credential",
 )
 
 
