@@ -392,8 +392,6 @@ class AbstractModelViewSet(
 
     @action(detail=False, methods=["post"], url_path="ev-group")
     def list_ev_group(self, request, *args, **kwargs):
-        start_time = time.time()
-
         groups_types = request.data.get("groups_types", None)
         groups_values = request.data.get("groups_values", None)
         groups_order = request.data.get("groups_order", None)
@@ -457,11 +455,7 @@ class AbstractModelViewSet(
             global_table_search,
         )
 
-        # print('len after handle groups %s' % len(filtered_qs))
-
-        page = self.paginator.post_paginate_queryset(filtered_qs.order_by("id"), request)
-
-        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
+        page = self.paginator.post_paginate_queryset(filtered_qs, request)
 
         if content_type.model == "transactiontype":  # FIXME refactor someday
             from poms.transactions.models import TransactionTypeGroup
@@ -471,21 +465,8 @@ class AbstractModelViewSet(
             # maybe we need to refactor this whole module, or just provide user_codes and frontend app will
 
             for item in page:
-                try:
-                    # _l.info('group_identifier %s' % item['group_identifier'])
-
-                    ttype_group = TransactionTypeGroup.objects.filter(
-                        user_code=item["group_identifier"]
-                    ).first()
-
-                    # _l.info('short_name %s' % ttype_group.short_name)
-
-                    item["group_name"] = ttype_group.short_name
-
-                except Exception as e:
-                    _l.info(f"e {e}")
-
-        # _l.info(f"page {page}")
+                ttype_group = TransactionTypeGroup.objects.filter(user_code=item["group_identifier"]).first()
+                item["group_name"] = ttype_group.short_name if ttype_group else None
 
         if page is not None:
             return self.get_paginated_response(page)

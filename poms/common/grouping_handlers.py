@@ -228,7 +228,6 @@ def handle_groups(
     start_time = time.time()
 
     groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
-
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     if is_root_groups_configuration(groups_types, groups_values):
@@ -247,7 +246,6 @@ def handle_groups(
 
     else:
         Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
-
         query_set = filter_items_for_group(query_set, groups_types, groups_values, content_type_key, Model)
 
         if is_digit_attribute(groups_types[-1]):
@@ -279,10 +277,9 @@ def count_groups(
     ev_options,
     global_table_search,
 ):
-    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
-
     start_time = time.time()
 
+    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     for item in query_set:
@@ -306,15 +303,13 @@ def count_groups(
                 else:
                     value = item["group_identifier"]
 
-                result = []
-
                 attr_type_q = get_q_obj_for_attribute_type(attribute_type, value)
 
+                result = []
                 if attr_type_q != Q():
                     result = Model.objects.filter(q & attr_type_q).values_list("id", flat=True)
 
                 key = "id__in"
-
                 if len(result):
                     q = q & Q(**{f"{key}": result})
 
@@ -331,9 +326,9 @@ def count_groups(
 
             index = index + 1
 
-        if content_type.model in ["currencyhistory", "currencyhistoryerror"]:
+        if content_type.model in {"currencyhistory", "currencyhistoryerror"}:
             q = q & Q(currency__master_user_id=master_user.pk)
-        elif content_type.model in ["pricehistory", "pricehistoryerror"]:
+        elif content_type.model in {"pricehistory", "pricehistoryerror"}:
             q = q & Q(instrument__master_user_id=master_user.pk)
         else:
             q = q & Q(master_user_id=master_user.pk)
@@ -348,11 +343,7 @@ def count_groups(
                 and ev_options["entity_filters"]
             ):
                 if (
-                    content_type.model
-                    not in [
-                        "objecthistory4entry",
-                        "generatedevent",
-                    ]
+                    content_type.model not in {"objecthistory4entry", "generatedevent"}
                     and "deleted" not in ev_options["entity_filters"]
                 ):
                     q = q & Q(is_deleted=False)
