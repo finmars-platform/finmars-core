@@ -466,7 +466,8 @@ class AbstractModelViewSet(
 
             for item in page:
                 ttype_group = TransactionTypeGroup.objects.filter(user_code=item["group_identifier"]).first()
-                item["group_name"] = ttype_group.short_name if ttype_group else None
+                if ttype_group:
+                    item["group_name"] = ttype_group.short_name
 
         if page is not None:
             return self.get_paginated_response(page)
