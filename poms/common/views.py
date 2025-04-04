@@ -129,164 +129,6 @@ class AbstractViewSet(AbstractApiView, ViewSet):
         return {"request": self.request, "format": self.format_kwarg, "view": self}
 
 
-# DEPRECATED
-class AbstractEvGroupViewSet(
-    AbstractApiView,
-    UpdateModelMixinExt,
-    DestroyModelFakeMixin,
-    BulkModelMixin,
-    ModelViewSet,
-):
-    permission_classes = [IsAuthenticated]
-    filter_backends = [
-        ByIdFilterBackend,
-        ByIsDeletedFilterBackend,
-        DjangoFilterBackend,
-        OrderingFilter,
-        OrderingPostFilter,
-    ]
-
-    # DEPRECATED
-    def list(self, request, *args, **kwargs):
-        if len(request.query_params.getlist("groups_types")) == 0:
-            return Response(
-                {
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": "No groups provided.",
-                    "data": [],
-                }
-            )
-
-        start_time = time.time()
-        master_user = request.user.master_user
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        filtered_qs = self.get_queryset()
-
-        filtered_qs = filtered_qs.filter(id__in=qs)
-
-        filtered_qs = filtered_qs.filter(master_user=master_user)
-
-        content_type = ContentType.objects.get(
-            app_label=self.serializer_class.Meta.model._meta.app_label,
-            model=self.serializer_class.Meta.model._meta.model_name,
-        )
-
-        try:
-            filtered_qs.model._meta.get_field("is_enabled")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_enabled = self.request.query_params.get("is_enabled", "true")
-            if is_enabled == "true":
-                filtered_qs = filtered_qs.filter(is_enabled=True)
-
-        try:
-            filtered_qs.model._meta.get_field("is_deleted")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_deleted = self.request.query_params.get("is_deleted", "true")
-            if is_deleted == "true":
-                filtered_qs = filtered_qs.filter(is_deleted=True)
-            else:
-                filtered_qs = filtered_qs.filter(is_deleted=False)
-
-        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
-
-        page = self.paginate_queryset(filtered_qs)
-
-        _l.debug(f"List {time.time() - start_time} seconds ")
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(filtered_qs)
-
-    @action(detail=False, methods=["post"], url_path="filtered")
-    def filtered_list(self, request, *args, **kwargs):
-        start_time = time.time()
-
-        groups_types = request.data.get("groups_types", None)
-        groups_values = request.data.get("groups_values", None)
-        groups_order = request.data.get("groups_order", None)
-        master_user = request.user.master_user
-        content_type = ContentType.objects.get(
-            app_label=self.serializer_class.Meta.model._meta.app_label,
-            model=self.serializer_class.Meta.model._meta.model_name,
-        )
-        filter_settings = request.data.get("filter_settings", None)
-        global_table_search = request.data.get("global_table_search", "")
-        ev_options = request.data.get("ev_options", "")
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        filtered_qs = self.get_queryset()
-
-        filtered_qs = filtered_qs.filter(id__in=qs)
-
-        # print('len before handle filters %s' % len(filtered_qs))
-
-        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
-
-        if global_table_search:
-            filtered_qs = handle_global_table_search(
-                filtered_qs,
-                global_table_search,
-                self.serializer_class.Meta.model,
-                content_type,
-            )
-
-        if content_type.model not in {
-            "currencyhistory",
-            "pricehistory",
-            "currencyhistoryerror",
-            "pricehistoryerror",
-        }:
-            is_enabled = request.data.get("is_enabled", "true")
-
-            if is_enabled == "true":
-                filtered_qs = filtered_qs.filter(is_enabled=True)
-
-        filtered_qs = handle_groups(
-            filtered_qs,
-            groups_types,
-            groups_values,
-            groups_order,
-            master_user,
-            self.get_queryset(),
-            content_type,
-        )
-
-        filtered_qs = count_groups(
-            filtered_qs,
-            groups_types,
-            groups_values,
-            master_user,
-            self.get_queryset(),
-            content_type,
-            filter_settings,
-            ev_options,
-            global_table_search,
-        )
-
-        # print('len after handle groups %s' % len(filtered_qs))
-
-        page = self.paginator.post_paginate_queryset(filtered_qs, request)
-
-        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(filtered_qs)
-
-
 class AbstractModelViewSet(
     AbstractApiView,
     ListLightModelMixin,
@@ -439,7 +281,7 @@ class AbstractModelViewSet(
             groups_values,
             groups_order,
             master_user,
-            self.get_queryset(),
+            None,
             content_type,
         )
 
@@ -448,7 +290,7 @@ class AbstractModelViewSet(
             groups_types,
             groups_values,
             master_user,
-            self.get_queryset(),
+            None,
             content_type,
             filter_settings,
             ev_options,
@@ -958,3 +800,161 @@ class RealmMigrateSchemeView(APIView):
             _l.error(f"RealmMigrateSchemeView.exception: {str(e)} " f"trace: {traceback.format_exc()}")
 
             return Response({"status": "error", "message": str(e)})
+
+
+# DEPRECATED
+class AbstractEvGroupViewSet(
+    AbstractApiView,
+    UpdateModelMixinExt,
+    DestroyModelFakeMixin,
+    BulkModelMixin,
+    ModelViewSet,
+):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [
+        ByIdFilterBackend,
+        ByIsDeletedFilterBackend,
+        DjangoFilterBackend,
+        OrderingFilter,
+        OrderingPostFilter,
+    ]
+
+    def list(self, request, *args, **kwargs):
+        raise NotImplemented("Deprecated API")
+        # if len(request.query_params.getlist("groups_types")) == 0:
+        #     return Response(
+        #         {
+        #             "status": status.HTTP_404_NOT_FOUND,
+        #             "message": "No groups provided.",
+        #             "data": [],
+        #         }
+        #     )
+        #
+        # start_time = time.time()
+        # master_user = request.user.master_user
+        #
+        # qs = self.get_queryset()
+        #
+        # qs = self.filter_queryset(qs)
+        #
+        # filtered_qs = self.get_queryset()
+        #
+        # filtered_qs = filtered_qs.filter(id__in=qs)
+        #
+        # filtered_qs = filtered_qs.filter(master_user=master_user)
+        #
+        # content_type = ContentType.objects.get(
+        #     app_label=self.serializer_class.Meta.model._meta.app_label,
+        #     model=self.serializer_class.Meta.model._meta.model_name,
+        # )
+        #
+        # try:
+        #     filtered_qs.model._meta.get_field("is_enabled")
+        # except FieldDoesNotExist:
+        #     pass
+        # else:
+        #     is_enabled = self.request.query_params.get("is_enabled", "true")
+        #     if is_enabled == "true":
+        #         filtered_qs = filtered_qs.filter(is_enabled=True)
+        #
+        # try:
+        #     filtered_qs.model._meta.get_field("is_deleted")
+        # except FieldDoesNotExist:
+        #     pass
+        # else:
+        #     is_deleted = self.request.query_params.get("is_deleted", "true")
+        #     if is_deleted == "true":
+        #         filtered_qs = filtered_qs.filter(is_deleted=True)
+        #     else:
+        #         filtered_qs = filtered_qs.filter(is_deleted=False)
+        #
+        # filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
+        #
+        # page = self.paginate_queryset(filtered_qs)
+        #
+        # _l.debug(f"List {time.time() - start_time} seconds ")
+        #
+        # if page is not None:
+        #     return self.get_paginated_response(page)
+        #
+        # return Response(filtered_qs)
+
+    @action(detail=False, methods=["post"], url_path="filtered")
+    def filtered_list(self, request, *args, **kwargs):
+        start_time = time.time()
+
+        groups_types = request.data.get("groups_types", None)
+        groups_values = request.data.get("groups_values", None)
+        groups_order = request.data.get("groups_order", None)
+        master_user = request.user.master_user
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
+        )
+        filter_settings = request.data.get("filter_settings", None)
+        global_table_search = request.data.get("global_table_search", "")
+        ev_options = request.data.get("ev_options", "")
+
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
+
+        filtered_qs = self.get_queryset()
+
+        filtered_qs = filtered_qs.filter(id__in=qs)
+
+        # print('len before handle filters %s' % len(filtered_qs))
+
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
+
+        if global_table_search:
+            filtered_qs = handle_global_table_search(
+                filtered_qs,
+                global_table_search,
+                self.serializer_class.Meta.model,
+                content_type,
+            )
+
+        if content_type.model not in {
+            "currencyhistory",
+            "pricehistory",
+            "currencyhistoryerror",
+            "pricehistoryerror",
+        }:
+            is_enabled = request.data.get("is_enabled", "true")
+
+            if is_enabled == "true":
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
+        filtered_qs = handle_groups(
+            filtered_qs,
+            groups_types,
+            groups_values,
+            groups_order,
+            master_user,
+            None,
+            content_type,
+        )
+
+        filtered_qs = count_groups(
+            filtered_qs,
+            groups_types,
+            groups_values,
+            master_user,
+            None,
+            content_type,
+            filter_settings,
+            ev_options,
+            global_table_search,
+        )
+
+        # print('len after handle groups %s' % len(filtered_qs))
+
+        page = self.paginator.post_paginate_queryset(filtered_qs, request)
+
+        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
+
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(filtered_qs)
