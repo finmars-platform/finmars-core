@@ -168,7 +168,7 @@ class AbstractModelViewSet(
         except FieldDoesNotExist:
             pass
         else:
-            is_enabled = self.request.query_params.get("is_enabled", "true")
+            is_enabled = request.query_params.get("is_enabled", "true")
             if is_enabled == "true":
                 queryset = queryset.filter(is_enabled=True)
 
@@ -818,7 +818,7 @@ class AbstractEvGroupViewSet(
     ]
 
     def list(self, request, *args, **kwargs):
-        raise NotImplemented("Deprecated API")
+        raise DeprecationWarning("Deprecated API")
         # if len(request.query_params.getlist("groups_types")) == 0:
         #     return Response(
         #         {
