@@ -1,7 +1,6 @@
 import logging
 
 import django_filters
-from django_filters.filters import BooleanFilter
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -11,6 +10,7 @@ from rest_framework.response import Response
 from poms.celery_tasks.models import CeleryTask
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
+from poms.common.renderers import FinmarsJSONRenderer
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet
 from poms.configuration.filters import ConfigurationQueryFilter
@@ -52,6 +52,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
     filter_class = ConfigurationFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [ConfigurationQueryFilter]
     permission_classes = AbstractModelViewSet.permission_classes + []
+    renderer_classes = [FinmarsJSONRenderer]
 
     @action(detail=True, methods=["get"], url_path="export-configuration")
     def export_configuration(self, request, pk=None, realm_code=None, space_code=None):
@@ -71,10 +72,15 @@ class ConfigurationViewSet(AbstractModelViewSet):
         task.save()
 
         try:
-            export_configuration.apply_async(kwargs={"task_id": task.id, 'context': {
-                'space_code': task.master_user.space_code,
-                'realm_code': task.master_user.realm_code
-            }})
+            export_configuration.apply_async(
+                kwargs={
+                    "task_id": task.id,
+                    "context": {
+                        "space_code": task.master_user.space_code,
+                        "realm_code": task.master_user.realm_code,
+                    },
+                }
+            )
 
             return Response({"status": "ok", "task_id": task.id})
 
@@ -119,10 +125,15 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
         instance.task_id = celery_task.id
 
-        import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
-            'space_code': celery_task.master_user.space_code,
-            'realm_code': celery_task.master_user.realm_code
-        }})
+        import_configuration.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            }
+        )
 
         _l.info(f"ConfigurationViewSet.import_configuration celery_task {celery_task.id}")
 
@@ -147,10 +158,13 @@ class ConfigurationViewSet(AbstractModelViewSet):
         )
 
         push_configuration_to_marketplace.apply_async(
-            kwargs={"task_id": celery_task.id, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }}
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            }
         )
 
         return Response({"task_id": celery_task.id})
@@ -175,7 +189,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
             "channel": request.data.get("channel", "stable"),
             "version": request.data.get("version", None),
             "is_package": request.data.get("is_package", False),
-            "access_token": get_access_token(request)
+            "access_token": get_access_token(request),
         }
 
         celery_task.options_object = options_object
@@ -183,22 +197,21 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
         if request.data.get("is_package", False):
             install_package_from_marketplace.apply_async(
-                kwargs={"task_id": celery_task.id, "context": {
-                    "realm_code": request.realm_code,
-                    "space_code": request.space_code
-                }}
+                kwargs={
+                    "task_id": celery_task.id,
+                    "context": {"realm_code": request.realm_code, "space_code": request.space_code},
+                }
             )
         else:
             install_configuration_from_marketplace.apply_async(
-                kwargs={"task_id": celery_task.id, "context": {
-                    "realm_code": request.realm_code,
-                    "space_code": request.space_code
-                }}
+                kwargs={
+                    "task_id": celery_task.id,
+                    "context": {"realm_code": request.realm_code, "space_code": request.space_code},
+                }
             )
 
         _l.info(
-            f"ConfigurationViewSet.import_configuration_from_marketplace "
-            f"celery_task {celery_task.id}"
+            f"ConfigurationViewSet.import_configuration_from_marketplace " f"celery_task {celery_task.id}"
         )
 
         return Response({"task_id": celery_task.id}, status=status.HTTP_200_OK)
@@ -218,12 +231,12 @@ class NewMemberSetupConfigurationFilterSet(FilterSet):
 
 class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
-
     queryset = NewMemberSetupConfiguration.objects
     serializer_class = NewMemberSetupConfigurationSerializer
     filter_class = NewMemberSetupConfigurationFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + []
     permission_classes = AbstractModelViewSet.permission_classes + []
+    renderer_classes = [FinmarsJSONRenderer]
 
     @action(detail=True, methods=["PUT"], url_path="install", serializer_class=None)
     def install(self, request, pk=None, realm_code=None, space_code=None):
@@ -255,17 +268,23 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
 
             if request.data.get("is_package", False):
                 install_package_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }}
+                    kwargs={
+                        "task_id": celery_task.id,
+                        "context": {
+                            "space_code": celery_task.master_user.space_code,
+                            "realm_code": celery_task.master_user.realm_code,
+                        },
+                    }
                 )
             else:
                 install_configuration_from_marketplace.apply_async(
-                    kwargs={"task_id": celery_task.id, 'context': {
-                        'space_code': celery_task.master_user.space_code,
-                        'realm_code': celery_task.master_user.realm_code
-                    }}
+                    kwargs={
+                        "task_id": celery_task.id,
+                        "context": {
+                            "space_code": celery_task.master_user.space_code,
+                            "realm_code": celery_task.master_user.realm_code,
+                        },
+                    }
                 )
 
         elif new_member_setup_configuration.file_url:
@@ -282,9 +301,14 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
             celery_task.options_object = options_object
             celery_task.save()
 
-            import_configuration.apply_async(kwargs={"task_id": celery_task.id, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }})
+            import_configuration.apply_async(
+                kwargs={
+                    "task_id": celery_task.id,
+                    "context": {
+                        "space_code": celery_task.master_user.space_code,
+                        "realm_code": celery_task.master_user.realm_code,
+                    },
+                }
+            )
 
         return Response({"task_id": celery_task.id})
