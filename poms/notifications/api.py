@@ -3,10 +3,19 @@ import json
 from django.utils.encoding import force_str
 
 
-def send(recipients, message=None, actor=None, verb=None, action_object=None, target=None, data=None, throttle=False):
-    from poms.users.models import Member
+def send(
+    recipients,
+    message=None,
+    actor=None,
+    verb=None,
+    action_object=None,
+    target=None,
+    data=None,
+    throttle=False,
+):
     from poms.notifications.models import Notification
     from poms.notifications.throttling import allow_notification
+    from poms.users.models import Member
 
     ret = []
 
@@ -52,12 +61,12 @@ def _send_instance_action_message(master_user, member, instance, verb, check_per
 
 
 def send_instance_created(master_user, member, instance, check_perms=False):
-    _send_instance_action_message(master_user, member, instance, 'created', check_perms=check_perms)
+    _send_instance_action_message(master_user, member, instance, "created", check_perms=check_perms)
 
 
 def send_instance_changed(master_user, member, instance, check_perms=False):
-    _send_instance_action_message(master_user, member, instance, 'changed', check_perms=check_perms)
+    _send_instance_action_message(master_user, member, instance, "changed", check_perms=check_perms)
 
 
 def send_instance_deleted(master_user, member, instance, check_perms=False):
-    _send_instance_action_message(master_user, member, instance, 'deleted', check_perms=check_perms)
+    _send_instance_action_message(master_user, member, instance, "deleted", check_perms=check_perms)

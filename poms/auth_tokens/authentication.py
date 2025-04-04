@@ -1,6 +1,7 @@
 import logging
 
 import pytz
+
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
@@ -9,7 +10,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from poms.auth_tokens.models import AuthToken
 
-_l = logging.getLogger('poms.auth_tokens')
+_l = logging.getLogger("poms.auth_tokens")
 
 
 class ExpiringTokenAuthentication(TokenAuthentication):
@@ -32,62 +33,43 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
                 self.try_token(tokens, index)
 
-                _l.info('wrong token')
+                _l.info("wrong token")
         else:
-            msg = _('Invalid token header. All Tokens invalid.')
+            msg = _("Invalid token header. All Tokens invalid.")
             raise exceptions.AuthenticationFailed(msg)
 
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
-        # print('auth %s' % auth)
-
-        # _l.info('equest.COOKIES %s' % request.COOKIES)
-
         if len(auth) == 0:
-
-            # print(request.COOKIES['authtoken'])
-
             tokens = []
 
             for key, value in request.COOKIES.items():
 
-                if 'authtoken' == key:
+                if "authtoken" == key:
                     tokens.append(value)
 
             if len(tokens):
-                _l.info("Multiple tokens detected %s " % len(tokens))
+                _l.info(f"Multiple tokens detected {len(tokens)} ")
 
                 index = 0
                 self.try_token(tokens, index)
                 return self.result_token_user, self.result_token
 
-        # if len(auth) == 0:
-        #
-        #     # print(request.COOKIES['authtoken'])
-        #
-        #     token = None
-        #
-        #     if 'authtoken' in request.COOKIES:
-        #         token = request.COOKIES['authtoken']
-        #
-        #     if token:
-        #         return self.authenticate_credentials(token)
-
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
         if len(auth) == 1:
-            msg = _('Invalid token header. No credentials provided.')
+            msg = _("Invalid token header. No credentials provided.")
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = _('Invalid token header. Token string should not contain spaces.')
+            msg = _("Invalid token header. Token string should not contain spaces.")
             raise exceptions.AuthenticationFailed(msg)
 
         try:
             token = auth[1].decode()
         except UnicodeError:
-            msg = _('Invalid token header. Token string should not contain invalid characters.')
+            msg = _("Invalid token header. Token string should not contain invalid characters.")
             raise exceptions.AuthenticationFailed(msg)
 
         return self.authenticate_credentials(token)
@@ -99,20 +81,11 @@ class ExpiringTokenAuthentication(TokenAuthentication):
         try:
             token = models.objects.select_related("user").get(key=key)
         except models.DoesNotExist:
-            raise AuthenticationFailed(
-                {"error": "Invalid or Inactive Token", "is_authenticated": False}
-            )
+            raise AuthenticationFailed({"error": "Invalid or Inactive Token", "is_authenticated": False})
 
         if not token.user.is_active:
-            raise AuthenticationFailed(
-                {"error": "Invalid user", "is_authenticated": False}
-            )
+            raise AuthenticationFailed({"error": "Invalid user", "is_authenticated": False})
 
         utc_now = timezone.now()
         utc_now = utc_now.replace(tzinfo=pytz.utc)
-
-        # if token.created < utc_now - settings.TOKEN_TTL:
-        #     raise AuthenticationFailed(
-        #         {"error": "Token has expired", "is_authenticated": False}
-        #     )
         return token.user, token

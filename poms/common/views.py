@@ -40,6 +40,7 @@ from poms.common.mixins import (
 )
 from poms.common.serializers import RealmMigrateSchemeSerializer
 from poms.common.sorting import sort_by_dynamic_attrs
+from poms.common.renderers import FinmarsJSONRenderer
 from poms.common.tasks import apply_migration_to_space
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -464,6 +465,7 @@ class AbstractModelViewSet(
 
         if content_type.model == "transactiontype":  # FIXME refactor someday
             from poms.transactions.models import TransactionTypeGroup
+
             # It happens because we change TransactionTypeGroup relation to user_code,
             # so its broke default relation group counting, and now we need to get group name separately
             # maybe we need to refactor this whole module, or just provide user_codes and frontend app will
@@ -736,6 +738,8 @@ def _get_values_from_report(content_type, report_instance_id, key):
 
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
+    renderer_classes = [FinmarsJSONRenderer]
+
     def list(self, request, *args, **kwargs):
         content_type_name = request.query_params.get("content_type", None)
         key = request.query_params.get("key", None)
@@ -744,7 +748,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
         report_instance_id = request.query_params.get("report_instance_id", None)
 
         master_user = request.user.master_user
-        results = []
 
         # keys of attributes that are not relations (e.g. not: instrument.name, currency.user_code etc.)
         report_system_attrs_keys_list = []

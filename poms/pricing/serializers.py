@@ -33,7 +33,9 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
         self.fields["instrument_object"] = InstrumentLightSerializer(source="instrument", read_only=True)
-        self.fields["pricing_policy_object"] = PricingPolicyLightSerializer(source="pricing_policy", read_only=True)
+        self.fields["pricing_policy_object"] = PricingPolicyLightSerializer(
+            source="pricing_policy", read_only=True
+        )
 
     class Meta:
         model = PriceHistoryError
@@ -84,7 +86,9 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
         self.fields["currency_object"] = CurrencyViewSerializer(source="currency", read_only=True)
-        self.fields["pricing_policy_object"] = PricingPolicyLightSerializer(source="pricing_policy", read_only=True)
+        self.fields["pricing_policy_object"] = PricingPolicyLightSerializer(
+            source="pricing_policy", read_only=True
+        )
 
     class Meta:
         model = CurrencyHistoryError
