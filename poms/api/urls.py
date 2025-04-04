@@ -69,12 +69,6 @@ router.register(
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",
 )
-router.register(  # DEPRECATED
-    "active_processes/active_processes",
-    celery_tasks.CeleryTaskViewSet,
-    "activeprocesses",
-
-)
 router.register(
     "tasks/task",
     celery_tasks.CeleryTaskViewSet,
@@ -100,20 +94,10 @@ router.register(
     configuration.NewMemberSetupConfigurationViewSet,
     "newmembersetupconfiguration",
 )
-router.register(  # deprecated?
-    "transactions/bank-file",
-    integrations.TransactionFileResultViewSet,
-    "transaction_bank_file",
-)
 router.register(
     "specific-data/values-for-select",
     common.ValuesForSelectViewSet,
     "valuesforselect",
-)
-router.register(
-    "data-provider/bloomberg/credential",
-    integrations.BloombergDataProviderCredentialViewSet,
-    "bloomberg_credential",
 )
 router.register(
     "utils/expression",
@@ -190,36 +174,6 @@ router.register(
     api.LastDayOfMonthViewSet,
     "last_day_of_month",
 )
-router.register(  # Probably deprecated
-    "import/complex/scheme",
-    complex_import.ComplexImportSchemeViewSet,
-    "import_complex_scheme",
-)
-router.register(  # Probably deprecated
-    "import/complex",
-    complex_import.ComplexImportViewSet,
-    "import_complex",
-)
-router.register(
-    "reconciliation/process-bank-file",
-    reconciliation.ProcessBankFileForReconcileViewSet,
-    "process_bank_file_for_reconcile",
-)
-router.register(
-    "reconciliation/bank-field",
-    reconciliation.ReconciliationBankFileFieldViewSet,
-    "bank_fields",
-)
-router.register(
-    "reconciliation/new-bank-field",
-    reconciliation.ReconciliationNewBankFileFieldViewSet,
-    "new_bank_fields",
-)
-router.register(
-    "reconciliation/complex-transaction-field",
-    reconciliation.ReconciliationComplexTransactionFieldViewSet,
-    "complex_transaction_fields",
-)
 router.register(
     "file-reports/file-report",
     file_reports.FileReportViewSet,
@@ -265,16 +219,6 @@ router.register(
     schedules.ScheduleViewSet,
     "schedule",
 )
-router.register(  # Probably deprecated
-    "credentials/credentials",
-    credentials.CredentialsViewSet,
-    "Credentials"
-)
-router.register(  # Probably deprecated
-    "integrations/data-provider",
-    integrations.DataProviderViewSet,
-    "integrations_data_provider",
-)
 router.register(
     "widgets/history/nav",
     widgets.HistoryNavViewSet,
@@ -310,11 +254,6 @@ router.register(
     widgets.CollectStatsViewSet,
     "widgets_collect_stats",
 )
-router.register(  # DEPRECATED
-    "debug/logs",
-    common.DebugLogViewSet,
-    "debug_log",
-)
 router.register(
     "errors/error",
     ErrorRecordViewSet,
@@ -339,6 +278,68 @@ router.register(
     "notifications/notification",
     notifications.NotificationViewSet,
     "Notification",
+)
+
+# DEPRECATED
+router.register(
+    "debug/logs",
+    common.DebugLogViewSet,
+    "debug_log",
+)
+router.register(
+    "credentials/credentials",
+    credentials.CredentialsViewSet,
+    "Credentials"
+)
+router.register(
+    "integrations/data-provider",
+    integrations.DataProviderViewSet,
+    "integrations_data_provider",
+)
+router.register(
+    "import/complex/scheme",
+    complex_import.ComplexImportSchemeViewSet,
+    "import_complex_scheme",
+)
+router.register(
+    "import/complex",
+    complex_import.ComplexImportViewSet,
+    "import_complex",
+)
+router.register(
+    "active_processes/active_processes",
+    celery_tasks.CeleryTaskViewSet,
+    "activeprocesses",
+)
+router.register(
+    "transactions/bank-file",
+    integrations.TransactionFileResultViewSet,
+    "transaction_bank_file",
+)
+router.register(
+    "data-provider/bloomberg/credential",
+    integrations.BloombergDataProviderCredentialViewSet,
+    "bloomberg_credential",
+)
+router.register(
+    "reconciliation/process-bank-file",
+    reconciliation.ProcessBankFileForReconcileViewSet,
+    "process_bank_file_for_reconcile",
+)
+router.register(
+    "reconciliation/bank-field",
+    reconciliation.ReconciliationBankFileFieldViewSet,
+    "bank_fields",
+)
+router.register(
+    "reconciliation/new-bank-field",
+    reconciliation.ReconciliationNewBankFileFieldViewSet,
+    "new_bank_fields",
+)
+router.register(
+    "reconciliation/complex-transaction-field",
+    reconciliation.ReconciliationComplexTransactionFieldViewSet,
+    "complex_transaction_fields",
 )
 
 

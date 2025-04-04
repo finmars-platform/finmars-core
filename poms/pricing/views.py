@@ -1,32 +1,36 @@
-import json
 from logging import getLogger
 
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.permissions import IsAuthenticated
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import NoOpFilter, GroupsAttributeFilter
+from poms.common.filters import GroupsAttributeFilter, NoOpFilter
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet, AbstractViewSet
-
-from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
+from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.views import (
+    AbstractEvGroupViewSet,
+    AbstractModelViewSet,
+    AbstractViewSet,
+)
+from poms.pricing.models import CurrencyHistoryError, PriceHistoryError
 from poms.pricing.serializers import (
-    RunPricingSerializer,
+    CurrencyHistoryErrorSerializer,
     PriceHistoryErrorSerializer,
-    CurrencyHistoryErrorSerializer
+    RunPricingSerializer,
 )
 from poms.pricing.tasks import run_pricing
 from poms.users.filters import OwnerByMasterUserFilter
 
-_l = getLogger('poms.pricing')
+_l = getLogger("poms.pricing")
 
 
 class RunPricingView(AbstractViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = RunPricingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -41,10 +45,15 @@ class RunPricingView(AbstractViewSet):
         task.options_object = serializer.validated_data
         task.save()
 
-        run_pricing.apply_async(kwargs={"task_id": task.id, "context": {
-            "space_code": task.master_user.space_code,
-            "realm_code": task.master_user.realm_code
-        }})
+        run_pricing.apply_async(
+            kwargs={
+                "task_id": task.id,
+                "context": {
+                    "space_code": task.master_user.space_code,
+                    "realm_code": task.master_user.realm_code,
+                },
+            }
+        )
         return Response({"status": "ok", "task_id": task.id}, status=status.HTTP_201_CREATED)
 
 
@@ -58,44 +67,40 @@ class PriceHistoryErrorFilterSet(FilterSet):
 
 class PriceHistoryErrorViewSet(AbstractModelViewSet):
     queryset = PriceHistoryError.objects.select_related(
-        'master_user',
-        'instrument',
-        'pricing_policy',
+        "master_user",
+        "instrument",
+        "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = PriceHistoryErrorFilterSet
-    ordering_fields = [
-        'date'
-    ]
+    ordering_fields = ["date"]
 
 
 class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
     queryset = PriceHistoryError.objects.select_related(
-        'master_user',
-        'instrument',
-        'pricing_policy',
+        "master_user",
+        "instrument",
+        "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        GroupsAttributeFilter
-    ]
+    renderer_classes = [FinmarsJSONRenderer]
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
     filter_class = PriceHistoryErrorFilterSet
-    ordering_fields = [
-        'date'
-    ]
+    ordering_fields = ["date"]
 
 
 class PriceHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
     queryset = PriceHistoryError.objects.select_related(
-        'master_user',
-        'instrument',
-        'pricing_policy',
+        "master_user",
+        "instrument",
+        "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PriceHistoryErrorFilterSet
 
@@ -114,45 +119,41 @@ class CurrencyHistoryErrorFilterSet(FilterSet):
 
 class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
     queryset = CurrencyHistoryError.objects.select_related(
-        'master_user',
-        'currency',
-        'pricing_policy',
+        "master_user",
+        "currency",
+        "pricing_policy",
     )
     serializer_class = CurrencyHistoryErrorSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = CurrencyHistoryErrorFilterSet
-    ordering_fields = [
-        'date'
-    ]
+    ordering_fields = ["date"]
 
 
 class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
     queryset = CurrencyHistoryError.objects.select_related(
-        'master_user',
-        'currency',
-        'pricing_policy',
+        "master_user",
+        "currency",
+        "pricing_policy",
     )
     serializer_class = CurrencyHistoryErrorSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        GroupsAttributeFilter
-    ]
+    renderer_classes = [FinmarsJSONRenderer]
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
     filter_class = CurrencyHistoryErrorFilterSet
-    ordering_fields = [
-        'date'
-    ]
+    ordering_fields = ["date"]
 
 
 class CurrencyHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
     queryset = CurrencyHistoryError.objects.select_related(
-        'master_user',
-        'currency',
-        'pricing_policy',
+        "master_user",
+        "currency",
+        "pricing_policy",
     )
 
     serializer_class = CurrencyHistoryErrorSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = CurrencyHistoryErrorFilterSet
 

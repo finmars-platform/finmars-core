@@ -25,9 +25,7 @@ class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["file_report_object"] = FileReportSerializer(
-            source="file_report", read_only=True
-        )
+        self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
 
 
 class SystemMessageCommentSerializer(serializers.ModelSerializer):
@@ -90,9 +88,7 @@ class SystemMessageSerializer(serializers.ModelSerializer):
 
 
 class SystemMessageActionSerializer(serializers.Serializer):
-    ids = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=SystemMessage.objects.all()
-    )
+    ids = serializers.PrimaryKeyRelatedField(many=True, queryset=SystemMessage.objects.all())
     sections = serializers.MultipleChoiceField(
         default=SystemMessage.SECTION_OTHER, choices=SystemMessage.SECTION_CHOICES
     )

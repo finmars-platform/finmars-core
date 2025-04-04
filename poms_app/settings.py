@@ -63,6 +63,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 ROUND_NDIGITS = ENV_INT("ROUND_NDIGITS", 4)
 
 API_DATE_FORMAT = "%Y-%m-%d"
+API_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # Important that all files write to temporary file no matter size
 FILE_UPLOAD_MAX_MEMORY_SIZE = 0
@@ -539,7 +540,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": (
-        "poms.common.renderers.CustomJSONRenderer",
+        "poms.common.renderers.FinmarsJSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
         "rest_framework.renderers.AdminRenderer",
     ),

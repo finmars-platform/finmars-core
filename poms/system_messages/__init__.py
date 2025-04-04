@@ -1,3 +1,1 @@
-from __future__ import unicode_literals
-
-default_app_config = 'poms.system_messages.apps.SystemMessagesConfig'
+default_app_config = "poms.system_messages.apps.SystemMessagesConfig"

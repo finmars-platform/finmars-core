@@ -4,6 +4,9 @@ import time
 import traceback
 from typing import Any
 
+import requests
+from celery.result import AsyncResult
+
 import django_filters
 from django.conf import settings
 from django.db.models import Prefetch
@@ -18,9 +21,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
-import requests
-from celery.result import AsyncResult
-
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import (
     AttributeFilter,
@@ -34,6 +34,7 @@ from poms.common.mixins import (
     DestroyModelFakeMixin,
     UpdateModelMixinExt,
 )
+from poms.common.renderers import FinmarsJSONRenderer
 from poms.common.storage import get_storage
 from poms.common.utils import datetime_now, get_current_schema
 from poms.common.views import (
@@ -166,16 +167,19 @@ storage = get_storage()
 class ProviderClassViewSet(AbstractClassModelViewSet):
     queryset = ProviderClass.objects
     serializer_class = ProviderClassSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
 
 class FactorScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
     queryset = FactorScheduleDownloadMethod.objects
     serializer_class = FactorScheduleDownloadMethodSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
 
 class AccrualScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
     queryset = AccrualScheduleDownloadMethod.objects
     serializer_class = AccrualScheduleDownloadMethodSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
 
 class BloombergDataProviderCredentialViewSet(
@@ -187,6 +191,7 @@ class BloombergDataProviderCredentialViewSet(
 ):
     queryset = BloombergDataProviderCredential.objects
     serializer_class = BloombergDataProviderCredentialSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + [
         SuperUserOnly,
     ]
@@ -206,6 +211,7 @@ class ImportConfigFilterSet(FilterSet):
 class ImportConfigViewSet(AbstractModelViewSet):
     queryset = ImportConfig.objects
     serializer_class = ImportConfigSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + [
         SuperUserOnly,
     ]
@@ -236,12 +242,11 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         "inputs",
         Prefetch(
             "attributes",
-            queryset=InstrumentDownloadSchemeAttribute.objects.select_related(
-                "attribute_type"
-            ),
+            queryset=InstrumentDownloadSchemeAttribute.objects.select_related("attribute_type"),
         ),
     )
     serializer_class = InstrumentDownloadSchemeSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -273,6 +278,7 @@ class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
         "provider",
     )
     serializer_class = InstrumentDownloadSchemeLightSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -298,6 +304,7 @@ class PriceDownloadSchemeFilterSet(FilterSet):
 class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     queryset = PriceDownloadScheme.objects.select_related("provider")
     serializer_class = PriceDownloadSchemeSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -322,6 +329,7 @@ class MappingTableFilterSet(FilterSet):
 class MappingTableViewSet(AbstractModelViewSet):
     queryset = MappingTable.objects.prefetch_related("items")
     serializer_class = MappingTableSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + [SuperUserOrReadOnly]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -342,6 +350,7 @@ class AbstractMappingFilterSet(FilterSet):
 class AbstractMappingViewSet(AbstractModelViewSet):
     queryset = None
     serializer_class = None
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + [SuperUserOrReadOnly]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -373,10 +382,9 @@ class CurrencyMappingFilterSet(AbstractMappingFilterSet):
 
 
 class CurrencyMappingViewSet(AbstractMappingViewSet):
-    queryset = CurrencyMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = CurrencyMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = CurrencyMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = CurrencyMappingFilterSet
 
 
@@ -388,10 +396,9 @@ class PricingPolicyMappingFilterSet(AbstractMappingFilterSet):
 
 
 class PricingPolicyMappingViewSet(AbstractMappingViewSet):
-    queryset = PricingPolicyMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PricingPolicyMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PricingPolicyMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = PricingPolicyMappingFilterSet
 
 
@@ -401,10 +408,9 @@ class AccountTypeMappingFilterSet(AbstractMappingFilterSet):
 
 
 class AccountTypeMappingViewSet(AbstractMappingViewSet):
-    queryset = AccountTypeMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = AccountTypeMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = AccountTypeMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         AccountTypeMappingObjectPermissionFilter,
     ]
@@ -417,10 +423,9 @@ class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):
 
 
 class InstrumentTypeMappingViewSet(AbstractMappingViewSet):
-    queryset = InstrumentTypeMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = InstrumentTypeMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = InstrumentTypeMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         InstrumentTypeMappingObjectPermissionFilter,
     ]
@@ -437,6 +442,7 @@ class InstrumentAttributeValueMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object", "classifier"
     )
     serializer_class = InstrumentAttributeValueMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         InstrumentAttributeValueMappingObjectPermissionFilter,
     ]
@@ -444,9 +450,7 @@ class InstrumentAttributeValueMappingViewSet(AbstractMappingViewSet):
 
 
 class AccrualCalculationModelMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(
-        queryset=AccrualCalculationModel.objects
-    )
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=AccrualCalculationModel.objects)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccrualCalculationModelMapping
@@ -457,23 +461,21 @@ class AccrualCalculationModelMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object"
     )
     serializer_class = AccrualCalculationModelMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = AccrualCalculationModelMappingFilterSet
 
 
 class PeriodicityMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(
-        queryset=Periodicity.objects
-    )
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=Periodicity.objects)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PeriodicityMapping
 
 
 class PeriodicityMappingViewSet(AbstractMappingViewSet):
-    queryset = PeriodicityMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PeriodicityMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PeriodicityMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = PeriodicityMappingFilterSet
 
 
@@ -488,10 +490,9 @@ class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class AccountMappingViewSet(AbstractMappingViewSet):
-    queryset = AccountMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = AccountMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = AccountMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         AccountMappingObjectPermissionFilter,
     ]
@@ -503,6 +504,7 @@ class AccountClassifierMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = AccountClassifierMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         AccountMappingObjectPermissionFilter,
     ]
@@ -515,10 +517,9 @@ class InstrumentMappingFilterSet(AbstractMappingFilterSet):
 
 
 class InstrumentMappingViewSet(AbstractMappingViewSet):
-    queryset = InstrumentMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = InstrumentMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = InstrumentMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         InstrumentMappingObjectPermissionFilter,
     ]
@@ -531,10 +532,9 @@ class InstrumentClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class InstrumentClassifierMappingViewSet(AbstractMappingViewSet):
-    queryset = InstrumentClassifierMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = InstrumentClassifierMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = InstrumentClassifierMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         InstrumentMappingObjectPermissionFilter,
     ]
@@ -552,10 +552,9 @@ class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class CounterpartyMappingViewSet(AbstractMappingViewSet):
-    queryset = CounterpartyMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = CounterpartyMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = CounterpartyMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         CounterpartyMappingObjectPermissionFilter,
     ]
@@ -567,6 +566,7 @@ class CounterpartyClassifierMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = CounterpartyClassifierMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         CounterpartyMappingObjectPermissionFilter,
     ]
@@ -584,10 +584,9 @@ class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class ResponsibleMappingViewSet(AbstractMappingViewSet):
-    queryset = ResponsibleMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = ResponsibleMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = ResponsibleMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         ResponsibleMappingObjectPermissionFilter,
     ]
@@ -599,6 +598,7 @@ class ResponsibleClassifierMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = ResponsibleClassifierMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         ResponsibleMappingObjectPermissionFilter,
     ]
@@ -616,10 +616,9 @@ class PortfolioClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class PortfolioMappingViewSet(AbstractMappingViewSet):
-    queryset = PortfolioMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PortfolioMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PortfolioMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         PortfolioMappingObjectPermissionFilter,
     ]
@@ -631,6 +630,7 @@ class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
         "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = PortfolioClassifierMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         PortfolioMappingObjectPermissionFilter,
     ]
@@ -643,10 +643,9 @@ class Strategy1MappingFilterSet(AbstractMappingFilterSet):
 
 
 class Strategy1MappingViewSet(AbstractMappingViewSet):
-    queryset = Strategy1Mapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = Strategy1Mapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = Strategy1MappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         Strategy1MappingObjectPermissionFilter,
     ]
@@ -659,10 +658,9 @@ class Strategy2MappingFilterSet(AbstractMappingFilterSet):
 
 
 class Strategy2MappingViewSet(AbstractMappingViewSet):
-    queryset = Strategy2Mapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = Strategy2Mapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = Strategy2MappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         Strategy2MappingObjectPermissionFilter,
     ]
@@ -675,10 +673,9 @@ class Strategy3MappingFilterSet(AbstractMappingFilterSet):
 
 
 class Strategy3MappingViewSet(AbstractMappingViewSet):
-    queryset = Strategy3Mapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = Strategy3Mapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = Strategy3MappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractMappingViewSet.filter_backends + [
         Strategy3MappingObjectPermissionFilter,
     ]
@@ -686,70 +683,57 @@ class Strategy3MappingViewSet(AbstractMappingViewSet):
 
 
 class DailyPricingModelMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(
-        queryset=DailyPricingModelMapping.objects
-    )
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModelMapping.objects)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = DailyPricingModelMapping
 
 
 class DailyPricingModelMappingViewSet(AbstractMappingViewSet):
-    queryset = DailyPricingModelMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = DailyPricingModelMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = DailyPricingModelMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = DailyPricingModelMappingFilterSet
 
 
 class PaymentSizeDetailMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(
-        queryset=PaymentSizeDetail.objects
-    )
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=PaymentSizeDetail.objects)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PaymentSizeDetailMapping
 
 
 class PaymentSizeDetailMappingViewSet(AbstractMappingViewSet):
-    queryset = PaymentSizeDetailMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PaymentSizeDetailMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PaymentSizeDetailMappingSerializer
     filter_class = PaymentSizeDetailMappingFilterSet
 
 
 class PricingConditionMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(
-        queryset=PricingCondition.objects
-    )
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=PricingCondition.objects)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PricingConditionMapping
 
 
 class PricingConditionMappingViewSet(AbstractMappingViewSet):
-    queryset = PricingConditionMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PricingConditionMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PricingConditionMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = PricingConditionMappingFilterSet
 
 
 class PriceDownloadSchemeMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtMultipleChoiceFilter(
-        model=PriceDownloadScheme, field_name="scheme_name"
-    )
+    content_object = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name="scheme_name")
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PriceDownloadSchemeMapping
 
 
 class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
-    queryset = PriceDownloadSchemeMapping.objects.select_related(
-        "master_user", "provider", "content_object"
-    )
+    queryset = PriceDownloadSchemeMapping.objects.select_related("master_user", "provider", "content_object")
     serializer_class = PriceDownloadSchemeMappingSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = PriceDownloadSchemeMappingFilterSet
     ordering_fields = AbstractMappingViewSet.base_ordering_fields + [
         "content_object__scheme_name",
@@ -770,6 +754,7 @@ class ImportInstrumentViewSet(AbstractViewSet):
 class ImportUnifiedDataProviderViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + []
     serializer_class = ImportUnifiedDataProviderSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -780,6 +765,7 @@ class ImportUnifiedDataProviderViewSet(AbstractViewSet):
 
 class TestCertificateViewSet(AbstractViewSet):
     serializer_class = TestCertificateSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -793,6 +779,7 @@ class UnifiedCallBackDatabaseViewSet(ViewSet):
     permission_classes = []
     authentication_classes = []
     callback_serializer_class = CallBackDataDictRequestSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def handle_callback(self, validated_data: dict) -> dict:
         raise NotImplementedError
@@ -913,6 +900,7 @@ class CompanyCallBackViewSet(UnifiedCallBackDatabaseViewSet):
 
 class ImportInstrumentDatabaseViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentDatabaseSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -922,6 +910,7 @@ class ImportInstrumentDatabaseViewSet(AbstractViewSet):
 
 class ImportCurrencyDatabaseViewSet(AbstractViewSet):
     serializer_class = ImportCurrencyDatabaseSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -931,6 +920,7 @@ class ImportCurrencyDatabaseViewSet(AbstractViewSet):
 
 class ImportCompanyDatabaseViewSet(AbstractViewSet):
     serializer_class = ImportCompanyDatabaseSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -948,9 +938,7 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
         fields = []
 
 
-class ComplexTransactionImportSchemeViewSet(
-    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
-):
+class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -958,9 +946,8 @@ class ComplexTransactionImportSchemeViewSet(
         AttributeFilter,
     ]
     queryset = ComplexTransactionImportScheme.objects
-
     serializer_class = ComplexTransactionImportSchemeSerializer
-
+    renderer_classes = [FinmarsJSONRenderer]
     filter_class = ComplexTransactionImportSchemeFilterSet
     ordering_fields = [
         "scheme_name",
@@ -991,7 +978,7 @@ class ComplexTransactionImportSchemeViewSet(
 
 class TransactionImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
@@ -1039,9 +1026,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
                             celery_task_data["total_rows"] = res.result["total_rows"]
 
                         if "processed_rows" in res.result:
-                            celery_task_data["processed_rows"] = res.result[
-                                "processed_rows"
-                            ]
+                            celery_task_data["processed_rows"] = res.result["processed_rows"]
 
                         if "scheme_name" in res.result:
                             celery_task_data["scheme_name"] = res.result["scheme_name"]
@@ -1072,9 +1057,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            return Response(
-                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, *args, **kwargs):
         st = time.perf_counter()
@@ -1258,10 +1241,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             "ComplexTransaction Dry Run done: %s",
             "{:3.3f}".format(time.perf_counter() - st),
         )
-        _l.info(
-            "ComplexTransaction Dry Run done: realm_code %s"
-            % celery_task.master_user.realm_code
-        )
+        _l.info("ComplexTransaction Dry Run done: realm_code %s" % celery_task.master_user.realm_code)
 
         current_schema = get_current_schema()
 
@@ -1284,8 +1264,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 # DEPRECATED
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionImportScheme.objects
-
     serializer_class = ComplexTransactionImportSchemeLightSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -1298,7 +1278,7 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
 
 class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
@@ -1313,9 +1293,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
 
         if not instance.scheme.data_preprocess_expression:
             raise ValidationError(
-                {
-                    "data_preprocess_expression": "data_preprocess_expression is required to preprocess file"
-                }
+                {"data_preprocess_expression": "data_preprocess_expression is required to preprocess file"}
             )
 
         options_object = {
@@ -1340,18 +1318,15 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
 
         filename_without_ext = instance.file_name.split(".")[0]
 
-        response = HttpResponse(
-            new_raw_items, content_type="application/force-download"
-        )
-        response[
-            "Content-Disposition"
-        ] = f"attachment; filename=preprocessed_{filename_without_ext}.json"
+        response = HttpResponse(new_raw_items, content_type="application/force-download")
+        response["Content-Disposition"] = f"attachment; filename=preprocessed_{filename_without_ext}.json"
 
         return response
 
 
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
@@ -1399,9 +1374,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                             celery_task_data["total_rows"] = res.result["total_rows"]
 
                         if "processed_rows" in res.result:
-                            celery_task_data["processed_rows"] = res.result[
-                                "processed_rows"
-                            ]
+                            celery_task_data["processed_rows"] = res.result["processed_rows"]
 
                         if "scheme_name" in res.result:
                             celery_task_data["scheme_name"] = res.result["scheme_name"]
@@ -1432,9 +1405,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            return Response(
-                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, *args, **kwargs):
         st = time.perf_counter()
@@ -1494,7 +1465,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
 class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-
+    renderer_classes = [FinmarsJSONRenderer]
     permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
@@ -1516,9 +1487,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(
-                    master_user=request.user.master_user, task_id=task_id
-                )
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 raise PermissionDenied()
@@ -1549,9 +1518,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                             celery_task_data["total_rows"] = res.result["total_rows"]
 
                         if "processed_rows" in res.result:
-                            celery_task_data["processed_rows"] = res.result[
-                                "processed_rows"
-                            ]
+                            celery_task_data["processed_rows"] = res.result["processed_rows"]
 
                         if "scheme_name" in res.result:
                             celery_task_data["scheme_name"] = res.result["scheme_name"]
@@ -1582,9 +1549,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            return Response(
-                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, *args, **kwargs):
         from poms.integrations.tasks import (
@@ -1642,6 +1607,7 @@ class TransactionFileResultViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     permission_classes = []
+    renderer_classes = [FinmarsJSONRenderer]
 
 
 class TransactionImportJson(APIView):
@@ -1655,7 +1621,7 @@ class TransactionImportJson(APIView):
 
         # _l.debug('request.data %s' % request.data)
 
-        _l.debug("request.data %s" % request.data)
+        _l.debug(f"request.data {request.data}")
 
         procedure_id = request.data["procedure_id"]
 
@@ -1683,6 +1649,7 @@ class DataProviderViewSet(AbstractReadOnlyModelViewSet):
     pagination_class = None
     queryset = DataProvider.objects
     serializer_class = DataProviderSerializer
+    renderer_classes = [FinmarsJSONRenderer]
 
 
 class SupersetGetSecurityToken(APIView):
@@ -1696,10 +1663,8 @@ class SupersetGetSecurityToken(APIView):
 
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-        url = settings.SUPERSET_URL + "api/v1/security/login"
-        response = requests.post(
-            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
-        )
+        url = f"{settings.SUPERSET_URL}api/v1/security/login"
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
         return response.json()
 
@@ -1710,7 +1675,7 @@ class SupersetGetSecurityToken(APIView):
             "Authorization": f'Bearer {tokens["access_token"]}',
         }
 
-        url = settings.SUPERSET_URL + "api/v1/security/csrf_token/"
+        url = f"{settings.SUPERSET_URL}api/v1/security/csrf_token/"
         response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
 
         response_json = response.json()
@@ -1748,9 +1713,7 @@ class SupersetGetSecurityToken(APIView):
 
         _l.info("SupersetGetSecurityToken.Requesting url %s" % url)
 
-        response = requests.post(
-            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
-        )
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
         _l.info("SupersetGetSecurityToken.response %s" % response.text)
 
