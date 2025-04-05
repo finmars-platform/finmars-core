@@ -181,17 +181,6 @@ def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     return qs
 
 
-# ME: 2024-02-08 TODO: delete later if everything works fine
-# def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key, model):
-#     start_time = time.time()
-#
-#     # print('get_queryset_filters len %s' % len(qs    ))
-#     qs = filter_items_for_group(qs, groups_types, groups_values, content_type_key, model)
-#     _l.debug("get_queryset_filters %s seconds " % (time.time() - start_time))
-#
-#     return qs
-
-
 def is_digit_attribute(item):
     return item.isdigit()
 
