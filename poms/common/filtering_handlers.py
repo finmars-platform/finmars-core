@@ -110,10 +110,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     attributes_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    # print('attribute_type.value_type %s' % attribute_type.value_type)
-    # print('value_type %s' % value_type)
-
-    # region CLASSIFIER FILTERS START
+    # CLASSIFIER FILTERS
 
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.CLASSIFIER:
         print(filter_config["value"])
@@ -159,13 +156,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             value = filter_config["value"][0]
 
         if value:
-            # options = {"classifier__name__icontains": value}
-            # include_null_options = {}
-            # if not exclude_empty_cells:
-            #     include_null_options["classifier__isnull"] = True
-            #     include_null_options["value_string__isnull"] = True
-            #     include_null_options["value_float__isnull"] = True
-            #     include_null_options["value_date__isnull"] = True
             q = Q()
             substrings = value.split(" ")
 
@@ -189,10 +179,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     elif filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
         attributes_qs = attributes_qs.filter(classifier__isnull=True)
 
-    # endregion CLASSIFIER FILTERS END
-
-    # region STRING FILTERS START
-
+    # STRING FILTERS START
     elif filter_type == FilterType.MULTISELECTOR and value_type == ValueType.STRING:
         print(filter_config["value"])
 
@@ -276,10 +263,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             Q(**include_null_options) | Q(**include_empty_string_options)
         )
 
-    # endregion STRING FILTERS END
-
-    # region NUMBER FILTERS START
-
+    # NUMBER FILTERS
     elif filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
@@ -365,10 +349,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
         attributes_qs = attributes_qs.filter(Q(**include_null_options))
 
-    # endregion NUMBER FILTERS END
-
-    # region DATE FILTERS START
-
+    # DATE FILTERS
     elif filter_type == FilterType.EQUAL and value_type == ValueType.DATE:
         if len(filter_config["value"]):
             value = filter_config["value"][0]
@@ -474,8 +455,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
             attributes_qs = attributes_qs.filter(Q(**options))
 
-    # endregion DATE FILTERS
-
     filtered_attributes_ids = attributes_qs.values_list("object_id", flat=True)
 
     qs = qs.filter(id__in=filtered_attributes_ids)
@@ -493,7 +472,7 @@ def add_filter(qs, filter_config):
     if isinstance(values, list) and values:
         value = values[0]
 
-    print(f"add_filter: values={values} value={value} value_type={value_type} key={key}")
+    _l.info(f"add_filter: values={values} value={value} value_type={value_type} key={key}")
 
     # FIELD FILTERS. Uses same filter types as string filter
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
@@ -507,8 +486,6 @@ def add_filter(qs, filter_config):
             qs = qs.filter(query)
 
     elif filter_type == FilterType.SELECTOR and value_type == ValueType.FIELD:
-        # TODO HANDLE SYSTEM CODE
-
         if value:
             options = {f"{key}__user_code": value}
             qs = qs.filter(Q(**options))
@@ -603,7 +580,7 @@ def add_filter(qs, filter_config):
 
         qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
-    # region NUMBER FILTERS
+    # NUMBER FILTERS
     elif filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
         if value or value == 0:
             q = _get_equal_q(key, value_type, value)
@@ -659,7 +636,7 @@ def add_filter(qs, filter_config):
         include_null_options = {f"{key}__isnull": True}
         qs = qs.filter(Q(**include_null_options))
 
-    # DATE FILTERS START
+    # DATE FILTERS
     elif filter_type == FilterType.EQUAL and value_type == ValueType.DATE:
         if value:
             q = _get_equal_q(
@@ -678,9 +655,6 @@ def add_filter(qs, filter_config):
     elif filter_type == FilterType.GREATER and value_type == ValueType.DATE:
         if value:
             options = {key + "__gt": datetime.strptime(value, DATE_FORMAT).date()}
-
-            print("options", options)
-
             qs = qs.filter(Q(**options))
 
     elif filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
@@ -763,9 +737,6 @@ def is_dynamic_attribute_filter(filter_config: dict) -> bool:
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
-    # print('Handle filters %s' % filter_settings)
-    # start_time = time.time()
-
     if filter_settings:
         for filter_config in filter_settings:
             if is_dynamic_attribute_filter(filter_config):
@@ -775,16 +746,11 @@ def handle_filters(qs, filter_settings, master_user, content_type):
             else:
                 qs = add_filter(qs, filter_config)
 
-    # _l.debug("handle_filters done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
-
     return qs
 
 
 def handle_global_table_search(qs, global_table_search, model, content_type):
     start_time = time.time()
-
-    # _l.info('handle_global_table_search.global_table_search %s' % global_table_search)
-
     q = Q()
 
     relation_fields = [
@@ -804,8 +770,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         and f.name != "linked_import_task"
         and f.name != "content_type"
     ]
-
-    # _l.info('relation_fields %s' % relation_fields)
 
     relation_queries_short_name = [
         Q(**{f"{f.name}__short_name__icontains": global_table_search})
@@ -837,8 +801,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         if isinstance(f, CharField) and f.name != "deleted_user_code"
     ]
 
-    # _l.info('char_fields %s' % char_fields)
-
     char_queries = [
         Q(**{f"{f.name}__icontains": global_table_search}) for f in char_fields
     ]
@@ -847,8 +809,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     text_fields = [f for f in model._meta.fields if isinstance(f, TextField)]
-
-    # _l.info('text_fields %s' % text_fields)
 
     text_queries = [
         Q(**{f"{f.name}__icontains": global_table_search}) for f in text_fields
@@ -913,8 +873,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | date_attr_query
 
         q = q & Q(**{"is_deleted": False})
-
-    # _l.info('q %s' % q)
 
     qs = qs.filter(q).distinct()
 
