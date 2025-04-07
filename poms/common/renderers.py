@@ -17,7 +17,7 @@ class ExtendedJSONEncoder(JSONEncoder):
     - Decimals objects (to be converted to string)
     - Django QuerySets
 
-    Attention! in nested structures special floats are handled differently
+    Attention! float inf, -inf & nan will cause ValueError exception
     """
 
     def __init__(self, *args, **kwargs):
