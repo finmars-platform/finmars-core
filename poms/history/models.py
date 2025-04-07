@@ -638,4 +638,4 @@ def record_history():
 
 # TODO refactor this code, HISTORY TEMPORARY DISABLED
 # AFTER FULLY MIGRATE TO REALM INFRASTRUCTURE REFACTOR THIS CODE
-# record_history()
+record_history()
