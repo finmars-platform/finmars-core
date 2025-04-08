@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.common.filters import CharFilter
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.views import AbstractModelViewSet
 from poms.schedules.models import Schedule
 from poms.schedules.serializers import ScheduleSerializer
@@ -27,7 +27,7 @@ class ScheduleFilterSet(FilterSet):
 class ScheduleViewSet(AbstractModelViewSet):
     queryset = Schedule.objects
     serializer_class = ScheduleSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     permission_classes = []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
