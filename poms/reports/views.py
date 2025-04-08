@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.common.filters import CharFilter, NoOpFilter
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.utils import get_closest_bday_of_yesterday
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.reports.light_builders.balance import BalanceReportLightBuilderSql
@@ -71,7 +71,7 @@ class BalanceReportCustomFieldFilterSet(FilterSet):
 class BalanceReportCustomFieldViewSet(AbstractModelViewSet):
     queryset = BalanceReportCustomField.objects.select_related("master_user")
     serializer_class = BalanceReportCustomFieldSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -93,7 +93,7 @@ class PLReportCustomFieldFilterSet(FilterSet):
 class PLReportCustomFieldViewSet(AbstractModelViewSet):
     queryset = PLReportCustomField.objects.select_related("master_user")
     serializer_class = PLReportCustomFieldSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -115,7 +115,7 @@ class TransactionReportCustomFieldFilterSet(FilterSet):
 class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
     queryset = TransactionReportCustomField.objects.select_related("master_user")
     serializer_class = TransactionReportCustomFieldSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -128,7 +128,6 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
 # TODO implement Pure Balance Report as separate module
 class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -391,7 +390,6 @@ class BalanceReportViewSet(AbstractViewSet):
 
 class BalanceReportLightViewSet(AbstractViewSet):
     serializer_class = BalanceReportLightSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -654,7 +652,6 @@ class BalanceReportLightViewSet(AbstractViewSet):
 
 class SummaryViewSet(AbstractViewSet):
     serializer_class = SummarySerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.GET)
@@ -827,20 +824,12 @@ class SummaryViewSet(AbstractViewSet):
                 "metrics": {
                     "nav": report_summary.get_nav(portfolio.id),
                     "pl_daily": report_summary.get_total_pl_daily(portfolio.id),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(
-                        portfolio.id
-                    ),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(portfolio.id),
                     "pl_mtd": report_summary.get_total_pl_mtd(portfolio.id),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(
-                        portfolio.id
-                    ),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(portfolio.id),
                     "pl_ytd": report_summary.get_total_pl_ytd(portfolio.id),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(
-                        portfolio.id
-                    ),
-                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(
-                        portfolio.id
-                    ),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(portfolio.id),
+                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(portfolio.id),
                     "pl_inception_to_date_percent": report_summary.get_total_position_return_pl_inception_to_date(
                         portfolio.id
                     ),
@@ -856,7 +845,6 @@ class SummaryViewSet(AbstractViewSet):
 
 class PLReportViewSet(AbstractViewSet):
     serializer_class = PLReportSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -977,17 +965,13 @@ class PLReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "PL Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("PL Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TransactionReportViewSet(AbstractViewSet):
     serializer_class = TransactionReportSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
         serialize_report_st = time.perf_counter()
@@ -1006,17 +990,13 @@ class TransactionReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Transaction Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Transaction Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PriceHistoryCheckViewSet(AbstractViewSet):
     serializer_class = PriceHistoryCheckSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
         st = time.perf_counter()
@@ -1042,7 +1022,6 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
 class PerformanceReportViewSet(AbstractViewSet):
     serializer_class = PerformanceReportSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     @action(detail=False, methods=["get"], url_path="first-transaction-date")
     def filtered_list(self, request, *args, **kwargs):
@@ -1360,7 +1339,7 @@ class BalanceReportInstanceViewSet(AbstractModelViewSet):
         "owner",
     )
     serializer_class = BalanceReportInstanceSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -1397,7 +1376,7 @@ class PLReportInstanceViewSet(AbstractModelViewSet):
         "owner",
     )
     serializer_class = PLReportInstanceSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

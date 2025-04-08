@@ -9,7 +9,7 @@ from rest_framework.settings import api_settings
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import GroupsAttributeFilter, NoOpFilter
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.views import (
     AbstractEvGroupViewSet,
     AbstractModelViewSet,
@@ -30,7 +30,7 @@ _l = getLogger("poms.pricing")
 class RunPricingView(AbstractViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = RunPricingSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -72,7 +72,7 @@ class PriceHistoryErrorViewSet(AbstractModelViewSet):
         "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -87,7 +87,7 @@ class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
         "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
     filter_class = PriceHistoryErrorFilterSet
     ordering_fields = ["date"]
@@ -100,7 +100,7 @@ class PriceHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMi
         "pricing_policy",
     )
     serializer_class = PriceHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PriceHistoryErrorFilterSet
 
@@ -124,7 +124,7 @@ class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
         "pricing_policy",
     )
     serializer_class = CurrencyHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -139,7 +139,7 @@ class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
         "pricing_policy",
     )
     serializer_class = CurrencyHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
     filter_class = CurrencyHistoryErrorFilterSet
     ordering_fields = ["date"]
@@ -153,7 +153,7 @@ class CurrencyHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginatio
     )
 
     serializer_class = CurrencyHistoryErrorSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = CurrencyHistoryErrorFilterSet
 

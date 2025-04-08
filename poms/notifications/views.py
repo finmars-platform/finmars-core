@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from poms.common.filters import CharFilter, NoOpFilter
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.views import AbstractReadOnlyModelViewSet
 from poms.notifications.filters import (
     NotificationContentTypeMultipleChoiceFilter,
@@ -49,7 +49,7 @@ class NotificationViewSet(AbstractReadOnlyModelViewSet):
         "target",
     )
     serializer_class = NotificationSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     permission_classes = (IsAuthenticated,)
     filter_backends = AbstractReadOnlyModelViewSet.filter_backends + [
         NotificationFilter,

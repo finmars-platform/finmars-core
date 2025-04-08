@@ -9,13 +9,21 @@ from rest_framework.response import Response
 from poms.common.views import AbstractViewSet, AbstractModelViewSet
 from poms.vault.models import VaultRecord
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
-    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer, UpdateVaultSecretSerializer, \
-    VaultSealSerializer, VaultUnsealSerializer, VaultRecordSerializer
+from poms.vault.serializers import (
+    VaultSecretSerializer,
+    VaultEngineSerializer,
+    VaultStatusSerializer,
+    GetVaultSecretSerializer,
+    DeleteVaultEngineSerializer,
+    DeleteVaultSecretSerializer,
+    UpdateVaultSecretSerializer,
+    VaultSealSerializer,
+    VaultUnsealSerializer,
+    VaultRecordSerializer,
+)
 from poms.vault.vault import FinmarsVault
-from poms_app import settings
 
-_l = logging.getLogger('poms.vault')
+_l = logging.getLogger("poms.vault")
 
 
 class VaultViewSet(AbstractViewSet):
@@ -26,9 +34,9 @@ class VaultViewSet(AbstractViewSet):
         responses={
             status.HTTP_200_OK: openapi.Response("Vault init successfully"),
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
-        }
+        },
     )
-    @action(detail=False, methods=['post'], url_path="init", serializer_class=VaultSealSerializer)
+    @action(detail=False, methods=["post"], url_path="init", serializer_class=VaultSealSerializer)
     def init(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -41,47 +49,46 @@ class VaultViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['get'], url_path="health", serializer_class=VaultStatusSerializer)
+    @action(detail=False, methods=["get"], url_path="health", serializer_class=VaultStatusSerializer)
     def health(self, request, *args, **kwargs):
 
         data = {}
 
-        data['status'] = 'ok'
-        data['text'] = 'Vault is responded with health check'
+        data["status"] = "ok"
+        data["text"] = "Vault is responded with health check"
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
         status = finmars_vault.get_health()
 
-        data['data'] = status
+        data["data"] = status
 
         serializer = VaultStatusSerializer(data)
 
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
+    @action(detail=False, methods=["get"], url_path="status", serializer_class=VaultStatusSerializer)
     def get_status(self, request, *args, **kwargs):
 
         data = {}
 
         try:
             # needed to check if token is available
-            vault_token = VaultRecord.objects.get(user_code='hashicorp-vault-token')
+            vault_token = VaultRecord.objects.get(user_code="hashicorp-vault-token")
 
-            data['status'] = 'ok'
-            data['text'] = 'Vault is operational for storing secrets'
+            data["status"] = "ok"
+            data["text"] = "Vault is operational for storing secrets"
 
             finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
             status = finmars_vault.get_status()
 
-            data['data'] = status
+            data["data"] = status
 
         except Exception as e:
-            _l.info(f'Failed to get vault token: {e}')
+            _l.info(f"Failed to get vault token: {e}")
 
-            data['status'] = 'unknown'
-            data['text'] = 'Vault is not configured for this Space'
-
+            data["status"] = "unknown"
+            data["text"] = "Vault is not configured for this Space"
 
         serializer = VaultStatusSerializer(data)
 
@@ -92,9 +99,9 @@ class VaultViewSet(AbstractViewSet):
         responses={
             status.HTTP_200_OK: openapi.Response("Vault sealed successfully"),
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
-        }
+        },
     )
-    @action(detail=False, methods=['post'], url_path="seal", serializer_class=VaultSealSerializer)
+    @action(detail=False, methods=["post"], url_path="seal", serializer_class=VaultSealSerializer)
     def seal(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -107,12 +114,12 @@ class VaultViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="unseal", serializer_class=VaultUnsealSerializer)
+    @action(detail=False, methods=["post"], url_path="unseal", serializer_class=VaultUnsealSerializer)
     def unseal(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        key = serializer.validated_data['key']
+        key = serializer.validated_data["key"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -138,14 +145,14 @@ class VaultEngineViewSet(AbstractViewSet):
         responses={
             status.HTTP_201_CREATED: openapi.Response("Vault engine created successfully"),
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
-        }
+        },
     )
-    @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultEngineSerializer)
+    @action(detail=False, methods=["post"], url_path="create", serializer_class=VaultEngineSerializer)
     def create_engine(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        engine_name = serializer.validated_data['engine_name']
+        engine_name = serializer.validated_data["engine_name"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -155,12 +162,12 @@ class VaultEngineViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultEngineSerializer)
+    @action(detail=False, methods=["post"], url_path="delete", serializer_class=DeleteVaultEngineSerializer)
     def delete_engine(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        engine_name = serializer.validated_data['engine_name']
+        engine_name = serializer.validated_data["engine_name"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -176,10 +183,10 @@ class VaultSecretViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
 
-        engine_name = request.query_params.get('engine_name')
+        engine_name = request.query_params.get("engine_name")
 
         if not engine_name:
-            return Response({'error': 'engine_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "engine_name is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -192,16 +199,16 @@ class VaultSecretViewSet(AbstractViewSet):
         responses={
             status.HTTP_201_CREATED: openapi.Response("Vault secret created successfully"),
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
-        }
+        },
     )
-    @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=["post"], url_path="create", serializer_class=VaultSecretSerializer)
     def create_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        engine_name = serializer.validated_data['engine_name']
-        path = serializer.validated_data['path']
-        data = serializer.validated_data['data']
+        engine_name = serializer.validated_data["engine_name"]
+        path = serializer.validated_data["path"]
+        data = serializer.validated_data["data"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -211,15 +218,15 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="update", serializer_class=UpdateVaultSecretSerializer)
+    @action(detail=False, methods=["post"], url_path="update", serializer_class=UpdateVaultSecretSerializer)
     def update_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        engine_name = serializer.validated_data['engine_name']
-        path = serializer.validated_data['path']
-        data = serializer.validated_data['data']
-        version = serializer.validated_data['version']
+        engine_name = serializer.validated_data["engine_name"]
+        path = serializer.validated_data["path"]
+        data = serializer.validated_data["data"]
+        version = serializer.validated_data["version"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -229,18 +236,17 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @swagger_auto_schema(
-        method='get',
-        responses={200: VaultSecretSerializer}
-    )
-    @action(detail=False, methods=['get'], url_path="get", serializer_class=GetVaultSecretSerializer)
+    @swagger_auto_schema(method="get", responses={200: VaultSecretSerializer})
+    @action(detail=False, methods=["get"], url_path="get", serializer_class=GetVaultSecretSerializer)
     def get_secret(self, request, *args, **kwargs):
-        engine_name = request.query_params.get('engine_name')
-        path = request.query_params.get('path')
-        version = request.query_params.get('version', None)
+        engine_name = request.query_params.get("engine_name")
+        path = request.query_params.get("path")
+        version = request.query_params.get("version", None)
 
         if not engine_name or not path:
-            return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "engine_name and path are required"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -254,13 +260,15 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['get'], url_path="get-metadata", serializer_class=GetVaultSecretSerializer)
+    @action(detail=False, methods=["get"], url_path="get-metadata", serializer_class=GetVaultSecretSerializer)
     def get_metadata(self, request, *args, **kwargs):
-        engine_name = request.query_params.get('engine_name')
-        path = request.query_params.get('path')
+        engine_name = request.query_params.get("engine_name")
+        path = request.query_params.get("path")
 
         if not engine_name or not path:
-            return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "engine_name and path are required"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 
@@ -270,13 +278,13 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultSecretSerializer)
+    @action(detail=False, methods=["post"], url_path="delete", serializer_class=DeleteVaultSecretSerializer)
     def delete_secret(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        engine_name = serializer.validated_data['engine_name']
-        path = serializer.validated_data['path']
+        engine_name = serializer.validated_data["engine_name"]
+        path = serializer.validated_data["path"]
 
         finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
 

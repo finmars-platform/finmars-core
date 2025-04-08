@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from poms.common.filters import CharFilter
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import (
     OwnerBySystemMessageMember,
@@ -56,7 +56,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         "comments", "attachments", "members"
     )
     serializer_class = SystemMessageSerializer
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -492,7 +492,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
 
 
 class NotificationViewSet(ViewSet):
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
 
     def list(self, request, *args, **kwargs):
         _l.debug(f"Original request auth: {request.headers.get('Authorization')}")
