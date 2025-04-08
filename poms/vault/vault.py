@@ -1,24 +1,23 @@
 import json
 import logging
-import contextlib
+
 import requests
 
-from django.core.exceptions import ObjectDoesNotExist
-from poms_app import settings
 from poms.vault.models import VaultRecord
+from poms_app import settings
 
-_l = logging.getLogger('poms.vault')
+_l = logging.getLogger("poms.vault")
 
 
 def remove_trailing_slash_from_keys(data):
     modified_data = {}
     for key, value in data.items():
-        new_key = key.rstrip('/')  # Remove trailing slash
+        new_key = key.rstrip("/")  # Remove trailing slash
         modified_data[new_key] = value
     return modified_data
 
 
-class FinmarsVault():
+class FinmarsVault:
 
     def __init__(self, realm_code=None, space_code=None):
 
@@ -26,20 +25,22 @@ class FinmarsVault():
         self.space_code = space_code
 
         if self.realm_code:
-            self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.realm_code + '/' + self.space_code + '/vault'
+            self.vault_host = (
+                "https://" + settings.DOMAIN_NAME + "/" + self.realm_code + "/" + self.space_code + "/vault"
+            )
         else:
-            self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + self.space_code + '/vault'
+            self.vault_host = "https://" + settings.DOMAIN_NAME + "/" + self.space_code + "/vault"
 
         self.auth_token = None
         try:
-            vault_token = VaultRecord.objects.get(user_code='hashicorp-vault-token')
+            vault_token = VaultRecord.objects.get(user_code="hashicorp-vault-token")
             self.auth_token = json.loads(vault_token.data)["token"]
         except Exception as e:
-            _l.info(f'Failed to get vault token: {e}')
+            _l.info(f"Failed to get vault token: {e}")
 
     def get_headers(self):
 
-        headers = {'X-Vault-Token': self.auth_token}
+        headers = {"X-Vault-Token": self.auth_token}
 
         return headers
 
@@ -47,82 +48,79 @@ class FinmarsVault():
 
     def get_health(self):
 
-        url = f'{self.vault_host}/v1/sys/health'  # warning should be no trailing slash
+        url = f"{self.vault_host}/v1/sys/health"  # warning should be no trailing slash
         headers = self.get_headers()
 
         try:
             response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Vault get health successfully')
+            _l.info(f"Vault get health successfully")
         except Exception as e:
-            _l.info(f'Failed to get health: {e}')
+            _l.info(f"Failed to get health: {e}")
 
         return response.json()
 
     def get_status(self):
 
-        url = f'{self.vault_host}/v1/sys/seal-status'  # warning should be no trailing slash
+        url = f"{self.vault_host}/v1/sys/seal-status"  # warning should be no trailing slash
         headers = self.get_headers()
 
         try:
             response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Vault get status successfully')
+            _l.info(f"Vault get status successfully")
         except Exception as e:
-            _l.info(f'Failed to get status: {e}')
+            _l.info(f"Failed to get status: {e}")
 
         return response.json()
 
     def init(self):
 
-        url = f'{self.vault_host}/v1/sys/init'  # warning should be no trailing slash
+        url = f"{self.vault_host}/v1/sys/init"  # warning should be no trailing slash
         headers = self.get_headers()
 
-        data = {
-            "secret_shares": 5,
-            "secret_threshold": 3
-        }
+        data = {"secret_shares": 5, "secret_threshold": 3}
 
         try:
             response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Vault inited successfully')
+            _l.info(f"Vault inited successfully")
         except Exception as e:
-            _l.info(f'Failed to init: {e}')
+            _l.info(f"Failed to init: {e}")
 
         return response.json()
 
     def seal(self):
 
-        url = f'{self.vault_host}/v1/sys/seal'  # warning should be no trailing slash
+        url = f"{self.vault_host}/v1/sys/seal"  # warning should be no trailing slash
         headers = self.get_headers()
 
         try:
             response = requests.post(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Vault sealed successfully')
+            _l.info(f"Vault sealed successfully")
         except Exception as e:
-            _l.info(f'Failed to seal: {e}')
+            _l.info(f"Failed to seal: {e}")
 
     def unseal(self, key):
 
-        url = f'{self.vault_host}/v1/sys/unseal'  # warning should be no trailing slash
+        url = f"{self.vault_host}/v1/sys/unseal"  # warning should be no trailing slash
         headers = self.get_headers()
 
-        data = {
-            'key': key
-        }
+        data = {"key": key}
 
         try:
             response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Vault sealed successfully')
+            _l.info(f"Vault sealed successfully")
         except Exception as e:
-            _l.info(f'Failed to seal: {e}')
+            _l.info(f"Failed to seal: {e}")
 
     # GENERAL ACTIONS ENDS
 
-    def get_list_engines(self, ):
+    def get_list_engines(
+        self,
+    ):
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
         response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
@@ -131,39 +129,36 @@ class FinmarsVault():
 
         filtered_list = []
 
-        if 'data' in response_json:
-            formatted_data = remove_trailing_slash_from_keys(response_json['data'])
+        if "data" in response_json:
+            formatted_data = remove_trailing_slash_from_keys(response_json["data"])
 
             filtered_keys = ["sys", "identity", "cubbyhole"]
 
-            filtered_list = [{'engine_name': k, 'data': v} for k, v in formatted_data.items() if
-                             k not in filtered_keys]
+            filtered_list = [
+                {"engine_name": k, "data": v} for k, v in formatted_data.items() if k not in filtered_keys
+            ]
 
         return filtered_list
 
     def create_engine(self, engine_name):
 
-        url = f'{self.vault_host}/v1/sys/mounts/{engine_name}'
+        url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
         headers = self.get_headers()
 
         payload = {
             "path": engine_name,
             "type": "kv",
             "generate_signing_key": True,
-            "config": {
-                "id": engine_name
-            },
-            "options": {
-                "version": 2
-            }
+            "config": {"id": engine_name},
+            "options": {"version": 2},
         }
 
         try:
             response = requests.post(url, json=payload, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Secret engine {engine_name} created successfully')
+            _l.info(f"Secret engine {engine_name} created successfully")
         except Exception as e:
-            _l.info(f'Failed to create secret engine: {e}')
+            _l.info(f"Failed to create secret engine: {e}")
 
         # return response.json()
 
@@ -173,9 +168,9 @@ class FinmarsVault():
         try:
             response = requests.delete(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Secret engine {engine_name} deleted successfully')
+            _l.info(f"Secret engine {engine_name} deleted successfully")
         except Exception as e:
-            _l.info(f'Failed to delete secret engine: {e}')
+            _l.info(f"Failed to delete secret engine: {e}")
 
     def get_list_secrets(self, engine_name):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/?list=true"
@@ -187,19 +182,14 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
 
-        data = {
-            'data': secret_data,
-            'options': {
-                'cas': 0
-            }
-        }
+        data = {"data": secret_data, "options": {"cas": 0}}
 
         try:
             response = requests.post(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Secret {secret_path} created successfully')
+            _l.info(f"Secret {secret_path} created successfully")
         except Exception as e:
-            _l.info(f'Failed to create secret: {e}')
+            _l.info(f"Failed to create secret: {e}")
         # return response.json()
 
     def get_secret_metadata(self, engine_name, secret_path):
@@ -212,7 +202,7 @@ class FinmarsVault():
 
         metadata = self.get_secret_metadata(engine_name, secret_path)
 
-        version = len(metadata['data']['versions'])
+        version = len(metadata["data"]["versions"])
 
         return version
 
@@ -226,19 +216,14 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
 
-        data = {
-            'data': secret_data,
-            'options': {
-                'cas': version
-            }
-        }
+        data = {"data": secret_data, "options": {"cas": version}}
 
         try:
             response = requests.put(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Secret {secret_path} updated successfully')
+            _l.info(f"Secret {secret_path} updated successfully")
         except Exception as e:
-            _l.info(f'Failed to update secret: {e}')
+            _l.info(f"Failed to update secret: {e}")
 
     def delete_secret(self, engine_name, secret_path):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/{secret_path}"
@@ -247,6 +232,6 @@ class FinmarsVault():
         try:
             response = requests.delete(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
-            _l.info(f'Secret {secret_path} deleted successfully')
+            _l.info(f"Secret {secret_path} deleted successfully")
         except Exception as e:
-            _l.info(f'Failed to delete secret: {e}')
+            _l.info(f"Failed to delete secret: {e}")

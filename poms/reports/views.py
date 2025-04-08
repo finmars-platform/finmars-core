@@ -129,7 +129,6 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
 class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
-
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
@@ -391,7 +390,6 @@ class BalanceReportViewSet(AbstractViewSet):
 
 class BalanceReportLightViewSet(AbstractViewSet):
     serializer_class = BalanceReportLightSerializer
-
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -655,7 +653,6 @@ class BalanceReportLightViewSet(AbstractViewSet):
 class SummaryViewSet(AbstractViewSet):
     serializer_class = SummarySerializer
 
-
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.GET)
         serializer.is_valid(raise_exception=True)
@@ -827,20 +824,12 @@ class SummaryViewSet(AbstractViewSet):
                 "metrics": {
                     "nav": report_summary.get_nav(portfolio.id),
                     "pl_daily": report_summary.get_total_pl_daily(portfolio.id),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(
-                        portfolio.id
-                    ),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(portfolio.id),
                     "pl_mtd": report_summary.get_total_pl_mtd(portfolio.id),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(
-                        portfolio.id
-                    ),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(portfolio.id),
                     "pl_ytd": report_summary.get_total_pl_ytd(portfolio.id),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(
-                        portfolio.id
-                    ),
-                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(
-                        portfolio.id
-                    ),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(portfolio.id),
+                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(portfolio.id),
                     "pl_inception_to_date_percent": report_summary.get_total_position_return_pl_inception_to_date(
                         portfolio.id
                     ),
@@ -856,7 +845,6 @@ class SummaryViewSet(AbstractViewSet):
 
 class PLReportViewSet(AbstractViewSet):
     serializer_class = PLReportSerializer
-
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -977,17 +965,13 @@ class PLReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "PL Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("PL Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TransactionReportViewSet(AbstractViewSet):
     serializer_class = TransactionReportSerializer
-
 
     def create(self, request, *args, **kwargs):
         serialize_report_st = time.perf_counter()
@@ -1006,17 +990,13 @@ class TransactionReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug(
-            "Transaction Report done: %s"
-            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
-        )
+        _l.debug("Transaction Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PriceHistoryCheckViewSet(AbstractViewSet):
     serializer_class = PriceHistoryCheckSerializer
-
 
     def create(self, request, *args, **kwargs):
         st = time.perf_counter()
@@ -1042,7 +1022,6 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
 class PerformanceReportViewSet(AbstractViewSet):
     serializer_class = PerformanceReportSerializer
-
 
     @action(detail=False, methods=["get"], url_path="first-transaction-date")
     def filtered_list(self, request, *args, **kwargs):
