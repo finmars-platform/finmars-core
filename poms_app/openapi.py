@@ -102,7 +102,10 @@ def get_account_documentation(*args, **kwargs):
     import poms.accounts.urls as account_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/accounts/", include(account_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/accounts/",
+            include(account_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -111,7 +114,10 @@ def get_portfolio_documentation(*args, **kwargs):
     import poms.portfolios.urls as portfolio_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/portfolios/", include(portfolio_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/portfolios/",
+            include(portfolio_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -120,7 +126,10 @@ def get_currency_documentation(*args, **kwargs):
     import poms.currencies.urls as currency_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/currencies/", include(currency_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/currencies/",
+            include(currency_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -130,7 +139,8 @@ def get_instrument_documentation(*args, **kwargs):
 
     local_urlpatterns = [
         path(
-            "<slug:realm_code>/<slug:space_code>/api/v1/instruments/", include(instrument_router.router.urls)
+            "<slug:realm_code>/<slug:space_code>/api/v1/instruments/",
+            include(instrument_router.router.urls),
         ),
     ]
     return generate_schema(local_urlpatterns)
@@ -164,7 +174,10 @@ def get_strategy_documentation(*args, **kwargs):
     import poms.strategies.urls as strategy_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/strategies/", include(strategy_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/strategies/",
+            include(strategy_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -173,7 +186,10 @@ def get_report_documentation(*args, **kwargs):
     import poms.reports.urls as report_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/reports/", include(report_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/reports/",
+            include(report_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -182,7 +198,10 @@ def get_procedure_documentation(*args, **kwargs):
     import poms.procedures.urls as procedure_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/procedures/", include(procedure_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/procedures/",
+            include(procedure_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -191,7 +210,10 @@ def get_ui_documentation(*args, **kwargs):
     import poms.ui.urls as ui_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/ui/", include(ui_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/ui/",
+            include(ui_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -200,7 +222,10 @@ def get_explorer_documentation(*args, **kwargs):
     import poms.explorer.urls as explorer_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/explorer/", include(explorer_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/explorer/",
+            include(explorer_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -210,8 +235,14 @@ def get_import_documentation(*args, **kwargs):
     import poms.integrations.urls as integrations_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/import/", include(integrations_router.router.urls)),
-        path("<slug:realm_code>/<slug:space_code>/api/v1/import/", include(csv_import_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/import/",
+            include(integrations_router.router.urls),
+        ),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/import/",
+            include(csv_import_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -220,7 +251,10 @@ def get_iam_documentation(*args, **kwargs):
     import poms.iam.urls as iam_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/iam/", include(iam_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/iam/",
+            include(iam_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -229,7 +263,10 @@ def get_vault_documentation(*args, **kwargs):
     import poms.vault.urls as vault_router
 
     local_urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/api/v1/vault/", include(vault_router.router.urls)),
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/vault/",
+            include(vault_router.router.urls),
+        ),
     ]
     return generate_schema(local_urlpatterns)
 
@@ -261,8 +298,12 @@ def get_redoc_urlpatterns():
     iam_schema_view = get_iam_documentation()
     vault_schema_view = get_vault_documentation()
 
-    urlpatterns = [
-        path("<slug:realm_code>/<slug:space_code>/docs/api/v1/", render_main_page, name="main"),
+    return [
+        path(
+            "<slug:realm_code>/<slug:space_code>/docs/api/v1/",
+            render_main_page,
+            name="main",
+        ),
         path(
             "<slug:realm_code>/<slug:space_code>/docs/api/v1/account",
             account_schema_view.with_ui("redoc", cache_timeout=0),
@@ -334,5 +375,3 @@ def get_redoc_urlpatterns():
             name="vault",
         ),
     ]
-
-    return urlpatterns
