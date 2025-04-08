@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from poms.common.filters import CharFilter
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 from poms_app.celery import get_celery_task_names
@@ -65,7 +65,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         "parent__file_report",
     ).prefetch_related("attachments", "children")
     serializer_class = CeleryTaskSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_class = CeleryTaskFilterSet
     filter_backends = [
         CeleryTaskDateRangeFilter,

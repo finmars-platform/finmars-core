@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.utils import datetime_now
 from poms.common.views import AbstractAsyncViewSet, AbstractModelViewSet
 from poms.reconciliation.models import (
@@ -38,7 +38,7 @@ class ReconciliationComplexTransactionFieldViewSet(AbstractModelViewSet):
     queryset = ReconciliationComplexTransactionField.objects
     serializer_class = ReconciliationComplexTransactionFieldSerializer
     filter_class = ReconciliationComplexTransactionFieldFilterSet
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -58,7 +58,7 @@ class ReconciliationBankFileFieldFilterSet(FilterSet):
 class ReconciliationBankFileFieldViewSet(AbstractModelViewSet):
     queryset = ReconciliationBankFileField.objects
     serializer_class = ReconciliationBankFileFieldSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_class = ReconciliationBankFileFieldFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -76,7 +76,7 @@ class ReconciliationNewBankFileFieldFilterSet(FilterSet):
 class ReconciliationNewBankFileFieldViewSet(AbstractModelViewSet):
     queryset = ReconciliationNewBankFileField.objects
     serializer_class = ReconciliationNewBankFileFieldSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_class = ReconciliationNewBankFileFieldFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -85,7 +85,7 @@ class ReconciliationNewBankFileFieldViewSet(AbstractModelViewSet):
 
 class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
     serializer_class = ProcessBankFileForReconcileSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     celery_task = process_bank_file_for_reconcile
 
     def get_serializer_context(self):
