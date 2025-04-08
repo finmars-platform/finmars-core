@@ -4,7 +4,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.parsers import MultiPartParser
 
 from poms.common.filters import CharFilter, NoOpFilter
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.views import AbstractModelViewSet
 from poms.complex_import.serializers import (
     ComplexImportSchemeSerializer,
@@ -34,7 +34,7 @@ class ComplexImportSchemeViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + []
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
 
 
 class ComplexImportViewSet(AbstractModelViewSet):
@@ -44,4 +44,3 @@ class ComplexImportViewSet(AbstractModelViewSet):
     )
     serializer_class = ComplexImportSerializer
     http_method_names = ["get", "post", "head"]
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]

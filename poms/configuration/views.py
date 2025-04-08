@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from poms.celery_tasks.models import CeleryTask
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
-from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
+
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet
 from poms.configuration.filters import ConfigurationQueryFilter
@@ -52,7 +52,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
     filter_class = ConfigurationFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [ConfigurationQueryFilter]
     permission_classes = AbstractModelViewSet.permission_classes + []
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
 
     @action(detail=True, methods=["get"], url_path="export-configuration")
     def export_configuration(self, request, pk=None, realm_code=None, space_code=None):
@@ -236,7 +236,7 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
     filter_class = NewMemberSetupConfigurationFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + []
     permission_classes = AbstractModelViewSet.permission_classes + []
-    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
+
 
     @action(detail=True, methods=["PUT"], url_path="install", serializer_class=None)
     def install(self, request, pk=None, realm_code=None, space_code=None):
