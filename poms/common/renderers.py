@@ -46,6 +46,17 @@ class FinmarsJSONRenderer(JSONRenderer):
     encoder_class = ExtendedJSONEncoder
 
 
+
+# from json.encoder import (
+#     INFINITY,
+#     _make_iterencode,
+#     encode_basestring,
+#     encode_basestring_ascii,
+# )
+#
+# from rest_framework.renderers import JSONRenderer
+# from rest_framework.utils.encoders import JSONEncoder
+#
 # class CustomJSONEncoder(JSONEncoder):
 #
 #     def iterencode(self, o, _one_shot=False):
