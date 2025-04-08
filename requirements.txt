@@ -1,4 +1,4 @@
-Django==4.1.13
+Django==4.2.20
 amqp==5.3.1
 azure-core==1.31.0
 azure-storage-blob==12.14.1
