@@ -1,6 +1,5 @@
 import logging
-
-from six import string_types
+from functools import partial
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
@@ -12,6 +11,8 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
 
+from six import string_types
+
 from poms.common.middleware import get_request
 from poms.common.utils import attr_is_relation
 from poms.obj_attrs.models import GenericAttributeType
@@ -19,22 +20,20 @@ from poms.obj_attrs.models import GenericAttributeType
 _l = logging.getLogger("poms.common")
 
 
-def _model_choices(model, field_name, master_user_path) -> list:
-    request = get_request()
-    if not request or not request.user or not request.user.master_user:
-        return []
-
-    qs = model.objects.filter(**{master_user_path: request.user.master_user}).order_by(field_name)
-    return [(t.id, getattr(t, field_name)) for t in qs]
-
-
 def _user_code_model_choices(model, field_name, master_user_path):
-    request = get_request()
-    if not request or not request.user or not request.user.master_user:
-        return []
+    master_user = get_request().user.master_user
+    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
 
-    qs = model.objects.filter(**{master_user_path: request.user.master_user}).order_by(field_name)
-    return [(t.user_code, getattr(t, field_name)) for t in qs]
+    for t in qs:
+        yield t.user_code, getattr(t, field_name)
+
+
+def _model_choices(model, field_name, master_user_path):
+    master_user = get_request().user.master_user
+    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
+
+    for t in qs:
+        yield t.id, getattr(t, field_name)
 
 
 class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
@@ -46,7 +45,8 @@ class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         self.model = kwargs.pop("model", self.model)
         self.field_name = kwargs.pop("field_name", self.field_name)
         self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
-        kwargs["choices"] = _model_choices(
+        kwargs["choices"] = partial(
+            _model_choices,
             model=self.model,
             field_name=self.field_name,
             master_user_path=self.master_user_path,
@@ -91,7 +91,8 @@ class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         self.model = kwargs.pop("model", self.model)
         self.field_name = kwargs.pop("field_name", self.field_name)
         self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
-        kwargs["choices"] = _user_code_model_choices(
+        kwargs["choices"] = partial(
+            _user_code_model_choices,
             model=self.model,
             field_name=self.field_name,
             master_user_path=self.master_user_path,
