@@ -4,7 +4,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.exceptions import ValidationError
 
 from poms.common.views import AbstractModelViewSet
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.system.models import EcosystemConfiguration, WhitelabelModel
 from poms.system.serializers import (
     EcosystemConfigurationSerializer,
@@ -24,7 +24,7 @@ class EcosystemConfigurationViewSet(AbstractModelViewSet):
     queryset = EcosystemConfiguration.objects
     serializer_class = EcosystemConfigurationSerializer
     filter_class = SchemeFilterSet
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
 
 class IsDefaultFilterSet(FilterSet):
@@ -38,7 +38,7 @@ class WhitelabelViewSet(AbstractModelViewSet):
     serializer_class = WhitelabelSerializer
     pagination_class = None
     filter_class = IsDefaultFilterSet
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

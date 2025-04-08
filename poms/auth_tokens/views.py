@@ -33,7 +33,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.views import AbstractModelViewSet
 from poms.configuration.utils import get_default_configuration_code
 from poms.users.filters import OwnerByMasterUserFilter
@@ -51,7 +51,7 @@ class ObtainAuthToken(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = AuthTokenSerializer
 
     if coreapi_schema.is_enabled():
@@ -102,7 +102,7 @@ class SetAuthToken(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = SetAuthTokenSerializer
 
     def get_serializer_context(self):
@@ -190,7 +190,7 @@ class CreateUser(APIView):
         parsers.JSONParser,
     )
     authentication_classes = ()
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = CreateUserSerializer
 
     def get_serializer_context(self):
@@ -288,7 +288,7 @@ class AcceptInvite(APIView):
         parsers.JSONParser,
     )
     authentication_classes = (JWTAuthentication,)
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = AcceptInviteSerializer
 
     def get_serializer_context(self):
@@ -330,7 +330,7 @@ class DeclineInvite(APIView):
         parsers.JSONParser,
     )
     authentication_classes = (JWTAuthentication,)
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = AcceptInviteSerializer
 
     def get_serializer_context(self):
@@ -371,7 +371,7 @@ class CreateMasterUser(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = CreateMasterUserSerializer
 
     def get_serializer_context(self):
@@ -420,7 +420,7 @@ class RenameMasterUser(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = RenameMasterUserSerializer
 
     def get_serializer_context(self):
@@ -451,7 +451,7 @@ class MasterUserChangeOwner(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = MasterUserChangeOwnerSerializer
 
     def get_serializer_context(self):
@@ -488,7 +488,7 @@ class CreateMember(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = CreateMemberSerializer
 
     def get_serializer_context(self):
@@ -527,7 +527,7 @@ class DeleteMember(APIView):
         parsers.MultiPartParser,
         parsers.JSONParser,
     )
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     serializer_class = DeleteMemberSerializer
 
     def get_serializer_context(self):
@@ -568,7 +568,7 @@ class PersonalAccessTokenViewSet(AbstractModelViewSet):
         "member",
     )
     serializer_class = PersonalAccessTokenSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

@@ -5,7 +5,7 @@ from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.utils import (
     get_closest_bday_of_yesterday,
     get_first_transaction,
@@ -33,7 +33,7 @@ _l = logging.getLogger("poms.widgets")
 
 
 class HistoryNavViewSet(AbstractViewSet):
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     def list(self, request, *args, **kwargs):
 
         try:
@@ -203,7 +203,7 @@ class HistoryNavViewSet(AbstractViewSet):
 
 
 class HistoryPlViewSet(AbstractViewSet):
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def list(self, request, *args, **kwargs):
 
@@ -370,7 +370,7 @@ class HistoryPlViewSet(AbstractViewSet):
 
 
 class StatsViewSet(AbstractViewSet):
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def list(self, request, *args, **kwargs):
         date = request.query_params.get("date", None)
@@ -401,7 +401,7 @@ class StatsViewSet(AbstractViewSet):
 
 class CollectHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
 
@@ -490,7 +490,7 @@ class CollectHistoryViewSet(AbstractViewSet):
 
 class CollectBalanceHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
 
@@ -565,7 +565,7 @@ class CollectBalanceHistoryViewSet(AbstractViewSet):
 
 class CollectPlHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
 
@@ -640,7 +640,7 @@ class CollectPlHistoryViewSet(AbstractViewSet):
 
 class CollectStatsViewSet(AbstractViewSet):
     serializer_class = CollectStatsSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def create(self, request, *args, **kwargs):
         date_from = request.data.get("date_from", None)

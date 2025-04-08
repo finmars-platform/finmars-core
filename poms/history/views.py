@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import NoOpFilter
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.views import AbstractModelViewSet
 from poms.history.filters import (
     HistoryActionFilter,
@@ -63,7 +63,7 @@ class HistoricalRecordFilterSet(FilterSet):
 class HistoricalRecordViewSet(AbstractModelViewSet):
     queryset = HistoricalRecord.objects.select_related("master_user", "member", "content_type")
     serializer_class = HistoricalRecordSerializer
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         HistoryDateRangeFilter,

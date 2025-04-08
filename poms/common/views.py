@@ -40,7 +40,7 @@ from poms.common.mixins import (
 )
 from poms.common.serializers import RealmMigrateSchemeSerializer
 from poms.common.sorting import sort_by_dynamic_attrs
-from poms.common.renderers import FinmarsJSONRenderer
+from poms.common.renderers import FinmarsJSONRenderer, BrowsableAPIRenderer
 from poms.common.tasks import apply_migration_to_space
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -560,7 +560,7 @@ def _get_values_from_report(content_type, report_instance_id, key):
 
 
 class ValuesForSelectViewSet(AbstractApiView, ViewSet):
-    renderer_classes = [FinmarsJSONRenderer]
+    renderer_classes = [FinmarsJSONRenderer, BrowsableAPIRenderer]
 
     def list(self, request, *args, **kwargs):
         content_type_name = request.query_params.get("content_type", None)
