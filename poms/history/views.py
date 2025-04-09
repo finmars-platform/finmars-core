@@ -98,7 +98,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
             "history.export_journal_to_storage",
             kwargs={
                 "task_id": task.id,
-                "context": {"realm_code": task.realm_code, "space_code": task.space_code},
+                "context": {"realm_code": task.master_user.realm_code, "space_code": task.master_user.space_code},
             },
             queue="backend-background-queue",
         )
