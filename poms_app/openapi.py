@@ -282,6 +282,17 @@ def get_schedule_documentation(*args, **kwargs):
     ]
     return generate_schema(local_urlpatterns)
 
+def get_celery_tasks_documentation(*args, **kwargs):
+    import poms.celery_tasks.urls as celery_router
+
+    local_urlpatterns = [
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/celery_tasks/",
+            include(celery_router.router.urls),
+        ),
+    ]
+    return generate_schema(local_urlpatterns)
+
 
 # -----------------------------------------
 # MAIN PAGE RENDER FUNCTION
@@ -310,6 +321,7 @@ def get_redoc_urlpatterns():
     iam_schema_view = get_iam_documentation()
     vault_schema_view = get_vault_documentation()
     schedule_schema_view = get_schedule_documentation()
+    celery_tasks_schema_view = get_celery_tasks_documentation()
 
     return [
         path(
@@ -391,5 +403,10 @@ def get_redoc_urlpatterns():
             "<slug:realm_code>/<slug:space_code>/docs/api/v1/schedule",
             schedule_schema_view.with_ui("redoc", cache_timeout=0),
             name="schedule",
+        ),
+        path(
+            "<slug:realm_code>/<slug:space_code>/docs/api/v1/celery_tasks",
+            celery_tasks_schema_view.with_ui("redoc", cache_timeout=0),
+            name="celery_tasks",
         ),
     ]
