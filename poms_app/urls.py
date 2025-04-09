@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, re_path, path
+from django.urls import include, path, re_path
+
 from healthcheck.views import HealthcheckView
 from poms_app.openapi import get_redoc_urlpatterns
 
@@ -15,17 +16,16 @@ if "django.contrib.admin" in settings.INSTALLED_APPS:
     ]
 
 urlpatterns = urlpatterns + [
-
     # Old Approach (delete in 1.9.0)
     re_path(r"^(?P<space_code>[^/]+)/api/", include("poms.api.urls")),
     re_path(r"^(?P<space_code>[^/]+)/healthcheck", HealthcheckView.as_view()),
-    re_path(r"^(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
-
+    re_path(r"^(?P<space_code>[^/]+)/healthz", HealthcheckView.as_view()),  # needed for k8s healthcheck
     # New Approach
     path("<slug:realm_code>/<slug:space_code>/api/", include("poms.api.urls")),
     path("<slug:realm_code>/<slug:space_code>/healthcheck/", HealthcheckView.as_view()),
-    path("<slug:realm_code>/<slug:space_code>/healthz/", HealthcheckView.as_view()), # needed for k8s healthcheck
-
+    path(
+        "<slug:realm_code>/<slug:space_code>/healthz/", HealthcheckView.as_view()
+    ),  # needed for k8s healthcheck
 ]
 
 if "drf_yasg" in settings.INSTALLED_APPS:
@@ -46,7 +46,5 @@ if settings.SERVER_TYPE == "local":
     ]
 
     urlpatterns += [
-        re_path(
-            r"^dev/auth/", include("rest_framework.urls", namespace="rest_framework")
-        ),
+        re_path(r"^dev/auth/", include("rest_framework.urls", namespace="rest_framework")),
     ]

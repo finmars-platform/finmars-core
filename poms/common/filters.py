@@ -1,5 +1,8 @@
+import functools
 import logging
-from functools import partial
+import warnings
+
+from six import string_types
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
@@ -7,11 +10,11 @@ from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _
-from django_filters.rest_framework import FilterSet
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from drf_yasg import openapi
+from drf_yasg.inspectors import FilterInspector
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
-
-from six import string_types
 
 from poms.common.middleware import get_request
 from poms.common.utils import attr_is_relation
@@ -20,26 +23,34 @@ from poms.obj_attrs.models import GenericAttributeType
 _l = logging.getLogger("poms.common")
 
 
-def is_system_relation(item) -> bool:
-    return item in {
-        "instrument_class",
-        "transaction_class",
-        "daily_pricing_model",
-        "payment_size_detail",
-    }
+def _get_master_user():
+    request = get_request()
+    if (
+        not request
+        or not request.user
+        or not hasattr(request.user, "master_user")
+        or not request.user.master_user
+    ):
+        return None
+    return request.user.master_user
 
 
-def is_scheme(item) -> bool:
-    return item == "price_download_scheme"
-
-
-def _model_choices(model, field_name, master_user_path):
-    master_user = get_request().user.master_user
+def _id_model_choices(model, field_name, master_user_path) -> list:
+    master_user = _get_master_user()
+    if not master_user:
+        return []
 
     qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
+    return [(t.id, getattr(t, field_name)) for t in qs]
 
-    for t in qs:
-        yield t.id, getattr(t, field_name)
+
+def _user_code_model_choices(model, field_name, master_user_path) -> list:
+    master_user = _get_master_user()
+    if not master_user:
+        return []
+
+    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
+    return [(t.user_code, getattr(t, field_name)) for t in qs]
 
 
 class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
@@ -51,8 +62,27 @@ class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         self.model = kwargs.pop("model", self.model)
         self.field_name = kwargs.pop("field_name", self.field_name)
         self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
-        kwargs["choices"] = partial(
-            _model_choices,
+        kwargs["choices"] = functools.partial(
+            _id_model_choices,
+            model=self.model,
+            field_name=self.field_name,
+            master_user_path=self.master_user_path,
+        )
+        super().__init__(*args, **kwargs)
+
+
+class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
+    model = None
+    field_name = "user_code"
+    master_user_path = "master_user"
+
+    def __init__(self, *args, **kwargs):
+        kwargs["lookup_expr"] = "exact"
+        self.model = kwargs.pop("model", self.model)
+        self.field_name = kwargs.pop("field_name", self.field_name)
+        self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
+        kwargs["choices"] = functools.partial(
+            _user_code_model_choices,
             model=self.model,
             field_name=self.field_name,
             master_user_path=self.master_user_path,
@@ -79,10 +109,7 @@ class ByIdFilterBackend(AbstractRelatedFilterBackend):
 
 class ByIsDeletedFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if (
-            getattr(view, "has_feature_is_deleted", False)
-            and getattr(view, "action", "") == "list"
-        ):
+        if getattr(view, "has_feature_is_deleted", False) and getattr(view, "action", "") == "list":
             value = request.query_params.get("is_deleted", None)
             if value is None:
                 is_deleted = value in (True, "True", "true", "1")
@@ -90,40 +117,9 @@ class ByIsDeletedFilterBackend(BaseFilterBackend):
         return queryset
 
 
-def _user_code_model_choices(model, field_name, master_user_path):
-    master_user = get_request().user.master_user
-
-    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
-
-    for t in qs:
-        yield t.user_code, getattr(t, field_name)
-
-
-class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
-    model = None
-    field_name = "user_code"
-    master_user_path = "master_user"
-
-    def __init__(self, *args, **kwargs):
-        kwargs["lookup_expr"] = "exact"
-        self.model = kwargs.pop("model", self.model)
-        self.field_name = kwargs.pop("field_name", self.field_name)
-        self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
-        kwargs["choices"] = partial(
-            _user_code_model_choices,
-            model=self.model,
-            field_name=self.field_name,
-            master_user_path=self.master_user_path,
-        )
-        super().__init__(*args, **kwargs)
-
-
 class ByIsEnabledFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if (
-            getattr(view, "has_feature_is_enabled", False)
-            and getattr(view, "action", "") == "list"
-        ):
+        if getattr(view, "has_feature_is_enabled", False) and getattr(view, "action", "") == "list":
             value = request.query_params.get("is_enabled", None)
             if value is None:
                 is_enabled = value in (True, "True", "true", "1")
@@ -147,57 +143,6 @@ class CharExactFilter(django_filters.CharFilter):
     def __init__(self, *args, **kwargs):
         kwargs["lookup_expr"] = "exact"
         super().__init__(*args, **kwargs)
-
-
-def _is_date_or_number(field_type) -> bool:
-    return any(type_part in field_type for type_part in ("Date", "Float", "Integer"))
-
-
-def get_q_obj_for_group_dash(content_type_key, model, attribute_key):
-    """
-
-    :param content_type_key:
-    :param model:
-    :param attribute_key:
-    :return: Q object with filtering conditions for '-' group
-    """
-    res_attr = attribute_key
-
-    if attr_is_relation(content_type_key, res_attr):
-        res_attr = f"{res_attr}__user_code"
-
-    q = Q(**{f"{res_attr}__isnull": True})
-
-    """
-    TODO: move rest of models from front end to backend
-    use them to determine whether attribute
-    contains number or date
-    """
-    try:
-        field = model._meta.get_field(attribute_key)
-    except (FieldDoesNotExist, AttributeError) as e:
-        raise e
-
-    field_type = field.get_internal_type()
-    value_type = None
-
-    if "Date" in field_type:
-        value_type = 40
-    else:
-        for type_part in ["Float", "Integer"]:
-            if type_part in field_type:
-                value_type = 20
-                break
-
-    # TODO: remove block bellow after separating 0 and '-'
-    if value_type == 20:
-        q = Q(q | Q(**{res_attr: 0}))
-
-    elif value_type != 40:
-        # value_type is 10 or 30
-        q = Q(q | Q(**{res_attr: "-"}))
-
-    return q
 
 
 def get_q_obj_for_attribute_type(attribute_type, group_value):
@@ -224,17 +169,13 @@ def get_q_obj_for_attribute_type(attribute_type, group_value):
         q = q & Q(**{f"{field_key}": group_value})
 
     else:
-        _l.error(
-            f"Attribute with invalid value_type passed: {attribute_type.value_type}"
-        )
+        _l.error(f"Attribute with invalid value_type passed: {attribute_type.value_type}")
         return q
 
     return q
 
 
-def filter_items_for_group(
-    queryset, groups_types, groups_values, content_type_key, model=None
-):
+def filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model=None):
     """
     :param queryset:
     :type queryset: object
@@ -283,21 +224,13 @@ def _filter_queryset_for_attribute(self_obj, request, queryset, view):
     else:
         return queryset
 
-    content_type = ContentType.objects.get(
-        app_label=model._meta.app_label, model=model._meta.model_name
-    )
+    content_type = ContentType.objects.get(app_label=model._meta.app_label, model=model._meta.model_name)
 
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
-    groups_types = list(
-        map(
-            lambda x: self_obj.format_groups(x, master_user, content_type), groups_types
-        )
-    )
+    groups_types = list(map(lambda x: self_obj.format_groups(x, master_user, content_type), groups_types))
 
-    return filter_items_for_group(
-        queryset, groups_types, groups_values, content_type_key, model
-    )
+    return filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model)
 
 
 class GroupsAttributeFilter(BaseFilterBackend):
@@ -430,19 +363,10 @@ class OrderingPostFilter(BaseFilterBackend):
 
         elif valid_fields == "__all__":
             # View explicitly allows filtering on any model field
-            valid_fields = [
-                (field.name, field.verbose_name)
-                for field in queryset.model._meta.fields
-            ]
-            valid_fields += [
-                (key, key.title().split("__"))
-                for key in queryset.query.annotations.keys()
-            ]
+            valid_fields = [(field.name, field.verbose_name) for field in queryset.model._meta.fields]
+            valid_fields += [(key, key.title().split("__")) for key in queryset.query.annotations.keys()]
         else:
-            valid_fields = [
-                (item, item) if isinstance(item, string_types) else item
-                for item in valid_fields
-            ]
+            valid_fields = [(item, item) if isinstance(item, string_types) else item for item in valid_fields]
 
         return valid_fields
 
@@ -485,10 +409,7 @@ class EntitySpecificFilter(BaseFilterBackend):
             is_inactive = False
             is_active = False
 
-            if (
-                "ev_options" in request.data
-                and "entity_filters" in request.data["ev_options"]
-            ):
+            if "ev_options" in request.data and "entity_filters" in request.data["ev_options"]:
                 if "disabled" in request.data["ev_options"]["entity_filters"]:
                     is_disabled = True
 
@@ -512,7 +433,6 @@ class EntitySpecificFilter(BaseFilterBackend):
             if not is_inactive and is_active:
                 try:
                     field = queryset.model._meta.get_field("is_active")
-
                     queryset = queryset.filter(is_active=True)
                 except FieldDoesNotExist:
                     pass
@@ -536,20 +456,11 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
             show_booked = False
             show_ignored = False
 
-            if (
-                "ev_options" in request.data
-                and "complex_transaction_filters" in request.data["ev_options"]
-            ):
-                if (
-                    "booked"
-                    in request.data["ev_options"]["complex_transaction_filters"]
-                ):
+            if "ev_options" in request.data and "complex_transaction_filters" in request.data["ev_options"]:
+                if "booked" in request.data["ev_options"]["complex_transaction_filters"]:
                     show_booked = True
 
-                if (
-                    "ignored"
-                    in request.data["ev_options"]["complex_transaction_filters"]
-                ):
+                if "ignored" in request.data["ev_options"]["complex_transaction_filters"]:
                     show_ignored = True
 
             if not show_booked and show_ignored:
@@ -581,10 +492,7 @@ class GlobalTableSearchFilter(django_filters.CharFilter):
             return qs
 
         # Create a Q object for each text field you want to search in
-        queries = [
-            Q(**{f"{field_name}__icontains": value})
-            for field_name in self.get_text_fields(qs.model)
-        ]
+        queries = [Q(**{f"{field_name}__icontains": value}) for field_name in self.get_text_fields(qs.model)]
 
         # Combine the Q objects using OR operator
         query = queries.pop()
@@ -609,3 +517,39 @@ class GlobalTableSearchFilter(django_filters.CharFilter):
                 ),
             )
         ]
+
+
+class FinmarsFilterBackend(DjangoFilterBackend):
+    """
+    Fixing problem in openapi inspecting filters with choices implemented as functools.partial
+    """
+    def get_schema_operation_parameters(self, view):
+        try:
+            queryset = view.get_queryset()
+        except Exception:
+            queryset = None
+            warnings.warn(f"{view.__class__} is not compatible with schema generation")
+
+        filterset_class = self.get_filterset_class(view, queryset)
+
+        if not filterset_class:
+            return []
+
+        parameters = []
+        for field_name, field in filterset_class.base_filters.items():
+            parameter = {
+                "name": field_name,
+                "required": field.extra["required"],
+                "in": "query",
+                "description": field.label if field.label is not None else field_name,
+                "schema": {
+                    "type": "string",
+                },
+            }
+            if field.extra and "choices" in field.extra:
+                if callable(field.extra["choices"]):  # fix case when 'choices' is callable function
+                    parameter["schema"]["enum"] = field.extra["choices"]()
+                else:
+                    parameter["schema"]["enum"] = [c[0] for c in field.extra["choices"]]
+            parameters.append(parameter)
+        return parameters
