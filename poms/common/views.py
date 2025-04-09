@@ -12,7 +12,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
 from django.http import Http404, HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import parsers, renderers, status
 from rest_framework.decorators import action
@@ -28,6 +27,7 @@ from poms.common.filters import (
     ByIdFilterBackend,
     ByIsDeletedFilterBackend,
     ByIsEnabledFilterBackend,
+    FinmarsFilterBackend,
     OrderingPostFilter,
 )
 from poms.common.grouping_handlers import count_groups, handle_groups
@@ -50,6 +50,9 @@ _l = logging.getLogger("poms.common")
 
 class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
+
+        print(f"get_operation {operation_keys=}")
+
         operation = super().get_operation(operation_keys)
 
         # e.g. operation_keys might be ("api", "v1", "accounts", "account-attribute-type", "list")
@@ -335,7 +338,7 @@ class AbstractReadOnlyModelViewSet(AbstractApiView, ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [
         ByIdFilterBackend,
-        DjangoFilterBackend,
+        FinmarsFilterBackend,
         OrderingFilter,
     ]
 
@@ -810,70 +813,64 @@ class AbstractEvGroupViewSet(
     filter_backends = [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
-        DjangoFilterBackend,
+        FinmarsFilterBackend,
         OrderingFilter,
         OrderingPostFilter,
     ]
 
     def list(self, request, *args, **kwargs):
-        raise DeprecationWarning("Deprecated API")
-        # if len(request.query_params.getlist("groups_types")) == 0:
-        #     return Response(
-        #         {
-        #             "status": status.HTTP_404_NOT_FOUND,
-        #             "message": "No groups provided.",
-        #             "data": [],
-        #         }
-        #     )
-        #
-        # start_time = time.time()
-        # master_user = request.user.master_user
-        #
-        # qs = self.get_queryset()
-        #
-        # qs = self.filter_queryset(qs)
-        #
-        # filtered_qs = self.get_queryset()
-        #
-        # filtered_qs = filtered_qs.filter(id__in=qs)
-        #
-        # filtered_qs = filtered_qs.filter(master_user=master_user)
-        #
-        # content_type = ContentType.objects.get(
-        #     app_label=self.serializer_class.Meta.model._meta.app_label,
-        #     model=self.serializer_class.Meta.model._meta.model_name,
-        # )
-        #
-        # try:
-        #     filtered_qs.model._meta.get_field("is_enabled")
-        # except FieldDoesNotExist:
-        #     pass
-        # else:
-        #     is_enabled = self.request.query_params.get("is_enabled", "true")
-        #     if is_enabled == "true":
-        #         filtered_qs = filtered_qs.filter(is_enabled=True)
-        #
-        # try:
-        #     filtered_qs.model._meta.get_field("is_deleted")
-        # except FieldDoesNotExist:
-        #     pass
-        # else:
-        #     is_deleted = self.request.query_params.get("is_deleted", "true")
-        #     if is_deleted == "true":
-        #         filtered_qs = filtered_qs.filter(is_deleted=True)
-        #     else:
-        #         filtered_qs = filtered_qs.filter(is_deleted=False)
-        #
-        # filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
-        #
-        # page = self.paginate_queryset(filtered_qs)
-        #
-        # _l.debug(f"List {time.time() - start_time} seconds ")
-        #
-        # if page is not None:
-        #     return self.get_paginated_response(page)
-        #
-        # return Response(filtered_qs)
+        if len(request.query_params.getlist("groups_types")) == 0:
+            return Response(
+                {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": "No groups provided.",
+                    "data": [],
+                }
+            )
+
+        start_time = time.time()
+        master_user = request.user.master_user
+        qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
+
+        filtered_qs = self.get_queryset()
+        filtered_qs = filtered_qs.filter(id__in=qs)
+        filtered_qs = filtered_qs.filter(master_user=master_user)
+
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
+        )
+
+        try:
+            filtered_qs.model._meta.get_field("is_enabled")
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_enabled = self.request.query_params.get("is_enabled", "true")
+            if is_enabled == "true":
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
+        try:
+            filtered_qs.model._meta.get_field("is_deleted")
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_deleted = self.request.query_params.get("is_deleted", "true")
+            if is_deleted == "true":
+                filtered_qs = filtered_qs.filter(is_deleted=True)
+            else:
+                filtered_qs = filtered_qs.filter(is_deleted=False)
+
+        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
+        page = self.paginate_queryset(filtered_qs)
+
+        _l.debug(f"List {time.time() - start_time} seconds ")
+
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(filtered_qs)
 
     @action(detail=False, methods=["post"], url_path="filtered")
     def filtered_list(self, request, *args, **kwargs):

@@ -564,8 +564,7 @@ class FinmarsFilterBackend(DjangoFilterBackend):
                 },
             }
             if field.extra and "choices" in field.extra:
-                if isinstance(field.extra["choices"], functools.partial):
-                    # fix choices as functools.partial
+                if callable(field.extra["choices"]):  # fix case when 'choices' is callable function
                     parameter["schema"]["enum"] = field.extra["choices"]()
                 else:
                     parameter["schema"]["enum"] = [c[0] for c in field.extra["choices"]]
