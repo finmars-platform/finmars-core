@@ -27,7 +27,7 @@ def _get_master_user():
     return request.user.master_user
 
 
-def _id_model_choices(model, field_name, master_user_path):
+def _id_model_choices(model, field_name, master_user_path) -> list:
     master_user = _get_master_user()
     if not master_user:
         return []
@@ -36,7 +36,7 @@ def _id_model_choices(model, field_name, master_user_path):
     return [(t.id, getattr(t, field_name)) for t in qs]
 
 
-def _user_code_model_choices(model, field_name, master_user_path):
+def _user_code_model_choices(model, field_name, master_user_path) -> list:
     master_user = _get_master_user()
     if not master_user:
         return []
