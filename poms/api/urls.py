@@ -18,6 +18,7 @@ import poms.file_reports.views as file_reports
 import poms.history.views as history
 import poms.iam.urls as iam_router
 import poms.instruments.urls as instrument_router
+import poms.schedules.urls as schedule_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
 import poms.integrations.views as integrations
@@ -28,7 +29,6 @@ import poms.procedures.urls as procedure_router
 import poms.reconciliation.views as reconciliation
 import poms.reference_tables.views as reference_table
 import poms.reports.urls as report_router
-import poms.schedules.views as schedules
 import poms.strategies.urls as strategy_router
 import poms.system.views as system
 import poms.system_messages.views as system_messages
@@ -215,11 +215,6 @@ router.register(
     "currency_history_error",
 )
 router.register(
-    "schedules/schedule",
-    schedules.ScheduleViewSet,
-    "schedule",
-)
-router.register(
     "widgets/history/nav",
     widgets.HistoryNavViewSet,
     "widgets_history_nav",
@@ -362,6 +357,7 @@ urlpatterns = [
     re_path("^v1/clients/", include(clients_router.router.urls)),
     re_path("^v1/vault/", include(vault_router.router.urls)),
     re_path("^v1/iam/", include(iam_router.router.urls)),
+    re_path("^v1/schedules", include(schedule_router.router.urls)),
     re_path("^v1/", include(router.urls)),
     re_path(
         "instruments/instrument-database-search",

@@ -271,6 +271,18 @@ def get_vault_documentation(*args, **kwargs):
     return generate_schema(local_urlpatterns)
 
 
+def get_schedule_documentation(*args, **kwargs):
+    import poms.schedules.urls as schedule_router
+
+    local_urlpatterns = [
+        path(
+            "<slug:realm_code>/<slug:space_code>/api/v1/schedule/",
+            include(schedule_router.router.urls),
+        ),
+    ]
+    return generate_schema(local_urlpatterns)
+
+
 # -----------------------------------------
 # MAIN PAGE RENDER FUNCTION
 # -----------------------------------------
@@ -297,6 +309,7 @@ def get_redoc_urlpatterns():
     import_schema_view = get_import_documentation()
     iam_schema_view = get_iam_documentation()
     vault_schema_view = get_vault_documentation()
+    schedule_schema_view = get_schedule_documentation()
 
     return [
         path(
@@ -373,5 +386,10 @@ def get_redoc_urlpatterns():
             "<slug:realm_code>/<slug:space_code>/docs/api/v1/vault",
             vault_schema_view.with_ui("redoc", cache_timeout=0),
             name="vault",
+        ),
+        path(
+            "<slug:realm_code>/<slug:space_code>/docs/api/v1/schedule",
+            schedule_schema_view.with_ui("redoc", cache_timeout=0),
+            name="schedule",
         ),
     ]
