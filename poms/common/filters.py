@@ -27,7 +27,7 @@ def _get_master_user():
     return request.user.master_user
 
 
-def _model_choices(model, field_name, master_user_path):
+def _id_model_choices(model, field_name, master_user_path):
     master_user = _get_master_user()
     if not master_user:
         return []
@@ -55,7 +55,7 @@ class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         self.field_name = kwargs.pop("field_name", self.field_name)
         self.master_user_path = kwargs.pop("master_user_path", self.master_user_path)
         kwargs["choices"] = functools.partial(
-            _model_choices,
+            _id_model_choices,
             model=self.model,
             field_name=self.field_name,
             master_user_path=self.master_user_path,
@@ -425,7 +425,6 @@ class EntitySpecificFilter(BaseFilterBackend):
             if not is_inactive and is_active:
                 try:
                     field = queryset.model._meta.get_field("is_active")
-
                     queryset = queryset.filter(is_active=True)
                 except FieldDoesNotExist:
                     pass
