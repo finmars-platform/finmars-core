@@ -4,7 +4,8 @@ from rest_framework import routers
 
 import poms.accounts.urls as account_router
 import poms.api.views as api
-import poms.celery_tasks.views as celery_tasks
+import poms.celery_tasks.urls as celery_router
+import poms.celery_tasks.views as celery_views
 import poms.clients.urls as clients_router
 import poms.common.views as common
 import poms.complex_import.views as complex_import
@@ -18,6 +19,7 @@ import poms.file_reports.views as file_reports
 import poms.history.views as history
 import poms.iam.urls as iam_router
 import poms.instruments.urls as instrument_router
+import poms.schedules.urls as schedule_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
 import poms.integrations.views as integrations
@@ -28,7 +30,6 @@ import poms.procedures.urls as procedure_router
 import poms.reconciliation.views as reconciliation
 import poms.reference_tables.views as reference_table
 import poms.reports.urls as report_router
-import poms.schedules.views as schedules
 import poms.strategies.urls as strategy_router
 import poms.system.views as system
 import poms.system_messages.views as system_messages
@@ -68,21 +69,6 @@ router.register(
     "reference-tables/reference-table",
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",
-)
-router.register(
-    "tasks/task",
-    celery_tasks.CeleryTaskViewSet,
-    "CeleryTask",
-)
-router.register(
-    "tasks/worker",
-    celery_tasks.CeleryWorkerViewSet,
-    "CeleryWorker",
-)
-router.register(
-    "tasks/stats",
-    celery_tasks.CeleryStatsViewSet,
-    "CeleryStats",
 )
 router.register(
     "configuration/configuration",
@@ -215,11 +201,6 @@ router.register(
     "currency_history_error",
 )
 router.register(
-    "schedules/schedule",
-    schedules.ScheduleViewSet,
-    "schedule",
-)
-router.register(
     "widgets/history/nav",
     widgets.HistoryNavViewSet,
     "widgets_history_nav",
@@ -307,11 +288,6 @@ router.register(
     "import_complex",
 )
 router.register(
-    "active_processes/active_processes",
-    celery_tasks.CeleryTaskViewSet,
-    "activeprocesses",
-)
-router.register(
     "transactions/bank-file",
     integrations.TransactionFileResultViewSet,
     "transaction_bank_file",
@@ -341,7 +317,11 @@ router.register(
     reconciliation.ReconciliationComplexTransactionFieldViewSet,
     "complex_transaction_fields",
 )
-
+router.register(
+    "active_processes/active_processes",
+    celery_views.CeleryTaskViewSet,
+    "activeprocesses",
+)
 
 urlpatterns = [
     re_path("^v1/system-notifications/", include("poms.system_messages.urls")),
@@ -362,6 +342,8 @@ urlpatterns = [
     re_path("^v1/clients/", include(clients_router.router.urls)),
     re_path("^v1/vault/", include(vault_router.router.urls)),
     re_path("^v1/iam/", include(iam_router.router.urls)),
+    re_path("^v1/schedules/", include(schedule_router.router.urls)),
+    re_path("^v1/tasks/", include(celery_router.router.urls)),
     re_path("^v1/", include(router.urls)),
     re_path(
         "instruments/instrument-database-search",

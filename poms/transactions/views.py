@@ -9,6 +9,7 @@ from django.db.models import Prefetch, Q
 from django.http import Http404
 from django.utils.translation import gettext_lazy
 from django_filters.rest_framework import FilterSet
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -22,9 +23,11 @@ from poms.common.filters import (
     AttributeFilter,
     CharExactFilter,
     CharFilter,
+    GlobalTableSearchFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter, ModelExtUserCodeMultipleChoiceFilter, GlobalTableSearchFilter,
+    ModelExtUserCodeMultipleChoiceFilter,
+    NoOpFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import (
@@ -221,9 +224,10 @@ class TransactionTypeEvFilterSet(FilterSet):
 
 
 class TransactionTypeViewSet(AbstractModelViewSet):
-    queryset = TransactionType.objects.select_related('master_user','owner',
-                                                      ).prefetch_related('instrument_types',
-                                                                                      'attributes', 'portfolios')
+    queryset = TransactionType.objects.select_related(
+        "master_user",
+        "owner",
+    ).prefetch_related("instrument_types", "attributes", "portfolios")
     serializer_class = TransactionTypeSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -375,9 +379,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         currency_id = request.query_params.get("context_currency", None)
         pricing_policy_id = request.query_params.get("context_pricing_policy", None)
-        allocation_balance_id = request.query_params.get(
-            "context_allocation_balance", None
-        )
+        allocation_balance_id = request.query_params.get("context_allocation_balance", None)
         allocation_pl_id = request.query_params.get("context_allocation_pl", None)
 
         context_instrument = None
@@ -402,13 +404,9 @@ class TransactionTypeViewSet(AbstractModelViewSet):
             except Exception:
                 context_position_size = None
 
-        context_effective_date = request.query_params.get(
-            "context_effective_date", None
-        )
+        context_effective_date = request.query_params.get("context_effective_date", None)
         context_report_date = request.query_params.get("context_report_date", None)
-        context_report_start_date = request.query_params.get(
-            "context_report_start_date", None
-        )
+        context_report_start_date = request.query_params.get("context_report_start_date", None)
 
         # context_notification_date = request.query_params.get(
         #     "context_notification_date"
@@ -431,9 +429,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         if currency_id:
             try:
-                context_currency = Currency.objects.get(
-                    master_user=master_user, id=currency_id
-                )
+                context_currency = Currency.objects.get(master_user=master_user, id=currency_id)
             except Currency.DoesNotExist:
                 context_currency = None
 
@@ -447,57 +443,43 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         if allocation_pl_id:
             try:
-                context_allocation_pl = Instrument.objects.get(
-                    master_user=master_user, id=allocation_pl_id
-                )
+                context_allocation_pl = Instrument.objects.get(master_user=master_user, id=allocation_pl_id)
             except Instrument.DoesNotExist:
                 context_allocation_pl = None
 
         if instrument_id:
             try:
-                context_instrument = Instrument.objects.get(
-                    master_user=master_user, id=instrument_id
-                )
+                context_instrument = Instrument.objects.get(master_user=master_user, id=instrument_id)
             except Instrument.DoesNotExist:
                 context_instrument = None
 
         if portfolio_id:
             try:
-                context_portfolio = Portfolio.objects.get(
-                    master_user=master_user, id=portfolio_id
-                )
+                context_portfolio = Portfolio.objects.get(master_user=master_user, id=portfolio_id)
             except Portfolio.DoesNotExist:
                 context_portfolio = None
 
         if account_id:
             try:
-                context_account = Account.objects.get(
-                    master_user=master_user, id=account_id
-                )
+                context_account = Account.objects.get(master_user=master_user, id=account_id)
             except Account.DoesNotExist:
                 context_account = None
 
         if strategy1_id:
             try:
-                context_strategy1 = Strategy1.objects.get(
-                    master_user=master_user, id=strategy1_id
-                )
+                context_strategy1 = Strategy1.objects.get(master_user=master_user, id=strategy1_id)
             except Strategy1.DoesNotExist:
                 context_strategy1 = None
 
         if strategy2_id:
             try:
-                context_strategy2 = Strategy2.objects.get(
-                    master_user=master_user, id=strategy2_id
-                )
+                context_strategy2 = Strategy2.objects.get(master_user=master_user, id=strategy2_id)
             except Strategy2.DoesNotExist:
                 context_strategy2 = None
 
         if strategy3_id:
             try:
-                context_strategy3 = Strategy3.objects.get(
-                    master_user=master_user, id=strategy3_id
-                )
+                context_strategy3 = Strategy3.objects.get(master_user=master_user, id=strategy3_id)
             except Strategy3.DoesNotExist:
                 context_strategy3 = None
 
@@ -541,9 +523,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         increment = 1
         while context_parameter_exist:
             try:
-                parameter = request.query_params.get(
-                    f"context_parameter{str(increment)}", None
-                )
+                parameter = request.query_params.get(f"context_parameter{str(increment)}", None)
 
                 if parameter:
                     context_values[f"context_parameter{str(increment)}"] = parameter
@@ -602,9 +582,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
                 )
 
                 try:
-                    serializer = self.get_serializer(
-                        instance=instance, data=request.data
-                    )
+                    serializer = self.get_serializer(instance=instance, data=request.data)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
                     return Response(serializer.data)
@@ -638,9 +616,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
                 return Response(serializer.data)
             else:
                 try:
-                    serializer = self.get_serializer(
-                        instance=instance, data=request.data
-                    )
+                    serializer = self.get_serializer(instance=instance, data=request.data)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
                     return Response(serializer.data)
@@ -732,10 +708,11 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         recalculate_user_fields.apply_async(
             kwargs={
-                "task_id": celery_task.id, 'context': {
-                    'space_code': celery_task.master_user.space_code,
-                    'realm_code': celery_task.master_user.realm_code
-                }
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
             }
         )
 
@@ -773,9 +750,7 @@ class TransactionFilterSet(FilterSet):
         field_name="id",
         master_user_path="transaction_type__master_user",
     )
-    transaction_class = django_filters.ModelMultipleChoiceFilter(
-        queryset=TransactionClass.objects
-    )
+    transaction_class = django_filters.ModelMultipleChoiceFilter(queryset=TransactionClass.objects)
     transaction_code = django_filters.NumberFilter()
     transaction_currency = ModelExtMultipleChoiceFilter(model=Currency)
     position_size_with_sign = django_filters.RangeFilter()
@@ -801,9 +776,7 @@ class TransactionFilterSet(FilterSet):
         fields = []
 
 
-def get_transaction_queryset(
-    select_related=True, complex_transaction_transactions=False
-):
+def get_transaction_queryset(select_related=True, complex_transaction_transactions=False):
     qs = Transaction.objects
 
     fields1 = (
@@ -869,9 +842,9 @@ def get_transaction_queryset(
         qs = qs.prefetch_related(
             Prefetch(
                 "complex_transaction__transactions",
-                queryset=get_transaction_queryset(
-                    select_related=select_related
-                ).order_by("complex_transaction_order", "transaction_date"),
+                queryset=get_transaction_queryset(select_related=select_related).order_by(
+                    "complex_transaction_order", "transaction_date"
+                ),
             )
         )
 
@@ -898,9 +871,7 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
         qs = qs.prefetch_related(
             Prefetch(
                 "transactions",
-                queryset=get_transaction_queryset(
-                    select_related=select_related
-                ).order_by(
+                queryset=get_transaction_queryset(select_related=select_related).order_by(
                     "transaction_date",
                     "complex_transaction_order",
                 ),
@@ -911,9 +882,7 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
 
 
 class TransactionViewSet(AbstractModelViewSet):
-    queryset = get_transaction_queryset(
-        select_related=False, complex_transaction_transactions=True
-    )
+    queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
     serializer_class = TransactionSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -1199,10 +1168,8 @@ class ComplexTransactionFilterSet(FilterSet):
     code = django_filters.NumberFilter()
     date = django_filters.DateFromToRangeFilter()
     is_deleted = django_filters.BooleanFilter()
-
     transactions__accounting_date = django_filters.DateFromToRangeFilter()
     transactions__portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
-
     global_table_search = GlobalTableSearchFilter(label="Global table search")
 
     class Meta:
@@ -1220,12 +1187,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         GroupsAttributeFilter,
     ]
     filter_class = ComplexTransactionFilterSet
-    ordering_fields = [
-        "date",
-        "code",
-        "is_deleted",
-        "transactions__accounting_date"
-    ]
+    ordering_fields = ["date", "code", "is_deleted", "transactions__accounting_date"]
 
     def create(self, request, *args, **kwargs):
         raise ValidationError("Not allowed!")
@@ -1369,9 +1331,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             with transaction.atomic():
                 savepoint = transaction.savepoint()
 
-                _l.info(
-                    f'complex tt status {request.data["complex_transaction_status"]}'
-                )
+                _l.info(f'complex tt status {request.data["complex_transaction_status"]}')
 
                 uniqueness_reaction = request.data.get("uniqueness_reaction", None)
 
@@ -1379,9 +1339,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                     transaction_type=complex_transaction.transaction_type,
                     process_mode=request.data["process_mode"],
                     complex_transaction=complex_transaction,
-                    complex_transaction_status=request.data[
-                        "complex_transaction_status"
-                    ],
+                    complex_transaction_status=request.data["complex_transaction_status"],
                     context=self.get_serializer_context(),
                     uniqueness_reaction=uniqueness_reaction,
                     member=request.user.member,
@@ -1394,13 +1352,9 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                         request.data["complex_transaction"]
                         and not request.data["complex_transaction"]["status"]
                     ):
-                        request.data["complex_transaction"][
-                            "status"
-                        ] = ComplexTransaction.PRODUCTION
+                        request.data["complex_transaction"]["status"] = ComplexTransaction.PRODUCTION
 
-                    serializer = self.get_serializer(
-                        instance=instance, data=request.data
-                    )
+                    serializer = self.get_serializer(instance=instance, data=request.data)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
 
@@ -1455,9 +1409,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         )
 
         if request.data["complex_transaction"]:
-            request.data["complex_transaction"][
-                "status"
-            ] = ComplexTransaction.PRODUCTION
+            request.data["complex_transaction"]["status"] = ComplexTransaction.PRODUCTION
 
         serialize_st = time.perf_counter()
 
@@ -1497,9 +1449,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 return Response(serializer.data)
             else:
                 try:
-                    serializer = self.get_serializer(
-                        instance=instance, data=request.data
-                    )
+                    serializer = self.get_serializer(instance=instance, data=request.data)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
 
@@ -1519,9 +1469,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 
         print("detail_route: /update_properties: process update_properties")
 
-        serializer = self.get_serializer(
-            instance=complex_transaction, data=request.data
-        )
+        serializer = self.get_serializer(instance=complex_transaction, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -1557,9 +1505,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 except PermissionDenied:
                     raise
 
-                serializer = self.get_serializer(
-                    instance=instance, data=adata, partial=partial
-                )
+                serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
                 if not serializer.is_valid(raise_exception=False):
                     has_error = True
                 serializers.append(serializer)
@@ -1570,9 +1516,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 if serializer:
                     errors.append(serializer.errors)
                 else:
-                    errors.append(
-                        {api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy("Not Found")}
-                    )
+                    errors.append({api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy("Not Found")})
             raise ValidationError(errors)
         else:
             instances = []
@@ -1596,13 +1540,9 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         _st = time.perf_counter()
 
         complex_transaction = ComplexTransaction.objects.get(id=pk)
-        transaction_type = TransactionType.objects.get(
-            id=complex_transaction.transaction_type_id
-        )
+        transaction_type = TransactionType.objects.get(id=complex_transaction.transaction_type_id)
 
-        instance = ComplexTransactionViewOnly(
-            complex_transaction, transaction_type=transaction_type
-        )
+        instance = ComplexTransactionViewOnly(complex_transaction, transaction_type=transaction_type)
 
         _serialize_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance)
@@ -1624,7 +1564,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         if not ids:
             raise ValidationError("'ids' parameter is empty or missing")
 
-        _l.info(f'bulk_restore {ids}')
+        _l.info(f"bulk_restore {ids}")
 
         complex_transactions = ComplexTransaction.objects.filter(id__in=ids)
         for complex_transaction in complex_transactions:

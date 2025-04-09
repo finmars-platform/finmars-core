@@ -5,15 +5,14 @@ from logging import getLogger
 from celery import current_app
 from celery.result import AsyncResult
 
-from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from poms.common.filters import CharFilter
-
+from poms.common.filters import CharFilter, FinmarsFilterBackend
 from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 from poms_app.celery import get_celery_task_names
@@ -70,7 +69,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     filter_backends = [
         CeleryTaskDateRangeFilter,
         CeleryTaskQueryFilter,
-        DjangoFilterBackend,
+        FinmarsFilterBackend,
         OwnerByMasterUserFilter,
     ]
 
