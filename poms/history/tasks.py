@@ -147,12 +147,23 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
-    date_from = str_to_date(task.options_object.get("date_from"))
+    try:
+        date_from = str_to_date(task.options_object.get("date_from"))
+    except ValueError:
+        date_from = HistoricalRecord.objects.order_by("created_at").first().created_at.date()
     date_to = str_to_date(task.options_object.get("date_to"))
 
     storage = get_storage()
 
     total = HistoricalRecord.objects.filter(created_at__range=[date_from, date_to]).count()
+    if not  total:
+        result_object = {
+            "message": "No records found",
+        }
+        task.result_object = result_object
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+        return
 
     count = 0
 
@@ -196,11 +207,9 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
                 }
             )
 
-        result_object = {
-            "message": f"Exported {count} records to storage",
-        }
-        task.result_object = result_object
-
-
-        task.status = CeleryTask.STATUS_DONE
-        task.save()
+    result_object = {
+        "message": f"Exported {count} records to storage",
+    }
+    task.result_object = result_object
+    task.status = CeleryTask.STATUS_DONE
+    task.save()
