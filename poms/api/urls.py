@@ -357,7 +357,7 @@ urlpatterns = [
     re_path("^v1/clients/", include(clients_router.router.urls)),
     re_path("^v1/vault/", include(vault_router.router.urls)),
     re_path("^v1/iam/", include(iam_router.router.urls)),
-    re_path("^v1/schedules", include(schedule_router.router.urls)),
+    re_path("^v1/schedules/", include(schedule_router.router.urls)),
     re_path("^v1/", include(router.urls)),
     re_path(
         "instruments/instrument-database-search",

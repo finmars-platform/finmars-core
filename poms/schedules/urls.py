@@ -4,7 +4,7 @@ from poms.schedules import views
 
 router = routers.DefaultRouter()
 router.register(
-    "schedules/schedule",
+    "schedule",
     views.ScheduleViewSet,
     "schedule",
 )
