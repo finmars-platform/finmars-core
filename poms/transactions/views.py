@@ -881,9 +881,7 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
 
     return qs
 
-@swagger_auto_schema(
-    filter_inspectors=[NoMultipleChoiceFilterInspector],
-)
+
 class TransactionViewSet(AbstractModelViewSet):
     queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
     serializer_class = TransactionSerializer
@@ -1015,6 +1013,10 @@ class TransactionViewSet(AbstractModelViewSet):
     def perform_destroy(self, instance):
         super().perform_destroy(instance)
 
+    @swagger_auto_schema(
+        methods=["get"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
@@ -1180,9 +1182,6 @@ class ComplexTransactionFilterSet(FilterSet):
         fields = []
 
 
-@swagger_auto_schema(
-    filter_inspectors=[NoMultipleChoiceFilterInspector],  # Use the custom inspector
-)
 class ComplexTransactionViewSet(AbstractModelViewSet):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
@@ -1198,6 +1197,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     def create(self, request, *args, **kwargs):
         raise ValidationError("Not allowed!")
 
+    @swagger_auto_schema(
+        methods=["post"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=False,
         methods=["post"],
@@ -1207,6 +1210,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     def list_ev_item(self, request, *args, **kwargs):
         return super().list_ev_item(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        methods=["get"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=False,
         methods=["get"],
@@ -1220,6 +1227,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 
         return self.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        methods=["get"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
@@ -1310,6 +1321,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 
         return Response(result)
 
+    @swagger_auto_schema(
+        methods=["get", "put"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=True,
         methods=["get", "put"],
@@ -1386,6 +1401,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                     _l.error(f"rebook error {repr(e)}\n {traceback.format_exc()}")
                     raise e
 
+    @swagger_auto_schema(
+        methods=["get", "put"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=True,
         methods=["get", "put"],
@@ -1430,6 +1449,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        methods=["get", "put"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=True,
         methods=["get", "put"],
@@ -1464,6 +1487,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                     if instance.has_errors:
                         transaction.set_rollback(True)
 
+    @swagger_auto_schema(
+        methods=["put"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=True,
         methods=["put"],
@@ -1535,6 +1562,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             )
             return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        methods=["get"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(
         detail=True,
         methods=["get"],
@@ -1561,6 +1592,10 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 
         return response
 
+    @swagger_auto_schema(
+        methods=["get"],
+        filter_inspectors=[NoMultipleChoiceFilterInspector],
+    )
     @action(detail=False, methods=["get", "post"], url_path="bulk-restore")
     def bulk_restore(self, request, realm_code=None, space_code=None):
         if request.method.lower() == "get":

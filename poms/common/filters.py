@@ -90,6 +90,8 @@ class NoMultipleChoiceFilterInspector(FilterInspector):
     """
 
     def process_result(self, result, method_name, obj, **kwargs):
+        print(f"NoMultipleChoiceFilterInspector -> {result.name}")
+
         if isinstance(result, openapi.Parameter) and result.name in {
             "ModelExtUserCodeMultipleChoiceFilter",
             "ModelExtMultipleChoiceFilter",
