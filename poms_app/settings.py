@@ -537,7 +537,8 @@ REST_FRAMEWORK = {
         "poms.common.authentication.JWTAuthentication",
         "poms.common.authentication.KeycloakAuthentication",
     ),
-    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    "DEFAULT_FILTER_BACKENDS": ("poms.common.filters.FinmarsFilterBackend",),
+    # "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": (
         "poms.common.renderers.FinmarsJSONRenderer",

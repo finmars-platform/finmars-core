@@ -1,5 +1,6 @@
 import functools
 import logging
+import warnings
 
 from six import string_types
 
@@ -9,7 +10,7 @@ from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _
-from django_filters.rest_framework import FilterSet
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from drf_yasg import openapi
 from drf_yasg.inspectors import FilterInspector
 from rest_framework.filters import BaseFilterBackend
@@ -24,7 +25,12 @@ _l = logging.getLogger("poms.common")
 
 def _get_master_user():
     request = get_request()
-    if not request or not request.user or not request.user.master_user:
+    if (
+        not request
+        or not request.user
+        or not hasattr(request.user, "master_user")
+        or not request.user.master_user
+    ):
         return None
     return request.user.master_user
 
@@ -89,7 +95,7 @@ class NoMultipleChoiceFilterInspector(FilterInspector):
     Fix problem caused by functools.partial is not iterable
     """
 
-    def process_result(self, result, method_name, obj, **kwargs):
+    def get_schema_operation_parameters(self, result, method_name, obj, **kwargs):
         print(f"NoMultipleChoiceFilterInspector -> {result.name}")
 
         if isinstance(result, openapi.Parameter) and result.name in {
@@ -528,3 +534,40 @@ class GlobalTableSearchFilter(django_filters.CharFilter):
                 ),
             )
         ]
+
+
+class FinmarsFilterBackend(DjangoFilterBackend):
+    """
+    Fixing problem in openapi inspecting filters with choices implemented as functools.partial
+    """
+    def get_schema_operation_parameters(self, view):
+        try:
+            queryset = view.get_queryset()
+        except Exception:
+            queryset = None
+            warnings.warn(f"{view.__class__} is not compatible with schema generation")
+
+        filterset_class = self.get_filterset_class(view, queryset)
+
+        if not filterset_class:
+            return []
+
+        parameters = []
+        for field_name, field in filterset_class.base_filters.items():
+            parameter = {
+                "name": field_name,
+                "required": field.extra["required"],
+                "in": "query",
+                "description": field.label if field.label is not None else field_name,
+                "schema": {
+                    "type": "string",
+                },
+            }
+            if field.extra and "choices" in field.extra:
+                if isinstance(field.extra["choices"], functools.partial):
+                    # fix choices as functools.partial
+                    parameter["schema"]["enum"] = field.extra["choices"]()
+                else:
+                    parameter["schema"]["enum"] = [c[0] for c in field.extra["choices"]]
+            parameters.append(parameter)
+        return parameters
