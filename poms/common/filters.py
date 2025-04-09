@@ -90,23 +90,6 @@ class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         super().__init__(*args, **kwargs)
 
 
-class NoMultipleChoiceFilterInspector(FilterInspector):
-    """
-    Fix problem caused by functools.partial is not iterable
-    """
-
-    def get_schema_operation_parameters(self, result, method_name, obj, **kwargs):
-        print(f"NoMultipleChoiceFilterInspector -> {result.name}")
-
-        if isinstance(result, openapi.Parameter) and result.name in {
-            "ModelExtUserCodeMultipleChoiceFilter",
-            "ModelExtMultipleChoiceFilter",
-        }:
-            return None  # Exclude these parameters
-
-        return result  # Keep other parameters
-
-
 class AbstractRelatedFilterBackend(BaseFilterBackend):
     source = None
     query_key = None

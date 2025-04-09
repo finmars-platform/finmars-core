@@ -50,9 +50,6 @@ _l = logging.getLogger("poms.common")
 
 class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
-
-        print(f"get_operation {operation_keys=}")
-
         operation = super().get_operation(operation_keys)
 
         # e.g. operation_keys might be ("api", "v1", "accounts", "account-attribute-type", "list")
