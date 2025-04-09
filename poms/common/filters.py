@@ -1,5 +1,7 @@
-import logging
 import functools
+import logging
+
+from six import string_types
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
@@ -8,10 +10,10 @@ from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import FilterSet
+from drf_yasg import openapi
+from drf_yasg.inspectors import FilterInspector
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
-
-from six import string_types
 
 from poms.common.middleware import get_request
 from poms.common.utils import attr_is_relation
@@ -80,6 +82,21 @@ class ModelExtUserCodeMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
             master_user_path=self.master_user_path,
         )
         super().__init__(*args, **kwargs)
+
+
+class NoMultipleChoiceFilterInspector(FilterInspector):
+    """
+    Fix problem caused by functools.partial is not iterable
+    """
+
+    def process_result(self, result, method_name, obj, **kwargs):
+        if isinstance(result, openapi.Parameter) and result.name in {
+            "ModelExtUserCodeMultipleChoiceFilter",
+            "ModelExtMultipleChoiceFilter",
+        }:
+            return None  # Exclude these parameters
+
+        return result  # Keep other parameters
 
 
 class AbstractRelatedFilterBackend(BaseFilterBackend):
