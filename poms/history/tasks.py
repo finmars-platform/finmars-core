@@ -149,7 +149,7 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
 
     try:
         date_from = str_to_date(task.options_object.get("date_from"))
-    except ValueError:
+    except Exception as e:
         date_from = HistoricalRecord.objects.order_by("created_at").first().created_at.date()
     date_to = str_to_date(task.options_object.get("date_to"))
 
