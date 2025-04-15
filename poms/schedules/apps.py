@@ -29,6 +29,9 @@ class SchedulesConfig(AppConfig):
         _l.info(f"update_periodic_tasks start, using {using} database")
 
         master = MasterUser.objects.first()
+        if not master:
+            _l.info("update_periodic_tasks ignored - no master user")
+            return
 
         crontabs = {}
         crontabs["every_30_min"], _ = CrontabSchedule.objects.using(using).get_or_create(
