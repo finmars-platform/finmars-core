@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 
@@ -19,12 +20,15 @@ class SchedulesConfig(AppConfig):
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
+        from poms.users.models import MasterUser
 
         if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
             _l.info("update_periodic_tasks ignored - TEST MODE")
             return
 
         _l.info(f"update_periodic_tasks start, using {using} database")
+
+        master = MasterUser.objects.first()
 
         crontabs = {}
         crontabs["every_30_min"], _ = CrontabSchedule.objects.using(using).get_or_create(
@@ -92,17 +96,24 @@ class SchedulesConfig(AppConfig):
             #     "task": "widgets.calculate_historical",
             #     "crontab": crontabs["daily_morning"],
             # },
+            # {
+            #     "id": 6,
+            #     "name": "SYSTEM: Clean Old Historical Records",
+            #     "task": "history_tasks.clear_old_journal_records",
+            #     "crontab": crontabs["daily_morning"],
+            # },
+            # {
+            #     "id": 7,
+            #     "name": "SYSTEM: Check for Died Workers",
+            #     "task": "celery_tasks.check_for_died_workers",
+            #     "crontab": crontabs["every_5_min"],
+            # },
             {
-                "id": 6,
-                "name": "SYSTEM: Clean Old Historical Records",
-                "task": "history_tasks.clear_old_journal_records",
+                "id": 8,
+                "name": "SYSTEM: Export journal to storage",
+                "task": "history.common_export_journal_to_storage",
                 "crontab": crontabs["daily_morning"],
-            },
-            {
-                "id": 7,
-                "name": "SYSTEM: Check for Died Workers",
-                "task": "celery_tasks.check_for_died_workers",
-                "crontab": crontabs["every_5_min"],
+                "kwargs": json.dumps({"context": {"space_code": master.space_code}}),
             },
         ]
 
@@ -121,6 +132,7 @@ class SchedulesConfig(AppConfig):
                 item.name = task["name"]
                 item.task = task["task"]
                 item.crontab = task["crontab"]
+                item.kwargs = task.get("kwargs", {})
                 item.save()
 
             else:

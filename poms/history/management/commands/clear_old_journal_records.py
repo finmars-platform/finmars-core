@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from poms.history.tasks import clear_old_journal_records
+from poms.history.tasks import clear_old_journal_records, common_export_journal_to_storage
 
 
 class Command(BaseCommand):
