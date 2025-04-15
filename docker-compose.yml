@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    environment:
-      - GUNICORN_START_TIME=${GUNICORN_START_TIME:-$(date +%s)}
     restart: always
     depends_on:
       - db
@@ -16,6 +14,16 @@ services:
     ports:
       - "8080:8080"
     # command: CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - INSTANCE_TYPE=worker
+    depends_on:
+      - db
+      - rabbitmq
 
   backend_migration:
     build:

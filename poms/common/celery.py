@@ -85,9 +85,10 @@ def schema_exists(schema_name):
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
 
-    _l.info(f"task_prerun.task {task} context: {kwargs['context']}" )
-
     context = kwargs.get('context')
+
+    _l.info(f"task_prerun.task {task} context: {context}" )
+
     if context:
         if context.get('space_code'):
             space_code = context.get('space_code')
