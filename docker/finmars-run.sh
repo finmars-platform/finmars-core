@@ -104,8 +104,8 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
 
   supervisord
 
-  echo "Run CeleryBeat"
-  supervisorctl start celerybeat
+  # echo "Run CeleryBeat"
+  # supervisorctl start celerybeat
 
 #  python manage.py clear_celery
 #  python manage.py deploy_default_worker
