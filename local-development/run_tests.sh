@@ -4,6 +4,7 @@ python poms_app/print_finmars.py
 
 . ../venv/bin/activate
 DB_NAME=finmars_dev \
+REDIS_HOST=0.0.0.0 \
 DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
