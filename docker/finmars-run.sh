@@ -134,7 +134,7 @@ elif [ "$INSTANCE_TYPE" = "worker" ]; then
 
 elif [ "$INSTANCE_TYPE" = "scheduler" ]; then
 
-  cd /var/app && celery --app poms_app beat --loglevel=INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  cd /var/app && celery --app poms_app beat --loglevel=INFO --scheduler poms.common.celery:PerSpaceDatabaseScheduler
 
 else
   echo "Missing or unsupported value for INSTANCE_TYPE environment variable. Exiting."
