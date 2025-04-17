@@ -3,6 +3,11 @@ from threading import local
 
 from celery.signals import task_postrun, task_prerun
 from django.db import connection
+from django.db import DatabaseError, InterfaceError
+from django_celery_beat.schedulers import DatabaseScheduler
+
+from poms.common.db import get_all_tenant_schemas
+
 
 celery_state = local()
 
@@ -77,6 +82,26 @@ def schema_exists(schema_name):
         return cursor.fetchone() is not None
 
 
+def set_schema_from_context(context):
+
+    if context:
+        if context.get('space_code'):
+
+            if schema_exists(space_code:= context.get('space_code')):
+
+                # space_code = context.get('space_code')
+                with connection.cursor() as cursor:
+                    cursor.execute(f"SET search_path TO {space_code};")
+
+            else:
+                raise Exception('No space_code in database schemas')
+        else:
+            raise Exception('No space_code in context')
+    else:
+        raise Exception('No context in kwargs')
+    
+
+
 # EXTREMELY IMPORTANT CODE
 # DO NOT MODIFY IT
 # IT SETS CONTEXT FOR SHARED WORKERS TO WORK WITH DIFFERENT SCHEMAS
@@ -84,7 +109,6 @@ def schema_exists(schema_name):
 # ALL TASKS MUST BE PROVIDED WITH CONTEXT WITH space_code
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
-
     context = kwargs.get('context')
 
     _l.info(f"task_prerun.task {task} context: {context}" )
@@ -121,3 +145,49 @@ def cleanup(task_id, **kwargs):
     # weird behavior when we call sync task (.apply()) we break context of viewset that executes that tasks
     # with connection.cursor() as cursor:
     #     cursor.execute("SET search_path TO public;")
+
+
+
+class PerSpaceDatabaseScheduler(DatabaseScheduler):
+    def all_as_schedule(self):
+        _l.debug('DatabaseScheduler: Fetching database schedule')
+        schemas = get_all_tenant_schemas()
+        s = {}
+        for schema in schemas:
+            set_schema_from_context({'space_code': schema})
+            for model in self.Model.objects.enabled():
+                try:
+                    s[model.name] = self.Entry(model, app=self.app)
+                except ValueError:
+                    pass
+        return s
+
+    def schedule_changed(self):
+        last = self._last_timestamp
+        ts = None
+        
+        schemas = get_all_tenant_schemas()
+        for schema in schemas:
+            set_schema_from_context({'space_code': schema})
+            try:
+                last_change_in_schema = self.Changes.last_change()
+                if last_change_in_schema:
+                    if ts:
+                        ts = max(ts, last_change_in_schema)
+                    else:
+                        ts = last_change_in_schema
+            except DatabaseError as exc:
+                _l.exception('Database gave error: %r', exc)
+                return False
+            except InterfaceError:
+                _l.warning(
+                    'DatabaseScheduler: InterfaceError in schedule_changed(), '
+                    'waiting to retry in next call...'
+                )
+                return False
+        try:
+            if ts and ts > (last if last else ts):
+                return True
+        finally:
+            self._last_timestamp = ts
+        return False
