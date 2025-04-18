@@ -5,9 +5,9 @@ from poms.common.middleware import get_request
 
 
 class NotificationRateThrottle(throttling.UserRateThrottle):
-    cache = caches['throttling']
-    cache_format = 'notification_throttle_%(scope)s_%(ident)s'
-    rate = '1/day'
+    cache = caches["throttling"]
+    cache_format = "notification_throttle_%(scope)s_%(ident)s"
+    rate = "1/day"
 
 
 def allow_notification():

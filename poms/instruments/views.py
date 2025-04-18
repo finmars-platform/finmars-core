@@ -5,10 +5,11 @@ import logging
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Case, Prefetch, Q, Value, When
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -22,11 +23,11 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 import requests
-from poms_app import settings
 
 from poms.common.authentication import get_access_token
 from poms.common.filters import (
     AttributeFilter,
+    CharExactFilter,
     CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
@@ -43,12 +44,13 @@ from poms.common.views import (
 )
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
+from poms.explorer.serializers import FinmarsFileSerializer
 from poms.instruments.filters import (
     GeneratedEventPermissionFilter,
-    InstrumentSelectSpecialQueryFilter,
+    IdentifierKeysValuesFilter,
+    InstrumentsUserCodeFilter,
     ListDatesFilter,
     PriceHistoryObjectPermissionFilter,
-    InstrumentsUserCodeFilter,
 )
 from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import (
@@ -76,9 +78,11 @@ from poms.instruments.models import (
 )
 from poms.instruments.serializers import (
     AccrualCalculationModelSerializer,
+    AttachmentSerializer,
     CostMethodSerializer,
     CountrySerializer,
     DailyPricingModelSerializer,
+    DayTimeConventionSerializer,
     EventScheduleConfigSerializer,
     ExposureCalculationModelSerializer,
     GeneratedEventSerializer,
@@ -86,13 +90,16 @@ from poms.instruments.serializers import (
     InstrumentClassSerializer,
     InstrumentForSelectSerializer,
     InstrumentLightSerializer,
+    InstrumentOnBalanceSerializer,
     InstrumentSerializer,
+    InstrumentTypeApplySerializer,
     InstrumentTypeLightSerializer,
     InstrumentTypeProcessSerializer,
     InstrumentTypeSerializer,
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
+    PriceHistoryRecalculateSerializer,
     PriceHistorySerializer,
     PricingConditionSerializer,
     PricingPolicyLightSerializer,
@@ -110,12 +117,14 @@ from poms.instruments.tasks import (
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
+from poms.reports.sql_builders.helpers import dictfetchall
 from poms.strategies.models import Strategy3
-from poms.transactions.models import NotificationClass
+from poms.transactions.models import NotificationClass, Transaction
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import EcosystemDefault, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly
+from poms_app import settings
 
 _l = logging.getLogger("poms.instruments")
 
@@ -295,7 +304,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         url_path="book",
         serializer_class=InstrumentTypeProcessSerializer,
     )
-    def book(self, request, pk=None):
+    def book(self, request, pk=None, realm_code=None, space_code=None):
         instrument_type = InstrumentType.objects.get(pk=pk)
 
         instance = InstrumentTypeProcess(
@@ -513,43 +522,123 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
+        methods=["put"],
+        url_path="apply",
+        permission_classes=[IsAuthenticated],
+        serializer_class=InstrumentTypeApplySerializer,
+    )
+    def apply_type_to_instruments(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instrument_type = self.get_object()
+        instruments = Instrument.objects.filter(instrument_type=instrument_type)
+
+        _l.info(
+            f"instrument_type.apply request.data={request.data} "
+            f"instruments affected={len(instruments)}"
+        )
+
+        if "pricing_policies" in serializer.data["fields_to_update"]:
+            serializer.data["fields_to_update"].remove("pricing_policies")
+            self._apply_pricing_to_instruments(
+                instrument_type, instruments, serializer.data["mode"]
+            )
+
+        to_update = []
+        for instrument in instruments:
+            for field in serializer.data["fields_to_update"]:
+                if (
+                    serializer.data["mode"] == "fill"
+                    and not getattr(instrument, field)
+                    or serializer.data["mode"] == "overwrite"
+                ):
+                    setattr(instrument, field, getattr(instrument_type, field))
+                    to_update.append(instrument)
+
+        if serializer.data["fields_to_update"]:
+            Instrument.objects.bulk_update(
+                to_update,
+                serializer.data["fields_to_update"],
+            )
+
+        return Response(
+            {
+                "status": "ok",
+                "data": {"instruments_affected": len(instruments)},
+            }
+        )
+
+    @staticmethod
+    def _apply_pricing_to_instruments(instrument_type, instruments, fill_or_overwrite):
+        from poms.instruments.models import InstrumentPricingPolicy
+
+        pricing_policies = instrument_type.pricing_policies.all()
+        pricing_policy_ids = [pp.pricing_policy_id for pp in pricing_policies]
+        # Add missing pricing policies to each instrument
+        instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(
+            instrument__in=instruments,
+            pricing_policy_id__in=pricing_policy_ids,
+        )
+        existing_policies = {
+            (ip.pricing_policy_id, ip.instrument_id): ip
+            for ip in instrument_pricing_policies
+        }
+
+        to_create = []
+        to_update = []
+        for instrument in instruments:
+            for instrument_type_pricing_policy in pricing_policies:
+                key = (instrument_type_pricing_policy.pricing_policy_id, instrument.id)
+                if key in existing_policies:
+                    ip = existing_policies[key]
+
+                    ip.target_pricing_schema_user_code = (
+                        instrument_type_pricing_policy.target_pricing_schema_user_code
+                    )
+                    ip.options = instrument_type_pricing_policy.options
+
+                    to_update.append(ip)
+                else:
+                    to_create.append(
+                        InstrumentPricingPolicy(
+                            pricing_policy=instrument_type_pricing_policy.pricing_policy,
+                            instrument=instrument,
+                            target_pricing_schema_user_code=instrument_type_pricing_policy.target_pricing_schema_user_code,
+                            options=instrument_type_pricing_policy.options,
+                        )
+                    )
+
+        if to_create:
+            InstrumentPricingPolicy.objects.bulk_create(to_create)
+
+        if fill_or_overwrite == "overwrite":
+            InstrumentPricingPolicy.objects.bulk_update(
+                to_update,
+                ["target_pricing_schema_user_code", "options"],
+            )
+            # Remove instrument pricing policies that are no longer associated with the given instrument type
+            to_delete = InstrumentPricingPolicy.objects.filter(
+                instrument__in=instruments
+            ).exclude(pricing_policy_id__in=pricing_policy_ids)
+            to_delete.delete()
+
+    @action(
+        detail=True,
         methods=["get", "put"],
         url_path="update-pricing",
         permission_classes=[IsAuthenticated],
     )
-    def update_pricing(self, request, pk=None):
-        from poms.pricing.models import InstrumentPricingPolicy
-
+    def update_pricing(self, request, pk=None, realm_code=None, space_code=None):
         instrument_type = self.get_object()
-        instruments = Instrument.objects.filter(
-            instrument_type=instrument_type, master_user=request.user.master_user
-        )
+        instruments = Instrument.objects.filter(instrument_type=instrument_type)
 
         _l.info(
             f"update_pricing request.data={request.data} "
             f"instruments affected={len(instruments)}"
         )
 
-        for instrument in instruments:
-            try:
-                policy = InstrumentPricingPolicy.objects.get(
-                    instrument=instrument,
-                    pricing_policy=request.data["pricing_policy"],
-                )
-                if request.data["overwrite_default_parameters"]:
-                    policy.pricing_scheme_id = request.data.get("pricing_scheme", None)
-                    policy.default_value = request.data.get("default_value", None)
-                    policy.data = request.data.get("data", None)
-                    policy.attribute_key = request.data.get("attribute_key", None)
-                    policy.save()
-
-                    _l.info(f"update_pricing policy.id={policy.id} updated")
-
-                else:
-                    _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
-
-            except InstrumentPricingPolicy.DoesNotExist:
-                _l.error(f"Policy was not found for instrument.id={instrument.id}")
+        self._apply_pricing_to_instruments(instrument_type, instruments, "fill")
 
         return Response(
             {
@@ -559,7 +648,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         )
 
     @action(detail=False, methods=["patch"], url_path="bulk-update")
-    def bulk_update(self, request):
+    def bulk_update(self, request, realm_code=None, space_code=None):
         request_data = request.data
         if not isinstance(request_data, list):
             raise ValidationError("Required list of data")
@@ -620,9 +709,11 @@ class InstrumentFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     user_code = CharFilter()
+    user_code__exact = CharExactFilter(field_name="user_code")
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
+    identifier = IdentifierKeysValuesFilter()
     instrument_type__instrument_class = django_filters.ModelMultipleChoiceFilter(
         queryset=InstrumentClass.objects
     )
@@ -698,6 +789,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         "instrument_type__name",
         "instrument_type__short_name",
         "instrument_type__public_name",
+        "identifier",
         "pricing_currency",
         "pricing_currency__user_code",
         "pricing_currency__name",
@@ -896,10 +988,84 @@ class InstrumentViewSet(AbstractModelViewSet):
     @action(
         detail=False,
         methods=["post"],
+        url_path="is-on-balance",
+        serializer_class=InstrumentOnBalanceSerializer,
+    )
+    def is_on_balance(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        balance_date = serializer.validated_data["date"]
+        user_codes = serializer.validated_data["user_codes"]
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        queryset = queryset.filter(is_active=True, is_deleted=False)
+
+        queryset = queryset.select_related("instrument_type")
+
+        if user_codes:
+            instruments = queryset.filter(user_code__in=user_codes)
+        else:
+            instruments = queryset
+
+        instrument_ids = [instrument.id for instrument in instruments]
+
+        query = f"""
+            SELECT account_position_id, portfolio_id, instrument_id, 
+                        SUM(position_size_with_sign) as position_size
+                FROM {Transaction._meta.db_table}
+                WHERE transaction_date <= %s AND instrument_id = ANY(%s)
+                GROUP BY account_position_id, portfolio_id, instrument_id
+                HAVING SUM(position_size_with_sign) <> 0
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, [balance_date, instrument_ids])
+            sql_results = dictfetchall(cursor)
+
+        # Group SQL results by instrument_id
+        grouped_results = {}
+        for row in sql_results:
+            instrument_id = row["instrument_id"]
+            if instrument_id not in grouped_results:
+                grouped_results[instrument_id] = []
+            grouped_results[instrument_id].append(
+                {
+                    "account_position_id": row["account_position_id"],
+                    "portfolio_id": row["portfolio_id"],
+                    "position_size": row["position_size"],
+                }
+            )
+
+        # Prepare the response
+        items = []
+        for instrument in instruments:
+            instrument_items = grouped_results.get(instrument.id, [])
+            is_on_balance = any(item["position_size"] != 0 for item in instrument_items)
+
+            items.append(
+                {
+                    "id": instrument.id,
+                    "user_code": instrument.user_code,
+                    "name": instrument.name,
+                    "items": instrument_items,  # SQL results filtered by instrument ID
+                    "is_on_balance": is_on_balance,  # True if at least one item has a non-zero position
+                    "instrument_type": instrument.instrument_type.user_code
+                    if instrument.instrument_type
+                    else None,
+                }
+            )
+
+        result = {"date": balance_date, "instruments": items}
+        return Response(result)
+
+    @action(
+        detail=False,
+        methods=["post"],
         url_path="rebuild-events",
         serializer_class=serializers.Serializer,
     )
-    def rebuild_all_events(self, request):
+    def rebuild_all_events(self, request, realm_code=None, space_code=None):
         queryset = self.filter_queryset(self.get_queryset())
         processed = 0
         for instance in queryset:
@@ -915,7 +1081,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="rebuild-events",
         serializer_class=serializers.Serializer,
     )
-    def rebuild_events(self, request, pk):
+    def rebuild_events(self, request, pk, realm_code=None, space_code=None):
         instance = self.get_object()
         with contextlib.suppress(ValueError):
             instance.rebuild_event_schedules()
@@ -928,7 +1094,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events",
         serializer_class=serializers.Serializer,
     )
-    def generate_events(self, request):
+    def generate_events(self, request, realm_code=None, space_code=None):
         from poms.celery_tasks.models import CeleryTask
 
         celery_task = CeleryTask.objects.create(
@@ -938,7 +1104,15 @@ class InstrumentViewSet(AbstractModelViewSet):
             type="generate_events",
         )
 
-        ret = generate_events.apply_async(kwargs={"task_id": celery_task.id})
+        ret = generate_events.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            }
+        )
         return Response(
             {
                 "success": True,
@@ -952,7 +1126,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="system-generate-and-process",
         serializer_class=serializers.Serializer,
     )
-    def system_generate_and_process(self, request):
+    def system_generate_and_process(self, request, realm_code=None, space_code=None):
         ret = generate_events_do_not_inform_apply_default.apply_async()
         return Response(
             {
@@ -967,9 +1141,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events-range",
         serializer_class=serializers.Serializer,
     )
-    def generate_events_range(self, request):
-        print(f"request.data {request.data} ")
-
+    def generate_events_range(self, request, realm_code=None, space_code=None):
         date_from_string = request.data.get("effective_date_0", None)
         date_to_string = request.data.get("effective_date_1", None)
 
@@ -988,7 +1160,14 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
-                kwargs={"master_user_id": request.user.master_user.id, "date": dte}
+                kwargs={
+                    "master_user_id": request.user.master_user.id,
+                    "date": dte,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
             )
             tasks_ids.append(res.id)
 
@@ -1000,7 +1179,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="generate-events-range-for-single-instrument",
         serializer_class=serializers.Serializer,
     )
-    def generate_events_range_for_single_instrument(self, request):
+    def generate_events_range_for_single_instrument(self, request, *args, **kwargs):
         print(f"request.data {request.data} ")
 
         date_from_string = request.data.get("effective_date_0", None)
@@ -1029,17 +1208,17 @@ class InstrumentViewSet(AbstractModelViewSet):
             date_from + datetime.timedelta(days=i)
             for i in range((date_to - date_from).days + 1)
         ]
-
         tasks_ids = []
-
-        print(f"dates {dates}")
-
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
                 kwargs={
                     "master_user_id": request.user.master_user.id,
                     "date": str(dte),
                     "instrument_id": instrument.id,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
                 }
             )
             tasks_ids.append(res.id)
@@ -1052,9 +1231,15 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="process-events",
         serializer_class=serializers.Serializer,
     )
-    def process_events(self, request):
+    def process_events(self, request, *args, **kwargs):
         ret = process_events.apply_async(
-            kwargs={"master_users": [request.user.master_user.pk]}
+            kwargs={
+                "master_users": [request.user.master_user.pk],
+                "context": {
+                    "space_code": request.space_code,
+                    "realm_code": request.realm_code,
+                },
+            }
         )
         return Response(
             {
@@ -1069,7 +1254,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         url_path="recalculate-prices-accrued-price",
         serializer_class=InstrumentCalculatePricesAccruedPriceSerializer,
     )
-    def calculate_prices_accrued_price(self, request):
+    def calculate_prices_accrued_price(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         begin_date = serializer.validated_data["begin_date"]
@@ -1083,19 +1268,41 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        request_body=AttachmentSerializer,
+        responses={
+            status.HTTP_200_OK: FinmarsFileSerializer(many=True),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["patch"],
+        url_path="attach-file",
+        serializer_class=AttachmentSerializer,
+    )
+    def attach_file(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = AttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(instance)
+        response_json = FinmarsFileSerializer(instance=instance.files, many=True).data
+        return Response(response_json, status=status.HTTP_200_OK)
+
 
 # Not for getting List
 class InstrumentExternalAPIViewSet(APIView):
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         token = request.data["token"]
 
         master_user = MasterUser.objects.get(token=token)
 
         context = {"request": request, "master_user": master_user}
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
         )
@@ -1155,15 +1362,16 @@ class InstrumentExternalAPIViewSet(APIView):
         return Response({"ok"})
 
 
+# DEPRECATED
 class InstrumentFDBCreateFromCallbackViewSet(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         _l.info("InstrumentFDBCreateFromCallbackViewSet get")
 
         return Response({"ok"})
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         from poms.celery_tasks.models import CeleryTask
         from poms.integrations.tasks import (
             create_currency_from_callback_data,
@@ -1205,6 +1413,15 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
             return Response({"status": "error"})
 
 
+class CustomInstrumentTypeFilter(django_filters.Filter):
+    field_class = django_filters.CharFilter
+
+    def filter(self, qs, value):
+        if value:
+            qs = qs.filter(instrument_type__user_code__endswith=value)
+        return qs
+
+
 class InstrumentForSelectFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -1212,10 +1429,45 @@ class InstrumentForSelectFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
+    query = CharFilter(method="filter_query")
+    instrument_type = CharFilter(method="filter_instrument_type")
 
     class Meta:
         model = Instrument
-        fields = []
+        fields = [
+            "id",
+            "is_deleted",
+            "user_code",
+            "name",
+            "public_name",
+            "short_name",
+        ]
+
+    @staticmethod
+    def filter_instrument_type(queryset, _, value):
+        return (
+            queryset.filter(instrument_type__user_code__endswith=value)
+            if value
+            else queryset
+        )
+
+    @staticmethod
+    def filter_query(queryset, _, value):
+        if value:
+            # Split the value by spaces to get individual search terms
+            search_terms = value.split()
+
+            # Create an OR condition to search across multiple fields
+            conditions = Q()
+            for term in search_terms:
+                conditions |= (
+                    Q(name__icontains=term)
+                    | Q(short_name__icontains=term)
+                    | Q(user_code__icontains=term)
+                )
+            queryset = queryset.filter(conditions)
+
+        return queryset
 
 
 class InstrumentForSelectViewSet(AbstractModelViewSet):
@@ -1229,7 +1481,6 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
     serializer_class = InstrumentForSelectSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        InstrumentSelectSpecialQueryFilter,
     ]
     filter_class = InstrumentForSelectFilterSet
     ordering_fields = [
@@ -1243,12 +1494,12 @@ class InstrumentForSelectViewSet(AbstractModelViewSet):
 class InstrumentDatabaseSearchViewSet(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         if settings.CBONDS_BROKER_URL:
             headers = {"Content-type": "application/json"}
 
             payload_jwt = {
-                "sub": settings.BASE_API_URL,  # "user_id_or_name",
+                "sub": request.space_code,  # "user_id_or_name",
                 "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
             }
 
@@ -1268,7 +1519,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             )
 
             if instrument_type:
-                url = url + "&instrument_type=" + str(instrument_type)
+                url = f"{url}&instrument_type={str(instrument_type)}"
 
             _l.info(f"Requesting URL {url}")
 
@@ -1334,15 +1585,15 @@ class InstrumentDatabaseSearchViewSet(APIView):
                 mappedItems = []
 
                 for item in response_json["results"]:
-                    mappedItem = {}
-
-                    mappedItem["instrumentType"] = item["instrument_type"]
-                    mappedItem["issueName"] = item["name"]
-                    mappedItem["referenceId"] = item["isin"]
-                    mappedItem["commonCode"] = ""
-                    mappedItem["figi"] = ""
-                    mappedItem["issuerName"] = ""
-                    mappedItem["wkn"] = ""
+                    mappedItem = {
+                        "instrumentType": item["instrument_type"],
+                        "issueName": item["name"],
+                        "referenceId": item["isin"],
+                        "commonCode": "",
+                        "figi": "",
+                        "issuerName": "",
+                        "wkn": "",
+                    }
 
                     mappedItems.append(mappedItem)
 
@@ -1410,7 +1661,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         "accrued_price",
     ]
 
-    @action(detail=False, methods=["post"], url_path="bulk-create")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-create",
+        serializer_class=PriceHistorySerializer,
+    )
     def bulk_create(self, request, *args, **kwargs):
         valid_data = []
         errors = []
@@ -1424,13 +1680,18 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"PriceHistoryViewSet.valid_data {len(valid_data)}")
 
-        PriceHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+        PriceHistory.objects.bulk_create(
+            valid_data,
+            update_conflicts=True,
+            unique_fields=["instrument", "pricing_policy", "date"],
+            update_fields=["principal_price", "accrued_price"],
+        )
 
         if errors:
             _l.info(f"PriceHistoryViewSet.bulk_create.errors {errors}")
-        #     # Here we just return the errors as part of the response.
-        #     # You may want to log them or handle them differently depending on your needs.
-        #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+            # Here we just return the errors as part of the response.
+            # You may want to log them or handle them differently
+            # return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -1513,6 +1774,25 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
+
+    @action(
+        detail=False,
+        methods=["put"],
+        url_path="recalculate",
+        permission_classes=[IsAuthenticated],
+        serializer_class=PriceHistoryRecalculateSerializer,
+    )
+    def recalculate(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        recalculate_inputs = serializer.validated_data.pop("recalculate_inputs")
+        instance = PriceHistory(**serializer.validated_data)
+        instance.run_auto_calculation(recalculate_inputs)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response(serializer.data)
 
 
 class GeneratedEventFilterSet(FilterSet):
@@ -1706,7 +1986,12 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=["put"], url_path="informed")
+    @action(
+        detail=True,
+        methods=["put"],
+        url_path="informed",
+        serializer_class=GeneratedEventSerializer,
+    )
     def ignore(self, request, pk=None):
         generated_event = self.get_object()
 
@@ -1783,3 +2068,9 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
+
+
+class DayTimeConventionViewSet(AbstractModelViewSet):
+    queryset = AccrualCalculationModel.objects.all().order_by("id")
+    serializer_class = DayTimeConventionSerializer
+    http_method_names = ["get"]

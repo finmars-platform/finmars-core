@@ -15,11 +15,13 @@
 
 <div class="content">
 
-    <div>
-        <h3>API Reference</h3>
-        <p><span class="color-orange">Finmars</span> API is organized around REST. Our API has predictable
+    <div class="documentation-block" style="text-align: center;">
+        <h3>API Documentation Reference</h3>
+        <p style="margin: 0 auto; max-width: 800px;">
+            <span class="color-orange">Finmars API</span> is organized around REST. Our API has predictable
             resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses, and uses
-            standard HTTP response codes, authentication, and verbs.</p>
+            standard HTTP response codes, authentication, and verbs.
+        </p>
     </div>
 
     <div class="documentation-block">
@@ -31,7 +33,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/instrument">Instrument</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/instrument">Instrument</a>
                     <div class="api-description">
                         <p>
                             The instrument entity represents a financial asset that can be bought and sold in Finmars.
@@ -41,21 +43,17 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/account">Account</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/account">Account</a>
                     <div class="api-description">
                         <p>
                             The /accounts/ API endpoint provides access to information about user accounts in Finmars.
-                            This
-                            endpoint
-                            allows users to create new accounts, retrieve information about existing accounts, and
-                            update
-                            account
-                            details.
+                            This endpoint allows users to create new accounts, retrieve information about
+                            existing accounts, and update account details.
                         </p>
                     </div>
                 </div>
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/portfolio">Portfolio</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/portfolio">Portfolio</a>
                     <div class="api-description">
                         <p>
                             The portfolio entity represents a collection of financial assets held by a user in Finmars.
@@ -65,19 +63,17 @@
                     </div>
                 </div>
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/currency">Currency</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/currency">Currency</a>
                     <div class="api-description">
                         <p>
                             The currency entity represents a unit of currency used in Finmars. Each currency is
-                            identified by a
-                            unique
-                            code, and can have a corresponding name and symbol.
+                            identified by a unique code, and can have a corresponding name and symbol.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/strategy">Strategy</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/strategy">Strategy</a>
                     <div class="api-description">
                         <p>
                             The strategy entity represents an investment strategy that our users can use to manage their
@@ -93,7 +89,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/transaction">Transaction</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/transaction">Transaction</a>
                     <div class="api-description">
                         <p>
                             The transaction entity represents a single financial transaction that occurs in Finmars.
@@ -105,7 +101,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/instrument#tag/Price-History">Price History</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/instrument#tag/Price-History">Price History</a>
                     <div class="api-description">
                         <p>
                             The price history entity represents the historical prices for a financial instrument in
@@ -116,7 +112,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/currency#tag/Currency-History">FX Rate History</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/currency#tag/Currency-History">FX Rate History</a>
                     <div class="api-description">
                         <p>
                             The FX rate history entity represents the historical exchange rates between two currencies
@@ -127,7 +123,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/counterparty">Counterparty</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/counterparty">Counterparty</a>
                     <div class="api-description">
                         <p>
                             The counterparty entity represents a financial institution, broker, or company that our
@@ -140,7 +136,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/counterparty#tag/Responsible">Responsible</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/counterparty#tag/Responsible">Responsible</a>
                     <div class="api-description">
                         <p>
                             The responsible entity represents a person or department responsible for managing finance
@@ -150,15 +146,11 @@
                     </div>
                 </div>
 
-
             </div>
-
 
         </div>
 
-
     </div>
-
 
     <div class="documentation-block">
 
@@ -168,7 +160,7 @@
 
             <div class="display-flex-column">
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/report#tag/Balance-Report">Balance Report</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/report#tag/Balance-Report">Balance Report</a>
                     <div class="api-description">
                         <p>
                             The balance report entity represents a report that shows the current balance and holdings of
@@ -181,7 +173,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/report#tag/Transaction-Report">Transaction Report</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/report#tag/Transaction-Report">Transaction Report</a>
                     <div class="api-description">
                         <p>
                             The transaction report entity represents a report that shows a list of transactions for a
@@ -198,7 +190,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/report#tag/Pl-Report">P&L Report</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/report#tag/Pl-Report">P&L Report</a>
                     <div class="api-description">
                         <p>
                             The PL report entity represents a report that shows the profits and losses of a user's
@@ -211,7 +203,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/report#tag/Performance-Report">Performance Report</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/report#tag/Performance-Report">Performance Report</a>
                     <div class="api-description">
                         <p>
                             The performance report entity represents a report that shows the performance of a user's
@@ -227,7 +219,6 @@
 
         </div>
 
-
     </div>
 
     <div class="documentation-block">
@@ -239,7 +230,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/import#tag/Simple-Import">Simple Import</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/import#tag/Simple-Import">Simple Import</a>
                     <div class="api-description">
                         <p>
                             The data import API endpoint allows users to import data related to Portfolios, Accounts,
@@ -257,7 +248,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/import#tag/Transaction-Import">Transaction Import</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/import#tag/Transaction-Import">Transaction Import</a>
                     <div class="api-description">
                         <p>
                             The transaction import API endpoint allows users to import transactions from CSV and JSON
@@ -284,7 +275,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/transaction#tag/Transaction-Type">Transaction Type</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/transaction#tag/Transaction-Type">Transaction Type</a>
                     <div class="api-description">
                         <p>
                             The Transaction Type entity represents the different types of financial transactions that
@@ -293,27 +284,25 @@
                             additional
                             attributes, such as a description or default values for certain fields. In addition, each
                             Transaction Type can define custom templates and logic for creating and processing
-                            transactions
-                            of that type.
+                            transactions of that type.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Data-Procedure">Data Procedure</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/procedure#tag/Data-Procedure">Data Procedure</a>
                     <div class="api-description">
                         <p>
                             The Data Procedure entity represents a configured connection to a data source. Each Data
                             Procedure has a unique name and a set of configuration attributes that specify the details
-                            of
-                            the connection, such as the type of data source, the location of the data source, and any
+                            of the connection, such as the type of data source, the location of the data source, and any
                             credentials required for authentication.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Expression-Procedure">Expression Procedure</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/procedure#tag/Expression-Procedure">Expression Procedure</a>
                     <div class="api-description">
                         <p>
                             The Expression Procedure entity represents a custom Python-like script that can be executed
@@ -327,14 +316,13 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/ui">Input Form Layout</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/ui">Input Form Layout</a>
                     <div class="api-description">
                         <p>
                             The Input Form Layout entity represents a user interface (UI) configuration for an input
-                            form in
-                            JSON format. Each Input Form Layout has a unique name and a set of configuration attributes
-                            that
-                            define the UI components and their layout for the corresponding input form.
+                            form in JSON format. Each Input Form Layout has a unique name and a set of
+                            configuration attributes that define the UI components and their layout
+                            for the corresponding input form.
                         </p>
                     </div>
                 </div>
@@ -344,45 +332,42 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/instrument#tag/Instrument-Type">Instrument Type</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/instrument#tag/Instrument-Type">Instrument Type</a>
                     <div class="api-description">
                         <p>
                             The Instrument Type entity represents the different types of financial instruments that can
-                            be
-                            tracked in the application. Each Instrument Type has a unique name and may have additional
+                            be tracked in the application. Each Instrument Type has a unique name and may have additional
                             attributes, such as a description or default values for certain fields.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Pricing-Procedure">Pricing Procedure</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/procedure#tag/Pricing-Procedure">Pricing Procedure</a>
                     <div class="api-description">
                         <p>
                             The Pricing Procedure entity represents a set of rules for downloading and updating price
                             history and foreign exchange (FX) rates within the application. Each Pricing Procedure has a
                             unique name and a set of configuration attributes that specify the details of the pricing
-                            data
-                            to be retrieved, such as the data source, frequency of updates, and any transformation or
+                            data to be retrieved, such as the data source, frequency of updates, and any transformation or
                             mapping required.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/ui#tag/List-Layout">Entity Viewer / Report Layout</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/ui#tag/List-Layout">Entity Viewer / Report Layout</a>
                     <div class="api-description">
                         <p>
-                            The Layout entity represents a user interface (UI) configuration in JSON format. Each Layout
-                            has
-                            a unique name and a set of configuration attributes that define the UI components and their
-                            layout.
+                            The Layout entity represents a user interface (UI) configuration in JSON format.
+                            Each Layout has a unique name and a set of configuration attributes that
+                            define the UI components and their layout.
                         </p>
                     </div>
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/ui">Other Layouts</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/ui">Other Layouts</a>
                     <div class="api-description">
                         <p>
                             Such as Dashboards, Context menus, Aliases, etc.
@@ -391,10 +376,10 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/transaction#tag/Transaction-Type">Schedule</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/schedule">Schedule</a>
                     <div class="api-description">
                         <p>
-                            -
+                            User defined schedules
                         </p>
                     </div>
                 </div>
@@ -414,7 +399,7 @@
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/explorer">Explorer</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/explorer">Explorer</a>
                     <div class="api-description">
                         <p>The Explorer entity represents a web file storage system that allows users to store and
                             manage
@@ -425,7 +410,7 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/vault">Vault</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/vault">Vault</a>
                     <div class="api-description">
                         <p>
                             Vault serves as a robust foundation for securely storing secrets and seamlessly integrating
@@ -434,19 +419,19 @@
                     </div>
                 </div>
 
-                <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/import">Other</a>
-                    <div class="api-description">
-                        -
-                    </div>
-                </div>
+{#                <div class="documentation-endpoint-block">#}
+{#                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/import">Other</a>#}
+{#                    <div class="api-description">#}
+{#                        -#}
+{#                    </div>#}
+{#                </div>#}
 
             </div>
 
             <div class="display-flex-column">
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/iam">Permissions (IAM)</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/iam">Permissions (IAM)</a>
                     <div class="api-description">
                         <p>The IAM (Identity and Access Management) API endpoints provide functionality for managing
                             users,
@@ -456,9 +441,9 @@
                 </div>
 
                 <div class="documentation-endpoint-block">
-                    <a href="/{{space_code}}/docs/api/v1/import">Task</a>
+                    <a href="/{{realm_code}}/{{space_code}}/docs/api/v1/celery_tasks">Tasks</a>
                     <div class="api-description">
-                        -
+                        Celery Tasks started by system
                     </div>
                 </div>
 

@@ -2,8 +2,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
-from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.common.fields import ResourceGroupsField
+from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -67,7 +67,7 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Counterparty(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
 
     """
     One of Core Finmars entities, real world meaning is hold here
@@ -217,7 +217,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 # noinspection PyUnresolvedReferences
-class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Responsible(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     One of Core Finmars entities, real world meaning is to indicate
     who is executing/initiator of Transaction
@@ -244,6 +244,12 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
+    )
+
+    resource_groups = ResourceGroupsField(
+        verbose_name=gettext_lazy(
+            "list of resource groups user_codes, to which responsible belongs"
+        ),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):

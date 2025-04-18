@@ -1,11 +1,12 @@
+import datetime
 import json
 from logging import getLogger
 
-from django.contrib.auth import get_user_model
-
+import jwt
 import requests
-from poms_app import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from poms_app import settings
 
 _l = getLogger("poms.authorizer")
 
@@ -14,57 +15,47 @@ class AuthorizerService:
     # ?space_code=... needs for JWT Auth purpose !!!
 
     @staticmethod
+    def create_jwt_token():
+        payload = {
+            'some': 'payload',
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),  # Expires in 1 day
+        }
+        secret_key = settings.SECRET_KEY
+        token = jwt.encode(payload, secret_key, algorithm='HS256')
+        return token
+
+    @staticmethod
     def prepare_refresh_token() -> RefreshToken:
-        User = get_user_model()
+        # User = get_user_model()
+        #
+        # # Probably need to come up with something more smart
+        # bot = User.objects.get(username="finmars_bot")
+        #
+        # return RefreshToken.for_user(bot)
 
-        # Probably need to come up with something more smart
-        bot = User.objects.get(username="finmars_bot")
-
-        return RefreshToken.for_user(bot)
+        return AuthorizerService.create_jwt_token()
 
     def prepare_headers(self) -> dict:
-        refresh = self.prepare_refresh_token()
+        token = self.prepare_refresh_token()
         return {
             "Content-type": "application/json",
             "Accept": "application/json",
-            "Authorization": f"Bearer {refresh.access_token}",
+            "Authorization": f"Bearer {token}",
         }
 
-    def kick_member(self, member):
+    def invite_member(self, member, from_user, realm_code, space_code):
         headers = self.prepare_headers()
-
         data = {
-            "base_api_url": settings.BASE_API_URL,
-            "username": member.username,
-        }
-
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/kick-member/"
-            f"?space_code={settings.BASE_API_URL}"
-        )
-
-        _l.info(f"kick_member url={url} data={data}")
-
-        response = requests.post(
-            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
-        )
-
-        if response.status_code != 200:
-            raise RuntimeError(f"Error kicking member {response.text}")
-
-    def invite_member(self, member, from_user):
-        headers = self.prepare_headers()
-
-        data = {
-            "base_api_url": settings.BASE_API_URL,
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "base_api_url": space_code,  # deprecated, delete, but be sure authorizer not using it
             "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": from_user.username,
         }
-
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/invite-member/"
-            f"?space_code={settings.BASE_API_URL}"
+            f"?space_code={space_code}"
         )
 
         _l.info(f"invite_member url={url} data={data}")
@@ -72,127 +63,125 @@ class AuthorizerService:
         response = requests.post(
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
-
         if response.status_code != 200:
             raise RuntimeError(
                 f"Authorizer API error, data={data} code={response.status_code} "
                 f"details={response.text}"
             )
 
-    def start_worker(self, worker):
+    def kick_member(self, member, realm_code, space_code):
         headers = self.prepare_headers()
-
         data = {
-            "space_code": settings.BASE_API_URL,
-            "worker_name": worker.worker_name,
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "base_api_url": space_code,  # deprecated, but, be sure that authorizer not using it
+            "username": member.username,
         }
-
         url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/start-worker/"
-            f"?space_code={settings.BASE_API_URL}"
+            f"{settings.AUTHORIZER_URL}/api/v1/internal/kick-member/"
+            f"?space_code={space_code}"
         )
+
+        _l.info(f"kick_member url={url} data={data}")
 
         response = requests.post(
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
-
         if response.status_code != 200:
-            raise RuntimeError(f"Error starting worker {response.text}")
+            raise RuntimeError(f"Error kicking member {response.text}")
 
-    def stop_worker(self, worker):
+    def update_member(self, member, realm_code, space_code, **kwargs):
         headers = self.prepare_headers()
-
         data = {
-            "space_code": settings.BASE_API_URL,
-            "worker_name": worker.worker_name,
+            "realm_code": realm_code,
+            "space_code": space_code,
+            "username": member.username,
         }
+        data.update(**kwargs)
+        url = f"{settings.AUTHORIZER_URL}/api/v2/internal/update-member/"
 
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/stop-worker/"
-            f"?space_code={settings.BASE_API_URL}"
-        )
+        _l.info(f"update_member url={url} data={data}")
 
         response = requests.post(
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
-
         if response.status_code != 200:
-            raise RuntimeError(f"Error stopping worker {response.text}")
+            raise RuntimeError(f"Error updating member {response.text}")
 
-    def restart_worker(self, worker):
+    def prepare_and_post_request(self, url, worker, realm_code, err_msg):
         headers = self.prepare_headers()
-
         data = {
-            "space_code": settings.BASE_API_URL,
+            "realm_code": realm_code,
             "worker_name": worker.worker_name,
         }
-
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/restart-worker/"
-            f"?space_code={settings.BASE_API_URL}"
-        )
-
+        url = f"{settings.AUTHORIZER_URL}{url}"
         response = requests.post(
-            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
+            url=url,
+            data=json.dumps(data),
+            headers=headers,
+            verify=settings.VERIFY_SSL,
         )
-
         if response.status_code != 200:
-            raise RuntimeError(f"Error restarting worker {response.text}")
+            raise RuntimeError(f"{err_msg}{response.text}")
 
-    def delete_worker(self, worker):
-        headers = self.prepare_headers()
-
-        data = {
-            "space_code": settings.BASE_API_URL,
-            "worker_name": worker.worker_name,
-        }
-
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/delete-worker/"
-            f"?space_code={settings.BASE_API_URL}"
+    def start_worker(self, worker, realm_code):
+        self.prepare_and_post_request(
+            "/api/v1/internal/start-worker/",
+            worker,
+            realm_code,
+            "Error starting worker ",
         )
 
-        response = requests.post(
-            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
+    def stop_worker(self, worker, realm_code):
+        self.prepare_and_post_request(
+            "/api/v1/internal/stop-worker/",
+            worker,
+            realm_code,
+            "Error stopping worker ",
         )
 
-        if response.status_code != 200:
-            raise RuntimeError(f"Error restarting worker {response.text}")
+    def restart_worker(self, worker, realm_code):
+        self.prepare_and_post_request(
+            "/api/v1/internal/restart-worker/",
+            worker,
+            realm_code,
+            "Error restarting worker ",
+        )
 
-    def get_worker_status(self, worker):
+    def delete_worker(self, worker, realm_code):
+        self.prepare_and_post_request(
+            "/api/v1/internal/delete-worker/",
+            worker,
+            realm_code,
+            "Error deleting worker ",
+        )
+
+    def get_worker_status(self, worker, realm_code):
         headers = self.prepare_headers()
-
         url = (
             f"{settings.AUTHORIZER_URL}/api/v1/internal/worker-status/"
-            f"?space_code={settings.BASE_API_URL}&worker_name={worker.worker_name}"
+            f"?realm_code={realm_code}&worker_name={worker.worker_name}"
         )
 
         response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
-
         if response.status_code != 200:
             raise RuntimeError(f"Error getting worker status {response.text}")
 
         return response.json()
 
-    def create_worker(self, worker):
+    def create_worker(self, worker, realm_code):
         headers = self.prepare_headers()
-
         data = {
-            "space_code": settings.BASE_API_URL,
+            "realm_code": realm_code,
             "worker_name": worker.worker_name,
             "worker_type": worker.worker_type,
             "memory_limit": worker.memory_limit,
             "queue": worker.queue,
         }
-
-        url = (
-            f"{settings.AUTHORIZER_URL}/api/v1/internal/create-worker/"
-            f"?space_code={settings.BASE_API_URL}"
-        )
+        url = f"{settings.AUTHORIZER_URL}/api/v1/internal/create-worker/"
 
         response = requests.post(
             url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
         )
-
         if response.status_code != 200:
             raise RuntimeError(f"Error creating worker {response.text}")

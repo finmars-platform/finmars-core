@@ -16,14 +16,14 @@ class CounterpartyGroupDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         from poms.users.models import EcosystemDefault
 
         self.set_context(serializer_field)
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self._master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
         )
 
         return self.ecosystem_defaults.counterparty_group
@@ -44,14 +44,15 @@ class CounterpartyDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # Only One Space per Scheme
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self._master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
         )
 
         return self.ecosystem_defaults.counterparty
@@ -72,14 +73,14 @@ class ResponsibleGroupDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self._master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
         )
 
         return self.ecosystem_defaults.responsible_group
@@ -100,14 +101,14 @@ class ResponsibleDefault(object):
 
         from poms.users.models import MasterUser
 
-        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        self._master_user = MasterUser.objects.all().first()
 
     def __call__(self, serializer_field):
         from poms.users.models import EcosystemDefault
 
         self.set_context(serializer_field)
-        self.ecosystem_defaults = EcosystemDefault.objects.get(
-            master_user=self._master_user
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self._master_user.pk
         )
 
         return self.ecosystem_defaults.responsible

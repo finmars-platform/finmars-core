@@ -1,22 +1,20 @@
-from unittest import mock, skip
+from unittest import mock
 from datetime import date
-
-from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.monad import Monad, MonadStatus
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_urls
 from poms.celery_tasks.models import CeleryTask
 from poms.instruments.models import Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = (
-            f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/instrument/"
-        )
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/instrument/"
         self.task = self.create_task(
             name="Test",
             func="test",
@@ -52,14 +50,13 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 400, response.content)
 
-    @skip("till fix the instrument type")
     @BaseTestCase.cases(
         ("bond_111", "bond"),
         ("bond_777", "bond"),
         ("stock_333", "stock"),
         ("stock_999", "stock"),
     )
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__task_ready(self, type_code, mock_get_task):
         remote_task_id = self.random_int()
         mock_get_task.return_value = Monad(
@@ -78,8 +75,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print("task_ready", response_json)
-
         self.assertIn("result_id", response_json)
         self.assertIn("errors", response_json)
         self.assertIsNone(response_json["errors"])
@@ -97,16 +92,18 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
-        self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
 
-    @skip("till fix the instrument type")
+        backend_callback_urls = get_backend_callback_urls()
+
+        self.assertEqual(options["callback_url"], backend_callback_urls["instrument"])
+
     @BaseTestCase.cases(
         ("bond", "bond"),
         ("stock", "stock"),
     )
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__data_ready(self, type_code, mock_get_monad):
-        user_code = self.random_string(10)
+        user_code = self.random_string()
         currency_code = self.random_string(3)
         mock_get_monad.return_value = Monad(
             status=MonadStatus.DATA_READY,
@@ -127,6 +124,13 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                         "country": {
                             "alpha_3": "USA",
                         },
+                        "identifier": {
+                            "cbond_id": f"{self.random_int(_max=1000)}",
+                            "isin": self.random_string(12),
+                        },
+                        "factor_schedules": [],
+                        "accrual_calculation_schedules": [],
+                        "accruals": [],
                     },
                 ],
                 "currencies": [
@@ -140,10 +144,8 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
             },
         )
         reference = self.random_string()
-        name = self.random_string()
         request_data = {
             "user_code": reference,
-            "name": name,
             "instrument_type_user_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
@@ -168,9 +170,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNotNone(instrument.country)
         self.assertEqual(instrument.country.alpha_3, "USA")
 
-        self.assertIsNotNone(Instrument.objects.get(pk=response_json["result_id"]))
-
-    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    @mock.patch("poms.integrations.tasks.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
         message = self.random_string()
         mock_get_task.return_value = Monad(
@@ -187,9 +187,50 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print("error", response_json)
-
         self.assertNotIn("result_id", response_json)
 
         self.assertIn("errors", response_json)
         self.assertIn(message, response_json["errors"])
+
+    @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
+    def test__task_ready_instrument_exists(self, mock_get_monad):
+        remote_task_id = self.random_int()
+        mock_get_monad.return_value = Monad(
+            status=MonadStatus.TASK_CREATED,
+            task_id=remote_task_id,
+        )
+        user_code = self.random_string()
+        request_data = {
+            "user_code": user_code,
+            "instrument_type_user_code": "bond",
+        }
+        instrument = self.create_instrument()  # create instrument
+        instrument.user_code = user_code
+        instrument.save()
+
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        mock_get_monad.assert_called_once()
+
+        response_json = response.json()
+
+        self.assertIn("result_id", response_json)
+        self.assertIn("errors", response_json)
+        self.assertIsNone(response_json["errors"])
+
+        self.assertIn("task", response_json)
+        self.assertEqual(response_json["user_code"], user_code)
+
+        self.assertIn("remote_task_id", response_json)
+        self.assertEqual(response_json["remote_task_id"], remote_task_id)
+
+        simple_instrument = Instrument.objects.get(pk=response_json["result_id"])
+        self.assertTrue(simple_instrument.is_active)
+
+        celery_task = CeleryTask.objects.get(pk=response_json["task"])
+        options = celery_task.options_object
+
+        backend_callback_urls = get_backend_callback_urls()
+
+        self.assertEqual(options["callback_url"], backend_callback_urls["instrument"])

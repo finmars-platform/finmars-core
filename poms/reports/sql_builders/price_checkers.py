@@ -686,11 +686,13 @@ class PriceHistoryCheckerSql:
 
     def __init__(self, instance=None):
 
-        _l.debug('PriceHistoryCheckerSql init')
+        # _l.debug('PriceHistoryCheckerSql init')
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
+        )
 
     def process(self):
 
@@ -721,7 +723,7 @@ class PriceHistoryCheckerSql:
                 transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor,
                                                               self.ecosystem_defaults)
 
-                _l.debug('transactions %s ' % len(transactions))
+                # _l.debug('transactions %s ' % len(transactions))
 
                 self.instance.items = self.instance.items + transactions
 
@@ -745,7 +747,7 @@ class PriceHistoryCheckerSql:
             transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor,
                                                           self.ecosystem_defaults)
 
-            _l.debug('transactions %s ' % len(transactions))
+            # _l.debug('transactions %s ' % len(transactions))
 
             self.instance.items = self.instance.items + transactions
 
@@ -764,107 +766,110 @@ class PriceHistoryCheckerSql:
                     elif 'settlement_currency_user_code' in item:
                         unique_items_dict[item['type'] + '_' + item['settlement_currency_user_code']] = item
                 except Exception as e:
-                    _l.info('error %s' % e)
-                    _l.info(item)
+                    _l.debug('error %s' % e)
+                    _l.debug(item)
 
             for key, value in unique_items_dict.items():
                 unique_items.append(unique_items_dict[key])
 
             self.instance.items = unique_items
 
-        self.add_data_items()
+        # self.add_data_items()
 
-        _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        # _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
-    def add_data_items_instruments(self, ids):
-
-        self.instance.item_instruments = Instrument.objects.select_related(
-            'instrument_type',
-            'instrument_type__instrument_class',
-            'pricing_currency',
-            'accrued_currency',
-            'payment_size_detail',
-            'daily_pricing_model',
-            # 'price_download_scheme',
-            # 'price_download_scheme__provider',
-        ).prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-            'pricing_policies',
-            'pricing_policies__pricing_scheme'
-        ).filter(master_user=self.instance.master_user) \
-            .filter(id__in=ids)
-
-    def add_data_items_currencies(self, ids):
-
-        self.instance.item_currencies = Currency.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
-
-    def add_data_items(self):
-
-        instance_relations_st = time.perf_counter()
-
-        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
-                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
-
-        item_relations_st = time.perf_counter()
-
-        instrument_ids = []
-        currencies_ids = []
-
-        dash_currency = Currency.objects.get(user_code='-', master_user=self.instance.master_user)
-
-        items_without_dash_currency = []
-
-        print('dash_currency %s' % dash_currency.id)
-
-        for item in self.instance.items:
-
-            is_not_dash = True
-
-            if item['type'] == 'missing_principal_pricing_history':
-                instrument_ids.append(item['id'])
-
-            if item['type'] == 'missing_instrument_currency_fx_rate':
-                currencies_ids.append(item['id'])
-
-                if item['id'] == dash_currency.id:
-                    is_not_dash = False
-
-            if item['type'] == 'fixed_calc':
-                currencies_ids.append(item['transaction_currency_id'])
-
-                if item['transaction_currency_id'] == dash_currency.id:
-                    is_not_dash = False
-
-            if item['type'] == 'stl_cur_fx':
-                currencies_ids.append(item['transaction_currency_id'])
-
-                if item['transaction_currency_id'] == dash_currency.id:
-                    is_not_dash = False
-
-            if item['type'] == 'rep_fx_var':
-                currencies_ids.append(item['transaction_currency_id'])
-
-                if item['transaction_currency_id'] == dash_currency.id:
-                    is_not_dash = False
-
-            if is_not_dash:
-                items_without_dash_currency.append(item)
-
-        self.instance.items = items_without_dash_currency
-
-        _l.debug('len instrument_ids %s' % len(instrument_ids))
-
-        self.add_data_items_instruments(instrument_ids)
-
-        self.add_data_items_currencies(currencies_ids)
-
-        _l.debug('_refresh_with_perms_optimized item relations done: %s',
-                 "{:3.3f}".format(time.perf_counter() - item_relations_st))
+    # def add_data_items_instruments(self, ids):
+    #
+    #     self.instance.item_instruments = Instrument.objects.select_related(
+    #         'instrument_type',
+    #         'instrument_type__instrument_class',
+    #         'pricing_currency',
+    #         'accrued_currency',
+    #         'payment_size_detail',
+    #         'daily_pricing_model',
+    #         'country',
+    #         # 'price_download_scheme',
+    #         # 'price_download_scheme__provider',
+    #     ).prefetch_related(
+    #         'attributes',
+    #         'attributes__attribute_type',
+    #         'attributes__classifier',
+    #     ).filter(master_user=self.instance.master_user) \
+    #         .filter(id__in=ids)
+    #
+    # def add_data_items_currencies(self, ids):
+    #
+    #     self.instance.item_currencies = Currency.objects.prefetch_related(
+    #         'attributes',
+    #         'country',
+    #         'attributes__attribute_type',
+    #         'attributes__classifier',
+    #     ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+    #
+    # def add_data_items(self):
+    #
+    #     instance_relations_st = time.perf_counter()
+    #
+    #     _l.debug('_refresh_with_perms_optimized instance relations done: %s',
+    #              "{:3.3f}".format(time.perf_counter() - instance_relations_st))
+    #
+    #     item_relations_st = time.perf_counter()
+    #
+    #     instrument_ids = []
+    #     currencies_ids = []
+    #
+    #     try:
+    #         dash_currency_id = Currency.objects.get(user_code='-', master_user=self.instance.master_user).id
+    #     except Exception as e:
+    #         dash_currency_id = None
+    #
+    #     items_without_dash_currency = []
+    #
+    #     # print('dash_currency %s' % dash_currency.id)
+    #
+    #     for item in self.instance.items:
+    #
+    #         is_not_dash = True
+    #
+    #         if item['type'] == 'missing_principal_pricing_history':
+    #             instrument_ids.append(item['id'])
+    #
+    #         if item['type'] == 'missing_instrument_currency_fx_rate':
+    #             currencies_ids.append(item['id'])
+    #
+    #             if item['id'] == dash_currency_id:
+    #                 is_not_dash = False
+    #
+    #         if item['type'] == 'fixed_calc':
+    #             currencies_ids.append(item['transaction_currency_id'])
+    #
+    #             if item['transaction_currency_id'] == dash_currency_id:
+    #                 is_not_dash = False
+    #
+    #         if item['type'] == 'stl_cur_fx':
+    #             currencies_ids.append(item['transaction_currency_id'])
+    #
+    #             if item['transaction_currency_id'] == dash_currency_id:
+    #                 is_not_dash = False
+    #
+    #         if item['type'] == 'rep_fx_var':
+    #             currencies_ids.append(item['transaction_currency_id'])
+    #
+    #             if item['transaction_currency_id'] == dash_currency_id:
+    #                 is_not_dash = False
+    #
+    #         if is_not_dash:
+    #             items_without_dash_currency.append(item)
+    #
+    #     self.instance.items = items_without_dash_currency
+    #
+    #     _l.debug('len instrument_ids %s' % len(instrument_ids))
+    #
+    #     self.add_data_items_instruments(instrument_ids)
+    #
+    #     self.add_data_items_currencies(currencies_ids)
+    #
+    #     _l.debug('_refresh_with_perms_optimized item relations done: %s',
+    #              "{:3.3f}".format(time.perf_counter() - item_relations_st))

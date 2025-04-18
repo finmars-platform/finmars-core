@@ -1,22 +1,18 @@
-from __future__ import unicode_literals
-
 import logging
 
 from django.apps import AppConfig
-from django.db import DEFAULT_DB_ALIAS
-from django.db import connection
+from django.db import DEFAULT_DB_ALIAS, connection
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
 from poms_app import settings
 
-_l = logging.getLogger('provision')
+_l = logging.getLogger("provision")
 
 
 class ReportsConfig(AppConfig):
-    name = 'poms.reports'
-    # label = 'poms_reports'
-    verbose_name = gettext_lazy('Reports')
+    name = "poms.reports"
+    verbose_name = gettext_lazy("Reports")
 
     def ready(self):
         post_migrate.connect(self.create_views_for_sql_reports, sender=self)
@@ -216,7 +212,7 @@ class ReportsConfig(AppConfig):
                 cursor.execute(query)
 
         except Exception as e:
-            _l.info("create_view_for_positions %s" % e)
+            _l.debug(f"create_view_for_positions {e}")
 
     def create_view_for_cash_fx_trades(self):
 

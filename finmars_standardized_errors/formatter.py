@@ -6,7 +6,6 @@ from typing import List, Union
 from django.utils.timezone import now
 from rest_framework import exceptions
 from rest_framework.status import is_client_error
-
 from .models import ErrorRecord
 from .settings import package_settings
 from .types import (
@@ -49,6 +48,7 @@ class ExceptionFormatter:
         errors = self.get_errors()
 
         url = str(self.context["request"].build_absolute_uri())[:255]
+        method = str(self.context["request"].method)
         username = str(self.context["request"].user.username)[:255]
         status_code = self.exc.status_code
         http_code_to_message = {v.value: v.description for v in HTTPStatus}
@@ -64,7 +64,7 @@ class ExceptionFormatter:
         )
 
         error_response = self.get_error_response(
-            url, username, status_code, message, error_datetime, error_type, errors
+            url, method, username, status_code, message, error_datetime, error_type, errors
         )
 
         return self.format_error_response(error_response)
@@ -87,6 +87,7 @@ class ExceptionFormatter:
     def get_error_response(
         self,
         url: str,
+        method: str,
         username: str,
         status_code: int,
         message,
@@ -97,7 +98,7 @@ class ExceptionFormatter:
         error_response_details = ErrorResponseDetails(error_type, errors)
 
         return ErrorResponse(
-            url, username, status_code, message, error_datetime, error_response_details
+            url, method, username, status_code, message, error_datetime, error_response_details
         )
 
     def format_error_response(self, error_response: ErrorResponse):
@@ -170,4 +171,10 @@ def flatten_errors(
         return flatten_errors(value, key) + flatten_errors(dict(rest), attr)
 
     else:
-        return [Error(detail.code, str(detail), attr)]
+
+        error_key = None
+
+        if getattr(detail, 'error_key', None):
+            error_key = detail.error_key
+
+        return [Error(detail.code,  str(detail), error_key, attr)]

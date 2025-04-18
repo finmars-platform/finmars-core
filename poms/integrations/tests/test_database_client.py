@@ -1,13 +1,16 @@
 from unittest import mock
 
-from poms.common.common_base_test import BaseTestCase
-from poms.integrations.database_client import DatabaseService
-from poms.common.http_client import HttpClientError
-from poms.integrations.monad import Monad, MonadStatus
 from poms.celery_tasks.models import CeleryTask
+from poms.common.common_base_test import BaseTestCase
+from poms.common.exceptions import FinmarsBaseException
+from poms.common.http_client import HttpClientError
+from poms.integrations.database_client import DatabaseService
+from poms.integrations.monad import Monad, MonadStatus
 
 
 class DatabaseClientTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -75,13 +78,13 @@ class DatabaseClientTest(BaseTestCase):
     def test__wrong_service(self, service):
         data = {"items": []}
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FinmarsBaseException):
             self.service.get_monad(service, data)
 
     @BaseTestCase.cases(
-        ("no_data", {"task_id": None, "request_id": None, }),
-        ("no_task_id", {"data": {"test": 333}, "request_id": None,}),
-        ("no_both", {"data": None, "task_id": None, "request_id": None,}),
+        ("no_data", {"task_id": None, "request_id": None}),
+        ("no_task_id", {"data": {"test": 333}, "request_id": None}),
+        ("no_both", {"data": None, "task_id": None, "request_id": None}),
     )
     @mock.patch("poms.common.http_client.HttpClient.post")
     def test__missing_param(self, request_data: dict, mock_post):
@@ -89,15 +92,13 @@ class DatabaseClientTest(BaseTestCase):
         mock_post.return_value = request_data
         monad: Monad = self.service.get_monad("instrument", request_data)
         self.assertEqual(monad.status, MonadStatus.ERROR)
-        print(f"\nmonad.message={monad.message}\n")
 
     @BaseTestCase.cases(
-        ("no_req_id", {"data": {"test": 1}, "task_id": 2, }),
-        ("wrong_reg_id", {"data": {"test": 1}, "task_id": 2, "request_id": 777,}),
+        ("no_req_id", {"data": {"test": 1}, "task_id": 2}),
+        ("wrong_reg_id", {"data": {"test": 1}, "task_id": 2, "request_id": 777}),
     )
     @mock.patch("poms.common.http_client.HttpClient.post")
     def test__invalid(self, request_data: dict, mock_post):
         mock_post.return_value = request_data
         monad: Monad = self.service.get_monad("instrument", request_data)
         self.assertEqual(monad.status, MonadStatus.ERROR)
-        print(f"\nmonad.message={monad.message}\n")

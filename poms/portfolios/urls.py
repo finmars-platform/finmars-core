@@ -5,48 +5,69 @@ import poms.portfolios.views as portfolios
 router = routers.DefaultRouter()
 
 router.register(
-    r"portfolio-attribute-type",
+    "portfolio-class",
+    portfolios.PortfolioClassViewSet,
+)
+router.register(
+    "portfolio-type",
+    portfolios.PortfolioTypeViewSet,
+)
+router.register(
+    "portfolio-type-attribute-type",
+    portfolios.PortfolioTypeAttributeTypeViewSet,
+)
+router.register(
+    "portfolio-attribute-type",
     portfolios.PortfolioAttributeTypeViewSet,
     "portfolioattributetype",
 )
 router.register(
-    r"portfolio-classifier",
+    "portfolio-classifier",
     portfolios.PortfolioClassifierViewSet,
     "portfolioclassifier",
 )
 router.register(
-    r"portfolio",
+    "portfolio",
     portfolios.PortfolioViewSet,
     "portfolio",
 )
 router.register(
-    r"portfolio-register-attribute-type",
+    "portfolio-register-attribute-type",
     portfolios.PortfolioRegisterAttributeTypeViewSet,
     "portfolioregisterattributetype",
 )
 router.register(
-    r"portfolio-register",
+    "portfolio-register",
     portfolios.PortfolioRegisterViewSet,
     "portfolioregister",
 )
 router.register(
-    r"portfolio-register-record",
+    "portfolio-register-record",
     portfolios.PortfolioRegisterRecordViewSet,
     "portfolioregisterrecord",
 )
 router.register(
-    r"portfolio-bundle",
+    "portfolio-bundle",
     portfolios.PortfolioBundleViewSet,
     "portfoliobundle",
 )
 router.register(
-    r"first-transaction-date",
+    "first-transaction-date",
     portfolios.PortfolioFirstTransactionViewSet,
     "firsttransactiondate",
 )
-
 router.register(
-    r"portfolio-history",
+    "portfolio-history",
     portfolios.PortfolioHistoryViewSet,
     "portfoliohistory",
+)
+router.register(
+    "portfolio-reconcile-group",
+    portfolios.PortfolioReconcileGroupViewSet,
+    "portfolioreconcilegroup",
+)
+router.register(
+    "portfolio-reconcile-history",
+    portfolios.PortfolioReconcileHistoryViewSet,
+    "portfolioreconcilehistory",
 )

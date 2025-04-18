@@ -3,11 +3,79 @@ from rest_framework import routers
 import poms.explorer.views as explorer
 
 router = routers.DefaultRouter()
-router.register(r'explorer', explorer.ExplorerViewSet, 'explorer')
-router.register(r'view', explorer.ExplorerViewFileViewSet, 'explorerView')
-router.register(r'upload', explorer.ExplorerUploadViewSet, 'explorerUpload')
-router.register(r'delete', explorer.ExplorerDeleteViewSet, 'explorerDelete')
-router.register(r'create-folder', explorer.ExplorerCreateFolderViewSet, 'explorerCreateFolder')
-router.register(r'delete-folder', explorer.ExplorerDeleteFolderViewSet, 'explorerDeleteFolder')
-router.register(r'download-as-zip', explorer.DownloadAsZipViewSet, 'downloadAsZip')
-router.register(r'download', explorer.DownloadViewSet, 'explorerDownload')
+
+router.register(
+    "explorer",
+    explorer.ExplorerViewSet,
+    "explorer",
+)
+router.register(
+    "view",
+    explorer.ExplorerViewFileViewSet,
+    "explorer_view",
+)
+router.register(
+    "upload",
+    explorer.ExplorerUploadViewSet,
+    "explorer_upload",
+)
+router.register(
+    "delete",
+    explorer.ExplorerDeleteViewSet,
+    "explorer_delete",
+)
+router.register(
+    "create-folder",
+    explorer.ExplorerCreateFolderViewSet,
+    "explorer_create_folder",
+)
+router.register(
+    "delete-folder",
+    explorer.ExplorerDeleteFolderViewSet,
+    "explorer_delete_folder",
+)
+router.register(
+    "download-as-zip",
+    explorer.DownloadAsZipViewSet,
+    "download_as_zip",
+)
+router.register(
+    "download",
+    explorer.DownloadViewSet,
+    "explorer_download",
+)
+router.register(
+    "move",
+    explorer.MoveViewSet,
+    "explorer_move",
+)
+router.register(
+    "unzip",
+    explorer.UnZipViewSet,
+    "explorer_unzip",
+)
+router.register(
+    "sync",
+    explorer.SyncViewSet,
+    "explorer_sync",
+)
+router.register(
+    "search",
+    explorer.SearchViewSet,
+    "explorer_search",
+)
+router.register(
+    "storage-object",
+    explorer.StorageObjectResourceGroupViewSet,
+    "explorer_storage_object",
+)
+router.register(
+    "rename",
+    explorer.RenameViewSet,
+    "explorer_rename",
+)
+router.register(
+    "copy",
+    explorer.CopyViewSet,
+    "explorer_copy",
+)

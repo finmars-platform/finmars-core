@@ -91,11 +91,11 @@ class InstrumentTypeProcess(object):
         self.instrument_type = instrument_type
         self.context = context
 
-        self.ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.instrument_type.master_user
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instrument_type.master_user.pk
         )
 
-        self.instrument_object = {"instrument_type": instrument_type.id}
+        self.instrument_object = {"instrument_type": instrument_type.id, "identifier": {}}
         self.fill_instrument_with_instrument_type_defaults()
         self.set_pricing_policies()
 
@@ -139,12 +139,12 @@ class InstrumentTypeProcess(object):
                     "pricing_currency"
                 ] = self.ecosystem_default.currency.pk
 
-            self.instrument_object["instrument_type_pricing_policies"] = []
-
-            if self.instrument_type.pricing_policies:
-                self.instrument_object[
-                    "_instrument_type_pricing_policies"
-                ] = self.instrument_type.pricing_policies
+            # self.instrument_object["instrument_type_pricing_policies"] = []
+            #
+            # if self.instrument_type.pricing_policies:
+            #     self.instrument_object[
+            #         "_instrument_type_pricing_policies"
+            #     ] = self.instrument_type.pricing_policies
 
             self.instrument_object["default_price"] = self.instrument_type.default_price
             self.instrument_object["maturity_date"] = self.instrument_type.maturity_date
@@ -399,12 +399,9 @@ class InstrumentTypeProcess(object):
 
             for it_pricing_policy in self.instrument_type.pricing_policies.all():
                 pricing_policy = {
-                    "pricing_policy": it_pricing_policy.pricing_policy.id,
-                    "pricing_scheme": it_pricing_policy.pricing_scheme.id,
-                    "notes": it_pricing_policy.notes,
-                    "default_value": it_pricing_policy.default_value,
-                    "attribute_key": it_pricing_policy.attribute_key,
-                    "json_data": it_pricing_policy.json_data,
+                    "pricing_policy_id": it_pricing_policy.pricing_policy.id,
+                    "target_pricing_schema_user_code": it_pricing_policy.target_pricing_schema_user_code,
+                    "options": it_pricing_policy.options,
                 }
 
                 self.instrument_object["pricing_policies"].append(pricing_policy)

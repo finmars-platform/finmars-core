@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from poms.common.filters import (
     AttributeFilter,
+    CharExactFilter,
     CharFilter,
     EntitySpecificFilter,
     GroupsAttributeFilter,
@@ -16,7 +17,12 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.views import AbstractModelViewSet
-from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter
+from poms.currencies.constants import MAIN_CURRENCIES
+from poms.currencies.filters import (
+    CurrencyUserCodeFilter,
+    ListDatesFilter,
+    OwnerByCurrencyFilter,
+)
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import (
     CurrencyHistorySerializer,
@@ -33,7 +39,6 @@ _l = logging.getLogger("poms.currencies")
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Currency
     target_model_serializer = CurrencySerializer
-
     permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
@@ -41,6 +46,7 @@ class CurrencyFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     user_code = CharFilter()
+    user_code__exact = CharExactFilter(field_name="user_code")
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
@@ -63,6 +69,7 @@ class CurrencyFilterSet(FilterSet):
                     Q(user_code__icontains=term)
                     | Q(name__icontains=term)
                     | Q(short_name__icontains=term)
+                    | Q(public_name__icontains=term)
                 )
             queryset = queryset.filter(conditions)
 
@@ -72,7 +79,9 @@ class CurrencyFilterSet(FilterSet):
 class CurrencyViewSet(AbstractModelViewSet):
     queryset = Currency.objects.select_related(
         "master_user",
-        "owner"
+        "owner",
+        "pricing_condition",
+        "country",
     ).prefetch_related(get_attributes_prefetch())
     serializer_class = CurrencySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -169,15 +178,25 @@ class CurrencyViewSet(AbstractModelViewSet):
 
         return Response(result)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user_code in MAIN_CURRENCIES:
+            return Response(
+                {
+                    "message": "Cannot delete instance because they are referenced through a protected foreign key",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        return super().destroy(request, *args, **kwargs)
+
 
 class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
     currency = ModelExtMultipleChoiceFilter(model=Currency)
-    pricing_policy = CharFilter(
-        field_name="pricing_policy__user_code", lookup_expr="icontains"
-    )
+    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
     fx_rate = django_filters.RangeFilter()
+    is_temporary_fx_rate = django_filters.BooleanFilter()
 
     class Meta:
         model = CurrencyHistory
@@ -185,12 +204,11 @@ class CurrencyHistoryFilterSet(FilterSet):
 
 
 class CurrencyHistoryViewSet(AbstractModelViewSet):
-    queryset = CurrencyHistory.objects.select_related(
-        "currency", "pricing_policy"
-    ).prefetch_related()
+    queryset = CurrencyHistory.objects.select_related("currency", "pricing_policy").prefetch_related()
     serializer_class = CurrencyHistorySerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
+        CurrencyUserCodeFilter,
         OwnerByCurrencyFilter,
         AttributeFilter,
         ListDatesFilter,
@@ -226,7 +244,12 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
 
         _l.info(f"CurrencyHistoryViewSet.valid_data {len(valid_data)}")
 
-        CurrencyHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+        CurrencyHistory.objects.bulk_create(
+            valid_data,
+            update_conflicts=True,
+            unique_fields=["currency", "pricing_policy", "date"],
+            update_fields=["fx_rate"],
+        )
 
         if errors:
             _l.info(f"CurrencyHistoryViewSet.bulk_create.errors {errors}")

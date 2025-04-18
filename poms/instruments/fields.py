@@ -1,4 +1,5 @@
 from poms.common.fields import (
+    FloatEvalField,
     PrimaryKeyRelatedFilteredField,
     UserCodeOrPrimaryKeyRelatedField,
 )
@@ -22,7 +23,9 @@ from poms.transactions.models import (
     TransactionTypeInput,
     TransactionTypeInputSettings,
 )
-from poms.users.filters import LinkedWithPortfolioFilter, OwnerByMasterUserFilter
+from poms.users.filters import OwnerByMasterUserFilter
+
+AUTO_CALCULATE = float("-inf")
 
 
 class InstrumentTypeDefault(object):
@@ -30,11 +33,11 @@ class InstrumentTypeDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context["request"]
-        self._master_user = request.user.master_user
+        self._master_user = request.user.master_user if request.user.is_authenticated else None
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.instrument_type
+        return self._master_user.instrument_type if self._master_user else None
 
 
 class InstrumentTypeField(UserCodeOrPrimaryKeyRelatedField):
@@ -49,11 +52,11 @@ class InstrumentDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context["request"]
-        self._master_user = request.user.master_user
+        self._master_user = request.user.master_user if request.user.is_authenticated else None
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.instrument
+        return self._master_user.instrument if self._master_user else None
 
 
 class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
@@ -129,10 +132,15 @@ class SystemPricingPolicyDefault:
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
-        self.set_context(serializer_field)
-
         from poms.users.models import EcosystemDefault
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
+        self.set_context(serializer_field)
+
+        ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=self._master_user.pk)
 
         return ecosystem_default.pricing_policy
+
+
+class AutocalculateFloatEvalField(FloatEvalField):
+    def run_validation(self, value=None):
+        return AUTO_CALCULATE if value is None else super().run_validation(value)

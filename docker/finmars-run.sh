@@ -77,22 +77,22 @@ chmod 777 /var/log/finmars/backend/django.log
 # Default value is "backend"
 : "${INSTANCE_TYPE:=backend}"
 
-
+export GUNICORN_START_TIME=$(date +%s)
 
 if [ "$INSTANCE_TYPE" = "backend" ]; then
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migrating..."
-  python /var/app/manage.py migrate
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Migration Done 💚"
+  # timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+  # echo "[${timestamp}] Migrating..."
+  # python /var/app/manage.py migrate_all_schemes
+  # timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+  # echo "[${timestamp}] Migration Done 💚"
 
   #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Clear sessions"
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Clear sessions"
 
-  python /var/app/manage.py clearsessions
+#  python /var/app/manage.py clearsessions
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Collect static"
@@ -102,22 +102,27 @@ if [ "$INSTANCE_TYPE" = "backend" ]; then
   export DJANGO_SETTINGS_MODULE=poms_app.settings
   export C_FORCE_ROOT='true'
 
-  python manage.py clear_celery
-  python manage.py deploy_default_worker
+  # supervisord
 
-  python manage.py download_init_configuration
+  # echo "Run CeleryBeat"
+  # supervisorctl start celerybeat
 
-  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  echo "[${timestamp}] Create admin user"
+#  python manage.py clear_celery
+#  python manage.py deploy_default_worker
+#
+#  python manage.py download_init_configuration
 
-  python /var/app/manage.py generate_super_user
+#  timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+#  echo "[${timestamp}] Create admin user"
+#
+#  python /var/app/manage.py generate_super_user
 
   timestamp=$(date +"%Y-%m-%d %H:%M:%S")
   echo "[${timestamp}] Run Gunicorn Web Server"
 
   python /var/app/poms_app/print_finmars.py
 
-  gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
+  gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi --name=finmars-backend
 
 elif [ "$INSTANCE_TYPE" = "worker" ]; then
 
@@ -129,7 +134,7 @@ elif [ "$INSTANCE_TYPE" = "worker" ]; then
 
 elif [ "$INSTANCE_TYPE" = "scheduler" ]; then
 
-  cd /var/app && celery --app poms_app beat --loglevel=INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  cd /var/app && celery --app poms_app beat --loglevel=INFO --scheduler poms.common.celery:PerSpaceDatabaseScheduler
 
 else
   echo "Missing or unsupported value for INSTANCE_TYPE environment variable. Exiting."

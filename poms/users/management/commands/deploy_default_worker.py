@@ -8,6 +8,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from poms.celery_tasks.models import CeleryWorker
+from poms_app import settings
 
 _l = logging.getLogger('provision')
 
@@ -26,6 +27,8 @@ class Command(BaseCommand):
             _l.info('Waiting for Rabbitmq...')
             time.sleep(10)
 
+            realm_code = settings.REALM_CODE
+
             try:
 
                 try:
@@ -36,9 +39,9 @@ class Command(BaseCommand):
                                                                  memory_limit='1Gi',
                                                                  queue='backend-general-queue,backend-reports-queue,backend-imports-queue,backend-background-queue')
 
-                    default_worker.create_worker()
+                    default_worker.create_worker(realm_code)
 
-                default_worker.get_status()
+                default_worker.get_status(realm_code)
 
                 status_detail = json.loads(default_worker.status)
 
@@ -49,9 +52,9 @@ class Command(BaseCommand):
                         _l.info("deploy_default_worker: Default worker already deployed")
                         return
                     elif status_detail['status'] == 'not_found':
-                        default_worker.deploy()
+                        default_worker.deploy(realm_code)
                     else:
-                        default_worker.start()
+                        default_worker.start(realm_code)
 
             except Exception as e:
                 _l.error("deploy_default_worker: Could not deploy worker %s" % e)

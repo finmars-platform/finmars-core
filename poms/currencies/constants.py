@@ -1,0 +1,2 @@
+DASH = "-"
+MAIN_CURRENCIES = [DASH, "USD", "EUR", "CHF", "GBP"]

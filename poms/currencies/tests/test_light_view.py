@@ -1,19 +1,24 @@
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency
 
 
 class CompanyViewTestCase(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/currencies/currency/light/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency/light/"
+        )
 
     @BaseTestCase.cases(
         ("name", "name"),
         ("user_code", "user_code"),
         ("short_name", "short_name"),
+        ("public_name", "public_name"),
     )
     def test__filter_by_query(self, field):
         query = self.random_string(7)

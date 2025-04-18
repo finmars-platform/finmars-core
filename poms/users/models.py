@@ -1,16 +1,22 @@
 import binascii
 import json
+import logging
 import os
 import uuid
 
 import pytz
+
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import FakeDeletableModel
+from poms.common.models import (
+    CacheByMasterUserManager,
+    CacheModel,
+    FakeDeletableModel,
+)
 from poms.common.utils import get_content_type_by_name
 
 AVAILABLE_APPS = [
@@ -30,9 +36,7 @@ TIMEZONE_MAX_LENGTH = 20
 TIMEZONE_CHOICES = sorted([(k, k) for k in pytz.all_timezones])
 TIMEZONE_COMMON_CHOICES = sorted([(k, k) for k in pytz.common_timezones])
 
-import logging
-
-_l = logging.getLogger('poms.users')
+_l = logging.getLogger("poms.users")
 
 
 class ResetPasswordToken(models.Model):
@@ -51,9 +55,7 @@ class ResetPasswordToken(models.Model):
         settings.AUTH_USER_MODEL,
         related_name="password_reset_tokens",
         on_delete=models.CASCADE,
-        verbose_name=gettext_lazy(
-            "The User which is associated to this password reset token"
-        ),
+        verbose_name=gettext_lazy("The User which is associated to this password reset token"),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -101,7 +103,7 @@ class MasterUser(models.Model):
     Master User
 
     One of core entities, and its most important.
-    Its a Finmars Installation instance, it uses Space Id (base_api_url) which make
+    Its a Finmars Installation instance, it uses Space Id (space_code) which make
     each Finmars installation unique
     Sometimes master_user called as ecosystem, workspace, space or even ledger
 
@@ -141,12 +143,23 @@ class MasterUser(models.Model):
         blank=True,
         verbose_name=gettext_lazy("name"),
     )
-    base_api_url = models.CharField(
+
+    realm_code = models.CharField(
         max_length=255,
+        # unique=True, # fix later in 1.9.0, because existing spaces could not have realm_code yet
         null=True,
         blank=True,
-        verbose_name=gettext_lazy("base api url"),
+        verbose_name=gettext_lazy("realm_code"),
     )
+
+    space_code = models.CharField(
+        max_length=255,
+        unique=True,
+        # null=True,
+        # blank=True,
+        verbose_name=gettext_lazy("space_code"),
+    )
+
     description = models.TextField(
         null=True,
         blank=True,
@@ -204,13 +217,12 @@ class MasterUser(models.Model):
     class Meta:
         verbose_name = gettext_lazy("master user")
         verbose_name_plural = gettext_lazy("master users")
-        ordering = ["name"]
 
     def __str__(self):
         return self.name
 
     def create_user_fields(self):
-        from poms.ui.models import InstrumentUserField, ComplexTransactionUserField
+        from poms.ui.models import ComplexTransactionUserField, InstrumentUserField
 
         finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -435,9 +447,7 @@ class MasterUser(models.Model):
 
             for field in entity["fields"]:
                 try:
-                    item = EntityTooltip.objects.get(
-                        master_user=self, key=field["key"], content_type=content_type
-                    )
+                    item = EntityTooltip.objects.get(master_user=self, key=field["key"], content_type=content_type)
 
                     item.name = field["name"]
                     item.save()
@@ -492,7 +502,7 @@ class MasterUser(models.Model):
                 )
 
                 palette.name = user_code
-                palette.is_default = (i == 0)
+                palette.is_default = i == 0
                 palette.save()
 
             for x in range(16):
@@ -515,6 +525,37 @@ class MasterUser(models.Model):
                     color.name = f"Color {str(x + 1)}"
                     color.save()
 
+    def create_defaults_currencies(self, finmars_bot):
+        from poms.currencies.models import Currency, currencies_data
+        from poms.instruments.models import Country
+
+        ccys = {}
+        ccy_usd = None
+        dc_reference_for_pricing = ""
+        for dc in currencies_data.values():
+            dc_user_code = dc["user_code"]
+            dc_name = dc.get("name", dc_user_code)
+            country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
+
+            if dc_user_code != "-":
+                c = Currency.objects.create(
+                    master_user=self,
+                    user_code=dc_user_code,
+                    short_name=dc_user_code,
+                    name=dc_name,
+                    owner=finmars_bot,
+                    reference_for_pricing=dc_reference_for_pricing,
+                    country=dc_country,
+                )
+
+                if dc_user_code == "USD":
+                    ccy_usd = c
+
+                ccys[c.user_code] = c
+
+        return ccy_usd
+
     def create_defaults(self, user=None):
         from poms.accounts.models import Account, AccountType
         from poms.counterparties.models import (
@@ -523,7 +564,7 @@ class MasterUser(models.Model):
             Responsible,
             ResponsibleGroup,
         )
-        from poms.currencies.models import Currency, currencies_data
+        from poms.currencies.models import Currency
         from poms.instruments.models import (
             AccrualCalculationModel,
             EventScheduleConfig,
@@ -536,7 +577,6 @@ class MasterUser(models.Model):
             PricingPolicy,
         )
         from poms.portfolios.models import Portfolio
-        from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
         from poms.strategies.models import (
             Strategy1,
             Strategy1Group,
@@ -561,51 +601,22 @@ class MasterUser(models.Model):
             from django.contrib.auth.models import User
 
             try:
-
-                user = User.objects.get(username='finmars_bot')
+                user = User.objects.get(username="finmars_bot")
 
             except Exception as e:
+                user = User.objects.create(username="finmars_bot")
 
-                user = User.objects.create(username='finmars_bot')
+            finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self, is_admin=True)
 
-            finmars_bot = Member.objects.create(user=user, username="finmars_bot", master_user=self,
-                                                is_admin=True)
-
-        ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-", owner=finmars_bot)
-        ccy_usd = None
-        dc_reference_for_pricing = ""
-
-        for dc in currencies_data.values():
-            dc_user_code = dc["user_code"]
-            dc_name = dc.get("name", dc_user_code)
-            if dc_user_code != "-":
-                if dc_user_code == "USD":
-                    c = Currency.objects.create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                    )
-                    ccy_usd = c
-                else:
-                    c = Currency.objects.create(
-                        master_user=self,
-                        user_code=dc_user_code,
-                        short_name=dc_user_code,
-                        name=dc_name,
-                        owner=finmars_bot,
-                        reference_for_pricing=dc_reference_for_pricing,
-                    )
-                ccys[c.user_code] = c
+        ccy_usd = self.create_defaults_currencies(finmars_bot)
 
         account_type = AccountType.objects.create(master_user=self, name="-", owner=finmars_bot)
         account = Account.objects.create(master_user=self, type=account_type, name="-", owner=finmars_bot)
 
         counterparty_group = CounterpartyGroup.objects.create(
-            master_user=self, name="-",
+            master_user=self,
+            name="-",
             owner=finmars_bot,
         )
         counterparty = Counterparty.objects.create(
@@ -630,9 +641,7 @@ class MasterUser(models.Model):
             name="-",
             owner=finmars_bot,
         )
-        instrument_general_class = InstrumentClass.objects.get(
-            pk=InstrumentClass.GENERAL
-        )
+        instrument_general_class = InstrumentClass.objects.get(pk=InstrumentClass.GENERAL)
         instrument_type = InstrumentType.objects.create(
             master_user=self,
             instrument_class=instrument_general_class,
@@ -670,7 +679,9 @@ class MasterUser(models.Model):
             owner=finmars_bot,
         )
         strategy2_subgroup = Strategy2Subgroup.objects.create(
-            master_user=self, group=strategy2_group, name="-",
+            master_user=self,
+            group=strategy2_group,
+            name="-",
             owner=finmars_bot,
         )
         strategy2 = Strategy2.objects.create(
@@ -707,7 +718,9 @@ class MasterUser(models.Model):
             owner=finmars_bot,
         )
         pricing_policy = PricingPolicy.objects.create(
-            master_user=self, name="-", expr="(ask+bid)/2",
+            master_user=self,
+            name="-",
+            expr="(ask+bid)/2",
             owner=finmars_bot,
         )
         # pricing_policy_dft = PricingPolicy.objects.create(
@@ -715,20 +728,6 @@ class MasterUser(models.Model):
         #     name="DFT",
         #     expr="(ask+bid)/2",
         # )
-        instrument_pricing_scheme = InstrumentPricingScheme.objects.create(
-            master_user=self,
-            name="-",
-            user_code="",
-            type_id=1,
-            owner=finmars_bot,
-        )
-        currency_pricing_scheme = CurrencyPricingScheme.objects.create(
-            master_user=self,
-            name="-",
-            user_code="",
-            type_id=1,
-            owner=finmars_bot,
-        )
 
         # bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
 
@@ -789,22 +788,14 @@ class MasterUser(models.Model):
         ecosystem_defaults.mismatch_account = account
         ecosystem_defaults.pricing_policy = pricing_policy
         ecosystem_defaults.transaction_type = transaction_type
-        ecosystem_defaults.instrument_pricing_scheme = instrument_pricing_scheme
-        ecosystem_defaults.currency_pricing_scheme = currency_pricing_scheme
 
-        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(
-            pk=InstrumentClass.DEFAULT
+        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT)
+        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(
+            pk=AccrualCalculationModel.DAY_COUNT_SIMPLE
         )
-        ecosystem_defaults.accrual_calculation_model = (
-            AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DAY_COUNT_SIMPLE)
-        )
-        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(
-            pk=PaymentSizeDetail.DEFAULT
-        )
+        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
         ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT)
-        ecosystem_defaults.pricing_condition = PricingCondition.objects.get(
-            pk=PricingCondition.NO_VALUATION
-        )
+        ecosystem_defaults.pricing_condition = PricingCondition.objects.get(pk=PricingCondition.NO_VALUATION)
 
         ecosystem_defaults.save()
 
@@ -817,21 +808,19 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="complex_transaction")
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
-    def patch_currencies(
-            self, overwrite_name=False, overwrite_reference_for_pricing=False
-    ):
+    def patch_currencies(self, overwrite_name=False, overwrite_reference_for_pricing=False):
         from poms.currencies.models import Currency, currencies_data
+        from poms.instruments.models import Country
 
-        ccys_existed = {
-            c.user_code: c
-            for c in Currency.objects.filter(master_user=self, is_deleted=False)
-        }
+        ccys_existed = {c.user_code: c for c in Currency.objects.filter(master_user=self, is_deleted=False)}
 
         ccys = {}
         for dc in currencies_data.values():
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
             dc_reference_for_pricing = dc.get("reference_for_pricing", None)
+            country_alpha_3 = dc.get("country_alpha_3", dc_user_code)
+            dc_country = Country.objects.get(alpha_3=country_alpha_3)
 
             if dc_user_code in ccys_existed:
                 c1 = ccys_existed[dc_user_code]
@@ -849,6 +838,10 @@ class MasterUser(models.Model):
                     c1.public_name = dc_name
                     is_change = True
 
+                if overwrite_name or not c1.country:
+                    c1.country = dc_country
+                    is_change = True
+
                 if overwrite_reference_for_pricing or not c1.reference_for_pricing:
                     c1.reference_for_pricing = dc_reference_for_pricing
                     is_change = True
@@ -863,6 +856,7 @@ class MasterUser(models.Model):
                     short_name=dc_user_code,
                     public_name=dc_name,
                     reference_for_pricing=dc_reference_for_pricing,
+                    country=dc_country,
                 )
                 ccys[c.user_code] = c
 
@@ -875,10 +869,7 @@ class MasterUser(models.Model):
         ccys = {c.user_code: c for c in Currency.objects.filter(master_user=self)}
 
         mapping_existed = {
-            m.currency_id: m
-            for m in CurrencyMapping.objects.filter(
-                master_user=self, provider=bloomberg
-            )
+            m.currency_id: m for m in CurrencyMapping.objects.filter(master_user=self, provider=bloomberg)
         }
 
         for dc in currencies_data.values():
@@ -901,14 +892,16 @@ class MasterUser(models.Model):
                     )
 
 
-class EcosystemDefault(models.Model):
+class EcosystemDefault(CacheModel):
+    cache_timeout = 3600 * 24 * 7
+    cache = CacheByMasterUserManager()
+
     master_user = models.ForeignKey(
         MasterUser,
         related_name="ecosystem_default",
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     account_type = models.ForeignKey(
         "accounts.AccountType",
         null=True,
@@ -979,7 +972,6 @@ class EcosystemDefault(models.Model):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("portfolio"),
     )
-
     strategy1_group = models.ForeignKey(
         "strategies.Strategy1Group",
         null=True,
@@ -1115,20 +1107,6 @@ class EcosystemDefault(models.Model):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("pricing condition"),
     )
-    instrument_pricing_scheme = models.ForeignKey(
-        "pricing.InstrumentPricingScheme",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("instrument pricing scheme"),
-    )
-    currency_pricing_scheme = models.ForeignKey(
-        "pricing.CurrencyPricingScheme",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        verbose_name=gettext_lazy("currency pricing scheme"),
-    )
 
 
 class Member(FakeDeletableModel):
@@ -1143,11 +1121,11 @@ class Member(FakeDeletableModel):
         (SHOW_ONLY, gettext_lazy("Show notifications")),
     )
 
-    STATUS_ACTIVE = 'active'
-    STATUS_BLOCKED = 'blocked'
-    STATUS_DELETED = 'deleted'
-    STATUS_INVITED = 'invited'
-    STATUS_INVITE_DECLINED = 'invite_declined'
+    STATUS_ACTIVE = "active"
+    STATUS_BLOCKED = "blocked"
+    STATUS_DELETED = "deleted"
+    STATUS_INVITED = "invited"
+    STATUS_INVITE_DECLINED = "invite_declined"
 
     MEMBER_STATUS_CHOICES = (
         (STATUS_ACTIVE, gettext_lazy("Active")),
@@ -1226,8 +1204,11 @@ class Member(FakeDeletableModel):
         blank=True,
         verbose_name=gettext_lazy("json data"),
     )
-
-    status = models.CharField(max_length=255, choices=MEMBER_STATUS_CHOICES, default='active')
+    status = models.CharField(
+        max_length=255,
+        choices=MEMBER_STATUS_CHOICES,
+        default="active",
+    )
 
     @property
     def data(self):
@@ -1256,8 +1237,8 @@ class Member(FakeDeletableModel):
         from poms.ui.models import MemberLayout
 
         instance = super().save(*args, **kwargs)
-        configuration_code = get_default_configuration_code()
 
+        configuration_code = get_default_configuration_code()
         try:
             layout, _ = MemberLayout.objects.get_or_create(
                 member_id=self.id,
@@ -1270,7 +1251,7 @@ class Member(FakeDeletableModel):
                 },
             )
         except Exception as e:
-            _l.info("Could not create member layout %s" % e)
+            _l.error(f"Could not create member {self.username} layout due to {repr(e)}")
 
         return instance
 
@@ -1417,6 +1398,7 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
+
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):

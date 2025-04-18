@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.admin import AbstractModelAdmin, ClassModelAdmin
 from poms.instruments.models import (
+    AccrualEvent,
     AccrualCalculationModel,
     AccrualCalculationSchedule,
     CostMethod,
@@ -15,6 +16,7 @@ from poms.instruments.models import (
     EventScheduleConfig,
     GeneratedEvent,
     Instrument,
+    InstrumentAttachment,
     InstrumentClass,
     InstrumentFactorSchedule,
     InstrumentType,
@@ -123,6 +125,16 @@ class EventScheduleInline(admin.TabularInline):
     }
 
 
+class InstrumentAttachmentInline(admin.TabularInline):
+    model = InstrumentAttachment
+    extra = 0
+    formfield_overrides = {
+        models.TextField: {
+            "widget": widgets.Textarea(attrs={"cols": "40", "rows": "3"})
+        },
+    }
+
+
 class InstrumentFactorScheduleInline(admin.TabularInline):
     model = InstrumentFactorSchedule
     extra = 0
@@ -162,6 +174,7 @@ class InstrumentAdmin(AbstractModelAdmin):
         InstrumentFactorScheduleInline,
         EventScheduleInline,
         GenericAttributeInline,
+        InstrumentAttachmentInline,
     ]
     actions = [
         "calculate_prices_accrued_price",
@@ -505,3 +518,14 @@ admin.site.register(Periodicity, ClassModelAdmin)
 admin.site.register(CostMethod, ClassModelAdmin)
 admin.site.register(Country, CountryAdmin)
 admin.site.register(PaymentSizeDetail, ClassModelAdmin)
+
+
+@admin.register(AccrualEvent)
+class AccrualAdmin(admin.ModelAdmin):
+    model = AccrualEvent
+    list_display = [
+        "instrument",
+        "accrual_size",
+        "start_date",
+        "accrual_size",
+    ]

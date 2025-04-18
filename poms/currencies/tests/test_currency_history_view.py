@@ -1,83 +1,35 @@
 from copy import deepcopy
 
-from django.conf import settings
-
 from poms.common.common_base_test import BaseTestCase
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.currencies.tests.common_test_data import (
+    CREATE_DATA,
+    EXPECTED_CURRENCY_HISTORY,
+)
 from poms.instruments.models import PricingPolicy
-from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
-
-EXPECTED_CURRENCY_HISTORY = {
-    "id": 1,
-    "currency": 7,
-    "currency_object": {
-        "id": 7,
-        "user_code": "USD",
-        "name": "USD - United States Dollar",
-        "short_name": "USD",
-        "deleted_user_code": None,
-        "meta": {
-            "content_type": "currencies.currency",
-            "app_label": "currencies",
-            "model_name": "currency",
-            "space_code": "space00000",
-        },
-    },
-    "pricing_policy": 5,
-    "pricing_policy_object": {
-        "id": 5,
-        "user_code": "local.poms.space00000:ytqvh",
-        "name": "OHGYTISTWFL",
-        "short_name": "BI",
-        "notes": None,
-        "expr": "",
-        "deleted_user_code": None,
-        "meta": {
-            "content_type": "instruments.pricingpolicy",
-            "app_label": "instruments",
-            "model_name": "pricingpolicy",
-            "space_code": "space00000",
-        },
-    },
-    "date": "2023-07-19",
-    "fx_rate": 426.0,
-    "procedure_modified_datetime": "2023-07-19T00:00:00Z",
-    "modified": "2023-07-19T17:31:35.274932Z",
-    "meta": {
-        "content_type": "currencies.currencyhistory",
-        "app_label": "currencies",
-        "model_name": "currencyhistory",
-        "space_code": "space00000",
-    },
-}
-
-CREATE_DATA = {
-    "currency": 7,
-    "pricing_policy": 5,
-    "fx_rate": 426.0,
-    "date": "2023-07-19",
-}
 
 
 class CurrencyHistoryViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/currencies/currency-history/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency-history/"
+        )
         self.currency = Currency.objects.last()
-        self.instrument_pricing_schema = InstrumentPricingScheme.objects.first()
-        self.instrument_currency_schema = CurrencyPricingScheme.objects.first()
         self.currency_history = None
 
     def create_pricing_policy(self) -> PricingPolicy:
         return PricingPolicy.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(5),
             short_name=self.random_string(2),
             name=self.random_string(11),
-            default_instrument_pricing_scheme=self.instrument_pricing_schema,
-            default_currency_pricing_scheme=self.instrument_currency_schema,
         )
 
     def create_currency_history(self) -> CurrencyHistory:
@@ -149,7 +101,7 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
             currency_history.fx_rate,
         )
 
-    def test__create(self):
+    def test__create_with_pricing_policy(self):
         create_data = self.prepare_data_for_create()
 
         response = self.client.post(path=self.url, format="json", data=create_data)
@@ -232,3 +184,22 @@ class CurrencyHistoryViewSetTest(BaseTestCase):
 
         response = self.client.get(path=f"{self.url}{currency_history_id}/")
         self.assertEqual(response.status_code, 404, response.content)
+
+    def test__update_temporary_flag(self):
+        ch = self.create_currency_history()
+
+        response = self.client.get(path=f"{self.url}{ch.id}/", format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertFalse(response_json["is_temporary_fx_rate"])
+
+        update_data = {"is_temporary_fx_rate": True}
+        response = self.client.patch(
+            path=f"{self.url}{ch.id}/", format="json", data=update_data
+        )
+        response_json = response.json()
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(response_json["is_temporary_fx_rate"])
+
+        currency_history = CurrencyHistory.objects.get(id=ch.id)
+        self.assertTrue(currency_history.is_temporary_fx_rate)

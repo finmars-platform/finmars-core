@@ -1,8 +1,6 @@
 import logging
 import traceback
 
-from celery import shared_task
-
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
@@ -32,7 +30,15 @@ def start_new_balance_history_collect(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_balance_report_history.apply_async(kwargs={'task_id': task.id})
+        collect_balance_report_history.apply_async(
+            kwargs={'task_id': task.id, 'context': {
+                'space_code': task.master_user.space_code,
+                'realm_code': task.master_user.realm_code
+            }
+                    })
+
+
+
 
     else:
 
@@ -50,7 +56,7 @@ def start_new_balance_history_collect(task):
 
 
 @finmars_task(name='widgets.collect_balance_report_history', bind=True)
-def collect_balance_report_history(self, task_id):
+def collect_balance_report_history(self, task_id, *args, **kwargs):
     '''
 
     ==== Hope this thing will move into workflow/olap ASAP ====
@@ -225,7 +231,10 @@ def start_new_pl_history_collect(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_pl_report_history.apply_async(kwargs={'task_id': task.id})
+        collect_pl_report_history.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }})
 
     else:
 
@@ -243,7 +252,7 @@ def start_new_pl_history_collect(task):
 
 
 @finmars_task(name='widgets.collect_pl_report_history', bind=True)
-def collect_pl_report_history(self, task_id):
+def collect_pl_report_history(self, task_id, *args, **kwargs):
     '''
 
     ==== Hope this thing will move into workflow/olap ASAP ====
@@ -417,7 +426,10 @@ def start_new_collect_stats(task):
     if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
             task_options_object['dates_to_process']):
 
-        collect_stats.apply_async(kwargs={'task_id': task.id})
+        collect_stats.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }})
 
     else:
 
@@ -435,7 +447,7 @@ def start_new_collect_stats(task):
 
 
 @finmars_task(name='widgets.collect_stats', bind=True)
-def collect_stats(self, task_id):
+def collect_stats(self, task_id, *args, **kwargs):
     '''
 
     Task that calculates metrics on portfolio for each day
@@ -554,7 +566,7 @@ def collect_stats(self, task_id):
 
 
 @finmars_task(name='widgets.calculate_historical', bind=True)
-def calculate_historical(self, task_id):
+def calculate_historical(self, task_id, *args, **kwargs):
     task = CeleryTask.objects.get(id=task_id)
 
     date_from = None
@@ -592,7 +604,9 @@ def calculate_historical(self, task_id):
         # dates = [bday_yesterday]
         dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         report_currency_id = ecosystem_default.currency_id
         pricing_policy_id = ecosystem_default.pricing_policy_id

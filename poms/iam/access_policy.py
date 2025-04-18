@@ -6,10 +6,12 @@ from typing import List, Union
 from django.conf import settings
 from django.db.models import prefetch_related_objects
 from rest_framework import permissions
+from django.contrib.contenttypes.models import ContentType
 
 from pyparsing import infixNotation, opAssoc
 
 from .exceptions import AccessPolicyException
+from .models import ResourceGroup
 from .parsing import BoolAnd, BoolNot, BoolOperand, BoolOr, ConditionOperand
 from .utils import action_statement_into_object
 
@@ -65,43 +67,66 @@ class AccessPolicy(permissions.BasePermission):
 
     def has_permission(self, request, view) -> bool:
 
+        if not request.user.is_authenticated:
+            return False
+
         if request.user.is_superuser:
             return True
 
         if request.user.member and request.user.member.is_admin:
             return True
 
-        action = self._get_invoked_action(view)
-        statements = self.get_policy_statements(request, view)
-
-        if len(statements) == 0:
-            return False
-
-        allowed = self._evaluate_statements(statements, request, view, action)
-        request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
-        return allowed
-
+        return self.has_specific_permission(view, request)
 
     def has_object_permission(self, request, view, obj):
 
+        if not request.user.is_authenticated:
+            return False
+
         if request.user.is_superuser:
             return True
 
         if request.user.member and request.user.member.is_admin:
             return True
 
-        # Check if the user is the owner
-        if obj.owner == request.user.member:
-            return True
+        # TODO Member entity itself has no owner, be careful if other entities have no owner
+        if hasattr(obj, 'owner'):
+            # Check if the user is the owner
+            if obj.owner == request.user.member:
+                return True
 
-        action = self._get_invoked_action(view)
+        return self.has_specific_permission(view, request, obj)
+
+    def has_specific_permission(self, view, request, obj=None):
         statements = self.get_policy_statements(request, view)
 
-        if len(statements) == 0:
+        action = self._get_invoked_action(view)
+        user_arn = f"frn:finmars:users:member:{request.user.username}"  # Customize to suit your naming convention
+        viewset_name = f"finmars:{view.__class__.__name__.replace('ViewSet', '')}"
+
+        if not statements:
+
+            request.permission_error_message = (
+                f"User: {user_arn} is not authorized to perform: "
+                f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
+            )
+
             return False
 
-        allowed = self._evaluate_statements(statements, request, view, action)
+        allowed = self._evaluate_statements(statements, request, view, action, obj=None)
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
+
+        _l.info('has_specific_permission.allowed %s' % allowed)
+
+        if not allowed:
+
+            request.permission_error_message = (
+                f"User: {user_arn} is not authorized to perform: "
+                f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
+            )
+
+            _l.info('permission_error_message %s' % request.permission_error_message)
+
         return allowed
 
     def get_policy_statements(self, request, view) -> List[Union[dict, Statement]]:
@@ -138,7 +163,7 @@ class AccessPolicy(permissions.BasePermission):
         raise AccessPolicyException("Could not determine action of request")
 
     def _evaluate_statements(
-        self, statements: List[Union[dict, Statement]], request, view, action: str
+        self, statements: List[Union[dict, Statement]], request, view, action: str, obj=None
     ) -> bool:
 
         statements = self._normalize_statements(statements)
@@ -153,6 +178,11 @@ class AccessPolicy(permissions.BasePermission):
         matched = self._get_statements_matching_conditions(
             request, view, action=action, statements=matched, is_expression=True
         )
+
+        if obj is not None:
+            matched = self._get_statements_matching_resource(
+                request, view, action=action, statements=matched, obj=obj
+            )
 
         denied = [_ for _ in matched if _["effect"].lower() != "allow"]
 
@@ -174,7 +204,7 @@ class AccessPolicy(permissions.BasePermission):
             if isinstance(statement, Statement):
                 statement = asdict(statement)
 
-            _l.debug(f"_normalize_statements.statement {statement} ")
+            # _l.debug(f"_normalize_statements.statement {statement} ")
 
             if isinstance(statement["principal"], str):
                 statement["principal"] = [statement["principal"]]
@@ -245,9 +275,11 @@ class AccessPolicy(permissions.BasePermission):
         SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
         http_method = f"<method:{request.method.lower()}>"
 
+        viewset_name = view.__class__.__name__.replace('ViewSet', '')
+
         _l.debug(
             f"_get_statements_matching_action.action {action} "
-            f"name {view.basename.lower()}"
+            f"name {viewset_name.lower()}"
         )
         # _l.info('_get_statements_matching_action.view %s' % view.__dict__)
         # _l.info('_get_statements_matching_action.self %s' % self)
@@ -265,7 +297,8 @@ class AccessPolicy(permissions.BasePermission):
                     maybe its a problem, see  utils.py#get_allowed_resources
 
                     """
-                    if view.basename.lower() in action_object["viewset"]:
+
+                    if viewset_name.lower() in action_object["viewset"]:
                         if (
                             action in action_object["action"]
                             or "*" in action_object["action"]
@@ -282,6 +315,60 @@ class AccessPolicy(permissions.BasePermission):
         # _l.debug('_get_statements_matching_action.matched %s' % matched)
 
         return matched
+
+    def _get_statements_matching_resource(
+            self, request, view, action: str, statements: List[dict], obj
+    ) -> List[dict]:
+        """
+        Filters statements to find those that match the resource defined in each statement.
+        If the resource is "*", it grants access to all objects.
+        If specific resources are defined, it checks if obj.user_code matches one of them
+        or is associated with a `ResourceGroup`.
+        """
+        matched_statements = []
+
+        # Determine the content type of the object (e.g., "portfolios:portfolio")
+        content_type = ContentType.objects.get_for_model(obj).app_label + ":" + obj.__class__.__name__.lower()
+
+        # Construct the unique resource identifier for the object
+        object_resource_identifier = f"frn:finmars:{content_type}:{obj.user_code}"
+
+        for statement in statements:
+            resources = statement.get("Resource", [])
+
+            # Check if the resource list contains a `ResourceGroup`, and if so, expand it
+            expanded_resources = set(resources)  # Start with a copy of original resources
+
+            for resource in resources:
+                if resource.startswith("frn:finmars:iam:resourcegroup:"):
+                    # Extract the `user_code` for the ResourceGroup from the resource identifier
+                    resource_group_code = resource.split(":")[-1]
+
+                    try:
+                        # Fetch the ResourceGroup and its assignments
+                        resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                        assignments = resource_group.assignments.all()
+
+                        # Add each assigned object's user_code to the expanded resources list
+                        expanded_resources.update(
+                            f"frn:finmars:{assignment.content_type.app_label}:{assignment.content_type.model}:{assignment.object_user_code}"
+                            for assignment in assignments if assignment.object_user_code
+                        )
+
+                    except ResourceGroup.DoesNotExist:
+                        _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                        continue
+
+            # Allow all if the original or expanded resource list contains "*"
+            if "*" in expanded_resources:
+                matched_statements.append(statement)
+                continue
+
+            # Check if the object's identifier matches any entry in the expanded resources
+            if object_resource_identifier in expanded_resources:
+                matched_statements.append(statement)
+
+        return matched_statements
 
     def _get_statements_matching_conditions(
         self, request, view, *, action: str, statements: List[dict], is_expression: bool

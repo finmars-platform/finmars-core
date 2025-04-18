@@ -596,11 +596,14 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
                                 options_object['date_from'], options_object['date_to']),
                             )
 
-        collect_balance_report_history.apply(kwargs={'task_id': task.id})
+        collect_balance_report_history.apply(kwargs={'task_id': task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
 
     else:
 
-        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': task.id}))
+        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}))
 
         send_system_message(master_user=task.master_user,
                             performed_by=task.member.username,
@@ -660,10 +663,13 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
                             description='PL History from %s to %s will be soon available' % (
                                 options_object['date_from'], options_object['date_to']),
                             )
-        collect_pl_report_history.apply(kwargs={'task_id': task.id})
+        collect_pl_report_history.apply(kwargs={'task_id': task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
 
     else:
-        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': task.id}))
+        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}))
 
         send_system_message(master_user=task.master_user,
                             performed_by=task.member.username,
@@ -706,8 +712,11 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
     task.save()
 
     if sync:
-        collect_stats.apply(kwargs={'task_id': task.id})
+        collect_stats.apply(kwargs={'task_id': task.id, "context": {"realm_code": task.realm_code, "space_code": task.space_code}})
     else:
-        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': task.id}))
+        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': task.id, 'context': {
+            'space_code': task.master_user.space_code,
+            'realm_code': task.master_user.realm_code
+        }}))
 
     return task

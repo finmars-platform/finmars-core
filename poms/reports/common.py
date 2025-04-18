@@ -19,6 +19,21 @@ class BaseReport:
         (MODE_INTERDEPENDENT, "Offsetting (Interdependent - 0/100, 100/0, 50/50)"),
     )
 
+    CALCULATION_GROUP_NO_GROUPING = 'no_grouping'
+    CALCULATION_GROUP_PORTFOLIO = 'portfolio.id'
+    CALCULATION_GROUP_ACCOUNT = 'account.id'
+    CALCULATION_GROUP_STRATEGY1 = 'strategy1'
+    CALCULATION_GROUP_STRATEGY2 = 'strategy2'
+    CALCULATION_GROUP_STRATEGY3 = 'strategy3'
+    CALCULATION_GROUP_CHOICES = (
+        (CALCULATION_GROUP_NO_GROUPING, "No Grouping"),
+        (CALCULATION_GROUP_PORTFOLIO, "Portfolio"),
+        (CALCULATION_GROUP_ACCOUNT, "Account"),
+        (CALCULATION_GROUP_STRATEGY1, "Strategy 1"),
+        (CALCULATION_GROUP_STRATEGY2, "Strategy 2"),
+        (CALCULATION_GROUP_STRATEGY3, "Strategy 3"),
+    )
+
     def __init__(
             self, id=None, master_user=None, member=None, task_id=None, task_status=None
     ):
@@ -64,12 +79,14 @@ class Report(BaseReport):
             task_status=None,
             report_instance_name=None,
             save_report=False,
+            ignore_cache=False,
             pl_first_date=None,
             report_type=TYPE_BALANCE,
             report_date=None,
             report_currency=None,
             pricing_policy=None,
             cost_method=None,
+            calculation_group=BaseReport.CALCULATION_GROUP_NO_GROUPING,
             portfolio_mode=BaseReport.MODE_INDEPENDENT,
             account_mode=BaseReport.MODE_INDEPENDENT,
             strategy1_mode=BaseReport.MODE_INDEPENDENT,
@@ -94,7 +111,7 @@ class Report(BaseReport):
             date_field=None,
             custom_fields=None,
             custom_fields_to_calculate=None,
-            calculate_pl=True,
+            calculate_pl=False,
             only_numbers=False,
             items=None,
             execution_time=None,
@@ -117,7 +134,9 @@ class Report(BaseReport):
             task_status=task_status,
         )
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_type = (
             report_type if report_type is not None else Report.TYPE_BALANCE
@@ -127,9 +146,11 @@ class Report(BaseReport):
         self.pl_first_date = pl_first_date
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)
+        self.calculation_group = calculation_group
 
         self.report_instance_name = report_instance_name
         self.save_report = save_report
+        self.ignore_cache = ignore_cache
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode
@@ -243,6 +264,7 @@ class TransactionReport(BaseReport):
             member=None,
             begin_date=None,
             end_date=None,
+            period_type=None,
             portfolios=None,
             bundle=None,
             accounts=None,
@@ -278,6 +300,7 @@ class TransactionReport(BaseReport):
         self.has_errors = False
         self.begin_date = begin_date
         self.end_date = end_date
+        self.period_type = period_type
         self.portfolios = portfolios or []
         self.bundle = bundle or None
         self.accounts = accounts or []
@@ -310,8 +333,8 @@ class TransactionReport(BaseReport):
 
         self.date_field = date_field or "date"
 
-        _l.info(f"====depth_level {depth_level}")
-        _l.info(f"====filters {filters}")
+        _l.debug(f"====depth_level {depth_level}")
+        _l.debug(f"====filters {filters}")
 
         self.depth_level = depth_level or "base_transaction"
 
@@ -320,7 +343,7 @@ class TransactionReport(BaseReport):
         self.frontend_request_options = frontend_request_options
         self.report_instance_id = report_instance_id
 
-        _l.info('TransactionReport.page %s' % page)
+        _l.debug('TransactionReport.page %s' % page)
 
         self.page = page
         self.page_size = page_size
@@ -365,6 +388,13 @@ class PerformanceReport(BaseReport):
         (SEGMENTATION_TYPE_MONTHS, "Months"),
     )
 
+    ADJUSTMENT_TYPE_ORIGINAL = "original"
+    ADJUSTMENT_TYPE_ANNUALIZED = "annualized"
+    ADJUSTMENT_TYPE_CHOICES = (
+        (ADJUSTMENT_TYPE_ORIGINAL, "Original"),
+        (ADJUSTMENT_TYPE_ANNUALIZED, "Annualized")
+    )
+
     def __init__(
             self,
             id=None,
@@ -375,6 +405,7 @@ class PerformanceReport(BaseReport):
             save_report=False,
             calculation_type=None,
             segmentation_type=None,
+            adjustment_type=None,
             registers=None,
             bundle=None,
             master_user=None,
@@ -416,12 +447,15 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date
         self.end_date = end_date or d
 
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.report_currency = report_currency or self.ecosystem_default.currency
         self.pricing_policy = pricing_policy
         self.calculation_type = calculation_type
         self.segmentation_type = segmentation_type
+        self.adjustment_type = adjustment_type
         self.registers = registers
         self.bundle = bundle
         self.periods = periods

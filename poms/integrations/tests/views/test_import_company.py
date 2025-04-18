@@ -1,21 +1,22 @@
 from unittest import mock
 
-# from django import urls
-from django.conf import settings
-
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_urls
 from poms.integrations.monad import Monad, MonadStatus
 from poms.counterparties.models import Counterparty
 
 
 class ImportCompanyDatabaseViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        # self.url = urls.reverse("import_company_database")
-        self.url = f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/company/"
+        self.group = self.db_data.create_counterparty_group()
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/company/"
 
     def test__400(self):
         response = self.client.post(path=self.url, format="json", data={})
@@ -37,8 +38,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print("task_ready", response_json)
-
         self.assertNotIn("result_id", response_json)
         self.assertIn("errors", response_json)
         self.assertIsNone(response_json["errors"])
@@ -51,6 +50,9 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response_json["remote_task_id"], task_id)
 
         options = celery_task.options_object
+
+        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
+
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["company"])
         results = celery_task.result_object
         self.assertEqual(results["remote_task_id"], task_id)
@@ -69,6 +71,7 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
                 "short_name": self.random_string(),
                 "name": self.random_string(),
                 "public_name": self.random_string(),
+                "group": self.group.id,
             },
         )
         request_data = {"company_id": code}
@@ -79,8 +82,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         mock_get_monad.assert_called_once()
 
         response_json = response.json()
-
-        print("data_ready", response_json)
 
         self.assertIn("task", response_json)
         self.assertIn("result_id", response_json)
@@ -103,8 +104,6 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-
-        print("error", response_json)
 
         self.assertNotIn("result_id", response_json)
 

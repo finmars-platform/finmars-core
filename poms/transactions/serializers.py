@@ -5,14 +5,13 @@ import time
 import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountDefault, AccountField
 from poms.accounts.models import Account
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, name_validator
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
     ModelMetaSerializer,
@@ -221,9 +220,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator],
     )
     content_type = TransactionTypeInputContentTypeField(
         required=False,
@@ -237,11 +234,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         allow_null=True,
         allow_blank=True,
         default="",
-    )
-    is_fill_from_context = serializers.BooleanField(
-        default=False,
-        initial=False,
-        required=False,
     )
     value = ExpressionField(
         max_length=EXPRESSION_FIELD_LENGTH,
@@ -272,11 +264,10 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             "can_recalculate",
             "value_expr",
             "tooltip",
-            "is_fill_from_context",
-            "context_property",
             "value",
             "settings",
             "button_data",
+            "expression_iterations_count"
         ]
         read_only_fields = ["order"]
 
@@ -371,9 +362,7 @@ class TransactionTypeInputViewOnlySerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator]
     )
     content_type = TransactionTypeInputContentTypeField(
         required=False,
@@ -3008,7 +2997,7 @@ class TransactionTypeSerializer(
         return new_context_parameters
 
     def save_actions_instrument(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3052,7 +3041,7 @@ class TransactionTypeSerializer(
                 actions[order] = action_instrument
 
     def save_actions_transaction(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3127,7 +3116,7 @@ class TransactionTypeSerializer(
                 actions[order] = action_transaction
 
     def save_actions_instrument_factor_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3179,7 +3168,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_execute_command(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3216,7 +3205,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_manual_pricing_formula(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3270,7 +3259,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_accrual_calculation_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3326,7 +3315,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_event_schedule(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3378,7 +3367,7 @@ class TransactionTypeSerializer(
                 actions[order] = item
 
     def save_actions_instrument_event_schedule_action(
-        self, instance, inputs, actions, existed_actions, actions_data
+            self, instance, inputs, actions, existed_actions, actions_data
     ):
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop("id", None)
@@ -3484,6 +3473,7 @@ class TransactionTypeSerializer(
 
 class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
     group = TransactionTypeGroupField(required=False, allow_null=False)
+
     # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
     class Meta:
@@ -4170,7 +4160,7 @@ class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
         fields = ["id", "is_locked", "is_canceled", "status", "is_deleted"]
 
     def update_base_transactions_permissions(
-        self, instance, complex_transaction_permissions
+            self, instance, complex_transaction_permissions
     ):
         view_permissions = []
 
@@ -4369,6 +4359,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    first_transaction_accounting_date = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -4382,6 +4373,7 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
         fields = [
             "id",
             "date",
+            "first_transaction_accounting_date",
             "status",
             "code",
             "text",
@@ -4449,6 +4441,13 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
             "user_date_5",
         ]
 
+    def get_first_transaction_accounting_date(self, instance):
+
+        if instance.transactions.count():
+            return instance.transactions.first().accounting_date
+
+        return None
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
@@ -4499,8 +4498,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             field_object = None
 
             if i.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
+                    TransactionTypeInput.STRING,
+                    TransactionTypeInput.SELECTOR,
             ):
                 field = serializers.CharField(
                     required=False,
@@ -4981,8 +4980,8 @@ class ComplexTransactionViewOnly(object):
             i = ci.transaction_type_input
             value = None
             if i.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
+                    TransactionTypeInput.STRING,
+                    TransactionTypeInput.SELECTOR,
             ):
                 value = ci.value_string
             elif i.value_type == TransactionTypeInput.NUMBER:
@@ -5002,7 +5001,7 @@ class ComplexTransactionViewOnly(object):
         _l.debug(f"ComplexTransactionViewOnly.init {result_time}")
 
     def _get_val_by_model_cls_for_complex_transaction_input(
-        self, master_user, obj, model_class
+            self, master_user, obj, model_class
     ):
         try:
             if issubclass(model_class, Account):
@@ -5146,8 +5145,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             recalculate_inputs = [
                 (i.name, i.verbose_name) for i in self.instance.inputs
             ]
-            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
-                required=False, allow_null=True, choices=recalculate_inputs
+            self.fields["recalculate_inputs"] = serializers.ListField(
+                required=False, allow_null=True, child=serializers.ChoiceField(choices=recalculate_inputs)
             )
         else:
             self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
@@ -5230,8 +5229,8 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
             recalculate_inputs = [
                 (i.name, i.verbose_name) for i in self.instance.inputs
             ]
-            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
-                required=False, allow_null=True, choices=recalculate_inputs
+            self.fields["recalculate_inputs"] = serializers.ListField(
+                required=False, allow_null=True, child=serializers.ChoiceField(choices=recalculate_inputs)
             )
         else:
             self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
@@ -5368,17 +5367,17 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 class RecalculateUserFields:
     def __init__(
-        self,
-        task_id=None,
-        task_status=None,
-        master_user=None,
-        member=None,
-        transaction_type_id=None,
-        key=None,
-        total_rows=None,
-        processed_rows=None,
-        stats_file_report=None,
-        stats=None,
+            self,
+            task_id=None,
+            task_status=None,
+            master_user=None,
+            member=None,
+            transaction_type_id=None,
+            key=None,
+            total_rows=None,
+            processed_rows=None,
+            stats_file_report=None,
+            stats=None,
     ):
         self.task_id = task_id
         self.task_status = task_status
@@ -5607,7 +5606,7 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
             "date",
             "transaction_unique_code",
             "deleted_transaction_unique_code",
-            "modified",
+            "modified_at",
             "text",
             "user_text_1",
             "user_text_2",

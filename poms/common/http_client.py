@@ -6,6 +6,7 @@ from requests.exceptions import RequestException
 
 GET = "get"
 POST = "post"
+PUT = "put"
 HEADERS = {
     "Accept": "application/json",
 }
@@ -64,3 +65,6 @@ class HttpClient:
 
     def post(self, url, **kwargs) -> dict:
         return self._fetch_response(POST, url, **kwargs)
+
+    def put(self, url, **kwargs) -> dict:
+        return self._fetch_response(PUT, url, **kwargs)

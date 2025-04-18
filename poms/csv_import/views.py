@@ -119,7 +119,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk},
+            kwargs={"task_id": celery_task.pk, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }},
             queue="backend-background-queue",
         )
 
@@ -172,7 +175,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk},
+            kwargs={"task_id": celery_task.pk, 'context': {
+                'space_code': celery_task.master_user.space_code,
+                'realm_code': celery_task.master_user.realm_code
+            }},
             queue="backend-background-queue",
         )
 

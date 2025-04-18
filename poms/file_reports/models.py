@@ -1,12 +1,11 @@
-import traceback
 import json
 from logging import getLogger
 
+from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
 from django.db import models
 from django.utils.translation import gettext_lazy
-
-from poms_app import settings
 
 from poms.common.storage import get_storage
 
@@ -57,64 +56,83 @@ class FileReport(models.Model):
         return self.name
 
     def upload_file(self, file_name, text, master_user):
-        file_url = self._get_path(master_user, file_name)
-
+        encoded_text = text.encode("utf-8")
+        file_url = self._get_path(file_name)
         try:
-            encoded_text = text.encode("utf-8")
+            if storage:
+                storage.save(
+                    f"/{master_user.space_code}{file_url}",
+                    ContentFile(encoded_text),
+                )
 
-            storage.save(
-                f"/{settings.BASE_API_URL}{file_url}",
-                ContentFile(encoded_text),
-            )
+            else:  # local/test mode
+                print(f"file '{file_name}' content '{text}' saved to storage '{file_url}'")
 
         except Exception as e:
-            _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
+            _l.error(f"upload_file {file_name} {file_url} error {repr(e)}")
+            return ""
 
         self.file_url = file_url
-
-        # _l.info(f"FileReport.upload_file.file_url {file_url}")
-
         return file_url
 
     def upload_json_as_local_file(self, file_name, dict_to_json, master_user):
-        file_url = self._get_path(master_user, file_name)
-
+        file_url = self._get_path(file_name)
         try:
-            with storage.open(f"/{settings.BASE_API_URL}{file_url}", 'w') as fp:
-                json.dump(dict_to_json, fp, indent=4, default=str)
+            if storage:
+                with storage.open(f"/{master_user.space_code}{file_url}", "w") as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str)
+
+            else:
+                with open(file_name, "w") as fp:
+                    json.dump(dict_to_json, fp, indent=4, default=str)
 
         except Exception as e:
-            _l.info(f"upload_file error {repr(e)} {traceback.format_exc()}")
+            _l.error(f"upload_file {file_url} error {repr(e)}")
+            return ""
 
         self.file_url = file_url
-
-        # _l.info(f"FileReport.upload_file.file_url {file_url}")
-
         return file_url
-    
 
     def get_file(self):
         result = None
 
-        # print(f"get_file self.file_url {self.file_url}")
+        if storage:
+            path = self.file_url
+            if not path:
+                path = self.master_user.space_code
+            elif path[0] == "/":
+                path = self.master_user.space_code + path
+            else:
+                path = f"{self.master_user.space_code}/{path}"
+            try:
+                with storage.open(path, "rb") as f:
+                    result = f.read()
 
-        path = self.file_url
+            except Exception as e:
+                _l.error(f"Cant open file {self.file_name} {self.file_url} due to {repr(e)}")
 
-        if not path:
-            path = settings.BASE_API_URL
-        elif path[0] == "/":
-            path = settings.BASE_API_URL + path
-        else:
-            path = f"{settings.BASE_API_URL}/{path}"
-
-        try:
-            with storage.open(path, "rb") as f:
+        else:  # local mode
+            with open(self.file_name, "rt") as f:
                 result = f.read()
-
-        except Exception as e:
-            print(f"Cant open file Exception: {repr(e)}")
 
         return result
 
-    def _get_path(self, master_user, file_name):
+    @staticmethod
+    def _get_path(file_name):
         return f"/.system/file_reports/{file_name}"
+
+    def send_emails(self, emails: list):
+        if not emails:
+            return
+
+        email = EmailMessage(
+            subject=f"Report {self.name} file {self.file_name}",
+            body=f"Please find the attached report {self.name} file {self.file_name}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=emails,
+        )
+
+        content = self.get_file()
+        if content:
+            email.attach(filename=self.file_name, content=content)
+            email.send(fail_silently=True)

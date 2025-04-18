@@ -3,14 +3,22 @@ from rest_framework import serializers
 from rest_framework.serializers import ListSerializer
 
 from mptt.utils import get_cached_trees
-from poms_app import settings
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeField
 from poms.common.filters import ClassifierRootFilter
 from poms.iam.serializers import IamProtectedSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.utils import get_master_user_from_context, get_member_from_context
+from poms.users.utils import (
+    get_master_user_from_context,
+    get_member_from_context,
+    get_realm_code_from_context,
+    get_space_code_from_context,
+)
+
+
+class BulkSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField())
 
 
 class PomsClassSerializer(serializers.ModelSerializer):
@@ -25,25 +33,23 @@ class PomsClassSerializer(serializers.ModelSerializer):
 
 class ModelOwnerSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
-
-        # print('ModelOwnerSerializer %s' % instance)
+        from poms.users.serializers import MemberLightViewSerializer
 
         representation = super().to_representation(instance)
 
-        from poms.users.serializers import MemberViewSerializer
-
-        serializer = MemberViewSerializer(instance=instance.owner)
+        serializer = MemberLightViewSerializer(instance=instance.owner)
 
         representation["owner"] = serializer.data
 
         return representation
 
     def create(self, validated_data):
-        # You should have 'request' in the serializer context
-        request = self.context.get('request', None)
+        # You should have 'request' in the serializer context !!!
+        request = self.context.get("request", None)
         if request and hasattr(request, "user"):
-            validated_data['owner'] = request.user.member
-        return super(ModelOwnerSerializer, self).create(validated_data)
+            validated_data["owner"] = request.user.member
+
+        return super().create(validated_data)
 
 
 class ModelMetaSerializer(serializers.ModelSerializer):
@@ -54,30 +60,36 @@ class ModelMetaSerializer(serializers.ModelSerializer):
             "content_type": f"{self.Meta.model._meta.app_label}.{self.Meta.model._meta.model_name}",
             "app_label": self.Meta.model._meta.app_label,
             "model_name": self.Meta.model._meta.model_name,
-            "space_code": settings.BASE_API_URL,
+            "space_code": get_space_code_from_context(self.context),
+            "realm_code": get_realm_code_from_context(self.context),
         }
 
         return representation
 
 
 class ModelWithTimeStampSerializer(serializers.ModelSerializer):
-    modified = serializers.ReadOnlyField()
+    modified_at = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["created_at"] = serializers.DateTimeField(read_only=True)
+        self.fields["modified_at"] = serializers.DateTimeField(read_only=True)
+        self.fields["deleted_at"] = serializers.DateTimeField(read_only=True)
 
     def validate(self, data):
         if (
             self.instance
-            and "modified" in data
-            and data["modified"] != self.instance.modified
+            and "modified_at" in data
+            and data["modified_at"] != self.instance.modified_at
         ):
             raise serializers.ValidationError("Synchronization error")
 
         return data
 
 
-class ModelWithUserCodeSerializer(ModelMetaSerializer, ModelOwnerSerializer, IamProtectedSerializer):
+class ModelWithUserCodeSerializer(
+    ModelMetaSerializer, ModelOwnerSerializer, IamProtectedSerializer
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["user_code"] = UserCodeField()
@@ -157,9 +169,57 @@ class ClassifierListSerializer(serializers.ListSerializer):
 
 
 class ContentTypeSerializer(serializers.ModelSerializer):
+    app_model = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = ContentType
         fields = [
-            "name",
+            "id",
+            "app_model",
         ]
         read_only_fields = fields
+
+    @staticmethod
+    def get_app_model(obj) -> str:
+        return f"{obj.app_label}.{obj.model}"
+
+
+class RealmMigrateSchemeSerializer(serializers.Serializer):
+    realm_code = serializers.CharField(required=True)
+    space_code = serializers.CharField(required=True)
+
+
+class ModelWithObjectStateSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"] = serializers.BooleanField(
+            default=True, required=False
+        )
+        self.fields["actual_at"] = serializers.DateTimeField(
+            allow_null=True, required=False
+        )
+        self.fields["source_type"] = serializers.ChoiceField(
+            choices=("manual", "external"), default="manual", required=False
+        )
+        self.fields["source_origin"] = serializers.CharField(
+            default="manual", required=False
+        )
+        self.fields["external_id"] = serializers.CharField(
+            allow_null=True, required=False
+        )
+        self.fields["is_manual_locked"] = serializers.BooleanField(
+            default=False, required=False
+        )
+        self.fields["is_locked"] = serializers.BooleanField(
+            default=True, required=False
+        )
+
+    def validate(self, data):
+        if data.get("source_type", "manual") == "manual" and (
+            data.get("source_origin") and data["source_origin"] != "manual"
+        ):
+            raise serializers.ValidationError(
+                "Object is protected from external changes"
+            )
+
+        return data

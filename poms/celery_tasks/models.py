@@ -2,12 +2,12 @@ import json
 import logging
 from datetime import timedelta
 
+from celery.result import AsyncResult
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-
-from celery.result import AsyncResult
 
 from poms.common.finmars_authorizer import AuthorizerService
 from poms.common.models import TimeStampedModel
@@ -170,7 +170,7 @@ class CeleryTask(TimeStampedModel):
     )
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.verbose_name} [{self.pk}] ({self.status})>"
@@ -237,9 +237,7 @@ class CeleryTask(TimeStampedModel):
             )
 
     def add_attachment(self, file_report_id):
-        CeleryTaskAttachment.objects.create(
-            celery_task=self, file_report_id=file_report_id
-        )
+        CeleryTaskAttachment.objects.create(celery_task=self, file_report_id=file_report_id)
 
     def mark_task_as_finished(self):
         self.finished_at = now()
@@ -252,18 +250,13 @@ class CeleryTask(TimeStampedModel):
         super().save(*args, **kwargs)
 
         if self.ttl and not self.expiry_at:
-            self.expiry_at = self.created + timedelta(seconds=self.ttl)
+            self.expiry_at = self.created_at + timedelta(seconds=self.ttl)
 
-        if (
-            CeleryTask.objects.exclude(
-                type__in=["calculate_balance_report", "calculate_pl_report"]
-            ).count()
-            > 3000
-        ):
+        if CeleryTask.objects.exclude(type__in=["calculate_balance_report", "calculate_pl_report"]).count() > 3000:
             _l.warning(f"{log} tasks amount > 1000, delete oldest task")
-            CeleryTask.objects.exclude(
-                type__in=["calculate_balance_report", "calculate_pl_report"]
-            ).order_by("id")[0].delete()
+            CeleryTask.objects.exclude(type__in=["calculate_balance_report", "calculate_pl_report"]).order_by("id")[
+                0
+            ].delete()
 
 
 class CeleryTaskAttachment(models.Model):
@@ -338,30 +331,25 @@ class CeleryWorker(TimeStampedModel):
         help_text="Comma separated list of queues that worker will listen to",
     )
 
-    def create_worker(self):
+    def create_worker(self, realm_code):
         authorizer_service = AuthorizerService()
+        authorizer_service.create_worker(self, realm_code)
 
-        authorizer_service.create_worker(self)
-
-    def start(self):
+    def start(self, realm_code):
         authorizer_service = AuthorizerService()
+        authorizer_service.start_worker(self, realm_code)
 
-        authorizer_service.start_worker(self)
-
-    def stop(self):
+    def stop(self, realm_code):
         authorizer_service = AuthorizerService()
+        authorizer_service.stop_worker(self, realm_code)
 
-        authorizer_service.stop_worker(self)
-
-    def restart(self):
+    def restart(self, realm_code):
         authorizer_service = AuthorizerService()
+        authorizer_service.restart_worker(self, realm_code)
 
-        authorizer_service.restart_worker(self)
-
-    def get_status(self):
+    def get_status(self, realm_code):
         authorizer_service = AuthorizerService()
-
-        status = authorizer_service.get_worker_status(self)
+        status = authorizer_service.get_worker_status(self, realm_code)
 
         try:
             self.status = json.dumps(status)
@@ -370,7 +358,6 @@ class CeleryWorker(TimeStampedModel):
 
         self.save()
 
-    def delete_worker(self):
+    def delete_worker(self, realm_code):
         authorizer_service = AuthorizerService()
-
-        authorizer_service.delete_worker(self)
+        authorizer_service.delete_worker(self, realm_code)

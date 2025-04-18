@@ -1,23 +1,29 @@
 from poms.common.common_base_test import BaseTestCase
 from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
-from poms.integrations.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import get_backend_callback_urls
 
 from poms.counterparties.models import Counterparty
 
 
 class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
+        self.group = self.db_data.create_counterparty_group()
         self.task = self.create_task(
             name="Import Company From Finmars Database",
             func="import_company_finmars_database",
         )
+
+        BACKEND_CALLBACK_URLS = get_backend_callback_urls()
+
         self.url = BACKEND_CALLBACK_URLS["company"]
 
     def test__company_created(self):
-        name = self.random_string(10)
-        short_name = self.random_string(10)
+        name = self.random_string()
+        short_name = self.random_string()
         post_data = {
             "request_id": self.task.id,
             "task_id": None,

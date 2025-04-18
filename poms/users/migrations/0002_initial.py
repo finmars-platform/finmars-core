@@ -6,8 +6,6 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    initial = True
-
     dependencies = [
         ('users', '0001_initial'),
         ('strategies', '0001_initial'),
@@ -31,10 +29,10 @@ class Migration(migrations.Migration):
                 ('counterparty', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='counterparties.counterparty', verbose_name='counterparty')),
                 ('counterparty_group', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='counterparties.counterpartygroup', verbose_name='counterparty group')),
                 ('currency', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='currencies.currency', verbose_name='currency')),
-                ('currency_pricing_scheme', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='pricing.currencypricingscheme', verbose_name='currency pricing scheme')),
+                # ('currency_pricing_scheme', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='pricing.currencypricingscheme', verbose_name='currency pricing scheme')),
                 ('instrument', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='instruments.instrument', verbose_name='instrument')),
                 ('instrument_class', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='instruments.instrumentclass', verbose_name='instrument class')),
-                ('instrument_pricing_scheme', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='pricing.instrumentpricingscheme', verbose_name='instrument pricing scheme')),
+                # ('instrument_pricing_scheme', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='pricing.instrumentpricingscheme', verbose_name='instrument pricing scheme')),
                 ('instrument_type', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='instruments.instrumenttype', verbose_name='instrument type')),
                 ('master_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ecosystem_default', to='users.masteruser', verbose_name='master user')),
                 ('mismatch_account', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='ecosystem_default_mismatch_account', to='accounts.account', verbose_name='mismatch account')),

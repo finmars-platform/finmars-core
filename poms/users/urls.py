@@ -12,10 +12,12 @@ router.register(
 router.register(
     r"user",
     users.UserViewSet,
+    'user'
 )
 router.register(
     r"master-user",
     users.MasterUserViewSet,
+    'masteruser'
 )
 router.register(  # Deprecated at all, no light-method needed
     r"master-user-light",
@@ -25,6 +27,7 @@ router.register(  # Deprecated at all, no light-method needed
 router.register(
     r"member",
     users.MemberViewSet,
+    "member",
 )
 router.register(
     r"ecosystem-default",

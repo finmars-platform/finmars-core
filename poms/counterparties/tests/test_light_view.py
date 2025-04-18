@@ -5,10 +5,14 @@ from poms.counterparties.models import Counterparty
 
 
 class CompanyViewTestCase(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/counterparty/light/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/counterparty/light/"
 
     @BaseTestCase.cases(
         ("name", "name"),

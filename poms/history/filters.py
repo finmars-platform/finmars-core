@@ -22,7 +22,7 @@ class HistoryQueryFilter(BaseFilterBackend):
 
             for piece in pieces:
                 user_code_q.add(Q(user_code__icontains=piece), Q.AND)
-                created_q.add(Q(created__icontains=piece), Q.AND)
+                created_q.add(Q(created_at__icontains=piece), Q.AND)
                 notes_q.add(Q(notes__icontains=piece), Q.AND)
                 context_url_q.add(Q(context_url__icontains=piece), Q.AND)
 
@@ -44,12 +44,12 @@ class HistoryDateRangeFilter(BaseFilterBackend):
         date_to = request.query_params.get('date_to', None)
 
         if date_from:
-            queryset = queryset.filter(created__gte=date_from)
+            queryset = queryset.filter(created_at__gte=date_from)
 
         if date_to:
             date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
 
-            queryset = queryset.filter(created__lte=date_to)
+            queryset = queryset.filter(created_at__lte=date_to)
 
         return queryset
 

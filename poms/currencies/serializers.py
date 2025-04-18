@@ -7,15 +7,15 @@ from rest_framework.fields import ReadOnlyField
 from poms.common.fields import FloatEvalField
 from poms.common.serializers import (
     ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.currencies.fields import CurrencyField
-from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.fields import PricingPolicyField, CountryField
-from poms.instruments.models import PricingPolicy
+from poms.currencies.models import Currency, CurrencyHistory, CurrencyPricingPolicy
+from poms.instruments.fields import PricingPolicyField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.pricing.models import CurrencyHistoryError, CurrencyPricingPolicy
+from poms.pricing.models import CurrencyHistoryError
 from poms.system_messages.handlers import send_system_message
 from poms.users.fields import MasterUserField
 from poms.users.utils import get_master_user_from_context, get_member_from_context
@@ -37,6 +37,7 @@ class CurrencySerializer(
     ModelWithUserCodeSerializer,
     ModelWithAttributesSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
 
@@ -47,6 +48,7 @@ class CurrencySerializer(
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "notes",
             "reference_for_pricing",
@@ -55,11 +57,11 @@ class CurrencySerializer(
             "is_deleted",
             "is_enabled",
             "pricing_policies",
-            "country"
+            "country",
         ]
 
     def __init__(self, *args, **kwargs):
-        from poms.pricing.serializers import CurrencyPricingPolicySerializer
+        from poms.instruments.serializers import CurrencyPricingPolicySerializer
 
         super().__init__(*args, **kwargs)
 
@@ -68,12 +70,13 @@ class CurrencySerializer(
         )
 
         from poms.instruments.serializers import CountrySerializer
+
         self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
 
     def create(self, validated_data):
         pricing_policies = validated_data.pop("pricing_policies", None)
 
-        instance = super(CurrencySerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
 
@@ -82,72 +85,33 @@ class CurrencySerializer(
     def update(self, instance, validated_data):
         pricing_policies = validated_data.pop("pricing_policies", None)
 
-        instance = super(CurrencySerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
 
         return instance
 
-    @staticmethod
-    def _update_currency_pricing_policy(item, cpp):
-        cpp.pricing_scheme = item["pricing_scheme"]
-        cpp.default_value = item["default_value"]
-        cpp.attribute_key = item["attribute_key"]
-        cpp.data = item["data"] if "data" in item else None
-        cpp.notes = item["notes"]
-        cpp.save()
-
     def save_pricing_policies(self, instance, pricing_policies):
-        policies = PricingPolicy.objects.filter(master_user=instance.master_user)
-
         ids = set()
+        pricing_policies = pricing_policies or []
+        for item in pricing_policies:
+            obj, _ = CurrencyPricingPolicy.objects.get_or_create(
+                currency=instance, pricing_policy_id=item["pricing_policy_id"]
+            )
+            self._update_and_save_pricing_policies(item, obj)
+            ids.add(obj.id)
 
-        for policy in policies:
-            try:
-                cpp = CurrencyPricingPolicy.objects.get(
-                    currency=instance, pricing_policy=policy
-                )
-
-            except CurrencyPricingPolicy.DoesNotExist:
-                cpp = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
-
-                if policy.default_currency_pricing_scheme:
-                    cpp.pricing_scheme = policy.default_currency_pricing_scheme
-
-                    parameters = policy.default_currency_pricing_scheme.get_parameters()
-                    set_currency_pricing_scheme_parameters(cpp, parameters)
-
-                cpp.save()
-                ids.add(cpp.id)
-
-        if pricing_policies:
-            for item in pricing_policies:
-                try:
-                    oid = item.get("id", None)
-                    ids.add(oid)
-
-                    cpp = CurrencyPricingPolicy.objects.get(
-                        currency_id=instance.id, id=oid
-                    )
-                    self._update_currency_pricing_policy(item, cpp)
-
-                except CurrencyPricingPolicy.DoesNotExist as e:
-                    try:
-                        cpp = CurrencyPricingPolicy.objects.get(
-                            currency_id=instance.id,
-                            pricing_policy=item["pricing_policy"],
-                        )
-                        self._update_currency_pricing_policy(item, cpp)
-
-                        ids.add(cpp.id)
-
-                    except Exception as e:
-                        print(f"Can't Find  Pricing Policy {e}")
-
+        to_delete = CurrencyPricingPolicy.objects.filter(currency=instance)
         if len(ids):
-            CurrencyPricingPolicy.objects.filter(
-                currency=instance,
-            ).exclude(id__in=ids).delete()
+            to_delete = to_delete.exclude(id__in=ids)
+        to_delete.delete()
+
+    @staticmethod
+    def _update_and_save_pricing_policies(item: dict, obj: CurrencyPricingPolicy):
+        obj.target_pricing_schema_user_code = item["target_pricing_schema_user_code"]
+        if "options" in item:
+            obj.options = item["options"]
+        obj.save()
 
 
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):
@@ -160,10 +124,13 @@ class CurrencyLightSerializer(ModelWithUserCodeSerializer):
             "master_user",
             "user_code",
             "name",
+            "public_name",
             "short_name",
             "is_deleted",
             "is_enabled",
         ]
+
+        read_only_fields = fields
 
 
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
@@ -174,6 +141,7 @@ class CurrencyViewSerializer(ModelWithUserCodeSerializer):
             "user_code",
             "name",
             "short_name",
+            "public_name",
         ]
 
 
@@ -181,11 +149,8 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
     currency = CurrencyField()
     currency_object = CurrencyViewSerializer(source="currency", read_only=True)
     pricing_policy = PricingPolicyField(allow_null=False)
-    pricing_policy_object = serializers.PrimaryKeyRelatedField(
-        source="pricing_policy", read_only=True
-    )
+    pricing_policy_object = serializers.PrimaryKeyRelatedField(source="pricing_policy", read_only=True)
     fx_rate = FloatEvalField()
-
     procedure_modified_datetime = ReadOnlyField()
 
     class Meta:
@@ -199,7 +164,8 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             "date",
             "fx_rate",
             "procedure_modified_datetime",
-            "modified",
+            "modified_at",
+            "is_temporary_fx_rate",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -207,9 +173,10 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
 
         super().__init__(*args, **kwargs)
 
-        self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(
-            source="pricing_policy", read_only=True
-        )
+        self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(source="pricing_policy", read_only=True)
+
+    def get_unique_together_validators(self):
+        return []
 
     def create(self, validated_data):
         instance = super().create(validated_data)
@@ -218,15 +185,12 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         instance.save()
 
         history_item = CurrencyHistoryError()
-        history_item.created = now()
         history_item.master_user = instance.currency.master_user
         history_item.currency = instance.currency
         history_item.fx_rate = instance.fx_rate
         history_item.date = instance.date
         history_item.pricing_policy = instance.pricing_policy
         history_item.status = CurrencyHistoryError.STATUS_CREATED
-        history_item.created = now()
-
         history_item.save()
 
         member = get_member_from_context(self.context)
@@ -238,10 +202,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             section="prices",
             type="success",
             title="New FX rate (manual)",
-            description=(
-                f"{instance.currency.user_code} {str(instance.date)} "
-                f"{str(instance.fx_rate)}",
-            ),
+            description=(f"{instance.currency.user_code} {str(instance.date)} " f"{str(instance.fx_rate)}",),
         )
 
         return instance
@@ -259,9 +220,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         return result
 
     def update(self, instance, validated_data):
-        instance = super(CurrencyHistorySerializer, self).update(
-            instance, validated_data
-        )
+        instance = super().update(instance, validated_data)
 
         instance.procedure_modified_datetime = now()
         instance.save()
@@ -289,13 +248,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             section="prices",
             type="warning",
             title="Edit FX rate (manual)",
-            description=(
-                instance.currency.user_code
-                + " "
-                + str(instance.date)
-                + " "
-                + str(instance.fx_rate)
-            ),
+            description=f"{instance.currency.user_code} {str(instance.date)} {str(instance.fx_rate)}",
         )
 
         return instance

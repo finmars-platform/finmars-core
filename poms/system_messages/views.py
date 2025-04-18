@@ -3,14 +3,33 @@ from logging import getLogger
 import django_filters
 from django.db.models import Q
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 
 from poms.common.filters import CharFilter
+
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import (
     OwnerBySystemMessageMember,
     SystemMessageOnlyNewFilter,
+)
+from poms.system_messages.handlers import (
+    forward_create_channel_to_service,
+    forward_create_notification_to_service,
+    forward_get_all_channels_to_service,
+    forward_get_all_subscription_types_to_service,
+    forward_get_categories_to_service,
+    forward_get_statuses_to_service,
+    forward_get_user_notifications,
+    forward_get_user_subscriptions_to_service,
+    forward_join_channel_to_service,
+    forward_leave_channel_to_service,
+    forward_partial_update_notification_to_service,
+    forward_update_notification_to_service,
+    forward_update_user_subscriptions_to_service,
+    forward_user_subscribed_channels_to_service,
 )
 from poms.system_messages.models import SystemMessage, SystemMessageComment
 from poms.system_messages.serializers import (
@@ -25,7 +44,7 @@ _l = getLogger("poms.system_messages")
 class SystemMessageFilterSet(FilterSet):
     title = CharFilter()
     description = CharFilter()
-    created = django_filters.DateFromToRangeFilter()
+    created_at = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = SystemMessage
@@ -33,8 +52,11 @@ class SystemMessageFilterSet(FilterSet):
 
 
 class SystemMessageViewSet(AbstractModelViewSet):
-    queryset = SystemMessage.objects
+    queryset = SystemMessage.objects.select_related("master_user", "linked_event").prefetch_related(
+        "comments", "attachments", "members"
+    )
     serializer_class = SystemMessageSerializer
+
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -44,7 +66,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
     ordering_fields = [
         "members__is_pinned",
-        "created",
+        "created_at",
         "section",
         "type",
         "action_status",
@@ -70,13 +92,9 @@ class SystemMessageViewSet(AbstractModelViewSet):
             queryset = queryset.exclude(title__icontains="Workflow")
 
         if only_new == "true":
-            queryset = queryset.filter(
-                members__is_read=False, members__member=request.user.member
-            )
+            queryset = queryset.filter(members__is_read=False, members__member=request.user.member)
 
-        queryset = queryset.filter(
-            members__is_pinned=False, members__member=request.user.member
-        )
+        queryset = queryset.filter(members__is_pinned=False, members__member=request.user.member)
 
         if msg_type:
             msg_type = msg_type.split(",")
@@ -91,14 +109,12 @@ class SystemMessageViewSet(AbstractModelViewSet):
             queryset = queryset.filter(action_status__in=action_status)
 
         if query:
-            queryset = queryset.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
-            )
+            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
         if ordering:
             queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by("-created")
+            queryset = queryset.order_by("-created_at")
 
         if page is None or page == "1":
             pinned_queryset = self.get_queryset().filter(
@@ -171,20 +187,16 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 )
 
             if is_pinned:
-                queryset = queryset.filter(
-                    members__is_pinned=True, members__member=member
-                )
+                queryset = queryset.filter(members__is_pinned=True, members__member=member)
 
             if query:
-                queryset = queryset.filter(
-                    Q(title__icontains=query) | Q(description__icontains=query)
-                )
+                queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
             if created_before:
-                queryset = queryset.filter(created__lte=created_before)
+                queryset = queryset.filter(created_at__lte=created_before)
 
             if created_after:
-                queryset = queryset.filter(created__gte=created_after)
+                queryset = queryset.filter(created_at__gte=created_after)
 
             if action_status:
                 queryset = queryset.filter(action_status__in=[action_status])
@@ -207,7 +219,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return stats
 
     @action(detail=False, methods=["get"], url_path="stats")
-    def stats(self, request, pk=None):
+    def stats(self, request, pk=None, realm_code=None, space_code=None):
         only_new = request.query_params.get("only_new", False)
         query = request.query_params.get("query", None)
 
@@ -219,7 +231,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         if action_status and ("," in action_status):
             action_status = action_status.split(",")
 
-        only_new = (only_new == "true")
+        only_new = only_new == "true"
         member = request.user.member
 
         result = [
@@ -317,7 +329,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response(result)
 
     @action(detail=False, methods=["get"], url_path="mark-all-as-read")
-    def mark_all_as_read(self, request, pk=None):
+    def mark_all_as_read(self, request, pk=None, realm_code=None, space_code=None):
         member = request.user.member
 
         messages = SystemMessage.objects.all()
@@ -336,7 +348,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="mark-as-read",
         serializer_class=SystemMessageActionSerializer,
     )
-    def mark_as_read(self, request, pk=None):
+    def mark_as_read(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data.get("ids")
         sections = request.data.get("sections")
 
@@ -375,7 +387,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="mark-as-solved",
         serializer_class=SystemMessageActionSerializer,
     )
-    def mark_as_solved(self, request, pk=None):
+    def mark_as_solved(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -395,7 +407,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="pin",
         serializer_class=SystemMessageActionSerializer,
     )
-    def pin(self, request, pk=None):
+    def pin(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -416,7 +428,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         url_path="unpin",
         serializer_class=SystemMessageActionSerializer,
     )
-    def unpin(self, request, pk=None):
+    def unpin(self, request, pk=None, realm_code=None, space_code=None):
         ids = request.data["ids"]
 
         if not isinstance(ids, list):
@@ -432,7 +444,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["put"], url_path="solve")
-    def solve(self, request, pk=None):
+    def solve(self, request, pk=None, realm_code=None, space_code=None):
         system_message = SystemMessage.objects.get(id=pk)
         context = {"request": request, "master_user": request.user.master_user}
         system_message.action_status = SystemMessage.ACTION_STATUS_SOLVED
@@ -452,7 +464,7 @@ class SystemMessageViewSet(AbstractModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["put"], url_path="comment")
-    def comment(self, request, pk=None):
+    def comment(self, request, pk=None, realm_code=None, space_code=None):
         system_message = SystemMessage.objects.get(id=pk)
         context = {"request": request, "master_user": request.user.master_user}
 
@@ -470,3 +482,142 @@ class SystemMessageViewSet(AbstractModelViewSet):
         serializer = SystemMessageSerializer(instance=system_message, context=context)
 
         return Response(serializer.data)
+
+
+"""
+=========================================================
+# Methods to forward requests to the notification service
+=========================================================
+"""
+
+
+class NotificationViewSet(ViewSet):
+
+
+    def list(self, request, *args, **kwargs):
+        _l.debug(f"Original request auth: {request.headers.get('Authorization')}")
+        response = forward_get_user_notifications(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        payload = request.data
+        response = forward_create_notification_to_service(payload, request)
+        return Response(response, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        user_code = kwargs.get("pk")
+        if not user_code:
+            return Response(
+                {"error": "Notification user_code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = request.data
+        response = forward_update_notification_to_service(user_code, payload, request)
+        return Response(response, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, *args, **kwargs):
+        user_code = kwargs.get("pk")
+        if not user_code:
+            return Response(
+                {"error": "Notification user_code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = request.data
+        response = forward_partial_update_notification_to_service(user_code, payload, request)
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class SubscriptionViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        return self.subscriptions_of_user(request)
+
+    def create(self, request, *args, **kwargs):
+        return self.subscriptions_update_for_user(request)
+
+    @action(detail=False, methods=["get"])
+    def subscriptions_of_user(self, request, *args, **kwargs):
+        response = forward_get_user_subscriptions_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"])
+    def subscriptions_update_for_user(self, request, *args, **kwargs):
+        payload = request.data
+        response = forward_update_user_subscriptions_to_service(request, payload)
+        return Response(response, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def all_types(self, request, *args, **kwargs):
+        response = forward_get_all_subscription_types_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class ChannelViewSet(ViewSet):
+    lookup_field = "user_code"
+    lookup_url_kwarg = "user_code"
+
+    def list(self, request, *args, **kwargs):
+        return self.user_subscribed_channels(request)
+
+    def create(self, request, *args, **kwargs):
+        return self.create_channel(request)
+
+    # Channel 1: Create a channel (POST)
+    @action(detail=False, methods=["post"])
+    def create_channel(self, request, *args, **kwargs):
+        payload = request.data
+        response = forward_create_channel_to_service(request, payload)
+        return Response(response, status=status.HTTP_201_CREATED)
+
+    # Channel 2: Join a channel (POST)
+    @action(detail=True, methods=["post"], url_path="join")
+    def join_channel(self, request, user_code=None, *args, **kwargs):
+        payload = request.data
+        user_code = self.kwargs.get("user_code") or kwargs.get("user_code")
+
+        if not user_code:
+            return Response(
+                {"error": "Channel user_code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        response = forward_join_channel_to_service(request, payload, user_code)
+        return Response(response, status=status.HTTP_200_OK)
+
+    # Channel 3: Leave a channel (POST)
+    @action(detail=True, methods=["post"], url_path="leave")
+    def leave_channel(self, request, user_code=None, *args, **kwargs):
+        payload = request.data
+        user_code = self.kwargs.get("user_code") or kwargs.get("user_code")
+
+        if not user_code:
+            return Response(
+                {"error": "Channel user_code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        response = forward_leave_channel_to_service(request, payload, user_code)
+        return Response(response, status=status.HTTP_200_OK)
+
+    # Channel 4: List all channels the user is subscribed to (GET)
+    @action(detail=False, methods=["get"])
+    def user_subscribed_channels(self, request, *args, **kwargs):
+        response = forward_user_subscribed_channels_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+    # Channel 5: List all channels (GET)
+    @action(detail=False, methods=["get"], url_path="all_channels")
+    def all_channels(self, request, *args, **kwargs):
+        response = forward_get_all_channels_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class CategoryViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        response = forward_get_categories_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class CurrentStatusViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        response = forward_get_statuses_to_service(request)
+        return Response(response, status=status.HTTP_200_OK)
