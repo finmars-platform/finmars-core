@@ -6,8 +6,10 @@ from poms.common.serializers import (
     ModelMetaSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
+    ModelWithObjectStateSerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.users.fields import MasterUserField
 
@@ -58,10 +60,12 @@ class AccountTypeViewSerializer(ModelWithUserCodeSerializer):
 
 
 class AccountSerializer(
+    ModelWithResourceGroupSerializer,
     ModelWithAttributesSerializer,
     ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
     ModelMetaSerializer,
+    ModelWithObjectStateSerializer,
 ):
     master_user = MasterUserField()
     type = AccountTypeField()

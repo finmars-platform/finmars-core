@@ -1,3 +1,4 @@
+from copy import deepcopy
 import csv
 import json
 import logging
@@ -115,8 +116,8 @@ class TransactionImportProcess(object):
         self.execution_context = self.task.options_object["execution_context"]
         self.file_path = self.task.options_object["file_path"]
 
-        self.ecosystem_default = EcosystemDefault.objects.get(
-            master_user=self.master_user
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.master_user.pk
         )
 
         self.find_default_rule_scenario()
@@ -468,16 +469,12 @@ class TransactionImportProcess(object):
 
                 else:
                     item.status = "error"
-                    item.error_message = (
-                        item.error_message
-                        + " Can't find relation of "
-                        + "["
-                        + field.transaction_type_input
-                        + "]"
-                        + "(value:"
-                        + value
-                        + ")"
-                    )
+                    item.error_message = "%(error_message)s Can't find relation of [%(transaction_type_input)s](value:%(value)s)"  % {
+                        'error_message': item.error_message,
+                        'transaction_type_input': field.transaction_type_input,
+                        'value': value
+                    }
+                    raise BookException(code=400, error_message=item.error_message)
 
             return v
 
@@ -504,7 +501,7 @@ class TransactionImportProcess(object):
                     f"Traceback {traceback.format_exc()}"
                 )
 
-                # raise Exception(e) # Uncomment when apetrushkin will be ready
+                raise Exception(e)
 
         return fields
 
@@ -513,7 +510,11 @@ class TransactionImportProcess(object):
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
         try:
+            if item.status == "error":
+                raise BookException(code=400, error_message=item.error_message)
+
             fields = self.get_fields_for_item(item, rule_scenario)
+
             if error:
                 fields["error_message"] = str(error)
 
@@ -877,8 +878,15 @@ class TransactionImportProcess(object):
             conversion_item.row_number = row_number
 
             for scheme_input in self.scheme.inputs.all():
+                ## passing first column from shema page
                 try:
-                    names = raw_item
+                    ## functional by FN-2436: Pass None value to Imported Columns expression when 
+                    ## the field is absent but expected in the data received 
+                    # deepcopy raw_item.source item data remains untouched                  
+                    names = deepcopy(raw_item)
+
+                    if scheme_input.name not in names.keys():
+                        names[scheme_input.name] = None
 
                     conversion_item.conversion_inputs[
                         scheme_input.name
@@ -948,6 +956,7 @@ class TransactionImportProcess(object):
                 try:
                     names = preprocess_item.inputs
 
+                    # passing second column formulas on schema page
                     value = formula.safe_eval(
                         scheme_calculated_input.name_expr,
                         names=names,

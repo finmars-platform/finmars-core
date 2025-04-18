@@ -10,6 +10,7 @@ from rest_framework.serializers import ListSerializer
 
 from mptt.utils import get_cached_trees
 
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.fields import ContentTypeOrPrimaryKeyRelatedField, ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelMetaSerializer, ModelWithUserCodeSerializer
@@ -47,21 +48,23 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         self.create_attributes_if_not_exists(instance)
 
-        self.save_attributes(instance, attributes, True)
+        self.save_attributes(instance, attributes)
 
         self.calculate_attributes(instance)
 
         return instance
 
     def update(self, instance, validated_data):
-        attributes = validated_data.pop("attributes", [])
+        old_attributes = instance.attributes.all()
+        new_attributes = validated_data.pop("attributes", [])
 
         instance = super().update(instance, validated_data)
+        instance.attributes.add(*old_attributes)
 
         self.create_attributes_if_not_exists(instance)
 
-        if attributes:
-            self.save_attributes(instance, attributes, False)
+        if new_attributes:
+            self.save_attributes(instance, new_attributes)
 
         self.calculate_attributes(instance)
 
@@ -70,7 +73,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def create_attributes_if_not_exists(self, instance):
         master_user = get_master_user_from_context(self.context)
 
-        content_type = ContentType.objects.get_for_model(instance)
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         attribute_types = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -113,13 +116,13 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                         attribute_type.expr, names={"this": eval_data}, context={}
                     )
                 except (ExpressionEvalError, Exception):
-                    executed_expressions[
-                        attribute_type.user_code
-                    ] = "Invalid Expression"
+                    executed_expressions[attribute_type.user_code] = (
+                        "Invalid Expression"
+                    )
 
-                eval_data["attributes"][
-                    attribute_type.user_code
-                ] = executed_expressions[attribute_type.user_code]
+                eval_data["attributes"][attribute_type.user_code] = (
+                    executed_expressions[attribute_type.user_code]
+                )
 
         current_index = current_index + 1
 
@@ -151,7 +154,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
     def calculate_attributes(self, instance):
         master_user = get_master_user_from_context(self.context)
-        content_type = ContentType.objects.get_for_model(instance)
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         attr_types_qs = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -218,17 +221,17 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
                 attr.save()
 
-    def save_attributes(self, instance, attributes, created):
+    def save_attributes(self, instance, attributes):
         # _l.info(f"save_attributes: attributes={attributes}")
 
         if not attributes:
             return
 
-        try:
-            ctype = ContentType.objects.get_for_model(instance)
+        ctype = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
-            for attr in attributes:
-                attribute_type = attr["attribute_type"]
+        for attr in attributes:
+            attribute_type = attr["attribute_type"]
+            try:
                 oattr = GenericAttribute.objects.get(
                     content_type=ctype,
                     object_id=instance.id,
@@ -254,8 +257,17 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     )
                 oattr.save()
 
-        except Exception as e:
-            _l.error(f"save_attributes: {repr(e)} traceback {traceback.format_exc()} ")
+            except Exception as e:
+                err_msg = (
+                    f"ModelWithAttributesSerializer.save_attributes: {repr(e)} "
+                    f"content_type='{ctype}' object_id={instance.id} "
+                    f"attribute_type_id={attribute_type.id}"
+                )
+                _l.error(err_msg)
+                raise FinmarsBaseException(
+                    error_key="save_attributes_error",
+                    message=err_msg,
+                ) from e
 
 
 class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
@@ -369,9 +381,11 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
 
     def to_representation(self, value):
         member = get_member_from_context(self.context)
-        for o in value.options.all():
-            if o.member_id == member.id:
-                return o.is_hidden
+
+        if hasattr(value, "options"):
+            for o in value.options.all():
+                if o.member_id == member.id:
+                    return o.is_hidden
         return False
 
 
@@ -426,9 +440,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         content_type = instance.content_type
-        representation[
-            "content_type"
-        ] = f"{content_type.app_label}.{content_type.model}"
+        representation["content_type"] = (
+            f"{content_type.app_label}.{content_type.model}"
+        )
         return representation
 
     def validate(self, attrs):
@@ -679,18 +693,20 @@ class GenericAttributeTypeViewSerializer(serializers.ModelSerializer):
 class GenericAttributeListSerializer(serializers.ListSerializer):
     # Used as list_serializer_class if many=True in AbstractAttributeSerializer
     def get_attribute(self, instance):
-        member = get_member_from_context(self.context)
-        if member.is_superuser:
-            return instance.attributes
-        master_user = get_master_user_from_context(self.context)
-        attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
+        # member = get_member_from_context(self.context)
+        # if member.is_superuser:
+        #     return instance.attributes
 
-        content_type = ContentType.objects.get_for_model(instance)
+        master_user = get_master_user_from_context(self.context)
+
+        # attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
+
+        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
 
         return GenericAttribute.objects.filter(
             content_type=content_type,
             object_id=instance.id,
-            attribute_type__in=attribute_type_qs,
+            # attribute_type__in=attribute_type_qs,
         )
 
 
@@ -737,7 +753,7 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         parent = self.parent
         if isinstance(parent, ListSerializer):
             parent = parent.parent
-        owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
+        # owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
 
         return attrs
 

@@ -7,26 +7,23 @@ from poms.users.models import Member
 _l = logging.getLogger("poms.users")
 
 
-def get_master_user_and_member(request):
+def get_master_user_and_member(request) -> tuple:
     if not request.user.is_authenticated:
-        raise PermissionDenied()
+        raise PermissionDenied("User is not authenticated")
 
-    try:
-        member = Member.objects.get(user=request.user)
-        master_user = member.master_user
+    member = Member.objects.filter(user=request.user).first()
+    if not member:
+        raise NotFound(f"Member not found for user {request.user.username}")
 
-        if member.is_deleted:
-            raise PermissionDenied()
+    master_user = member.master_user
 
-        if member.status != Member.STATUS_ACTIVE:
-            raise PermissionDenied()
+    if member.is_deleted:
+        raise PermissionDenied("Member deleted")
 
-        return member, master_user
+    if member.status != Member.STATUS_ACTIVE:
+        raise PermissionDenied("Member not active")
 
-    except Exception as e:
-        _l.debug("get_master_user_and_member: token not found")
-
-        raise NotFound() from e
+    return member, master_user
 
 
 def get_user_from_context(context):
@@ -50,3 +47,20 @@ def get_member_from_context(context):
         return request.user.member if hasattr(request.user, "member") else None
 
     return context.get("member", None)
+
+
+def get_realm_code_from_context(context):
+    context = context or {}
+    request = context.get("request", None)
+    if request:
+        return request.realm_code if hasattr(request, "realm_code") else None
+
+    return context.get("realm_code", None)
+
+def get_space_code_from_context(context):
+    context = context or {}
+    request = context.get("request", None)
+    if request:
+        return request.space_code if hasattr(request, "space_code") else None
+
+    return context.get("space_code", None)

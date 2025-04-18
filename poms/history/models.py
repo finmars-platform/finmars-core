@@ -2,6 +2,7 @@ import contextlib
 import json
 import logging
 import sys
+import time
 import traceback
 
 from deepdiff import DeepDiff
@@ -13,7 +14,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
-from poms_app import settings
+from poms.common.models import TimeStampedModel
 
 _l = logging.getLogger("poms.history")
 
@@ -36,15 +37,16 @@ excluded_to_track_history_models = [
     "csv_import.csvfield",
     "csv_import.entityfield",
     "portfolios.portfoliohistory",
-    "pricing.instrumentpricingschemetype",
-    "pricing.currencypricingschemetype",
-    "pricing.instrumentpricingpolicy",
-    "pricing.currencypricingpolicy",
+    "portfolios.portfolioreconcilehistory",
+    # "pricing.instrumentpricingschemetype",
+    # "pricing.currencypricingschemetype",
+    # "pricing.instrumentpricingpolicy",
+    # "pricing.currencypricingpolicy",
     "pricing.pricehistoryerror",
     "pricing.currencyhistoryerror",
-    "pricing.pricingprocedurebloomberginstrumentresult",
-    "pricing.pricingprocedurebloombergforwardinstrumentresult",
-    "pricing.pricingprocedurebloombergcurrencyresult",
+    # "pricing.pricingprocedurebloomberginstrumentresult",
+    # "pricing.pricingprocedurebloombergforwardinstrumentresult",
+    # "pricing.pricingprocedurebloombergcurrencyresult",
     "integrations.dataprovider",
     "integrations.accrualscheduledownloadmethod",
     "integrations.providerclass",
@@ -91,7 +93,7 @@ excluded_to_track_history_models = [
 ]
 
 
-class HistoricalRecord(models.Model):
+class HistoricalRecord(TimeStampedModel):
     ACTION_CREATE = "create"
     ACTION_CHANGE = "change"
     ACTION_DELETE = "delete"
@@ -157,13 +159,6 @@ class HistoricalRecord(models.Model):
         blank=True,
         verbose_name=gettext_lazy("diff"),
     )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        null=True,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
     json_data = models.TextField(
         null=True,
         blank=True,
@@ -190,7 +185,7 @@ class HistoricalRecord(models.Model):
     def __str__(self):
         return (
             f"{self.member.username} changed {self.user_code} ({self.content_type}) "
-            f"at {self.created.strftime(DATETIME_FORMAT)}"
+            f"at {self.created_at.strftime(DATETIME_FORMAT)}"
         )
 
     @property
@@ -203,7 +198,7 @@ class HistoricalRecord(models.Model):
             "content_type": str(self.content_type),
             "context_url": self.context_url,
             "notes": self.notes,
-            "created": self.created.strftime(DATETIME_FORMAT),
+            "created_at": self.created_at.strftime(DATETIME_FORMAT),
             "json_data": self.json_data,
         }
 
@@ -211,7 +206,7 @@ class HistoricalRecord(models.Model):
         verbose_name = gettext_lazy("history record")
         verbose_name_plural = gettext_lazy("history records")
         index_together = [["user_code", "content_type"]]
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
 
 def get_user_code_from_instance(instance, content_type_key):
@@ -374,7 +369,7 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
                 HistoricalRecord.ACTION_DELETE,
                 HistoricalRecord.ACTION_DANGER,
             ],
-        ).order_by("-created")[0]
+        ).order_by("-created_at")[0]
 
         everything_is_dict = json.loads(
             json.dumps(serialized_data)
@@ -411,9 +406,7 @@ def get_record_context():
 
         else:
             # _l.info(f'get_record_contex: User {request.user}')
-            result["master_user"] = MasterUser.objects.get(
-                base_api_url=settings.BASE_API_URL
-            )
+            result["master_user"] = MasterUser.objects.all().first()
             result["member"] = Member.objects.get(user=request.user)
             result["context_url"] = request.path
 
@@ -429,7 +422,7 @@ def get_record_context():
 
             except Exception:
                 finmars_bot = Member.objects.get(username="finmars_bot")
-                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+                master_user = MasterUser.objects.all().first()
 
                 result["member"] = finmars_bot
                 result["master_user"] = master_user
@@ -466,7 +459,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
         from poms.users.models import MasterUser
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         if sender == MasterUser and instance.journal_status == "disabled":
             record_context = get_record_context()
@@ -478,7 +471,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 last_record = HistoricalRecord.objects.filter(
                     user_code=master_user.name,
                     content_type=content_type,
-                ).order_by("-created")[0]
+                ).order_by("-created_at")[0]
 
                 _l.info(f"last_record {last_record.data}")
 
@@ -566,7 +559,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 def post_delete(sender, instance, using=None, **kwargs):
     from poms.users.models import MasterUser
 
-    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+    master_user = MasterUser.objects.all().first()
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
         try:
@@ -602,26 +595,47 @@ def post_delete_action(sender, instance):
 
 
 def add_history_listeners(sender, **kwargs):
-    # _l.debug("History listener registered Entity %s" % sender)
 
-    # IMPORTANT TO DO ONLY LOCAL IMPORTS
-    # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
+    try:
+        # _l.debug("History listener registered Entity %s" % sender)
 
-    content_type_key = get_model_content_type_as_text(sender)
+        # IMPORTANT TO DO ONLY LOCAL IMPORTS
+        # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
 
-    if content_type_key not in excluded_to_track_history_models:
-        models.signals.post_save.connect(post_save, sender=sender, weak=False)
-        models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+        content_type_key = get_model_content_type_as_text(sender)
+
+        if content_type_key not in excluded_to_track_history_models:
+            models.signals.post_save.connect(post_save, sender=sender, weak=False)
+            models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+
+    except Exception as e:
+        # TODO figure out what to do when live migrate happens (on space create in realm)
+        _l.error(f"add_history_listeners.exception: {e}")
+        _l.error(f"add_history_listeners.traceback: {traceback.format_exc()}")
 
 
 def record_history():
+
     _l = logging.getLogger("provision")
 
-    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+    to_representation_st = time.perf_counter()
+
+    _l.info('record_history %s' % sys.argv)
+
+    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv or 'clearsessions' in sys.argv or 'collectstatic' in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
-        models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        try:
+            models.signals.class_prepared.connect(add_history_listeners, weak=False)
+        except Exception as e:
+            _l.error(f"Could not add history listeners {e}")
 
+    _l.info(
+        "Record History init time: %s"
+        % "{:3.3f}".format(time.perf_counter() - to_representation_st)
+    )
 
+# TODO refactor this code, HISTORY TEMPORARY DISABLED
+# AFTER FULLY MIGRATE TO REALM INFRASTRUCTURE REFACTOR THIS CODE
 record_history()

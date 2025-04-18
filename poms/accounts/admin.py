@@ -37,7 +37,7 @@ class AccountAdmin(AbstractModelAdmin):
         "user_code",
         "name",
         "is_deleted",
-        "modified",
+        "modified_at",
     ]
     list_select_related = ["master_user", "type"]
     list_filter = [

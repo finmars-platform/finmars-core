@@ -36,7 +36,9 @@ class PLReportBuilderSql:
 
         self.instance = instance
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=self.instance.master_user.pk
+        )
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
@@ -44,25 +46,42 @@ class PLReportBuilderSql:
         '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
 
         '''Important security methods'''
-        self.transform_to_allowed_portfolios()
-        self.transform_to_allowed_accounts()
+        # self.transform_to_allowed_portfolios()
+        # self.transform_to_allowed_accounts()
 
         if not self.instance.pl_first_date and not self.instance.period_type:
-            _l.info("No pl_first_date, no period_type settings to ytd")
+            _l.debug("No pl_first_date, no period_type settings to ytd")
             self.instance.period_type = 'ytd'
 
         if not self.instance.pl_first_date and self.instance.period_type:
-            
-            _l.info("No pl_first_date, calculating by period_type...")
+
+            _l.debug("No pl_first_date, calculating by period_type...")
 
             if self.instance.period_type == 'inception':
                 # TODO wtf is first transaction when multi portfolios?
                 # TODO ask oleg what to do with inception
                 # szhitenev 2023-12-04
+
+                transaction = (
+                    Transaction.objects.filter(
+                        portfolio__user_code__in=self.instance.portfolios,
+                    )
+                    .order_by("transaction_date")
+                    .first()
+                )
+
+                first_transaction_date =  transaction.transaction_date
                 
-                first_portfolio = self.instance.portfolios.first()
-                
-                self.instance.pl_first_date = get_last_business_day(first_portfolio.first_transaction_date('accounting_date') - timedelta(days=1))
+                _l.info('inception.first_transaction_date %s ' % first_transaction_date)
+
+                # first_portfolio = self.instance.portfolios.first()
+
+                self.instance.pl_first_date = get_last_business_day(
+                    first_transaction_date - timedelta(days=1),
+                    )
+
+                _l.info('inception.pl_first_date %s ' % self.instance.pl_first_date)
+
             elif self.instance.period_type == 'ytd':
                 self.instance.pl_first_date = get_last_business_day_of_previous_year(self.instance.report_date)
 
@@ -116,12 +135,13 @@ class PLReportBuilderSql:
         pl_first_date = self.instance.pl_first_date
 
         if not pl_first_date or pl_first_date == date.min:
-            self.instance.pl_first_date = self.instance.first_transaction_date
+            self.instance.pl_first_date = get_last_business_day(self.instance.first_transaction_date - timedelta(days=1))
 
-        _l.info('self.instance.report_date %s' % self.instance.report_date)
-        _l.info('self.instance.pl_first_date %s' % self.instance.pl_first_date)
+        _l.debug('self.instance.report_date %s' % self.instance.report_date)
+        _l.debug('self.instance.pl_first_date %s' % self.instance.pl_first_date)
 
-        self.parallel_build()
+        # self.parallel_build()
+        self.serial_build()
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
@@ -188,6 +208,9 @@ class PLReportBuilderSql:
 
         if instance.strategy3_mode == Report.MODE_INDEPENDENT:
             result.append("q2.strategy3_position_id = q1.strategy3_position_id")
+
+        if instance.allocation_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.allocation_pl_id = q1.allocation_pl_id")
 
         resultString = ''
 
@@ -365,9 +388,9 @@ class PLReportBuilderSql:
                                    when rn_total=group_border
                                    then
                                        case
-                                           when NOT rolling_position_size_prev*position_size_with_sign = 0 and not rolling_position_size_prev+position_size_with_sign = 0
+                                           when NOT rolling_position_size_prev * position_size_with_sign = 0 and not rolling_position_size_prev + position_size_with_sign = 0
                                               then
-                                                  ln(1+(rolling_position_size_prev/position_size_with_sign))
+                                                  ln(1+(rolling_position_size_prev / position_size_with_sign))
                                               else
                                                   0
                                            end
@@ -375,7 +398,7 @@ class PLReportBuilderSql:
                                       case
                                         when rolling_position_size_prev*position_size_with_sign < 0
                                           then
-                                                  ln(1+(position_size_with_sign/rolling_position_size_prev))
+                                                  ln(1+(position_size_with_sign / rolling_position_size_prev))
                                           else
                                           0
                                       end
@@ -1197,10 +1220,10 @@ class PLReportBuilderSql:
                         
                         position_size,
                         -- (position_size / cur_factor) as nominal_position_size,
-                        case when coalesce(cur_factor,0) = 0
-                                then 0
+                        case when coalesce(cur_factor,1) = 0
+                                then position_size
                                 else
-                                    position_size / cur_factor
+                                    position_size / coalesce(cur_factor,1)
                         end as nominal_position_size,
                         position_size_opened,
                         
@@ -1264,7 +1287,7 @@ class PLReportBuilderSql:
                         end as position_return,
                         
                         case
-                            when amount_invested_fixed != 0
+                            when amount_invested != 0
                             then ((((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -amount_invested) * cross_loc_prc_fx)
                             else 0
                         end as position_return_loc,
@@ -1402,7 +1425,7 @@ class PLReportBuilderSql:
                             end as ytm_at_cost,
                             
                             rep_cur_fx,
-                            (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
+                            (rep_cur_fx / i.prc_cur_fx) cross_loc_prc_fx,
         
                             position_size,
                             position_size_opened,
@@ -1426,19 +1449,19 @@ class PLReportBuilderSql:
         
                             -- вроде, не используется
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as net_cost_price,
                             -- испольщуется только эта
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as net_cost_price_loc,
                             
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                     then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as principal_cost_price_loc, -- wtf?
@@ -1446,19 +1469,19 @@ class PLReportBuilderSql:
                             
                             -- вроде, не используется
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as gross_cost_price,
                             -- испольщуется только эта
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0 and i.price_multiplier != 0
                                 then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as gross_cost_price_loc,
                             
                             case
-                                when position_size_opened <> 0
+                                when position_size_opened != 0
                                 then time_invested_sum / position_size_opened / 365
                                 else 0
                             end as time_invested,
@@ -2470,13 +2493,13 @@ class PLReportBuilderSql:
                     (0) as position_size,
                     (0) as nominal_position_size,
                     
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx)     as carry_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_opened,
 
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_fx_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx) as carry_fx_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_fx_opened,
                      
                     (0) as principal_fixed_opened,
                     (0) as carry_fixed_opened,
@@ -2806,13 +2829,13 @@ class PLReportBuilderSql:
                     (0) as position_size,
                     (0) as nominal_position_size,
                     
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_opened,
+                    sum(carry_with_sign * stl_cur_fx / rep_cur_fx)     as carry_opened,
+                    sum(overheads_with_sign * stl_cur_fx / rep_cur_fx) as overheads_opened,
 
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as principal_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as carry_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx / rep_cur_fx) as overheads_fx_opened,
                      
                     (0) as principal_fixed_opened,
                     (0) as carry_fixed_opened,
@@ -3222,7 +3245,9 @@ class PLReportBuilderSql:
     @staticmethod
     def get_query_for_first_date(instance):
 
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
+        )
 
         report_fx_rate = get_report_fx_rate(instance, instance.pl_first_date)
 
@@ -3265,7 +3290,9 @@ class PLReportBuilderSql:
     def get_query_for_second_date(instance):
 
         report_fx_rate = get_report_fx_rate(instance, instance.report_date)
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
+        ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=instance.master_user.pk
+        )
 
         _l.debug('report_fx_rate %s' % report_fx_rate)
 
@@ -3305,7 +3332,7 @@ class PLReportBuilderSql:
         return query
 
     @finmars_task(name='reports.build_pl_report', bind=True)
-    def build(self, task_id):
+    def build(self, task_id, *args, **kwargs):
 
         try:
 
@@ -3346,6 +3373,9 @@ class PLReportBuilderSql:
                                 
                                 (q2.position_size) as position_size, -- ?
                                 (q2.nominal_position_size) as nominal_position_size,
+                                
+                                (q1.position_size) as period_start_position_size, -- ?
+                                (q1.nominal_position_size) as period_start_nominal_position_size,
                                 
                                 (q2.position_return) as position_return,
                                 (q2.position_return_loc) as position_return_loc,
@@ -3403,69 +3433,255 @@ class PLReportBuilderSql:
                                 (q2.item_type) as item_type,
                                 (q2.item_type_name) as item_type_name,
                                 
-                                (q2.principal_opened - coalesce(q1.principal_opened, 0)) as principal_opened,
-                                (q2.carry_opened - coalesce(q1.carry_opened, 0)) as carry_opened,
-                                (q2.overheads_opened - coalesce(q1.overheads_opened, 0)) as overheads_opened,
-                                (q2.total_opened - coalesce(q1.total_opened, 0)) as total_opened,
+                                case 
+                                    --- 2024-07-31 szhitenev
+                                    --- if we dont have principal_opened value but we have q1.position_size, then probably we miss prices or fxrates
+                                    when q1.principal_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_opened - coalesce(q1.principal_opened, 0)
+                                end as principal_opened,
                                 
-                                (q2.principal_closed - coalesce(q1.principal_closed, 0)) as principal_closed,
-                                (q2.carry_closed - coalesce(q1.carry_closed, 0)) as carry_closed,
-                                (q2.overheads_closed - coalesce(q1.overheads_closed, 0)) as overheads_closed,
-                                (q2.total_closed - coalesce(q1.total_closed, 0)) as total_closed,
+                                case 
+                                    when q1.carry_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_opened - coalesce(q1.carry_opened, 0)
+                                end as carry_opened,
                                 
-                                (q2.principal_fx_opened - coalesce(q1.principal_fx_opened, 0)) as principal_fx_opened,
-                                (q2.carry_fx_opened - coalesce(q1.carry_fx_opened, 0)) as carry_fx_opened,
-                                (q2.overheads_fx_opened - coalesce(q1.overheads_fx_opened, 0)) as overheads_fx_opened,
-                                (q2.total_fx_opened - coalesce(q1.total_fx_opened, 0)) as total_fx_opened,
+                                case 
+                                    when q1.overheads_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_opened - coalesce(q1.overheads_opened, 0)
+                                end as overheads_opened,
                                 
-                                (q2.principal_fx_closed - coalesce(q1.principal_fx_closed, 0)) as principal_fx_closed,
-                                (q2.carry_fx_closed - coalesce(q1.carry_fx_closed, 0)) as carry_fx_closed,
-                                (q2.overheads_fx_closed - coalesce(q1.overheads_fx_closed, 0)) as overheads_fx_closed,
-                                (q2.total_fx_closed - coalesce(q1.total_fx_closed, 0)) as total_fx_closed,
+                                case 
+                                    when q1.total_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_opened - coalesce(q1.total_opened, 0)
+                                end as total_opened,
                                 
-                                (q2.principal_fixed_opened - coalesce(q1.principal_fixed_opened, 0)) as principal_fixed_opened,
-                                (q2.carry_fixed_opened - coalesce(q1.carry_fixed_opened, 0)) as carry_fixed_opened,
-                                (q2.overheads_fixed_opened - coalesce(q1.overheads_fixed_opened, 0)) as overheads_fixed_opened,
-                                (q2.total_fixed_opened - coalesce(q1.total_fixed_opened, 0)) as total_fixed_opened,
+                                case 
+                                    when q1.principal_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_closed - coalesce(q1.principal_closed, 0)
+                                end as principal_closed,
                                 
-                                (q2.principal_fixed_closed - coalesce(q1.principal_fixed_closed, 0)) as principal_fixed_closed,
-                                (q2.carry_fixed_closed - coalesce(q1.carry_fixed_closed, 0)) as carry_fixed_closed,
-                                (q2.overheads_fixed_closed - coalesce(q1.overheads_fixed_closed, 0)) as overheads_fixed_closed,
-                                (q2.total_fixed_closed - coalesce(q1.total_fixed_closed, 0)) as total_fixed_closed,
+                                case 
+                                    when q1.carry_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_closed - coalesce(q1.carry_closed, 0)
+                                end as carry_closed,
                                 
+                                case 
+                                    when q1.overheads_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_closed - coalesce(q1.overheads_closed, 0)
+                                end as overheads_closed,
+                                
+                                case 
+                                    when q1.total_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_closed - coalesce(q1.total_closed, 0)
+                                end as total_closed,
+                                
+                                case 
+                                    when q1.principal_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_opened - coalesce(q1.principal_fx_opened, 0)
+                                end as principal_fx_opened,
+                                
+                                case 
+                                    when q1.carry_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_opened - coalesce(q1.carry_fx_opened, 0)
+                                end as carry_fx_opened,
+                                
+                                case 
+                                    when q1.overheads_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_opened - coalesce(q1.overheads_fx_opened, 0)
+                                end as overheads_fx_opened,
+                                
+                                case 
+                                    when q1.total_fx_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_opened - coalesce(q1.total_fx_opened, 0)
+                                end as total_fx_opened,
+                                                           
+                                case 
+                                    when q1.principal_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_closed - coalesce(q1.principal_fx_closed, 0)
+                                end as principal_fx_closed,        
+                                
+                                case 
+                                    when q1.carry_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_closed - coalesce(q1.carry_fx_closed, 0)
+                                end as carry_fx_closed,    
+                                
+                                case 
+                                    when q1.overheads_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_closed - coalesce(q1.overheads_fx_closed, 0)
+                                end as overheads_fx_closed,        
+                                
+                                case 
+                                    when q1.total_fx_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_closed - coalesce(q1.total_fx_closed, 0)
+                                end as total_fx_closed,     
+                                
+                                case 
+                                    when q1.principal_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_opened - coalesce(q1.principal_fixed_opened, 0)
+                                end as principal_fixed_opened,          
+
+                                case 
+                                    when q1.carry_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_opened - coalesce(q1.carry_fixed_opened, 0)
+                                end as carry_fixed_opened,  
+                                
+                                case 
+                                    when q1.overheads_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_opened - coalesce(q1.overheads_fixed_opened, 0)
+                                end as overheads_fixed_opened,  
+                                
+                                case 
+                                    when q1.total_fixed_opened is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_opened - coalesce(q1.total_fixed_opened, 0)
+                                end as total_fixed_opened,  
+                                
+                                case 
+                                    when q1.principal_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_closed - coalesce(q1.principal_fixed_closed, 0)
+                                end as principal_fixed_closed,  
+                                
+                                case 
+                                    when q1.carry_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_closed - coalesce(q1.carry_fixed_closed, 0)
+                                end as carry_fixed_closed,  
+
+                                case 
+                                    when q1.overheads_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_closed - coalesce(q1.overheads_fixed_closed, 0)
+                                end as overheads_fixed_closed, 
+                                
+                                case 
+                                    when q1.total_fixed_closed is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_closed - coalesce(q1.total_fixed_closed, 0)
+                                end as total_fixed_closed, 
+
                                 -- loc
                                 
-                                (q2.principal_opened_loc - coalesce(q1.principal_opened_loc, 0)) as principal_opened_loc,
-                                (q2.carry_opened_loc - coalesce(q1.carry_opened_loc, 0)) as carry_opened_loc,
-                                (q2.overheads_opened_loc - coalesce(q1.overheads_opened_loc, 0)) as overheads_opened_loc,
-                                (q2.total_opened_loc - coalesce(q1.total_opened_loc, 0)) as total_opened_loc,
+                                case 
+                                    when q1.principal_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_opened_loc - coalesce(q1.principal_opened_loc, 0)
+                                end as principal_opened_loc, 
                                 
-                                (q2.principal_closed_loc - coalesce(q1.principal_closed_loc, 0)) as principal_closed_loc,
-                                (q2.carry_closed_loc - coalesce(q1.carry_closed_loc, 0)) as carry_closed_loc,
-                                (q2.overheads_closed_loc - coalesce(q1.overheads_closed_loc, 0)) as overheads_closed_loc,
-                                (q2.total_closed_loc - coalesce(q1.total_closed_loc, 0)) as total_closed_loc,
+                                case 
+                                    when q1.carry_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_opened_loc - coalesce(q1.carry_opened_loc, 0)
+                                end as carry_opened_loc, 
                                 
-                                (q2.principal_fx_opened_loc - coalesce(q1.principal_fx_opened_loc, 0)) as principal_fx_opened_loc,
-                                (q2.carry_fx_opened_loc - coalesce(q1.carry_fx_opened_loc, 0)) as carry_fx_opened_loc,
-                                (q2.overheads_fx_opened_loc - coalesce(q1.overheads_fx_opened_loc, 0)) as overheads_fx_opened_loc,
-                                (q2.total_fx_opened_loc - coalesce(q1.total_fx_opened_loc, 0)) as total_fx_opened_loc,
+                                case 
+                                    when q1.overheads_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_opened_loc - coalesce(q1.overheads_opened_loc, 0)
+                                end as overheads_opened_loc, 
                                 
-                                (q2.principal_fx_closed_loc - coalesce(q1.principal_fx_closed_loc, 0)) as principal_fx_closed_loc,
-                                (q2.carry_fx_closed_loc - coalesce(q1.carry_fx_closed_loc, 0)) as carry_fx_closed_loc,
-                                (q2.overheads_fx_closed_loc - coalesce(q1.overheads_fx_closed_loc, 0)) as overheads_fx_closed_loc,
-                                (q2.total_fx_closed_loc - coalesce(q1.total_fx_closed_loc, 0)) as total_fx_closed_loc,
+                                case 
+                                    when q1.total_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_opened_loc - coalesce(q1.total_opened_loc, 0)
+                                end as total_opened_loc, 
                                 
-                                (q2.principal_fixed_opened_loc - coalesce(q1.principal_fixed_opened_loc, 0)) as principal_fixed_opened_loc,
-                                (q2.carry_fixed_opened_loc - coalesce(q1.carry_fixed_opened_loc, 0)) as carry_fixed_opened_loc,
-                                (q2.overheads_fixed_opened_loc - coalesce(q1.overheads_fixed_opened_loc, 0)) as overheads_fixed_opened_loc,
-                                (q2.total_fixed_opened_loc - coalesce(q1.total_fixed_opened_loc, 0)) as total_fixed_opened_loc,
+                                case 
+                                    when q1.principal_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_closed_loc - coalesce(q1.principal_closed_loc, 0)
+                                end as principal_closed_loc, 
                                 
-                                (q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)) as principal_fixed_closed_loc,
-                                (q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)) as carry_fixed_closed_loc,
-                                (q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)) as overheads_fixed_closed_loc,
-                                (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc,
+                                case 
+                                    when q1.carry_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_closed_loc - coalesce(q1.carry_closed_loc, 0)
+                                end as carry_closed_loc, 
                                 
-                                (q2.mismatch - coalesce(q1.mismatch, 0)) as mismatch
+                                case 
+                                    when q1.overheads_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_closed_loc - coalesce(q1.overheads_closed_loc, 0)
+                                end as overheads_closed_loc, 
+                                
+                                case 
+                                    when q1.total_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_closed_loc - coalesce(q1.total_closed_loc, 0)
+                                end as total_closed_loc, 
+                                
+                                case 
+                                    when q1.principal_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_opened_loc - coalesce(q1.principal_fx_opened_loc, 0)
+                                end as principal_fx_opened_loc, 
+                                
+                                case 
+                                    when q1.carry_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_opened_loc - coalesce(q1.carry_fx_opened_loc, 0)
+                                end as carry_fx_opened_loc, 
+                                
+                                case 
+                                    when q1.overheads_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_opened_loc - coalesce(q1.overheads_fx_opened_loc, 0)
+                                end as overheads_fx_opened_loc, 
+                                
+                                case 
+                                    when q1.total_fx_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_opened_loc - coalesce(q1.total_fx_opened_loc, 0)
+                                end as total_fx_opened_loc, 
+                                
+                                case 
+                                    when q1.principal_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fx_closed_loc - coalesce(q1.principal_fx_closed_loc, 0)
+                                end as principal_fx_closed_loc, 
+                                
+                                case 
+                                    when q1.carry_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fx_closed_loc - coalesce(q1.carry_fx_closed_loc, 0)
+                                end as carry_fx_closed_loc, 
+
+                                case
+                                    when q1.overheads_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fx_closed_loc - coalesce(q1.overheads_fx_closed_loc, 0)
+                                end as overheads_fx_closed_loc, 
+                                
+                                case
+                                    when q1.total_fx_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fx_closed_loc - coalesce(q1.total_fx_closed_loc, 0)
+                                end as total_fx_closed_loc, 
+                                
+                                case
+                                    when q1.principal_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_opened_loc - coalesce(q1.principal_fixed_opened_loc, 0)
+                                end as principal_fixed_opened_loc, 
+                                
+                                case
+                                    when q1.carry_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_opened_loc - coalesce(q1.carry_fixed_opened_loc, 0)
+                                end as carry_fixed_opened_loc, 
+                                
+                                case
+                                    when q1.overheads_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_opened_loc - coalesce(q1.overheads_fixed_opened_loc, 0)
+                                end as overheads_fixed_opened_loc, 
+                                
+                                case
+                                    when q1.total_fixed_opened_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_opened_loc - coalesce(q1.total_fixed_opened_loc, 0)
+                                end as total_fixed_opened_loc, 
+                                
+                                case
+                                    when q1.principal_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)
+                                end as principal_fixed_closed_loc, 
+
+                                case
+                                    when q1.carry_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)
+                                end as carry_fixed_closed_loc, 
+                                
+                                case
+                                    when q1.overheads_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)
+                                end as overheads_fixed_closed_loc, 
+                                
+                                case
+                                    when q1.total_fixed_closed_loc is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)
+                                end as total_fixed_closed_loc, 
+                                
+                                case
+                                    when q1.mismatch is null and not (coalesce(q1.position_size, 0) = 0) then null 
+                                    else q2.mismatch - coalesce(q1.mismatch, 0)
+                                end as mismatch
+            
                                     
                            from ({query_report_date}) as q2 
                            left join ({query_first_date}) as q1 on q1.name = q2.name and q1.item_type = q2.item_type and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
@@ -3514,6 +3730,147 @@ class PLReportBuilderSql:
                     item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
                     item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
+                    # PLAT-1748
+
+                    if item["total_opened"] is not None:
+                        item['total_opened'] = round(item['total_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_opened_loc"] is not None:
+                        item['total_opened_loc'] = round(item['total_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_closed"] is not None:
+                        item['total_closed'] = round(item['total_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_closed_loc"] is not None:
+                        item['total_closed_loc'] = round(item['total_closed_loc'], settings.ROUND_NDIGITS)
+
+
+                    if item["total_fx_opened"] is not None:
+                        item['total_fx_opened'] = round(item['total_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_opened_loc"] is not None:
+                        item['total_fx_opened_loc'] = round(item['total_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_closed"] is not None:
+                        item['total_fx_closed'] = round(item['total_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_fx_closed_loc"] is not None:
+                        item['total_fx_closed_loc'] = round(item['total_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_opened"] is not None:
+                        item['total_fixed_opened'] = round(item['total_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_opened_loc"] is not None:
+                        item['total_fixed_opened_loc'] = round(item['total_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_closed"] is not None:
+                        item['total_fixed_closed'] = round(item['total_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["total_fixed_closed_loc"] is not None:
+                        item['total_fixed_closed_loc'] = round(item['total_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+
+                    if item["principal_opened"] is not None:
+                        item['principal_opened'] = round(item['principal_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_opened"] is not None:
+                        item['carry_opened'] = round(item['carry_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_opened"] is not None:
+                        item['overheads_opened'] = round(item['overheads_opened'], settings.ROUND_NDIGITS)
+
+                    if item["principal_closed"] is not None:
+                        item['principal_closed'] = round(item['principal_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_closed"] is not None:
+                        item['carry_closed'] = round(item['carry_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_closed"] is not None:
+                        item['overheads_closed'] = round(item['overheads_closed'], settings.ROUND_NDIGITS)
+
+
+                    # FX
+
+                    if item["principal_fx_opened"] is not None:
+                        item['principal_fx_opened'] = round(item['principal_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_opened"] is not None:
+                        item['carry_fx_opened'] = round(item['carry_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_opened"] is not None:
+                        item['overheads_fx_opened'] = round(item['overheads_fx_opened'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fx_closed"] is not None:
+                        item['principal_fx_closed'] = round(item['principal_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_closed"] is not None:
+                        item['carry_fx_closed'] = round(item['carry_fx_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_closed"] is not None:
+                        item['overheads_fx_closed'] = round(item['overheads_fx_closed'], settings.ROUND_NDIGITS)
+
+                    # FIXED
+
+                    if item["principal_fixed_opened"] is not None:
+                        item['principal_fixed_opened'] = round(item['principal_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_opened"] is not None:
+                        item['carry_fixed_opened'] = round(item['carry_fixed_opened'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_opened"] is not None:
+                        item['overheads_fixed_opened'] = round(item['overheads_fixed_opened'], settings.ROUND_NDIGITS)
+
+
+                    if item["principal_fixed_closed"] is not None:
+                        item['principal_fixed_closed'] = round(item['principal_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_closed"] is not None:
+                        item['carry_fixed_closed'] = round(item['carry_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_closed"] is not None:
+                        item['overheads_fixed_closed'] = round(item['overheads_fixed_closed'], settings.ROUND_NDIGITS)
+
+                    # FX LOC
+
+                    if item["principal_fx_opened_loc"] is not None:
+                        item['principal_fx_opened_loc'] = round(item['principal_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_opened_loc"] is not None:
+                        item['carry_fx_opened_loc'] = round(item['carry_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_opened_loc"] is not None:
+                        item['overheads_fx_opened_loc'] = round(item['overheads_fx_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fx_closed_loc"] is not None:
+                        item['principal_fx_closed_loc'] = round(item['principal_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fx_closed_loc"] is not None:
+                        item['carry_fx_closed_loc'] = round(item['carry_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fx_closed_loc"] is not None:
+                        item['overheads_fx_closed_loc'] = round(item['overheads_fx_closed_loc'], settings.ROUND_NDIGITS)
+
+
+                    # FIXED LOC
+
+                    if item["principal_fixed_opened_loc"] is not None:
+                        item['principal_fixed_opened_loc'] = round(item['principal_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_opened_loc"] is not None:
+                        item['carry_fixed_opened_loc'] = round(item['carry_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_opened_loc"] is not None:
+                        item['overheads_fixed_opened_loc'] = round(item['overheads_fixed_opened_loc'], settings.ROUND_NDIGITS)
+
+                    if item["principal_fixed_closed_loc"] is not None:
+                        item['principal_fixed_closed_loc'] = round(item['principal_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["carry_fixed_closed_loc"] is not None:
+                        item['carry_fixed_closed_loc'] = round(item['carry_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
+                    if item["overheads_fixed_closed_loc"] is not None:
+                        item['overheads_fixed_closed_loc'] = round(item['overheads_fixed_closed_loc'], settings.ROUND_NDIGITS)
+
                     if item['item_type'] == ITEM_TYPE_MISMATCH:
                         if item['position_size'] and item['total_opened']:
                             if item['instrument_id'] != ecosystem_defaults.instrument_id:
@@ -3521,14 +3878,14 @@ class PLReportBuilderSql:
                     else:
                         result_tmp.append(item)
 
-                # _l.info("WTF??")
+                # _l.debug("WTF??")
 
                 # index = 0
 
                 for item in result_tmp:
 
                     # if 'Pfizer' in item['user_code']:
-                    #     _l.info("WTF??? item %s ______  %s" %  (index, item))
+                    #     _l.debug("WTF??? item %s ______  %s" %  (index, item))
                     #     index = index + 1
                     # result_item_opened = item.copy()
                     result_item_opened = {}
@@ -3582,6 +3939,9 @@ class PLReportBuilderSql:
 
                     result_item_opened['position_size'] = item['position_size']
                     result_item_opened['nominal_position_size'] = item['nominal_position_size']
+
+                    result_item_opened['period_start_position_size'] = item['period_start_position_size']
+                    result_item_opened['period_start_nominal_position_size'] = item['period_start_nominal_position_size']
 
                     result_item_opened['mismatch'] = item['mismatch']
 
@@ -3727,6 +4087,26 @@ class PLReportBuilderSql:
                     if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
                         has_opened_value = True
 
+                    # PLAT-1417
+
+                    if item["principal_fixed_opened"] is not None and item["principal_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fixed_opened"] is not None and item["carry_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fixed_opened"] is not None and item["overheads_fixed_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["principal_fx_opened"] is not None and item["principal_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_fx_opened"] is not None and item["carry_fx_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_fx_opened"] is not None and item["overheads_fx_opened"] != 0:
+                        has_opened_value = True
+
                     has_closed_value = False
 
                     if item["principal_closed"] is not None and item["principal_closed"] != 0:
@@ -3737,6 +4117,26 @@ class PLReportBuilderSql:
 
                     if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
                         has_closed_value = True
+
+                    # PLAT-1417
+                    if item["principal_fixed_closed"] is not None and item["principal_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fixed_closed"] is not None and item["carry_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fixed_closed"] is not None and item["overheads_fixed_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["principal_fx_closed"] is not None and item["principal_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_fx_closed"] is not None and item["carry_fx_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_fx_closed"] is not None and item["overheads_fx_closed"] != 0:
+                        has_closed_value = True
+
 
                     if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
                         result.append(result_item_opened)
@@ -3750,12 +4150,13 @@ class PLReportBuilderSql:
                     if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
                         result.append(result_item_opened)
 
-                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
+                    # if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and (item["position_size"] != 0 or item["period_start_position_size"] != 0):
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_opened_value:
                         result.append(result_item_opened)
 
                     if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
 
-                        _l.info("PL opened position has closed value")
+                        _l.debug("PL opened position has closed value")
 
                         # result_item_closed = item.copy()
                         # result_item_closed = copy.deepcopy(item)
@@ -3814,6 +4215,11 @@ class PLReportBuilderSql:
                         result_item_closed['net_position_return_fixed_loc'] = item['net_position_return_fixed_loc']
 
                         result_item_closed['position_size'] = item['position_size']
+                        result_item_closed['nominal_position_size'] = item['nominal_position_size']
+
+                        result_item_closed['period_start_position_size'] = item['period_start_position_size']
+                        result_item_closed['period_start_nominal_position_size'] = item['period_start_nominal_position_size']
+
                         result_item_closed['mismatch'] = item['mismatch']
 
                         result_item_closed['exposure'] = item['exposure']
@@ -3974,7 +4380,7 @@ class PLReportBuilderSql:
 
                 _l.debug('build position result %s ' % len(result))
 
-                _l.info('single build done: %s' % (time.perf_counter() - st))
+                _l.debug('single build done: %s' % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
@@ -3998,7 +4404,7 @@ class PLReportBuilderSql:
 
             return self.build(task_id)
 
-           
+
         except Exception as e:
             celery_task.status = CeleryTask.STATUS_ERROR
             celery_task.save()
@@ -4073,10 +4479,13 @@ class PLReportBuilderSql:
 
             tasks.append(task)
 
-        _l.info("Going to run %s tasks" % len(tasks))
+        _l.debug("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
-        job = group(self.build.s(task_id=task.id) for task in tasks)
+        job = group(self.build.s(task_id=task.id, context={
+            "realm_code": self.instance.master_user.realm_code,
+            "space_code": self.instance.master_user.space_code
+        }) for task in tasks)
 
         group_result = job.apply_async()
         # Wait for all tasks to finish and get their results
@@ -4099,7 +4508,7 @@ class PLReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
 
-        _l.info('parallel_build done: %s',
+        _l.debug('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
 
     def build_pl_sync(self):
@@ -4162,9 +4571,9 @@ class PLReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = result
 
-        _l.info('parallel_build done: %s',
+        _l.debug('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
-    
+
     def get_cash_consolidation_for_select(self):
 
         result = []
@@ -4331,7 +4740,7 @@ class PLReportBuilderSql:
                 try:
                     instrument_ids.append(item['allocation_pl_id'])
                 except Exception as e:
-                    _l.info('no allocation_pl_id %s' % item)
+                    _l.debug('no allocation_pl_id %s' % item)
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])

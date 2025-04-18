@@ -1,9 +1,11 @@
 import contextlib
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import RegexValidator
+from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_lazy as _
 from rest_framework import ISO_8601
 from rest_framework.exceptions import ValidationError
@@ -11,7 +13,6 @@ from rest_framework.fields import (
     CharField,
     DateTimeField,
     FloatField,
-    RegexField,
     empty,
 )
 from rest_framework.relations import (
@@ -22,6 +23,18 @@ from rest_framework.relations import (
 
 from poms.expressions_engine import formula
 from poms.iam.fields import IamProtectedRelatedField
+
+
+def default_empty_list():
+    return []
+
+
+name_validator = RegexValidator(
+    regex=r"\A[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z]\Z",
+    message=(
+        "Invalid name. Must start and end with a letter, contain only letters, digits, or underscores."
+    ),
+)
 
 
 class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
@@ -76,19 +89,16 @@ class SlugRelatedFilteredField(SlugRelatedField):
         return queryset
 
 
-# Thats cool
 class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
     default_error_messages = {
-        "does_not_exist": _(
-            "Object with user_code or id that equals {value} does not exist."
-        ),
+        "does_not_exist": _("Object with user_code or id that equals {value} does not exist."),
         "invalid": _("Invalid value."),
     }
 
     def to_internal_value(self, value):
         queryset = self.get_queryset()
         try:
-            if isinstance(value, int) or value.isdigit():
+            if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
                 return queryset.get(pk=int(value))
             else:
                 return queryset.get(user_code=value)
@@ -111,6 +121,14 @@ class UserCodeField(CharField):
         kwargs["allow_null"] = True
         kwargs["allow_blank"] = True
         super().__init__(**kwargs)
+
+    def to_internal_value(self, data: str) -> str:
+        validated_data = super().to_internal_value(data)
+
+        if validated_data and not validated_data[0].isalpha():
+            raise ValidationError("user_code must start with a letter")
+
+        return validated_data
 
 
 class DateTimeTzAwareField(DateTimeField):
@@ -143,9 +161,6 @@ class Expression2Field(CharField):
 
 
 class FloatEvalField(FloatField):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def run_validation(self, data=empty):
         value = super().run_validation(data)
         if data is not None:
@@ -162,17 +177,7 @@ class FloatEvalField(FloatField):
                 expr = str(data)
                 return formula.safe_eval(expr, context=self.context)
             except (formula.InvalidExpression, ArithmeticError) as e:
-                raise ValidationError(gettext_lazy("Invalid expression.")) from e
-
-
-class ISINField(RegexField):
-    REGEX = "\S+ \S+"
-
-    def __init__(self, **kwargs):
-        super().__init__(ISINField.REGEX, **kwargs)
-
-    def to_representation(self, value):
-        return " ".join(value) if isinstance(value, (tuple, list)) else str(value)
+                raise ValidationError(_("Invalid expression.")) from e
 
 
 class ContentTypeOrPrimaryKeyRelatedField(RelatedField):
@@ -193,3 +198,14 @@ class ContentTypeOrPrimaryKeyRelatedField(RelatedField):
 
     def to_representation(self, obj):
         return getattr(obj, "id")
+
+
+class ResourceGroupsField(ArrayField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("base_field", models.CharField(max_length=1024))
+        kwargs.setdefault("default", default_empty_list)
+        kwargs.setdefault(
+            "verbose_name",
+            _("list of resource groups user_codes, to which obj belongs"),
+        )
+        super().__init__(*args, **kwargs)

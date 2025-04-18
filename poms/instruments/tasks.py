@@ -37,7 +37,7 @@ def calculate_prices_accrued_price(
 @transaction.atomic()
 def calculate_prices_accrued_price_async(
         self,
-        master_user=None, begin_date=None, end_date=None, instruments=None
+        master_user=None, begin_date=None, end_date=None, instruments=None, *args, **kwargs
 ):
     if begin_date:
         begin_date = date.fromordinal(begin_date)
@@ -100,7 +100,7 @@ def fill_parameters_from_instrument(event_schedule, instrument):
 
 
 @finmars_task(name="instruments.only_generate_events_at_date", bind=True)
-def only_generate_events_at_date(self, master_user_id, date):
+def only_generate_events_at_date(self, master_user_id, date, *args, **kwargs):
     try:
         master_user = MasterUser.objects.get(id=master_user_id)
 
@@ -256,7 +256,7 @@ def only_generate_events_at_date(self, master_user_id, date):
     name="instruments.only_generate_events_at_date_for_single_instrument", bind=True
 )
 def only_generate_events_at_date_for_single_instrument(
-        self, master_user_id, date, instrument_id
+        self, master_user_id, date, instrument_id, *args, **kwargs
 ):
     try:
         date = datetime.date(datetime.strptime(date, "%Y-%m-%d"))
@@ -421,10 +421,10 @@ def only_generate_events_at_date_for_single_instrument(
 
 
 @finmars_task(name="instruments.generate_events", bind=True)
-def generate_events(self, task_id):
+def generate_events(self, task_id, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.all()[0]  # TODO get by base_api_url
+
 
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     # finmars_bot = Member.objects.get(username="finmars_bot")
@@ -432,6 +432,8 @@ def generate_events(self, task_id):
     celery_task = CeleryTask.objects.get(id=task_id)
     celery_task.celery_task_id = self.request.id
     celery_task.save()
+
+    master_user = celery_task.master_user
 
     # celery_task = CeleryTask.objects.create(
     #     master_user=master_user,
@@ -627,10 +629,11 @@ def generate_events(self, task_id):
 
         _l.info(f"generate_events0 exception occurred {e}")
         _l.info(traceback.format_exc())
+        raise RuntimeError(celery_task.error_message) from e
 
 
 @finmars_task(name="instruments.generate_events_do_not_inform_apply_default", bind=True)
-def generate_events_do_not_inform_apply_default(self):
+def generate_events_do_not_inform_apply_default(self, *args, **kwargs):
     try:
         master_user = MasterUser.objects.all()[0]
 
@@ -796,7 +799,7 @@ def process_events(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
     from poms.instruments.handlers import GeneratedEventProcess
 
-    master_user = MasterUser.objects.all()[0]  # TODO refactor to get by base_api_url
+    master_user = MasterUser.objects.all().first()  # TODO refactor to get by space_code
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -970,3 +973,4 @@ def process_events(self, *args, **kwargs):
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise RuntimeError(err_msg) from e

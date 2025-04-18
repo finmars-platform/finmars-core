@@ -1,7 +1,4 @@
 import copy
-from unittest import skip
-
-from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.configuration.utils import get_default_configuration_code
@@ -13,7 +10,7 @@ from poms.transactions.models import (
     TransactionTypeInput,
     TransactionTypeInputSettings,
 )
-from poms.transactions.tests.transaction_type_dicts import (
+from poms.transactions.tests.transaction_test_data import (
     RECALCULATE_PAYLOAD,
 )
 
@@ -21,10 +18,14 @@ DATE_FORMAT = "%Y-%m-%d"
 
 
 class TransactionTypeViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/transactions/transaction-type/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/transactions/transaction-type/"
         self.user_code = "developing"
         self.configuration_code = get_default_configuration_code()
 
@@ -36,7 +37,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         transaction_type_group = self.get_transaction_type_group()
         self.transaction_type = TransactionType.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             configuration_code=self.configuration_code,
             user_code=self.user_code,
             name=self.random_string(),
@@ -182,18 +183,3 @@ class TransactionTypeViewSetTest(BaseTestCase):
             data=payload,
         )
         self.assertEqual(response.status_code, 404, response.content)
-
-    @skip("need to create transaction type inputs")
-    def test__recalculate(self):
-        tt = self.create_transaction_type()
-
-        payload = copy.deepcopy(RECALCULATE_PAYLOAD)
-
-        response = self.client.put(
-            path=f"{self.url}{tt.id}/recalculate/",
-            format="json",
-            data=payload,
-        )
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()

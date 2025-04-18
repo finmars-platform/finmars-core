@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 
 class GunicornWorkerIDLogFormatter(logging.Formatter):
     def format(self, record):

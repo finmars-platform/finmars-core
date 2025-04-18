@@ -1,3 +1,6 @@
+from django.contrib.contenttypes.models import ContentType
+
+
 def serialize_price_checker_item(item):
     result = {
         "type": item["type"]
@@ -85,12 +88,11 @@ def serialize_price_checker_item_instrument(item):
             "pricing_policy": policy.pricing_policy_id
         }
 
-        if policy.pricing_scheme_id:
-            policy_result["pricing_scheme"] = policy.pricing_scheme_id,
-            policy_result["pricing_scheme_object"] = {
-                "id": policy.pricing_scheme.id,
-                "user_code": policy.pricing_scheme.user_code,
-                "name": policy.pricing_scheme.name,
+        if policy.pricing_policy_id:
+            policy_result["pricing_policy_object"] = {
+                "id": policy.pricing_policy.id,
+                "user_code": policy.pricing_policy.user_code,
+                "name": policy.pricing_policy.name,
             }
 
         pricing_policies.append(policy_result)
@@ -113,7 +115,7 @@ def serialize_price_checker_item_instrument(item):
         "accrued_currency": item.accrued_currency_id,
         "accrued_multiplier": item.accrued_multiplier,
         "default_accrued": item.default_accrued,
-        "default_price": item.price_multiplier,
+        "default_price": item.default_price,
         "user_text_1": item.user_text_1,
         "user_text_2": item.user_text_2,
         "user_text_3": item.user_text_3,
@@ -532,6 +534,9 @@ def serialize_pl_report_item(item):
     result["position_size"] = item["position_size"]
     result["nominal_position_size"] = item["nominal_position_size"]
 
+    result["period_start_position_size"] = item["period_start_position_size"]
+    result["period_start_nominal_position_size"] = item["period_start_nominal_position_size"]
+
     result["position_return"] = item["position_return"]
     result["position_return_loc"] = item["position_return_loc"]
     result["net_position_return"] = item["net_position_return"]
@@ -603,7 +608,15 @@ def serialize_pl_report_item(item):
 def serialize_report_item_instrument(item):
     attributes = []
 
-    for attribute in item.attributes.all():
+    from poms.obj_attrs.models import GenericAttribute
+    content_type = ContentType.objects.get(
+        app_label="instruments", model="instrument"
+    )
+    # szhitenev 2024-06-27
+    # Important: could be solution to missing attributes in report
+    instrument_attributes = GenericAttribute.objects.filter(object_id=item.id, content_type=content_type)
+
+    for attribute in instrument_attributes:
 
         attr_result = {
             "id": attribute.id,
@@ -657,13 +670,14 @@ def serialize_report_item_instrument(item):
         "name": item.name,
         "short_name": item.short_name,
         "user_code": item.user_code,
+        "identifier": item.identifier,
         "public_name": item.public_name,
         "pricing_currency": item.pricing_currency_id,
         "price_multiplier": item.price_multiplier,
         "accrued_currency": item.accrued_currency_id,
         "accrued_multiplier": item.accrued_multiplier,
         "default_accrued": item.default_accrued,
-        "default_price": item.price_multiplier,
+        "default_price": item.default_price,
         "user_text_1": item.user_text_1,
         "user_text_2": item.user_text_2,
         "user_text_3": item.user_text_3,

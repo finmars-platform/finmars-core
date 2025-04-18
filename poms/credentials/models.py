@@ -1,12 +1,12 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import NamedModel, DataTimeStampedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.integrations.models import DataProvider
 from poms.users.models import MasterUser
 
 
-class Credentials(NamedModel, DataTimeStampedModel):
+class Credentials(NamedModel, TimeStampedModel):
     '''
     Deprecated, probably not in use
     Need to be moved in separate microservices which stores credentials in secure way

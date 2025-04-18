@@ -1,24 +1,12 @@
 import logging
+
+from django.conf import settings
 from django.core.cache import cache
+from django.db.models import QuerySet
+from poms.iam.models import AccessPolicy, ResourceGroup
+from poms.users.models import Member
 
 _l = logging.getLogger('poms.iam')
-from django.db.models import Q
-
-'''
-    parse_resource_into_object
-
-    converts:
-        frn:finmars:authorizer:eu-central:client00004:authorizer.spacebackup:space00000
-    to
-        {
-         "type": "frn",
-         "service": "authorizer
-         ...
-         "user_code": "space00000"
-        }
-
-    '''
-from poms.iam.models import AccessPolicy
 
 
 def add_to_list_if_not_exists(string, my_list):
@@ -43,16 +31,32 @@ def lowercase_keys_and_values(dictionary):
 
     return new_dict
 
+'''
+    parse_resource_into_object
+
+    converts:
+        frn:finmars:authorizer:authorizer:spacebackup:space00000
+    to
+        {
+         "type": "frn",
+         "service": "authorizer"
+         "app_label": authorizer",
+         "model": "spacebackup",
+         ...
+         "user_code": "space00000"
+        }
+'''
 
 def parse_resource_into_object(resource):
     result = {}
 
-    pieces = resource.split(':', 3)
+    pieces = resource.split(':', 4) # split only first 4 :
 
     result['type'] = pieces[0].lower()
     result['service'] = pieces[1].lower()
-    result['content_type'] = pieces[2].lower()
-    result['user_code'] = pieces[3].lower()
+    result['app_label'] = pieces[2].lower()
+    result['model'] = pieces[3].lower()
+    result['user_code'] = pieces[4].lower()
 
     return result
 
@@ -62,8 +66,8 @@ parse_resource_attribute
 
     converts list of
     
-    "frn:finmars:authorizer:authorizer.spacebackup:space00000",
-    "frn:finmars:authorizer:authorizer.spacebackup:space00000"
+    "frn:finmars:authorizer:authorizer:spacebackup:space00000",
+    "frn:finmars:authorizer:authorizer:spacebackup:space00000"
     
     list of objects
     
@@ -83,16 +87,15 @@ parse_resource_attribute
 '''
 
 
-def parse_resource_attribute(resources):
-    result = []
 
-    for resource in resources:
-        result.append(parse_resource_into_object(resource))
-
-    return result
-
-
-def get_member_access_policies(member):
+def get_member_access_policies(member: Member) -> QuerySet:
+    """
+    Get all AccessPolicy objects for the member from cache or db
+    Args:
+        member:
+    Returns:
+        list of AccessPolicy objects
+    """
 
     cache_key = f'member_access_policies_{member.id}'
     access_policies = cache.get(cache_key)
@@ -105,42 +108,48 @@ def get_member_access_policies(member):
         ).distinct()
 
         # Cache the result for a specific duration (e.g., 5 minutes)
-        cache.set(cache_key, access_policies, 300)
+        cache.set(cache_key, access_policies, settings.ACCESS_POLICY_CACHE_TTL)
 
     return access_policies
 
 
-def get_statements(member):
-    # Get all AccessPolicy objects for the user
-    access_policies = get_member_access_policies(member)
+def get_statements(member: Member) -> list:
+    """
+    Get all AccessPolicy statements for member/owner
+    Args:
+        member: policies owner
+    Returns:
+        list of AccessPolicy json fields (statements)
+    """
 
     statements = []
-
-    for item in access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
+    for item in get_member_access_policies(member):
 
         policy = lowercase_keys_and_values(item.policy)
 
-        for statement in policy['statement']:
-            statements.append(lowercase_keys_and_values(statement))
-
-    # _l.debug('get_policy_statements.statements %s' % statements)
+        statements.extend(
+            lowercase_keys_and_values(statement)
+            for statement in policy['statement']
+        )
 
     return statements
 
 
+from django.db.models import Q
+
+
 def filter_queryset_with_access_policies(member, queryset, view):
+    if not member:
+        return queryset.none()
+
     if member.is_admin:
         return queryset
 
     statements = get_statements(member)
 
-    # _l.info('ObjectPermissionBackend.filter_queryset.statements %s' % statements)
-
     '''
-    Important clause
-    We will not grant access to objects if Access Policy is not configured
+    Important clause:
+    We will not grant access to objects if Access Policy is not configured.
     '''
     if not len(statements):
         return queryset.none()
@@ -149,92 +158,83 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
     app_label = queryset.model._meta.app_label
     model_name = queryset.model._meta.model_name
-
-    content_type_key = app_label + '.' + model_name
-
-    # _l.info('ObjectPermissionBackend.filter_queryset.app_label %s' % app_label)
-    # _l.info('ObjectPermissionBackend.filter_queryset.model_name %s' % model_name)
+    content_type_key = f"{app_label}.{model_name}"
 
     q = Q()
-
     view_related_statements = []
+    viewset_name = view.__class__.__name__.replace('ViewSet', '').lower()
 
+    # Filter statements related to the current view
     for statement in statements:
-
-        related = False
-
-        for action_statement in statement["action"]:
-
-            action_object = action_statement_into_object(action_statement)
-
-            if view.basename.lower() == action_object['viewset']:
-                related = True
-
-        if related:
+        if any(viewset_name == action_statement_into_object(act)["viewset"]
+               for act in statement["action"]):
             view_related_statements.append(statement)
 
-    _l.debug('filter_queryset_with_access_policies.statements %s' % len(statements))
     _l.debug('filter_queryset_with_access_policies.view_related_statements %s' % len(view_related_statements))
 
     for statement in view_related_statements:
-
         if statement['effect'] == 'allow':
+            resources = statement.get('resource', [])
 
-            if statement['resource']:
+            # Handle '*' resource (no restrictions)
+            if '*' in resources:
+                q |= Q(id__isnull=False)
+                continue
 
-                if statement['resource'] == '*':
+            # Parse and expand resources if there are ResourceGroups
+            expanded_resources = set()
+            for resource in resources:
+                if resource.startswith("frn:finmars:iam:resourcegroup:"):
+                    # Handle ResourceGroup resource
+                    resource_group_code = resource.split(":")[-1]
+                    try:
+                        resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                        assignments = resource_group.assignments.all()
 
-                    no_filter_q = Q(id__isnull=False)
-
-                    q = q | no_filter_q
-
+                        # Add each assigned object's user_code as a resource
+                        expanded_resources.update(
+                            f"frn:finmars:{assignment.content_type.app_label}:{assignment.content_type.model}:{assignment.object_user_code}"
+                            for assignment in assignments if assignment.object_user_code
+                        )
+                    except ResourceGroup.DoesNotExist:
+                        _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                        continue
                 else:
+                    expanded_resources.add(resource)
 
-                    resources = parse_resource_attribute(statement['resource'])
+            # Apply the filters for expanded resources
+            for resource in expanded_resources:
+                parsed_resource = parse_resource_into_object(resource)
+                _l.info('filter_queryset_with_access_policies.parsed_resource %s' % parsed_resource)
 
-                    _l.info('filter_queryset_with_access_policies.resources %s' % resources)
-
-                    for resource in resources:
-
-                        if content_type_key == resource['content_type']:
-
-                            val = resource['user_code']
-
-                            '''
-                            * means that we have pattern e.g.
-                            
-                            "frn:finmars:portfolios.portfolio:portfolio*"
-                            
-                            it would find following objects
-                            
-                            "portfolio_1"
-                            "portfolio_2"
-                            
-                            '''
-                            if '*' in val:
-                                val = val.split('*')[0]
-
-                                q = q | Q(**{'user_code__icontains': val})
-                            else:
-                                q = q | Q(**{'user_code': val})
+                # Match the content type and apply filters
+                if f"{parsed_resource['app_label']}.{parsed_resource['model']}" == content_type_key:
+                    user_code_val = parsed_resource['user_code']
+                    if '*' in user_code_val:
+                        # Apply wildcard match
+                        base_code = user_code_val.split('*')[0]
+                        q |= Q(user_code__icontains=base_code)
+                    else:
+                        # TODO szhitenev
+                        # in future release enforce user_code to asci lowercase only
+                        q |= Q(user_code__icontains=user_code_val)
 
     _l.debug('filter_queryset_with_access_policies.q %s' % len(q))
 
     '''
-    Another Important clause
-    If somehow Access Statements above cause not effect
-    We also will not grant access to objects
+    Important clause:
+    If Access Statements do not grant access, we deny access to objects.
     '''
-    if not len(q):
+    if not q:
         return queryset.none()
 
     _l.debug('ObjectPermissionBackend.filter_queryset before access filter: %s' % queryset.count())
 
+    result = queryset.filter(q)
     _l.info('ObjectPermissionBackend.filter_queryset q %s' % q)
 
-    result = queryset.filter(q)
-
     return result
+
 
 
 '''
@@ -280,90 +280,92 @@ def capitalize_first_letter(string):
 
 
 def get_allowed_queryset(member, queryset):
+    if not member:
+        return queryset.none()
 
     if member.is_admin:
         return queryset
 
-    # Retrieve the user's Access Policies and apply the filtering logic
-    # You might need to adjust the logic based on your Access Policies implementation
-    # TODO maybe has performance issues
+    # Get allowed resources for the member and model
     allowed_resources = get_allowed_resources(member, queryset.model, queryset)
     allowed_user_codes = []
 
     _l.debug('get_allowed_queryset.allowed_resources %s' % allowed_resources)
 
+    # Extract user codes from allowed resources
     for resource in allowed_resources:
-        prefix, app, content_type, user_code = resource.split(':', 3)
+        parsed_resource = parse_resource_into_object(resource)
+        allowed_user_codes.append(parsed_resource['user_code'])
 
-        allowed_user_codes.append(user_code)
+    _l.debug('get_allowed_queryset.allowed_user_codes %s' % allowed_user_codes)
 
-    return queryset.filter(user_code__in=allowed_user_codes)
+    # Filter queryset based on allowed user codes
+    # Build a Q object for filtering using icontains for each user_code
+    q_filter = Q()
+    for user_code in allowed_user_codes:
+        q_filter |= Q(user_code__icontains=user_code)
+
+    # Apply the Q filter to the queryset
+    return queryset.filter(q_filter)
 
 
 def get_allowed_resources(member, model, queryset):
     """
-    Returns a list of allowed resources for a user based on their access policies for the given action and model.
-
-    in most cases queryset consists of one item
-    Args:
-        member (Member): The user whose access policies are being checked.
-        action (str): The action being performed (e.g. "retrieve", "list", "create", etc.)
-        model (Model): The Django model being accessed.
-        queryset (QuerySet): The queryset of objects being accessed.
-
-    Returns:
-        list: A list of allowed resource strings.
+    Returns a list of allowed resources for a user based on their access policies for the given model and action.
     """
-
     # Get all AccessPolicy objects for the user
     access_policies = get_member_access_policies(member)
-
     allowed_resources = []
-
     related_access_policies = []
 
+    # Filter access policies related to the current model
     for access_policy in access_policies:
-
         policy = lowercase_keys_and_values(access_policy.policy)
-
         is_related = False
 
         for statement in policy["statement"]:
-
             for action in statement.get('action', []):
-
                 action_object = action_statement_into_object(action)
 
-                '''
-                TODO IAM_SECURITY_VERIFY
-                Important, there is a possible issue, in this appoach I limit myself that
-                modelName should be equal viewsetName, in most cases it should work great
-                
-                but for example we have viewset PortfolioAttributeType, but our model is GenericAttributeType
-                It means that permission engine would not able create resource access policy for this model
-                
-                '''
+                # Ensure viewset matches the model name (case-insensitive)
                 if model.__name__.lower() == action_object['viewset']:
                     is_related = True
 
         if is_related:
             related_access_policies.append(policy)
 
-    # _l.info('related_access_policies %s' % related_access_policies)
-
     for policy in related_access_policies:
-
         for statement in policy.get("statement", []):
-
             if statement.get("effect") == "allow":
                 resources = statement.get("resource", [])
-                for resource in resources:
-                    # If a wildcard is used, return all resources in the queryset
-                    if resource == "*":
-                        for obj in queryset:
-                            allowed_resources.append(
-                                f"frn:finmars:{model._meta.app_label.lower()}.{model.__name__.lower()}:{obj.user_code}")
-                    else:
-                        allowed_resources.append(resource)
 
-    return allowed_resources
+                # Expand resources for ResourceGroups
+                expanded_resources = set()
+                for resource in resources:
+                    if resource == "*":
+                        # Allow access to all resources in queryset if wildcard is used
+                        for obj in queryset:
+                            expanded_resources.add(
+                                f"frn:finmars:{model._meta.app_label.lower()}:{model.__name__.lower()}:{obj.user_code}"
+                            )
+                    elif resource.startswith("frn:finmars:iam:resourcegroup:"):
+                        # Handle ResourceGroup resource
+                        resource_group_code = resource.split(":")[-1]
+                        try:
+                            resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                            assignments = resource_group.assignments.all()
+
+                            # Add each assigned object's user_code to the expanded resources list
+                            expanded_resources.update(
+                                f"frn:finmars:{assignment.content_type.app_label}:{assignment.content_type.model}:{assignment.object_user_code}"
+                                for assignment in assignments if assignment.object_user_code
+                            )
+                        except ResourceGroup.DoesNotExist:
+                            _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                            continue
+                    else:
+                        expanded_resources.add(resource)
+
+                allowed_resources.extend(expanded_resources)
+
+    return list(allowed_resources)

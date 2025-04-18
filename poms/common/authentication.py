@@ -1,13 +1,15 @@
 import logging
+import time
 
+import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication, get_authorization_header
-from django.contrib.auth.models import User
 
-from poms.auth_tokens.utils import generate_random_string
+from datetime import timedelta
 from poms.common.keycloak import KeycloakConnect
 
 _l = logging.getLogger('poms.common')
@@ -80,10 +82,14 @@ class KeycloakAuthentication(TokenAuthentication):
             return finmars_bot, None
 
         token = self.get_auth_token_from_request(request)
+        if token is None:
+            return None  # No token or not a Bearer token, continue to next authentication
 
         return self.authenticate_credentials(token, request)
 
     def authenticate_credentials(self, key, request=None):
+
+        auth_start_time = time.perf_counter()
         '''
         Validate user Berarer token in keycloak
 
@@ -139,5 +145,90 @@ class KeycloakAuthentication(TokenAuthentication):
             #     except Exception as e:
             #         # _l.error("Error create new user %s" % e)
             #         raise exceptions.AuthenticationFailed(e)
+
+        return user, key
+
+
+class JWTAuthentication(TokenAuthentication):
+
+    keyword = 'Bearer'
+
+    '''
+
+    Important piece of code, here we override default authentication handler in django
+    Each user request that django processes, it checks if JWT is valid ad signed by Space secret_key
+
+    look at method authenticate_credentials
+
+    '''
+
+    def get_auth_token_from_request(self, request):
+
+        auth = get_authorization_header(request).split()
+
+        if not auth:
+
+            for key, value in request.COOKIES.items():
+
+                if 'bearer_token' == key:
+                    auth = ['Bearer'.encode(), value.encode()]
+
+        if not auth or auth[0].lower() != self.keyword.lower().encode():
+            return None  # Ensure that if there's no 'Bearer', None is returned.
+
+        if len(auth) == 1:
+            msg = _('Invalid token header. No credentials provided.')
+            raise exceptions.AuthenticationFailed(msg)
+        elif len(auth) > 2:
+            msg = _('Invalid token header. Token string should not contain spaces.')
+            raise exceptions.AuthenticationFailed(msg)
+
+        try:
+            token = auth[1].decode()
+        except UnicodeError:
+            msg = _('Invalid token header. Token string should not contain invalid characters.')
+            raise exceptions.AuthenticationFailed(msg)
+
+        return token
+
+    def authenticate(self, request):
+
+        user_model = get_user_model()
+
+        if request.method == 'OPTIONS':
+
+            finmars_bot = User.objects.get(username='finmars_bot')
+
+            return finmars_bot, None
+
+        token = self.get_auth_token_from_request(request)
+        if token is None:
+            return None  # No token or not a Bearer token, continue to next authentication
+
+        return self.authenticate_credentials(token, request)
+
+    def authenticate_credentials(self, key, request=None):
+
+        user_model = get_user_model()
+
+        # user = user_model.objects.get(username=userinfo['preferred_username'])
+
+        try:
+            # Decode the JWT token
+            payload = jwt.decode(key, settings.SECRET_KEY, algorithms=["HS256"], options={"leeway": timedelta(seconds=5)})
+
+        except jwt.ExpiredSignatureError:
+            raise exceptions.AuthenticationFailed('Token has expired')
+        except jwt.InvalidTokenError as e:
+            raise exceptions.AuthenticationFailed(f'Invalid token: {str(e)}')
+        except Exception as e:
+            raise exceptions.AuthenticationFailed(str(e))
+
+        try:
+            user = User.objects.get(username=payload['username'])
+        except Exception as e:
+            # _l.error("User not found %s" % e)
+
+            raise exceptions.AuthenticationFailed(e)
 
         return user, key

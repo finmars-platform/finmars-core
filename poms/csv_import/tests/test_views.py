@@ -1,16 +1,15 @@
 import json
 from unittest import mock
 
-from django.conf import settings
+from django.test import override_settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.csv_import.models import CsvImportScheme
-from poms.csv_import.tests.instrument_data import INSTRUMENT
+from poms.csv_import.tests.common_test_data import INSTRUMENT
 
-API_URL = f"/{settings.BASE_API_URL}/api/v1/import"
 FILE_CONTENT = json.dumps(INSTRUMENT).encode("utf-8")
 FILE_NAME = "instrument.json"
 
@@ -20,15 +19,22 @@ class DummyStorage:
         return
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class CsvDataImportViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"{API_URL}/csv/"
+
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/csv/"
         self.scheme = CsvImportScheme.objects.create(
             content_type=ContentType.objects.first(),
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(length=5),
         )
 

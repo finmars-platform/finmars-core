@@ -1,23 +1,31 @@
 import csv
+import logging
 import os
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
+from poms.common.exceptions import FinmarsBaseException
+from poms.common.models import (
+    FakeDeletableModel,
+    NamedModel,
+    ObjectStateModel,
+    TimeStampedModel,
+)
 from poms.common.utils import date_now
-from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.currencies.constants import MAIN_CURRENCIES
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
+_l = logging.getLogger("poms.currencies")
+
 
 # Probably Deprecated
-def _load_currencies_data():
+def _load_currencies_data() -> dict:
     ccy_path = os.path.join(settings.BASE_DIR, "data", "currencies.csv")
     ret = {}
     with open(ccy_path) as csvfile:
@@ -30,7 +38,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Currency(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     Entity for Currency itself, e.g. USD, EUR, CHF
     Used in Transactions, in Reports, in Pricing,
@@ -64,7 +72,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         default=1,
         verbose_name=gettext_lazy("default fx rate"),
     )
-
     country = models.ForeignKey(
         "instruments.Country",
         null=True,
@@ -72,7 +79,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("Country"),
         on_delete=models.SET_NULL,
     )
-
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("currency")
@@ -132,8 +138,57 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             },
         ]
 
+    def fake_delete(self):
+        if self.user_code not in MAIN_CURRENCIES:
+            return super().fake_delete()
 
-class CurrencyHistory(DataTimeStampedModel):
+
+class CurrencyPricingPolicy(TimeStampedModel):
+    pricing_policy = models.ForeignKey(
+        "instruments.PricingPolicy", on_delete=models.CASCADE
+    )
+    currency = models.ForeignKey(
+        Currency, on_delete=models.CASCADE, related_name="pricing_policies"
+    )
+    target_pricing_schema_user_code = models.CharField(
+        max_length=1024,
+        help_text="link to some workflow from marketplace, e.g. com.finmars.bank-a-pricing-bond",
+    )
+    options = models.JSONField(
+        default=dict, help_text="options populated from module form"
+    )
+
+    class Meta:
+        unique_together = ("pricing_policy", "currency")
+
+
+class CurrencyHistoryManager(models.Manager):
+    def get_fx_rate(self, currency_id, pricing_policy, date) -> float:
+        history = (
+            super()
+            .get_queryset()
+            .filter(
+                currency_id=currency_id,
+                pricing_policy=pricing_policy,
+                date=date,
+            )
+            .first()
+        )
+        if not history:
+            err_msg = (
+                f"no fx_rate for currency {currency_id} date {date} "
+                f"policy {pricing_policy} was found in currency history"
+            )
+            _l.error(err_msg)
+            raise FinmarsBaseException(
+                error_key="currency_fx_rate_lookup_error",
+                message=err_msg,
+            )
+
+        return history.fx_rate
+
+
+class CurrencyHistory(TimeStampedModel):
     """
     FX rate of Currencies for specific date
     Finmars is not bound to USD as base currency (Base Currency could be set in poms.users.EcosystemDefault)
@@ -169,6 +224,12 @@ class CurrencyHistory(DataTimeStampedModel):
         blank=True,
         verbose_name=gettext_lazy("procedure_modified_datetime"),
     )
+    is_temporary_fx_rate = models.BooleanField(
+        default=False,
+        verbose_name=gettext_lazy("is temporary fx rate"),
+    )
+
+    objects = CurrencyHistoryManager()
 
     class Meta:
         verbose_name = gettext_lazy("currency history")
@@ -182,18 +243,13 @@ class CurrencyHistory(DataTimeStampedModel):
         ordering = ["date"]
 
     def save(self, *args, **kwargs):
-        cache.clear()
-
         if self.fx_rate == 0:
             raise ValidationError("FX rate must not be zero")
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
 
-        if not self.created:
-            self.created = date_now()
-
-        super(CurrencyHistory, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.fx_rate} @{self.date}"

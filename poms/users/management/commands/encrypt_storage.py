@@ -19,9 +19,11 @@ class Command(BaseCommand):
         # Save the keys to Vault or any other secure storage
         # You can use the Vault client or any other library to store the keys securely
 
+        from poms.users.models import MasterUser
+        master_user = MasterUser.objects.all().first()
         # Encrypt files recursively
         try:
-            self.encrypt_files_recursively(storage, symmetric_key, settings.BASE_API_URL)
+            self.encrypt_files_recursively(storage, symmetric_key, master_user.space_code)
         except Exception as e:
             print('Error encrypting files: %s ' % traceback.format_exc())
             print('Error encrypting files: %s' % e)

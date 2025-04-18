@@ -6,7 +6,7 @@ import traceback
 from datetime import date, datetime
 
 from django.apps import apps
-from django.core.cache import cache
+# from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy
@@ -45,6 +45,7 @@ from poms.transactions.models import (
     TransactionType,
     TransactionTypeInput,
 )
+from poms.transactions.utils import generate_user_fields
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.transactions")
@@ -122,7 +123,9 @@ class TransactionTypeProcess:
         )
 
         master_user = transaction_type.master_user
-        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_default = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.member = member
         self.transaction_type = transaction_type
@@ -431,15 +434,6 @@ class TransactionTypeProcess:
             if (i.name not in self.values) and ("context_" not in i.name):
                 value = None
 
-                if i.is_fill_from_context:
-                    try:
-                        value = self.context_values[i.context_property]
-
-                        _l.debug(f"Set from context. input {i.name} value {value}")
-
-                    except KeyError:
-                        _l.debug(f"Can't find context variable {i.context_property}")
-
                 if value is None:
                     if i.value_type == TransactionTypeInput.RELATION:
                         model_class = i.content_type.model_class()
@@ -610,8 +604,8 @@ class TransactionTypeProcess:
                     instrument = None
                     instrument_exists = False
 
-                    ecosystem_default = EcosystemDefault.objects.get(
-                        master_user=master_user
+                    ecosystem_default = EcosystemDefault.cache.get_cache(
+                        master_user_pk=master_user.pk
                     )
 
                     if user_code:
@@ -654,6 +648,7 @@ class TransactionTypeProcess:
                             user_code=user_code,
                             name=user_code,
                             owner=self.member,
+                            identifier={},
                             instrument_type=ecosystem_default.instrument_type,
                             accrued_currency=ecosystem_default.currency,
                             pricing_currency=ecosystem_default.currency,
@@ -664,7 +659,7 @@ class TransactionTypeProcess:
 
                     _l.debug(f"instrument.user_code {instrument.user_code} ")
 
-                    object_data = {"user_code": instrument.user_code}
+                    object_data = {"user_code": instrument.user_code, "identifier": {}}
 
                     if instrument.user_code not in [
                         "-",
@@ -2529,94 +2524,31 @@ class TransactionTypeProcess:
         for key, value in self.values.items():
             names[key] = value
 
-        fields = [
-            "user_text_1",
-            "user_text_2",
-            "user_text_3",
-            "user_text_4",
-            "user_text_5",
-            "user_text_6",
-            "user_text_7",
-            "user_text_8",
-            "user_text_9",
-            "user_text_10",
-            "user_text_11",
-            "user_text_12",
-            "user_text_13",
-            "user_text_14",
-            "user_text_15",
-            "user_text_16",
-            "user_text_17",
-            "user_text_18",
-            "user_text_19",
-            "user_text_20",
-            "user_number_1",
-            "user_number_2",
-            "user_number_3",
-            "user_number_4",
-            "user_number_5",
-            "user_number_6",
-            "user_number_7",
-            "user_number_8",
-            "user_number_9",
-            "user_number_10",
-            "user_number_11",
-            "user_number_12",
-            "user_number_13",
-            "user_number_14",
-            "user_number_15",
-            "user_number_16",
-            "user_number_17",
-            "user_number_18",
-            "user_number_19",
-            "user_number_20",
-            "user_date_1",
-            "user_date_2",
-            "user_date_3",
-            "user_date_4",
-            "user_date_5",
-        ]
-
         self.record_execution_progress("Calculating User Fields")
 
         _result_for_log = {}
+        for field_key in generate_user_fields():
 
-        for field_key in fields:
-            # _l.debug('field_key')
+            if not hasattr(self.complex_transaction.transaction_type, field_key):
+                continue
 
-            if getattr(self.complex_transaction.transaction_type, field_key):
-                try:
-                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+            field_value = getattr(self.complex_transaction.transaction_type, field_key)
+            try:
+                value = formula.safe_eval(
+                    field_value,
+                    names=names,
+                    context=self._context
+                )
+                setattr(self.complex_transaction, field_key, value)
+                _result_for_log[field_key] = value
 
-                    val = formula.safe_eval(
-                        getattr(self.complex_transaction.transaction_type, field_key),
-                        names=names,
-                        context=self._context,
-                    )
-
-                    setattr(self.complex_transaction, field_key, val)
-
-                    _result_for_log[field_key] = val
-
-                except Exception as e:
-                    # _l.error("User Field Expression Eval error expression %s" % getattr(
-                    #     self.complex_transaction.transaction_type, field_key))
-                    # _l.error("User Field Expression Eval error names %s" % names)
-                    # _l.error("User Field Expression Eval error %s" % e)
-
-                    if "number" in field_key:
-                        setattr(self.complex_transaction, field_key, None)
-                    else:
-                        try:
-                            setattr(
-                                self.complex_transaction,
-                                field_key,
-                                "<InvalidExpression>",
-                            )
-                            _result_for_log[field_key] = str(e)
-                        except Exception as e:
-                            setattr(self.complex_transaction, field_key, None)
-                            _result_for_log[field_key] = str(e)
+            except Exception as e:
+                _l.error(
+                    f"execute_user_fields_expressions: formula.safe_eval resulted in {repr(e)} "
+                    f"field {field_key} value {field_value} names {names} context {self._context}"
+                )
+                setattr(self.complex_transaction, field_key, None)
+                _result_for_log[field_key] = f"value {field_value} error {e}"
 
         self.record_execution_progress("==== USER FIELDS ====", _result_for_log)
 
@@ -2929,7 +2861,7 @@ class TransactionTypeProcess:
 
         try:
             if self.execution_context == "manual":
-                cache.clear()
+                # cache.clear()
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
                     date_from = None
@@ -3292,92 +3224,104 @@ class TransactionTypeProcess:
 
         _l.debug(f"self.recalculate_inputs {self.recalculate_inputs}")
 
-        for name in self.recalculate_inputs:
-            inp = inputs[name]
-            if inp.can_recalculate:
-                errors = {}
+        iteration_count = 5
 
-                if inp.value_type in [TransactionTypeInput.RELATION]:
-                    try:
-                        res = formula.safe_eval(
-                            inp.value_expr,
-                            names=self.values,
-                            now=self._now,
-                            context=self._context,
-                        )
+        # szhitenev
+        # need to handle case when we trying calculate inputs that required on other inputs beign calculated
+        for i in range(iteration_count):
+            for name in self.recalculate_inputs:
+                inp = inputs[name]
+                if inp.can_recalculate:
 
-                        Model = apps.get_model(
-                            app_label=inp.content_type.app_label,
-                            model_name=inp.content_type.model,
-                        )
+                    if inp.expression_iterations_count > i:
 
-                        try:
-                            self.values[name] = Model.objects.get(
-                                master_user=self.transaction_type.master_user,
-                                user_code=res,
-                            )
+                        # _l.info('inp.expression_iterations_count %s' % inp.expression_iterations_count)
+                        # _l.info('inp.i %s' % i)
+                        # _l.info('inp %s' % name)
 
-                        except Model.DoesNotExist as e:
-                            raise formula.InvalidExpression from e
+                        errors = {}
 
-                    except formula.InvalidExpression as e:
-                        ecosystem_default = EcosystemDefault.objects.get(
-                            master_user=self.transaction_type.master_user
-                        )
+                        if inp.value_type in [TransactionTypeInput.RELATION]:
+                            try:
+                                res = formula.safe_eval(
+                                    inp.value_expr,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
+                                )
 
-                        _l.debug(f"error {repr(e)}")
-                        _l.debug(inp.content_type)
+                                Model = apps.get_model(
+                                    app_label=inp.content_type.app_label,
+                                    model_name=inp.content_type.model,
+                                )
 
-                        entity_map = {
-                            "instrument": "instrument",
-                            "instrumenttype": "instrument_type",
-                            "account": "account",
-                            "currency": "currency",
-                            "counterparty": "counterparty",
-                            "responsible": "responsible",
-                            "portfolio": "portfolio",
-                            "strategy1": "strategy1",
-                            "strategy2": "strategy2",
-                            "strategy3": "strategy3",
-                            "dailypricingmodel": "daily_pricing_model",
-                            "paymentsizedetail": "payment_size_detail",
-                            "pricingpolicy": "pricing_policy",
-                            "periodicity": "periodicity",
-                            "accrualcalculationmodel": "accrual_calculation_model",
-                            "eventclass": "event_class",
-                            "notificationclass": "notification_class",
-                        }
+                                try:
+                                    self.values[name] = Model.objects.get(
+                                        master_user=self.transaction_type.master_user,
+                                        user_code=res,
+                                    )
 
-                        key = entity_map[inp.content_type.model]
+                                except Model.DoesNotExist as e:
+                                    raise formula.InvalidExpression from e
 
-                        if hasattr(ecosystem_default, key):
-                            res = getattr(ecosystem_default, key)
-                            self.values[name] = res
+                            except formula.InvalidExpression as e:
+                                ecosystem_default = EcosystemDefault.cache.get_cache(
+                                    master_user_pk=self.transaction_type.master_user.pk
+                                )
+
+                                _l.debug(f"error {repr(e)}")
+                                _l.debug(inp.content_type)
+
+                                entity_map = {
+                                    "instrument": "instrument",
+                                    "instrumenttype": "instrument_type",
+                                    "account": "account",
+                                    "currency": "currency",
+                                    "counterparty": "counterparty",
+                                    "responsible": "responsible",
+                                    "portfolio": "portfolio",
+                                    "strategy1": "strategy1",
+                                    "strategy2": "strategy2",
+                                    "strategy3": "strategy3",
+                                    "dailypricingmodel": "daily_pricing_model",
+                                    "paymentsizedetail": "payment_size_detail",
+                                    "pricingpolicy": "pricing_policy",
+                                    "periodicity": "periodicity",
+                                    "accrualcalculationmodel": "accrual_calculation_model",
+                                    "eventclass": "event_class",
+                                    "notificationclass": "notification_class",
+                                }
+
+                                key = entity_map[inp.content_type.model]
+
+                                if hasattr(ecosystem_default, key):
+                                    res = getattr(ecosystem_default, key)
+                                    self.values[name] = res
+                                else:
+                                    self._set_eval_error(errors, inp.name, inp.value_expr, e)
+                                    self.value_errors.append(errors)
+
                         else:
-                            self._set_eval_error(errors, inp.name, inp.value_expr, e)
-                            self.value_errors.append(errors)
+                            _l.debug(f"inp {inp}")
+                            _l.debug(f"inp {inp.value_expr}")
 
-                else:
-                    _l.debug(f"inp {inp}")
-                    _l.debug(f"inp {inp.value_expr}")
+                            try:
+                                res = formula.safe_eval(
+                                    inp.value_expr,
+                                    names=self.values,
+                                    now=self._now,
+                                    context=self._context,
+                                )
+                                self.values[name] = res
 
-                    try:
-                        res = formula.safe_eval(
-                            inp.value_expr,
-                            names=self.values,
-                            now=self._now,
-                            context=self._context,
-                        )
-                        self.values[name] = res
+                                _l.debug(f"process_recalculate self.values {self.values}")
 
-                        _l.debug(f"process_recalculate self.values {self.values}")
-
-                    except formula.InvalidExpression as e:
-                        self._handle_errors(e, inp, name, errors)
-        _l.debug(
-            "TransactionTypeProcess: process_recalculate done: %s",
-            "{:3.3f}".format(time.perf_counter() - process_recalculate_st),
-        )
+                            except formula.InvalidExpression as e:
+                                self._handle_errors(e, inp, name, errors)
+            _l.debug(
+                "TransactionTypeProcess: process_recalculate done: %s",
+                "{:3.3f}".format(time.perf_counter() - process_recalculate_st),
+            )
 
     def _handle_errors(self, e, inp, name, errors):
         _l.error(
@@ -3387,6 +3331,8 @@ class TransactionTypeProcess:
 
         if inp.value_type == TransactionTypeInput.STRING:
             self.values[name] = "Invalid Expression"
+        else:
+            self.values[name] = None
 
         self._set_eval_error(errors, inp.name, inp.value_expr, e)
         self.value_errors.append(errors)

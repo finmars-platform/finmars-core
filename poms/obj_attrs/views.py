@@ -107,7 +107,16 @@ class GenericClassifierViewSet(AbstractReadOnlyModelViewSet):
 
     @property
     def target_model_content_type(self):
-        return ContentType.objects.get_for_model(self.target_model)
+        # return ContentType.objects.get_for_model(self.target_model)
+        # TODO important objects.get_for_model return cached value
+        # from public scheme, it can lead to unexpected behavior
+        # ContentType.objects.get_for_model(self.target_model)
+        # Assuming 'self.target_model' is a Django model class
+        app_label = self.target_model._meta.app_label
+        model = self.target_model._meta.model_name  # 'model_name' is always lowercase
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+        return content_type
 
 
 class GenericAttributeTypeFilterSet(FilterSet):
@@ -127,7 +136,7 @@ class GenericAttributeTypeFilterSet(FilterSet):
 # class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 class GenericAttributeTypeViewSet(AbstractModelViewSet):
     queryset = GenericAttributeType.objects.select_related(
-        "master_user", "content_type"
+        "master_user", "content_type", "owner"
     ).prefetch_related(
         "options",
         "classifiers",
@@ -159,10 +168,29 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
 
     @property
     def target_model_content_type(self):
-        return ContentType.objects.get_for_model(self.target_model)
+        # TODO important objects.get_for_model return cached value
+        # from public scheme, it can lead to unexpected behavior
+        # ContentType.objects.get_for_model(self.target_model)
+        # Assuming 'self.target_model' is a Django model class
+        app_label = self.target_model._meta.app_label
+        model = self.target_model._meta.model_name  # 'model_name' is always lowercase
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+        return content_type
 
     def perform_create(self, serializer):
-        serializer.save(content_type=self.target_model_content_type)
+
+
+        # TODO important objects.get_for_model return cached value
+        # from public scheme, it can lead to unexpected behavior
+        # ContentType.objects.get_for_model(self.target_model)
+        # Assuming 'self.target_model' is a Django model class
+        app_label = self.target_model._meta.app_label
+        model = self.target_model._meta.model_name  # 'model_name' is always lowercase
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+
+        serializer.save(content_type=content_type)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -175,7 +203,7 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         )
 
     @action(detail=True, methods=["get"], url_path="objects-to-recalculate")
-    def objects_to_recalculate(self, request, pk):
+    def objects_to_recalculate(self, request, pk, realm_code=None, space_code=None):
         master_user = request.user.master_user
 
         attribute_type = GenericAttributeType.objects.get(
@@ -197,7 +225,7 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         url_path="recalculate",
         serializer_class=RecalculateAttributesSerializer,
     )
-    def recalculate_attributes(self, request, pk):
+    def recalculate_attributes(self, request, pk, realm_code=None, space_code=None):
         context = {"request": request}
 
         serializer = RecalculateAttributesSerializer(data=request.data, context=context)
@@ -214,7 +242,10 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
             instance.target_model_content_type = self.target_model_content_type
             instance.target_model_serializer = self.target_model_serializer
 
-            res = recalculate_attributes.apply_async(kwargs={"instance": instance})
+            res = recalculate_attributes.apply_async(kwargs={"instance": instance, 'context': {
+                'space_code': request.space_code,
+                'realm_code': request.realm_code
+            }})
 
             instance.task_id = res.id
             instance.task_status = res.status

@@ -1,7 +1,6 @@
 from tempfile import NamedTemporaryFile
 from typing import Type
 
-from django.conf import settings
 from django.db.models import Model
 
 
@@ -13,8 +12,8 @@ def get_local_path(filename: str) -> str:
     return f"/var/log/finmars/backend/{filename}.zip"
 
 
-def get_storage_path(filename: str) -> str:
-    return f"{settings.BASE_API_URL}/.system/history_files/{filename}.zip"
+def get_storage_path(filename: str, space_code: str) -> str:
+    return f"{space_code}/.system/history_files/{filename}.zip"
 
 
 def save_to_local_file(file_path: str, buffer: bytes):

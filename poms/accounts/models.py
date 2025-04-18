@@ -1,21 +1,24 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
+from poms.common.fields import ResourceGroupsField
+
+from django.core.cache import cache
 
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
-    DataTimeStampedModel,
+    TimeStampedModel,
     FakeDeletableModel,
     NamedModel,
+    ObjectStateModel,
 )
-from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
 
 class AccountType(
-    NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
+    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
 ):
     """
     Meta Entity, part of Finmars Configuration
@@ -106,7 +109,7 @@ class AccountType(
         ]
 
 
-class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Account(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
     """
     One of core entities - Account
     Could stand for anything that could hold money in real world e.g. Bank Accounts,
@@ -134,12 +137,25 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         GenericAttribute, verbose_name=gettext_lazy("attributes")
     )
 
+    resource_groups = ResourceGroupsField(
+        verbose_name=gettext_lazy(
+            "list of resource groups user_codes, to which account belongs"
+        ),
+    )
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("account")
         verbose_name_plural = gettext_lazy("accounts")
         permissions = [
             ("manage_account", "Can manage account"),
         ]
+
+    def save(self, *args, **kwargs):
+
+        cache_key = f"{self.master_user.space_code}_serialized_report_account_{self.id}"
+        cache.delete(cache_key)
+
+        super().save(*args, **kwargs)
 
     @staticmethod
     def get_system_attrs():

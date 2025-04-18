@@ -1,11 +1,20 @@
+import itertools
 import logging
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
-from poms.instruments.models import Instrument
 from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger("poms.reports")
+
+
+def almost_equal_floats(a: float, b: float, round_digits=settings.ROUND_NDIGITS) -> bool:
+    """
+    Compare two flaat values with given precision
+    """
+    epsilon = 10 ** -round_digits
+    return abs(a - b) < epsilon
 
 
 class BackendReportHelperService:
@@ -36,7 +45,7 @@ class BackendReportHelperService:
         identifier_key = self.convert_name_key_to_user_code_key(group_type["key"])
         identifier_value = item.get(identifier_key)
 
-        # _l.info('get_result_group.identifier_value %s' % identifier_value)
+        # _l.debug('get_result_group.identifier_value %s' % identifier_value)
 
         if identifier_value not in [None, "-"]:
             result_group["___group_identifier"] = str(identifier_value)
@@ -44,9 +53,7 @@ class BackendReportHelperService:
 
             if group_type["key"] == "complex_transaction.status":
                 status_map = {1: "Booked", 2: "Pending", 3: "Ignored"}
-                result_group["___group_name"] = status_map.get(
-                    item_value, str(item_value)
-                )
+                result_group["___group_name"] = status_map.get(item_value, str(item_value))
         elif identifier_value == "-":
             result_group["___group_identifier"] = "-"
             result_group["___group_name"] = "-"
@@ -57,7 +64,7 @@ class BackendReportHelperService:
 
         return result_group
 
-    def get_unique_groups(self, items, group_type, columns, total_value=None):
+    def get_unique_groups(self, items, group_type, columns):
         seen_group_identifiers = set()
         result_groups = []
 
@@ -69,38 +76,38 @@ class BackendReportHelperService:
                 seen_group_identifiers.add(identifier)
                 result_groups.append(result_group)
 
-        # _l.info('result_groups %s' % result_groups)
-        # _l.info('items %s' % items)
+        # _l.debug('result_groups %s' % result_groups)
+        # _l.debug('items %s' % items)
 
         identifier_key = self.convert_name_key_to_user_code_key(group_type["key"])
 
         for result_group in result_groups:
             group_items = [
-                item
-                for item in items
-                if item.get(identifier_key) == result_group["___group_identifier"]
+                item for item in items if item.get(identifier_key) == result_group["___group_identifier"]
             ]
 
-            # _l.info('group_items %s' % group_items)
+            # _l.debug('group_items %s' % group_items)
 
-            result_group["subtotal"] = BackendReportSubtotalService.calculate(
-                group_items, columns
-            )
+            result_group["subtotal"] = BackendReportSubtotalService.calculate(group_items, columns)
 
-        for result_group in result_groups:
-            if "market_value" in result_group["subtotal"]:
-                if total_value:
-                    result_group["subtotal"]["market_value_percent"] = round(
-                        (result_group["subtotal"]["market_value"] / total_value) * 100,
-                        2,
-                    )
-
-                else:
+            if result_group["subtotal"].get("market_value"):
+                try:
+                    total_value = sum(map(lambda item: item["market_value_percent"], group_items)) or None
+                    # None is to raise an exception if sum is 0
+                    result_group["subtotal"]["market_value_percent"] = total_value
+                except Exception as e:
                     result_group["subtotal"]["market_value_percent"] = "No Data"
+
+            if result_group["subtotal"].get("exposure"):
+                try:
+                    total_value = sum(map(lambda item: item["exposure_percent"], group_items)) or None
+                    result_group["subtotal"]["exposure_percent"] = total_value
+                except Exception as e:
+                    result_group["subtotal"]["exposure_percent"] = "No Data"
 
         return result_groups
 
-    def convert_helper_dict(self, helper_list):
+    def convert_helper_dict(self, helper_list: list) -> dict:
         return {entry["id"]: entry for entry in helper_list}
 
     def _get_attribute_value(self, attribute):
@@ -185,22 +192,14 @@ class BackendReportHelperService:
                     for first_level_key, related_value in related_object.items():
                         related_prefixed_key = f"{root_key}.{first_level_key}"
 
-                        if first_level_key == "attributes" and isinstance(
-                            related_value, list
-                        ):
+                        if first_level_key == "attributes" and isinstance(related_value, list):
                             for attribute in related_value:
-                                user_code = attribute.get(
-                                    "attribute_type_object", {}
-                                ).get("user_code")
+                                user_code = attribute.get("attribute_type_object", {}).get("user_code")
                                 if user_code:
                                     attr_value = self._get_attribute_value(attribute)
-                                    flattened_item[
-                                        f"{related_prefixed_key}.{user_code}"
-                                    ] = attr_value
+                                    flattened_item[f"{related_prefixed_key}.{user_code}"] = attr_value
                         elif first_level_key in helper_dicts:
-                            related_related_object = helper_dicts[first_level_key].get(
-                                related_value, {}
-                            )
+                            related_related_object = helper_dicts[first_level_key].get(related_value, {})
 
                             if related_related_object:
                                 for (
@@ -209,19 +208,13 @@ class BackendReportHelperService:
                                 ) in related_related_object.items():
                                     _prefixed_key = f"{root_key}.{first_level_key}.{second_level_key}"
 
-                                    flattened_item[
-                                        _prefixed_key
-                                    ] = related_related_value
+                                    flattened_item[_prefixed_key] = related_related_value
 
                             else:
-                                flattened_item[
-                                    f"{root_key}.{first_level_key}"
-                                ] = related_value
+                                flattened_item[f"{root_key}.{first_level_key}"] = related_value
 
                         else:
-                            flattened_item[
-                                f"{root_key}.{first_level_key}"
-                            ] = related_value
+                            flattened_item[f"{root_key}.{first_level_key}"] = related_value
 
                 else:
                     flattened_item[root_key] = value
@@ -231,14 +224,10 @@ class BackendReportHelperService:
         if "item_type" in item:
             if item["item_type"] == 2:
                 for attribute_type in instrument_attribute_types:
-                    flattened_item[
-                        f"instrument.attributes.{attribute_type.user_code}"
-                    ] = "Cash & Equivalents"
+                    flattened_item[f"instrument.attributes.{attribute_type.user_code}"] = "Cash & Equivalents"
 
                 if "currency.country.name" in flattened_item:
-                    flattened_item["instrument.country.name"] = flattened_item[
-                        "currency.country.name"
-                    ]
+                    flattened_item["instrument.country.name"] = flattened_item["currency.country.name"]
                     flattened_item["instrument.country.user_code"] = flattened_item[
                         "currency.country.user_code"
                     ]
@@ -246,27 +235,93 @@ class BackendReportHelperService:
                         "currency.country.short_name"
                     ]
 
-                flattened_item['instrument.instrument_type.name'] = 'Cash & Equivalents'
-                flattened_item['instrument.instrument_type.user_code'] = 'Cash & Equivalents'
-                flattened_item['instrument.instrument_type.short_name'] = 'Cash & Equivalents'
+                flattened_item["instrument.instrument_type.name"] = "Cash & Equivalents"
+                flattened_item["instrument.instrument_type.user_code"] = "Cash & Equivalents"
+                flattened_item["instrument.instrument_type.short_name"] = "Cash & Equivalents"
 
             if item["item_type"] == 1 and "instrument.country.name" in flattened_item:
-                flattened_item["currency.country.name"] = flattened_item[
-                    "instrument.country.name"
-                ]
-                flattened_item["currency.country.user_code"] = flattened_item[
-                    "instrument.country.user_code"
-                ]
+                flattened_item["currency.country.name"] = flattened_item["instrument.country.name"]
+                flattened_item["currency.country.user_code"] = flattened_item["instrument.country.user_code"]
                 flattened_item["currency.country.short_name"] = flattened_item[
                     "instrument.country.short_name"
                 ]
 
+            if item["item_type"] == 3:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f"instrument.attributes.{attribute_type.user_code}"] = "FX Variations"
+
+                flattened_item["instrument.country.name"] = "FX Variations"
+                flattened_item["instrument.country.user_code"] = "FX Variations"
+                flattened_item["instrument.country.short_name"] = "FX Variations"
+
+                flattened_item["instrument.instrument_type.name"] = "FX Variations"
+                flattened_item["instrument.instrument_type.user_code"] = "FX Variations"
+                flattened_item["instrument.instrument_type.short_name"] = "FX Variations"
+
+                flattened_item["currency.country.name"] = "FX Variations"
+                flattened_item["currency.country.user_code"] = "FX Variations"
+                flattened_item["currency.country.short_name"] = "FX Variations"
+
+            if item["item_type"] == 4:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f"instrument.attributes.{attribute_type.user_code}"] = "FX Trades"
+
+                flattened_item["instrument.country.name"] = "FX Trades"
+                flattened_item["instrument.country.user_code"] = "FX Trades"
+                flattened_item["instrument.country.short_name"] = "FX Trades"
+
+                flattened_item["instrument.instrument_type.name"] = "FX Trades"
+                flattened_item["instrument.instrument_type.user_code"] = "FX Trades"
+                flattened_item["instrument.instrument_type.short_name"] = "FX Trades"
+
+                flattened_item["currency.country.name"] = "FX Trades"
+                flattened_item["currency.country.user_code"] = "FX Trades"
+                flattened_item["currency.country.short_name"] = "FX Trades"
+
+            if item["item_type"] == 5:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f"instrument.attributes.{attribute_type.user_code}"] = "Other"
+
+                flattened_item["instrument.country.name"] = "Other"
+                flattened_item["instrument.country.user_code"] = "Other"
+                flattened_item["instrument.country.short_name"] = "Other"
+
+                flattened_item["instrument.instrument_type.name"] = "Other"
+                flattened_item["instrument.instrument_type.user_code"] = "Other"
+                flattened_item["instrument.instrument_type.short_name"] = "Other"
+
+                flattened_item["currency.country.name"] = "Other"
+                flattened_item["currency.country.user_code"] = "Other"
+                flattened_item["currency.country.short_name"] = "Other"
+
+            if item["item_type"] == 6:
+                for attribute_type in instrument_attribute_types:
+                    flattened_item[f"instrument.attributes.{attribute_type.user_code}"] = "Mismatch"
+
+                flattened_item["instrument.country.name"] = "Mismatch"
+                flattened_item["instrument.country.user_code"] = "Mismatch"
+                flattened_item["instrument.country.short_name"] = "Mismatch"
+
+                flattened_item["instrument.instrument_type.name"] = "Mismatch"
+                flattened_item["instrument.instrument_type.user_code"] = "Mismatch"
+                flattened_item["instrument.instrument_type.short_name"] = "Mismatch"
+
+                flattened_item["currency.country.name"] = "Mismatch"
+                flattened_item["currency.country.user_code"] = "Mismatch"
+                flattened_item["currency.country.short_name"] = "Mismatch"
+
         return flattened_item
 
     def convert_report_items_to_full_items(self, data):
-        original_items = []  # probably we missing user attributes
+        original_items = []  # probably we're missing user attributes
+
+        # to_representation_st = time.perf_counter()
+        # def log_with_time(message):
+        #     elapsed_time = time.perf_counter() - to_representation_st
+        #     _l.debug(f"{message} | Elapsed time: {elapsed_time:.3f} seconds")
 
         helper_dicts = {
+            "accrued_currency": self.convert_helper_dict(data["item_currencies"]),
             "pricing_currency": self.convert_helper_dict(data["item_currencies"]),
             "settlement_currency": self.convert_helper_dict(data["item_currencies"]),
             "transaction_currency": self.convert_helper_dict(data["item_currencies"]),
@@ -276,7 +331,6 @@ class BackendReportHelperService:
             "portfolio": self.convert_helper_dict(data["item_portfolios"]),
             "instrument": self.convert_helper_dict(data["item_instruments"]),
             "instrument_type": self.convert_helper_dict(data["item_instrument_types"]),
-            "country": self.convert_helper_dict(data["item_countries"]),
             "entry_instrument": self.convert_helper_dict(data["item_instruments"]),
             "allocation": self.convert_helper_dict(data["item_instruments"]),
             "allocation_balance": self.convert_helper_dict(data["item_instruments"]),
@@ -295,40 +349,37 @@ class BackendReportHelperService:
             "strategy3_cash": self.convert_helper_dict(data["item_strategies3"]),
         }
 
+        # log_with_time("helper dicts are created")
+
+        if "item_countries" in data:
+            helper_dicts["country"] = self.convert_helper_dict(data["item_countries"])
+
         if "item_counterparties" in data:
-            helper_dicts["counterparty"] = self.convert_helper_dict(
-                data["item_counterparties"]
-            )
+            helper_dicts["counterparty"] = self.convert_helper_dict(data["item_counterparties"])
 
         if "item_responsibles" in data:
-            helper_dicts["responsible"] = self.convert_helper_dict(
-                data["item_responsibles"]
-            )
+            helper_dicts["responsible"] = self.convert_helper_dict(data["item_responsibles"])
 
         if "item_transaction_classes" in data:
-            helper_dicts["transaction_class"] = self.convert_helper_dict(
-                data["item_transaction_classes"]
-            )
+            helper_dicts["transaction_class"] = self.convert_helper_dict(data["item_transaction_classes"])
 
-        content_type = ContentType.objects.get_for_model(Instrument)
-        instrument_attribute_types = GenericAttributeType.objects.filter(
-            content_type=content_type
-        )
+        content_type = ContentType.objects.get(app_label="instruments", model="instrument")
+        instrument_attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
 
-        # _l.info('data helper_dicts %s' %  helper_dicts)
-        # _l.info('data items %s' % data['items'][0])
+        # log_with_time("data prepared to be flattened")
+
+        # _l.debug('data helper_dicts %s' %  helper_dicts)
+        # _l.debug('data items %s' % data['items'][0])
         for item in data["items"]:
-            original_item = self.flatten_and_convert_item(
-                item, helper_dicts, instrument_attribute_types
-            )
+            original_item = self.flatten_and_convert_item(item, helper_dicts, instrument_attribute_types)
 
             if "custom_fields" in item:
                 for custom_field in item["custom_fields"]:
-                    original_item[
-                        "custom_fields." + custom_field["user_code"]
-                    ] = custom_field["value"]
+                    original_item["custom_fields." + custom_field["user_code"]] = custom_field["value"]
 
             original_items.append(original_item)
+
+        # log_with_time("data flattening")
 
         return original_items
 
@@ -340,8 +391,8 @@ class BackendReportHelperService:
         if isinstance(result_value, str):
             result_value = result_value.lower()
 
-        # _l.info('get_filter_match.item_value %s' % item_value)
-        # _l.info('get_filter_match.result_value %s' % result_value)
+        # _l.debug('get_filter_match.item_value %s' % item_value)
+        # _l.debug('get_filter_match.result_value %s' % result_value)
 
         # Refactor someday this shitty logic
         if item_value is None:
@@ -363,7 +414,9 @@ class BackendReportHelperService:
             ):
                 return True
         elif isinstance(regular_filter_value, list):
-            if regular_filter_value[0] is not None:
+            if (regular_filter_value and regular_filter_value[0]) or (
+                regular_filter_value and regular_filter_value[0] == 0
+            ):  # important to work with zero values in filter # PLAT-1749
                 return True
         return False
 
@@ -372,11 +425,6 @@ class BackendReportHelperService:
         return all(substring in value_to_filter for substring in filter_substrings)
 
     def filter_value_from_table(self, value_to_filter, filter_by, operation_type):
-       # _l.info(
-        #     f"filter_table_rows.filter_value_from_table value_to_filter="
-        #     f"{value_to_filter} filter_by={filter_by} operation_type={operation_type}"
-        # )
-
         if operation_type == "contains":
             if '"' in filter_by:  # if string inside of double quotes
                 formatted_filter_by = filter_by.strip('"')
@@ -395,25 +443,40 @@ class BackendReportHelperService:
 
         elif operation_type == "does_not_contains":
             return filter_by not in value_to_filter
-        elif operation_type in ("equal", "selector"):
+
+        elif operation_type == "selector":
             return value_to_filter == filter_by
+
+        elif operation_type == "equal":
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter == filter_by
+
         elif operation_type == "not_equal":
-            return value_to_filter != filter_by
+            if isinstance(value_to_filter, float) and isinstance(filter_by, float):
+                return not almost_equal_floats(value_to_filter, filter_by)
+            else:
+                return value_to_filter != filter_by
+
         elif operation_type == "greater":
             return value_to_filter > filter_by
+
         elif operation_type == "greater_equal":
             return value_to_filter >= filter_by
+
         elif operation_type == "less":
             return value_to_filter < filter_by
+
         elif operation_type == "less_equal":
             return value_to_filter <= filter_by
+
         elif operation_type == "from_to":
             return filter_by["min_value"] <= value_to_filter <= filter_by["max_value"]
+
         elif operation_type == "out_of_range":
-            return (
-                value_to_filter <= filter_by["min_value"]
-                or value_to_filter >= filter_by["max_value"]
-            )
+            return value_to_filter <= filter_by["min_value"] or value_to_filter >= filter_by["max_value"]
+
         elif operation_type == "multiselector":
             return value_to_filter in filter_by
 
@@ -447,56 +510,41 @@ class BackendReportHelperService:
 
         def match_item(item):
             for filter_ in regular_filters:
+
                 key_property = filter_["key"]
                 value_type = filter_["value_type"]
                 filter_type = filter_["filter_type"]
-                exclude_empty_cells = filter_["exclude_empty_cells"]
                 filter_value = filter_["value"]
+                filter_value_not_empty = self.check_for_empty_regular_filter(filter_value, filter_type)
 
-                #_l.info(#f"filter_table_rows.match_item item={item} filter_={filter_}"# )
+                if key_property != "ordering":
+                    if item.get(key_property) or item.get(key_property) == 0:
 
-                if len(filter_value) and key_property != "ordering":
-                    if key_property in item and item[key_property] is not None:
-                        if self.check_for_empty_regular_filter(
-                            filter_value, filter_type
-                        ):
+                        if filter_type == "empty":
+                            return False
+
+                        if filter_value_not_empty:
                             value_from_table = item[key_property]
                             filter_argument = filter_value
 
-                            if (
-                                value_type in (10, 30)
-                                and filter_type != "multiselector"
-                            ):
+                            if value_type in (10, 30) and filter_type != "multiselector":
                                 value_from_table = value_from_table.lower()
                                 filter_argument = filter_argument[0].lower()
 
-                            elif value_type == 40:
-                                _l.info(
-                                    "BackendReportHelperService.filter_table_rows"
-                                    f".match_item value_type=40 "
-                                    f"value_from_table={value_from_table} "
-                                    f"filter_argument={filter_argument}"
-                                )
-                                if filter_type in ["equal", "not_equal"]:
+                            elif value_type == 20:
+                                if filter_type not in ("from_to", "out_of_range"):
                                     filter_argument = filter_argument[0]
 
-                                elif filter_type in ["from_to", "out_of_range"]:
-                                    filter_argument["min_value"] = filter_argument[
-                                        "min_value"
-                                    ]
-                                    filter_argument["max_value"] = filter_argument[
-                                        "max_value"
-                                    ]
+                            elif value_type == 40:
+                                if filter_type not in {"from_to", "out_of_range", "date_tree"}:
+                                    filter_argument = filter_argument[0]
 
                             if not self.filter_value_from_table(
                                 value_from_table, filter_argument, filter_type
                             ):
                                 return False
 
-                    elif exclude_empty_cells or (
-                        key_property in ["name", "instrument"]
-                        and item["item_type"] != 1
-                    ):
+                    elif filter_type != "empty" and filter_value_not_empty:
                         return False
             return True
 
@@ -505,41 +553,41 @@ class BackendReportHelperService:
     # Methods for filter_table_rows
 
     def filter_by_groups_filters(self, items, options):
-        groups_types = options["groups_types"]
+        # Retrieve the group types and values from the options dictionary
+        groups_types = options.get("groups_types", [])
+        groups_values = options.get("groups_values", [])
 
-        # _l.info('filter_by_groups_filters.groups_types %s' % groups_types)
-        # _l.info('filter_by_groups_filters.groups_values %s' % options.get("groups_values", []))
+        # Early exit: If there are no group types or values, return the original list without filtering
+        if not groups_types or not groups_values:
+            # _l.debug(f"filter_by_groups_filters after len {len(items)}")
+            return items
 
-        # _l.info(f'filter_by_groups_filters before len {len(items)}')
+        # Validate that both lists have the same length
+        if len(groups_types) != len(groups_values):
+            _l.warning("Mismatch between groups_types and groups_values lengths")
+            # Optionally, handle this by truncating the longer list or raising an error
+            min_length = min(len(groups_types), len(groups_values))
+            groups_types = groups_types[:min_length]
+            groups_values = groups_values[:min_length]
 
-        if len(groups_types) > 0 and len(options.get("groups_values", [])) > 0:
-            filtered_items = []
-            for item in items:
-                match = True
-                for i in range(len(options["groups_values"])):
-                    key = options["groups_types"][i]["key"]
-                    value = options["groups_values"][i]
-                    converted_key = self.convert_name_key_to_user_code_key(key)
+        # Filter the items based on group types and values
+        # We use a list comprehension for efficiency and readability
+        filtered_items = [
+            item  # Include item in the filtered list if it matches all criteria
+            for item in items
+            if all(  # `all` checks that every condition in the inner loop is True
+                self.get_filter_match(
+                    item, self.convert_name_key_to_user_code_key(groups_types[i]["key"]), groups_values[i]
+                )
+                for i in range(len(groups_types))  # Iterate over each index in group types
+            )
+        ]
 
-                    # _l.info('filter_by_groups_filters.key %s' % key)
-                    # _l.info('filter_by_groups_filters.value %s' % value)
+        # Log the final count of filtered items
+        # _l.debug(f"filter_by_groups_filters after len {len(filtered_items)}")
 
-                    match = self.get_filter_match(item, converted_key, value)
-
-                    if not match:
-                        break
-                if match:
-                    filtered_items.append(item)
-
-            # _l.info('filter_by_groups_filters.filtered_items %s' % filtered_items)
-
-            _l.info(f"filter_by_groups_filters after len {len(filtered_items)}")
-
-            return filtered_items
-
-        _l.info(f"filter_by_groups_filters after len {len(items)}")
-
-        return items
+        # Return the filtered list
+        return filtered_items
 
     def filter_by_global_table_search(self, items, options):
         query = options.get("globalTableSearch", "")
@@ -565,19 +613,19 @@ class BackendReportHelperService:
         return list(filter(item_matches, items))
 
     def filter(self, items, options):
-        _l.info(f"Before filter {len(items)}")
+        # _l.debug(f"Before filter {len(items)}")
 
         items = self.filter_by_global_table_search(items, options)
 
-        _l.info(f"After filter_by_global_table_search {len(items)}")
+        # _l.debug(f"After filter_by_global_table_search {len(items)}")
 
         items = self.filter_table_rows(items, options)
 
-        _l.info(f"After filter_table_rows {len(items)}")
+        # _l.debug(f"After filter_table_rows {len(items)}")
 
         # items = self.filter_by_groups_filters(items, options)
 
-        _l.info(f"After filter_by_groups_filters {len(items)}")
+        # _l.debug(f"After filter_by_groups_filters {len(items)}")
 
         return items
 
@@ -653,20 +701,25 @@ class BackendReportHelperService:
 
         return items
 
-    def calculate_market_value_percent(self, items, total_market_value):
-        for item in items:
-            if total_market_value:
-                item["market_value_percent"] = round(
-                    (item["market_value"] / total_market_value) * 100, 2
-                )
-            else:
-                item["market_value_percent"] = "No Data"
-
-        return items
-
-    def calculate_total_percent(self, items, total_total_value):
-        for item in items:
-            item["total_percent"] = round((item["total"] / total_total_value) * 100, 2)
+    def calculate_value_percent(self, items, group_field, data_field):
+        if not items:
+            return items
+        if group_field == "no_grouping":
+            item_groups = [items]
+        else:
+            sorted_items = sorted(items, key=lambda item: item[group_field])
+            item_groups = [
+                list(items_group)
+                for _, items_group in itertools.groupby(sorted_items, lambda item: item[group_field])
+            ]
+        for items_group in item_groups:
+            try:
+                group_value = sum(item[data_field] for item in items_group)
+                for item in items_group:
+                    item[f"{data_field}_percent"] = item[data_field] / group_value
+            except Exception as e:
+                for item in items_group:
+                    item[f"{data_field}_percent"] = None
 
         return items
 
@@ -692,7 +745,7 @@ class BackendReportSubtotalService:
             item_val = BackendReportSubtotalService.get_item_value(item, column["key"])
             if not isinstance(item_val, (int, float)):
                 result = "No Data"
-                print(f"{column['key']} with not a number", item, item[column["key"]])
+                # print(f"{column['key']} with not a number", item, item[column["key"]])
                 break
             else:
                 result += float(item_val)
@@ -714,9 +767,7 @@ class BackendReportSubtotalService:
         result = 0
         total = 0
         for item in items:
-            value = BackendReportSubtotalService.get_item_value(
-                item, weighted_average_key
-            )
+            value = BackendReportSubtotalService.get_item_value(item, weighted_average_key)
             if value:
                 total += value
         if total:
@@ -726,11 +777,10 @@ class BackendReportSubtotalService:
                     result = "No Data"
                     break
                 else:
-                    value = BackendReportSubtotalService.get_item_value(
-                        item, weighted_average_key
-                    )
-                    average = float(value) / total
-                    result += float(item_val) * average
+                    value = BackendReportSubtotalService.get_item_value(item, weighted_average_key)
+                    if isinstance(value, (int, float)):
+                        average = float(value) / total
+                        result += float(item_val) * average
         else:
             print(f"{weighted_average_key} totals is", total, column_key)
             result = "No Data"
@@ -738,65 +788,50 @@ class BackendReportSubtotalService:
 
     @staticmethod
     def resolve_subtotal_function(items, column):
-        return BackendReportSubtotalService.sum(items, column)
-        # TODO
         # szhitenev 2023-12-21
         # implement other formulas
-        # if (
-        #     "report_settings" in column
-        #     and "subtotal_formula_id" in column["report_settings"]
-        # ):
+        if "report_settings" in column and "subtotal_formula_id" in column["report_settings"]:
 
-            # formula_id = column["report_settings"]["subtotal_formula_id"]
-            # if formula_id == 1:
-            #     return BackendReportSubtotalService.sum(items, column)
-            # elif formula_id == 2:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 3:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 4:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 5:
-            #     return BackendReportSubtotalService.get_weighted_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
-            # elif formula_id == 6:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value"
-            #     )
-            # elif formula_id == 7:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "market_value_percent"
-            #     )
-            # elif formula_id == 8:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure"
-            #     )
-            # elif formula_id == 9:
-            #     return BackendReportSubtotalService.get_weighted_average_value(
-            #         items, column["key"], "exposure_percent"
-            #     )
+            formula_id = column["report_settings"]["subtotal_formula_id"]
+            if formula_id == 1:
+                return BackendReportSubtotalService.sum(items, column)
+            elif formula_id == 2:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "market_value")
+            elif formula_id == 3:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 4:
+                return BackendReportSubtotalService.get_weighted_value(items, column["key"], "exposure")
+            elif formula_id == 5:
+                return BackendReportSubtotalService.get_weighted_value(
+                    items, column["key"], "exposure_percent"
+                )
+            elif formula_id == 6:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value"
+                )
+            elif formula_id == 7:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "market_value_percent"
+                )
+            elif formula_id == 8:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure"
+                )
+            elif formula_id == 9:
+                return BackendReportSubtotalService.get_weighted_average_value(
+                    items, column["key"], "exposure_percent"
+                )
 
     @staticmethod
     def calculate(items, columns):
         return {
-            column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
-                items, column
-            )
+            column["key"]: BackendReportSubtotalService.resolve_subtotal_function(items, column)
             for column in columns
             if column["value_type"] == 20
         }
 
     @staticmethod
     def calculate_column(items, column):
-        return {
-            column["key"]: BackendReportSubtotalService.resolve_subtotal_function(
-                items, column
-            )
-        }
+        return {column["key"]: BackendReportSubtotalService.resolve_subtotal_function(items, column)}

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel
+from poms.common.models import EXPRESSION_FIELD_LENGTH, TimeStampedModel, NamedModel
 from poms.common.utils import get_last_business_day
 from poms.configuration.models import ConfigurationModel
 from poms.instruments.models import CostMethod, PricingPolicy
@@ -409,6 +409,398 @@ class PLReport(models.Model):
         verbose_name = gettext_lazy("p&l report")
         verbose_name_plural = gettext_lazy("p&l report")
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "item_type_name",
+                "name": "Item Type",
+                "value_type": 10
+            },
+            {
+                "key": "position_size",
+                "name": "Position size",
+                "value_type": 20
+            },
+            {
+                "key": "nominal_position_size",
+                "name": "Nominal Position size",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "instrument_pricing_currency_fx_rate",
+                "name": "Pricing currency fx rate",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrued_currency_fx_rate",
+                "name": "Accrued currency FX rate",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_accrual_size",
+                "name": "Current Payment Size",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_object_name",
+                "name": "Current Payment Frequency",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrual_object_periodicity_n",
+                "name": "Current Payment Periodicity N",
+                "value_type": 20
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "ytm",
+                "name": "YTM",
+                "value_type": 20
+            },
+            {
+                "key": "ytm_at_cost",
+                "name": "YTM at cost",
+                "value_type": 20
+            },
+            {
+                "key": "modified_duration",
+                "name": "Modified duration",
+                "value_type": 20
+            },
+            {
+                "key": "last_notes",
+                "name": "Last notes",
+                "value_type": 10
+            },
+            {
+                "key": "mismatch",
+                "name": "Mismatch",
+                "value_type": 20
+            },
+            {
+                "key": "gross_cost_price_loc",
+                "name": "Gross cost price (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "net_cost_price_loc",
+                "name": "Net cost price (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "currency",
+                "name": "Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "market_value",
+                "name": "Market value",
+                "value_type": 20
+            },
+            {
+                "key": "market_value_loc",
+                "name": "Market value (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "market_value_percent",
+                "name": "Market value %",
+                "value_type": 20
+            },
+            {
+                "key": "exposure",
+                "name": "Exposure",
+                "value_type": 20
+            },
+            {
+                "key": "exposure_percent",
+                "name": "Exposure %",
+                "value_type": 20
+            },
+            {
+                "key": "exposure_loc",
+                "name": "Exposure (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_principal_price",
+                "name": "Current Price",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_accrued_price",
+                "name": "Current Accrued",
+                "value_type": 20
+            },
+            {
+                "key": "instrument_factor",
+                "name": "Factor",
+                "value_type": 20
+            },
+            {
+                "key": "detail",
+                "name": "Transaction Detail",
+                "value_type": 10
+            },
+            # region Pl report performance attributes
+            {
+                "key": "item_group_name",
+                "name": "Group Name",
+                "value_type": 10
+            },
+            {
+                "key": "item_subtype_name",
+                "name": "Subtype Name",
+                "value_type": 10
+            },
+            # region This models needed to facilitate linking to report dates
+            {
+                "key": "pl_first_date",
+                "name": "Date-from",
+                "value_type": 40
+            },
+            {
+                "key": "report_date",
+                "name": "Date-to",
+                "value_type": 40
+            },
+            # endregion This models needed to facilitate linking to report dates
+            {
+                "key": "net_position_return",
+                "name": "Net position return",
+                "value_type": 20
+            },
+            {
+                "key": "net_position_return_loc",
+                "name": "Net position return (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "net_position_return_fixed",
+                "name": "Net position return fixed",
+                "value_type": 20
+            },
+            {
+                "key": "net_position_return_fixed_loc",
+                "name": "Net position return Fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "time_invested",
+                "name": "Time invested",
+                "value_type": 20
+            },
+            {
+                "key": "position_return",
+                "name": "Position return",
+                "value_type": 20
+            },
+            {
+                "key": "position_return_loc",
+                "name": "Position return (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "position_return_fixed",
+                "name": "Position Return Fixed",
+                "value_type": 20
+            },
+            {
+                "key": "position_return_fixed_loc",
+                "name": "Position Return Fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "daily_price_change",
+                "name": "Daily price change",
+                "value_type": 20
+            },
+            {
+                "key": "mtd_price_change",
+                "name": "MTD price change",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fx",
+                "name": "Principal FX",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fx_loc",
+                "name": "Principal FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fixed",
+                "name": "Principal fixed",
+                "value_type": 20
+            },
+            {
+                "key": "principal_fixed_loc",
+                "name": "Principal fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "carry_fx",
+                "name": "Carry FX",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fx_loc",
+                "name": "Carry FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fixed",
+                "name": "Carry fixed",
+                "value_type": 20
+            },
+            {
+                "key": "carry_fixed_loc",
+                "name": "Carry fixed (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "overheads_fx",
+                "name": "Overheads FX",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fx_loc",
+                "name": "Overheads FX (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fixed",
+                "name": "Overheads fixed",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_fixed_loc",
+                "name": "Overheads fixed (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "principal",
+                "name": "Principal",
+                "value_type": 20
+            },
+            {
+                "key": "carry",
+                "name": "Carry",
+                "value_type": 20
+            },
+            {
+                "key": "overheads",
+                "name": "Overheads",
+                "value_type": 20
+            },
+            {
+                "key": "total",
+                "name": "Total",
+                "value_type": 20
+            },
+            {
+                "key": "principal_loc",
+                "name": "Principal (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "carry_loc",
+                "name": "Carry (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_loc",
+                "name": "Overheads (Pricing Currency)",
+                "value_type": 20
+            },
+            {
+                "key": "total_loc",
+                "name": "Total (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "total_fx",
+                "name": "Total FX",
+                "value_type": 20
+            },
+            {
+                "key": "total_fx_loc",
+                "name": "Total FX (Pricing Currency)",
+                "value_type": 20
+            },
+
+            {
+                "key": "total_fixed",
+                "name": "Total fixed",
+                "value_type": 20
+            },
+            # endregion Pl report performance attributes
+            # region Pl report mismatch attributes
+            {
+                "key": "mismatch",
+                "name": "Mismatch",
+                "value_type": 20
+            },
+            {
+                "key": "mismatch_portfolio",
+                "name": "Mismatch Portfolio",
+                "value_content_type": "portfolios.portfolio",
+                "value_entity": "portfolio",
+                "value_type": "field"
+            },
+            {
+                "key": "mismatch_account",
+                "name": "Mismatch Account",
+                "value_content_type": "accounts.account",
+                "value_entity": "account",
+                "value_type": "field"
+            }
+            # endregion Pl report mismatch attributes
+        ]
+
 
 class PerformanceReport(models.Model):
     master_user = models.ForeignKey(
@@ -575,7 +967,25 @@ class TransactionReport(models.Model):
         ]
 
 
-class BalanceReportInstance(DataTimeStampedModel, NamedModel):
+class BalanceReportInstance(TimeStampedModel, NamedModel):
+
+    unique_key = models.CharField(
+        max_length=32,
+        unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
+        verbose_name=gettext_lazy("unique key"),
+        help_text=gettext_lazy(
+            "Unique Key. Used for getting Report by its Report Settings"
+        ),
+    )
+
+    settings = models.TextField(
+        verbose_name=gettext_lazy("settings"),
+        help_text=gettext_lazy(
+            "Settings"
+        ),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -638,7 +1048,25 @@ class BalanceReportInstance(DataTimeStampedModel, NamedModel):
             BalanceReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class PLReportInstance(DataTimeStampedModel, NamedModel):
+class PLReportInstance(TimeStampedModel, NamedModel):
+
+    unique_key = models.CharField(
+        max_length=32,
+        unique=True,
+        db_index=True,  # Adds an explicit index for faster lookup
+        verbose_name=gettext_lazy("unique key"),
+        help_text=gettext_lazy(
+            "Unique Key. Used for getting Report by its Report Settings"
+        ),
+    )
+
+    settings = models.TextField(
+        verbose_name=gettext_lazy("settings"),
+        help_text=gettext_lazy(
+            "Settings"
+        ),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -703,7 +1131,7 @@ class PLReportInstance(DataTimeStampedModel, NamedModel):
             PLReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class TransactionReportInstance(DataTimeStampedModel, NamedModel):
+class TransactionReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -752,7 +1180,7 @@ class TransactionReportInstance(DataTimeStampedModel, NamedModel):
             TransactionReportInstance.objects.all().order_by("id")[0].delete()
 
 
-class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
+class PerformanceReportInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),
@@ -852,6 +1280,12 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
         null=True,
         blank=True,
         verbose_name=gettext_lazy("grand nav"),
+    )
+    grand_absolute_pl = models.FloatField(
+        default=0.0,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("grand absolute pl"),
     )
 
 
@@ -992,7 +1426,9 @@ class ReportSummary:
         member,
         context,
     ):
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        self.ecosystem_defaults = EcosystemDefault.cache.get_cache(
+            master_user_pk=master_user.pk
+        )
 
         self.context = context
         self.master_user = master_user
@@ -1037,7 +1473,7 @@ class ReportSummary:
 
         self.balance_report = BalanceReportBuilderSql(instance=instance).build_balance()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_balance done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1067,7 +1503,7 @@ class ReportSummary:
 
         self.pl_report_range = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1079,7 +1515,7 @@ class ReportSummary:
 
         pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
 
-        _l.info('build_pl_daily %s' % pl_first_date)
+        _l.debug('build_pl_daily %s' % pl_first_date)
 
         serializer = PLReportSerializer(
             data={
@@ -1101,7 +1537,7 @@ class ReportSummary:
 
         self.pl_report_daily = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1127,7 +1563,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.info('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.debug('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
 
 
         serializer = PLReportSerializer(
@@ -1146,7 +1582,7 @@ class ReportSummary:
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        _l.info(
+        _l.debug(
             f"build_pl_mtd.instance.pl_first_date {instance.pl_first_date} "
             f"report_date {instance.report_date}"
         )
@@ -1155,7 +1591,7 @@ class ReportSummary:
 
         self.pl_report_mtd = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_mtd done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1181,7 +1617,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.info('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
+        _l.debug('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
 
         serializer = PLReportSerializer(
             data={
@@ -1203,7 +1639,7 @@ class ReportSummary:
 
         self.pl_report_ytd = PLReportBuilderSql(instance=instance).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_ytd done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1234,7 +1670,7 @@ class ReportSummary:
             instance=instance
         ).build_report()
 
-        _l.info(
+        _l.debug(
             "ReportSummary.build_pl_inception_to_date done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
@@ -1450,7 +1886,7 @@ class ReportSummary:
 
         from poms.reports.serializers import PerformanceReportSerializer
 
-        _l.info('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.debug('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
 
         serializer = PerformanceReportSerializer(data={
             "begin_date": self.pl_first_date_for_mtd,
@@ -1499,7 +1935,7 @@ class ReportInstanceModel:
         from poms.portfolios.models import Portfolio
         from poms.strategies.models import Strategy1, Strategy2, Strategy3
 
-        # _l.info('ReportInstanceModel.kwargs %s' % kwargs)
+        # _l.debug('ReportInstanceModel.kwargs %s' % kwargs)
 
         self.report_date = datetime.strptime(kwargs["report_date"], "%Y-%m-%d")
 
@@ -1531,11 +1967,12 @@ class ReportInstanceModel:
         self.strategy2_mode = kwargs["strategy2_mode"]
         self.strategy3_mode = kwargs["strategy3_mode"]
         self.allocation_mode = kwargs["allocation_mode"]
+        self.calculate_pl = kwargs.get("calculate_pl", False)
 
         self.master_user = kwargs["master_user"]
 
 
-class ReportSummaryInstance(DataTimeStampedModel, NamedModel):
+class ReportSummaryInstance(TimeStampedModel, NamedModel):
     master_user = models.ForeignKey(
         MasterUser,
         verbose_name=gettext_lazy("master user"),

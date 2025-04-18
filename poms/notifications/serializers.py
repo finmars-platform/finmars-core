@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import json
 
 from django.utils.encoding import force_str
@@ -10,7 +8,6 @@ from poms.notifications.models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='notification-detail')
     create_date = DateTimeTzAwareField()
     read_date = DateTimeTzAwareField()
     message = serializers.SerializerMethodField()
@@ -27,13 +24,24 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ['id', 'create_date', 'read_date', 'timesince',
-                  'message',
-                  'actor', 'actor_type', 'actor_repr',
-                  'verb',
-                  'action_object', 'action_object_type', 'action_object_repr',
-                  'target', 'target_type', 'target_repr',
-                  'data']
+        fields = [
+            "id",
+            "create_date",
+            "read_date",
+            "timesince",
+            "message",
+            "actor",
+            "actor_type",
+            "actor_repr",
+            "verb",
+            "action_object",
+            "action_object_type",
+            "action_object_repr",
+            "target",
+            "target_type",
+            "target_repr",
+            "data",
+        ]
 
     def get_message(self, value):
         return force_str(value)
@@ -45,12 +53,12 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_actor_type(self, value):
         if value.actor_content_type:
-            return '%s.%s' % (value.actor_content_type.app_label, value.actor_content_type.model)
+            return "%s.%s" % (value.actor_content_type.app_label, value.actor_content_type.model)
         return None
 
     def get_actor_repr(self, value):
         if value.actor_object_id:
-            return '%s' % value.actor
+            return "%s" % value.actor
         return None
 
     def get_action_object(self, value):
@@ -60,12 +68,15 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_action_object_type(self, value):
         if value.action_object_content_type_id:
-            return '%s.%s' % (value.action_object_content_type.app_label, value.action_object_content_type.model)
+            return "%s.%s" % (
+                value.action_object_content_type.app_label,
+                value.action_object_content_type.model,
+            )
         return None
 
     def get_action_object_repr(self, value):
         if value.action_object_object_id:
-            return '%s' % value.action_object
+            return "%s" % value.action_object
         return None
 
     def get_target(self, value):
@@ -75,12 +86,12 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_target_type(self, value):
         if value.target_content_type_id:
-            return '%s.%s' % (value.target_content_type.app_label, value.target_content_type.model)
+            return "%s.%s" % (value.target_content_type.app_label, value.target_content_type.model)
         return None
 
     def get_target_repr(self, value):
         if value.target_object_id:
-            return '%s' % value.target
+            return "%s" % value.target
         return None
 
     def get_data(self, value):

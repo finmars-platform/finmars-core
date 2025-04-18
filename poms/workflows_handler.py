@@ -9,7 +9,7 @@ from poms_app import settings
 _l = logging.getLogger('poms.api')
 
 
-def get_workflows_list(date_from, date_to):
+def get_workflows_list(date_from, date_to, realm_code, space_code):
     '''
     Requesting list of workflows from Finmars Workflow microservice
     Serves in Finmars Calendar web intrerface page
@@ -25,8 +25,14 @@ def get_workflows_list(date_from, date_to):
     headers = {'Content-type': 'application/json', 'Accept': 'application/json',
                'Authorization': 'Bearer %s' % refresh.access_token}
 
-    url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/?created_after=' + str(
-        date_from) + '&created_before=' + str(date_to)
+    if realm_code:
+
+        url = 'https://' + settings.DOMAIN_NAME + '/' + realm_code + '/' + space_code + '/workflow/api/workflow/?created_after=' + str(
+            date_from) + '&created_before=' + str(date_to)
+
+    else:
+        url = 'https://' + settings.DOMAIN_NAME + '/' + space_code + '/workflow/api/workflow/?created_after=' + str(
+            date_from) + '&created_before=' + str(date_to)
 
     response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
 

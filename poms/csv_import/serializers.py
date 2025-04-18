@@ -3,22 +3,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
-from poms_app import settings
-
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, name_validator
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
-    ModelMetaSerializer,
     ModelWithTimeStampSerializer,
     ModelWithUserCodeSerializer,
 )
 from poms.common.storage import get_storage
 from poms.users.fields import HiddenMemberField, MasterUserField
-
-from ..celery_tasks.models import CeleryTask
-from ..file_reports.serializers import FileReportSerializer
-from ..obj_attrs.models import GenericAttributeType
-from ..transaction_import.models import TransactionImportResult
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 from .models import (
     CsvField,
@@ -27,6 +19,10 @@ from .models import (
     EntityField,
     SimpleImportProcessItem,
 )
+from ..celery_tasks.models import CeleryTask
+from ..file_reports.serializers import FileReportSerializer
+from ..obj_attrs.models import GenericAttributeType
+from ..transaction_import.models import TransactionImportResult
 
 storage = get_storage()
 
@@ -127,11 +123,8 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         max_length=255,
         allow_null=False,
         allow_blank=False,
-        validators=[
-            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
-        ],
+        validators=[name_validator],
     )
-
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     class Meta:
@@ -223,6 +216,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "default_fx_rate",
                 "reference_for_pricing",
                 "pricing_condition",
+                "country",
             ],
             "accounts.account": [
                 "name",
@@ -254,6 +248,15 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "short_name",
                 "public_name",
                 "notes",
+                "portfolio_type",
+            ],
+            "portfolios.portfoliotype": [
+                "name",
+                "user_code",
+                "short_name",
+                "public_name",
+                "notes",
+                "portfolio_class",
             ],
             "instruments.instrument": [
                 "name",
@@ -261,6 +264,9 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "short_name",
                 "public_name",
                 "notes",
+
+                "identifier",
+
                 "country",
                 "reference_for_pricing",
                 "instrument_type",
@@ -305,12 +311,18 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "principal_price",
                 "accrued_price",
                 "factor",
+                "ytm",
+                "modified_duration",
+                "long_delta",
+                "short_delta",
+                "is_temporary_price",
             ],
             "currencies.currencyhistory": [
                 "currency",
                 "pricing_policy",
                 "date",
                 "fx_rate",
+                "is_temporary_fx_rate",
             ],
             "strategies.strategy1": [
                 "name",
@@ -679,7 +691,7 @@ class CsvDataImportSerializer(serializers.Serializer):
         return CsvDataFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return f"{settings.BASE_API_URL}/public/{file_name}"
+        return f"{master_user.space_code}/public/{file_name}"
 
 
 class SimpleImportImportedItemSerializer(serializers.Serializer):

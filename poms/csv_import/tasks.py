@@ -16,12 +16,12 @@ storage = get_storage()
 
 
 @finmars_task(name="csv_import.simple_import", bind=True)
-def simple_import(self, task_id, procedure_instance_id=None):
+def simple_import(self, task_id, procedure_instance_id=None, *args, **kwargs):
     from poms.csv_import.handlers import SimpleImportProcess
 
     try:
         celery_task = CeleryTask.objects.get(pk=task_id)
-        # Important (record history rely on that)
+        # Important (record history relies on that)
         celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
@@ -34,71 +34,69 @@ def simple_import(self, task_id, procedure_instance_id=None):
         raise RuntimeError(err_msg) from e
 
     try:
-        instance = SimpleImportProcess(
+        import_process = SimpleImportProcess(
             task_id=task_id,
             procedure_instance_id=procedure_instance_id,
         )
-
         celery_task.update_progress(
             {
                 "current": 0,
-                "total": len(instance.raw_items),
+                "total": len(import_process.raw_items),
                 "percent": 0,
                 "description": "Going to parse raw items",
             }
         )
 
-        instance.fill_with_file_items()
+        import_process.fill_with_file_items()
 
-        if instance.scheme.data_preprocess_expression:
-            _l.info(f"Going to execute {instance.scheme.data_preprocess_expression}")
+        if import_process.scheme.data_preprocess_expression:
+            _l.info(
+                f"Going to execute {import_process.scheme.data_preprocess_expression}"
+            )
             try:
-                new_file_items = instance.whole_file_preprocess()
-                instance.file_items = new_file_items
+                new_file_items = import_process.whole_file_preprocess()
+                import_process.file_items = new_file_items
 
             except Exception as e:
-                err_msg = f"transaction_import.preprocess errors {repr(e)}"
+                err_msg = f"transaction_import.preprocess error {repr(e)}"
                 _l.error(err_msg)
-                celery_task.error_message = err_msg
-                celery_task.status = CeleryTask.STATUS_ERROR
-                celery_task.save()
                 raise RuntimeError(err_msg) from e
 
-        instance.fill_with_raw_items()
+        import_process.fill_with_raw_items()
 
         celery_task.update_progress(
             {
                 "current": 0,
-                "total": len(instance.raw_items),
+                "total": len(import_process.raw_items),
                 "percent": 0,
                 "description": "Parse raw items",
             }
         )
 
-        instance.apply_conversion_to_raw_items()
+        import_process.apply_conversion_to_raw_items()
 
         celery_task.update_progress(
             {
                 "current": 0,
-                "total": len(instance.raw_items),
+                "total": len(import_process.conversion_items),
                 "percent": 0,
                 "description": "Apply Conversion",
             }
         )
 
-        instance.preprocess()
+        import_process.preprocess()
 
         celery_task.update_progress(
             {
                 "current": 0,
-                "total": len(instance.raw_items),
+                "total": len(import_process.raw_items),
                 "percent": 0,
                 "description": "Preprocess items",
             }
         )
-        instance.process()
+        import_process.process()
 
-        return json.dumps(instance.task.result_object, default=str)
+        return json.dumps(import_process.task.result_object, default=str)
 
     except Exception as e:
         err_msg = f"simple_import error {repr(e)} trace {traceback.format_exc()}"
@@ -107,10 +105,13 @@ def simple_import(self, task_id, procedure_instance_id=None):
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise e
 
 
 @finmars_task(name="csv_import.data_csv_file_import_by_procedure_json", bind=True)
-def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
+def data_csv_file_import_by_procedure_json(
+    self, procedure_instance_id, celery_task_id, *args, **kwargs
+):
     from poms.procedures.models import RequestDataFileProcedureInstance
 
     _l.info(
@@ -164,6 +165,10 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                 kwargs={
                     "task_id": celery_task.id,
                     "procedure_instance_id": procedure_instance_id,
+                    "context": {
+                        "space_code": celery_task.master_user.space_code,
+                        "realm_code": celery_task.master_user.realm_code,
+                    },
                 },
                 queue="backend-background-queue",
             )
@@ -190,9 +195,12 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         procedure_instance.save()
 
 
-
-@finmars_task(name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True)
-def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_instance_id=None):
+@finmars_task(
+    name="csv_import.simple_import_bulk_insert_final_updates_procedure", bind=True
+)
+def simple_import_bulk_insert_final_updates_procedure(
+    self, task_id, procedure_instance_id=None, *args, **kwargs
+):
     from poms.csv_import.handlers import SimpleImportFinalUpdatesProcess
 
     try:
@@ -226,3 +234,4 @@ def simple_import_bulk_insert_final_updates_procedure(self, task_id, procedure_i
         celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
+        raise RuntimeError(err_msg) from e

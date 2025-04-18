@@ -66,7 +66,10 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 config_import_instance = serializer.save()
 
-                configuration_import_as_json.apply_async(kwargs={'instance': config_import_instance})
+                configuration_import_as_json.apply_async(kwargs={'instance': config_import_instance, 'context': {
+                    'space_code': request.space_code,
+                    'realm_code': request.realm_code
+                }})
                 processed = processed + 1
 
             _l.info("Processed layouts %s" % processed)

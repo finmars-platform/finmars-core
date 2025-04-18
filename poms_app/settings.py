@@ -3,16 +3,19 @@ Django settings for the main Backend project.
 """
 
 
-
 import os
 from datetime import timedelta
 
-import sentry_sdk
+from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import gettext_lazy
+
+import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
+
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
+
 
 DEFAULT_CHARSET = "utf-8"
 SERVICE_NAME = "finmars"  # needs for Finmars Access Policy
@@ -21,6 +24,8 @@ INSTANCE_TYPE = ENV_STR("INSTANCE_TYPE", "backend")  # backend, worker, schedule
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+print(f"BASE_DIR {BASE_DIR}")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL("DEBUG", True)
@@ -39,7 +44,9 @@ HOST_URL = ENV_STR("HOST_URL", "https://finmars.com")
 DOMAIN_NAME = ENV_STR("DOMAIN_NAME", "finmars.com")
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_BOOL("USE_DEBUGGER", False)
-BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
+
+REALM_CODE = ENV_STR("REALM_CODE", "realm00000")
+BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")  # DEPRECATED, remove in 1.9.0
 
 JWT_SECRET_KEY = ENV_STR("JWT_SECRET_KEY", None)
 VERIFY_SSL = ENV_BOOL("VERIFY_SSL", True)
@@ -53,9 +60,10 @@ CBONDS_BROKER_URL = os.environ.get("CBONDS_BROKER_URL", None)
 SUPERSET_URL = os.environ.get("SUPERSET_URL", None)
 UNIFIED_DATA_PROVIDER_URL = os.environ.get("UNIFIED_DATA_PROVIDER_URL", None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
-ROUND_NDIGITS = ENV_INT("ROUND_NDIGITS", 6)
+ROUND_NDIGITS = ENV_INT("ROUND_NDIGITS", 4)
 
 API_DATE_FORMAT = "%Y-%m-%d"
+API_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # Important that all files write to temporary file no matter size
 FILE_UPLOAD_MAX_MEMORY_SIZE = 0
@@ -72,17 +80,20 @@ INSTALLED_APPS = [
     "modeltranslation",
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    # Admin always required (even if urls are not serverd) - because of migrations
+    "django.contrib.admin",
+    "django.contrib.admindocs",
+    "django.contrib.sessions",
+    "django.contrib.messages",
     "drf_yasg",
     "django_filters",
     "mptt",
     "healthcheck",
     "poms.history",  # order is important because it registers models to listen to
     "poms.system",
-    # 'poms.cache_machine',
+    "poms.pricing",
     "poms.users",
     "poms.iam",
     "poms.notifications",
@@ -101,14 +112,13 @@ INSTALLED_APPS = [
     "poms.csv_import",
     "poms.transaction_import",
     "poms.complex_import",
-    "poms.configuration_export",  # DEPRECATED
-    "poms.configuration_import",  # DEPRECATED
     "poms.reference_tables",
     "poms.celery_tasks",
     "poms.reconciliation",
     "poms.file_reports",
     "poms.configuration_sharing",  # DEPRECATED
-    "poms.pricing",
+    "poms.clients",
+
     "poms.schedules",
     "poms.procedures",
     "poms.credentials",
@@ -117,18 +127,11 @@ INSTALLED_APPS = [
     "poms.configuration",
     "poms.auth_tokens",
     "poms.widgets",
-    "django.contrib.admin",
-    "django.contrib.admindocs",
+    "poms.explorer",
     "crispy_forms",
     "rest_framework",
     "rest_framework_swagger",
     "corsheaders",
-    # 'django_otp',
-    # 'django_otp.plugins.otp_hotp',
-    # 'django_otp.plugins.otp_totp',
-    # 'django_otp.plugins.otp_email',
-    # 'django_otp.plugins.otp_static',
-    # 'two_factor',
     "django_celery_results",
     "django_celery_beat",
     "finmars_standardized_errors",
@@ -139,8 +142,12 @@ INSTALLED_APPS = [
 ]
 
 if USE_DEBUGGER:
-    INSTALLED_APPS.append("debug_toolbar")
-    INSTALLED_APPS.append("pympler")
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar",
+            "pympler",
+        ]
+    )
 
 # CRAZY, this settings MUST be before MIDDLEWARE prop
 CORS_ALLOW_CREDENTIALS = ENV_BOOL("CORS_ALLOW_CREDENTIALS", True)
@@ -151,14 +158,21 @@ CORS_ALLOW_ALL_ORIGINS = ENV_BOOL("CORS_ALLOW_ALL_ORIGINS", True)
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
+
+    "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
+
+    "poms.common.middleware.ResponseTimeMiddleware",  # track execution time
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -209,17 +223,39 @@ WSGI_APPLICATION = "poms_app.wsgi.application"
 # ============
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+USE_DB_REPLICA = ENV_BOOL("USE_DB_REPLICA", False)
+DB_ENGINE = "django.db.backends.postgresql"
+DB_DEFAULT = DEFAULT_DB_ALIAS
+DB_REPLICA = "replica"
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
+    DB_DEFAULT: {
+        "ENGINE": DB_ENGINE,
         "NAME": ENV_STR("DB_NAME", "finmars_dev"),
         "USER": ENV_STR("DB_USER", "postgres"),
         "PASSWORD": ENV_STR("DB_PASSWORD", "postgres"),
         "HOST": ENV_STR("DB_HOST", "localhost"),
         "PORT": ENV_INT("DB_PORT", 5432),
-        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
-    }
+        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 300),
+    },
 }
+if USE_DB_REPLICA:
+    print("Warning. DB Replica RO mode activated!")
+    DATABASES[DB_REPLICA] = {
+        "ENGINE": DB_ENGINE,
+        "NAME": ENV_STR("REPLICA_DB_NAME", "finmars_dev"),
+        "USER": ENV_STR("REPLICA_DB_USER", "postgres"),
+        "PASSWORD": ENV_STR("REPLICA_DB_PASSWORD", "postgres"),
+        "HOST": ENV_STR("REPLICA_DB_HOST", "localhost"),
+        "PORT": ENV_INT("REPLICA_DB_PORT", 5432),
+        "CONN_MAX_AGE": ENV_INT("CONN_MAX_AGE", 60),
+        "TEST": {
+            "MIRROR": DB_DEFAULT,
+        },
+    }
+    DATABASE_ROUTERS = [
+        "poms_app.db_router.DbRouter",
+    ]
+
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
@@ -341,7 +377,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-STATIC_URL = f"/{BASE_API_URL}/api/static/"
+STATIC_URL = f"{REALM_CODE}/api/static/"
+
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # creates when collectstatic
 
 STATICFILES_DIR = os.path.join(BASE_DIR, "poms", "api", "static")
@@ -354,25 +391,45 @@ USE_WEBSOCKETS = ENV_BOOL("USE_WEBSOCKETS", False)
 WEBSOCKET_HOST = ENV_STR("WEBSOCKET_HOST", "ws://0.0.0.0:6969")
 WEBSOCKET_APP_TOKEN = ENV_STR("WEBSOCKET_APP_TOKEN", "943821230")
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "throttling": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-#     "http_session": {
-#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-#     },
-# }
+# ==========
+# = REDIS =
+# ==========
 
-# Maybe in future, we will return to Redis
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379',
-#     },
-# }
+REDIS_HOST = ENV_STR("REDIS_HOST", default="localhost")
+REDIS_PORT = ENV_INT("REDIS_PORT", default=6379)
+REDIS_DB_DEFAULT = ENV_INT("REDIS_DB_DEFAULT", default=1)
+REDIS_DB_SESSION = ENV_INT("REDIS_DB_SESSION", default=2)
+REDIS_DB_THROTTLING = ENV_INT("REDIS_DB_THROTTLING", default=3)
+REDIS_BACKEND = "django_redis.cache.RedisCache"
+REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+REDIS_CLIENT_CLASS = "django_redis.client.DefaultClient"
+
+CACHES = {
+    "default": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_DEFAULT}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.default",
+    },
+    "throttling": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_THROTTLING}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.throttling",
+    },
+    "http_session": {
+        "BACKEND": REDIS_BACKEND,
+        "LOCATION": f"{REDIS_URL}/{REDIS_DB_SESSION}",
+        "OPTIONS": {
+            "CLIENT_CLASS": REDIS_CLIENT_CLASS,
+        },
+        "KEY_PREFIX": "backend.session",
+    },
+}
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
@@ -401,10 +458,10 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "provision-verbose",
         },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        }
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django.request": {"level": "ERROR", "handlers": ["console", "file"]},
@@ -422,28 +479,26 @@ LOGGING = {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True,
-        }
+        },
     },
 }
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == "local":
+    os.makedirs(f"{BASE_DIR}/log/", exist_ok=True)
 
-    os.makedirs(f'{BASE_DIR}/log/', exist_ok=True)
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': f'{BASE_DIR}/log/django.log',
-        'formatter': 'verbose',
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": f"{BASE_DIR}/log/django.log",
+        "formatter": "verbose",
     }
 
 else:
-
-    LOGGING['handlers']['file'] = {
-        'level': DJANGO_LOG_LEVEL,
-        'class': 'logging.FileHandler',
-        'filename': '/var/log/finmars/backend/django.log',
-        'formatter': 'verbose'
+    LOGGING["handlers"]["file"] = {
+        "level": DJANGO_LOG_LEVEL,
+        "class": "logging.FileHandler",
+        "filename": "/var/log/finmars/backend/django.log",
+        "formatter": "verbose",
     }
 
 # if SEND_LOGS_TO_FINMARS:
@@ -477,46 +532,29 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "poms.common.pagination.PageNumberPaginationExt",
     "PAGE_SIZE": 40,
-    # 'EXCEPTION_HANDLER': 'poms.common.utils.finmars_exception_handler',
     "EXCEPTION_HANDLER": "finmars_standardized_errors.handler.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        # 'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework.authentication.BasicAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "poms.common.authentication.JWTAuthentication",
         "poms.common.authentication.KeycloakAuthentication",
-        # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
-    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    "DEFAULT_FILTER_BACKENDS": ("poms.common.filters.FinmarsFilterBackend",),
+    # "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": (
-        # 'rest_framework.renderers.JSONRenderer',
-        "poms.common.renderers.CustomJSONRenderer",
+        "poms.common.renderers.FinmarsJSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+        "rest_framework.renderers.AdminRenderer",
     ),
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
-    # 'DEFAULT_PARSER_CLASSES': (
-    #     'rest_framework.parsers.JSONParser',
-    #     'rest_framework.parsers.FormParser',
-    #     'rest_framework.parsers.MultiPartParser',
-    # ),
     # "DEFAULT_THROTTLE_CLASSES": (
     #     "poms.api.throttling.AnonRateThrottleExt",
     #     "poms.api.throttling.UserRateThrottleExt",
     # ),
     "DEFAULT_THROTTLE_RATES": {
-        # 'anon': '5/second',
-        # 'user': '50/second',
         "anon": "20/min",
         "user": "500/min",
-    }
-    # 'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S %Z',
-    # 'DATETIME_INPUT_FORMATS': (ISO_8601, '%c', '%Y-%m-%d %H:%M:%S %Z'),
+    },
 }
-
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] += (
-    "rest_framework.renderers.BrowsableAPIRenderer",
-    "rest_framework.renderers.AdminRenderer",
-)
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
@@ -525,7 +563,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 # =================
 # = SMTP Settings =
 # =================
-
+if SERVER_TYPE == "local":
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = ENV_STR(
     "DEFAULT_FROM_EMAIL", '"Finmars Notifications" <no-reply@finmars.com>'
 )
@@ -586,19 +625,26 @@ CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1)
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 
-CELERY_WORKER_CONCURRENCY = ENV_INT(
-    "CELERY_WORKER_CONCURRENCY", 2
-)  # Number of child processes processing the queue. The default is the number of CPUs available on your system.
+# Max number of child processes which are processing the queue.
+# The default is the number of CPUs available on your system.
+CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2)
 
-# CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
-# This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
-# However, keep in mind that this could lead to tasks being executed multiple times if the worker crashes during execution, so ensure that your tasks are idempotent.
+
+# CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after
+# the task has been executed, not just before, which is the default behavior.
+# This means the tasks can be recovered when a worker crashes, as the tasks
+# won't be removed from the queue until they are completed.
+# However, keep in mind that this could lead to tasks being executed multiple times
+# if the worker crashes during execution, so ensure that your tasks are idempotent.
 CELERY_ACKS_LATE = True
 
-# CELERY_TASK_REJECT_ON_WORKER_LOST: If this is True, when the worker of a task is lost (e.g., crashes), the task will be returned back to the queue,
+# CELERY_TASK_REJECT_ON_WORKER_LOST: If this is True, when the worker of a task
+# is lost (e.g., crashes), the task will be returned back to the queue,
 # so it can be picked up by another worker.
-# This increases the resiliency of the system as the tasks are not lost, they are retried.
-# But, it can also increase the load on the system as tasks could potentially be executed multiple times in the event of frequent worker failures.
+# This increases the resiliency of the system as the tasks are not lost,
+# they are retried.
+# But it can also increase the load on the system as tasks
+# could potentially be executed multiple times in the event of frequent worker failures.
 # Make sure your tasks are safe to be retried in such cases (idempotent).
 CELERY_TASK_REJECT_ON_WORKER_LOST = False  # Make tasks rejected
 
@@ -627,11 +673,11 @@ AWS_S3_ACCESS_KEY_ID = os.environ.get("AWS_S3_ACCESS_KEY_ID", None)
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get("AWS_S3_SECRET_ACCESS_KEY", None)
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", None)
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", None)
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+
 AWS_S3_VERIFY = os.environ.get("AWS_S3_VERIFY", None)
 if os.environ.get("AWS_S3_VERIFY") == "False":
     AWS_S3_VERIFY = False
-
-AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY", None)
 AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME", None)
@@ -656,7 +702,6 @@ BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
 BLOOMBERG_SANDBOX_WAIT_FAIL = False
 
-# PRICING SECTION
 
 MEDIATOR_URL = ENV_STR("MEDIATOR_URL", "")
 DATA_FILE_SERVICE_URL = ENV_STR("DATA_FILE_SERVICE_URL", "")
@@ -677,6 +722,18 @@ INTERNAL_IPS = [
     "127.0.0.1",
     "localhost",
 ]
+
+SWAGGER_SETTINGS = {
+    # ...
+    'DEFAULT_SPEC_RENDERERS': [
+        # JSON only
+        'drf_yasg.renderers.SwaggerJSONRenderer',
+        'drf_yasg.renderers.OpenAPIRenderer',
+        # remove or comment out the YAML renderer
+        # 'drf_yasg.renderers.SwaggerYAMLRenderer',
+    ],
+    # ...
+}
 
 if USE_DEBUGGER:
     print("Warning. Debugger is activated, could lead to low performance")
@@ -701,6 +758,9 @@ if USE_DEBUGGER:
     DEBUG_TOOLBAR_CONFIG = {
         "RESULTS_STORE_SIZE": 100,
     }
+
+
+ACCESS_POLICY_CACHE_TTL = ENV_INT("ACCESS_POLICY_CACHE_TTL", 300)  # 5 mins
 
 # ========================
 # = KEYCLOAK INTEGRATION =
@@ -728,7 +788,7 @@ SIMPLE_JWT = {
     "ISSUER": None,
     "JWK_URL": None,
     "LEEWAY": 0,
-    "AUTH_HEADER_TYPES": ("Bearer"),
+    "AUTH_HEADER_TYPES": "Bearer",
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
@@ -740,21 +800,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
-# OLD ONE
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Set token lifetime
-#     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-#     'ROTATE_REFRESH_TOKENS': False,
-#     'ALGORITHM': 'HS256',
-#     'SIGNING_KEY': SECRET_KEY,
-#     'VERIFYING_KEY': None,
-#     'AUTH_HEADER_TYPES': ('Bearer',),
-#     'USER_ID_FIELD': 'id',
-#     'USER_ID_CLAIM': 'user_id',
-#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-#     'TOKEN_TYPE_CLAIM': 'token_type',
-# }
-
 REDOC_SETTINGS = {
     "LAZY_RENDERING": True,
     "NATIVE_SCROLLBARS": True,
@@ -762,16 +807,34 @@ REDOC_SETTINGS = {
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
-# SENTRY
+SENTRY_DSN = ENV_STR("SENTRY_DSN", None)
+if SENTRY_DSN is None:
+    SENTRY_DSN = "https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2"
 
-sentry_sdk.init(
-    dsn="https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2",
-    integrations=[DjangoIntegration()],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0,
-    # If you wish to associate users to errors (assuming you are using
-    # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True,
+# SENTRY
+if SERVER_TYPE != "local":
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        environment=SERVER_TYPE,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0,
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True,
+    )
+
+INSTRUMENT_TYPE_PREFIX = ENV_STR(
+    "INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type"
 )
+
+MAX_ITEMS_IMPORT = ENV_INT("MAX_ITEMS_IMPORT", 10000)
+
+NOTIFICATION_SERVICE_DOMAIN_NAME = ENV_STR(
+    env_name="NOTIFICATION_SERVICE_DOMAIN_NAME", default="http://localhost:8010"
+)
+
+# TODO: - change the URL to the actual URL of the notification service
+NOTIFICATION_SERVICE_BASE_URL = f"https://{DOMAIN_NAME}/{REALM_CODE}/{{space_code}}/notification-service/api/v1/"

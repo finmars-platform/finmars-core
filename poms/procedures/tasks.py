@@ -19,7 +19,7 @@ _l = logging.getLogger('poms.procedures')
 
 
 @finmars_task(name='procedures.execute_data_procedure', bind=True)
-def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=None, options=None):
+def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=None, options=None, *args, **kwargs):
 
     from poms.procedures.handlers import DataProcedureProcess
 
@@ -54,7 +54,7 @@ def procedure_request_data_file(self,
                                 master_user,
                                 procedure_instance,
                                 transaction_file_result,
-                                data):
+                                data, *args, **kwargs):
     _l.debug('procedure_request_data_file processing')
     _l.debug('procedure_request_data_file procedure %s' % procedure_instance)
     _l.debug('procedure_request_data_file transaction_file_result %s' % transaction_file_result)
@@ -134,7 +134,7 @@ def procedure_request_data_file(self,
 
 
 @finmars_task(name='procedures.run_data_procedure_from_formula', bind=True)
-def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context, **kwargs):
+def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context, *args, **kwargs):
     _l.info('run_data_procedure_from_formula init')
 
     from poms.users.models import MasterUser
@@ -174,15 +174,15 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
 
 # TODO Refactor to task_id
 @finmars_task(name='procedures.remove_old_data_procedures')
-def remove_old_data_procedures():
+def remove_old_data_procedures(*args, **kwargs):
     try:
 
-        tasks = RequestDataFileProcedureInstance.objects.filter(created__lte=now() - timedelta(days=30))
+        tasks = RequestDataFileProcedureInstance.objects.filter(created_at__lte=now() - timedelta(days=30))
 
         count = tasks.count()
 
         _l.info("Delete %s data procedures" % count)
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
         tasks.delete()
 
         send_system_message(master_user=master_user, type="info",
@@ -191,7 +191,7 @@ def remove_old_data_procedures():
 
     except Exception as e:
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.all().first()
 
         send_system_message(master_user=master_user, action_status="required", type="warning",
                             title='Could not delete old Data Procedures',

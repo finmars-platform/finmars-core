@@ -4,6 +4,8 @@ from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.counterparties.models import Responsible, ResponsibleGroup
+from poms.iam.models import ResourceGroup
+from poms.users.models import Member
 
 EXPECTED_RESPONSIBLE = {
     "id": 3,
@@ -20,6 +22,13 @@ EXPECTED_RESPONSIBLE = {
     "short_name": "XWY",
     "public_name": None,
     "notes": None,
+    "is_active": True,
+    "actual_at": None,
+    "source_type": "manual",
+    "source_origin": "manual",
+    "external_id": None,
+    "is_manual_locked": False,
+    "is_locked": True,
     "is_valid_for_all_portfolios": True,
     "is_deleted": False,
     "portfolios": [],
@@ -66,6 +75,11 @@ EXPECTED_RESPONSIBLE = {
         "model_name": "responsible",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
+    "resource_groups": [],
+    "resource_groups_object": [],
 }
 
 CREATE_DATA = {
@@ -79,16 +93,20 @@ CREATE_DATA = {
 
 
 class ResponsibleViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/responsible/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible/"
         self.responsible = None
 
     def create_responsible_group(self) -> ResponsibleGroup:
         return ResponsibleGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -97,7 +115,7 @@ class ResponsibleViewSetTest(BaseTestCase):
     def create_responsible(self) -> Responsible:
         self.responsible = Responsible.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_responsible_group(),
             user_code=self.random_string(),
             name=self.random_string(),
@@ -147,7 +165,8 @@ class ResponsibleViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        self.assertEqual(len(response_json["results"]), 2)  # default + new
+        self.assertEqual(len(response_json["results"]), 1)
+        self.assertEqual(response_json["results"][0]["user_code"], responsible.user_code)
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         responsible = self.create_responsible()
@@ -242,3 +261,114 @@ class ResponsibleViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def create_group(self, name: str = "test") -> ResourceGroup:
+        return ResourceGroup.objects.create(
+            name=name,
+            user_code=name,
+            description=name,
+            configuration_code=name,
+            owner=Member.objects.all().first(),
+        )
+
+    def test_add_resource_group(self):
+        response = self.client.post(
+            path=self.url, 
+            format="json", 
+            data=self.prepare_data_for_create()
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        responsible_id = response.json()["id"]
+        
+        rg_name = self.random_string()
+        rg = self.create_group(name=rg_name)
+        response = self.client.patch(
+            f"{self.url}{responsible_id}/",
+            data={"resource_groups": [rg_name]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        instrument_data = response.json()
+        self.assertIn("resource_groups", instrument_data)
+        self.assertEqual(instrument_data["resource_groups"], [rg_name])
+
+        self.assertIn("resource_groups_object", instrument_data)
+        resource_group = instrument_data["resource_groups_object"][0]
+        self.assertEqual(resource_group["user_code"], rg.user_code)
+        self.assertNotIn("assignments", resource_group)
+
+    def test_remove_resource_groups(self):
+        response = self.client.post(
+            path=self.url, 
+            format="json", 
+            data=self.prepare_data_for_create())
+        self.assertEqual(response.status_code, 201, response.content)
+        responsible_id = response.json()["id"]
+        
+        name_1 = self.random_string()
+        self.create_group(name=name_1)
+        name_3 = self.random_string()
+        self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{responsible_id}/",
+            data={"resource_groups": [name_1, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        responsible_data = response.json()
+        self.assertEqual(len(responsible_data["resource_groups"]), 2)
+        self.assertEqual(len(responsible_data["resource_groups_object"]), 2)
+
+        response = self.client.patch(
+            f"{self.url}{responsible_id}/",
+            data={"resource_groups": []},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        responsible_data = response.json()
+        self.assertEqual(len(responsible_data["resource_groups"]), 0)
+        self.assertEqual(responsible_data["resource_groups"], [])
+
+        self.assertEqual(len(responsible_data["resource_groups_object"]), 0)
+        self.assertEqual(responsible_data["resource_groups_object"], [])
+
+    def test_destroy_assignments(self):
+        response = self.client.post(
+            path=self.url, 
+            format="json", 
+            data=self.prepare_data_for_create())
+        self.assertEqual(response.status_code, 201, response.content)
+        responsible_id = response.json()["id"]
+        
+        name_1 = self.random_string()
+        rg_1 = self.create_group(name=name_1)
+        name_3 = self.random_string()
+        rg_3 = self.create_group(name=name_3)
+
+        response = self.client.patch(
+            f"{self.url}{responsible_id}/",
+            data={"resource_groups": [name_1, name_3]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        responsible_data = response.json()
+        self.assertEqual(len(responsible_data["resource_groups"]), 2)
+        self.assertEqual(len(responsible_data["resource_groups_object"]), 2)
+
+        url = f"/{self.realm_code}/{self.space_code}/api/v1/iam/resource-group/"
+        response = self.client.delete(f"{url}{rg_1.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.delete(f"{url}{rg_3.id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.get(f"{self.url}{responsible_id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        responsible_data = response.json()
+        self.assertEqual(len(responsible_data["resource_groups"]), 0)
+        self.assertEqual(responsible_data["resource_groups"], [])

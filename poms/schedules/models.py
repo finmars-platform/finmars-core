@@ -1,6 +1,9 @@
 import json
 import logging
 from datetime import datetime
+from typing import Optional
+
+from croniter import croniter
 
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
@@ -8,9 +11,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
-from croniter import croniter
-
-from poms.common.models import DataTimeStampedModel, NamedModel
+from poms.common.models import NamedModel, TimeStampedModel
 from poms.configuration.models import ConfigurationModel
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -18,12 +19,12 @@ from poms.users.models import MasterUser
 _l = logging.getLogger("poms.schedules")
 
 
-def validate_crontab(value):
+def validate_crontab(value: str) -> None:
     try:
         croniter(value, timezone.now())
 
-    except (ValueError, KeyError, TypeError) as e:
-        raise ValidationError(gettext_lazy("A valid cron string is required.")) from e
+    except Exception as e:
+        raise ValidationError(gettext_lazy(f"Invalid cron string {value} resulted in {repr(e)}")) from e
 
 
 class Schedule(NamedModel, ConfigurationModel):
@@ -58,9 +59,7 @@ class Schedule(NamedModel, ConfigurationModel):
         default="",
         validators=[validate_crontab],
         verbose_name=gettext_lazy("cron expr"),
-        help_text=gettext_lazy(
-            'Format is "* * * * *" (minute / hour / day_month / month / day_week)'
-        ),
+        help_text=gettext_lazy('Format is "* * * * *" (minute / hour / day_month / month / day_week)'),
     )
     last_run_at = models.DateTimeField(
         default=timezone.now,
@@ -102,15 +101,19 @@ class Schedule(NamedModel, ConfigurationModel):
         else:
             self.json_data = None
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    class Meta(NamedModel.Meta):
+        unique_together = ("user_code", "master_user")
+
+    def __str__(self):
+        return self.user_code
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         from poms.schedules.utils import sync_schedules
 
         if self.is_enabled:
-            self.schedule(save=False)
+            self.schedule()
 
-        super(Schedule, self).save(
+        super().save(
             force_insert=force_insert,
             force_update=force_update,
             using=using,
@@ -119,31 +122,22 @@ class Schedule(NamedModel, ConfigurationModel):
 
         sync_schedules()
 
-    def schedule(self, save=False):
-        start_time = timezone.localtime(timezone.now())
-        cron = croniter(self.cron_expr, start_time)
+    def schedule(self, save=False) -> Optional[datetime]:
+        """Schedule the next run of the schedule based on the cron expression."""
+        start_time = timezone.now()
+        try:
+            next_run_time = croniter(self.cron_expr, start_time).get_next()
+            self.next_run_at = datetime.fromtimestamp(next_run_time, tz=timezone.utc)
+            if save:
+                self.save(update_fields=["next_run_at"])
 
-        _l.info(f"schedule cron_expr {self.cron_expr} start_time {start_time} ")
+            _l.info(f"schedule next_run_time {self.next_run_at}")
 
-        next_run_at = cron.get_next(datetime)
+            return self.next_run_at
 
-        _l.info(f"schedule next_run_at {next_run_at} ")
-
-        self.next_run_at = next_run_at
-
-        if save:
-            self.save(
-                update_fields=[
-                    "last_run_at",
-                    "next_run_at",
-                ]
-            )
-
-    class Meta(NamedModel.Meta):
-        unique_together = ("user_code", "master_user")
-
-    def __str__(self):
-        return self.user_code
+        except Exception as e:
+            _l.error(f"Error scheduling next run for {self.name}: {e}")
+            return None
 
 
 class ScheduleProcedure(models.Model):
@@ -185,11 +179,11 @@ class ScheduleProcedure(models.Model):
         ]
 
 
-class ScheduleInstance(DataTimeStampedModel):
+class ScheduleInstance(TimeStampedModel):
     """
     Actual Instance of schedule
     Needs just to be control of Schedule Status
-    Its really important to keep track of Pricing Procedures/Data Procedures daily
+    It's really important to keep track of Pricing Procedures/Data Procedures daily
     External data feeds keeps our Reports in latest state. And we should be sure
     that schedules processed correctly
     """
@@ -244,9 +238,7 @@ class ScheduleInstance(DataTimeStampedModel):
             ),
         )
 
-        self.current_processing_procedure_number = (
-            self.current_processing_procedure_number + 1
-        )
+        self.current_processing_procedure_number += 1
 
         _l.debug(
             f"run_next_procedure schedule {self.schedule} "
@@ -256,8 +248,7 @@ class ScheduleInstance(DataTimeStampedModel):
         for procedure in self.schedule.procedures.all():
             try:
                 if (
-                    self.status != ScheduleInstance.STATUS_ERROR
-                    or self.schedule.error_handler == "continue"
+                    self.status != ScheduleInstance.STATUS_ERROR or self.schedule.error_handler == "continue"
                 ) and procedure.order == self.current_processing_procedure_number:
                     self.save()
 
@@ -277,10 +268,14 @@ class ScheduleInstance(DataTimeStampedModel):
                             "procedure_id": procedure.id,
                             "master_user_id": self.master_user.id,
                             "schedule_instance_id": self.id,
+                            "context": {
+                                "space_code": self.master_user.space_code,
+                                "realm_code": self.master_user.realm_code,
+                            },
                         }
                     )
 
-            except Exception:
+            except Exception as e:
                 self.status = ScheduleInstance.STATUS_ERROR
                 self.save()
 
@@ -289,7 +284,7 @@ class ScheduleInstance(DataTimeStampedModel):
                     performed_by="system",
                     section="schedules",
                     description=(
-                        f"Schedule {self.schedule.name}. Error occurred at step "
+                        f"Schedule {self.schedule.name}. Error {repr(e)} occurred at step "
                         f"{self.current_processing_procedure_number}/{total_procedures}"
                     ),
                 )

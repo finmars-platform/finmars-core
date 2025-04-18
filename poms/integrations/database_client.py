@@ -2,27 +2,45 @@ import logging
 import traceback
 
 from django.conf import settings
+
+from poms.common.exceptions import FinmarsBaseException
 from poms.common.http_client import HttpClient, HttpClientError
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.serializers import CallBackDataDictRequestSerializer
 
 _l = logging.getLogger("default")
-log = "DatabaseClient"
 
-BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-COMMON_PART = "api/v1/import/finmars-database"
-BACKEND_CALLBACK_URLS = {
-    "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
-    "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
-    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
-}
 
-V1_EXPORT = "api/v1/export"
+v1_export = "api/v1/export"
 FINMARS_DATABASE_URLS = {
-    "currency": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/currency/",
-    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/instrument/",
-    "company": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/company/",
+    "instrument": f"{settings.FINMARS_DATABASE_URL}{v1_export}/instrument/",
+    "currency": f"{settings.FINMARS_DATABASE_URL}{v1_export}/currency/",
+    "company": f"{settings.FINMARS_DATABASE_URL}{v1_export}/company/",
 }
+
+
+def get_backend_callback_urls() -> dict:
+    """
+    Returns a dictionary containing callback URLs for 'instrument', 'currency', and 'company' services.
+    """
+    from poms.users.models import MasterUser
+
+    master_user = MasterUser.objects.first()
+    if not master_user:
+        RuntimeError("No MasterUser defined!")
+
+    base_url = f"https://{settings.DOMAIN_NAME}"
+    if master_user.realm_code:
+        base_url += f"/{master_user.realm_code}/{master_user.space_code}"
+    else:
+        base_url += f"/{master_user.space_code}"
+
+    common_part = "api/v1/import/finmars-database"
+    return {
+        "instrument": f"{base_url}/{common_part}/instrument/callback/",
+        "currency": f"{base_url}/{common_part}/currency/callback/",
+        "company": f"{base_url}/{common_part}/company/callback/",
+    }
 
 
 class CallBackDataDictMonadSerializer(CallBackDataDictRequestSerializer):
@@ -45,31 +63,43 @@ class CallBackDataDictMonadSerializer(CallBackDataDictRequestSerializer):
 
 class DatabaseService:
     """
-    Client to work with FINMARS-DATABASE Service
+    Client of FINMARS-DATABASE Service
     """
 
     def __init__(self):
         self.http_client = HttpClient()
 
     def get_monad(self, service_name: str, request_options: dict) -> Monad:
-        _l.info(f"{log}.get_monad service={service_name} options={request_options}")
+        """
+        Retrieves data from the FINMARS-DATABASE service.
+        Args:
+            service_name: The name of the service to call (e.g., 'instrument', 'currency').
+            request_options: A dictionary containing request options.
+        Returns:
+            A Monad object containing the service response data or an error message.
+        Raises:
+            FinmarsBaseException: For unexpected errors during the API call.
+        """
+        _l.info(f"get_monad service={service_name} options={request_options}")
 
         if (service_name not in FINMARS_DATABASE_URLS) or not request_options:
-            raise RuntimeError(f"{log}.get_monad invalid args!")
+            err_msg = "get_monad: invalid service name or request options"
+            _l.error(err_msg)
+            raise FinmarsBaseException(message=err_msg, error_key="finmars_database_error")
+
         try:
-            response_json = self.http_client.post(
-                url=FINMARS_DATABASE_URLS[service_name],
-                json=request_options,
-            )
+            response_json = self.http_client.post(url=FINMARS_DATABASE_URLS[service_name], json=request_options)
+
         except HttpClientError as e:
             return Monad(status=MonadStatus.ERROR, message=repr(e))
+
         except Exception as e:
-            _l.error(f"{log}.get_monad unexpected {repr(e)} {traceback.format_exc()}")
-            raise
+            err_msg = f"get_monad: unexpected error {repr(e)}"
+            _l.error(f"{err_msg}  trace {traceback.format_exc()}")
+            raise FinmarsBaseException(message=err_msg, error_key="finmars_database_error") from e
 
         serializer = CallBackDataDictMonadSerializer(data=response_json)
-        return (
-            serializer.create_good_monad()
-            if serializer.is_valid()
-            else serializer.create_error_monad()
-        )
+        if serializer.is_valid():
+            return serializer.create_good_monad()
+        else:
+            return serializer.create_error_monad()

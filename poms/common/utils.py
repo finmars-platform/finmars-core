@@ -7,16 +7,49 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
+import pandas as pd
+
 from django.conf import settings
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.contenttypes.models import ContentType
+from django.db import connection, router
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
-import pandas as pd
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
+
+VALID_FREQUENCY = {"D", "W", "M", "Q", "Y", "C"}
+
+FORWARD = 1
+
+calc_shift_date_map = {
+    "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
+    "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
+    "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
+    "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
+    "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
+    "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
+    "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
+    "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
+    "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
+    "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
+}
+
+frequency_map = {
+    "D": lambda shift=1: pd.offsets.Day(shift),
+    "W": lambda shift=1: pd.offsets.Week(shift),
+    "M": lambda shift=1: pd.offsets.MonthBegin(shift),
+    "Q": lambda shift=1: pd.offsets.QuarterBegin(n=shift, startingMonth=1),
+    "Y": lambda shift=1: pd.offsets.YearBegin(shift),
+    "ED": lambda shift=1: pd.offsets.Day(shift),
+    "EW": lambda shift=1: pd.offsets.Week(shift),
+    "EM": lambda shift=1: pd.offsets.MonthEnd(shift),
+    "EQ": lambda shift=1: pd.offsets.QuarterEnd(n=shift, startingMonth=3),
+    "EY": lambda shift=1: pd.offsets.YearEnd(shift),
+}
 
 
 def force_qs_evaluation(qs):
@@ -43,13 +76,9 @@ def db_class_check_data(model, verbosity, using):
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
-            if not obj.name:
-                obj.name = name
-
-            if not obj.short_name:
-                obj.short_name = name
-            if not obj.description:
-                obj.description = name
+            obj.name = name
+            obj.short_name = name
+            obj.description = name
             obj.save()
 
 
@@ -59,6 +88,7 @@ def date_now():
 
 def date_yesterday():
     return timezone_today() - timedelta(days=1)
+
 
 def datetime_now():
     return now()
@@ -188,9 +218,7 @@ class MemorySavingQuerysetIterator(object):
             # By making a copy of the queryset and using that to actually access
             # the object, we ensure that there are only `max_obj_num` objects in
             # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[
-                i : i + self.max_obj_num
-            ]
+            smaller_queryset = copy.deepcopy(self._base_queryset)[i : i + self.max_obj_num]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
             yield from smaller_queryset.iterator()
 
@@ -236,112 +264,6 @@ def get_content_type_by_name(name):
     return ContentType.objects.get(app_label=app_label_title, model=model_title)
 
 
-def is_business_day(date):
-    return bool(len(pd.bdate_range(date, date)))
-
-
-def get_last_business_day(date, to_string=False):
-    """
-    Returns the previous business day of the given date.
-    :param date:
-    :param to_string:
-    :return:
-    """
-
-    if not isinstance(date, datetime.date):
-        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
-
-    weekday = datetime.date.weekday(date)
-    if weekday > 4:  # if it's Saturday or Sunday
-        date = date - datetime.timedelta(days=weekday - 4)
-
-    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
-
-
-def last_day_of_month(any_day):
-    # Day 28 exists in every month. 4 days later, it's always next month
-    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
-    # subtracting the number of the current day brings us back one month
-    return next_month - datetime.timedelta(days=next_month.day)
-
-
-def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-        if to_string:
-            result.append(str(day))
-        else:
-            result.append(day)
-
-    return result
-
-
-def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-
-        if is_business_day(day):
-            if to_string:
-                result.append(str(day))
-            else:
-                result.append(day)
-
-    return result
-
-
-def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
-
-    if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(
-            date_from, settings.API_DATE_FORMAT
-        ).date()
-
-    if not isinstance(date_to, datetime.date):
-        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-
-    diff = date_to - date_from
-
-    result = []
-    if date_from.day != 1:
-        if to_string:
-            result.append(str(date_from))
-        else:
-            result.append(date_from)
-
-    for i in range(diff.days + 1):
-        day = date_from + timedelta(days=i)
-
-        if day.day == 1:
-            if to_string:
-                result.append(str(day))
-            else:
-                result.append(day)
-
-    return result
-
-
 def convert_name_to_key(name: str) -> str:
     return name.strip().lower().replace(" ", "_")
 
@@ -365,62 +287,7 @@ def get_first_transaction(portfolio_instance) -> object:
     """
     from poms.transactions.models import Transaction
 
-    return Transaction.objects.filter(portfolio=portfolio_instance).order_by(
-        "accounting_date"
-    )[0]
-
-
-def get_last_business_day_in_month(year: int, month: int, to_string=False):
-    """
-    Get last business day of month
-    :param year:
-    :param month:
-    :param to_string:
-    :return: date or string
-    """
-    day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
-
-    d = datetime.datetime(year, month, day).date()
-
-    return d.strftime(settings.API_DATE_FORMAT) if to_string else d
-
-
-def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
-    """
-    Get last business day of each month between two dates
-    :param date_from:
-    :param date_to:
-    :param to_string:
-    :return: list of dates or strings
-    """
-    months = get_list_of_months_between_two_dates(date_from, date_to)
-    end_of_months = []
-
-    if not isinstance(date_to, datetime.date):
-        d_date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
-    else:
-        d_date_to = date_to
-
-    for month in months:
-        # _l.info(month)
-        # _l.info(d_date_to)
-
-        last_business_day = get_last_business_day_in_month(month.year, month.month)
-
-        if month.year == d_date_to.year and month.month == d_date_to.month:
-
-            if to_string:
-                end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
-            else:
-                end_of_months.append(d_date_to)
-
-        else:
-            if to_string:
-                end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
-            else:
-                end_of_months.append(last_business_day)
-
-    return end_of_months
+    return Transaction.objects.filter(portfolio=portfolio_instance).order_by("accounting_date")[0]
 
 
 def str_to_date(d):
@@ -433,16 +300,6 @@ def str_to_date(d):
         d = datetime.datetime.strptime(d, settings.API_DATE_FORMAT).date()
 
     return d
-
-
-def get_closest_bday_of_yesterday(to_string=False):
-    """
-    Get the closest business day of yesterday
-    :param to_string:
-    :return: date or string
-    """
-    yesterday = datetime.date.today() - timedelta(days=1)
-    return get_last_business_day(yesterday, to_string=to_string)
 
 
 def finmars_exception_handler(exc, context):
@@ -466,15 +323,18 @@ def finmars_exception_handler(exc, context):
                     now(),
                     f"{settings.API_DATE_FORMAT} %H:%M:%S",
                 ),
-                "workspace_id": settings.BASE_API_URL,
+                "realm_code": context["request"].realm_code,
+                "space_code": context["request"].space_code,
             }
         }
-        error = error_payload["error"]
+
         status_code = response.status_code
 
+        error = error_payload["error"]
         error["status_code"] = status_code
         error["message"] = http_code_to_message[status_code]
         error["details"] = response.data
+
         response.data = error_payload
 
     return response
@@ -501,10 +361,16 @@ def get_serializer(content_type_key):
     from poms.iam.serializers import (
         AccessPolicySerializer,
         GroupSerializer,
+        ResourceGroupSerializer,
         RoleSerializer,
     )
     from poms.instruments.serializers import (
+        AccrualCalculationScheduleStandaloneSerializer,
+        CurrencyPricingPolicySerializer,
+        InstrumentFactorScheduleStandaloneSerializer,
+        InstrumentPricingPolicySerializer,
         InstrumentSerializer,
+        InstrumentTypePricingPolicySerializer,
         InstrumentTypeSerializer,
         PriceHistorySerializer,
         PricingPolicySerializer,
@@ -519,10 +385,7 @@ def get_serializer(content_type_key):
         PortfolioRegisterRecordSerializer,
         PortfolioRegisterSerializer,
         PortfolioSerializer,
-    )
-    from poms.pricing.serializers import (
-        CurrencyPricingSchemeSerializer,
-        InstrumentPricingSchemeSerializer,
+        PortfolioTypeSerializer,
     )
     from poms.procedures.serializers import (
         ExpressionProcedureSerializer,
@@ -530,8 +393,14 @@ def get_serializer(content_type_key):
         RequestDataFileProcedureSerializer,
     )
     from poms.reference_tables.serializers import ReferenceTableSerializer
+    from poms.reports.serializers import (
+        BalanceReportCustomFieldSerializer,
+        PLReportCustomFieldSerializer,
+        TransactionReportCustomFieldSerializer,
+    )
     from poms.schedules.serializers import ScheduleSerializer
     from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer
+    from poms.system.serializers import WhitelabelSerializer
     from poms.transactions.serializers import (
         TransactionTypeGroupSerializer,
         TransactionTypeSerializer,
@@ -547,12 +416,7 @@ def get_serializer(content_type_key):
         MobileLayoutSerializer,
         TransactionUserFieldSerializer,
     )
-    from poms.reports.serializers import BalanceReportCustomFieldSerializer
-    from poms.reports.serializers import PLReportCustomFieldSerializer
-    from poms.reports.serializers import TransactionReportCustomFieldSerializer
 
-    from poms.instruments.serializers import InstrumentFactorScheduleStandaloneSerializer
-    from poms.instruments.serializers import AccrualCalculationScheduleStandaloneSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -561,10 +425,14 @@ def get_serializer(content_type_key):
         "instruments.accrualcalculationschedule": AccrualCalculationScheduleStandaloneSerializer,
         "instruments.instrumenttype": InstrumentTypeSerializer,
         "instruments.pricingpolicy": PricingPolicySerializer,
+        "instruments.instrumenttypepricingpolicy": InstrumentTypePricingPolicySerializer,
+        "instruments.instrumentpricingpolicy": InstrumentPricingPolicySerializer,
+        "instruments.currencypricingpolicy": CurrencyPricingPolicySerializer,
         "currencies.currency": CurrencySerializer,
         "accounts.account": AccountSerializer,
         "accounts.accounttype": AccountTypeSerializer,
         "portfolios.portfolio": PortfolioSerializer,
+        "portfolios.portfoliotype": PortfolioTypeSerializer,
         "portfolios.portfolioregister": PortfolioRegisterSerializer,
         "portfolios.portfolioregisterrecord": PortfolioRegisterRecordSerializer,
         "instruments.pricehistory": PriceHistorySerializer,
@@ -592,16 +460,16 @@ def get_serializer(content_type_key):
         "ui.complextransactionuserfield": ComplexTransactionUserFieldSerializer,
         "ui.transactionuserfield": TransactionUserFieldSerializer,
         "ui.instrumentuserfield": InstrumentUserFieldSerializer,
-        "pricing.instrumentpricingscheme": InstrumentPricingSchemeSerializer,
-        "pricing.currencypricingscheme": CurrencyPricingSchemeSerializer,
         "iam.group": GroupSerializer,
         "iam.role": RoleSerializer,
         "iam.accesspolicy": AccessPolicySerializer,
+        "iam.resourcegroup": ResourceGroupSerializer,
         "reference_tables.referencetable": ReferenceTableSerializer,
         "configuration.newmembersetupconfiguration": NewMemberSetupConfigurationSerializer,
         "reports.balancereportcustomfield": BalanceReportCustomFieldSerializer,
         "reports.plreportcustomfield": PLReportCustomFieldSerializer,
         "reports.transactionreportcustomfield": TransactionReportCustomFieldSerializer,
+        "system.whitelabelmodel": WhitelabelSerializer,
     }
 
     return serializer_map[content_type_key]
@@ -655,6 +523,172 @@ def is_newer_version(version1, version2):
     return compare_versions(version1, version2) > 0
 
 
+# region Dates
+def is_business_day(date):
+    return bool(len(pd.bdate_range(date, date)))
+
+
+def get_last_business_day(date, to_string=False):
+    """
+    Returns the previous business day of the given date.
+    :param date:
+    :param to_string:
+    :return:
+    """
+
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    weekday = datetime.date.weekday(date)
+    if weekday > 4:  # if it's Saturday or Sunday
+        date = date - datetime.timedelta(days=weekday - 4)
+
+    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
+
+
+def last_day_of_month(any_day):
+    # Day 28 exists in every month. 4 days later, it's always next month
+    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+    # subtracting the number of the current day brings us back one month
+    return next_month - datetime.timedelta(days=next_month.day)
+
+
+def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
+    if not (date_from and date_to):
+        raise ValueError("Both parameters 'date_from' & 'date_to' must be set")
+
+    date_from = (
+        date_from
+        if isinstance(date_from, datetime.date)
+        else datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+    )
+
+    date_to = (
+        date_to
+        if isinstance(date_to, datetime.date)
+        else datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+    )
+
+    if date_from > date_to:
+        raise ValueError(f"Parameter 'date_from' {date_from} must be less or equal 'date_to' {date_to}")
+
+    dates = [date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)]
+
+    return [str(date) for date in dates] if to_string else dates
+
+
+def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+
+    diff = date_to - date_from
+
+    result = []
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if is_business_day(day):
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
+
+    return result
+
+
+def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+
+    diff = date_to - date_from
+
+    result = []
+    if date_from.day != 1:
+        if to_string:
+            result.append(str(date_from))
+        else:
+            result.append(date_from)
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if day.day == 1:
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
+
+    return result
+
+
+def get_last_business_day_in_month(year: int, month: int, to_string=False):
+    """
+    Get last business day of month
+    :param year:
+    :param month:
+    :param to_string:
+    :return: date or string
+    """
+    day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
+
+    d = datetime.datetime(year, month, day).date()
+
+    return d.strftime(settings.API_DATE_FORMAT) if to_string else d
+
+
+def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
+    """
+    Get last business day of each month between two dates
+    :param date_from:
+    :param date_to:
+    :param to_string:
+    :return: list of dates or strings
+    """
+    months = get_list_of_months_between_two_dates(date_from, date_to)
+    end_of_months = []
+
+    if not isinstance(date_to, datetime.date):
+        d_date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
+    else:
+        d_date_to = date_to
+
+    for month in months:
+        # _l.info(month)
+        # _l.info(d_date_to)
+
+        last_business_day = get_last_business_day_in_month(month.year, month.month)
+
+        if month.year == d_date_to.year and month.month == d_date_to.month:
+            if to_string:
+                end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
+            else:
+                end_of_months.append(d_date_to)
+                
+        elif to_string:
+            end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
+            
+        else:
+            end_of_months.append(last_business_day)
+
+    return end_of_months
+
+
+def get_closest_bday_of_yesterday(to_string=False):
+    """
+    Get the closest business day of yesterday
+    :param to_string:
+    :return: date or string
+    """
+    yesterday = datetime.date.today() - timedelta(days=1)
+    return get_last_business_day(yesterday, to_string=to_string)
+
+
 def get_last_business_day_of_previous_year(date):
     """
     Given a date in 'YYYY-MM-DD' format, returns the last business day of the previous year.
@@ -694,7 +728,8 @@ def get_last_business_day_of_previous_month(date):
 
 def get_last_business_day_in_previous_quarter(date):
     """
-    Given a date in 'YYYY-MM-DD' format, returns the start date of the Quarter-To-Date (QTD) period.
+    Given a date in 'YYYY-MM-DD' format, returns the start date
+    of the Quarter-To-Date (QTD) period.
     """
 
     if not isinstance(date, datetime.date):
@@ -709,9 +744,282 @@ def get_last_business_day_in_previous_quarter(date):
         start_date = datetime.date(date.year, 7, 1)
     else:
         start_date = datetime.date(date.year, 10, 1)
+    last_day_of_previous_quarter = start_date - timedelta(days=1)
 
     # If the last day is a Saturday (5) or Sunday (6), subtract the necessary days
-    while start_date.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
-        start_date -= timedelta(days=1)
+    while last_day_of_previous_quarter.weekday() >= 5:  # 5 for Saturday, 6 for Sunday
+        last_day_of_previous_quarter -= timedelta(days=1)
 
-    return start_date
+    return last_day_of_previous_quarter
+
+
+def shift_to_bday(date, shift):
+    shift = FORWARD if shift > 0 else -1
+    while not is_business_day(date):
+        date += datetime.timedelta(days=shift)
+
+    return date
+
+
+def get_validated_date(date) -> datetime.date:
+    if not isinstance(date, datetime.date):
+        return datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+
+    return date
+
+
+def split_date_range(
+    start_date: str | datetime.date,
+    end_date: str | datetime.date,
+    frequency: str,
+    is_only_bday: bool,
+) -> list[tuple[str]]:
+    """
+    :param start_date: Start date in YYYY-MM-DD format.
+    :param end_date: End date in YYYY-MM-DD format.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :return: A list of tuples[str], each containing the start and end of a frequency.
+    """
+    if frequency == "C":
+        return [start_date, end_date]
+
+    start_date = get_validated_date(start_date)
+    end_date = get_validated_date(end_date)
+    freq_start = frequency
+    freq_end = f"E{frequency}"
+
+    start_date = calc_shift_date_map[freq_start](start_date)
+    ranges = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+
+    date_pairs: list[tuple] = []
+    for sd in ranges:
+        ed = calc_shift_date_map[freq_end](sd)
+
+        if is_only_bday:
+            if frequency == "D" and not is_business_day(sd):
+                continue
+            sd = shift_to_bday(sd, 1)
+            ed = shift_to_bday(ed, -1)
+
+        sd_str = str(sd.strftime(settings.API_DATE_FORMAT))
+        ed_str = str(ed.strftime(settings.API_DATE_FORMAT))
+        date_pair: tuple = (sd_str, ed_str)
+        date_pairs.append(date_pair)
+
+    return date_pairs
+
+
+def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
+    """
+    Changes the day to the beginning/end of the week,
+    taking into account the boundaries of the range
+    """
+    if (start and date > sdate) or (not start and date < edate):
+        date = calc_shift_date_map[freq](date)
+        
+    return date
+
+
+def pick_dates_from_range(
+    start_date: str | datetime.date,
+    end_date: str | datetime.date,
+    frequency: str,
+    is_only_bday: bool,
+    start: bool,
+) -> list[str]:
+    """
+    :param start_date: Start date in YYYY-MM-DD format.
+    :param end_date: End date in YYYY-MM-DD format.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :param start: The beginning of frequency, if False end of frequency.
+    :return: A list, containing the start or end of a each frequency.
+    """
+    if frequency == "C":
+        return [start_date, end_date]
+
+    start_date = get_validated_date(start_date)
+    end_date = get_validated_date(end_date)
+    frequency = frequency if start else f"E{frequency}"
+
+    dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+    dates = [d.date() for d in dates]
+
+    # don't meets conditions
+    if not len(dates):
+        return []
+
+    # pd.date_range - adds dates that fall completely within
+    # the frequency. Adding in list uneven areas of date
+    if start and start_date != dates[0]:
+        dates.insert(0, start_date)
+    if not start and end_date != dates[-1]:
+        dates.append(end_date)
+
+    pick_dates: list[str] = []
+    for date in dates:
+        if "W" in frequency:
+            date = shift_to_week_boundary(date, start_date, end_date, start, frequency)
+
+        if is_only_bday:
+            if "D" in frequency and not is_business_day(date):
+                continue
+
+            if not is_business_day(date):
+                if start:
+                    date = shift_to_bday(date, 1)
+                else:
+                    date = shift_to_bday(date, -1)
+
+        date_str = str(date.strftime(settings.API_DATE_FORMAT))
+        if date_str not in pick_dates:
+            pick_dates.append(date_str)
+
+    return pick_dates
+
+
+def calculate_period_date(
+    date: str | datetime.date,
+    frequency: str,
+    shift: int,
+    is_only_bday=False,
+    start=False,
+) -> str:
+    """
+    Calculates the start or end date of a certain time period,
+    with the possibility of shifting forward or backward by several periods.
+
+    :param date: A string in YYYY-MM-DD ISO format representing the current date.
+    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
+    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    :param shift: Indicating how many periods to shift (-N for backward, +N for forward).
+    :param is_only_bday: Whether to adjust the dates to business days.
+    :param start: The beginning of frequency, if False end of frequency.
+    :return: The calculated date in YYYY-MM-DD format.
+    """
+    if frequency == "C":
+        return date
+
+    frequency = frequency if start else f"E{frequency}"
+    date = get_validated_date(date)
+    if "W" in frequency:
+        date = calc_shift_date_map[frequency](date)
+
+    date = date + frequency_map[frequency](shift)
+
+    if is_only_bday and not is_business_day(date):
+        if start:
+            date = shift_to_bday(date, 1)
+        else:
+            date = shift_to_bday(date, -1)
+
+    return str(date.strftime(settings.API_DATE_FORMAT))
+
+
+# endregion Dates
+
+
+def attr_is_relation(content_type_key: str, attribute_key: str) -> bool:
+    """
+    Determines if the given attribute key is a relation attribute based
+    on the content type key.
+
+    :param content_type_key: The key representing the content type.
+    :param attribute_key: The key of the attribute to check.
+    :return: True if the attribute is a relation attribute, False otherwise.
+    """
+    if content_type_key == "transactions.transactiontype" and attribute_key == "group":
+        # because configuration
+        return False
+
+    return attribute_key in {
+        "type",
+        "currency",
+        "instrument",
+        "instrument_type",
+        "country",
+        "group",
+        "pricing_policy",
+        "portfolio",
+        "transaction_type",
+        "transaction_currency",
+        "settlement_currency",
+        "account_cash",
+        "account_interim",
+        "account_position",
+        "accrued_currency",
+        "pricing_currency",
+        "one_off_event",
+        "regular_event",
+        "factor_same",
+        "factor_up",
+        "factor_down",
+        "strategy1_position",
+        "strategy1_cash",
+        "strategy2_position",
+        "strategy2_cash",
+        "strategy3_position",
+        "strategy3_cash",
+        "counterparty",
+        "responsible",
+        "allocation_balance",
+        "allocation_pl",
+        "linked_instrument",
+        "subgroup",
+        "instrument_class",
+        "transaction_class",
+        "daily_pricing_model",
+        "payment_size_detail",
+        # Portfolio register
+        "cash_currency",
+        "portfolio_register",
+        "valuation_currency",
+    }
+
+
+def set_schema(space_code):
+    with connection.cursor() as cursor:
+        cursor.execute(f"SET search_path TO {space_code};")
+
+
+def get_current_schema():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_schema();")
+        return cursor.fetchone()[0]
+
+
+class FinmarsNestedObjects(NestedObjects):
+    def __init__(self, instance):
+        using = router.db_for_write(instance._meta.model)
+        super().__init__(using=using, origin=[instance])
+
+    def _nested(self, obj, seen):
+        if obj in seen:
+            return None
+        seen.add(obj)
+        children = []
+        for child in self.edges.get(obj, ()):
+            if nested := self._nested(child, seen):
+                children.append(nested)
+        ret = {
+            "name": obj.__class__.__name__,
+            "content_type": f"{obj._meta.app_label}.{obj._meta.model_name}",
+            "id": obj.id,
+        }
+        if hasattr(obj, "user_code"):
+            ret["user_code"] = obj.user_code
+        if children:
+            ret["related"] = children
+        return ret
+
+    def nested(self, *args, **kwargs):
+        seen = set()
+        roots = []
+        for root in self.edges.get(None, ()):
+            if item := self._nested(root, seen):
+                item["protected"] = root in self.protected
+                roots.append(item)
+        return roots

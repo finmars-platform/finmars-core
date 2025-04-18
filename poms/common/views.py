@@ -1,15 +1,19 @@
+import contextlib
 import json
 import logging
 import time
+import traceback
 from os.path import getsize
 
+from celery.result import AsyncResult
+
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
 from django.http import Http404, HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.inspectors import SwaggerAutoSchema
-from rest_framework import status
+from rest_framework import parsers, renderers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -18,13 +22,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from celery.result import AsyncResult
-
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import (
     ByIdFilterBackend,
     ByIsDeletedFilterBackend,
     ByIsEnabledFilterBackend,
+    FinmarsFilterBackend,
     OrderingPostFilter,
 )
 from poms.common.grouping_handlers import count_groups, handle_groups
@@ -35,7 +38,9 @@ from poms.common.mixins import (
     ListLightModelMixin,
     UpdateModelMixinExt,
 )
+from poms.common.serializers import RealmMigrateSchemeSerializer
 from poms.common.sorting import sort_by_dynamic_attrs
+from poms.common.tasks import apply_migration_to_space
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
@@ -47,35 +52,42 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
         operation = super().get_operation(operation_keys)
 
-        splitted_dash_operation_keys = [
-            word for item in operation_keys for word in item.split("-")
-        ]
-        splitted_underscore_operation_keys = [
-            word for item in splitted_dash_operation_keys for word in item.split("_")
-        ]
+        # e.g. operation_keys might be ("api", "v1", "accounts", "account-attribute-type", "list")
+        # We skip the first two:
+        relevant = operation_keys[2:]  # e.g. ("accounts", "account-attribute-type", "list")
+        summary_words = operation_keys[4:]  # e.g. ("accounts", "account-attribute-type", "list")
 
-        capitalized_operation_keys = [
-            word.capitalize() for word in splitted_underscore_operation_keys
-        ]
+        # split on dashes and underscores
+        splitted = []
+        for item in relevant:
+            # split on dashes first
+            for part in item.split("-"):
+                # then split on underscores
+                splitted.extend(part.split("_"))
 
-        operation.operationId = " ".join(capitalized_operation_keys)
+        # capitalize each piece: e.g. "accounts" -> "Accounts", "list" -> "List"
+        capitalized = [word.capitalize() for word in splitted]
 
-        # operation.operationId = f"{self.view.queryset.model._meta.verbose_name.capitalize()} {operation_keys[-1].capitalize()}"
+        summary_capitalized = [" ".join(word.capitalize().split("_")) for word in summary_words]
+
+        # join with underscores so we get "Accounts_Account_Attribute_Type_List"
+        operation.operationId = "_".join(capitalized)
+        operation.summary = " ".join(summary_capitalized)
+
         return operation
 
     def get_tags(self, operation_keys=None):
-        tags = super().get_tags(operation_keys)
-
-        splitted_tags = [word.split("-") for word in tags]
-
-        result = []
-
-        for splitted_tag in splitted_tags:
-            capitalized_tag = [word.capitalize() for word in splitted_tag]
-
-            result.append(" ".join(capitalized_tag))
-
-        return result
+        if not operation_keys:
+            return []
+        # The viewset name is one before last, e.g. in ("api", "v1", "accounts", "account-attribute-type", "list")
+        # it's "account-attribute-type"
+        viewset = operation_keys[-2]
+        # Split the viewset name on dashes and underscores, then capitalize each word
+        parts = []
+        for part in viewset.split("-"):
+            parts.extend(part.split("_"))
+        tag = " ".join(word.capitalize() for word in parts)
+        return [tag]
 
 
 class AbstractApiView(APIView):
@@ -116,166 +128,6 @@ class AbstractViewSet(AbstractApiView, ViewSet):
         return {"request": self.request, "format": self.format_kwarg, "view": self}
 
 
-# DEPRECATED
-class AbstractEvGroupViewSet(
-    AbstractApiView,
-    UpdateModelMixinExt,
-    DestroyModelFakeMixin,
-    BulkModelMixin,
-    ModelViewSet,
-):
-    permission_classes = [IsAuthenticated]
-    filter_backends = [
-        ByIdFilterBackend,
-        ByIsDeletedFilterBackend,
-        DjangoFilterBackend,
-        OrderingFilter,
-        OrderingPostFilter,
-    ]
-
-    # DEPRECATED
-    def list(self, request):
-        if len(request.query_params.getlist("groups_types")) == 0:
-            return Response(
-                {
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": "No groups provided.",
-                    "data": [],
-                }
-            )
-
-        start_time = time.time()
-        master_user = request.user.master_user
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        filtered_qs = self.get_queryset()
-
-        filtered_qs = filtered_qs.filter(id__in=qs)
-
-        filtered_qs = filtered_qs.filter(master_user=master_user)
-
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
-
-        try:
-            filtered_qs.model._meta.get_field("is_enabled")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_enabled = self.request.query_params.get("is_enabled", "true")
-            if is_enabled == "true":
-                filtered_qs = filtered_qs.filter(is_enabled=True)
-
-        try:
-            filtered_qs.model._meta.get_field("is_deleted")
-        except FieldDoesNotExist:
-            pass
-        else:
-            is_deleted = self.request.query_params.get("is_deleted", "true")
-            if is_deleted == "true":
-                filtered_qs = filtered_qs.filter(is_deleted=True)
-            else:
-                filtered_qs = filtered_qs.filter(is_deleted=False)
-
-        filtered_qs = handle_groups(
-            filtered_qs, request, self.get_queryset(), content_type
-        )
-
-        page = self.paginate_queryset(filtered_qs)
-
-        _l.debug(f"List {time.time() - start_time} seconds ")
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(filtered_qs)
-
-    @action(detail=False, methods=["post"], url_path="filtered")
-    def filtered_list(self, request, *args, **kwargs):
-        start_time = time.time()
-
-        groups_types = request.data.get("groups_types", None)
-        groups_values = request.data.get("groups_values", None)
-        groups_order = request.data.get("groups_order", None)
-        master_user = request.user.master_user
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
-        filter_settings = request.data.get("filter_settings", None)
-        global_table_search = request.data.get("global_table_search", "")
-        ev_options = request.data.get("ev_options", "")
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        filtered_qs = self.get_queryset()
-
-        filtered_qs = filtered_qs.filter(id__in=qs)
-
-        # print('len before handle filters %s' % len(filtered_qs))
-
-        filtered_qs = handle_filters(
-            filtered_qs, filter_settings, master_user, content_type
-        )
-
-        if global_table_search:
-            filtered_qs = handle_global_table_search(
-                filtered_qs,
-                global_table_search,
-                self.serializer_class.Meta.model,
-                content_type,
-            )
-
-        if content_type.model not in [
-            "currencyhistory",
-            "pricehistory",
-            "currencyhistoryerror",
-            "pricehistoryerror",
-        ]:
-            is_enabled = request.data.get("is_enabled", "true")
-
-            if is_enabled == "true":
-                filtered_qs = filtered_qs.filter(is_enabled=True)
-
-        filtered_qs = handle_groups(
-            filtered_qs,
-            groups_types,
-            groups_values,
-            groups_order,
-            master_user,
-            self.get_queryset(),
-            content_type,
-        )
-
-        filtered_qs = count_groups(
-            filtered_qs,
-            groups_types,
-            groups_values,
-            master_user,
-            self.get_queryset(),
-            content_type,
-            filter_settings,
-            ev_options,
-            global_table_search,
-        )
-
-        # print('len after handle groups %s' % len(filtered_qs))
-
-        page = self.paginator.post_paginate_queryset(filtered_qs, request)
-
-        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(filtered_qs)
-
-
 class AbstractModelViewSet(
     AbstractApiView,
     ListLightModelMixin,
@@ -285,14 +137,13 @@ class AbstractModelViewSet(
     BulkModelMixin,
     AbstractFinmarsAccessPolicyViewSet,
 ):
-    permission_classes = AbstractFinmarsAccessPolicyViewSet.permission_classes + [
-        IsAuthenticated
-    ]
+    # Seems order matters, szhitenev
+    # 2024-10-21
+    permission_classes = [IsAuthenticated, *AbstractFinmarsAccessPolicyViewSet.permission_classes]
     filter_backends = AbstractFinmarsAccessPolicyViewSet.filter_backends + [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
         ByIsEnabledFilterBackend,
-        # DjangoFilterBackend, # Create duplicate error, possibly inheriths from AbstractFinmarsAccessPolicyViewSet
         OrderingFilter,
         OrderingPostFilter,
     ]
@@ -303,24 +154,20 @@ class AbstractModelViewSet(
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
         ordering = request.GET.get("ordering")
         master_user = request.user.master_user
 
         if ordering:
-            queryset = sort_by_dynamic_attrs(
-                queryset, ordering, master_user, content_type
-            )
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         try:
             queryset.model._meta.get_field("is_enabled")
         except FieldDoesNotExist:
             pass
         else:
-            is_enabled = self.request.query_params.get("is_enabled", "true")
+            is_enabled = request.query_params.get("is_enabled", "true")
             if is_enabled == "true":
                 queryset = queryset.filter(is_enabled=True)
 
@@ -335,32 +182,30 @@ class AbstractModelViewSet(
 
     @action(detail=False, methods=["post"], url_path="ev-item")
     def list_ev_item(self, request, *args, **kwargs):
-        start_time = time.perf_counter()
-
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
         )
         master_user = request.user.master_user
 
-        filters_st = time.perf_counter()
         queryset = self.filter_queryset(self.get_queryset())
 
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "complextransaction",
             "transaction",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
                 queryset = queryset.filter(is_enabled=True)
 
-        if content_type.model in ["complextransaction"]:
+        if content_type.model == "complextransaction":
             queryset = queryset.filter(is_deleted=False)
 
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
@@ -370,15 +215,7 @@ class AbstractModelViewSet(
         _l.debug(f"ordering {ordering}")
 
         if ordering:
-            sort_st = time.perf_counter()
-            queryset = sort_by_dynamic_attrs(
-                queryset, ordering, master_user, content_type
-            )
-            # _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
-
-        # _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
-
-        page_st = time.perf_counter()
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         if global_table_search:
             queryset = handle_global_table_search(
@@ -390,37 +227,17 @@ class AbstractModelViewSet(
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 
-        # _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
-
-        serialize_st = time.perf_counter()
-
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
-
-        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
-
-        return result
-
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["post"], url_path="ev-group")
     def list_ev_group(self, request, *args, **kwargs):
-        start_time = time.time()
-
         groups_types = request.data.get("groups_types", None)
         groups_values = request.data.get("groups_values", None)
         groups_order = request.data.get("groups_order", None)
         master_user = request.user.master_user
-        content_type = ContentType.objects.get_for_model(
-            self.serializer_class.Meta.model
-        )
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get("filter_settings", None)
         global_table_search = request.data.get("global_table_search", "")
         ev_options = request.data.get("ev_options", "")
@@ -433,11 +250,7 @@ class AbstractModelViewSet(
 
         filtered_qs = filtered_qs.filter(id__in=qs)
 
-        # print('len before handle filters %s' % len(filtered_qs))
-
-        filtered_qs = handle_filters(
-            filtered_qs, filter_settings, master_user, content_type
-        )
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
 
         if global_table_search:
             filtered_qs = handle_global_table_search(
@@ -447,19 +260,12 @@ class AbstractModelViewSet(
                 content_type,
             )
 
-        # print('len after handle filters %s' % len(filtered_qs))
-
-        # filtered_qs = filtered_qs.filter(id__in=qs)
-
-        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-        #     filtered_qs = filtered_qs.filter(is_deleted=False)
-
-        if content_type.model not in [
+        if content_type.model not in {
             "currencyhistory",
             "pricehistory",
             "currencyhistoryerror",
             "pricehistoryerror",
-        ]:
+        }:
             is_enabled = request.data.get("is_enabled", "true")
 
             if is_enabled == "true":
@@ -474,7 +280,6 @@ class AbstractModelViewSet(
             groups_values,
             groups_order,
             master_user,
-            self.get_queryset(),
             content_type,
         )
 
@@ -483,45 +288,25 @@ class AbstractModelViewSet(
             groups_types,
             groups_values,
             master_user,
-            self.get_queryset(),
             content_type,
             filter_settings,
             ev_options,
             global_table_search,
         )
 
-        # print('len after handle groups %s' % len(filtered_qs))
-
         page = self.paginator.post_paginate_queryset(filtered_qs, request)
 
-        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
+        if content_type.model == "transactiontype":  # FIXME refactor someday
+            from poms.transactions.models import TransactionTypeGroup
 
-        if content_type.model == "transactiontype":  # TODO refactor someday
-            from poms.transactions.models import (  # TODO Really bad stuff here
-                TransactionTypeGroup,
-            )
-
-            """It happens because we change TransactionTypeGroup relation to user_code,
-                so its broke default relation group counting, and now we need to get group name separately
-                maybe we need to refactor this whole module, or just provide user_codes and frontend app will get names of groups
-            """
+            # It happens because we change TransactionTypeGroup relation to user_code,
+            # so its broke default relation group counting, and now we need to get group name separately
+            # maybe we need to refactor this whole module, or just provide user_codes and frontend app will
 
             for item in page:
-                try:
-                    # _l.info('group_identifier %s' % item['group_identifier'])
-
-                    ttype_group = TransactionTypeGroup.objects.filter(
-                        user_code=item["group_identifier"]
-                    ).first()
-
-                    # _l.info('short_name %s' % ttype_group.short_name)
-
+                ttype_group = TransactionTypeGroup.objects.filter(user_code=item["group_identifier"]).first()
+                if ttype_group:
                     item["group_name"] = ttype_group.short_name
-
-                except Exception as e:
-                    _l.info(f"e {e}")
-
-        # _l.info(f"page {page}")
 
         if page is not None:
             return self.get_paginated_response(page)
@@ -534,9 +319,7 @@ class AbstractModelViewSet(
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
@@ -552,7 +335,7 @@ class AbstractReadOnlyModelViewSet(AbstractApiView, ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [
         ByIdFilterBackend,
-        DjangoFilterBackend,
+        FinmarsFilterBackend,
         OrderingFilter,
     ]
 
@@ -601,7 +384,15 @@ class AbstractAsyncViewSet(AbstractViewSet):
 
             instance.task_id = task_id
         else:
-            res = self.celery_task.apply_async(kwargs={"instance": instance})
+            res = self.celery_task.apply_async(
+                kwargs={
+                    "instance": instance,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
+            )
             instance.task_id = signer.sign(f"{res.id}")
 
             print(f"CREATE CELERY TASK {res.id}")
@@ -639,17 +430,17 @@ class AbstractSyncViewSet(AbstractViewSet):
 
 
 def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=False):
-    '''
+    """
     :param model:
     :param value_type: Allowed values: 10, 20, 30, 40, 'field'
     :param key:
     :param filter_kw: Keyword arguments for method .filter()
     :type filter_kw: dict
     :param include_deleted:
-    '''
-    filter_kw[key + "__isnull"] = False
+    """
+    filter_kw[f"{key}__isnull"] = False
 
-    if value_type not in [10, 20, 40, 'field']:
+    if value_type not in {10, 20, 40, "field"}:
         return Response(
             {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -658,20 +449,12 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             }
         )
 
-    try:
-        if model._meta.get_field("is_deleted"):
-            if not include_deleted:
-                filter_kw["is_deleted"] = False
-    except FieldDoesNotExist:
-        pass
+    with contextlib.suppress(FieldDoesNotExist):
+        if model._meta.get_field("is_deleted") and not include_deleted:
+            filter_kw["is_deleted"] = False
 
-    if value_type in [10, 20, 40]:
-        return (
-            model.objects.filter(**filter_kw)
-            .order_by(key)
-            .values_list(key, flat=True)
-            .distinct(key)
-        )
+    if value_type in {10, 20, 40}:
+        return model.objects.filter(**filter_kw).order_by(key).values_list(key, flat=True).distinct(key)
 
     elif value_type == "field":
         return (
@@ -681,16 +464,113 @@ def _get_values_for_select(model, value_type, key, filter_kw, include_deleted=Fa
             .distinct(key + "__user_code")
         )
 
-class ValuesForSelectViewSet(AbstractApiView, ViewSet):
-    def list(self, request):
-        results = []
 
+def _get_values_of_generic_attribute(master_user, value_type, content_type, key):
+    """
+    :param master_user:
+    :param value_type: Allowed values: 10, 20, 30, 40, 'field'
+    :param content_type:
+    :param key:
+    :return list:
+    """
+
+    results = []
+    attribute_type_user_code = key.split("attributes.")[1]
+
+    attribute_type = GenericAttributeType.objects.get(
+        master_user=master_user,
+        user_code=attribute_type_user_code,
+        content_type=content_type,
+    )
+
+    if value_type == 10:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_string__isnull=False,
+            )
+            .order_by("value_string")
+            .values_list("value_string", flat=True)
+            .distinct("value_string")
+        )
+    elif value_type == 20:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_float__isnull=False,
+            )
+            .order_by("value_float")
+            .values_list("value_float", flat=True)
+            .distinct("value_float")
+        )
+    elif value_type == 30:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                classifier__name__isnull=False,
+            )
+            .order_by("classifier__name")
+            .values_list("classifier__name", flat=True)
+            .distinct("classifier__name")
+        )
+    elif value_type == 40:
+        results = (
+            GenericAttribute.objects.filter(
+                content_type=content_type,
+                attribute_type=attribute_type,
+                value_date__isnull=False,
+            )
+            .order_by("value_date")
+            .values_list("value_date", flat=True)
+            .distinct("value_date")
+        )
+
+    return list(results)
+
+
+def _get_values_from_report(content_type, report_instance_id, key):
+    """
+    Returns unique value from items for custom field or system attribute
+    of report
+
+    :param content_type:
+    :param report_instance_id:
+    :type report_instance_id: int
+    :param key:
+    :return list:
+    """
+
+    report_instance_model = apps.get_model(f"{content_type}instance")
+
+    report_instance = report_instance_model.objects.get(id=report_instance_id)
+
+    full_items = report_instance.data["items"]
+
+    # for item in full_items:
+    #     if key in item and item[key] not in (None, ''):
+    #         values.add(item[key])
+    values = {item[key] for item in full_items if key in item and item[key] not in (None, "")}
+
+    values = sorted(values)
+    return values
+
+
+class ValuesForSelectViewSet(AbstractApiView, ViewSet):
+
+    def list(self, request, *args, **kwargs):
         content_type_name = request.query_params.get("content_type", None)
         key = request.query_params.get("key", None)
         value_type = request.query_params.get("value_type", None)
         include_deleted = request.query_params.get("include_deleted", None)
+        report_instance_id = request.query_params.get("report_instance_id", None)
 
         master_user = request.user.master_user
+
+        # keys of attributes that are not relations (e.g. not: instrument.name, currency.user_code etc.)
+        report_system_attrs_keys_list = []
 
         # region Exceptions
         if not content_type_name:
@@ -734,6 +614,10 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         # endregion Exceptions
 
+        # report_instance_id is required only in some cases
+        if report_instance_id is not None:
+            report_instance_id = int(report_instance_id)
+
         content_type_pieces = content_type_name.split(".")
 
         try:
@@ -751,15 +635,24 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
         model = content_type.model_class()
 
-        if "attributes." in key:
-            attribute_type_user_code = key.split("attributes.")[1]
+        is_report = content_type_name in (
+            "reports.balancereport",
+            "reports.plreport",
+            "reports.transactionreport",
+        )
 
+        if is_report:
+            report_system_attrs_keys_list = [
+                item["key"] for item in model.get_system_attrs() if item["value_type"] != "field"
+            ]
+
+        if "attributes." in key:
             try:
-                attribute_type = GenericAttributeType.objects.get(
-                    master_user=master_user,
-                    user_code=attribute_type_user_code,
-                    content_type=content_type,
-                )
+                results = _get_values_of_generic_attribute(master_user, value_type, content_type, key)
+
+                if "Cash & Equivalents" not in results:
+                    results.append("Cash & Equivalents")
+
             except GenericAttributeType.DoesNotExist:
                 return Response(
                     {
@@ -769,96 +662,50 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     }
                 )
 
-            if value_type == 10:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_string__isnull=False
-                    )
-                    .order_by("value_string")
-                    .values_list("value_string", flat=True)
-                    .distinct("value_string")
+        elif is_report and (key in report_system_attrs_keys_list or "custom_fields." in key):
+            if report_instance_id is None:
+                return Response(
+                    {
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "message": "report_instance_id needed for such combination of a content_type and a key",
+                        "results": [],
+                    }
                 )
-            if value_type == 20:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_float__isnull=False
-                    )
-                    .order_by("value_float")
-                    .values_list("value_float", flat=True)
-                    .distinct("value_float")
-                )
-            if value_type == 30:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        classifier__name__isnull=False
-                    )
-                    .order_by("classifier__name")
-                    .values_list("classifier__name", flat=True)
-                    .distinct("classifier__name")
-                )
-            if value_type == 40:
-                results = (
-                    GenericAttribute.objects.filter(
-                        content_type=content_type,
-                        attribute_type=attribute_type,
-                        value_date__isnull=False
-                    )
-                    .order_by("value_date")
-                    .values_list("value_date", flat=True)
-                    .distinct("value_date")
-                )
+
+            results = _get_values_from_report(content_type_name, report_instance_id, key)
+
+        elif content_type_name == "instruments.pricehistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"instrument__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name == "currencies.currencyhistory":
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"currency__master_user": master_user},
+                include_deleted,
+            )
+
+        elif content_type_name in [
+            "transactions.transactionclass",
+            "instruments.country",
+        ]:
+            results = model.objects.all().order_by(key).values_list(key, flat=True).distinct(key)
 
         else:
-
-            if content_type_name == "instruments.pricehistory":
-
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"instrument__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "currencies.currencyhistory":
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"currency__master_user": master_user},
-                    include_deleted
-                )
-
-            elif content_type_name == "transactions.transactionclass":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            elif content_type_name == "instruments.country":
-                results = (
-                    model.objects.all()
-                    .order_by(key)
-                    .values_list(key, flat=True)
-                    .distinct(key)
-                )
-
-            else:
-                results = _get_values_for_select(
-                    model,
-                    value_type,
-                    key,
-                    {"master_user": master_user},
-                    include_deleted
-                )
+            results = _get_values_for_select(
+                model,
+                value_type,
+                key,
+                {"master_user": master_user},
+                include_deleted,
+            )
 
         _l.debug(f"model {model}")
 
@@ -878,7 +725,7 @@ class DebugLogViewSet(AbstractViewSet):
                 context["log"].close()
                 return
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         log_file = "/var/log/finmars/backend/django.log"
 
         seek_to = request.query_params.get("seek_to", 0)
@@ -890,17 +737,16 @@ class DebugLogViewSet(AbstractViewSet):
         except Exception as e:
             raise Http404("Cannot access file") from e
 
-        context = {}
-
         if seek_to == 0:
             seek_to = file_length - 1000
 
-            if seek_to < 0:
-                seek_to = 0
+        elif seek_to < 0:
+            seek_to = 0
 
-        if seek_to > file_length:
+        elif seek_to > file_length:
             seek_to = file_length
 
+        context = {}
         try:
             context["log"] = open(log_file, "r")
             context["log"].seek(seek_to)
@@ -909,3 +755,194 @@ class DebugLogViewSet(AbstractViewSet):
             raise Http404("Cannot access file") from exc
 
         return HttpResponse(self.iter_json(context), content_type="application/json")
+
+
+class RealmMigrateSchemeView(APIView):
+    throttle_classes = []
+    permission_classes = []
+    authentication_classes = []  # no auth neede
+    parser_classes = (
+        parsers.FormParser,
+        parsers.MultiPartParser,
+        parsers.JSONParser,
+    )
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = RealmMigrateSchemeSerializer
+
+    def get_serializer_context(self):
+        return {"request": self.request, "format": self.format_kwarg, "view": self}
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs["context"] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            space_code = serializer.validated_data.get("space_code")
+            realm_code = serializer.validated_data.get("realm_code")
+
+            apply_migration_to_space.apply_async(kwargs={"space_code": space_code, "realm_code": realm_code})
+
+            # Optionally, reset the search path to default after migrating
+            # with connection.cursor() as cursor:
+            #     cursor.execute("SET search_path TO public;")
+
+            return Response({"status": "ok"})
+
+        except Exception as e:
+            _l.error(f"RealmMigrateSchemeView.exception: {str(e)} " f"trace: {traceback.format_exc()}")
+
+            return Response({"status": "error", "message": str(e)})
+
+
+# DEPRECATED
+class AbstractEvGroupViewSet(
+    AbstractApiView,
+    UpdateModelMixinExt,
+    DestroyModelFakeMixin,
+    BulkModelMixin,
+    ModelViewSet,
+):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [
+        ByIdFilterBackend,
+        ByIsDeletedFilterBackend,
+        FinmarsFilterBackend,
+        OrderingFilter,
+        OrderingPostFilter,
+    ]
+
+    def list(self, request, *args, **kwargs):
+        if len(request.query_params.getlist("groups_types")) == 0:
+            return Response(
+                {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": "No groups provided.",
+                    "data": [],
+                }
+            )
+
+        start_time = time.time()
+        master_user = request.user.master_user
+        qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
+
+        filtered_qs = self.get_queryset()
+        filtered_qs = filtered_qs.filter(id__in=qs)
+        filtered_qs = filtered_qs.filter(master_user=master_user)
+
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
+        )
+
+        try:
+            filtered_qs.model._meta.get_field("is_enabled")
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_enabled = self.request.query_params.get("is_enabled", "true")
+            if is_enabled == "true":
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
+        try:
+            filtered_qs.model._meta.get_field("is_deleted")
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_deleted = self.request.query_params.get("is_deleted", "true")
+            if is_deleted == "true":
+                filtered_qs = filtered_qs.filter(is_deleted=True)
+            else:
+                filtered_qs = filtered_qs.filter(is_deleted=False)
+
+        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
+        page = self.paginate_queryset(filtered_qs)
+
+        _l.debug(f"List {time.time() - start_time} seconds ")
+
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(filtered_qs)
+
+    @action(detail=False, methods=["post"], url_path="filtered")
+    def filtered_list(self, request, *args, **kwargs):
+        start_time = time.time()
+
+        groups_types = request.data.get("groups_types", None)
+        groups_values = request.data.get("groups_values", None)
+        groups_order = request.data.get("groups_order", None)
+        master_user = request.user.master_user
+        content_type = ContentType.objects.get(
+            app_label=self.serializer_class.Meta.model._meta.app_label,
+            model=self.serializer_class.Meta.model._meta.model_name,
+        )
+        filter_settings = request.data.get("filter_settings", None)
+        global_table_search = request.data.get("global_table_search", "")
+        ev_options = request.data.get("ev_options", "")
+
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
+
+        filtered_qs = self.get_queryset()
+
+        filtered_qs = filtered_qs.filter(id__in=qs)
+
+        # print('len before handle filters %s' % len(filtered_qs))
+
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
+
+        if global_table_search:
+            filtered_qs = handle_global_table_search(
+                filtered_qs,
+                global_table_search,
+                self.serializer_class.Meta.model,
+                content_type,
+            )
+
+        if content_type.model not in {
+            "currencyhistory",
+            "pricehistory",
+            "currencyhistoryerror",
+            "pricehistoryerror",
+        }:
+            is_enabled = request.data.get("is_enabled", "true")
+
+            if is_enabled == "true":
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
+        filtered_qs = handle_groups(
+            filtered_qs,
+            groups_types,
+            groups_values,
+            groups_order,
+            master_user,
+            content_type,
+        )
+
+        filtered_qs = count_groups(
+            filtered_qs,
+            groups_types,
+            groups_values,
+            master_user,
+            content_type,
+            filter_settings,
+            ev_options,
+            global_table_search,
+        )
+
+        # print('len after handle groups %s' % len(filtered_qs))
+
+        page = self.paginator.post_paginate_queryset(filtered_qs, request)
+
+        _l.debug(f"Filtered EV Group List {str(time.time() - start_time)} seconds ")
+
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(filtered_qs)

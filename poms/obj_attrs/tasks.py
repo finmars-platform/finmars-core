@@ -54,7 +54,7 @@ def get_json_objs(target_model, target_model_serializer, target_model_content_ty
 
 
 @finmars_task(name='obj_attrs.recalculate_attributes', bind=True)
-def recalculate_attributes(self, instance):
+def recalculate_attributes(self, instance, *args, **kwargs):
     _l.debug('recalculate_attributes: instance', instance)
     # _l.debug('recalculate_attributes: context', context)
 

@@ -1,18 +1,15 @@
-from django.conf import settings
 from django.urls import include, re_path
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
 import poms.accounts.urls as account_router
-import poms.users.urls as users_router
 import poms.api.views as api
-import poms.celery_tasks.views as celery_tasks
+import poms.celery_tasks.urls as celery_router
+import poms.celery_tasks.views as celery_views
+import poms.clients.urls as clients_router
 import poms.common.views as common
 import poms.complex_import.views as complex_import
 import poms.configuration.views as configuration
-import poms.configuration_export.views as configuration_export
-import poms.configuration_import.views as configuration_import
-import poms.configuration_sharing.views as configuration_sharing
 import poms.counterparties.urls as counterparty_router
 import poms.credentials.views as credentials
 import poms.csv_import.urls as csv_import_router
@@ -22,6 +19,7 @@ import poms.file_reports.views as file_reports
 import poms.history.views as history
 import poms.iam.urls as iam_router
 import poms.instruments.urls as instrument_router
+import poms.schedules.urls as schedule_router
 import poms.instruments.views as instruments
 import poms.integrations.urls as integrations_router
 import poms.integrations.views as integrations
@@ -32,421 +30,397 @@ import poms.procedures.urls as procedure_router
 import poms.reconciliation.views as reconciliation
 import poms.reference_tables.views as reference_table
 import poms.reports.urls as report_router
-import poms.schedules.views as schedules
 import poms.strategies.urls as strategy_router
 import poms.system.views as system
 import poms.system_messages.views as system_messages
 import poms.transactions.urls as transaction_router
 import poms.ui.urls as ui_router
-
+import poms.users.urls as users_router
 import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import (
+    AcceptInvite,
     CreateMasterUser,
     CreateUser,
+    DeclineInvite,
     DeleteMember,
     MasterUserChangeOwner,
     ObtainAuthToken,
+    PersonalAccessTokenViewSet,
     RenameMasterUser,
-    SetAuthToken, AcceptInvite, DeclineInvite,
+    SetAuthToken,
 )
-from poms.explorer.views import ExplorerServeFileViewSet
+from poms.explorer.views import ExplorerServerFileViewSet
 
 router = routers.DefaultRouter()
 
 router.register(
-    r"system/ecosystem-configuration",
+    "system/ecosystem-configuration",
     system.EcosystemConfigurationViewSet,
     "ecosystemconfiguration",
 )
-
 router.register(
-    r"reference-tables/reference-table",
+    "system/whitelabel",
+    system.WhitelabelViewSet,
+    "Whitelabel",
+)
+router.register(
+    "reference-tables/reference-table",
     reference_table.ReferenceTableViewSet,
     "ReferenceTable",
 )
 router.register(
-    r"active_processes/active_processes",
-    celery_tasks.CeleryTaskViewSet,
-    "CeleryTask",
-)  # deprecated
-router.register(
-    r"tasks/task",
-    celery_tasks.CeleryTaskViewSet,
-    "CeleryTask",
-)
-
-router.register(
-    r"tasks/worker",
-    celery_tasks.CeleryWorkerViewSet,
-    "CeleryWorker",
-)
-
-router.register(
-    r"tasks/stats",
-    celery_tasks.CeleryStatsViewSet,
-    "CeleryStats",
-)
-
-router.register(
-    r"configuration/configuration",
+    "configuration/configuration",
     configuration.ConfigurationViewSet,
+    "configuration",
 )
 router.register(
-    r"configuration/new-member-setup-configuration",
+    "configuration/new-member-setup-configuration",
     configuration.NewMemberSetupConfigurationViewSet,
+    "newmembersetupconfiguration",
 )
 router.register(
-    r"transactions/bank-file",
-    integrations.TransactionFileResultViewSet,
-)  # deprecated?
-router.register(
-    r"specific-data/values-for-select",
+    "specific-data/values-for-select",
     common.ValuesForSelectViewSet,
     "valuesforselect",
 )
 router.register(
-    r"notifications/notification",
-    notifications.NotificationViewSet,
-)
-router.register(
-    r"data-provider/bloomberg/credential",
-    integrations.BloombergDataProviderCredentialViewSet,
-)
-router.register(
-    r"utils/expression",
+    "utils/expression",
     api.ExpressionViewSet,
     "expression",
 )
 router.register(
-    r"utils/stats",
+    "utils/send-email",
+    api.EmailViewSet,
+    "email",
+)
+router.register(
+    "utils/stats",
     api.StatsViewSet,
     "stats",
 )
 router.register(
-    r"utils/system-info",
+    "utils/system-info",
     api.SystemInfoViewSet,
     "system-info",
 )
 router.register(
-    r"utils/system-logs",
+    "utils/system-logs",
     api.SystemLogsViewSet,
     "system-logs",
 )
 router.register(
-    r"utils/calendar-events",
+    "utils/calendar-events",
     api.CalendarEventsViewSet,
     "calendar-events",
 )
 router.register(
-    r"utils/tables-size",
+    "utils/tables-size",
     api.TablesSizeViewSet,
     "tables-size",
 )
 router.register(
-    r"utils/recycle-bin",
+    "utils/recycle-bin",
     api.RecycleBinViewSet,
     "recycle-bin",
 )
 router.register(
-    r"utils/universal-input",
+    "utils/universal-input",
     api.UniversalInputViewSet,
     "universalInput",
 )
 router.register(
-    r"import/complex/scheme",
-    complex_import.ComplexImportSchemeViewSet,
-    "import_complex_scheme",
-)  # Probably deprecated
-router.register(
-    r"import/complex",
-    complex_import.ComplexImportViewSet,
-    "import_complex",
-)  # Probably deprecated
-router.register(
-    r"import/configuration-json",
-    configuration_import.ConfigurationImportAsJsonViewSet,
-    "configuration_import",
+    "utils/date/split-date-range",
+    api.SplitDateRangeViewSet,
+    "split_date_range",
 )
 router.register(
-    r"export/configuration",
-    configuration_export.ConfigurationExportViewSet,
-    "configuration_export",
+    "utils/date/pick-dates-from-range",
+    api.PickDatesFromRangeViewSet,
+    "pick_dates_from_range",
 )
 router.register(
-    r"export/mapping",
-    configuration_export.MappingExportViewSet,
-    "mapping_export",
+    "utils/date/calc-period-date",
+    api.CalcPeriodDateViewSet,
+    "calculate_period_date",
 )
 router.register(
-    r"import/configuration/check-duplicates",
-    configuration_export.ConfigurationDuplicateCheckViewSet,
-    "configuration_import_check_duplicates",
+    "utils/date/last-business-day",
+    api.LastBusinessDayViewSet,
+    "last_business_day",
 )
 router.register(
-    r"reconciliation/process-bank-file",
-    reconciliation.ProcessBankFileForReconcileViewSet,
-    "process_bank_file_for_reconcile",
+    "utils/date/is-business-day",
+    api.IsBusinessDayViewSet,
+    "is_business_day",
 )
 router.register(
-    r"reconciliation/bank-field",
-    reconciliation.ReconciliationBankFileFieldViewSet,
-    "bank_fields",
+    "utils/date/last-day-of-month",
+    api.LastDayOfMonthViewSet,
+    "last_day_of_month",
 )
 router.register(
-    r"reconciliation/new-bank-field",
-    reconciliation.ReconciliationNewBankFileFieldViewSet,
-    "new_bank_fields",
-)
-router.register(
-    r"reconciliation/complex-transaction-field",
-    reconciliation.ReconciliationComplexTransactionFieldViewSet,
-    "complex_transaction_fields",
-)
-router.register(
-    r"file-reports/file-report",
+    "file-reports/file-report",
     file_reports.FileReportViewSet,
     "file_reports",
 )
 router.register(
-    r"configuration-sharing/shared-configuration-file",
-    configuration_sharing.SharedConfigurationFileViewSet,
-    "shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"configuration-sharing/invites",
-    configuration_sharing.InviteToSharedConfigurationFileViewSet,
-    "invites_to_shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"configuration-sharing/my-invites",
-    configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
-    "my_invites_to_shared_configuration_file",
-)  # Probably deprecated
-router.register(
-    r"pricing/instrument-pricing-scheme",
-    pricing.InstrumentPricingSchemeViewSet,
-    "pricing_instrument_pricing_scheme",
+    "pricing/run",
+    pricing.RunPricingView,
+    "runpricing",
 )
 router.register(
-    r"pricing/instrument-pricing-scheme-type",
-    pricing.InstrumentPricingSchemeTypeViewSet,
-    "pricing_instrument_pricing_scheme type",
-)
-router.register(
-    r"pricing/currency-pricing-scheme",
-    pricing.CurrencyPricingSchemeViewSet,
-    "pricing_currency_pricing_scheme",
-)
-router.register(
-    r"pricing/currency-pricing-scheme-type",
-    pricing.CurrencyPricingSchemeTypeViewSet,
-    "pricing_currency_pricing_scheme_type",
-)
-router.register(
-    r"pricing/price-history-error-ev-group",
+    "pricing/price-history-error-ev-group",
     pricing.PriceHistoryErrorEvGroupViewSet,
     "pricehistoryerrorevgroup",
 )
 router.register(
-    r"pricing/price-history-error-ev",
+    "pricing/price-history-error-ev",
     pricing.PriceHistoryErrorEvViewSet,
+    "price_history_error_ev",
 )
 router.register(
-    r"pricing/price-history-error",
+    "pricing/price-history-error",
     pricing.PriceHistoryErrorViewSet,
+    "price_history_error",
 )
 router.register(
-    r"pricing/currency-history-error-ev-group",
+    "pricing/currency-history-error-ev-group",
     pricing.CurrencyHistoryErrorEvGroupViewSet,
     "currencyhistoryerrorevgroup",
 )
 router.register(
-    r"pricing/currency-history-error-ev",
+    "pricing/currency-history-error-ev",
     pricing.CurrencyHistoryErrorEvViewSet,
+    "currency_history_error_ev",
 )
 router.register(
-    r"pricing/currency-history-error",
+    "pricing/currency-history-error",
     pricing.CurrencyHistoryErrorViewSet,
+    "currency_history_error",
 )
 router.register(
-    r"schedules/schedule",
-    schedules.ScheduleViewSet,
-)
-router.register(
-    r"system-messages/message",
-    system_messages.SystemMessageViewSet,
-)
-router.register(
-    r"credentials/credentials",
-    credentials.CredentialsViewSet,
-)  # Probably deprecated
-router.register(
-    r"integrations/data-provider",
-    integrations.DataProviderViewSet,
-)  # Probably deprecated
-router.register(
-    r"widgets/history/nav",
+    "widgets/history/nav",
     widgets.HistoryNavViewSet,
     "widgets_history_nav",
 )
 router.register(
-    r"widgets/history/pl",
+    "widgets/history/pl",
     widgets.HistoryPlViewSet,
     "widgets_history_pl",
 )
 router.register(
-    r"widgets/stats",
+    "widgets/stats",
     widgets.StatsViewSet,
     "widgets_stats",
 )
 router.register(
-    r"widgets/collect-history",
+    "widgets/collect-history",
     widgets.CollectHistoryViewSet,
     "widgets_collect_history",
 )
 router.register(
-    r"widgets/collect-balance-history",
+    "widgets/collect-balance-history",
     widgets.CollectBalanceHistoryViewSet,
     "widgets_collect_balance_history",
 )
 router.register(
-    r"widgets/collect-pl-history",
+    "widgets/collect-pl-history",
     widgets.CollectPlHistoryViewSet,
     "widgets_collect_pl_history",
 )
 router.register(
-    r"widgets/collect-stats",
+    "widgets/collect-stats",
     widgets.CollectStatsViewSet,
     "widgets_collect_stats",
 )
 router.register(
-    r"debug/logs",
-    common.DebugLogViewSet,
-    "debug_log",
-)  # Deprecated
-router.register(
-    r"errors/error",
+    "errors/error",
     ErrorRecordViewSet,
     "error",
 )
 router.register(
-    r"history/historical-record", history.HistoricalRecordViewSet, "historical-record"
+    "history/historical-record",
+    history.HistoricalRecordViewSet,
+    "HistoricalRecord",
+)
+router.register(
+    "auth-tokens/personal-access-token",
+    PersonalAccessTokenViewSet,
+    "PersonalAccessToken",
+)
+router.register(
+    "system-messages/message",
+    system_messages.SystemMessageViewSet,
+    "SystemMessage"
+)
+router.register(
+    "notifications/notification",
+    notifications.NotificationViewSet,
+    "Notification",
+)
+
+# DEPRECATED
+router.register(
+    "debug/logs",
+    common.DebugLogViewSet,
+    "debug_log",
+)
+router.register(
+    "credentials/credentials",
+    credentials.CredentialsViewSet,
+    "Credentials"
+)
+router.register(
+    "integrations/data-provider",
+    integrations.DataProviderViewSet,
+    "integrations_data_provider",
+)
+router.register(
+    "import/complex/scheme",
+    complex_import.ComplexImportSchemeViewSet,
+    "import_complex_scheme",
+)
+router.register(
+    "import/complex",
+    complex_import.ComplexImportViewSet,
+    "import_complex",
+)
+router.register(
+    "transactions/bank-file",
+    integrations.TransactionFileResultViewSet,
+    "transaction_bank_file",
+)
+router.register(
+    "data-provider/bloomberg/credential",
+    integrations.BloombergDataProviderCredentialViewSet,
+    "bloomberg_credential",
+)
+router.register(
+    "reconciliation/process-bank-file",
+    reconciliation.ProcessBankFileForReconcileViewSet,
+    "process_bank_file_for_reconcile",
+)
+router.register(
+    "reconciliation/bank-field",
+    reconciliation.ReconciliationBankFileFieldViewSet,
+    "bank_fields",
+)
+router.register(
+    "reconciliation/new-bank-field",
+    reconciliation.ReconciliationNewBankFileFieldViewSet,
+    "new_bank_fields",
+)
+router.register(
+    "reconciliation/complex-transaction-field",
+    reconciliation.ReconciliationComplexTransactionFieldViewSet,
+    "complex_transaction_fields",
+)
+router.register(
+    "active_processes/active_processes",
+    celery_views.CeleryTaskViewSet,
+    "activeprocesses",
 )
 
 urlpatterns = [
-    re_path(r"^v1/users/", include(users_router.router.urls)),
-    re_path(r"^v1/accounts/", include(account_router.router.urls)),
-    re_path(r"^v1/portfolios/", include(portfolio_router.router.urls)),
-    re_path(r"^v1/currencies/", include(currency_router.router.urls)),
-    re_path(r"^v1/instruments/", include(instrument_router.router.urls)),
-    re_path(r"^v1/transactions/", include(transaction_router.router.urls)),
-    re_path(r"^v1/counterparties/", include(counterparty_router.router.urls)),
-    re_path(r"^v1/strategies/", include(strategy_router.router.urls)),
-    re_path(r"^v1/reports/", include(report_router.router.urls)),
-    re_path(r"^v1/procedures/", include(procedure_router.router.urls)),
-    re_path(r"^v1/import/", include(integrations_router.router.urls)),
-    re_path(r"^v1/import/", include(csv_import_router.router.urls)),
-    re_path(r"^v1/ui/", include(ui_router.router.urls)),
-    re_path(r"^v1/explorer/", include(explorer_router.router.urls)),
-    re_path(r"^v1/vault/", include(vault_router.router.urls)),
-    re_path(r"^v1/iam/", include(iam_router.router.urls)),
-    re_path(r"^v1/", include(router.urls)),
+    re_path("^v1/system-notifications/", include("poms.system_messages.urls")),
+    re_path("^v1/users/", include(users_router.router.urls)),
+    re_path("^v1/accounts/", include(account_router.router.urls)),
+    re_path("^v1/portfolios/", include(portfolio_router.router.urls)),
+    re_path("^v1/currencies/", include(currency_router.router.urls)),
+    re_path("^v1/instruments/", include(instrument_router.router.urls)),
+    re_path("^v1/transactions/", include(transaction_router.router.urls)),
+    re_path("^v1/counterparties/", include(counterparty_router.router.urls)),
+    re_path("^v1/strategies/", include(strategy_router.router.urls)),
+    re_path("^v1/reports/", include(report_router.router.urls)),
+    re_path("^v1/procedures/", include(procedure_router.router.urls)),
+    re_path("^v1/import/", include(integrations_router.router.urls)),
+    re_path("^v1/import/", include(csv_import_router.router.urls)),
+    re_path("^v1/ui/", include(ui_router.router.urls)),
+    re_path("^v1/explorer/", include(explorer_router.router.urls)),
+    re_path("^v1/clients/", include(clients_router.router.urls)),
+    re_path("^v1/vault/", include(vault_router.router.urls)),
+    re_path("^v1/iam/", include(iam_router.router.urls)),
+    re_path("^v1/schedules/", include(schedule_router.router.urls)),
+    re_path("^v1/tasks/", include(celery_router.router.urls)),
+    re_path("^v1/", include(router.urls)),
     re_path(
-        r"instruments/instrument-database-search",
+        "instruments/instrument-database-search",
         instruments.InstrumentDatabaseSearchViewSet.as_view(),
     ),
-
     # Authorizer, Workflow, Backend Internal API section
     re_path(
-        r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"
+        "^internal/accept-invite/",
+        AcceptInvite.as_view(),
+        name="accept-invite",
     ),
     re_path(
-        r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
-    ),
-
-    # external callbacks
-    re_path(
-        r"internal/brokers/bloomberg/callback",
-        csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()),
+        "^internal/decline-invite/",
+        DeclineInvite.as_view(),
+        name="decline-invite",
     ),
     re_path(
-        r"internal/brokers/bloomberg-forwards/callback",
-        csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/wtrade/callback",
-        csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/cbonds/callback",
-        csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/fx-cbonds/callback",
-        csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/fixer/callback",
-        csrf_exempt(pricing.PricingBrokerFixerHandler.as_view()),
-    ),
-    re_path(
-        r"internal/brokers/alphav/callback",
-        csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view()),
-    ),
-    # re_path(r'internal/data/transactions/callback',
-    #         csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
-    re_path(
-        r"internal/data/transactions/json",
+        "internal/data/transactions/json",
         csrf_exempt(integrations.TransactionImportJson.as_view()),
     ),
     re_path(
-        r"integrations/superset/get-security-token",
+        "integrations/superset/get-security-token",
         csrf_exempt(integrations.SupersetGetSecurityToken.as_view()),
     ),
     re_path(
-        r"instruments/instrument-external-api",
+        "instruments/instrument-external-api",
         csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view()),
     ),
     re_path(
-        r"instruments/fdb-create-from-callback",
+        "instruments/fdb-create-from-callback",
         csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view()),
     ),
     re_path(
-        r"^authorizer/token-auth/", ObtainAuthToken.as_view(), name="api-token-auth"
+        "^authorizer/token-auth/",
+        ObtainAuthToken.as_view(),
+        name="api-token-auth",
     ),
     re_path(
-        r"^authorizer/set-token-auth/", SetAuthToken.as_view(), name="set-token-auth"
-    ),
-
-    re_path(
-        r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"
+        "^authorizer/set-token-auth/",
+        SetAuthToken.as_view(),
+        name="set-token-auth",
     ),
     re_path(
-        r"^authorizer/create-master-user/",
+        "^authorizer/create-user/",
+        CreateUser.as_view(),
+        name="create-user",
+    ),
+    re_path(
+        "^authorizer/create-master-user/",
         CreateMasterUser.as_view(),
         name="create-master-user",
     ),
     # TODO deprecated delete soon
     re_path(
-        r"^authorizer/rename-master-user/",
+        "^authorizer/rename-master-user/",
         RenameMasterUser.as_view(),
         name="rename-master-user",
     ),
-    # re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'), # Deprecated
     re_path(
-        r"^authorizer/delete-member/", DeleteMember.as_view(), name="delete-member"
+        "^authorizer/delete-member/",
+        DeleteMember.as_view(),
+        name="delete-member",
     ),
     re_path(
-        r"^authorizer/master-user-change-owner/",
+        "^authorizer/master-user-change-owner/",
         MasterUserChangeOwner.as_view(),
         name="master-user-change-owner",
     ),
     re_path(
-        r"^storage/(?P<filepath>.+)",
-        ExplorerServeFileViewSet.as_view({"get": "retrieve"}),
+        "^storage/(?P<filepath>.+)",
+        ExplorerServerFileViewSet.as_view({"get": "retrieve"}),
         name="storage",
+    ),
+    re_path(
+        "^authorizer/migrate/",
+        common.RealmMigrateSchemeView.as_view(),
+        name="migrate",
     ),
 ]
 
@@ -454,16 +428,3 @@ urlpatterns = [
 #     urlpatterns += [
 #         re_path(r'^schema/', api.SchemaViewSet.as_view()),
 #     ]
-
-if settings.SERVER_TYPE == "local":
-    import debug_toolbar
-
-    urlpatterns += [
-        re_path("__debug__/", include(debug_toolbar.urls)),
-    ]
-
-    urlpatterns += [
-        re_path(
-            r"^dev/auth/", include("rest_framework.urls", namespace="rest_framework")
-        ),
-    ]

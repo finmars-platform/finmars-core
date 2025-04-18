@@ -72,6 +72,7 @@ Eritrea,ER,ERI,232,ISO 3166-2:ER,Africa,Sub-Saharan Africa,Eastern Africa,002,20
 Estonia,EE,EST,233,ISO 3166-2:EE,Europe,Northern Europe,"",150,154,""
 Eswatini,SZ,SWZ,748,ISO 3166-2:SZ,Africa,Sub-Saharan Africa,Southern Africa,002,202,018
 Ethiopia,ET,ETH,231,ISO 3166-2:ET,Africa,Sub-Saharan Africa,Eastern Africa,002,202,014
+Europe,EU,EUR,150,ISO 3166-2:EU,Europe,Europe,"",001,150,""
 Falkland Islands (Malvinas),FK,FLK,238,ISO 3166-2:FK,Americas,Latin America and the Caribbean,South America,019,419,005
 Faroe Islands,FO,FRO,234,ISO 3166-2:FO,Europe,Northern Europe,"",150,154,""
 Fiji,FJ,FJI,242,ISO 3166-2:FJ,Oceania,Melanesia,"",009,054,""
@@ -246,6 +247,7 @@ Virgin Islands (British),VG,VGB,092,ISO 3166-2:VG,Americas,Latin America and the
 Virgin Islands (U.S.),VI,VIR,850,ISO 3166-2:VI,Americas,Latin America and the Caribbean,Caribbean,019,419,029
 Wallis and Futuna,WF,WLF,876,ISO 3166-2:WF,Oceania,Polynesia,"",009,061,""
 Western Sahara,EH,ESH,732,ISO 3166-2:EH,Africa,Northern Africa,"",002,015,""
+Worldwide,WW,WWD,001,ISO 3166-2:WW,Worldwide,Worldwide,"",001,001,""
 Yemen,YE,YEM,887,ISO 3166-2:YE,Asia,Western Asia,"",142,145,""
 Zambia,ZM,ZMB,894,ISO 3166-2:ZM,Africa,Sub-Saharan Africa,Eastern Africa,002,202,014
 Zimbabwe,ZW,ZWE,716,ISO 3166-2:ZW,Africa,Sub-Saharan Africa,Eastern Africa,002,202,014

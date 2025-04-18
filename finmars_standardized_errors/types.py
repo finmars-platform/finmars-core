@@ -23,6 +23,7 @@ class ErrorType(str, Enum):
 class Error:
     code: str
     detail: str
+    error_key: str
     attr: Optional[str]
 
 
@@ -34,6 +35,7 @@ class ErrorResponseDetails:
 @dataclass
 class ErrorResponse:
     url: str
+    method: str
     username: str
     status_code: int
     message: str

@@ -220,12 +220,28 @@ EXPECTED_INSTRUMENT = {
         "is_admin": True,
         "user": 1
     },
+    "files": [],
     "meta": {
         "content_type": "instruments.instrument",
         "app_label": "instruments",
         "model_name": "instrument",
         "space_code": "space00000",
     },
+    "identifier": {},
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
+    "actual_at": None,
+    "source_type": "manual",
+    "source_origin": None,
+    "external_id": None,
+    "is_manual_locked": False,
+    "is_locked": True,
+    "first_transaction_date": None,
+    "resource_groups": [],
+    "resource_groups_object": [],
+    "accrual_events": [],
+    "registration_date": "2020-01-01",
 }
 
 INSTRUMENT_CREATE_DATA = {
@@ -319,6 +335,9 @@ EXPECTED_INSTRUMENT_TYPE = {
         "model_name": "instrumenttype",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
 }
 
 INSTRUMENT_FOR_SELECT = {
@@ -331,7 +350,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "-",
             "name": "-",
             "short_name": "-",
-            "modified": "2023-09-18T17:15:58.872171Z",
+            "modified_at": "2023-09-18T17:15:58.872171Z",
             "instrument_type": 1,
             "instrument_type_object": {
                 "id": 1,
@@ -373,7 +392,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "Apple",
             "name": "Apple",
             "short_name": "Apple",
-            "modified": "2023-09-18T17:15:59.159401Z",
+            "modified_at": "2023-09-18T17:15:59.159401Z",
             "instrument_type": 2,
             "instrument_type_object": {
                 "id": 2,
@@ -415,7 +434,7 @@ INSTRUMENT_FOR_SELECT = {
             "user_code": "Tesla B.",
             "name": "Tesla B.",
             "short_name": "Tesla B.",
-            "modified": "2023-09-18T17:15:59.168410Z",
+            "modified_at": "2023-09-18T17:15:59.168410Z",
             "instrument_type": 3,
             "instrument_type_object": {
                 "id": 3,

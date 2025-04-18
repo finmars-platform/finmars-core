@@ -20,6 +20,13 @@ EXPECTED_COUNTERPARTY = {
     "short_name": "SCW",
     "public_name": None,
     "notes": None,
+    "is_active": True,
+    "actual_at": None,
+    "source_type": "manual",
+    "source_origin": "manual",
+    "external_id": None,
+    "is_manual_locked": False,
+    "is_locked": True,
     "is_valid_for_all_portfolios": True,
     "is_deleted": False,
     "portfolios": [],
@@ -66,6 +73,9 @@ EXPECTED_COUNTERPARTY = {
         "model_name": "counterparty",
         "space_code": "space00000",
     },
+    "created_at": "20240823T16:41:00.0Z",
+    "modified_at": "20240823T16:41:00.0Z",
+    "deleted_at": None,
 }
 
 CREATE_DATA = {
@@ -78,16 +88,20 @@ CREATE_DATA = {
 
 
 class CounterpartyViewSetTest(BaseTestCase):
+    databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/counterparty/"
+        self.realm_code = 'realm00000'
+        self.space_code = 'space00000'
+        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/counterparty/"
         self.counterparty = None
 
     def create_counterparty_group(self) -> CREATE_DATA:
         return CounterpartyGroup.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             user_code=self.random_string(),
             name=self.random_string(),
             short_name=self.random_string(3),
@@ -96,7 +110,7 @@ class CounterpartyViewSetTest(BaseTestCase):
     def create_counterparty(self) -> Counterparty:
         self.counterparty = Counterparty.objects.create(
             master_user=self.master_user,
-            owner=self.finmars_bot,
+            owner=self.member,
             group=self.create_counterparty_group(),
             user_code=self.random_string(),
             name=self.random_string(),
@@ -141,7 +155,7 @@ class CounterpartyViewSetTest(BaseTestCase):
         self.assertEqual(len(response_json["results"]), 7)
 
     def test__list_light(self):
-        counterparty = self.create_counterparty()
+        self.create_counterparty()
         response = self.client.get(path=f"{self.url}light/")
         self.assertEqual(response.status_code, 200, response.content)
 

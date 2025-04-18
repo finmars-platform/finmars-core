@@ -2,7 +2,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, NamedModel, FakeDeletableModel
+from poms.common.models import (
+    EXPRESSION_FIELD_LENGTH,
+    FakeDeletableModel,
+    NamedModel,
+    TimeStampedModel,
+)
 from poms.configuration.models import ConfigurationModel
 from poms.users.models import MasterUser
 
@@ -35,7 +40,9 @@ CLASSIFIER_HANDLER = [
 COLUMN_MATCHER_CHOICES = [["index", "Index"], ["name", "Name"]]
 
 
-class CsvImportScheme(NamedModel, DataTimeStampedModel, ConfigurationModel, FakeDeletableModel):
+class CsvImportScheme(
+    NamedModel, TimeStampedModel, ConfigurationModel, FakeDeletableModel
+):
     content_type = models.ForeignKey(
         ContentType,
         verbose_name=gettext_lazy("content type"),

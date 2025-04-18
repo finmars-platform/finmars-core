@@ -21,7 +21,7 @@ storage = get_storage()
 
 
 @finmars_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)
-def process_bank_file_for_reconcile(self, instance):
+def process_bank_file_for_reconcile(self, instance, *args, **kwargs):
     _l.debug('complex_transaction_file_import: %s', instance)
 
     instance.processed_rows = 0

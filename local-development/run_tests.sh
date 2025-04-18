@@ -3,8 +3,8 @@
 python poms_app/print_finmars.py
 
 . ../venv/bin/activate
-REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
+REDIS_HOST=0.0.0.0 \
 DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
@@ -38,3 +38,6 @@ ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
 BACKEND_ROLES="ALL" \
 python manage.py test --keepdb
+#python manage.py test --keepdb poms.explorer.tests.views.test_server_file_view
+
+#python manage.py test --keepdb poms.explorer

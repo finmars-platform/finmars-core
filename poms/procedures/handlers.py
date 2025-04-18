@@ -290,7 +290,10 @@ class DataProcedureProcess(object):
                     complex_transaction_csv_file_import_by_procedure_json.apply_async(
                         kwargs={
                             "procedure_instance_id": procedure_instance.id,
-                            "celery_task_id": celery_task.id,
+                            "celery_task_id": celery_task.id, 'context': {
+                                'space_code': celery_task.master_user.space_code,
+                                'realm_code': celery_task.master_user.realm_code
+                            }
                         }
                     )
 
@@ -318,7 +321,10 @@ class DataProcedureProcess(object):
                     data_csv_file_import_by_procedure_json.apply_async(
                         kwargs={
                             "procedure_instance_id": procedure_instance.id,
-                            "celery_task_id": celery_task.id,
+                            "celery_task_id": celery_task.id, 'context': {
+                                'space_code': celery_task.master_user.space_code,
+                                'realm_code': celery_task.master_user.realm_code
+                            }
                         }
                     )
 
@@ -526,7 +532,7 @@ class DataProcedureProcess(object):
                 "https://"
                 + settings.DOMAIN_NAME
                 + "/"
-                + settings.BASE_API_URL
+                + self.master_user.space_code
                 + "/api/internal/data/transactions/callback/"
             )
 
@@ -534,7 +540,7 @@ class DataProcedureProcess(object):
                 "id": self.procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
-                    # "base_api_url": settings.BASE_API_URL,
+                    "base_api_url": self.master_user.space_code,
                     "credentials": {},
                     "params": params,
                 },
@@ -566,7 +572,10 @@ class DataProcedureProcess(object):
                     "master_user": self.master_user,
                     "procedure_instance": self.procedure_instance,
                     "transaction_file_result": item,
-                    "data": data,
+                    "data": data, 'context': {
+                        'space_code': self.master_user.space_code,
+                        'realm_code': self.master_user.realm_code
+                    }
                 }
             )
 

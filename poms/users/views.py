@@ -41,7 +41,6 @@ from poms.common.views import (
     AbstractModelViewSet,
     AbstractViewSet,
 )
-
 from poms.complex_import.models import ComplexImportScheme
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType
@@ -318,7 +317,10 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 kwargs={
                     "instance": instance,
                     "name": request.data["name"],
-                    "current_user": request.user,
+                    "current_user": request.user, 'context': {
+                        'space_code': request.space_code,
+                        'realm_code': request.realm_code
+                    }
                 }
             )
             instance.task_id = signer.sign(f"{res.id}")
@@ -537,11 +539,11 @@ class UserViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
-        methods=("PUT",),
+        methods=["put"],
         url_path="set-password",
         serializer_class=UserSetPasswordSerializer,
     )
-    def set_password(self, request, pk=None):
+    def set_password(self, request, pk=None, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -549,11 +551,11 @@ class UserViewSet(AbstractModelViewSet):
 
     @action(
         detail=True,
-        methods=("PUT",),
+        methods=["put"],
         url_path="unsubscribe",
         serializer_class=UserUnsubscribeSerializer,
     )
-    def unsubscribe(self, request, pk=None):
+    def unsubscribe(self, request, pk=None, realm_code=None, space_code=None):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -595,7 +597,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         if lookup_value == "0":
             return self.request.user.master_user
-        obj = super(MasterUserViewSet, self).get_object()
+        obj = super().get_object()
 
         _l.debug(f"set_master_user get_object done: {time.perf_counter() - set_st}")
 
@@ -634,14 +636,14 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return Response({"status": "OK"})
 
-    @action(detail=False, methods=["POST"], url_path="update")
+    @action(detail=False, methods=["post"], url_path="update")
     def update_master_user(self, request, *args, **kwargs):
         # Name and Description only available for change
 
         user = request.user
 
         try:
-            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            master_user = MasterUser.objects.get(space_code=request.space_code)
 
             member_qs = Member.objects.filter(
                 master_user=master_user, user=user, is_admin=True
@@ -662,7 +664,7 @@ class MasterUserViewSet(AbstractModelViewSet):
         except MasterUser.DoesNotExist as e:
             raise PermissionDenied() from e
 
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.get(space_code=request.space_code)
 
         serializer = MasterUserSerializer(instance=master_user)
 
@@ -670,7 +672,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="get")
     def get_master_user(self, request, *args, **kwargs):
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.get(space_code=request.space_code)
 
         serializer = MasterUserSerializer(instance=master_user)
 
@@ -678,7 +680,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
 
 class MasterUserLightViewSet(AbstractModelViewSet):
-    queryset = MasterUser.objects.prefetch_related("members")
+    queryset = MasterUser.objects.all().prefetch_related("members")
     serializer_class = MasterUserLightSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
         IsCurrentMasterUser,
@@ -716,14 +718,11 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
     @action(
         detail=False,
-        methods=(
-            "PUT",
-            "PATCH",
-        ),
+        methods=["put", "patch"],
         url_path="generate-code",
         permission_classes=[IsAuthenticated],
     )
-    def generate_code(self, request, pk=None):
+    def generate_code(self, request, pk=None, realm_code=None, space_code=None):
         secret = pyotp.random_base32()
 
         user = request.user
@@ -745,14 +744,11 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
     @action(
         detail=False,
-        methods=(
-            "PUT",
-            "PATCH",
-        ),
+        methods=["put", "patch"],
         url_path="validate-code",
         permission_classes=[],
     )
-    def validate_code(self, request, pk=None):
+    def validate_code(self, request, pk=None, realm_code=None, space_code=None):
         code = request.data["code"]
         username = request.data["username"]
         result = False
@@ -819,6 +815,8 @@ class EcosystemDefaultViewSet(AbstractModelViewSet):
         "strategy3__subgroup__group",
         "mismatch_portfolio",
         "mismatch_account",
+    ).order_by(
+        "master_user",
     )
     serializer_class = EcosystemDefaultSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
@@ -859,7 +857,11 @@ class MemberViewSet(AbstractModelViewSet):
     pagination_class = BigPagination
 
     def list(self, request, *args, **kwargs):
-        # Rewriting parent list, we must show deleted members
+        # Rewriting the parent list, we must show deleted members
+
+        # Just example of how to raise custom exception
+        # from poms.common.exceptions import FinmarsBaseException
+        # raise FinmarsBaseException(error_key="internal_server_error", message="Something went wrong")
 
         queryset = self.filter_queryset(Member.objects.all())
 
@@ -878,6 +880,7 @@ class MemberViewSet(AbstractModelViewSet):
         if lookup_value == "0":
             try:
                 return self.request.user.member
+
             except AttributeError:
                 return None
 
@@ -888,13 +891,12 @@ class MemberViewSet(AbstractModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         with transaction.atomic():
-
             self.perform_create(serializer)  # try to create member
 
             member = serializer.instance
 
             try:
-                AuthorizerService().invite_member(member=member, from_user=request.user)
+                AuthorizerService().invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
                 headers = self.get_success_headers(serializer.data)
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -908,7 +910,7 @@ class MemberViewSet(AbstractModelViewSet):
     @staticmethod
     def _handle_authorizer_error(request, member, err):
         params = {
-            "base_api_url": settings.BASE_API_URL,
+            "base_api_url": request.space_code,
             "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": request.user.username,
@@ -917,7 +919,7 @@ class MemberViewSet(AbstractModelViewSet):
             f"Could not create/invite member, using params={params}, due to "
             f"Authorizer error={repr(err)}"
         )
-        _l.error(f"MemberViewset.create {error_message} trace {traceback.format_exc()}")
+        _l.error(f"MemberViewSet.create {error_message} trace {traceback.format_exc()}")
 
         return Response(
             {"error_message": error_message},
@@ -925,28 +927,45 @@ class MemberViewSet(AbstractModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
-        if self.get_object().username == "finmars_bot":
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        member = self.get_object()
+        if member.username == "finmars_bot":
             raise PermissionDenied()
 
-        if request.user.member.id != self.get_object().id:
+        if request.user.member.id != member.id:
             if not request.user.member.is_admin:
                 raise PermissionDenied()
-
-            form_data_is_owner = request.data.get("is_owner", False)
-            form_data_is_admin = request.data.get("is_admin", False)
-
-            if self.get_object().is_owner and form_data_is_owner is False:
-                raise ValidationError("Could not remove owner rights from owner")
-
-            if (
-                self.get_object().is_owner
-                and self.get_object().is_admin
-                and form_data_is_admin is False
-            ):
-                raise ValidationError("Could not remove admin rights from owner")
-
-        if request.user.member.id == self.get_object().id:
+        else:
             self.validate_member_settings(request)
+
+        form_data_is_owner = serializer.validated_data["is_owner"]
+        form_data_is_admin = serializer.validated_data["is_admin"]
+
+        if member.is_owner and form_data_is_owner is False:
+            raise ValidationError("Could not remove owner rights from owner")
+        if not member.is_owner and form_data_is_owner is True:
+            if not self.request.user.member.is_owner:
+                raise ValidationError("Only the owner himself can pass owner rights to another user")
+
+        if (
+            member.is_owner
+            and member.is_admin
+            and form_data_is_admin is False
+        ):
+            raise ValidationError("Could not remove admin rights from owner")
+
+        if member.is_admin != form_data_is_admin or member.is_owner != form_data_is_owner:
+            authorizer = AuthorizerService()
+            authorizer.update_member(member, request.realm_code, request.space_code,
+                                     is_admin=form_data_is_admin, is_owner=form_data_is_owner)
+
+        if not member.is_owner and form_data_is_owner is True:
+            master_user = MasterUser.objects.get(space_code=kwargs["space_code"])
+            for member in master_user.members.all():
+                member.is_owner = False
+                member.save()
 
         return super().update(request, *args, **kwargs)
 
@@ -984,15 +1003,15 @@ class MemberViewSet(AbstractModelViewSet):
 
         authorizer = AuthorizerService()
 
-        authorizer.kick_member(instance)
+        authorizer.kick_member(instance, request.realm_code, request.space_code)
 
         instance.status = Member.STATUS_DELETED
         instance.save()
 
-        return super(MemberViewSet, self).perform_destroy(instance)
+        return super().perform_destroy(instance)
 
-    @action(detail=True, methods=("PUT",), url_path="send-invite")
-    def send_invite(self, request, pk=None):
+    @action(detail=True, methods=["put"], url_path="send-invite")
+    def send_invite(self, request, pk=None, realm_code=None, space_code=None):
         member = self.get_object()
 
         if not member.is_deleted and member.status != Member.STATUS_INVITE_DECLINED:
@@ -1003,7 +1022,7 @@ class MemberViewSet(AbstractModelViewSet):
 
         authorizer = AuthorizerService()
 
-        authorizer.invite_member(member=member, from_user=request.user)
+        authorizer.invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
 
         return Response({"status": "ok"})
 
@@ -1046,10 +1065,7 @@ class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
-class DeleteMasterUserViewSet(
-    AbstractApiView,
-    ViewSet,
-):
+class DeleteMasterUserViewSet(AbstractApiView, ViewSet):
     permission_classes = [IsAuthenticated]
 
     @method_decorator(ensure_csrf_cookie)

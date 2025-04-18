@@ -6,7 +6,7 @@ from poms.file_reports.models import FileReport
 from poms.users.models import Member
 
 
-class SystemMessage(models.Model):
+class SystemMessage(TimeStampedModel):
     SECTION_GENERAL = 0
     SECTION_EVENTS = 1
     SECTION_TRANSACTIONS = 2
@@ -86,12 +86,6 @@ class SystemMessage(models.Model):
         blank=True,
         verbose_name=gettext_lazy("text"),
     )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-        db_index=True,
-        verbose_name=gettext_lazy("created"),
-    )
     performed_by = models.CharField(
         max_length=255,
         null=True,
@@ -113,13 +107,13 @@ class SystemMessage(models.Model):
     )
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-created_at"]
 
     def __str__(self):
         pieces = []
 
-        if self.created:
-            pieces.append(self.created.strftime("%Y-%m-%d %H:%M:%S"))
+        if self.created_at:
+            pieces.append(self.created_at.strftime("%Y-%m-%d %H:%M:%S"))
 
         if self.title:
             pieces.append(self.title)
