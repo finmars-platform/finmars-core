@@ -120,7 +120,7 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
 
     file_path = task.options_object["file_path"]
 
-    output_directory = os.path.join(settings.BASE_DIR, f"tmp/task_{str(task.id)}/")
+    output_directory = os.path.join(settings.BASE_DIR, f"tmp/{str(task.master_user.space_code)}/task_{str(task.id)}/")
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory, exist_ok=True)
@@ -132,11 +132,11 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
     _l.info(f"import_configuration got {file_path}")
 
     output_directory = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.id)}/source"
+        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source"
     )
 
     if not os.path.exists(
-        os.path.join(settings.BASE_DIR, f"configurations/{str(task.id)}/source")
+        os.path.join(settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source")
     ):
         os.makedirs(output_directory, exist_ok=True)
 
@@ -344,7 +344,7 @@ def export_configuration(self, task_id, *args, **kwargs):
     _l.info(f"configuration {configuration}")
 
     source_directory = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.id)}/source"
+        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source"
     )
 
     if not os.path.exists(source_directory):
@@ -593,7 +593,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     )
 
     destination_path = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.id)}/archive.zip"
+        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/archive.zip"
     )
 
     if response.status_code != 200:
