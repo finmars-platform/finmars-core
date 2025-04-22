@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/var/app
+      - ./poms:/var/app/poms
     restart: always
     depends_on:
       - db
@@ -31,7 +31,7 @@ services:
     env_file:
       - .env
     environment:
-      - INSTANCE_TYPE=scheduler
+      - INSTANCE_TYPE=beat
     depends_on:
       - db
       - rabbitmq
