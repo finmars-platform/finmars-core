@@ -17,13 +17,13 @@ loglevel = os.getenv("GUNICORN_LOG_LEVEL", "info")
 
 reload = bool(os.getenv("LOCAL"))
 
-INSTANCE_TYPE = os.getenv("INSTANCE_TYPE", "backend")
+INSTANCE_TYPE = os.getenv("INSTANCE_TYPE", "web")
 celery_queue = os.getenv("QUEUES", "backend-general-queue,backend-background-queue")
 celery_worker = os.getenv("WORKER_NAME", "worker1")
 
 def on_starting(server):
-    if INSTANCE_TYPE == "backend":
-        print("I'm backend_instance")
+    if INSTANCE_TYPE == "web":
+        print("I'm web_instance")
         os.system("python /var/app/manage.py collectstatic -c --noinput")
     elif INSTANCE_TYPE == "worker":
         print("I'm celery_instance")
