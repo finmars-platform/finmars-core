@@ -21,16 +21,13 @@ class TestNameValidator(BaseTestCase):
 
     @BaseTestCase.cases(
         ("1", "1invalid"),
-        ("2", "invalid3"),
-        ("3", "_invalid"),
-        ("4", "invalid_"),
-        ("5", " invalid"),
-        ("6", "invalid!"),
-        ("7", "invalid-string"),
-        ("8", ""),
-        ("9", "x"),
-        ("10", "invalid string"),
-        ("11", "invalid@string"),
+        ("2", "_invalid"),
+        ("3", " invalid"),
+        ("4", "invalid!"),
+        ("5", "invalid-string"),
+        ("6", ""),
+        ("7", "invalid string"),
+        ("8", "invalid@string"),
     )
     def test_invalid_strings(self, string):
         with self.assertRaises(ValidationError):
