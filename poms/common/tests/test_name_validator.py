@@ -21,7 +21,7 @@ class TestNameValidator(BaseTestCase):
 
     @BaseTestCase.cases(
         ("1", "1invalid"),
-        ("2", "invalid3"),
+        ("2", "3invalid"),
         ("3", "_invalid"),
         ("4", "invalid_"),
         ("5", " invalid"),
