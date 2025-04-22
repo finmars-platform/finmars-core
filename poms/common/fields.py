@@ -30,7 +30,7 @@ def default_empty_list():
 
 
 name_validator = RegexValidator(
-    regex=r"\A[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z]\Z",
+    regex=r"\A[a-zA-Z][a-zA-Z0-9_]*\Z",
     message=(
         "Invalid name. Must start and end with a letter, contain only letters, digits, or underscores."
     ),
