@@ -1,5 +1,5 @@
 services:
-  backend:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
@@ -57,6 +57,8 @@ services:
     tty: true
     ports:
       - "5434:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
 
   rabbitmq:
     image: rabbitmq
@@ -71,3 +73,6 @@ services:
       - "6379:6379"
     stdin_open: true
     tty: true
+
+volumes:
+  postgres_data:
