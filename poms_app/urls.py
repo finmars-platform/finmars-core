@@ -55,4 +55,4 @@ def trigger_error(request):
 
 
 if settings.SERVER_TYPE == "development":
-    urlpatterns += [path('sentry-debug/', trigger_error)]
+    urlpatterns += [path('<slug:realm_code>/<slug:space_code>/sentry-debug/', trigger_error)]
