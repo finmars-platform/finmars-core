@@ -55,7 +55,7 @@ EXPECTED_ACCOUNT = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "accounts.account",
@@ -89,8 +89,8 @@ class AccountViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
 
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
 
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/accounts/account/"
         self.attribute_type = None
@@ -209,10 +209,12 @@ class AccountViewSetTest(BaseTestCase):
         response = self.client.delete(path=f"{self.url}{account_id}/")
         self.assertEqual(response.status_code, 204, response.content)
 
-        response = self.client.get(path=f"{self.url}?user_code={create_data['user_code']}")
+        response = self.client.get(
+            path=f"{self.url}?user_code={create_data['user_code']}"
+        )
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
-        
+
     def create_group(self, name: str = "test") -> ResourceGroup:
         return ResourceGroup.objects.create(
             name=name,
@@ -224,12 +226,11 @@ class AccountViewSetTest(BaseTestCase):
 
     def test_add_resource_group(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         account_id = response.json()["id"]
-        
+
         rg_name = self.random_string()
         rg = self.create_group(name=rg_name)
         response = self.client.patch(
@@ -250,12 +251,11 @@ class AccountViewSetTest(BaseTestCase):
 
     def test_update_resource_groups(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         account_id = response.json()["id"]
-        
+
         name_1 = self.random_string()
         self.create_group(name=name_1)
         name_2 = self.random_string()
@@ -287,12 +287,11 @@ class AccountViewSetTest(BaseTestCase):
 
     def test_remove_resource_groups(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         account_id = response.json()["id"]
-        
+
         name_1 = self.random_string()
         self.create_group(name=name_1)
         name_3 = self.random_string()
@@ -325,12 +324,11 @@ class AccountViewSetTest(BaseTestCase):
 
     def test_destroy_assignments(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         account_id = response.json()["id"]
-        
+
         name_1 = self.random_string()
         rg_1 = self.create_group(name=name_1)
         name_3 = self.random_string()

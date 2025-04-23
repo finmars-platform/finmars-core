@@ -15,7 +15,7 @@ from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member
 
 
-#TODO DEPRECATED delete in 1.15.0-rc
+# TODO DEPRECATED delete in 1.15.0-rc
 class PortalInterfaceAccessModel(AbstractClassModel):
     DATA_PORTFOLIO = 6
     DATA_ACCOUNT = 3
@@ -396,6 +396,8 @@ class PortalInterfaceAccessModel(AbstractClassModel):
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("portal interface access")
         verbose_name_plural = gettext_lazy("portal interface accesses")
+
+
 # DEPRECATED #
 
 
@@ -1353,8 +1355,8 @@ class UserInterfaceAccessModel(BaseUIModel, TimeStampedModel):
     @allowed_items.setter
     def allowed_items(self, val):
         try:
-            self.json_data = json.dumps(
-                val, cls=DjangoJSONEncoder, sort_keys=True
-            ) if val else "[]"
+            self.json_data = (
+                json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True) if val else "[]"
+            )
         except (ValueError, TypeError):
             self.json_data = "[]"

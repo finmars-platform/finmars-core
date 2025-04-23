@@ -26,7 +26,7 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
                 "only_errors": False,
                 "report_ttl": 45,
                 "round_digits": 2,
-            }
+            },
         )
 
     def test_check_url(self):
@@ -52,9 +52,14 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
     def test_calculate_invalid_group(self):
         calculate_data = {
             "portfolio_reconcile_group": self.random_int(1000000, 100000000),
-            "dates": [self.yesterday().strftime("%Y-%m-%d"), self.today().strftime("%Y-%m-%d")],
+            "dates": [
+                self.yesterday().strftime("%Y-%m-%d"),
+                self.today().strftime("%Y-%m-%d"),
+            ],
         }
-        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        response = self.client.post(
+            f"{self.url}calculate/", data=calculate_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_calculate_empty_dates(self):
@@ -62,14 +67,18 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             "portfolio_reconcile_group": self.group.user_code,
             "dates": [],
         }
-        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        response = self.client.post(
+            f"{self.url}calculate/", data=calculate_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_calculate_no_dates(self):
         calculate_data = {
             "portfolio_reconcile_group": self.group.user_code,
         }
-        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        response = self.client.post(
+            f"{self.url}calculate/", data=calculate_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
     @BaseTestCase.cases(
@@ -83,20 +92,32 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             "portfolio_reconcile_group": self.group.user_code,
             "dates": [invalid_date, self.today().strftime("%Y-%m-%d")],
         }
-        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        response = self.client.post(
+            f"{self.url}calculate/", data=calculate_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
-    @mock.patch("poms.portfolios.tasks.calculate_portfolio_reconcile_history.apply_async")
+    @mock.patch(
+        "poms.portfolios.tasks.calculate_portfolio_reconcile_history.apply_async"
+    )
     def test_calculate(self, apply_async):
         calculate_data = {
             "portfolio_reconcile_group": self.group.user_code,
-            "dates": [self.yesterday().strftime("%Y-%m-%d"), self.today().strftime("%Y-%m-%d")],
+            "dates": [
+                self.yesterday().strftime("%Y-%m-%d"),
+                self.today().strftime("%Y-%m-%d"),
+            ],
         }
-        response = self.client.post(f"{self.url}calculate/", data=calculate_data, format="json")
+        response = self.client.post(
+            f"{self.url}calculate/", data=calculate_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_data = response.json()
 
         apply_async.assert_called()
         self.group.refresh_from_db()
-        self.assertEqual(response_data["task_options"]["portfolio_reconcile_group"], self.group.user_code)
+        self.assertEqual(
+            response_data["task_options"]["portfolio_reconcile_group"],
+            self.group.user_code,
+        )
         self.assertEqual(response_data["task_status"], "I")

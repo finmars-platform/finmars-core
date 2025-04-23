@@ -32,7 +32,9 @@ calc_shift_date_map = {
     "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
     "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
     "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
-    "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
+    "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6)
+    if date.weekday() != 6
+    else date,
     "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
     "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
     "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
@@ -218,7 +220,9 @@ class MemorySavingQuerysetIterator(object):
             # By making a copy of the queryset and using that to actually access
             # the object, we ensure that there are only `max_obj_num` objects in
             # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[i : i + self.max_obj_num]
+            smaller_queryset = copy.deepcopy(self._base_queryset)[
+                i : i + self.max_obj_num
+            ]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
             yield from smaller_queryset.iterator()
 
@@ -287,7 +291,9 @@ def get_first_transaction(portfolio_instance) -> object:
     """
     from poms.transactions.models import Transaction
 
-    return Transaction.objects.filter(portfolio=portfolio_instance).order_by("accounting_date")[0]
+    return Transaction.objects.filter(portfolio=portfolio_instance).order_by(
+        "accounting_date"
+    )[0]
 
 
 def str_to_date(d):
@@ -570,16 +576,22 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
     )
 
     if date_from > date_to:
-        raise ValueError(f"Parameter 'date_from' {date_from} must be less or equal 'date_to' {date_to}")
+        raise ValueError(
+            f"Parameter 'date_from' {date_from} must be less or equal 'date_to' {date_to}"
+        )
 
-    dates = [date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)]
+    dates = [
+        date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)
+    ]
 
     return [str(date) for date in dates] if to_string else dates
 
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
 
     if not isinstance(date_to, datetime.date):
         date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
@@ -601,7 +613,9 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
     if not isinstance(date_from, datetime.date):
-        date_from = datetime.datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
+        date_from = datetime.datetime.strptime(
+            date_from, settings.API_DATE_FORMAT
+        ).date()
 
     if not isinstance(date_to, datetime.date):
         date_to = datetime.datetime.strptime(date_to, settings.API_DATE_FORMAT).date()
@@ -669,10 +683,10 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
                 end_of_months.append(d_date_to.strftime(settings.API_DATE_FORMAT))
             else:
                 end_of_months.append(d_date_to)
-                
+
         elif to_string:
             end_of_months.append(last_business_day.strftime(settings.API_DATE_FORMAT))
-            
+
         else:
             end_of_months.append(last_business_day)
 
@@ -791,7 +805,9 @@ def split_date_range(
     freq_end = f"E{frequency}"
 
     start_date = calc_shift_date_map[freq_start](start_date)
-    ranges = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+    ranges = pd.date_range(
+        start=start_date, end=end_date, freq=frequency_map[frequency]()
+    )
 
     date_pairs: list[tuple] = []
     for sd in ranges:
@@ -818,7 +834,7 @@ def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
     """
     if (start and date > sdate) or (not start and date < edate):
         date = calc_shift_date_map[freq](date)
-        
+
     return date
 
 
@@ -845,7 +861,9 @@ def pick_dates_from_range(
     end_date = get_validated_date(end_date)
     frequency = frequency if start else f"E{frequency}"
 
-    dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+    dates = pd.date_range(
+        start=start_date, end=end_date, freq=frequency_map[frequency]()
+    )
     dates = [d.date() for d in dates]
 
     # don't meets conditions

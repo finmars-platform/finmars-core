@@ -2,10 +2,9 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Move input settings'
+    help = "Move input settings"
 
     def handle(self, *args, **options):
-
         from poms.ui.models import EditLayout
         from poms.users.models import Member
 
@@ -18,13 +17,15 @@ class Command(BaseCommand):
         count = 0
 
         for member in members:
-
             for content_type in content_types:
-
-                layouts = EditLayout.objects.filter(member=member, content_type=content_type, is_default=True)
+                layouts = EditLayout.objects.filter(
+                    member=member, content_type=content_type, is_default=True
+                )
 
                 if len(layouts) == 0:
-                    layouts = EditLayout.objects.filter(member=member, content_type=content_type)
+                    layouts = EditLayout.objects.filter(
+                        member=member, content_type=content_type
+                    )
 
                     if len(layouts):
                         layout = layouts[0]

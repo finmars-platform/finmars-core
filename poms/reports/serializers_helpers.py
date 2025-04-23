@@ -2,9 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 def serialize_price_checker_item(item):
-    result = {
-        "type": item["type"]
-    }
+    result = {"type": item["type"]}
 
     if "name" in item:
         result["name"] = item["name"]
@@ -28,7 +26,9 @@ def serialize_price_checker_item(item):
         result["transaction_currency_name"] = item["transaction_currency_name"]
 
     if "transaction_currency_user_code" in item:
-        result["transaction_currency_user_code"] = item["transaction_currency_user_code"]
+        result["transaction_currency_user_code"] = item[
+            "transaction_currency_user_code"
+        ]
 
     if "settlement_currency_name" in item:
         result["settlement_currency_name"] = item["settlement_currency_name"]
@@ -54,7 +54,6 @@ def serialize_price_checker_item_instrument(item):
     attributes = []
 
     for attribute in item.attributes.all():
-
         attr_result = {
             "id": attribute.id,
             "attribute_type": attribute.attribute_type_id,
@@ -63,18 +62,18 @@ def serialize_price_checker_item_instrument(item):
                 "user_code": attribute.attribute_type.user_code,
                 "name": attribute.attribute_type.name,
                 "short_name": attribute.attribute_type.short_name,
-                "value_type": attribute.attribute_type.value_type
+                "value_type": attribute.attribute_type.value_type,
             },
             "value_string": attribute.value_string,
             "value_float": attribute.value_float,
             "value_date": attribute.value_date,
-            "classifier": attribute.classifier_id
+            "classifier": attribute.classifier_id,
         }
 
         if attribute.classifier_id:
             attr_result["classifier_object"] = {
                 "id": attribute.classifier.id,
-                "name": attribute.classifier.name
+                "name": attribute.classifier.name,
             }
 
         attributes.append(attr_result)
@@ -82,11 +81,7 @@ def serialize_price_checker_item_instrument(item):
     pricing_policies = []
 
     for policy in item.pricing_policies.all():
-
-        policy_result = {
-            "id": policy.id,
-            "pricing_policy": policy.pricing_policy_id
-        }
+        policy_result = {"id": policy.id, "pricing_policy": policy.pricing_policy_id}
 
         if policy.pricing_policy_id:
             policy_result["pricing_policy_object"] = {
@@ -101,7 +96,7 @@ def serialize_price_checker_item_instrument(item):
         "id": item.instrument_type.id,
         "name": item.instrument_type.name,
         "user_code": item.instrument_type.user_code,
-        "short_name": item.instrument_type.short_name
+        "short_name": item.instrument_type.short_name,
     }
 
     result = {
@@ -125,8 +120,7 @@ def serialize_price_checker_item_instrument(item):
         "attributes": attributes,
         "pricing_policies": pricing_policies,
         "instrument_type": item.instrument_type.id,
-        "instrument_type_object": instrument_type
-
+        "instrument_type_object": instrument_type,
     }
 
     return result
@@ -135,29 +129,24 @@ def serialize_price_checker_item_instrument(item):
 def serialize_transaction_report_item(item):
     result = {
         "id": item.get("id", None),
-
         "is_locked": item.get("is_locked", None),
         "is_canceled": item.get("is_canceled", None),
         "notes": item.get("notes", None),
         "transaction_code": item.get("transaction_code", None),
         "transaction_class": item.get("transaction_class_id", None),
         "complex_transaction": item.get("complex_transaction_id", None),
-
         "portfolio": item.get("portfolio_id", None),
         "counterparty": item.get("counterparty_id", None),
         "responsible": item.get("responsible_id", None),
         "settlement_currency": item.get("settlement_currency_id", None),
         "transaction_currency": item.get("transaction_currency_id", None),
-
         "account_cash": item.get("account_cash_id", None),
         "account_interim": item.get("account_interim_id", None),
         "account_position": item.get("account_position_id", None),
-
         "allocation_balance": item.get("allocation_balance_id", None),
         "allocation_pl": item.get("allocation_pl_id", None),
         "instrument": item.get("instrument_id", None),
         "linked_instrument": item.get("linked_instrument_id", None),
-
         "cash_consideration": item.get("cash_consideration", None),
         "carry_amount": item.get("carry_amount", None),
         "carry_with_sign": item.get("carry_with_sign", None),
@@ -169,118 +158,183 @@ def serialize_transaction_report_item(item):
         "principal_with_sign": item.get("principal_with_sign", None),
         "reference_fx_rate": item.get("reference_fx_rate", None),
         "trade_price": item.get("trade_price", None),
-
         "cash_date": item.get("cash_date", None),
         "accounting_date": item.get("accounting_date", None),
         "transaction_date": item.get("transaction_date", None),
-
         "strategy1_cash": item.get("strategy1_cash_id", None),
         "strategy1_position": item.get("strategy1_position_id", None),
-
         "strategy2_cash": item.get("strategy2_cash_id", None),
         "strategy2_position": item.get("strategy2_position_id", None),
-
         "strategy3_cash": item.get("strategy3_cash_id", None),
         "strategy3_position": item.get("strategy3_position_id", None),
-
     }
 
-    result['transaction_item_name'] = item['transaction_item_name']
-    result['transaction_item_short_name'] = item['transaction_item_short_name']
-    result['transaction_item_user_code'] = item['transaction_item_user_code']
+    result["transaction_item_name"] = item["transaction_item_name"]
+    result["transaction_item_short_name"] = item["transaction_item_short_name"]
+    result["transaction_item_user_code"] = item["transaction_item_user_code"]
 
     # Complex Transaction Fields
 
     # result['complex_transaction.status'] = item['complex_transaction_status']
-    result['complex_transaction.id'] = item['complex_transaction_id']
-    result['complex_transaction.code'] = item['complex_transaction_code']
-    result['complex_transaction.text'] = item['complex_transaction_text']
-    result['complex_transaction.date'] = item['complex_transaction_date']
-    result['complex_transaction.transaction_unique_code'] = item['transaction_unique_code']
-    result['complex_transaction.is_canceled'] = item['is_canceled']
-    result['complex_transaction.is_locked'] = item['is_locked']
+    result["complex_transaction.id"] = item["complex_transaction_id"]
+    result["complex_transaction.code"] = item["complex_transaction_code"]
+    result["complex_transaction.text"] = item["complex_transaction_text"]
+    result["complex_transaction.date"] = item["complex_transaction_date"]
+    result["complex_transaction.transaction_unique_code"] = item[
+        "transaction_unique_code"
+    ]
+    result["complex_transaction.is_canceled"] = item["is_canceled"]
+    result["complex_transaction.is_locked"] = item["is_locked"]
 
-    result['complex_transaction.user_text_1'] = item['complex_transaction_user_text_1']
-    result['complex_transaction.user_text_2'] = item['complex_transaction_user_text_2']
-    result['complex_transaction.user_text_3'] = item['complex_transaction_user_text_3']
-    result['complex_transaction.user_text_4'] = item['complex_transaction_user_text_4']
-    result['complex_transaction.user_text_5'] = item['complex_transaction_user_text_5']
-    result['complex_transaction.user_text_6'] = item['complex_transaction_user_text_6']
-    result['complex_transaction.user_text_7'] = item['complex_transaction_user_text_7']
-    result['complex_transaction.user_text_8'] = item['complex_transaction_user_text_8']
-    result['complex_transaction.user_text_9'] = item['complex_transaction_user_text_9']
-    result['complex_transaction.user_text_10'] = item['complex_transaction_user_text_10']
-    result['complex_transaction.user_text_11'] = item['complex_transaction_user_text_11']
-    result['complex_transaction.user_text_12'] = item['complex_transaction_user_text_12']
-    result['complex_transaction.user_text_13'] = item['complex_transaction_user_text_13']
-    result['complex_transaction.user_text_14'] = item['complex_transaction_user_text_14']
-    result['complex_transaction.user_text_15'] = item['complex_transaction_user_text_15']
-    result['complex_transaction.user_text_16'] = item['complex_transaction_user_text_16']
-    result['complex_transaction.user_text_17'] = item['complex_transaction_user_text_17']
-    result['complex_transaction.user_text_18'] = item['complex_transaction_user_text_18']
-    result['complex_transaction.user_text_19'] = item['complex_transaction_user_text_19']
-    result['complex_transaction.user_text_20'] = item['complex_transaction_user_text_20']
+    result["complex_transaction.user_text_1"] = item["complex_transaction_user_text_1"]
+    result["complex_transaction.user_text_2"] = item["complex_transaction_user_text_2"]
+    result["complex_transaction.user_text_3"] = item["complex_transaction_user_text_3"]
+    result["complex_transaction.user_text_4"] = item["complex_transaction_user_text_4"]
+    result["complex_transaction.user_text_5"] = item["complex_transaction_user_text_5"]
+    result["complex_transaction.user_text_6"] = item["complex_transaction_user_text_6"]
+    result["complex_transaction.user_text_7"] = item["complex_transaction_user_text_7"]
+    result["complex_transaction.user_text_8"] = item["complex_transaction_user_text_8"]
+    result["complex_transaction.user_text_9"] = item["complex_transaction_user_text_9"]
+    result["complex_transaction.user_text_10"] = item[
+        "complex_transaction_user_text_10"
+    ]
+    result["complex_transaction.user_text_11"] = item[
+        "complex_transaction_user_text_11"
+    ]
+    result["complex_transaction.user_text_12"] = item[
+        "complex_transaction_user_text_12"
+    ]
+    result["complex_transaction.user_text_13"] = item[
+        "complex_transaction_user_text_13"
+    ]
+    result["complex_transaction.user_text_14"] = item[
+        "complex_transaction_user_text_14"
+    ]
+    result["complex_transaction.user_text_15"] = item[
+        "complex_transaction_user_text_15"
+    ]
+    result["complex_transaction.user_text_16"] = item[
+        "complex_transaction_user_text_16"
+    ]
+    result["complex_transaction.user_text_17"] = item[
+        "complex_transaction_user_text_17"
+    ]
+    result["complex_transaction.user_text_18"] = item[
+        "complex_transaction_user_text_18"
+    ]
+    result["complex_transaction.user_text_19"] = item[
+        "complex_transaction_user_text_19"
+    ]
+    result["complex_transaction.user_text_20"] = item[
+        "complex_transaction_user_text_20"
+    ]
 
-    result['complex_transaction.user_number_1'] = item['complex_transaction_user_number_1']
-    result['complex_transaction.user_number_2'] = item['complex_transaction_user_number_2']
-    result['complex_transaction.user_number_3'] = item['complex_transaction_user_number_3']
-    result['complex_transaction.user_number_4'] = item['complex_transaction_user_number_4']
-    result['complex_transaction.user_number_5'] = item['complex_transaction_user_number_5']
-    result['complex_transaction.user_number_6'] = item['complex_transaction_user_number_6']
-    result['complex_transaction.user_number_7'] = item['complex_transaction_user_number_7']
-    result['complex_transaction.user_number_8'] = item['complex_transaction_user_number_8']
-    result['complex_transaction.user_number_9'] = item['complex_transaction_user_number_9']
-    result['complex_transaction.user_number_10'] = item['complex_transaction_user_number_10']
-    result['complex_transaction.user_number_11'] = item['complex_transaction_user_number_11']
-    result['complex_transaction.user_number_12'] = item['complex_transaction_user_number_12']
-    result['complex_transaction.user_number_13'] = item['complex_transaction_user_number_13']
-    result['complex_transaction.user_number_14'] = item['complex_transaction_user_number_14']
-    result['complex_transaction.user_number_15'] = item['complex_transaction_user_number_15']
-    result['complex_transaction.user_number_16'] = item['complex_transaction_user_number_16']
-    result['complex_transaction.user_number_17'] = item['complex_transaction_user_number_17']
-    result['complex_transaction.user_number_18'] = item['complex_transaction_user_number_18']
-    result['complex_transaction.user_number_19'] = item['complex_transaction_user_number_19']
-    result['complex_transaction.user_number_20'] = item['complex_transaction_user_number_20']
+    result["complex_transaction.user_number_1"] = item[
+        "complex_transaction_user_number_1"
+    ]
+    result["complex_transaction.user_number_2"] = item[
+        "complex_transaction_user_number_2"
+    ]
+    result["complex_transaction.user_number_3"] = item[
+        "complex_transaction_user_number_3"
+    ]
+    result["complex_transaction.user_number_4"] = item[
+        "complex_transaction_user_number_4"
+    ]
+    result["complex_transaction.user_number_5"] = item[
+        "complex_transaction_user_number_5"
+    ]
+    result["complex_transaction.user_number_6"] = item[
+        "complex_transaction_user_number_6"
+    ]
+    result["complex_transaction.user_number_7"] = item[
+        "complex_transaction_user_number_7"
+    ]
+    result["complex_transaction.user_number_8"] = item[
+        "complex_transaction_user_number_8"
+    ]
+    result["complex_transaction.user_number_9"] = item[
+        "complex_transaction_user_number_9"
+    ]
+    result["complex_transaction.user_number_10"] = item[
+        "complex_transaction_user_number_10"
+    ]
+    result["complex_transaction.user_number_11"] = item[
+        "complex_transaction_user_number_11"
+    ]
+    result["complex_transaction.user_number_12"] = item[
+        "complex_transaction_user_number_12"
+    ]
+    result["complex_transaction.user_number_13"] = item[
+        "complex_transaction_user_number_13"
+    ]
+    result["complex_transaction.user_number_14"] = item[
+        "complex_transaction_user_number_14"
+    ]
+    result["complex_transaction.user_number_15"] = item[
+        "complex_transaction_user_number_15"
+    ]
+    result["complex_transaction.user_number_16"] = item[
+        "complex_transaction_user_number_16"
+    ]
+    result["complex_transaction.user_number_17"] = item[
+        "complex_transaction_user_number_17"
+    ]
+    result["complex_transaction.user_number_18"] = item[
+        "complex_transaction_user_number_18"
+    ]
+    result["complex_transaction.user_number_19"] = item[
+        "complex_transaction_user_number_19"
+    ]
+    result["complex_transaction.user_number_20"] = item[
+        "complex_transaction_user_number_20"
+    ]
 
-    result['complex_transaction.user_date_1'] = item['complex_transaction_user_date_1']
-    result['complex_transaction.user_date_2'] = item['complex_transaction_user_date_2']
-    result['complex_transaction.user_date_3'] = item['complex_transaction_user_date_3']
-    result['complex_transaction.user_date_4'] = item['complex_transaction_user_date_4']
-    result['complex_transaction.user_date_5'] = item['complex_transaction_user_date_5']
+    result["complex_transaction.user_date_1"] = item["complex_transaction_user_date_1"]
+    result["complex_transaction.user_date_2"] = item["complex_transaction_user_date_2"]
+    result["complex_transaction.user_date_3"] = item["complex_transaction_user_date_3"]
+    result["complex_transaction.user_date_4"] = item["complex_transaction_user_date_4"]
+    result["complex_transaction.user_date_5"] = item["complex_transaction_user_date_5"]
 
     # Complex Transaction Transaction Type Fields
 
-    result['complex_transaction.transaction_type.id'] = item['transaction_type_id']
-    result['complex_transaction.transaction_type.user_code'] = item['transaction_type_user_code']
-    result['complex_transaction.transaction_type.name'] = item['transaction_type_name']
-    result['complex_transaction.transaction_type.short_name'] = item['transaction_type_short_name']
-    result['complex_transaction.transaction_type.group'] = item.get('transaction_type_group_name', None) # TODO refactor to get group name
+    result["complex_transaction.transaction_type.id"] = item["transaction_type_id"]
+    result["complex_transaction.transaction_type.user_code"] = item[
+        "transaction_type_user_code"
+    ]
+    result["complex_transaction.transaction_type.name"] = item["transaction_type_name"]
+    result["complex_transaction.transaction_type.short_name"] = item[
+        "transaction_type_short_name"
+    ]
+    result["complex_transaction.transaction_type.group"] = item.get(
+        "transaction_type_group_name", None
+    )  # TODO refactor to get group name
 
-    result['complex_transaction.status.name'] = item['complex_transaction_status_name']
+    result["complex_transaction.status.name"] = item["complex_transaction_status_name"]
 
-    result['entry_account'] = item['entry_account']
-    result['entry_strategy'] = item['entry_strategy']
-    result['entry_item_short_name'] = item['entry_item_short_name']
-    result['entry_item_user_code'] = item['entry_item_user_code']
-    result['entry_item_name'] = item['entry_item_name']
-    result['entry_item_public_name'] = item['entry_item_public_name']
-    result['entry_currency'] = item['entry_currency']
-    result['entry_instrument'] = item['entry_instrument']
-    result['entry_amount'] = item['entry_amount']
-    result['entry_item_type'] = item['entry_item_type']
-    result['entry_item_type_name'] = item['entry_item_type_name']
+    result["entry_account"] = item["entry_account"]
+    result["entry_strategy"] = item["entry_strategy"]
+    result["entry_item_short_name"] = item["entry_item_short_name"]
+    result["entry_item_user_code"] = item["entry_item_user_code"]
+    result["entry_item_name"] = item["entry_item_name"]
+    result["entry_item_public_name"] = item["entry_item_public_name"]
+    result["entry_currency"] = item["entry_currency"]
+    result["entry_instrument"] = item["entry_instrument"]
+    result["entry_amount"] = item["entry_amount"]
+    result["entry_item_type"] = item["entry_item_type"]
+    result["entry_item_type_name"] = item["entry_item_type_name"]
 
-    result['user_text_1'] = item.get('user_text_1', None)
-    result['user_text_2'] = item.get('user_text_2', None)
-    result['user_text_3'] = item.get('user_text_3', None)
+    result["user_text_1"] = item.get("user_text_1", None)
+    result["user_text_2"] = item.get("user_text_2", None)
+    result["user_text_3"] = item.get("user_text_3", None)
 
-    result['user_number_1'] = item.get('user_number_1', None)
-    result['user_number_2'] = item.get('user_number_2', None)
-    result['user_number_3'] = item.get('user_number_3', None)
+    result["user_number_1"] = item.get("user_number_1", None)
+    result["user_number_2"] = item.get("user_number_2", None)
+    result["user_number_3"] = item.get("user_number_3", None)
 
-    result['user_date_1'] = item.get('user_date_1', None)
-    result['user_date_2'] = item.get('user_date_2', None)
-    result['user_date_3'] = item.get('user_date_3', None)
+    result["user_date_1"] = item.get("user_date_1", None)
+    result["user_date_2"] = item.get("user_date_2", None)
+    result["user_date_3"] = item.get("user_date_3", None)
 
     return result
 
@@ -288,7 +342,7 @@ def serialize_transaction_report_item(item):
 def serialize_balance_report_item(item):
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
-        "id": '-',
+        "id": "-",
         "name": item["name"],
         "short_name": item["short_name"],
         "user_code": item["user_code"],
@@ -322,11 +376,13 @@ def serialize_balance_report_item(item):
     else:
         result["allocation"] = item["allocation_pl_id"]
 
-
-
     # Check if logic is right
-    result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-    result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+    result["instrument_pricing_currency_fx_rate"] = item[
+        "instrument_pricing_currency_fx_rate"
+    ]
+    result["instrument_accrued_currency_fx_rate"] = item[
+        "instrument_accrued_currency_fx_rate"
+    ]
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
     result["instrument_factor"] = item["instrument_factor"]
@@ -340,13 +396,13 @@ def serialize_balance_report_item(item):
     result["strategy3"] = item["strategy3_position_id"]
 
     ids = []
-    ids.append(str(result["item_type"])) # if of item type
+    ids.append(str(result["item_type"]))  # if of item type
 
-    if item['item_type'] == 1:
-        ids.append(str(result["instrument"])) # id of instrument
+    if item["item_type"] == 1:
+        ids.append(str(result["instrument"]))  # id of instrument
 
-    if item['item_type'] == 2:
-        ids.append(str(result["currency"])) # id of currency
+    if item["item_type"] == 2:
+        ids.append(str(result["currency"]))  # id of currency
 
     ids.append(str(result["portfolio"]))
     ids.append(str(result["account"]))
@@ -354,7 +410,7 @@ def serialize_balance_report_item(item):
     ids.append(str(result["strategy2"]))
     ids.append(str(result["strategy3"]))
 
-    result['id'] = ','.join(ids)
+    result["id"] = ",".join(ids)
 
     # result["pricing_currency"] = item["pricing_currency_id"]
     # result["currency"] = None
@@ -444,21 +500,18 @@ def serialize_balance_report_item(item):
 
 
 def serialize_pl_report_item(item):
-
-
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
-        "id": '-',
+        "id": "-",
         "name": item["name"],
         "short_name": item["short_name"],
         "user_code": item["user_code"],
         "portfolio": item["portfolio_id"],
         "item_type": item["item_type"],
         "item_type_name": item["item_type_name"],
-
         "item_group": item["item_group"],
         "item_group_code": item["item_group_code"],
-        "item_group_name": item["item_group_name"]
+        "item_group_name": item["item_group_name"],
     }
 
     # if item["item_type"] == 1:  # instrument
@@ -493,25 +546,23 @@ def serialize_pl_report_item(item):
 
     ids = []
 
-
     ids.append(str(item["item_type"]))
     ids.append(str(item["item_group"]))
 
-    if item['item_type'] == 1:  # instrument
+    if item["item_type"] == 1:  # instrument
         ids.append(str(result["instrument"]))
 
-    if item['item_type'] == 3:  # FX Variations
+    if item["item_type"] == 3:  # FX Variations
         ids.append(str(result["name"]))
 
-    if item['item_type'] == 4:  # FX Trades
+    if item["item_type"] == 4:  # FX Trades
         ids.append(str(result["name"]))
 
-    if item['item_type'] == 5:
+    if item["item_type"] == 5:
         ids.append(str(result["name"]))
 
-    if item['item_type'] == 6:  # mismatch
+    if item["item_type"] == 6:  # mismatch
         ids.append(str(result["instrument"]))
-
 
     ids.append(str(result["portfolio"]))
     ids.append(str(result["account"]))
@@ -520,10 +571,14 @@ def serialize_pl_report_item(item):
     ids.append(str(result["strategy3"]))
     ids.append(str(result["allocation"]))
 
-    result['id'] = ','.join(ids)
+    result["id"] = ",".join(ids)
 
-    result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-    result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+    result["instrument_pricing_currency_fx_rate"] = item[
+        "instrument_pricing_currency_fx_rate"
+    ]
+    result["instrument_accrued_currency_fx_rate"] = item[
+        "instrument_accrued_currency_fx_rate"
+    ]
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
     result["instrument_factor"] = item["instrument_factor"]
@@ -535,7 +590,9 @@ def serialize_pl_report_item(item):
     result["nominal_position_size"] = item["nominal_position_size"]
 
     result["period_start_position_size"] = item["period_start_position_size"]
-    result["period_start_nominal_position_size"] = item["period_start_nominal_position_size"]
+    result["period_start_nominal_position_size"] = item[
+        "period_start_nominal_position_size"
+    ]
 
     result["position_return"] = item["position_return"]
     result["position_return_loc"] = item["position_return_loc"]
@@ -609,15 +666,15 @@ def serialize_report_item_instrument(item):
     attributes = []
 
     from poms.obj_attrs.models import GenericAttribute
-    content_type = ContentType.objects.get(
-        app_label="instruments", model="instrument"
-    )
+
+    content_type = ContentType.objects.get(app_label="instruments", model="instrument")
     # szhitenev 2024-06-27
     # Important: could be solution to missing attributes in report
-    instrument_attributes = GenericAttribute.objects.filter(object_id=item.id, content_type=content_type)
+    instrument_attributes = GenericAttribute.objects.filter(
+        object_id=item.id, content_type=content_type
+    )
 
     for attribute in instrument_attributes:
-
         attr_result = {
             "id": attribute.id,
             "attribute_type": attribute.attribute_type_id,
@@ -626,18 +683,18 @@ def serialize_report_item_instrument(item):
                 "user_code": attribute.attribute_type.user_code,
                 "name": attribute.attribute_type.name,
                 "short_name": attribute.attribute_type.short_name,
-                "value_type": attribute.attribute_type.value_type
+                "value_type": attribute.attribute_type.value_type,
             },
             "value_string": attribute.value_string,
             "value_float": attribute.value_float,
             "value_date": attribute.value_date,
-            "classifier": attribute.classifier_id
+            "classifier": attribute.classifier_id,
         }
 
         if attribute.classifier_id:
             attr_result["classifier_object"] = {
                 "id": attribute.classifier.id,
-                "name": attribute.classifier.name
+                "name": attribute.classifier.name,
             }
 
         attributes.append(attr_result)
@@ -646,7 +703,7 @@ def serialize_report_item_instrument(item):
         "id": item.instrument_type.id,
         "name": item.instrument_type.name,
         "user_code": item.instrument_type.user_code,
-        "short_name": item.instrument_type.short_name
+        "short_name": item.instrument_type.short_name,
     }
 
     country = None
@@ -689,7 +746,7 @@ def serialize_report_item_instrument(item):
         "instrument_type": item.instrument_type.id,
         "instrument_type_object": instrument_type,
         "country": country_id,
-        "country_object": country
+        "country_object": country,
     }
 
     return result

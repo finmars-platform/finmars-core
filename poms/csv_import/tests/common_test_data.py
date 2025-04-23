@@ -98,7 +98,7 @@ SCHEME_20_FIELDS = [
         "name_expr": "float(long_delta)",
         "column_name": "Long Delta",
         "scheme": None,
-    }
+    },
 ]
 
 SCHEME_20_ENTITIES = [
@@ -167,7 +167,7 @@ SCHEME_20_ENTITIES = [
         "expression": "long_delta",
         "system_property_key": "long_delta",
         "scheme": None,
-    }
+    },
 ]
 
 
@@ -248,7 +248,6 @@ EXPECTED_RESULT_PRICE_HISTORY = {
         "long_delta": 1.1,
         "short_delta": 1.1,
         "is_temporary_price": False,
-
     },
     "message": "",
     "raw_inputs": {
@@ -505,7 +504,6 @@ SCHEME_PORTFOLIO_FIELDS = [
         "column_name": "portfolio_type",
         "scheme": None,
     },
-
 ]
 
 SCHEME_PORTFOLIO_ENTITIES = [
@@ -544,7 +542,7 @@ SCHEME_PORTFOLIO_ENTITIES = [
         "expression": "'-'",
         "system_property_key": "notes",
         "scheme": None,
-    }
+    },
 ]
 
 PORTFOLIO = [
@@ -555,56 +553,33 @@ PORTFOLIO = [
 ]
 
 PORTFOLIO_ITEM = {
-    'portfolio_type': 'com.finmars.test_01',
-    'temp_portfolio': 'Test',
+    "portfolio_type": "com.finmars.test_01",
+    "temp_portfolio": "Test",
 }
 
 BAD_PORTFOLIO_ITEM = {
-    'portfolio_type': None,
-    'temp_portfolio': 'Test',
+    "portfolio_type": None,
+    "temp_portfolio": "Test",
 }
 
 EXPECTED_RESULT_PORTFOLIO = {
-    "conversion_inputs": {
-        "portfolio_type": "1",
-        "temp_portfolio": "Test"
-    },
-
+    "conversion_inputs": {"portfolio_type": "1", "temp_portfolio": "Test"},
     "error_message": "",
-    "file_inputs": {
-        "Portfolio": "Test",
-        "portfolio_type": "1"
-    },
-
+    "file_inputs": {"Portfolio": "Test", "portfolio_type": "1"},
     "final_inputs": {
         "name": "Test",
         "notes": "-",
         "portfolio_type": "com.finmars.test_01",
         "public_name": "Test",
         "short_name": "Test",
-        "user_code": "Test"
+        "user_code": "Test",
     },
-
-    "imported_items": [
-        {
-            "id": 13,
-            "user_code": "Test"
-        }
-    ],
-
-    "inputs": {
-        "portfolio_type": "1",
-        "temp_portfolio": "Test"
-    },
-
+    "imported_items": [{"id": 13, "user_code": "Test"}],
+    "inputs": {"portfolio_type": "1", "temp_portfolio": "Test"},
     "message": "Item Imported Test",
-    "raw_inputs": {
-        "portfolio_type": "1",
-        "temp_portfolio": "Test"
-    },
-
+    "raw_inputs": {"portfolio_type": "1", "temp_portfolio": "Test"},
     "row_number": 1,
-    "status": "success"
+    "status": "success",
 }
 
 # Accrual Calculation Schedule
@@ -742,26 +717,26 @@ ACCRUAL_CALCULATION = [
 
 
 ACCRUAL_CALCULATION_ITEM = {
-        "instrument": "commitment-startup-2-round-a-debt",
-        "accrual_start_date": 20171122,
-        "first_payment_date": 20171122,
-        "accrual_calculation_model": "DAY_COUNT_30E_360",
-        "periodicity": "ANNUALLY",
-        "periodicity_n": None,
-        "accrual_size": 4.5,
-        "end_of_month": False,
+    "instrument": "commitment-startup-2-round-a-debt",
+    "accrual_start_date": 20171122,
+    "first_payment_date": 20171122,
+    "accrual_calculation_model": "DAY_COUNT_30E_360",
+    "periodicity": "ANNUALLY",
+    "periodicity_n": None,
+    "accrual_size": 4.5,
+    "end_of_month": False,
 }
 
 
 BAD_ACCRUAL_CALCULATION_ITEM = {
-        "instrument": "commitment-startup-2-round-a-debt",
-        "accrual_start_date": None,
-        "first_payment_date": 20171122,
-        "accrual_calculation_model": "DAY_COUNT_30E_360",
-        "periodicity": "ANNUALLY",
-        "periodicity_n": None,
-        "accrual_size": 4.5,
-        "end_of_month": False,
+    "instrument": "commitment-startup-2-round-a-debt",
+    "accrual_start_date": None,
+    "first_payment_date": 20171122,
+    "accrual_calculation_model": "DAY_COUNT_30E_360",
+    "periodicity": "ANNUALLY",
+    "periodicity_n": None,
+    "accrual_size": 4.5,
+    "end_of_month": False,
 }
 
 
@@ -897,7 +872,7 @@ SCHEME_CURRENCY_FIELDS = [
         "name_expr": "country_obj = universal_parse_country(str(if_null(country,'-')))\nif country_obj:\n    country_obj['user_code']",
         "column_name": "country",
         "scheme": None,
-    }
+    },
 ]
 
 
@@ -955,7 +930,7 @@ SCHEME_CURRENCY_ENTITIES = [
         "expression": "default_fx_rate",
         "system_property_key": "default_fx_rate",
         "scheme": None,
-    }
+    },
 ]
 
 
@@ -985,7 +960,7 @@ CURRENCY_ITEM = {
 }
 
 
-EXPECTED_RESULT_CURRENCY = {    
+EXPECTED_RESULT_CURRENCY = {
     "conversion_inputs": {
         "country": "Albania",
         "default_fx_rate": "1",
@@ -995,7 +970,7 @@ EXPECTED_RESULT_CURRENCY = {
         "public_name": "Public 1",
         "reference_for_pricing": "Reference",
         "short_name": "ALL",
-        "user_code": "ALL"
+        "user_code": "ALL",
     },
     "error_message": "",
     "file_inputs": {
@@ -1007,7 +982,7 @@ EXPECTED_RESULT_CURRENCY = {
         "Pricing Condition": "RUN_VALUATION_IF_OPEN",
         "Pricing Reference": "Reference",
         "Public Name": "Public 1",
-        "Short Name": "ALL"
+        "Short Name": "ALL",
     },
     "final_inputs": {
         "country": "Albania",
@@ -1018,14 +993,9 @@ EXPECTED_RESULT_CURRENCY = {
         "public_name": "Public 1",
         "reference_for_pricing": "Reference",
         "short_name": "ALL",
-        "user_code": "ALL"
+        "user_code": "ALL",
     },
-    "imported_items": [
-        {
-            "id": 24,
-            "user_code": "ALL"
-        }
-    ],
+    "imported_items": [{"id": 24, "user_code": "ALL"}],
     "inputs": {
         "country": "Albania",
         "default_fx_rate": "1",
@@ -1035,7 +1005,7 @@ EXPECTED_RESULT_CURRENCY = {
         "reference_for_pricing": "Reference",
         "public_name": "Public 1",
         "short_name": "ALL",
-        "user_code": "ALL"
+        "user_code": "ALL",
     },
     "message": "Item Imported ALL",
     "raw_inputs": {
@@ -1047,7 +1017,7 @@ EXPECTED_RESULT_CURRENCY = {
         "reference_for_pricing": "Reference",
         "public_name": "Public 1",
         "short_name": "ALL",
-        "user_code": "ALL"
+        "user_code": "ALL",
     },
     "row_number": 1,
     "status": "success",

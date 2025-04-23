@@ -6,12 +6,16 @@ from django.db import connection
 
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
-from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, \
-    get_position_consolidation_for_select, dictfetchall, \
-    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
+from poms.reports.sql_builders.helpers import (
+    get_transaction_filter_sql_string,
+    get_position_consolidation_for_select,
+    dictfetchall,
+    get_cash_consolidation_for_select,
+    get_cash_as_position_consolidation_for_select,
+)
 from poms.users.models import EcosystemDefault
 
-_l = logging.getLogger('poms.reports')
+_l = logging.getLogger("poms.reports")
 
 
 def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
@@ -460,29 +464,30 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
 
     consolidated_cash_columns = get_cash_consolidation_for_select(instance)
     consolidated_position_columns = get_position_consolidation_for_select(instance)
-    consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
+    consolidated_cash_as_position_columns = (
+        get_cash_as_position_consolidation_for_select(instance)
+    )
 
     transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
 
-    query = query.format(report_date=date,
-                         master_user_id=instance.master_user.id,
-                         default_currency_id=ecosystem_defaults.currency_id,
-                         report_currency_id=instance.report_currency.id,
-                         pricing_policy_id=instance.pricing_policy.id,
-
-                         consolidated_cash_columns=consolidated_cash_columns,
-                         consolidated_position_columns=consolidated_position_columns,
-                         consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
-
-                         transaction_filter_sql_string=transaction_filter_sql_string
-                         )
+    query = query.format(
+        report_date=date,
+        master_user_id=instance.master_user.id,
+        default_currency_id=ecosystem_defaults.currency_id,
+        report_currency_id=instance.report_currency.id,
+        pricing_policy_id=instance.pricing_policy.id,
+        consolidated_cash_columns=consolidated_cash_columns,
+        consolidated_position_columns=consolidated_position_columns,
+        consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
+        transaction_filter_sql_string=transaction_filter_sql_string,
+    )
 
     cursor.execute(query)
 
-    query_str = str(cursor.query, 'utf-8')
+    query_str = str(cursor.query, "utf-8")
 
-    if settings.SERVER_TYPE == 'local':
-        with open('/tmp/query_result.txt', 'w') as the_file:
+    if settings.SERVER_TYPE == "local":
+        with open("/tmp/query_result.txt", "w") as the_file:
             the_file.write(query_str)
 
     result = dictfetchall(cursor)
@@ -648,33 +653,34 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
 
     consolidated_cash_columns = get_cash_consolidation_for_select(instance)
     consolidated_position_columns = get_position_consolidation_for_select(instance)
-    consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
+    consolidated_cash_as_position_columns = (
+        get_cash_as_position_consolidation_for_select(instance)
+    )
 
     transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
 
-    query = query.format(report_date=date,
-                         master_user_id=instance.master_user.id,
-                         default_currency_id=ecosystem_defaults.currency_id,
-                         report_currency_id=instance.report_currency.id,
-                         pricing_policy_id=instance.pricing_policy.id,
+    query = query.format(
+        report_date=date,
+        master_user_id=instance.master_user.id,
+        default_currency_id=ecosystem_defaults.currency_id,
+        report_currency_id=instance.report_currency.id,
+        pricing_policy_id=instance.pricing_policy.id,
+        consolidated_cash_columns=consolidated_cash_columns,
+        consolidated_position_columns=consolidated_position_columns,
+        consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
+        transaction_filter_sql_string=transaction_filter_sql_string,
+    )
 
-                         consolidated_cash_columns=consolidated_cash_columns,
-                         consolidated_position_columns=consolidated_position_columns,
-                         consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
-
-                         transaction_filter_sql_string=transaction_filter_sql_string
-                         )
-
-    if settings.SERVER_TYPE == 'local':
-        with open('/tmp/price_check_query_raw.txt', 'w') as the_file:
+    if settings.SERVER_TYPE == "local":
+        with open("/tmp/price_check_query_raw.txt", "w") as the_file:
             the_file.write(query)
 
     cursor.execute(query)
 
-    query_str = str(cursor.query, 'utf-8')
+    query_str = str(cursor.query, "utf-8")
 
-    if settings.SERVER_TYPE == 'local':
-        with open('/tmp/price_check_query_result.txt', 'w') as the_file:
+    if settings.SERVER_TYPE == "local":
+        with open("/tmp/price_check_query_result.txt", "w") as the_file:
             the_file.write(query_str)
 
     result = dictfetchall(cursor)
@@ -683,9 +689,7 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
 
 
 class PriceHistoryCheckerSql:
-
     def __init__(self, instance=None):
-
         # _l.debug('PriceHistoryCheckerSql init')
 
         self.instance = instance
@@ -695,33 +699,41 @@ class PriceHistoryCheckerSql:
         )
 
     def process(self):
-
         st = time.perf_counter()
 
         with connection.cursor() as cursor:
-
             self.instance.items = []
 
             # pl first date
 
             if self.instance.pl_first_date:
-                positions = execute_nav_sql(self.instance.pl_first_date, self.instance, cursor, self.ecosystem_defaults)
+                positions = execute_nav_sql(
+                    self.instance.pl_first_date,
+                    self.instance,
+                    cursor,
+                    self.ecosystem_defaults,
+                )
 
                 for item in positions:
-                    if item['user_code'] != '-' and item['name'] != '-':
+                    if item["user_code"] != "-" and item["name"] != "-":
+                        item["position_size"] = round(
+                            item["position_size"], settings.ROUND_NDIGITS
+                        )
 
-                        item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-
-                        if item['type'] == 'missing_principal_pricing_history':
-                            if item['position_size']:
+                        if item["type"] == "missing_principal_pricing_history":
+                            if item["position_size"]:
                                 self.instance.items.append(item)
                         else:
                             self.instance.items.append(item)
 
                 # self.instance.items = self.instance.items + positions
 
-                transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor,
-                                                              self.ecosystem_defaults)
+                transactions = execute_transaction_prices_sql(
+                    self.instance.pl_first_date,
+                    self.instance,
+                    cursor,
+                    self.ecosystem_defaults,
+                )
 
                 # _l.debug('transactions %s ' % len(transactions))
 
@@ -729,23 +741,33 @@ class PriceHistoryCheckerSql:
 
             # report date
 
-            positions = execute_nav_sql(self.instance.report_date, self.instance, cursor, self.ecosystem_defaults)
+            positions = execute_nav_sql(
+                self.instance.report_date,
+                self.instance,
+                cursor,
+                self.ecosystem_defaults,
+            )
 
             for item in positions:
-                if item['user_code'] != '-' and item['name'] != '-':
+                if item["user_code"] != "-" and item["name"] != "-":
+                    item["position_size"] = round(
+                        item["position_size"], settings.ROUND_NDIGITS
+                    )
 
-                    item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-
-                    if item['type'] == 'missing_principal_pricing_history':
-                        if item['position_size']:
+                    if item["type"] == "missing_principal_pricing_history":
+                        if item["position_size"]:
                             self.instance.items.append(item)
                     else:
                         self.instance.items.append(item)
 
             # self.instance.items = self.instance.items + positions
 
-            transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor,
-                                                          self.ecosystem_defaults)
+            transactions = execute_transaction_prices_sql(
+                self.instance.report_date,
+                self.instance,
+                cursor,
+                self.ecosystem_defaults,
+            )
 
             # _l.debug('transactions %s ' % len(transactions))
 
@@ -755,18 +777,21 @@ class PriceHistoryCheckerSql:
             unique_items = []
 
             for item in self.instance.items:
-
                 try:
-                    if 'user_code' in item:
-                        unique_items_dict[item['type'] + '_' + item['user_code']] = item
-                    elif 'name' in item:
-                        unique_items_dict[item['type'] + '_' + item['name']] = item
-                    elif 'transaction_currency_user_code' in item:
-                        unique_items_dict[item['type'] + '_' + item['transaction_currency_user_code']] = item
-                    elif 'settlement_currency_user_code' in item:
-                        unique_items_dict[item['type'] + '_' + item['settlement_currency_user_code']] = item
+                    if "user_code" in item:
+                        unique_items_dict[item["type"] + "_" + item["user_code"]] = item
+                    elif "name" in item:
+                        unique_items_dict[item["type"] + "_" + item["name"]] = item
+                    elif "transaction_currency_user_code" in item:
+                        unique_items_dict[
+                            item["type"] + "_" + item["transaction_currency_user_code"]
+                        ] = item
+                    elif "settlement_currency_user_code" in item:
+                        unique_items_dict[
+                            item["type"] + "_" + item["settlement_currency_user_code"]
+                        ] = item
                 except Exception as e:
-                    _l.debug('error %s' % e)
+                    _l.debug("error %s" % e)
                     _l.debug(item)
 
             for key, value in unique_items_dict.items():

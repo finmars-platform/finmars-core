@@ -10,9 +10,9 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency"
         self.currency = self.create_currency()
-        
+
     def create_currency(self, user_code=None):
-        user_code = user_code if user_code else "TEST01" 
+        user_code = user_code if user_code else "TEST01"
         return Currency.objects.using(settings.DB_DEFAULT).create(
             master_user=self.master_user,
             owner=self.member,
@@ -25,7 +25,11 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         get_request.return_value.user.member = self.member
         self.currency.fake_delete()
 
-        data = {"ids": [self.currency.id,]}
+        data = {
+            "ids": [
+                self.currency.id,
+            ]
+        }
         response = self.client.post(path=f"{self.url}/bulk-restore/", data=data)
         self.assertEqual(response.status_code, 200)
         response_data = response.json()
@@ -36,15 +40,13 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         ids = [id for id in range(999, 1999, 155) if id not in cur_ids]
         data = {"ids": ids}
 
-        response = self.client.post(
-            path=f"{self.url}/bulk-restore/", data=data
-        )
+        response = self.client.post(path=f"{self.url}/bulk-restore/", data=data)
         self.assertEqual(response.status_code, 404)
         response_data = response.json()
 
         self.assertEqual(
             response_data["error"],
-            f"IDs '{', '.join([str(id) for id in ids])}' don`t exist"
+            f"IDs '{', '.join([str(id) for id in ids])}' don`t exist",
         )
 
     @mock.patch("poms.common.models.get_request")
@@ -55,11 +57,13 @@ class CurrencyRestoreViewSetTest(BaseTestCase):
         user_code = self.currency.user_code
         self.currency.fake_delete()
         self.create_currency(user_code)
-        data = {"ids": [self.currency.id,]}
+        data = {
+            "ids": [
+                self.currency.id,
+            ]
+        }
 
-        response = self.client.post(
-            path=f"{self.url}/bulk-restore/", data=data
-        )
+        response = self.client.post(path=f"{self.url}/bulk-restore/", data=data)
         self.assertEqual(response.status_code, 409)
         response_data = response.json()
 

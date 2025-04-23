@@ -194,7 +194,9 @@ class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
     currency = ModelExtMultipleChoiceFilter(model=Currency)
-    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
+    pricing_policy = CharFilter(
+        field_name="pricing_policy__user_code", lookup_expr="icontains"
+    )
     fx_rate = django_filters.RangeFilter()
     is_temporary_fx_rate = django_filters.BooleanFilter()
 
@@ -204,7 +206,9 @@ class CurrencyHistoryFilterSet(FilterSet):
 
 
 class CurrencyHistoryViewSet(AbstractModelViewSet):
-    queryset = CurrencyHistory.objects.select_related("currency", "pricing_policy").prefetch_related()
+    queryset = CurrencyHistory.objects.select_related(
+        "currency", "pricing_policy"
+    ).prefetch_related()
     serializer_class = CurrencyHistorySerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [

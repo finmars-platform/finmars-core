@@ -12,7 +12,8 @@ from poms.common.models import (
     AbstractClassModel,
     TimeStampedModel,
     NamedModel,
-    TimeStampedModel, FakeDeletableModel,
+    TimeStampedModel,
+    FakeDeletableModel,
 )
 from poms.common.storage import get_storage
 from poms.configuration.models import ConfigurationModel

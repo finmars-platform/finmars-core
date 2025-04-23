@@ -80,7 +80,9 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
 
         self.assertEqual(old_accrual.id, new_accrual.id)
         self.assertNotEqual(old_accrual.notes, new_accrual.notes)
-        self.assertNotEqual(old_accrual.first_payment_date, new_accrual.first_payment_date)
+        self.assertNotEqual(
+            old_accrual.first_payment_date, new_accrual.first_payment_date
+        )
 
     @BaseTestCase.cases(
         ("date", date.today()),
@@ -105,4 +107,6 @@ class AccrualCalculationScheduleModelTest(BaseTestCase):
 
         old_accrual.refresh_from_db()
 
-        self.assertEqual(old_accrual.first_payment_date, new_first_date.strftime(DATE_FORMAT))
+        self.assertEqual(
+            old_accrual.first_payment_date, new_first_date.strftime(DATE_FORMAT)
+        )

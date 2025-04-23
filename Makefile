@@ -46,7 +46,7 @@ test:
 	$(COMPOSE) exec -i $(SERVICE) python manage.py test --keepdb
 
 lint:
-	$(COMPOSE) exec -i $(SERVICE) ruff format
+	$(COMPOSE) exec -i $(SERVICE) ruff format --exclude '**/migrations/*.py'
 
 up:
 	$(COMPOSE) up --build

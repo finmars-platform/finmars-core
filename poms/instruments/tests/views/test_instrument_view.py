@@ -123,7 +123,9 @@ class InstrumentViewSetTest(BaseTestCase):
         )
 
         # identifier_keys_values = {"cbonds_id": "id", "isin": "isin"} - without encoding characters look like
-        response = self.client.get(path=f"{self.url}?identifier=%7B%22cbonds_id%22%3A%22id%22%2C%22isin%22%3A%22isin%22%7D")
+        response = self.client.get(
+            path=f"{self.url}?identifier=%7B%22cbonds_id%22%3A%22id%22%2C%22isin%22%3A%22isin%22%7D"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
@@ -252,7 +254,9 @@ class InstrumentViewSetTest(BaseTestCase):
         self.assertEqual(file_data["size"], file.size)
         self.assertEqual(file_data["extension"], ".pdf")
 
-    def test__list_by_post_attributes_filter(self):  # sourcery skip: extract-duplicate-method
+    def test__list_by_post_attributes_filter(
+        self,
+    ):  # sourcery skip: extract-duplicate-method
         self.create_instrument()
         filter_data = {
             "groups_types": [
@@ -260,9 +264,11 @@ class InstrumentViewSetTest(BaseTestCase):
             ],
             "groups_values": [
                 "12345",
-            ]
+            ],
         }
-        response = self.client.post(path=f"{self.url}ev-group/", data=filter_data, format="json")
+        response = self.client.post(
+            path=f"{self.url}ev-group/", data=filter_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
     def create_group(self, name: str = "test") -> ResourceGroup:

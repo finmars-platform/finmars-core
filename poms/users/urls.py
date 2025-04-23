@@ -9,16 +9,8 @@ router.register(
     users.PingViewSet,
     "ping",
 )
-router.register(
-    r"user",
-    users.UserViewSet,
-    'user'
-)
-router.register(
-    r"master-user",
-    users.MasterUserViewSet,
-    'masteruser'
-)
+router.register(r"user", users.UserViewSet, "user")
+router.register(r"master-user", users.MasterUserViewSet, "masteruser")
 router.register(  # Deprecated at all, no light-method needed
     r"master-user-light",
     users.MasterUserLightViewSet,

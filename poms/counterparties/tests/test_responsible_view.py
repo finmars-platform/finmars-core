@@ -67,7 +67,7 @@ EXPECTED_RESPONSIBLE = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "counterparties.responsible",
@@ -98,9 +98,11 @@ class ResponsibleViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible/"
+        )
         self.responsible = None
 
     def create_responsible_group(self) -> ResponsibleGroup:
@@ -166,13 +168,13 @@ class ResponsibleViewSetTest(BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(len(response_json["results"]), 1)
-        self.assertEqual(response_json["results"][0]["user_code"], responsible.user_code)
+        self.assertEqual(
+            response_json["results"][0]["user_code"], responsible.user_code
+        )
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         responsible = self.create_responsible()
-        response = self.client.get(
-            path=f"{self.url}?user_code={responsible.user_code}"
-        )
+        response = self.client.get(path=f"{self.url}?user_code={responsible.user_code}")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
@@ -273,13 +275,11 @@ class ResponsibleViewSetTest(BaseTestCase):
 
     def test_add_resource_group(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create()
+            path=self.url, format="json", data=self.prepare_data_for_create()
         )
         self.assertEqual(response.status_code, 201, response.content)
         responsible_id = response.json()["id"]
-        
+
         rg_name = self.random_string()
         rg = self.create_group(name=rg_name)
         response = self.client.patch(
@@ -300,12 +300,11 @@ class ResponsibleViewSetTest(BaseTestCase):
 
     def test_remove_resource_groups(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         responsible_id = response.json()["id"]
-        
+
         name_1 = self.random_string()
         self.create_group(name=name_1)
         name_3 = self.random_string()
@@ -338,12 +337,11 @@ class ResponsibleViewSetTest(BaseTestCase):
 
     def test_destroy_assignments(self):
         response = self.client.post(
-            path=self.url, 
-            format="json", 
-            data=self.prepare_data_for_create())
+            path=self.url, format="json", data=self.prepare_data_for_create()
+        )
         self.assertEqual(response.status_code, 201, response.content)
         responsible_id = response.json()["id"]
-        
+
         name_1 = self.random_string()
         rg_1 = self.create_group(name=name_1)
         name_3 = self.random_string()

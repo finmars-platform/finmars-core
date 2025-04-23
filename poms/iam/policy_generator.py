@@ -97,7 +97,9 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
         )
 
         configuration_code = get_default_configuration_code()
-        user_code = f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
+        user_code = (
+            f"{configuration_code}:{service_name}-{viewset_name.lower()}-readonly"
+        )
         finmars_bot = Member.objects.get(username="finmars_bot")
 
         access_policy, created = AccessPolicy.objects.get_or_create(
@@ -118,7 +120,9 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes: list) -> lis
                 ],
             }
             access_policy.configuration_code = configuration_code
-            access_policy.name = f"{capitalize_first_letter(viewset_name)} Readonly Access"
+            access_policy.name = (
+                f"{capitalize_first_letter(viewset_name)} Readonly Access"
+            )
             access_policy.policy = access_policy_json
             if not created:
                 access_policy.owner = finmars_bot

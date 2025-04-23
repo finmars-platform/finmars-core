@@ -80,8 +80,8 @@ class CsvDataFileImport:
 
     def __str__(self):
         return (
-            f'{getattr(self.master_user, "name", None)}:'
-            f'{getattr(self.scheme, "user_code", None)}'
+            f"{getattr(self.master_user, 'name', None)}:"
+            f"{getattr(self.scheme, 'user_code', None)}"
         )
 
 
@@ -132,7 +132,9 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "column", "name_expr"]
 
 
-class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
+class CsvImportSchemeSerializer(
+    ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
+):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
@@ -264,19 +266,15 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "short_name",
                 "public_name",
                 "notes",
-
                 "identifier",
-
                 "country",
                 "reference_for_pricing",
                 "instrument_type",
                 "pricing_currency",
                 "accrued_currency",
-
                 "co_directional_exposure_currency",
                 "counter_directional_exposure_currency",
                 "exposure_calculation_model",
-
                 "payment_size_detail",
                 "pricing_condition",
                 "price_multiplier",
@@ -284,14 +282,14 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "maturity_date",
                 "maturity_price",
                 "default_price",
-                "default_accrued" "user_text_1",
+                "default_accrueduser_text_1",
                 "user_text_2",
                 "user_text_3",
             ],
             "instruments.instrumentfactorschedule": [
                 "instrument",
                 "effective_date",
-                "factor_value"
+                "factor_value",
             ],
             "instruments.accrualcalculationschedule": [
                 "instrument",
@@ -302,7 +300,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                 "periodicity",
                 "periodicity_n",
                 "notes",
-                "eom"
+                "eom",
             ],
             "instruments.pricehistory": [
                 "instrument",
@@ -400,7 +398,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
                     instance.save()
 
                 except EntityField.DoesNotExist:
-                    print(f'Unknown entity {entity_field.get("system_property_key")}')
+                    print(f"Unknown entity {entity_field.get('system_property_key')}")
                     # raise ValidationError("Entity with id {} is not exist ".format(entity_field.get(
                     #     'system_property_key')))
 
@@ -463,7 +461,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeS
 
                 except EntityField.DoesNotExist:
                     print(
-                        f'Unknown attribute {entity_field.get("attribute_user_code")}'
+                        f"Unknown attribute {entity_field.get('attribute_user_code')}"
                     )
 
     def save_calculated_inputs(self, scheme, inputs):

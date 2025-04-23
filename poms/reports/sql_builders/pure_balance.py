@@ -104,9 +104,7 @@ class PureBalanceReportBuilderSql:
 
         return self.instance
 
-
     def build_sync(self, celery_task):
-
         try:
             report_settings = celery_task.options_object
 
@@ -116,7 +114,6 @@ class PureBalanceReportBuilderSql:
 
             with connection.cursor() as cursor:
                 st = time.perf_counter()
-
 
                 transaction_filter_sql_string = get_transaction_filter_sql_string(
                     instance
@@ -978,12 +975,10 @@ class PureBalanceReportBuilderSql:
 
                 result = dictfetchall(cursor)
 
-
                 updated_result = []
 
                 for item in result:
                     result_item = {}
-
 
                     result_item["name"] = item["name"]
                     result_item["short_name"] = item["short_name"]
@@ -996,65 +991,69 @@ class PureBalanceReportBuilderSql:
                     result_item["market_value_loc"] = item["market_value_loc"]
 
                     if "portfolio_id" not in item:
-                        result_item["portfolio_id"] = self.ecosystem_defaults.portfolio_id
+                        result_item["portfolio_id"] = (
+                            self.ecosystem_defaults.portfolio_id
+                        )
                     else:
                         result_item["portfolio_id"] = item["portfolio_id"]
 
                     if "account_cash_id" not in item:
-                        result_item["account_cash_id"] = self.ecosystem_defaults.account_id
+                        result_item["account_cash_id"] = (
+                            self.ecosystem_defaults.account_id
+                        )
                     else:
                         result_item["account_cash_id"] = item["account_cash_id"]
 
                     if "strategy1_cash_id" not in item:
-                        result_item[
-                            "strategy1_cash_id"
-                        ] = self.ecosystem_defaults.strategy1_id
+                        result_item["strategy1_cash_id"] = (
+                            self.ecosystem_defaults.strategy1_id
+                        )
                     else:
                         result_item["strategy1_cash_id"] = item["strategy1_cash_id"]
 
                     if "strategy2_cash_id" not in item:
-                        result_item[
-                            "strategy2_cash_id"
-                        ] = self.ecosystem_defaults.strategy2_id
+                        result_item["strategy2_cash_id"] = (
+                            self.ecosystem_defaults.strategy2_id
+                        )
                     else:
                         result_item["strategy2_cash_id"] = item["strategy2_cash_id"]
 
                     if "strategy3_cash_id" not in item:
-                        result_item[
-                            "strategy3_cash_id"
-                        ] = self.ecosystem_defaults.strategy3_id
+                        result_item["strategy3_cash_id"] = (
+                            self.ecosystem_defaults.strategy3_id
+                        )
                     else:
                         result_item["strategy3_cash_id"] = item["strategy3_cash_id"]
 
                     if "account_position_id" not in item:
-                        result_item[
-                            "account_position_id"
-                        ] = self.ecosystem_defaults.account_id
+                        result_item["account_position_id"] = (
+                            self.ecosystem_defaults.account_id
+                        )
                     else:
                         result_item["account_position_id"] = item["account_position_id"]
 
                     if "strategy1_position_id" not in item:
-                        result_item[
-                            "strategy1_position_id"
-                        ] = self.ecosystem_defaults.strategy1_id
+                        result_item["strategy1_position_id"] = (
+                            self.ecosystem_defaults.strategy1_id
+                        )
                     else:
                         result_item["strategy1_position_id"] = item[
                             "strategy1_position_id"
                         ]
 
                     if "strategy2_position_id" not in item:
-                        result_item[
-                            "strategy2_position_id"
-                        ] = self.ecosystem_defaults.strategy2_id
+                        result_item["strategy2_position_id"] = (
+                            self.ecosystem_defaults.strategy2_id
+                        )
                     else:
                         result_item["strategy2_position_id"] = item[
                             "strategy2_position_id"
                         ]
 
                     if "strategy3_position_id" not in item:
-                        result_item[
-                            "strategy3_position_id"
-                        ] = self.ecosystem_defaults.strategy3_id
+                        result_item["strategy3_position_id"] = (
+                            self.ecosystem_defaults.strategy3_id
+                        )
                     else:
                         result_item["strategy3_position_id"] = item[
                             "strategy3_position_id"
@@ -1064,7 +1063,6 @@ class PureBalanceReportBuilderSql:
                         result_item["allocation_pl_id"] = None
                     else:
                         result_item["allocation_pl_id"] = item["allocation_pl_id"]
-
 
                     result_item["instrument_id"] = item["instrument_id"]
                     result_item["currency_id"] = item["currency_id"]
@@ -1087,16 +1085,13 @@ class PureBalanceReportBuilderSql:
                     if round(item["position_size"], settings.ROUND_NDIGITS):
                         updated_result.append(result_item)
 
-
                 _l.debug("build balance result %s " % len(result))
 
                 _l.debug("single build done: %s" % (time.perf_counter() - st))
 
-
                 return updated_result
 
         except Exception as e:
-
             raise e
 
     def serial_build(self):

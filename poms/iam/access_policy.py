@@ -66,7 +66,6 @@ class AccessPolicy(permissions.BasePermission):
     id_prefix = "id:"
 
     def has_permission(self, request, view) -> bool:
-
         if not request.user.is_authenticated:
             return False
 
@@ -79,7 +78,6 @@ class AccessPolicy(permissions.BasePermission):
         return self.has_specific_permission(view, request)
 
     def has_object_permission(self, request, view, obj):
-
         if not request.user.is_authenticated:
             return False
 
@@ -90,7 +88,7 @@ class AccessPolicy(permissions.BasePermission):
             return True
 
         # TODO Member entity itself has no owner, be careful if other entities have no owner
-        if hasattr(obj, 'owner'):
+        if hasattr(obj, "owner"):
             # Check if the user is the owner
             if obj.owner == request.user.member:
                 return True
@@ -105,7 +103,6 @@ class AccessPolicy(permissions.BasePermission):
         viewset_name = f"finmars:{view.__class__.__name__.replace('ViewSet', '')}"
 
         if not statements:
-
             request.permission_error_message = (
                 f"User: {user_arn} is not authorized to perform: "
                 f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
@@ -116,16 +113,15 @@ class AccessPolicy(permissions.BasePermission):
         allowed = self._evaluate_statements(statements, request, view, action, obj=None)
         request.access_enforcement = AccessEnforcement(action=action, allowed=allowed)
 
-        _l.info('has_specific_permission.allowed %s' % allowed)
+        _l.info("has_specific_permission.allowed %s" % allowed)
 
         if not allowed:
-
             request.permission_error_message = (
                 f"User: {user_arn} is not authorized to perform: "
                 f"{action} on resource: {viewset_name} because no access policy allows the '{action}' action."
             )
 
-            _l.info('permission_error_message %s' % request.permission_error_message)
+            _l.info("permission_error_message %s" % request.permission_error_message)
 
         return allowed
 
@@ -163,9 +159,13 @@ class AccessPolicy(permissions.BasePermission):
         raise AccessPolicyException("Could not determine action of request")
 
     def _evaluate_statements(
-        self, statements: List[Union[dict, Statement]], request, view, action: str, obj=None
+        self,
+        statements: List[Union[dict, Statement]],
+        request,
+        view,
+        action: str,
+        obj=None,
     ) -> bool:
-
         statements = self._normalize_statements(statements)
 
         matched = self._get_statements_matching_principal(request, statements)
@@ -275,7 +275,7 @@ class AccessPolicy(permissions.BasePermission):
         SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
         http_method = f"<method:{request.method.lower()}>"
 
-        viewset_name = view.__class__.__name__.replace('ViewSet', '')
+        viewset_name = view.__class__.__name__.replace("ViewSet", "")
 
         _l.debug(
             f"_get_statements_matching_action.action {action} "
@@ -317,7 +317,7 @@ class AccessPolicy(permissions.BasePermission):
         return matched
 
     def _get_statements_matching_resource(
-            self, request, view, action: str, statements: List[dict], obj
+        self, request, view, action: str, statements: List[dict], obj
     ) -> List[dict]:
         """
         Filters statements to find those that match the resource defined in each statement.
@@ -328,7 +328,11 @@ class AccessPolicy(permissions.BasePermission):
         matched_statements = []
 
         # Determine the content type of the object (e.g., "portfolios:portfolio")
-        content_type = ContentType.objects.get_for_model(obj).app_label + ":" + obj.__class__.__name__.lower()
+        content_type = (
+            ContentType.objects.get_for_model(obj).app_label
+            + ":"
+            + obj.__class__.__name__.lower()
+        )
 
         # Construct the unique resource identifier for the object
         object_resource_identifier = f"frn:finmars:{content_type}:{obj.user_code}"
@@ -337,7 +341,9 @@ class AccessPolicy(permissions.BasePermission):
             resources = statement.get("Resource", [])
 
             # Check if the resource list contains a `ResourceGroup`, and if so, expand it
-            expanded_resources = set(resources)  # Start with a copy of original resources
+            expanded_resources = set(
+                resources
+            )  # Start with a copy of original resources
 
             for resource in resources:
                 if resource.startswith("frn:finmars:iam:resourcegroup:"):
@@ -346,17 +352,22 @@ class AccessPolicy(permissions.BasePermission):
 
                     try:
                         # Fetch the ResourceGroup and its assignments
-                        resource_group = ResourceGroup.objects.get(user_code=resource_group_code)
+                        resource_group = ResourceGroup.objects.get(
+                            user_code=resource_group_code
+                        )
                         assignments = resource_group.assignments.all()
 
                         # Add each assigned object's user_code to the expanded resources list
                         expanded_resources.update(
                             f"frn:finmars:{assignment.content_type.app_label}:{assignment.content_type.model}:{assignment.object_user_code}"
-                            for assignment in assignments if assignment.object_user_code
+                            for assignment in assignments
+                            if assignment.object_user_code
                         )
 
                     except ResourceGroup.DoesNotExist:
-                        _l.warning(f"ResourceGroup with user_code {resource_group_code} does not exist.")
+                        _l.warning(
+                            f"ResourceGroup with user_code {resource_group_code} does not exist."
+                        )
                         continue
 
             # Allow all if the original or expanded resource list contains "*"
