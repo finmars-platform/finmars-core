@@ -5,19 +5,22 @@ from poms.counterparties.models import Responsible
 from poms.users.models import Member
 from poms.users.models import MasterUser
 
+
 class ResponsibleDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/responsible"
+        )
 
     def test_detail_delete_main_responsibles(self):
         for responsible in Responsible.objects.filter(user_code__in=DASH):
             response = self.client.delete(path=f"{self.url}/{responsible.id}/")
             self.assertEqual(response.status_code, 409)
-            
+
     def test_detail_delete_custom_responsibles(self):
         owner = Member.objects.first()
         master_user = MasterUser.objects.first()

@@ -31,7 +31,6 @@ class RunPricingView(AbstractViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = RunPricingSerializer
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -54,7 +53,9 @@ class RunPricingView(AbstractViewSet):
                 },
             }
         )
-        return Response({"status": "ok", "task_id": task.id}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"status": "ok", "task_id": task.id}, status=status.HTTP_201_CREATED
+        )
 
 
 class PriceHistoryErrorFilterSet(FilterSet):
@@ -88,7 +89,10 @@ class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
     )
     serializer_class = PriceHistoryErrorSerializer
 
-    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+    ]
     filter_class = PriceHistoryErrorFilterSet
     ordering_fields = ["date"]
 
@@ -140,7 +144,10 @@ class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
     )
     serializer_class = CurrencyHistoryErrorSerializer
 
-    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter, GroupsAttributeFilter]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+    ]
     filter_class = CurrencyHistoryErrorFilterSet
     ordering_fields = ["date"]
 

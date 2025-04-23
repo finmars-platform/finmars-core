@@ -55,22 +55,22 @@ class KeycloakConnect:
 
         # Keycloak useful Urls
         self.well_known_endpoint = (
-                self.server_url
-                + "/realms/"
-                + self.realm_name
-                + "/.well-known/openid-configuration"
+            self.server_url
+            + "/realms/"
+            + self.realm_name
+            + "/.well-known/openid-configuration"
         )
         self.token_introspection_endpoint = (
-                self.server_url
-                + "/realms/"
-                + self.realm_name
-                + "/protocol/openid-connect/token/introspect"
+            self.server_url
+            + "/realms/"
+            + self.realm_name
+            + "/protocol/openid-connect/token/introspect"
         )
         self.userinfo_endpoint = (
-                self.server_url
-                + "/realms/"
-                + self.realm_name
-                + "/protocol/openid-connect/userinfo"
+            self.server_url
+            + "/realms/"
+            + self.realm_name
+            + "/protocol/openid-connect/userinfo"
         )
 
     def well_known(self):
@@ -80,7 +80,9 @@ class KeycloakConnect:
         Returns:
             [type]: [list of keycloak endpoints]
         """
-        response = requests.request("GET", self.well_known_endpoint, verify=settings.VERIFY_SSL)
+        response = requests.request(
+            "GET", self.well_known_endpoint, verify=settings.VERIFY_SSL
+        )
         error = response.raise_for_status()
         if error:
             LOGGER.error(
@@ -127,7 +129,11 @@ class KeycloakConnect:
             "authorization": "Bearer " + token,
         }
         response = requests.request(
-            "POST", self.token_introspection_endpoint, data=payload, headers=headers, verify=settings.VERIFY_SSL
+            "POST",
+            self.token_introspection_endpoint,
+            data=payload,
+            headers=headers,
+            verify=settings.VERIFY_SSL,
         )
         error = response.raise_for_status()
         if error:
@@ -195,7 +201,9 @@ class KeycloakConnect:
             json: user info data
         """
         headers = {"authorization": "Bearer " + token}
-        response = requests.request("GET", self.userinfo_endpoint, headers=headers, verify=settings.VERIFY_SSL)
+        response = requests.request(
+            "GET", self.userinfo_endpoint, headers=headers, verify=settings.VERIFY_SSL
+        )
         error = response.raise_for_status()
         if error:
             LOGGER.error(

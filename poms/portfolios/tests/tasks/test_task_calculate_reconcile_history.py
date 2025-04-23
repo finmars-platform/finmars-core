@@ -94,7 +94,9 @@ class CalculateReconcileHistoryTest(BaseTestCase):
         calculate_portfolio_reconcile_history(task_id=celery_task.id)
 
         celery_task.refresh_from_db()
-        self.assertEqual(celery_task.status, CeleryTask.STATUS_DONE, celery_task.error_message)
+        self.assertEqual(
+            celery_task.status, CeleryTask.STATUS_DONE, celery_task.error_message
+        )
 
         self.assertEqual(calculate.call_count, 2)  # once per date
 

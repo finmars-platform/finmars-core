@@ -42,6 +42,5 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
 
 
 class ExportJournalSerializer(serializers.Serializer):
-
     date_from = serializers.DateField(required=False)
     date_to = serializers.DateField(required=True)

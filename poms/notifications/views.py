@@ -60,20 +60,35 @@ class NotificationViewSet(AbstractReadOnlyModelViewSet):
         "read_date",
     ]
 
-    @action(detail=False, methods=["get"], url_path="status", serializer_class=serializers.Serializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="status",
+        serializer_class=serializers.Serializer,
+    )
     def get_status(self, request, pk=None, realm_code=None, space_code=None):
         unread_count = request.user.notifications.filter(read_date__isnull=True).count()
         return Response({"unread_count": unread_count})
 
     @action(
-        detail=False, methods=["post"], url_path="mark-all-as-read", serializer_class=serializers.Serializer
+        detail=False,
+        methods=["post"],
+        url_path="mark-all-as-read",
+        serializer_class=serializers.Serializer,
     )
     def mark_all_as_read(self, request, pk=None, realm_code=None, space_code=None):
-        request.user.notifications.filter(read_date__isnull=True).update(read_date=timezone.now())
+        request.user.notifications.filter(read_date__isnull=True).update(
+            read_date=timezone.now()
+        )
         serializer = self.get_serializer(instance=[], many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=["post"], url_path="mark-as-read", serializer_class=serializers.Serializer)
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="mark-as-read",
+        serializer_class=serializers.Serializer,
+    )
     def mark_as_read(self, request, pk=None, realm_code=None, space_code=None):
         instance = self.get_object()
         instance.mark_as_read()

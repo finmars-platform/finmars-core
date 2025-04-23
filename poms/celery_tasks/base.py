@@ -7,7 +7,6 @@ logger = get_task_logger(__name__)
 
 
 class BaseTask(_Task):
-
     finmars_task = None
 
     def _generate_file(self, verbose_name, file_name, text):
@@ -68,7 +67,6 @@ class BaseTask(_Task):
         self.finmars_task.save()
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-
         if self.finmars_task:
             self._update_celery_task_with_error(exc, einfo)
 
@@ -86,7 +84,9 @@ class BaseTask(_Task):
 
         self.finmars_task.status = CeleryTask.STATUS_DONE
         if not retval:
-            result_object = {"message": f"Task {task_id} finished successfully. No results"}
+            result_object = {
+                "message": f"Task {task_id} finished successfully. No results"
+            }
             self.finmars_task.result_object = result_object
         else:
             try:
@@ -95,7 +95,9 @@ class BaseTask(_Task):
                         retval
                     )  ## TODO strange logic, probably refactor # but we can pass only string in celery
                 else:
-                    result_object = {"message": f"Task {task_id} returned result is not JSON"}
+                    result_object = {
+                        "message": f"Task {task_id} returned result is not JSON"
+                    }
                     self.finmars_task.result_object = result_object
             except Exception:
                 pass

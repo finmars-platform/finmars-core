@@ -40,7 +40,10 @@ class ScheduleViewSet(AbstractModelViewSet):
         process.apply_async(
             kwargs={
                 "schedule_user_code": schedule.user_code,
-                "context": {"space_code": request.space_code, "realm_code": request.realm_code},
+                "context": {
+                    "space_code": request.space_code,
+                    "realm_code": request.realm_code,
+                },
             }
         )
         return Response({"status": "ok"})

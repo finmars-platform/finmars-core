@@ -197,7 +197,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 2)
 
-        accruals = AccrualCalculationSchedule.objects.filter(instrument=instrument).order_by("accrual_start_date")
+        accruals = AccrualCalculationSchedule.objects.filter(
+            instrument=instrument
+        ).order_by("accrual_start_date")
         accrual_1 = accruals[0]
         self.assertIsNotNone(accrual_1)
         self.assertEqual(
@@ -286,7 +288,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)
 
-        accrual = AccrualCalculationSchedule.objects.filter(instrument=instrument).first()
+        accrual = AccrualCalculationSchedule.objects.filter(
+            instrument=instrument
+        ).first()
         self.assertIsNotNone(accrual)
         self.assertEqual(
             accrual.accrual_calculation_model.user_code,
@@ -366,7 +370,10 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         event_data: dict = post_data["data"]["instruments"][0]["accrual_events"][0]
         self.assertEqual(accrual_event.user_code, event_data["user_code"])
         self.assertEqual(accrual_event.periodicity_n, event_data["periodicity_n"])
-        self.assertEqual(accrual_event.accrual_calculation_model_id, event_data["accrual_calculation_model"])
+        self.assertEqual(
+            accrual_event.accrual_calculation_model_id,
+            event_data["accrual_calculation_model"],
+        )
         self.assertEqual(accrual_event.accrual_size, event_data["accrual_size"])
         self.assertEqual(str(accrual_event.start_date), event_data["start_date"])
         self.assertEqual(str(accrual_event.end_date), event_data["end_date"])

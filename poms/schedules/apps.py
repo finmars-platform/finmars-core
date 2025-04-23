@@ -18,7 +18,9 @@ class SchedulesConfig(AppConfig):
         post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
 
     # TODO update with auto_cancel_ttl_task
-    def update_periodic_tasks(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+    def update_periodic_tasks(
+        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+    ):
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
         from poms.users.models import MasterUser
 
@@ -34,7 +36,9 @@ class SchedulesConfig(AppConfig):
             return
 
         crontabs = {}
-        crontabs["every_30_min"], _ = CrontabSchedule.objects.using(using).get_or_create(
+        crontabs["every_30_min"], _ = CrontabSchedule.objects.using(
+            using
+        ).get_or_create(
             minute="*/30",
             hour="*",
             day_of_week="*",
@@ -142,7 +146,9 @@ class SchedulesConfig(AppConfig):
                 _l.info(f"create PeriodicTask data={task}")
                 PeriodicTask.objects.using(using).create(**task)
 
-    def sync_user_schedules_with_celery_beat(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+    def sync_user_schedules_with_celery_beat(
+        self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs
+    ):
         from poms.schedules.utils import sync_schedules
 
         if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:

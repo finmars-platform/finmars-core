@@ -31,7 +31,6 @@ class CalculateCashFlowTest(BaseTestCase):
         )
 
     def test__fx_ok(self):
-
         calculate_cash_flow(
             master_user=self.master_user,
             date=self.today(),

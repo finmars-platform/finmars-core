@@ -85,7 +85,9 @@ def send_system_message(
         _l.info(f"system_message {system_message}")
 
         system_message_attachments = [
-            SystemMessageAttachment(system_message=system_message, file_report_id=file_report_id)
+            SystemMessageAttachment(
+                system_message=system_message, file_report_id=file_report_id
+            )
             for file_report_id in attachments
         ]
         if len(system_message_attachments):
@@ -95,7 +97,8 @@ def send_system_message(
         members = Member.objects.all()
 
         system_message_members = [
-            SystemMessageMember(member=member, system_message=system_message) for member in members
+            SystemMessageMember(member=member, system_message=system_message)
+            for member in members
         ]
         if len(system_message_members):
             SystemMessageMember.objects.bulk_create(system_message_members)
@@ -103,7 +106,10 @@ def send_system_message(
             _l.debug(f"Send message to {len(system_message_members)} members ")
 
     except Exception as e:
-        _l.info(f"Error send system message: exception {repr(e)} " f"trace {traceback.format_exc()}")
+        _l.info(
+            f"Error send system message: exception {repr(e)} "
+            f"trace {traceback.format_exc()}"
+        )
 
 
 """
@@ -188,7 +194,9 @@ def forward_get_user_subscriptions_to_service(request):
         response.raise_for_status()
         return response.json()  # Return the exact response from the microservice
     except requests.exceptions.RequestException as e:
-        _l.error(f"Failed to fetch user's subscriptions: {e}")  # Log the error and raise it
+        _l.error(
+            f"Failed to fetch user's subscriptions: {e}"
+        )  # Log the error and raise it
         raise
 
 
@@ -202,7 +210,9 @@ def forward_update_user_subscriptions_to_service(request, payload):
         response.raise_for_status()
         return response.json()  # Return the exact response from the microservice
     except requests.exceptions.RequestException as e:
-        _l.error(f"Failed to fetch subscription types: {e}")  # Log the error and raise it
+        _l.error(
+            f"Failed to fetch subscription types: {e}"
+        )  # Log the error and raise it
         raise
 
 
@@ -215,7 +225,9 @@ def forward_get_all_subscription_types_to_service(request):
         response.raise_for_status()
         return response.json()  # Return the exact response from the microservice
     except requests.exceptions.RequestException as e:
-        _l.error(f"Failed to fetch subscription types: {e}")  # Log the error and raise it
+        _l.error(
+            f"Failed to fetch subscription types: {e}"
+        )  # Log the error and raise it
         raise
 
 
@@ -264,14 +276,18 @@ def forward_leave_channel_to_service(request, payload, user_code):
 def forward_user_subscribed_channels_to_service(request):
     try:
         query_params = request.query_params.urlencode()
-        base_url = f"{service_url.format(space_code=request.space_code)}channels/subscribed/"
+        base_url = (
+            f"{service_url.format(space_code=request.space_code)}channels/subscribed/"
+        )
         url = f"{base_url}?{query_params}" if query_params else base_url
 
         response = requests.get(url, headers=prepare_headers_for_service(request))
         response.raise_for_status()
         return response.json()  # Return the exact response from the microservice
     except requests.exceptions.RequestException as e:
-        _l.error(f"Failed to channels user subscribed: {e}")  # Log the error and raise it
+        _l.error(
+            f"Failed to channels user subscribed: {e}"
+        )  # Log the error and raise it
         raise
 
 
@@ -307,7 +323,9 @@ def forward_get_all_channels_to_service(request):
     """Forward request to get all channels from notification service"""
     try:
         query_params = request.query_params.urlencode()
-        base_url = f"{service_url.format(space_code=request.space_code)}channels/all_channels/"
+        base_url = (
+            f"{service_url.format(space_code=request.space_code)}channels/all_channels/"
+        )
         url = f"{base_url}?{query_params}" if query_params else base_url
 
         response = requests.get(url, headers=prepare_headers_for_service(request))

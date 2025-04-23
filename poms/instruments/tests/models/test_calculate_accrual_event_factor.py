@@ -21,7 +21,9 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
     def create_accrual_event(self, model_type: int, day: date) -> AccrualEvent:
         return AccrualEventFactory(
             instrument=self.default_instrument,
-            accrual_calculation_model=AccrualCalculationModelFactory(model_type=model_type),
+            accrual_calculation_model=AccrualCalculationModelFactory(
+                model_type=model_type
+            ),
             end_date=day,
             periodicity_n=PERIOD_DAYS,
         )
@@ -85,7 +87,9 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         ("DAY_COUNT_SIMPLE", AccrualCalculationModel.DAY_COUNT_SIMPLE),
     )
     def test_calculate_accrual_event_factor_june_1st(self, model_type):
-        accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
+        accrual_event = self.create_accrual_event(
+            model_type=model_type, day=date(2026, 1, 1)
+        )
         accrual_factor = calculate_accrual_event_factor(accrual_event, date(2025, 6, 1))
 
         self.assertLessEqual(accrual_factor, 0.43)
@@ -115,8 +119,12 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         ("DAY_COUNT_SIMPLE", AccrualCalculationModel.DAY_COUNT_SIMPLE),
     )
     def test_calculate_accrual_event_factor_december_31(self, model_type):
-        accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
-        accrual_factor = calculate_accrual_event_factor(accrual_event, date(2025, 12, 31))
+        accrual_event = self.create_accrual_event(
+            model_type=model_type, day=date(2026, 1, 1)
+        )
+        accrual_factor = calculate_accrual_event_factor(
+            accrual_event, date(2025, 12, 31)
+        )
 
         self.assertLessEqual(accrual_factor, 1.0)
         self.assertGreaterEqual(accrual_factor, 0.989)
@@ -145,7 +153,9 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         ("DAY_COUNT_SIMPLE", AccrualCalculationModel.DAY_COUNT_SIMPLE),
     )
     def test_calculate_accrual_event_factor_january_1(self, model_type):
-        accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
+        accrual_event = self.create_accrual_event(
+            model_type=model_type, day=date(2026, 1, 1)
+        )
         accrual_factor = calculate_accrual_event_factor(accrual_event, date(2026, 1, 1))
 
         self.assertEqual(accrual_factor, 1.0)
@@ -174,7 +184,9 @@ class CalculateAccrualEventFactorTests(BaseTestCase):
         ("DAY_COUNT_SIMPLE", AccrualCalculationModel.DAY_COUNT_SIMPLE),
     )
     def test_calculate_accrual_event_factor_one_year_ago(self, model_type):
-        accrual_event = self.create_accrual_event(model_type=model_type, day=date(2026, 1, 1))
+        accrual_event = self.create_accrual_event(
+            model_type=model_type, day=date(2026, 1, 1)
+        )
 
         price_date = date(2026, 1, 1) - timedelta(days=PERIOD_DAYS)
         accrual_factor = calculate_accrual_event_factor(accrual_event, price_date)

@@ -35,7 +35,9 @@ class DummyUpdateAndDeleteReconcileHistoryTest(BaseTestCase):
             file_name=self.random_string(),
         )
 
-    def create_reconcile_history(self, group: PortfolioReconcileGroup, day: date) -> PortfolioReconcileHistory:
+    def create_reconcile_history(
+        self, group: PortfolioReconcileGroup, day: date
+    ) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -46,7 +48,9 @@ class DummyUpdateAndDeleteReconcileHistoryTest(BaseTestCase):
         )
 
     def test__put(self):
-        response = self.client.put(path=f"{self.url}{self.history.id}/", data={}, format="json")
+        response = self.client.put(
+            path=f"{self.url}{self.history.id}/", data={}, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
 

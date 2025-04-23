@@ -9,7 +9,7 @@ from poms.common.storage import get_storage
 
 
 class Command(BaseCommand):
-    help = 'Encrypts all files in storage'
+    help = "Encrypts all files in storage"
 
     def handle(self, *args, **options):
         # Generate a new symmetric key
@@ -20,15 +20,18 @@ class Command(BaseCommand):
         # You can use the Vault client or any other library to store the keys securely
 
         from poms.users.models import MasterUser
+
         master_user = MasterUser.objects.all().first()
         # Encrypt files recursively
         try:
-            self.encrypt_files_recursively(storage, symmetric_key, master_user.space_code)
+            self.encrypt_files_recursively(
+                storage, symmetric_key, master_user.space_code
+            )
         except Exception as e:
-            print('Error encrypting files: %s ' % traceback.format_exc())
-            print('Error encrypting files: %s' % e)
+            print("Error encrypting files: %s " % traceback.format_exc())
+            print("Error encrypting files: %s" % e)
 
-        self.stdout.write(self.style.SUCCESS('All files have been encrypted.'))
+        self.stdout.write(self.style.SUCCESS("All files have been encrypted."))
 
     def encrypt_files_recursively(self, storage, symmetric_key, directory):
         files = storage.listdir(directory)[1]
@@ -37,9 +40,10 @@ class Command(BaseCommand):
 
             print("File_path %s" % file_path)
 
-            if not '.system/vault' in file_path: # TODO be careful about another services
-
-                file = storage.open_skip_decrypt(file_path, 'rb')
+            if (
+                not ".system/vault" in file_path
+            ):  # TODO be careful about another services
+                file = storage.open_skip_decrypt(file_path, "rb")
                 file_content = ContentFile(file.read())
                 storage.save(file_path, file_content)
 
