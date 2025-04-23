@@ -6,7 +6,6 @@ from poms_app.celery import get_celery_task_names, get_worker_task_names
 
 
 class CeleryTaskTests(BaseTestCase):
-
     def test__fake_task(self):
         # Register a fake task
         @finmars_task(name="test_task.fake_task")
@@ -28,7 +27,6 @@ class CeleryTaskTests(BaseTestCase):
         ("7", "reconciliation.process_bank_file_for_reconcile"),
     )
     def test__existing_tasks(self, task_name):
-
         task_names = set(get_celery_task_names())
 
         self.assertIn(task_name, task_names)

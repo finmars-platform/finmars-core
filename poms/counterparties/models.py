@@ -3,7 +3,12 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.fields import ResourceGroupsField
-from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
+from poms.common.models import (
+    TimeStampedModel,
+    FakeDeletableModel,
+    NamedModel,
+    ObjectStateModel,
+)
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -68,7 +73,6 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 # noinspection PyUnresolvedReferences
 class Counterparty(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
-
     """
     One of Core Finmars entities, real world meaning is hold here
     information about Company, Bank, Broker, StockExchange or other entity

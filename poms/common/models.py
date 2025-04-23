@@ -318,7 +318,7 @@ class ObjectStateModel(models.Model):
     )
     actual_at = models.DateTimeField(
         null=True,
-        help_text="Show the Date that object is truth for, e.g. price created_at is 2024-07-10 but actually this price is 2024-01-01"
+        help_text="Show the Date that object is truth for, e.g. price created_at is 2024-07-10 but actually this price is 2024-01-01",
     )
     source_type = models.CharField(
         default="manual",
@@ -327,16 +327,14 @@ class ObjectStateModel(models.Model):
         default="manual",
     )
     external_id = models.CharField(
-        null=True,
-        help_text="how object is referenced in external system"
+        null=True, help_text="how object is referenced in external system"
     )
     is_manual_locked = models.BooleanField(
-        default=False,
-        help_text="just a flag to disable form on frontend"
+        default=False, help_text="just a flag to disable form on frontend"
     )
     is_locked = models.BooleanField(
         default=True,
-        help_text="blocked to any change (only from finmars frontend change is allowed)"
+        help_text="blocked to any change (only from finmars frontend change is allowed)",
     )
 
     class Meta:
@@ -351,6 +349,7 @@ class BaseCacheManager(models.Manager):
     This manager should be used in the `CacheModel`.
     Attention! Global responsibility, not linked to space_code.
     """
+
     def _get_identifier_from_obj(cls, obj):
         """
         Getting the identificators for the cache. Redefine for non-standard identifiers.
@@ -398,6 +397,7 @@ class CacheByMasterUserManager(BaseCacheManager):
     The model must have a link to `MasterUser`.
     This manager should be used in the `CacheModel`.
     """
+
     def _get_identifier_from_obj(cls, obj):
         return obj.master_user.pk
 
@@ -414,7 +414,7 @@ class CacheByMasterUserManager(BaseCacheManager):
 class CacheModel(models.Model):
     """
     Abstract base model for integrating caching logic into Django models.
-    This class provides functionality for caching model instances using a  
+    This class provides functionality for caching model instances using a
     custom cache manager `BaseCacheManager` or the managers inherited from it.
 
     Attrs:
@@ -425,6 +425,7 @@ class CacheModel(models.Model):
         `cache`:
             Custom manager for handling caching logic. Redefine to the required manager.
     """
+
     cache_timeout = 3600
     objects = models.Manager()
     cache = BaseCacheManager()

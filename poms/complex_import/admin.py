@@ -2,19 +2,26 @@
 
 from django.contrib import admin
 
-from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeAction, ComplexImport
+from poms.complex_import.models import (
+    ComplexImportScheme,
+    ComplexImportSchemeAction,
+    ComplexImport,
+)
 
 
 class ComplexImportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'complex_import_scheme')
+    list_display = ("id", "complex_import_scheme")
 
 
 class ComplexSchemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_code',)
+    list_display = (
+        "id",
+        "user_code",
+    )
 
 
 class ComplexImportSchemeActionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'complex_import_scheme', 'order', 'action_notes')
+    list_display = ("id", "complex_import_scheme", "order", "action_notes")
 
 
 admin.site.register(ComplexImport, ComplexImportAdmin)

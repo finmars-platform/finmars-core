@@ -35,7 +35,9 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
             file_name=self.random_string(),
         )
 
-    def create_reconcile_history(self, group: PortfolioReconcileGroup, day: date) -> PortfolioReconcileHistory:
+    def create_reconcile_history(
+        self, group: PortfolioReconcileGroup, day: date
+    ) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -69,51 +71,68 @@ class ListFilterReconcileHistoryTest(BaseTestCase):
 
     def test__filter_out_date_range_2(self):
         response = self.client.get(
-            path=self.url, data={"date_after": str(self.yesterday()), "date_before": str(self.yesterday())}
+            path=self.url,
+            data={
+                "date_after": str(self.yesterday()),
+                "date_before": str(self.yesterday()),
+            },
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_out_date_range_1(self):
-        response = self.client.get(path=self.url, data={"date_before": str(self.yesterday())})
+        response = self.client.get(
+            path=self.url, data={"date_before": str(self.yesterday())}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_out_date_range_0(self):
-        response = self.client.get(path=self.url, data={"date_after": str(self.random_future_date())})
+        response = self.client.get(
+            path=self.url, data={"date_after": str(self.random_future_date())}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_in_date_range(self):
-        response = self.client.get(path=self.url, data={"date_after": str(self.yesterday())})
+        response = self.client.get(
+            path=self.url, data={"date_after": str(self.yesterday())}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
     def test__filter_status_ok(self):
-        response = self.client.get(path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK})
+        response = self.client.get(
+            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_OK}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 1)
 
     def test__filter_status_error(self):
-        response = self.client.get(path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR})
+        response = self.client.get(
+            path=self.url, data={"status": PortfolioReconcileHistory.STATUS_ERROR}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_wrong_user_code(self):
-        response = self.client.get(path=self.url, data={"reconcile_group": "invalid_user_code"})
+        response = self.client.get(
+            path=self.url, data={"reconcile_group": "invalid_user_code"}
+        )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
     def test__filter_user_code(self):
         response = self.client.get(
-            path=self.url, data={"reconcile_group": self.history.portfolio_reconcile_group.user_code}
+            path=self.url,
+            data={"reconcile_group": self.history.portfolio_reconcile_group.user_code},
         )
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()

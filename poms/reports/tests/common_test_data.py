@@ -1,15 +1,6 @@
 REQUEST_PAYLOAD = {
     "account_mode": 1,
-    "accounts": [
-        1,
-        5,
-        8,
-        7,
-        9,
-        6,
-        4,
-        3
-    ],
+    "accounts": [1, 5, 8, 7, 9, 6, 4, 3],
     "accounts_cash": [],
     "accounts_cash_object": [],
     "accounts_object": [
@@ -20,7 +11,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "-",
             "public_name": None,
@@ -33,14 +24,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "-",
                 "public_name": None,
                 "short_name": "-",
-                "user_code": "-"
+                "user_code": "-",
             },
-            "user_code": "-"
+            "user_code": "-",
         },
         {
             "deleted_user_code": "Test_AC_4",
@@ -49,7 +40,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "(del) Test_AC_4",
             "public_name": "Test_AC_3",
@@ -62,14 +53,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "-",
                 "public_name": None,
                 "short_name": "-",
-                "user_code": "-"
+                "user_code": "-",
             },
-            "user_code": "del00000000000000002"
+            "user_code": "del00000000000000002",
         },
         {
             "deleted_user_code": "New test",
@@ -78,7 +69,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "(del) New test",
             "public_name": "New test",
@@ -91,14 +82,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "House",
                 "public_name": None,
                 "short_name": "House",
-                "user_code": "House"
+                "user_code": "House",
             },
-            "user_code": "del00000000000000029"
+            "user_code": "del00000000000000029",
         },
         {
             "deleted_user_code": None,
@@ -107,7 +98,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Expenses",
             "public_name": "Rent",
@@ -120,14 +111,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "House",
                 "public_name": None,
                 "short_name": "House",
-                "user_code": "House"
+                "user_code": "House",
             },
-            "user_code": "Expenses"
+            "user_code": "Expenses",
         },
         {
             "deleted_user_code": None,
@@ -136,7 +127,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "New test",
             "public_name": "New test",
@@ -149,14 +140,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "House",
                 "public_name": None,
                 "short_name": "House",
-                "user_code": "House"
+                "user_code": "House",
             },
-            "user_code": "New test"
+            "user_code": "New test",
         },
         {
             "deleted_user_code": None,
@@ -165,7 +156,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Rent",
             "public_name": "Rent",
@@ -178,14 +169,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "House",
                 "public_name": None,
                 "short_name": "House",
-                "user_code": "House"
+                "user_code": "House",
             },
-            "user_code": "Rent"
+            "user_code": "Rent",
         },
         {
             "deleted_user_code": None,
@@ -194,7 +185,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Test_AC_3",
             "public_name": "Test_AC_3",
@@ -207,14 +198,14 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "-",
                 "public_name": None,
                 "short_name": "-",
-                "user_code": "-"
+                "user_code": "-",
             },
-            "user_code": "Test_AC_3"
+            "user_code": "Test_AC_3",
         },
         {
             "deleted_user_code": None,
@@ -223,7 +214,7 @@ REQUEST_PAYLOAD = {
                 "app_label": "accounts",
                 "content_type": "accounts.account",
                 "model_name": "account",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Test ACC 2",
             "public_name": "Test ACC 2",
@@ -236,15 +227,15 @@ REQUEST_PAYLOAD = {
                     "app_label": "accounts",
                     "content_type": "accounts.accounttype",
                     "model_name": "accounttype",
-                    "space_code": "space00000"
+                    "space_code": "space00000",
                 },
                 "name": "-",
                 "public_name": None,
                 "short_name": "-",
-                "user_code": "-"
+                "user_code": "-",
             },
-            "user_code": "Test ACC 2"
-        }
+            "user_code": "Test ACC 2",
+        },
     ],
     "accounts_position": [],
     "accounts_position_object": [],
@@ -270,10 +261,10 @@ REQUEST_PAYLOAD = {
                 "filter_values": [],
                 "use_from_above": {
                     "attrs_entity_type": "balance-report",
-                    "key": "user_code"
-                }
+                    "key": "user_code",
+                },
             },
-            "value_type": 10
+            "value_type": 10,
         },
         {
             "content_type": "portfolios.portfolio",
@@ -286,10 +277,10 @@ REQUEST_PAYLOAD = {
                 "filter_values": [],
                 "use_from_above": {
                     "attrs_entity_type": "balance-report",
-                    "key": "portfolio.user_code"
-                }
+                    "key": "portfolio.user_code",
+                },
             },
-            "value_type": 10
+            "value_type": 10,
         },
         {
             "content_type": "accounts.account",
@@ -302,10 +293,10 @@ REQUEST_PAYLOAD = {
                 "filter_values": [],
                 "use_from_above": {
                     "attrs_entity_type": "balance-report",
-                    "key": "account.user_code"
-                }
+                    "key": "account.user_code",
+                },
             },
-            "value_type": 10
+            "value_type": 10,
         },
         {
             "key": "instrument.maturity_date",
@@ -314,25 +305,14 @@ REQUEST_PAYLOAD = {
             "content_type": "instruments.instrument",
             "options": {
                 "filter_type": "equal",
-                "filter_values": [
-                    "2022-01-01"
-                ],
+                "filter_values": ["2022-01-01"],
                 "use_from_above": {},
-                "enabled": True
-            }
-        }
+                "enabled": True,
+            },
+        },
     ],
     "portfolio_mode": 1,
-    "portfolios": [
-        1,
-        2,
-        6,
-        10,
-        9,
-        5,
-        4,
-        3
-    ],
+    "portfolios": [1, 2, 6, 10, 9, 5, 4, 3],
     "portfolios_object": [
         {
             "deleted_user_code": None,
@@ -341,12 +321,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "-",
             "public_name": None,
             "short_name": "-",
-            "user_code": "-"
+            "user_code": "-",
         },
         {
             "deleted_user_code": None,
@@ -355,12 +335,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Model",
             "public_name": "Model",
             "short_name": "Model",
-            "user_code": "Model"
+            "user_code": "Model",
         },
         {
             "deleted_user_code": None,
@@ -369,12 +349,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Model_Fn",
             "public_name": "Model_Fn",
             "short_name": "Model_Fn",
-            "user_code": "Model_Fn"
+            "user_code": "Model_Fn",
         },
         {
             "deleted_user_code": None,
@@ -383,12 +363,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "New Test",
             "public_name": "New Test",
             "short_name": "New Test",
-            "user_code": "New Test"
+            "user_code": "New Test",
         },
         {
             "deleted_user_code": None,
@@ -397,12 +377,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "New portfolio",
             "public_name": "New portfolio",
             "short_name": "New portfolio",
-            "user_code": "nportf"
+            "user_code": "nportf",
         },
         {
             "deleted_user_code": None,
@@ -411,12 +391,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Prop",
             "public_name": "Prop",
             "short_name": "Prop",
-            "user_code": "Prop"
+            "user_code": "Prop",
         },
         {
             "deleted_user_code": None,
@@ -425,12 +405,12 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Register_test_1",
             "public_name": "Register_test_1",
             "short_name": "Register_test_1",
-            "user_code": "Register_test_1"
+            "user_code": "Register_test_1",
         },
         {
             "deleted_user_code": None,
@@ -439,13 +419,13 @@ REQUEST_PAYLOAD = {
                 "app_label": "portfolios",
                 "content_type": "portfolios.portfolio",
                 "model_name": "portfolio",
-                "space_code": "space00000"
+                "space_code": "space00000",
             },
             "name": "Test Portfolio 2",
             "public_name": "Test Portfolio 2",
             "short_name": "TPRTF",
-            "user_code": "T_PRTF"
-        }
+            "user_code": "T_PRTF",
+        },
     ],
     "pricing_policy": 1,
     "report_date": "2022-02-08",
@@ -470,9 +450,7 @@ REQUEST_PAYLOAD = {
                 "key": "instrument.maturity_date",
                 "filter_type": "equal",
                 "value_type": 40,
-                "value": [
-                    "2022-01-01"
-                ]
+                "value": ["2022-01-01"],
             }
         ],
         "columns": [
@@ -486,17 +464,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_text_1",
                 "layout_name": "Portfolio",
                 "name": "Complex Transaction. Portfolio",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 0,
-                "style": {
-                    "width": "341px"
-                },
-                "value_type": 10
+                "style": {"width": "341px"},
+                "value_type": 10,
             },
             {
                 "___column_id": "37573232cc8f8e871152adc27dd74d69",
@@ -508,14 +479,10 @@ REQUEST_PAYLOAD = {
                 "options": {
                     "sort": None,
                     "sort_mode": "default",
-                    "sort_settings": {
-                        "mode": None
-                    }
+                    "sort_settings": {"mode": None},
                 },
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 20
+                "style": {"width": "100px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "0371028dd282db3779a931a9f02769dd",
@@ -534,20 +501,14 @@ REQUEST_PAYLOAD = {
                         "round_format_id": 3,
                         "subtotal_formula_id": 1,
                         "thousands_separator_format_id": 2,
-                        "zero_format_id": 0
+                        "zero_format_id": 0,
                     },
                     "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
+                    "sort_settings": {"mode": None},
                 },
-                "report_settings": {
-                    "subtotal_formula_id": 1
-                },
-                "style": {
-                    "width": "195px"
-                },
-                "value_type": 20
+                "report_settings": {"subtotal_formula_id": 1},
+                "style": {"width": "195px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "948dc4afb985f82517b70cd9eb17ab75",
@@ -559,17 +520,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_date_1",
                 "layout_name": "Date (Trade)",
                 "name": "Complex Transaction. Date (Trade)",
-                "options": {
-                    "sort": "ASC",
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": "ASC", "sort_settings": {"mode": None}},
                 "orderNumber__": 24,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 40
+                "style": {"width": "100px"},
+                "value_type": 40,
             },
             {
                 "___column_id": "d90927a3c8f25df38c4e1bec29097df4",
@@ -581,17 +535,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_date_2",
                 "layout_name": "Date (Value)",
                 "name": "Complex Transaction. Date (Value)",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 25,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 40
+                "style": {"width": "100px"},
+                "value_type": 40,
             },
             {
                 "___column_id": "8534801cd988991d533936c2232bd865",
@@ -603,17 +550,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_date_3",
                 "layout_name": "Date (Book)",
                 "name": "Complex Transaction. Date (Book)",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 26,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 40
+                "style": {"width": "100px"},
+                "value_type": 40,
             },
             {
                 "___column_id": "b155e0cac393258eac5ba1b72819a4fc",
@@ -625,17 +565,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.transaction_type.name",
                 "layout_name": "Transaction Type",
                 "name": "Complex Transaction. Transaction Type. Name",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 0,
-                "style": {
-                    "width": "225px"
-                },
-                "value_type": 10
+                "style": {"width": "225px"},
+                "value_type": 10,
             },
             {
                 "___column_id": "71f240c427db93602d9f230d896c8d17",
@@ -647,17 +580,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_text_4",
                 "layout_name": "Instrument/Currency",
                 "name": "Complex Transaction. Instrument",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 3,
-                "style": {
-                    "width": "118px"
-                },
-                "value_type": 10
+                "style": {"width": "118px"},
+                "value_type": 10,
             },
             {
                 "___column_id": "a01c6a2c6d642e2fe2c6d35091616765",
@@ -669,12 +595,7 @@ REQUEST_PAYLOAD = {
                 "key": "position_size_with_sign",
                 "layout_name": "Position/Quantity",
                 "name": "Transaction. Position Size with sign",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 2,
                 "report_settings": {
                     "negative_color_format_id": 1,
@@ -685,12 +606,10 @@ REQUEST_PAYLOAD = {
                     "percentage_format_id": 0,
                     "round_format_id": 1,
                     "thousands_separator_format_id": 2,
-                    "zero_format_id": 1
+                    "zero_format_id": 1,
                 },
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 20
+                "style": {"width": "100px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "66d97c178f8747499a0083854a47eb8a",
@@ -702,17 +621,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_number_7",
                 "layout_name": "Price",
                 "name": "Complex Transaction. Traded Price",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 23,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 20
+                "style": {"width": "100px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "0af49b3b463f39bd4fb22430e6e291f1",
@@ -724,12 +636,7 @@ REQUEST_PAYLOAD = {
                 "key": "carry_with_sign",
                 "layout_name": "Accrued",
                 "name": "Transaction. Carry with sign",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 5,
                 "report_settings": {
                     "negative_color_format_id": 1,
@@ -740,12 +647,10 @@ REQUEST_PAYLOAD = {
                     "percentage_format_id": 0,
                     "round_format_id": 1,
                     "thousands_separator_format_id": 2,
-                    "zero_format_id": 1
+                    "zero_format_id": 1,
                 },
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 20
+                "style": {"width": "100px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "3e6cb9f296d2f740b343f42f878bff4a",
@@ -757,12 +662,7 @@ REQUEST_PAYLOAD = {
                 "key": "cash_consideration",
                 "layout_name": "Amount/Cash",
                 "name": "Transaction. Cash consideration",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 3,
                 "report_settings": {
                     "negative_color_format_id": 1,
@@ -773,12 +673,10 @@ REQUEST_PAYLOAD = {
                     "percentage_format_id": 0,
                     "round_format_id": 1,
                     "thousands_separator_format_id": 2,
-                    "zero_format_id": 1
+                    "zero_format_id": 1,
                 },
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 20
+                "style": {"width": "100px"},
+                "value_type": 20,
             },
             {
                 "___column_id": "56eb9439eeb9db157f90b1a508224eb4",
@@ -790,17 +688,10 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_text_3",
                 "layout_name": "Account Cash",
                 "name": "Complex Transaction. Account - Cash",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 2,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 10
+                "style": {"width": "100px"},
+                "value_type": 10,
             },
             {
                 "___column_id": "38875aab199b868d6aea49ea8bfd7584",
@@ -812,20 +703,13 @@ REQUEST_PAYLOAD = {
                 "key": "complex_transaction.user_text_2",
                 "layout_name": "Account Instrument",
                 "name": "Complex Transaction. Account - Position",
-                "options": {
-                    "sort": None,
-                    "sort_settings": {
-                        "mode": None
-                    }
-                },
+                "options": {"sort": None, "sort_settings": {"mode": None}},
                 "orderNumber__": 1,
-                "style": {
-                    "width": "100px"
-                },
-                "value_type": 10
-            }
+                "style": {"width": "100px"},
+                "value_type": 10,
+            },
         ],
-        "items_order": "asc"
+        "items_order": "asc",
     },
-    "report_instance_id": 94
+    "report_instance_id": 94,
 }

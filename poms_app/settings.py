@@ -807,9 +807,7 @@ REDOC_SETTINGS = {
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
-SENTRY_DSN = ENV_STR("SENTRY_DSN", None)
-if SENTRY_DSN is None:
-    SENTRY_DSN = "https://af79f220a0594fa6a2b3d69a65c4c27a@sentry.finmars.com/2"
+SENTRY_DSN = ENV_STR("SENTRY_DSN", "https://bbc302cc7bd5bbb2719b030ace26222a@sentry.finmars.com/2")
 
 # SENTRY
 if SERVER_TYPE != "local":

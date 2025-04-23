@@ -1,12 +1,12 @@
 services:
-  backend:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
       - .env
     volumes:
-      - .:/var/app
+      - ./poms:/var/app/poms
     restart: always
     depends_on:
       - db
@@ -31,17 +31,17 @@ services:
     env_file:
       - .env
     environment:
-      - INSTANCE_TYPE=scheduler
+      - INSTANCE_TYPE=beat
     depends_on:
       - db
       - rabbitmq
 
   backend_migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     env_file:
       - .env
+    environment:
+      - INSTANCE_TYPE=job
     depends_on:
       - db
     command: python manage.py migrate_all_schemes
@@ -57,6 +57,8 @@ services:
     tty: true
     ports:
       - "5434:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
 
   rabbitmq:
     image: rabbitmq
@@ -71,3 +73,6 @@ services:
       - "6379:6379"
     stdin_open: true
     tty: true
+
+volumes:
+  postgres_data:

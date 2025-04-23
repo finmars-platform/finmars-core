@@ -251,9 +251,7 @@ router.register(
     "PersonalAccessToken",
 )
 router.register(
-    "system-messages/message",
-    system_messages.SystemMessageViewSet,
-    "SystemMessage"
+    "system-messages/message", system_messages.SystemMessageViewSet, "SystemMessage"
 )
 router.register(
     "notifications/notification",
@@ -268,9 +266,7 @@ router.register(
     "debug_log",
 )
 router.register(
-    "credentials/credentials",
-    credentials.CredentialsViewSet,
-    "Credentials"
+    "credentials/credentials", credentials.CredentialsViewSet, "Credentials"
 )
 router.register(
     "integrations/data-provider",

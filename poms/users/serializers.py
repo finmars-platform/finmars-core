@@ -124,7 +124,7 @@ class MasterUserCopy:
         self.member = member
 
     def __str__(self):
-        return f'{getattr(self.master_user, "name", None)}:{self.name}'
+        return f"{getattr(self.master_user, 'name', None)}:{self.name}"
 
 
 class MasterUserCopySerializer(serializers.Serializer):
@@ -505,10 +505,10 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
 
-        self.fields[
-            "accrual_calculation_model_object"
-        ] = AccrualCalculationModelViewSerializer(
-            source="accrual_calculation_model", read_only=True
+        self.fields["accrual_calculation_model_object"] = (
+            AccrualCalculationModelViewSerializer(
+                source="accrual_calculation_model", read_only=True
+            )
         )
 
         self.fields["pricing_condition_object"] = PricingConditionViewSerializer(
@@ -753,6 +753,7 @@ class MemberViewSerializer(serializers.ModelSerializer):
     def get_is_current(self, obj):
         member = get_member_from_context(self.context)
         return obj.id == member.id
+
 
 class MemberLightViewSerializer(serializers.ModelSerializer):
     class Meta:

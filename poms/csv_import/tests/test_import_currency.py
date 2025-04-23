@@ -24,7 +24,9 @@ from poms.currencies.models import Currency
 
 FILE_CONTENT = json.dumps(CURRENCY).encode("utf-8")
 FILE_NAME = "currency.json"
-CURRENCIES = [CURRENCY,]
+CURRENCIES = [
+    CURRENCY,
+]
 
 
 class ImportCurrencyTest(BaseTestCase):
@@ -82,7 +84,7 @@ class ImportCurrencyTest(BaseTestCase):
 
         if remove_user_code:
             items[0]["user_code"] = None
-            
+
         if remove_default_fx_rate:
             items[0]["default_fx_rate"] = None
 
@@ -135,7 +137,7 @@ class ImportCurrencyTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
-        self.assertFalse(bool(Currency.objects.filter(user_code='ALB')))
+        self.assertFalse(bool(Currency.objects.filter(user_code="ALB")))
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -161,7 +163,9 @@ class ImportCurrencyTest(BaseTestCase):
 
         import_process.process()
         result = import_process.task.result_object["items"][0]
-        self.assertEqual(result["final_inputs"], EXPECTED_RESULT_CURRENCY["final_inputs"])
+        self.assertEqual(
+            result["final_inputs"], EXPECTED_RESULT_CURRENCY["final_inputs"]
+        )
 
         currency = Currency.objects.get(user_code="ALL")
         self.assertEqual(currency.country.alpha_3, "ALB")
@@ -170,7 +174,7 @@ class ImportCurrencyTest(BaseTestCase):
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_run_simple_import_process_missing_fields(self, mock_send_message):
         # Without user_code
-        self.assertFalse(bool(Currency.objects.filter(user_code='ALL')))
+        self.assertFalse(bool(Currency.objects.filter(user_code="ALL")))
         task = self.create_task(remove_user_code=True)
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -190,7 +194,7 @@ class ImportCurrencyTest(BaseTestCase):
             Currency.objects.get(user_code="ALL")
 
         # Without default_fx_rate
-        self.assertFalse(bool(Currency.objects.filter(user_code='ALL')))
+        self.assertFalse(bool(Currency.objects.filter(user_code="ALL")))
         task = self.create_task(remove_default_fx_rate=True)
         import_process = SimpleImportProcess(task_id=task.id)
 

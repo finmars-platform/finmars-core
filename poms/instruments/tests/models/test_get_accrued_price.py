@@ -22,7 +22,9 @@ class GetAccruedPriceMethodTest(BaseTestCase):
 
     def test_init(self):
         self.accrual_event = AccrualEventFactory(instrument=self.instrument)
-        self.accrual_schedule = AccrualCalculationScheduleFactory(instrument=self.instrument)
+        self.accrual_schedule = AccrualCalculationScheduleFactory(
+            instrument=self.instrument
+        )
         self.assertEqual(AccrualEvent.objects.count(), 1)
         self.assertEqual(AccrualCalculationSchedule.objects.count(), 1)
 
@@ -45,9 +47,9 @@ class GetAccruedPriceMethodTest(BaseTestCase):
     def test_get_accrued_price_accrual_schedule(self):
         self.accrual_schedule = AccrualCalculationScheduleFactory(
             instrument=self.instrument,
-            accrual_start_date = f"{YEAR}-01-01",
-            first_payment_date = f"{YEAR}-07-01",
-            accrual_size = 100,
+            accrual_start_date=f"{YEAR}-01-01",
+            first_payment_date=f"{YEAR}-07-01",
+            accrual_size=100,
         )
         price_date = date(YEAR, 6, 15)
 

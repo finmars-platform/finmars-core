@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet
 from poms.integrations.providers.base import parse_date_iso
+
 # from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import (
@@ -38,6 +39,7 @@ class PricingProcedureFilterSet(FilterSet):
     class Meta:
         model = PricingProcedure
         fields = []
+
 
 # DEPRECATED (remove in 1.9.0)
 class PricingProcedureViewSet(AbstractModelViewSet):
@@ -167,10 +169,13 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         )
 
         execute_data_procedure.apply_async(
-            kwargs={"procedure_instance_id": procedure_instance.id, 'context': {
-                'space_code': master_user.space_code,
-                'realm_code': master_user.realm_code
-            }}
+            kwargs={
+                "procedure_instance_id": procedure_instance.id,
+                "context": {
+                    "space_code": master_user.space_code,
+                    "realm_code": master_user.realm_code,
+                },
+            }
         )
 
         return Response(
@@ -205,10 +210,11 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
                 "procedure_instance_id": procedure_instance.id,
                 "date_from": request.data.get("date_from", None),
                 "date_to": request.data.get("date_to", None),
-                "options": request.data.get("options", None), 'context': {
-                    'space_code': master_user.space_code,
-                    'realm_code': master_user.realm_code
-                }
+                "options": request.data.get("options", None),
+                "context": {
+                    "space_code": master_user.space_code,
+                    "realm_code": master_user.realm_code,
+                },
             }
         )
 

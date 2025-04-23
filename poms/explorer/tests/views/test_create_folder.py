@@ -13,7 +13,7 @@ class ExplorerCreateFolderViewTest(CreateUserMemberMixin, BaseTestCase):
         self.realm_code = "realm00000"
         self.space_code = "space00000"
         self.url = (
-            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/" f"create-folder/"
+            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/create-folder/"
         )
 
         self.storage_patch = mock.patch(

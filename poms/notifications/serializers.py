@@ -53,7 +53,10 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_actor_type(self, value):
         if value.actor_content_type:
-            return "%s.%s" % (value.actor_content_type.app_label, value.actor_content_type.model)
+            return "%s.%s" % (
+                value.actor_content_type.app_label,
+                value.actor_content_type.model,
+            )
         return None
 
     def get_actor_repr(self, value):
@@ -86,7 +89,10 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_target_type(self, value):
         if value.target_content_type_id:
-            return "%s.%s" % (value.target_content_type.app_label, value.target_content_type.model)
+            return "%s.%s" % (
+                value.target_content_type.app_label,
+                value.target_content_type.model,
+            )
         return None
 
     def get_target_repr(self, value):

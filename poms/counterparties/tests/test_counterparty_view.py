@@ -65,7 +65,7 @@ EXPECTED_COUNTERPARTY = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "counterparties.counterparty",
@@ -93,9 +93,11 @@ class CounterpartyViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/counterparty/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/counterparties/counterparty/"
+        )
         self.counterparty = None
 
     def create_counterparty_group(self) -> CREATE_DATA:

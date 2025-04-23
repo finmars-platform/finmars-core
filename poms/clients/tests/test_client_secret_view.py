@@ -30,7 +30,7 @@ EXPECTED_DATA = {
             "model_name": "client",
             "space_code": "space00000",
             "realm_code": "realm00000",
-        }
+        },
     },
     "deleted_user_code": None,
     "owner": {
@@ -43,7 +43,7 @@ EXPECTED_DATA = {
         "model_name": "clientsecret",
         "space_code": "space00000",
         "realm_code": "realm00000",
-    }
+    },
 }
 
 
@@ -90,9 +90,7 @@ class ClientViewTest(BaseTestCase):
     )
     def test__get_filters(self, field, value, quantity):
         self.create_client_secret(user_code="test_filter")
-        response = self.client.get(
-            path=f"{self.url}?{field}={value}"
-        )
+        response = self.client.get(path=f"{self.url}?{field}={value}")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
         self.assertEqual(response_json["count"], quantity)
@@ -137,6 +135,8 @@ class ClientViewTest(BaseTestCase):
         response = self.client.delete(path=f"{self.url}{client_id}/")
         self.assertEqual(response.status_code, 204, response.content)
 
-        response = self.client.get(path=f"{self.url}?user_code={CREATE_DATA['user_code']}")
+        response = self.client.get(
+            path=f"{self.url}?user_code={CREATE_DATA['user_code']}"
+        )
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)

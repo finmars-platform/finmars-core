@@ -80,7 +80,7 @@ class CounterpartySerializer(
             "is_deleted",
             "portfolios",
             "portfolios_object",
-            "is_enabled"
+            "is_enabled",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -288,7 +288,7 @@ class ResponsibleEvalSerializer(
             "is_default",
             "is_valid_for_all_portfolios",
             "is_deleted",
-            "is_enabled"
+            "is_enabled",
         ]
 
         read_only_fields = fields

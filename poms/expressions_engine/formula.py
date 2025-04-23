@@ -779,7 +779,10 @@ def get_model_data(
 
 def _get_supported_models_serializer_class():
     from poms.accounts.models import Account, AccountType
-    from poms.accounts.serializers import AccountEvalSerializer, AccountTypeEvalSerializer
+    from poms.accounts.serializers import (
+        AccountEvalSerializer,
+        AccountTypeEvalSerializer,
+    )
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import (
         CounterpartyEvalSerializer,
@@ -829,6 +832,7 @@ def _get_supported_models_serializer_class():
     from poms.currencies.serializers import CurrencyHistorySerializer
     from poms.instruments.models import AccrualCalculationSchedule
     from poms.instruments.serializers import AccrualCalculationScheduleSerializer
+
     return {
         Account: AccountEvalSerializer,
         AccountType: AccountTypeEvalSerializer,
@@ -853,7 +857,7 @@ def _get_supported_models_serializer_class():
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
         Country: CountrySerializer,
-        AccrualCalculationSchedule: AccrualCalculationScheduleSerializer
+        AccrualCalculationSchedule: AccrualCalculationScheduleSerializer,
     }
 
 

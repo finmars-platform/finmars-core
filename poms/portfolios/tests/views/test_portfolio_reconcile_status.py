@@ -23,7 +23,7 @@ EXPECTED_RESPONSE = {
                     "created_at": "2025-02-25T17:14:11.704773Z",
                     "file_url": "/.system/file_reports/WUKYVOAUKF_2025-02-25-17-14_n.json",
                     "id": 2,
-                    "name": "Reconciliation report " "2025-02-25-17-14 " "(Task None).json",
+                    "name": "Reconciliation report 2025-02-25-17-14 (Task None).json",
                     "notes": "System File",
                     "type": "simple_import.import",
                 },
@@ -46,7 +46,10 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         self.portfolio_big = self.db_data.portfolios[BIG]
         self.portfolio_small = self.db_data.portfolios[SMALL]
         self.group = self.create_reconcile_group()
-        self.portfolios_list = [self.portfolio_big.user_code, self.portfolio_small.user_code]
+        self.portfolios_list = [
+            self.portfolio_big.user_code,
+            self.portfolio_small.user_code,
+        ]
 
     def create_reconcile_group(self) -> PortfolioReconcileGroup:
         return PortfolioReconcileGroup.objects.create(
@@ -60,7 +63,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
             },
         )
 
-    def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
+    def create_reconcile_history(
+        self, group: PortfolioReconcileGroup
+    ) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -110,7 +115,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(
-            response_json[user_code], {"final_status": "no_group", "all_statuses": {}, "history_objects": []}
+            response_json[user_code],
+            {"final_status": "no_group", "all_statuses": {}, "history_objects": []},
         )
 
     @BaseTestCase.cases(
@@ -125,7 +131,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
         self.assertEqual(
-            response_json[user_code], {"final_status": "no_group", "all_statuses": {}, "history_objects": []}
+            response_json[user_code],
+            {"final_status": "no_group", "all_statuses": {}, "history_objects": []},
         )
 
     @BaseTestCase.cases(
@@ -145,7 +152,8 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
 
         self.assertEqual(len(response_json), 1)
         self.assertEqual(
-            response_json[user_code], {"final_status": "not_run_yet", "all_statuses": {}, "history_objects": []}
+            response_json[user_code],
+            {"final_status": "not_run_yet", "all_statuses": {}, "history_objects": []},
         )
 
     @BaseTestCase.cases(
@@ -168,7 +176,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
 
-        self.assertEqual(response_json[user_code]["final_status"], ReconcileStatus.OK.value)
+        self.assertEqual(
+            response_json[user_code]["final_status"], ReconcileStatus.OK.value
+        )
 
     def test__status_ok_double(self):
         self.group.portfolios.add(self.portfolio_big)
@@ -206,7 +216,9 @@ class PortfolioReconcileHistoryViewTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
 
-        self.assertEqual(response_json[user_code]["final_status"], ReconcileStatus.ERROR.value)
+        self.assertEqual(
+            response_json[user_code]["final_status"], ReconcileStatus.ERROR.value
+        )
 
     def test__status_error_double(self):
         self.group.portfolios.add(self.portfolio_big)

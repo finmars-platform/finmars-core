@@ -17,11 +17,12 @@ class AuthorizerService:
     @staticmethod
     def create_jwt_token():
         payload = {
-            'some': 'payload',
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),  # Expires in 1 day
+            "some": "payload",
+            "exp": datetime.datetime.utcnow()
+            + datetime.timedelta(days=1),  # Expires in 1 day
         }
         secret_key = settings.SECRET_KEY
-        token = jwt.encode(payload, secret_key, algorithm='HS256')
+        token = jwt.encode(payload, secret_key, algorithm="HS256")
         return token
 
     @staticmethod
