@@ -184,25 +184,19 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response_dict.keys(), TRANSACTION_TYPE_WITH_INPUTS_DICT.keys())
 
     def _validate_get_filter(self, transaction_type, field_name, query_parameter=None):
-
         if not query_parameter:
             query_parameter = field_name
 
         field_value = getattr(transaction_type, field_name)
 
-        response = self.client.get(
-            path=f"{self.url}?{query_parameter}={field_value}"
-        )
+        response = self.client.get(path=f"{self.url}?{query_parameter}={field_value}")
 
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
 
         self.assertEqual(response_json["count"], 1)
 
-        self.assertEqual(
-            response_json["results"][0][field_name],
-            field_value
-        )
+        self.assertEqual(response_json["results"][0][field_name], field_value)
 
     def test__get_filters(self):  # sourcery skip: extract-duplicate-method
         transaction_type = self.get_transaction_type()
@@ -253,9 +247,9 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
         results = response.json()["results"]
         self.assertEqual(results[0]["id"], type_id)
-        self.assertFalse(results[0]['protected'])
+        self.assertFalse(results[0]["protected"])
         self.assertEqual(results[1]["id"], action.id)
-        self.assertTrue(results[1]['protected'])
+        self.assertTrue(results[1]["protected"])
 
     def test__create(self):
         create_data = self.prepare_create_data()

@@ -31,9 +31,9 @@ class GetAccrualSizeMethodTest(BaseTestCase):
     def test_get_accrued_price_accrual_schedule(self):
         self.accrual_schedule = AccrualCalculationScheduleFactory(
             instrument=self.instrument,
-            accrual_start_date = f"{YEAR}-01-01",
-            first_payment_date = f"{YEAR}-07-01",
-            accrual_size = 222,
+            accrual_start_date=f"{YEAR}-01-01",
+            first_payment_date=f"{YEAR}-07-01",
+            accrual_size=222,
         )
         price_date = date(YEAR, 6, 15)
 

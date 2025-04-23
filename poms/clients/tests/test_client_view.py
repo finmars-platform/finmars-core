@@ -20,10 +20,7 @@ EXPECTED_CLIENT = {
     "portfolios_object": [],
     "client_secrets": [],
     "client_secrets_object": [],
-    "owner": {
-        "id": 1318,
-        "username": "finmars_bot"
-    },
+    "owner": {"id": 1318, "username": "finmars_bot"},
     "meta": {
         "content_type": "clients.client",
         "app_label": "clients",
@@ -58,8 +55,8 @@ CREATE_DATA = {
             "portfolio": "TEST2",
             "path_to_secret": "TEST2",
             "notes": "TEST2",
-        }
-    ]
+        },
+    ],
 }
 
 
@@ -78,7 +75,7 @@ class ClientViewTest(BaseTestCase):
 
         response_json = response.json()
         self.assertGreater(response_json["count"], 0)
-        
+
         client = response_json["results"][0]
         self.assertEqual(client.keys(), EXPECTED_CLIENT.keys())
 
@@ -95,7 +92,10 @@ class ClientViewTest(BaseTestCase):
         self.assertEqual(response_json["count"], 0)
 
     def test__create(self):
-        client_secrets_uc = ["secret01", "secret02",]
+        client_secrets_uc = [
+            "secret01",
+            "secret02",
+        ]
         client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
         self.assertFalse(client_secrets.exists())
 
@@ -130,9 +130,11 @@ class ClientViewTest(BaseTestCase):
         client = response_json["results"][0]
         self.assertEqual(client["name"], new_name)
 
-        #-_-# Portfolios #-_-#
+        # -_-# Portfolios #-_-#
         portfolio = Portfolio.objects.first()
-        portfolios = [portfolio.id,]
+        portfolios = [
+            portfolio.id,
+        ]
         update_data = {"portfolios": portfolios}
         response = self.client.patch(
             path=f"{self.url}{client_id}/", format="json", data=update_data
@@ -144,7 +146,9 @@ class ClientViewTest(BaseTestCase):
         self.assertEqual(response_json["count"], 1)
         client = response_json["results"][0]
         self.assertEqual(client["portfolios"], portfolios)
-        self.assertEqual(client["portfolios_object"][0]["user_code"], portfolio.user_code)
+        self.assertEqual(
+            client["portfolios_object"][0]["user_code"], portfolio.user_code
+        )
 
     def test__client_secrets_update_patch(self):
         response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
@@ -158,18 +162,18 @@ class ClientViewTest(BaseTestCase):
                 "provider": "-",
                 "portfolio": "-",
                 "path_to_secret": "-",
-                "notes": "-",    
+                "notes": "-",
             },
             {
                 "user_code": "secret03",
                 "provider": "TEST3",
                 "portfolio": "TEST3",
                 "path_to_secret": "TEST3",
-                "notes": "TEST3",    
+                "notes": "TEST3",
             },
         ]
         update_data = {
-            "client_secrets_object": updated_secrets, 
+            "client_secrets_object": updated_secrets,
         }
         response = self.client.patch(
             path=f"{self.url}{client_id}/", format="json", data=update_data
@@ -199,14 +203,19 @@ class ClientViewTest(BaseTestCase):
         response_json = response.json()
         client_id = response_json["id"]
 
-        client_secrets_uc = ["secret01", "secret02",]
+        client_secrets_uc = [
+            "secret01",
+            "secret02",
+        ]
         client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
         self.assertTrue(client_secrets.exists())
 
         response = self.client.delete(path=f"{self.url}{client_id}/")
         self.assertEqual(response.status_code, 204, response.content)
 
-        response = self.client.get(path=f"{self.url}?user_code={CREATE_DATA['user_code']}")
+        response = self.client.get(
+            path=f"{self.url}?user_code={CREATE_DATA['user_code']}"
+        )
         response_json = response.json()
         self.assertEqual(response_json["count"], 0)
 
@@ -251,7 +260,7 @@ class ClientViewTest(BaseTestCase):
             path=f"{self.url}{client_id}/", format="json", data=update_data
         )
         self.assertEqual(response.status_code, 400, response.content)
-        
+
     def test__assign_identical_client_secrets(self):
         create_data = deepcopy(CREATE_DATA)
         create_data["client_secrets_object"] = [

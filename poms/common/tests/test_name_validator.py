@@ -5,7 +5,6 @@ from poms.common.fields import name_validator
 
 
 class TestNameValidator(BaseTestCase):
-
     @BaseTestCase.cases(
         ("1", "validString"),
         ("2", "A1_b2_C3d_ewrt"),

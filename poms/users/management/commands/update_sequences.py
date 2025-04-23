@@ -26,7 +26,7 @@ def get_all_tenant_schemas():
 
 
 class Command(BaseCommand):
-    help = 'Repair autoincrement primary keys sequence to be greater than max id'
+    help = "Repair autoincrement primary keys sequence to be greater than max id"
 
     def handle(self, *args, **options):
         models = apps.get_models()
@@ -46,7 +46,9 @@ class Command(BaseCommand):
                         continue
 
                     primary_key_column = primary_key_field.column
-                    cursor.execute(f'SELECT MAX({primary_key_column}) FROM {table_name}')
+                    cursor.execute(
+                        f"SELECT MAX({primary_key_column}) FROM {table_name}"
+                    )
                     max_id = cursor.fetchone()[0] or 0
 
                     cursor.execute(f"""SELECT seq.relname AS sequence_name
@@ -59,7 +61,10 @@ class Command(BaseCommand):
                     sequence_exists = cursor.fetchone()
                     if not sequence_exists:
                         self.stdout.write(
-                            self.style.WARNING(f'Sequence {sequence_name} does not exist for {schema}.{table_name}'))
+                            self.style.WARNING(
+                                f"Sequence {sequence_name} does not exist for {schema}.{table_name}"
+                            )
+                        )
                         continue
                     sequence_name = sequence_exists[0]
 
@@ -67,7 +72,13 @@ class Command(BaseCommand):
                     last_id = cursor.fetchone()[0]
 
                     if max_id > last_id:
-                        cursor.execute(f"SELECT setval('{sequence_name}', {max_id+1}, false)")
-                        self.stdout.write(f"Updated sequence {schema}.{sequence_name} from {last_id} to {max_id+1}")
+                        cursor.execute(
+                            f"SELECT setval('{sequence_name}', {max_id + 1}, false)"
+                        )
+                        self.stdout.write(
+                            f"Updated sequence {schema}.{sequence_name} from {last_id} to {max_id + 1}"
+                        )
 
-        self.stdout.write(self.style.SUCCESS('Successfully updated sequences where necessary'))
+        self.stdout.write(
+            self.style.SUCCESS("Successfully updated sequences where necessary")
+        )

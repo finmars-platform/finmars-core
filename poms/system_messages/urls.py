@@ -5,35 +5,27 @@ from django.urls import path, include
 router = routers.DefaultRouter()
 
 router.register(
-    r'system-notifications',
+    r"system-notifications",
     views.NotificationViewSet,
-    basename='system-notification',
+    basename="system-notification",
 )
 router.register(
-    r'subscriptions',
+    r"subscriptions",
     views.SubscriptionViewSet,
-    basename='subscription',
+    basename="subscription",
 )
 router.register(
-    r'channels',
+    r"channels",
     views.ChannelViewSet,
-    basename='channel',
+    basename="channel",
 )
 
-router.register(
-    r'categories',
-    views.CategoryViewSet,
-    basename='category'
-)
+router.register(r"categories", views.CategoryViewSet, basename="category")
 
-router.register(
-    r'statuses',
-    views.CurrentStatusViewSet,
-    basename='status'
-)
+router.register(r"statuses", views.CurrentStatusViewSet, basename="status")
 
 # app_name = 'system_messages'
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

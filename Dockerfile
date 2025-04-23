@@ -15,10 +15,12 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
-# Copy supervisor configs
-COPY docker/supervisor/*.conf /etc/supervisor/conf.d/
+COPY data ./data
+COPY finmars_standardized_errors ./finmars_standardized_errors
+COPY healthcheck ./healthcheck    
+COPY poms_app ./poms_app
+COPY poms ./poms
+COPY manage.py ./
 
 # Create necessary directories and change permissions
 RUN mkdir -p \
@@ -28,8 +30,7 @@ RUN mkdir -p \
     /var/app/finmars_data \
     /var/log/celery \
     /var/log/finmars/backend && \
-    chmod 777 /var/app/finmars_data && \
-    chmod +x /var/app/docker/finmars-run.sh
+    chmod 777 /var/app/finmars_data
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
@@ -38,4 +39,4 @@ ENV LC_ALL=C.UTF-8 \
 EXPOSE 8080
 
 # Run the command on container startup
-CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]
+CMD ["gunicorn", "poms_app.wsgi", "--config", "poms_app/gunicorn.py"]

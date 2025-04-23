@@ -317,10 +317,11 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 kwargs={
                     "instance": instance,
                     "name": request.data["name"],
-                    "current_user": request.user, 'context': {
-                        'space_code': request.space_code,
-                        'realm_code': request.realm_code
-                    }
+                    "current_user": request.user,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
                 }
             )
             instance.task_id = signer.sign(f"{res.id}")
@@ -896,7 +897,12 @@ class MemberViewSet(AbstractModelViewSet):
             member = serializer.instance
 
             try:
-                AuthorizerService().invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
+                AuthorizerService().invite_member(
+                    member=member,
+                    from_user=request.user,
+                    realm_code=request.realm_code,
+                    space_code=request.space_code,
+                )
                 headers = self.get_success_headers(serializer.data)
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -947,19 +953,25 @@ class MemberViewSet(AbstractModelViewSet):
             raise ValidationError("Could not remove owner rights from owner")
         if not member.is_owner and form_data_is_owner is True:
             if not self.request.user.member.is_owner:
-                raise ValidationError("Only the owner himself can pass owner rights to another user")
+                raise ValidationError(
+                    "Only the owner himself can pass owner rights to another user"
+                )
 
-        if (
-            member.is_owner
-            and member.is_admin
-            and form_data_is_admin is False
-        ):
+        if member.is_owner and member.is_admin and form_data_is_admin is False:
             raise ValidationError("Could not remove admin rights from owner")
 
-        if member.is_admin != form_data_is_admin or member.is_owner != form_data_is_owner:
+        if (
+            member.is_admin != form_data_is_admin
+            or member.is_owner != form_data_is_owner
+        ):
             authorizer = AuthorizerService()
-            authorizer.update_member(member, request.realm_code, request.space_code,
-                                     is_admin=form_data_is_admin, is_owner=form_data_is_owner)
+            authorizer.update_member(
+                member,
+                request.realm_code,
+                request.space_code,
+                is_admin=form_data_is_admin,
+                is_owner=form_data_is_owner,
+            )
 
         if not member.is_owner and form_data_is_owner is True:
             master_user = MasterUser.objects.get(space_code=kwargs["space_code"])
@@ -1022,7 +1034,12 @@ class MemberViewSet(AbstractModelViewSet):
 
         authorizer = AuthorizerService()
 
-        authorizer.invite_member(member=member, from_user=request.user, realm_code=request.realm_code, space_code=request.space_code)
+        authorizer.invite_member(
+            member=member,
+            from_user=request.user,
+            realm_code=request.realm_code,
+            space_code=request.space_code,
+        )
 
         return Response({"status": "ok"})
 

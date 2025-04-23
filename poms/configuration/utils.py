@@ -111,7 +111,9 @@ def model_has_field(model, field_name):
         return False
 
 
-def save_whitelable_files_from_storage(folder_path: str, json_data: dict[str, Any], context: dict[str, Any]) -> None:
+def save_whitelable_files_from_storage(
+    folder_path: str, json_data: dict[str, Any], context: dict[str, Any]
+) -> None:
     try:
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -119,7 +121,7 @@ def save_whitelable_files_from_storage(folder_path: str, json_data: dict[str, An
         master_user: MasterUser = context["master_user"]
         space_code = master_user.space_code
 
-        files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"] 
+        files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"]
         for key in files_key:
             file_url: str = json_data.get(key)
             file_path = unquote(file_url.lstrip("api/storage/"))
@@ -200,7 +202,7 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
 
 
 def save_serialized_attribute_type(
-        content_type, configuration_code, content_type_key, source_directory, context
+    content_type, configuration_code, content_type_key, source_directory, context
 ):
     try:
         model = apps.get_model(content_type)
@@ -232,7 +234,7 @@ def save_serialized_attribute_type(
 
 
 def save_serialized_custom_fields(
-        configuration_code, report_content_type, source_directory, context
+    configuration_code, report_content_type, source_directory, context
 ):
     """
 
@@ -314,17 +316,17 @@ def save_serialized_layout(content_type, configuration_code, source_directory, c
         serialized_data.pop("id")
 
         path = (
-                source_directory
-                + "/"
-                + user_code_to_file_name(configuration_code, item.user_code)
-                + ".json"
+            source_directory
+            + "/"
+            + user_code_to_file_name(configuration_code, item.user_code)
+            + ".json"
         )
 
         save_json_to_file(path, serialized_data)
 
 
 def save_serialized_entity_layout(
-        content_type, configuration_code, content_type_key, source_directory, context
+    content_type, configuration_code, content_type_key, source_directory, context
 ):
     try:
         model = apps.get_model(content_type)
@@ -361,10 +363,10 @@ def save_serialized_entity_layout(
             serialized_data["data"]["reportOptions"]["portfolios_object"] = []
 
         path = (
-                source_directory
-                + "/"
-                + user_code_to_file_name(configuration_code, item.user_code)
-                + ".json"
+            source_directory
+            + "/"
+            + user_code_to_file_name(configuration_code, item.user_code)
+            + ".json"
         )
 
         save_json_to_file(path, serialized_data)
@@ -409,7 +411,6 @@ def copy_directory(src_dir, dst_dir):
         copy_directory(src_subdir, dst_subdir)
 
 
-
 def upload_directory_to_storage(local_directory, storage_directory):
     for root, dirs, files in os.walk(local_directory):
         for file in files:
@@ -428,7 +429,7 @@ def get_headers_with_token(token: str):
         "Content-type": "application/json",
         "Accept": "application/json",
         "Authorization": f"Bearer {token}",
-    } 
+    }
 
 
 def run_workflow(user_code, payload, master_task):
@@ -452,7 +453,11 @@ def run_workflow(user_code, payload, master_task):
     space_code = master_task.master_user.space_code
     url = f"https://{settings.DOMAIN_NAME}/{realm_code}/{space_code}/workflow/api/workflow/run-workflow/"
 
-    data = {"user_code": user_code, "payload": payload, "platform_task_id": master_task.id}
+    data = {
+        "user_code": user_code,
+        "payload": payload,
+        "platform_task_id": master_task.id,
+    }
 
     response = requests.post(url, headers=headers, json=data)
 
@@ -497,6 +502,7 @@ def wait_workflow_until_end(workflow_id: int, master_task):
 
 def get_default_configuration_code():
     from poms.users.models import MasterUser
+
     master_user = MasterUser.objects.all().first()
 
     return f"local.poms.{master_user.space_code}"
@@ -517,14 +523,16 @@ def create_or_update_workflow_template(platform, json_data: dict[str, Any]):
     refresh = get_refresh_token(bot, platform)
     headers = get_headers_with_token(refresh.access_token)
 
-    base_url = f"https://{settings.DOMAIN_NAME}/{platform.realm_code}/{platform.space_code}"
+    base_url = (
+        f"https://{settings.DOMAIN_NAME}/{platform.realm_code}/{platform.space_code}"
+    )
     api_endpoint = "workflow/api/v1/workflow-template"
 
     workflow_template_data = {
         "name": json_data["workflow"].get("name"),
         "user_code": user_code,
         "notes": json_data["workflow"].get("notes"),
-        "data": json_data
+        "data": json_data,
     }
 
     # check if workflow template exists

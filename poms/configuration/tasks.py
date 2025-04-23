@@ -47,22 +47,17 @@ def _run_action(task: CeleryTask, action: dict):
     workflow = action.get("workflow", None)
     if workflow:
         try:
-            _l.info(
-                f"import_configuration.going to execute workflow {workflow}"
-            )
+            _l.info(f"import_configuration.going to execute workflow {workflow}")
 
             response_data = run_workflow(workflow, {}, task)
 
             response_data = wait_workflow_until_end(response_data["id"], task)
 
-            _l.info(
-                f"import_configuration.workflow finished {response_data}"
-            )
+            _l.info(f"import_configuration.workflow finished {response_data}")
 
         except Exception as e:
             _l.error(
-                f"Could not execute workflow {e} "
-                f"traceback {traceback.format_exc()}"
+                f"Could not execute workflow {e} traceback {traceback.format_exc()}"
             )
 
 
@@ -76,7 +71,7 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
-    _l.info('import_configuration.task master_user %s' % task.master_user)
+    _l.info("import_configuration.task master_user %s" % task.master_user)
 
     def generate_json_report(task, stats):
         result = stats
@@ -120,7 +115,10 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
 
     file_path = task.options_object["file_path"]
 
-    output_directory = os.path.join(settings.BASE_DIR, f"tmp/{str(task.master_user.space_code)}/task_{str(task.id)}/")
+    output_directory = os.path.join(
+        settings.BASE_DIR,
+        f"tmp/{str(task.master_user.space_code)}/task_{str(task.id)}/",
+    )
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory, exist_ok=True)
@@ -132,11 +130,15 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
     _l.info(f"import_configuration got {file_path}")
 
     output_directory = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source"
+        settings.BASE_DIR,
+        f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source",
     )
 
     if not os.path.exists(
-        os.path.join(settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source")
+        os.path.join(
+            settings.BASE_DIR,
+            f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source",
+        )
     ):
         os.makedirs(output_directory, exist_ok=True)
 
@@ -193,10 +195,18 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
             if not json_file_path.endswith("workflow.json"):
                 stats["other"][json_file_path] = {"status": "skip"}
                 continue
-            
-            if not isinstance(json_data, dict) or not (version:= json_data.get("version")) or version != "2" or not json_data.get("workflow"):
-                stats["workflow"][json_file_path] = {"status": "skip", "reason": "not template format"}
-                continue 
+
+            if (
+                not isinstance(json_data, dict)
+                or not (version := json_data.get("version"))
+                or version != "2"
+                or not json_data.get("workflow")
+            ):
+                stats["workflow"][json_file_path] = {
+                    "status": "skip",
+                    "reason": "not template format",
+                }
+                continue
 
             try:
                 create_or_update_workflow_template(task.master_user, json_data)
@@ -244,19 +254,28 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
 
                 if content_type == "system.whitelabelmodel":
                     model_name = content_type = json_data["meta"]["model_name"]
-                    directory_with_files = f"{output_directory}/{model_name}/{user_code.split(':')[-1]}"
+                    directory_with_files = (
+                        f"{output_directory}/{model_name}/{user_code.split(':')[-1]}"
+                    )
 
-                    files_key = ["favicon_url", "logo_dark_url", "logo_light_url", "theme_css_url"]
+                    files_key = [
+                        "favicon_url",
+                        "logo_dark_url",
+                        "logo_light_url",
+                        "theme_css_url",
+                    ]
                     for key in files_key:
                         relative_file_path = json_data.get(key)
                         file_name = os.path.basename(relative_file_path)
-                        file_path = os.path.join(directory_with_files, unquote(file_name))
+                        file_path = os.path.join(
+                            directory_with_files, unquote(file_name)
+                        )
 
                         if "css" in key:
                             data_key = key.replace("url", "file")
                         else:
                             data_key = key.replace("url", "image")
-                        
+
                         json_data[data_key] = load_file(file_path)
 
                 serializer = SerializerClass(
@@ -295,7 +314,6 @@ def import_configuration(self, task_id: int, *args, **kwargs) -> None:
                         "description": description,
                     }
                 )
-
 
     # Import Workflows
 
@@ -344,7 +362,8 @@ def export_configuration(self, task_id, *args, **kwargs):
     _l.info(f"configuration {configuration}")
 
     source_directory = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source"
+        settings.BASE_DIR,
+        f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/source",
     )
 
     if not os.path.exists(source_directory):
@@ -571,7 +590,9 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
             task.parent.refresh_from_db()
 
             step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"]) + len(task.parent.options_object["actions"])
+            total = len(task.parent.options_object["dependencies"]) + len(
+                task.parent.options_object["actions"]
+            )
             percent = int((step / total) * 100)
 
             description = f"Step {step}/{total} is installing {configuration.name}"
@@ -593,7 +614,8 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     )
 
     destination_path = os.path.join(
-        settings.BASE_DIR, f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/archive.zip"
+        settings.BASE_DIR,
+        f"configurations/{str(task.master_user.space_code)}/{str(task.id)}/archive.zip",
     )
 
     if response.status_code != 200:
@@ -635,7 +657,9 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
             task.parent.refresh_from_db()
 
             step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"]) + len(task.parent.options_object["actions"])
+            total = len(task.parent.options_object["dependencies"]) + len(
+                task.parent.options_object["actions"]
+            )
             percent = int((step / total) * 100)
 
             description = f"Step {step}/{total} is installed. {configuration.name}"
@@ -788,7 +812,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
                 "version": dependency["version"],
                 "channel": dependency_channel,
                 "is_package": False,
-                "step": step
+                "step": step,
                 # "access_token": access_token
             }
 
@@ -818,7 +842,7 @@ def install_package_from_marketplace(self, task_id, *args, **kwargs):
         try:
             install_configuration_from_marketplace(task_id=celery_task.id)
         except Exception as e:
-            celery_task_list = celery_task_list[i+1:]
+            celery_task_list = celery_task_list[i + 1 :]
             for celery_task in celery_task_list:
                 celery_task.status = CeleryTask.STATUS_CANCELED
             CeleryTask.objects.bulk_update(celery_task_list, ["status"])

@@ -8,26 +8,18 @@ EXPECTED_DATA = {
     "role": "com.finmars.standard-iam:base-data-manager",
     "user_code": "local.poms.space00000:data_manager_access_menu",
     "configuration_code": "local.poms.space00000",
-    "allowed_items": [
-        "dashboard",
-        "transaction",
-        "portfolio",
-        "transaction_type"
-    ],
+    "allowed_items": ["dashboard", "transaction", "portfolio", "transaction_type"],
     "created_at": "2024-10-28T09:25:17.140606Z",
     "modified_at": "2024-10-28T09:25:17.140615Z",
-    "owner": {
-        "id": 2,
-        "username": "workflow_admin"
-    },
+    "owner": {"id": 2, "username": "workflow_admin"},
     "deleted_user_code": None,
     "meta": {
         "content_type": "ui.userinterfaceaccessmodel",
         "app_label": "ui",
         "model_name": "userinterfaceaccessmodel",
         "space_code": "space00000",
-        "realm_code": "realme00000"
-    }
+        "realm_code": "realme00000",
+    },
 }
 
 CREATE_DATA = {
@@ -35,12 +27,7 @@ CREATE_DATA = {
     "role": "com.finmars.standard-iam:base-data-manager",
     "user_code": "local.poms.space00000:data_manager_access_menu",
     "configuration_code": "local.poms.space00000",
-    "allowed_items": [
-        "dashboard",
-        "transaction",
-        "portfolio",
-        "transaction_type"
-    ],
+    "allowed_items": ["dashboard", "transaction", "portfolio", "transaction_type"],
 }
 
 
@@ -50,8 +37,10 @@ class MemberLayoutViewSetTest(BaseTestCase):
         self.init_test_case()
         self.realm_code = "realm00000"
         self.space_code = "space00000"
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/ui/user-interface-access/"
-        
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/ui/user-interface-access/"
+        )
+
     def prepare_data(self, user_code):
         UserInterfaceAccessModel.objects.create(
             user_code=user_code,

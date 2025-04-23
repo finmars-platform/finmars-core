@@ -57,6 +57,7 @@ def get_realm_code_from_context(context):
 
     return context.get("realm_code", None)
 
+
 def get_space_code_from_context(context):
     context = context or {}
     request = context.get("request", None)

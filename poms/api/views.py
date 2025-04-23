@@ -88,7 +88,6 @@ def get_timezones():
 class LanguageViewSet(AbstractViewSet):
     serializer_class = LanguageSerializer
 
-
     def list(self, request, *args, **kwargs):
         languages = _languages
         serializer = self.get_serializer(instance=languages, many=True)
@@ -97,7 +96,6 @@ class LanguageViewSet(AbstractViewSet):
 
 class TimezoneViewSet(AbstractViewSet):
     serializer_class = TimezoneSerializer
-
 
     def list(self, request, *args, **kwargs):
         timezones = get_timezones()
@@ -108,7 +106,6 @@ class TimezoneViewSet(AbstractViewSet):
 class EmailViewSet(AbstractViewSet):
     serializer_class = EmailSerializer
 
-
     def list(self, request, *args, **kwargs):
         return Response({"message": "not_implemented"}, status=status.HTTP_200_OK)
 
@@ -117,13 +114,14 @@ class EmailViewSet(AbstractViewSet):
 
         if serializer.is_valid():
             send_mail(**serializer.validated_data)
-            return Response({"message": "Email is being sent."}, status=status.HTTP_202_ACCEPTED)
+            return Response(
+                {"message": "Email is being sent."}, status=status.HTTP_202_ACCEPTED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExpressionViewSet(AbstractViewSet):
     serializer_class = ExpressionSerializer
-
 
     def list(self, request, *args, **kwargs):
         serializer = self.get_serializer(data={"expression": "now()", "is_eval": True})
@@ -137,8 +135,6 @@ class ExpressionViewSet(AbstractViewSet):
 
 
 class StatsViewSet(AbstractViewSet):
-
-
     def get_first_transaction_date(self):
         from poms.transactions.models import Transaction
 
@@ -188,8 +184,10 @@ class StatsViewSet(AbstractViewSet):
 
         for pricing_policy in PricingPolicy.objects.all():
             pricing_policy_result = {
-                "expecting_histories": len(self.days_from_first_transaction) * instruments_count,
-                "expecting_bdays_histories": len(self.bdays_from_first_transaction) * instruments_count,
+                "expecting_histories": len(self.days_from_first_transaction)
+                * instruments_count,
+                "expecting_bdays_histories": len(self.bdays_from_first_transaction)
+                * instruments_count,
                 "price_histories": PriceHistory.objects.filter(
                     date__gte=self.date_from,
                     pricing_policy=pricing_policy,
@@ -225,8 +223,12 @@ class StatsViewSet(AbstractViewSet):
                     "user_code": instrument.user_code,
                     "name": instrument.name,
                 }
-                instrument_result["expecting_prices"] = len(self.days_from_first_transaction)
-                instrument_result["expecting_bdays_prices"] = len(self.bdays_from_first_transaction)
+                instrument_result["expecting_prices"] = len(
+                    self.days_from_first_transaction
+                )
+                instrument_result["expecting_bdays_prices"] = len(
+                    self.bdays_from_first_transaction
+                )
                 instrument_result["prices"] = PriceHistory.objects.filter(
                     instrument=instrument,
                     date__gte=self.date_from,
@@ -235,7 +237,9 @@ class StatsViewSet(AbstractViewSet):
 
                 try:
                     instrument_result["last_price_date"] = (
-                        PriceHistory.objects.filter(instrument=instrument, date__gte=self.date_from)
+                        PriceHistory.objects.filter(
+                            instrument=instrument, date__gte=self.date_from
+                        )
                         .order_by("-date")[0]
                         .date
                     )
@@ -248,7 +252,9 @@ class StatsViewSet(AbstractViewSet):
 
             # Price History stats
 
-            result["filled_items"] = result["filled_items"] + pricing_policy_result["price_histories"]
+            result["filled_items"] = (
+                result["filled_items"] + pricing_policy_result["price_histories"]
+            )
             result["items_to_fill"] = result["items_to_fill"] + (
                 len(self.bdays_from_first_transaction) * instruments_count
             )
@@ -256,7 +262,8 @@ class StatsViewSet(AbstractViewSet):
             # Portfolio stats
 
             portfolio_stats["filled_items"] = (
-                portfolio_stats["filled_items"] + pricing_policy_result["price_histories"]
+                portfolio_stats["filled_items"]
+                + pricing_policy_result["price_histories"]
             )
             portfolio_stats["items_to_fill"] = portfolio_stats["items_to_fill"] + (
                 len(self.bdays_from_first_transaction) * instruments_count
@@ -266,7 +273,9 @@ class StatsViewSet(AbstractViewSet):
 
         result["pricing_policies"] = pricing_policies
         try:
-            result["filled_percent"] = round(result["filled_items"] / (result["items_to_fill"] / 100))
+            result["filled_percent"] = round(
+                result["filled_items"] / (result["items_to_fill"] / 100)
+            )
         except Exception as e:
             result["filled_percent"] = 0
 
@@ -285,8 +294,10 @@ class StatsViewSet(AbstractViewSet):
             currencies_count = Currency.objects.filter(id__in=currencies_ids).count()
 
             pricing_policy_result = {
-                "expecting_histories": len(self.days_from_first_transaction) * currencies_count,
-                "expecting_bdays_histories": len(self.bdays_from_first_transaction) * currencies_count,
+                "expecting_histories": len(self.days_from_first_transaction)
+                * currencies_count,
+                "expecting_bdays_histories": len(self.bdays_from_first_transaction)
+                * currencies_count,
                 "currency_histories": CurrencyHistory.objects.filter(
                     date__gte=self.date_from,
                     pricing_policy=pricing_policy,
@@ -322,8 +333,12 @@ class StatsViewSet(AbstractViewSet):
                     "user_code": currency.user_code,
                     "name": currency.name,
                 }
-                currency_result["expecting_fxrates"] = len(self.days_from_first_transaction)
-                currency_result["expecting_bdays_fxrates"] = len(self.bdays_from_first_transaction)
+                currency_result["expecting_fxrates"] = len(
+                    self.days_from_first_transaction
+                )
+                currency_result["expecting_bdays_fxrates"] = len(
+                    self.bdays_from_first_transaction
+                )
                 currency_result["fxrates"] = CurrencyHistory.objects.filter(
                     currency=currency,
                     date__gte=self.date_from,
@@ -332,7 +347,9 @@ class StatsViewSet(AbstractViewSet):
 
                 try:
                     currency_result["last_fxrate_date"] = (
-                        CurrencyHistory.objects.filter(currency=currency, date__gte=self.date_from)
+                        CurrencyHistory.objects.filter(
+                            currency=currency, date__gte=self.date_from
+                        )
                         .order_by("-date")[0]
                         .date
                     )
@@ -345,7 +362,9 @@ class StatsViewSet(AbstractViewSet):
 
             # Currency history stat
 
-            result["filled_items"] = result["filled_items"] + pricing_policy_result["currency_histories"]
+            result["filled_items"] = (
+                result["filled_items"] + pricing_policy_result["currency_histories"]
+            )
             result["items_to_fill"] = result["items_to_fill"] + (
                 len(self.bdays_from_first_transaction) * currencies_count
             )
@@ -353,7 +372,8 @@ class StatsViewSet(AbstractViewSet):
             # Portfolio stat
 
             portfolio_stats["filled_items"] = (
-                portfolio_stats["filled_items"] + pricing_policy_result["currency_histories"]
+                portfolio_stats["filled_items"]
+                + pricing_policy_result["currency_histories"]
             )
             portfolio_stats["items_to_fill"] = portfolio_stats["items_to_fill"] + (
                 len(self.bdays_from_first_transaction) * currencies_count
@@ -363,7 +383,9 @@ class StatsViewSet(AbstractViewSet):
 
         result["pricing_policies"] = pricing_policies
         try:
-            result["filled_percent"] = round(result["filled_items"] / (result["items_to_fill"] / 100))
+            result["filled_percent"] = round(
+                result["filled_items"] / (result["items_to_fill"] / 100)
+            )
         except Exception as e:
             result["filled_percent"] = 0
 
@@ -387,14 +409,18 @@ class StatsViewSet(AbstractViewSet):
 
         try:
             result["last_nav_history_date"] = (
-                BalanceReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from)
+                BalanceReportHistory.objects.filter(
+                    portfolio=portfolio, date__gte=self.date_from
+                )
                 .order_by("-date")[0]
                 .date
             )
         except Exception as e:
             result["last_nav_history_date"] = None
 
-        portfolio_stats["filled_items"] = portfolio_stats["filled_items"] + result["nav_histories"]
+        portfolio_stats["filled_items"] = (
+            portfolio_stats["filled_items"] + result["nav_histories"]
+        )
         portfolio_stats["items_to_fill"] = portfolio_stats["items_to_fill"] + (
             len(self.bdays_from_first_transaction)
         )
@@ -418,14 +444,18 @@ class StatsViewSet(AbstractViewSet):
 
         try:
             result["last_pl_history_date"] = (
-                PLReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from)
+                PLReportHistory.objects.filter(
+                    portfolio=portfolio, date__gte=self.date_from
+                )
                 .order_by("-date")[0]
                 .date
             )
         except Exception as e:
             result["last_pl_history_date"] = None
 
-        portfolio_stats["filled_items"] = portfolio_stats["filled_items"] + result["pl_histories"]
+        portfolio_stats["filled_items"] = (
+            portfolio_stats["filled_items"] + result["pl_histories"]
+        )
         portfolio_stats["items_to_fill"] = portfolio_stats["items_to_fill"] + (
             len(self.bdays_from_first_transaction)
         )
@@ -449,14 +479,18 @@ class StatsViewSet(AbstractViewSet):
 
         try:
             result["last_widget_stats_date"] = (
-                WidgetStats.objects.filter(portfolio=portfolio, date__gte=self.date_from)
+                WidgetStats.objects.filter(
+                    portfolio=portfolio, date__gte=self.date_from
+                )
                 .order_by("-date")[0]
                 .date
             )
         except Exception as e:
             result["last_widget_stats_date"] = None
 
-        portfolio_stats["filled_items"] = portfolio_stats["filled_items"] + result["widget_stats"]
+        portfolio_stats["filled_items"] = (
+            portfolio_stats["filled_items"] + result["widget_stats"]
+        )
         portfolio_stats["items_to_fill"] = portfolio_stats["items_to_fill"] + (
             len(self.bdays_from_first_transaction)
         )
@@ -495,8 +529,10 @@ class StatsViewSet(AbstractViewSet):
             self.days_from_first_transaction = get_list_of_dates_between_two_dates(
                 self.date_from, self.date_to
             )
-            self.bdays_from_first_transaction = get_list_of_business_days_between_two_dates(
-                self.date_from, self.date_to
+            self.bdays_from_first_transaction = (
+                get_list_of_business_days_between_two_dates(
+                    self.date_from, self.date_to
+                )
             )
 
             from poms.portfolios.models import Portfolio
@@ -515,16 +551,20 @@ class StatsViewSet(AbstractViewSet):
                     "user_code": portfolio.user_code,
                 }
 
-                portfolio_item["complex_transactions"] = ComplexTransaction.objects.filter(
-                    transactions__portfolio=portfolio,
-                    transactions__accounting_date__gte=self.date_from,
-                ).count()
+                portfolio_item["complex_transactions"] = (
+                    ComplexTransaction.objects.filter(
+                        transactions__portfolio=portfolio,
+                        transactions__accounting_date__gte=self.date_from,
+                    ).count()
+                )
                 portfolio_item["transactions"] = Transaction.objects.filter(
                     portfolio=portfolio, accounting_date__gte=self.date_from
                 ).count()
 
                 instruments_ids = list(
-                    Transaction.objects.filter(portfolio=portfolio).values_list("instrument", flat=True)
+                    Transaction.objects.filter(portfolio=portfolio).values_list(
+                        "instrument", flat=True
+                    )
                 )
                 instruments_ids = instruments_ids + list(
                     Transaction.objects.filter(portfolio=portfolio).values_list(
@@ -537,7 +577,9 @@ class StatsViewSet(AbstractViewSet):
                     )
                 )
                 instruments_ids = instruments_ids + list(
-                    Transaction.objects.filter(portfolio=portfolio).values_list("allocation_pl", flat=True)
+                    Transaction.objects.filter(portfolio=portfolio).values_list(
+                        "allocation_pl", flat=True
+                    )
                 )
 
                 portfolio_item["related_instruments"] = Instrument.objects.filter(
@@ -555,7 +597,9 @@ class StatsViewSet(AbstractViewSet):
                     )
                 )
 
-                portfolio_item["related_currencies"] = Currency.objects.filter(id__in=currency_ids).count()
+                portfolio_item["related_currencies"] = Currency.objects.filter(
+                    id__in=currency_ids
+                ).count()
 
                 portfolio_item["price_history"] = self.get_price_history_section(
                     portfolio, portfolio_stats, instruments_ids
@@ -563,10 +607,14 @@ class StatsViewSet(AbstractViewSet):
                 portfolio_item["currency_history"] = self.get_currency_history_section(
                     portfolio, portfolio_stats, currency_ids
                 )
-                portfolio_item["nav_history"] = self.get_nav_history_section(portfolio, portfolio_stats)
-                portfolio_item["pl_history"] = self.get_pl_history_section(portfolio, portfolio_stats)
-                portfolio_item["widget_stats_history"] = self.get_widget_stats_history_section(
+                portfolio_item["nav_history"] = self.get_nav_history_section(
                     portfolio, portfolio_stats
+                )
+                portfolio_item["pl_history"] = self.get_pl_history_section(
+                    portfolio, portfolio_stats
+                )
+                portfolio_item["widget_stats_history"] = (
+                    self.get_widget_stats_history_section(portfolio, portfolio_stats)
                 )
 
                 portfolio_item["portfolio_stats"] = portfolio_stats
@@ -575,7 +623,9 @@ class StatsViewSet(AbstractViewSet):
                     / (portfolio_item["portfolio_stats"]["items_to_fill"] / 100)
                 )
 
-                trns = Transaction.objects.filter(portfolio=portfolio).order_by("accounting_date")
+                trns = Transaction.objects.filter(portfolio=portfolio).order_by(
+                    "accounting_date"
+                )
                 portfolio_item["first_transaction_date"] = []
                 if len(trns):
                     portfolio_item["first_transaction_date"] = trns[0].accounting_date
@@ -595,7 +645,9 @@ class StatsViewSet(AbstractViewSet):
                 items_to_fill = items_to_fill + item["portfolio_stats"]["items_to_fill"]
                 filled_items = filled_items + item["portfolio_stats"]["filled_items"]
 
-                result["general"]["filled_percent"] = round(filled_items / (items_to_fill / 100))
+                result["general"]["filled_percent"] = round(
+                    filled_items / (items_to_fill / 100)
+                )
 
         else:
             result["error_message"] = "No Transactions"
@@ -604,8 +656,6 @@ class StatsViewSet(AbstractViewSet):
 
 
 class SystemInfoViewSet(AbstractViewSet):
-
-
     def __vm_info(
         self,
     ):
@@ -733,7 +783,9 @@ class SystemInfoViewSet(AbstractViewSet):
                     lib_item = freeze_item.decode().strip()
                     lib_item_splited = lib_item.split("==")
                     if len(lib_item_splited) > 1:
-                        self.pip_freeze_data["all"][lib_item_splited[0]] = lib_item_splited[1]
+                        self.pip_freeze_data["all"][lib_item_splited[0]] = (
+                            lib_item_splited[1]
+                        )
 
                         if lib_item_splited[0] == "Django":
                             self.pip_freeze_data["django"] = lib_item_splited[1]
@@ -855,7 +907,13 @@ class SystemInfoViewSet(AbstractViewSet):
         else:
             base_url = request.space_code
 
-        workflow_url = "https://" + settings.DOMAIN_NAME + "/" + base_url + "/workflow/api/workflow/"
+        workflow_url = (
+            "https://"
+            + settings.DOMAIN_NAME
+            + "/"
+            + base_url
+            + "/workflow/api/workflow/"
+        )
         workflow_status = "unhealty"
 
         try:
@@ -885,7 +943,9 @@ class SystemInfoViewSet(AbstractViewSet):
 
     def __vault_status(self, request, *args, **kwargs):
         try:
-            finmars_vault = FinmarsVault(realm_code=request.realm_code, space_code=request.space_code)
+            finmars_vault = FinmarsVault(
+                realm_code=request.realm_code, space_code=request.space_code
+            )
             # it seems that this function, in case something is wrong with the Vault, always gives an exeption
             finmars_vault.get_health()
             status = "health"
@@ -915,8 +975,6 @@ class SystemInfoViewSet(AbstractViewSet):
 
 
 class SystemLogsViewSet(AbstractViewSet):
-
-
     def list(self, request, *args, **kwargs):
         result = {}
 
@@ -951,8 +1009,6 @@ class SystemLogsViewSet(AbstractViewSet):
 
 
 class TablesSizeViewSet(AbstractViewSet):
-
-
     @staticmethod
     def dictfetchall(cursor):
         """
@@ -998,8 +1054,6 @@ class TablesSizeViewSet(AbstractViewSet):
 
 
 class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
-
-
     def get_queryset(self):
         from poms.transactions.models import ComplexTransaction
 
@@ -1018,12 +1072,16 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         query = request.query_params.get("query", None)
 
         if date_to:
-            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
+            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(
+                days=1, microseconds=-1
+            )
         else:
             date_to = timezone.now()
 
         if date_from:
-            date_from = datetime.strptime(date_from, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
+            date_from = datetime.strptime(date_from, "%Y-%m-%d") + timedelta(
+                days=1, microseconds=-1
+            )
         else:
             date_from = date_to - timedelta(days=7)
 
@@ -1081,7 +1139,9 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         date_to = request.data.get("date_to", None)
 
         if date_to:
-            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1, microseconds=-1)
+            date_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(
+                days=1, microseconds=-1
+            )
 
         from django.contrib.contenttypes.models import ContentType
 
@@ -1091,7 +1151,9 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
             is_deleted=True, modified_at__gte=date_from, modified_at__lte=date_to
         ).values_list("id", flat=True)
 
-        content_type = ContentType.objects.get(app_label="transactions", model="complextransaction")
+        content_type = ContentType.objects.get(
+            app_label="transactions", model="complextransaction"
+        )
         content_type_key = content_type.app_label + "." + content_type.model
 
         options_object = {"content_type": content_type_key, "ids": list(ids)}
@@ -1124,8 +1186,6 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
 
 class UniversalInputViewSet(AbstractViewSet):
-
-
     def create(self, request):
         if request.content_type == "application/json":
             data = request.data
@@ -1162,8 +1222,6 @@ class UniversalInputViewSet(AbstractViewSet):
 
 
 class CalendarEventsViewSet(AbstractViewSet):
-
-
     def list(self, request, *args, **kwargs):
         """
         Method to create Events list for Finmars Web Interface Calendar Page
@@ -1321,7 +1379,9 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        title = instance.provider_verbose + ": " + instance.action_verbose
+                        title = (
+                            instance.provider_verbose + ": " + instance.action_verbose
+                        )
                     else:
                         title = instance.action_verbose
                 else:
@@ -1372,7 +1432,9 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        title = instance.provider_verbose + ": " + instance.action_verbose
+                        title = (
+                            instance.provider_verbose + ": " + instance.action_verbose
+                        )
                     else:
                         title = instance.action_verbose
                 else:
@@ -1393,7 +1455,9 @@ class CalendarEventsViewSet(AbstractViewSet):
         # Collect Celery Tasks
 
         if "celery_task" in filter:
-            tasks = CeleryTask.objects.filter(created_at__gte=date_from, created_at__lte=date_to)
+            tasks = CeleryTask.objects.filter(
+                created_at__gte=date_from, created_at__lte=date_to
+            )
 
             for task in tasks:
                 item = {
@@ -1438,7 +1502,9 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if "workflow" in filter:
             try:
-                workflows = get_workflows_list(date_from, date_to, request.realm_code, request.space_code)
+                workflows = get_workflows_list(
+                    date_from, date_to, request.realm_code, request.space_code
+                )
 
                 for workflow in workflows:
                     item = {
@@ -1490,7 +1556,6 @@ def serve_docs(request, path, **kwargs):
 class SplitDateRangeViewSet(AbstractViewSet):
     serializer_class = SplitDateRangeSerializer
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1506,7 +1571,6 @@ class SplitDateRangeViewSet(AbstractViewSet):
 
 class CalcPeriodDateViewSet(AbstractViewSet):
     serializer_class = CalcPeriodDateSerializer
-
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1525,7 +1589,6 @@ class CalcPeriodDateViewSet(AbstractViewSet):
 class PickDatesFromRangeViewSet(AbstractViewSet):
     serializer_class = PickDatesFromRangeSerializer
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1535,14 +1598,15 @@ class PickDatesFromRangeViewSet(AbstractViewSet):
         frequency = serializer.validated_data["frequency"]
         is_only_bday = serializer.validated_data["is_only_bday"]
         start = serializer.validated_data["start"]
-        dates = pick_dates_from_range(start_date, end_date, frequency, is_only_bday, start)
+        dates = pick_dates_from_range(
+            start_date, end_date, frequency, is_only_bday, start
+        )
 
         return Response({"result": dates}, status=status.HTTP_200_OK)
 
 
 class LastBusinessDayViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
-
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1556,7 +1620,6 @@ class LastBusinessDayViewSet(AbstractViewSet):
 class IsBusinessDayViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1567,7 +1630,6 @@ class IsBusinessDayViewSet(AbstractViewSet):
 
 class LastDayOfMonthViewSet(AbstractViewSet):
     serializer_class = UtilsDateSerializer
-
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

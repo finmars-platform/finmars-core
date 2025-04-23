@@ -17,9 +17,7 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
 
-class AccountType(
-    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
-):
+class AccountType(NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel):
     """
     Meta Entity, part of Finmars Configuration
     Mostly used for extra fragmentation of Reports
@@ -151,7 +149,6 @@ class Account(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
         ]
 
     def save(self, *args, **kwargs):
-
         cache_key = f"{self.master_user.space_code}_serialized_report_account_{self.id}"
         cache.delete(cache_key)
 

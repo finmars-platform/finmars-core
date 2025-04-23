@@ -131,7 +131,9 @@ class AccrualScheduleDownloadMethodSerializer(PomsClassSerializer):
 
 class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
-    p12cert = serializers.FileField(allow_null=True, allow_empty_file=False, write_only=True)
+    p12cert = serializers.FileField(
+        allow_null=True, allow_empty_file=False, write_only=True
+    )
     password = serializers.CharField(allow_null=True, allow_blank=True, write_only=True)
 
     class Meta:
@@ -182,7 +184,9 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
 class ImportConfigSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     provider_object = ProviderClassSerializer(source="provider", read_only=True)
-    p12cert = serializers.FileField(allow_null=True, allow_empty_file=False, write_only=True)
+    p12cert = serializers.FileField(
+        allow_null=True, allow_empty_file=False, write_only=True
+    )
     password = serializers.CharField(allow_null=True, allow_blank=True, write_only=True)
 
     class Meta:
@@ -211,7 +215,9 @@ class InstrumentDownloadSchemeInputSerializer(serializers.ModelSerializer):
 class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     attribute_type = GenericAttributeTypeField()
-    attribute_type_object = serializers.PrimaryKeyRelatedField(source="attribute_type", read_only=True)
+    attribute_type_object = serializers.PrimaryKeyRelatedField(
+        source="attribute_type", read_only=True
+    )
     value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
 
     class Meta:
@@ -233,7 +239,9 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
             attribute_type.content_type_id
             != ContentType.objects.get(app_label="instruments", model="instrument").id
         ):
-            self.fields["attribute_type"].fail("does_not_exist", pk_value=attribute_type.id)
+            self.fields["attribute_type"].fail(
+                "does_not_exist", pk_value=attribute_type.id
+            )
         return attrs
 
 
@@ -245,18 +253,40 @@ class InstrumentDownloadSchemeSerializer(
 
     inputs = InstrumentDownloadSchemeInputSerializer(many=True, read_only=False)
 
-    instrument_user_code = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_user_code = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
     instrument_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
-    instrument_short_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    instrument_public_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    instrument_notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    instrument_type = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    pricing_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    accrued_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_short_name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    instrument_public_name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    instrument_notes = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    instrument_type = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    pricing_currency = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    price_multiplier = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    accrued_currency = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    accrued_multiplier = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    maturity_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
+    maturity_price = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True
+    )
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
@@ -323,11 +353,15 @@ class InstrumentDownloadSchemeSerializer(
         self.fields["payment_size_detail_object"] = PaymentSizeDetailSerializer(
             source="payment_size_detail", read_only=True
         )
-        self.fields["factor_schedule_method_object"] = FactorScheduleDownloadMethodSerializer(
-            source="factor_schedule_method", read_only=True
+        self.fields["factor_schedule_method_object"] = (
+            FactorScheduleDownloadMethodSerializer(
+                source="factor_schedule_method", read_only=True
+            )
         )
-        self.fields["accrual_calculation_schedule_method_object"] = AccrualScheduleDownloadMethodSerializer(
-            source="accrual_calculation_schedule_method", read_only=True
+        self.fields["accrual_calculation_schedule_method_object"] = (
+            AccrualScheduleDownloadMethodSerializer(
+                source="accrual_calculation_schedule_method", read_only=True
+            )
         )
 
     def create(self, validated_data):
@@ -483,7 +517,9 @@ class MappingTableSerializer(ModelMetaSerializer):
         mapping_table = MappingTable.objects.create(**validated_data)
 
         for item_data in items_data:
-            MappingTableKeyValue.objects.create(mapping_table=mapping_table, **item_data)
+            MappingTableKeyValue.objects.create(
+                mapping_table=mapping_table, **item_data
+            )
 
         return mapping_table
 
@@ -521,7 +557,9 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["provider_object"] = ProviderClassSerializer(source="provider", read_only=True)
+        self.fields["provider_object"] = ProviderClassSerializer(
+            source="provider", read_only=True
+        )
 
         content_object_view_serializer_class = self.get_content_object_view_serializer()
         self.fields["content_object_object"] = content_object_view_serializer_class(
@@ -533,7 +571,9 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=("master_user", "provider", "value"),
-                message=gettext_lazy("The fields provider and value must make a unique set."),
+                message=gettext_lazy(
+                    "The fields provider and value must make a unique set."
+                ),
             )
         )
 
@@ -561,7 +601,9 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["provider_object"] = ProviderClassSerializer(source="provider", read_only=True)
+        self.fields["provider_object"] = ProviderClassSerializer(
+            source="provider", read_only=True
+        )
 
         self.fields["attribute_type_object"] = GenericAttributeTypeSerializer(
             source="attribute_type", read_only=True
@@ -576,7 +618,9 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=("master_user", "provider", "value", "attribute_type"),
-                message=gettext_lazy("The fields provider, value and attribute_type must make a unique set."),
+                message=gettext_lazy(
+                    "The fields provider, value and attribute_type must make a unique set."
+                ),
             )
         )
 
@@ -661,7 +705,9 @@ class InstrumentAttributeValueMappingSerializer(AbstractMappingSerializer):
             content_object.content_type_id
             != ContentType.objects.get(app_label="instruments", model="instrument").id
         ):
-            self.fields["content_object"].fail("does_not_exist", pk_value=content_object.id)
+            self.fields["content_object"].fail(
+                "does_not_exist", pk_value=content_object.id
+            )
 
         classifier = attrs.get("classifier", None)
         if classifier and classifier.attribute_type_id != content_object.id:
@@ -671,7 +717,9 @@ class InstrumentAttributeValueMappingSerializer(AbstractMappingSerializer):
 
 
 class AccrualCalculationModelMappingSerializer(AbstractMappingSerializer):
-    content_object = serializers.PrimaryKeyRelatedField(queryset=AccrualCalculationModel.objects.all())
+    content_object = serializers.PrimaryKeyRelatedField(
+        queryset=AccrualCalculationModel.objects.all()
+    )
 
     class Meta(AbstractMappingSerializer.Meta):
         model = AccrualCalculationModelMapping
@@ -683,7 +731,9 @@ class AccrualCalculationModelMappingSerializer(AbstractMappingSerializer):
 
 
 class PeriodicityMappingSerializer(AbstractMappingSerializer):
-    content_object = serializers.PrimaryKeyRelatedField(queryset=Periodicity.objects.all())
+    content_object = serializers.PrimaryKeyRelatedField(
+        queryset=Periodicity.objects.all()
+    )
 
     class Meta(AbstractMappingSerializer.Meta):
         model = PeriodicityMapping
@@ -831,7 +881,9 @@ class Strategy3MappingSerializer(AbstractMappingSerializer):
 
 
 class DailyPricingModelMappingSerializer(AbstractMappingSerializer):
-    content_object = serializers.PrimaryKeyRelatedField(queryset=DailyPricingModel.objects.all())
+    content_object = serializers.PrimaryKeyRelatedField(
+        queryset=DailyPricingModel.objects.all()
+    )
 
     class Meta(AbstractMappingSerializer.Meta):
         model = DailyPricingModelMapping
@@ -843,7 +895,9 @@ class DailyPricingModelMappingSerializer(AbstractMappingSerializer):
 
 
 class PaymentSizeDetailMappingSerializer(AbstractMappingSerializer):
-    content_object = serializers.PrimaryKeyRelatedField(queryset=PaymentSizeDetail.objects.all())
+    content_object = serializers.PrimaryKeyRelatedField(
+        queryset=PaymentSizeDetail.objects.all()
+    )
 
     class Meta(AbstractMappingSerializer.Meta):
         model = PaymentSizeDetailMapping
@@ -855,7 +909,9 @@ class PaymentSizeDetailMappingSerializer(AbstractMappingSerializer):
 
 
 class PricingConditionMappingSerializer(AbstractMappingSerializer):
-    content_object = serializers.PrimaryKeyRelatedField(queryset=PricingCondition.objects.all())
+    content_object = serializers.PrimaryKeyRelatedField(
+        queryset=PricingCondition.objects.all()
+    )
 
     class Meta(AbstractMappingSerializer.Meta):
         model = PricingConditionMapping
@@ -876,13 +932,21 @@ class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):
         return PriceDownloadSchemeViewSerializer
 
 
-class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class ImportInstrumentViewSerializer(
+    ModelWithAttributesSerializer, ModelWithUserCodeSerializer
+):
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
-    instrument_type_object = serializers.PrimaryKeyRelatedField(source="instrument_type", read_only=True)
+    instrument_type_object = serializers.PrimaryKeyRelatedField(
+        source="instrument_type", read_only=True
+    )
     pricing_currency = CurrencyField(default=CurrencyDefault())
-    pricing_currency_object = serializers.PrimaryKeyRelatedField(source="pricing_currency", read_only=True)
+    pricing_currency_object = serializers.PrimaryKeyRelatedField(
+        source="pricing_currency", read_only=True
+    )
     accrued_currency = CurrencyField(default=CurrencyDefault())
-    accrued_currency_object = serializers.PrimaryKeyRelatedField(source="accrued_currency", read_only=True)
+    accrued_currency_object = serializers.PrimaryKeyRelatedField(
+        source="accrued_currency", read_only=True
+    )
     payment_size_detail_object = serializers.PrimaryKeyRelatedField(
         source="payment_size_detail", read_only=True
     )
@@ -955,7 +1019,9 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
         self.fields["payment_size_detail_object"] = PaymentSizeDetailSerializer(
             source="payment_size_detail", read_only=True
         )
-        self.fields["event_schedules"] = EventScheduleSerializer(many=True, required=False, allow_null=True)
+        self.fields["event_schedules"] = EventScheduleSerializer(
+            many=True, required=False, allow_null=True
+        )
 
         self.fields["attributes"] = serializers.SerializerMethodField()
 
@@ -988,7 +1054,9 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithUse
 
         l = obj._attributes if hasattr(obj, "_attributes") else obj.attributes.all()
 
-        return GenericAttributeSerializer(instance=l, many=True, read_only=True, context=self.context).data
+        return GenericAttributeSerializer(
+            instance=l, many=True, read_only=True, context=self.context
+        ).data
 
     def get_accrual_events(self, obj):
         from poms.instruments.serializers import AccrualEventSerializer
@@ -1093,11 +1161,15 @@ class ImportInstrumentSerializer(serializers.Serializer):
         instrument_code = attrs["instrument_code"]
 
         try:
-            provider = get_provider(master_user=master_user, provider=instrument_download_scheme.provider_id)
+            provider = get_provider(
+                master_user=master_user, provider=instrument_download_scheme.provider_id
+            )
         except ProviderException:
             raise serializers.ValidationError(
                 {
-                    "instrument_download_scheme": gettext_lazy('Check "%(provider)s" provider configuration.')
+                    "instrument_download_scheme": gettext_lazy(
+                        'Check "%(provider)s" provider configuration.'
+                    )
                     % {"provider": instrument_download_scheme.provider}
                 }
             )
@@ -1105,7 +1177,9 @@ class ImportInstrumentSerializer(serializers.Serializer):
         if not provider.is_valid_reference(instrument_code):
             raise serializers.ValidationError(
                 {
-                    "instrument_code": gettext_lazy('Invalid value for "%(provider)s" provider.')
+                    "instrument_code": gettext_lazy(
+                        'Invalid value for "%(provider)s" provider.'
+                    )
                     % {
                         "reference": instrument_code,
                         "provider": instrument_download_scheme.provider,
@@ -1122,10 +1196,14 @@ class ImportInstrumentSerializer(serializers.Serializer):
                     {"task_result_overrides": gettext_lazy("Invalid JSON string.")}
                 )
         if not isinstance(task_result_overrides, dict):
-            raise serializers.ValidationError({"task_result_overrides": gettext_lazy("Invalid value.")})
+            raise serializers.ValidationError(
+                {"task_result_overrides": gettext_lazy("Invalid value.")}
+            )
 
         task_result_overrides = {
-            k: v for k, v in task_result_overrides.items() if k in instrument_download_scheme.fields
+            k: v
+            for k, v in task_result_overrides.items()
+            if k in instrument_download_scheme.fields
         }
         attrs["task_result_overrides"] = task_result_overrides
         return attrs
@@ -1530,12 +1608,16 @@ class ImportPricingEntry(object):
             instruments_pk = [instr_id for instr_id, _ in instrument_price_missed]
             existed_instrument_prices = {
                 (p.instrument_id, p.pricing_policy_id): p
-                for p in PriceHistory.objects.filter(instrument__in=instruments_pk, date=self.date_to)
+                for p in PriceHistory.objects.filter(
+                    instrument__in=instruments_pk, date=self.date_to
+                )
             }
 
             instrument_price_missed_objects = []
             for instrument_id, pricing_policy_id in instrument_price_missed:
-                op = existed_instrument_prices.get((instrument_id, pricing_policy_id), None)
+                op = existed_instrument_prices.get(
+                    (instrument_id, pricing_policy_id), None
+                )
                 if op is None:
                     op = PriceHistory(
                         instrument_id=instrument_id,
@@ -1556,7 +1638,9 @@ class ImportPricingEntry(object):
             currencies_pk = [instr_id for instr_id, _ in currency_price_missed]
             existed_currency_prices = {
                 (p.currency_id, p.pricing_policy_id): p
-                for p in CurrencyHistory.objects.filter(currency__in=currencies_pk, date=self.date_to)
+                for p in CurrencyHistory.objects.filter(
+                    currency__in=currencies_pk, date=self.date_to
+                )
             }
             currency_price_missed_objects = []
             for currency_id, pricing_policy_id in currency_price_missed:
@@ -1598,7 +1682,9 @@ class TestCertificateSerializer(serializers.Serializer):
                 task=instance.task_object,
             )
         else:
-            task, is_ready = test_certificate(master_user=instance.master_user, member=instance.member)
+            task, is_ready = test_certificate(
+                master_user=instance.master_user, member=instance.member
+            )
 
         instance.task_object = task
         return instance
@@ -1614,7 +1700,9 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
         fields = ["id", "name", "column", "name_expr", "column_name"]
 
 
-class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
+class ComplexTransactionImportSchemeCalculatedInputSerializer(
+    serializers.ModelSerializer
+):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
 
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
@@ -1624,7 +1712,9 @@ class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelS
         fields = ["id", "name", "column", "name_expr"]
 
 
-class ComplexTransactionImportSchemeSelectorValueSerializer(serializers.ModelSerializer):
+class ComplexTransactionImportSchemeSelectorValueSerializer(
+    serializers.ModelSerializer
+):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
 
     class Meta:
@@ -1649,11 +1739,15 @@ class ComplexTransactionImportSchemeReconFieldSerializer(serializers.ModelSerial
         ]
 
 
-class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSerializer):
+class ComplexTransactionImportSchemeReconScenarioSerializer(
+    serializers.ModelSerializer
+):
     line_reference_id = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
     reference_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
-    fields = ComplexTransactionImportSchemeReconFieldSerializer(many=True, read_only=False)
+    fields = ComplexTransactionImportSchemeReconFieldSerializer(
+        many=True, read_only=False
+    )
 
     class Meta:
         model = ComplexTransactionImportSchemeReconScenario
@@ -1728,7 +1822,9 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                     f"Error in to_representation instance.transaction_type_input: "
                     f"{instance.transaction_type_input}"
                 )
-                _l.error(f"Error in to_representation: {e} trace {traceback.format_exc()}")
+                _l.error(
+                    f"Error in to_representation: {e} trace {traceback.format_exc()}"
+                )
 
                 ret["transaction_type_input_object"] = None
 
@@ -1759,7 +1855,9 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         selector_values = []
 
-        selector_values.extend(item.value for item in list(instance.selector_values.all()))
+        selector_values.extend(
+            item.value for item in list(instance.selector_values.all())
+        )
         ret["selector_values"] = selector_values
 
         inputs = []
@@ -1767,7 +1865,9 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         try:
             from poms.transactions.models import TransactionType
 
-            transaction_type = TransactionType.objects.get(user_code=instance.transaction_type)
+            transaction_type = TransactionType.objects.get(
+                user_code=instance.transaction_type
+            )
 
             for input in transaction_type.inputs.all():
                 result = {
@@ -1823,12 +1923,22 @@ class ComplexTransactionImportSchemeSerializer(
     calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(
         many=True, read_only=False, required=False
     )
-    selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(many=True, read_only=False)
-    rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(many=True, read_only=False)
-    recon_scenarios = ComplexTransactionImportSchemeReconScenarioSerializer(many=True, read_only=False)
+    selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(
+        many=True, read_only=False
+    )
+    rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(
+        many=True, read_only=False
+    )
+    recon_scenarios = ComplexTransactionImportSchemeReconScenarioSerializer(
+        many=True, read_only=False
+    )
     recon_layout = serializers.JSONField(required=False, allow_null=True)
-    delimiter = serializers.CharField(max_length=3, required=False, initial=",", default=",")
-    column_matcher = serializers.CharField(max_length=255, required=False, initial="index", default="index")
+    delimiter = serializers.CharField(
+        max_length=3, required=False, initial=",", default=","
+    )
+    column_matcher = serializers.CharField(
+        max_length=255, required=False, initial="index", default="index"
+    )
 
     class Meta:
         model = ComplexTransactionImportScheme
@@ -1932,7 +2042,9 @@ class ComplexTransactionImportSchemeSerializer(
             input0 = None
             if input_id:
                 with contextlib.suppress(ObjectDoesNotExist):
-                    input0 = ComplexTransactionImportSchemeInput.objects.get(pk=input_id)
+                    input0 = ComplexTransactionImportSchemeInput.objects.get(
+                        pk=input_id
+                    )
 
             if input0 is None:
                 input0 = ComplexTransactionImportSchemeInput(scheme=instance)
@@ -1951,7 +2063,9 @@ class ComplexTransactionImportSchemeSerializer(
             input0 = None
             if input_id:
                 with contextlib.suppress(ObjectDoesNotExist):
-                    input0 = ComplexTransactionImportSchemeCalculatedInput.objects.get(pk=input_id)
+                    input0 = ComplexTransactionImportSchemeCalculatedInput.objects.get(
+                        pk=input_id
+                    )
 
             if input0 is None:
                 input0 = ComplexTransactionImportSchemeCalculatedInput(scheme=instance)
@@ -1999,8 +2113,10 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
-                            scheme=instance, value=val
+                        selector = (
+                            ComplexTransactionImportSchemeSelectorValue.objects.get(
+                                scheme=instance, value=val
+                            )
                         )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
@@ -2039,8 +2155,10 @@ class ComplexTransactionImportSchemeSerializer(
 
                 for val in selector_values:
                     try:
-                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(
-                            scheme=instance, value=val
+                        selector = (
+                            ComplexTransactionImportSchemeSelectorValue.objects.get(
+                                scheme=instance, value=val
+                            )
                         )
                         selector_values_instances.append(selector.id)
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
@@ -2097,10 +2215,14 @@ class ComplexTransactionImportSchemeSerializer(
                             field0 = rule_scenario.fields.get(pk=field_id)
 
                     if field0 is None:
-                        field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
+                        field0 = ComplexTransactionImportSchemeField(
+                            rule_scenario=rule_scenario
+                        )
 
                     if field_values.get("transaction_type_input", None):
-                        field0.transaction_type_input = field_values["transaction_type_input"]
+                        field0.transaction_type_input = field_values[
+                            "transaction_type_input"
+                        ]
 
                     if field_values.get("value_expr", None):
                         field0.value_expr = field_values["value_expr"]
@@ -2181,7 +2303,8 @@ class ComplexTransactionCsvFileImport:
 
     def __str__(self):
         return (
-            f'{getattr(self.master_user, "id", None)}-' f'{getattr(self.member, "id", None)}:{self.file_path}'
+            f"{getattr(self.master_user, 'id', None)}-"
+            f"{getattr(self.member, 'id', None)}:{self.file_path}"
         )
 
     @property
@@ -2207,9 +2330,14 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
         if "scheme" in validated_data:
             validated_data["delimiter"] = validated_data["scheme"].delimiter
             validated_data["error_handling"] = validated_data["scheme"].error_handler
-            validated_data["missing_data_handler"] = validated_data["scheme"].missing_data_handler
+            validated_data["missing_data_handler"] = validated_data[
+                "scheme"
+            ].missing_data_handler
 
-            _l.debug(f"scheme missing data helper: " f'{validated_data["scheme"].missing_data_handler}')
+            _l.debug(
+                f"scheme missing data helper: "
+                f"{validated_data['scheme'].missing_data_handler}"
+            )
 
         _l.debug(f"validated_data {validated_data}")
 
@@ -2230,7 +2358,9 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
                 validated_data["file_path"] = file_path
                 validated_data["file_name"] = filetmp.name
             else:
-                raise serializers.ValidationError({"file": gettext_lazy("Required field.")})
+                raise serializers.ValidationError(
+                    {"file": gettext_lazy("Required field.")}
+                )
 
         return ComplexTransactionCsvFileImport(**validated_data)
 

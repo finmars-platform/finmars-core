@@ -14,21 +14,21 @@ SELECTOR = 110
 BUTTON = 120
 
 SYSTEM_VALUE_TYPES = (
-    (NUMBER, gettext_lazy('Number')),
-    (STRING, gettext_lazy('String')),
-    (DATE, gettext_lazy('Date')),
-    (CLASSIFIER, gettext_lazy('Classifier')),
-    (BOOLEAN, gettext_lazy('Boolean')),
-    (SYSTEM_ATTRIBUTE, gettext_lazy('System Attribute')),
-    (USER_ATTRIBUTE, gettext_lazy('User Attribute')),
-    (RELATION, gettext_lazy('Relation')),
-    (SELECTOR, gettext_lazy('Selector')),
-    (BUTTON, gettext_lazy('Button')),
-    (DATETIME, gettext_lazy('Datetime'))
+    (NUMBER, gettext_lazy("Number")),
+    (STRING, gettext_lazy("String")),
+    (DATE, gettext_lazy("Date")),
+    (CLASSIFIER, gettext_lazy("Classifier")),
+    (BOOLEAN, gettext_lazy("Boolean")),
+    (SYSTEM_ATTRIBUTE, gettext_lazy("System Attribute")),
+    (USER_ATTRIBUTE, gettext_lazy("User Attribute")),
+    (RELATION, gettext_lazy("Relation")),
+    (SELECTOR, gettext_lazy("Selector")),
+    (BUTTON, gettext_lazy("Button")),
+    (DATETIME, gettext_lazy("Datetime")),
 )
 
 
-class SystemValueType():
+class SystemValueType:
     STRING = 10
     NUMBER = 20
     CLASSIFIER = 30

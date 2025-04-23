@@ -40,13 +40,19 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         credentials = Credentials.objects.create(**validated_data)
 
         if path_to_public_key:
-            public_file_path = "banks/keys/%s/%s" % (credentials.master_user.token, path_to_public_key.name)
+            public_file_path = "banks/keys/%s/%s" % (
+                credentials.master_user.token,
+                path_to_public_key.name,
+            )
 
             storage.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            private_file_path = "banks/keys/%s/%s" % (credentials.master_user.token, path_to_private_key.name)
+            private_file_path = "banks/keys/%s/%s" % (
+                credentials.master_user.token,
+                path_to_private_key.name,
+            )
 
             storage.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
@@ -56,7 +62,6 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         return credentials
 
     def update(self, credentials, validated_data):
-
         path_to_public_key = validated_data.pop("path_to_public_key", None)
         path_to_private_key = validated_data.pop("path_to_private_key", None)
 
@@ -67,7 +72,9 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         credentials.username = validated_data.get("username", credentials.username)
         credentials.password = validated_data.get("password", credentials.password)
         credentials.public_key = validated_data.get("password", credentials.public_key)
-        credentials.private_key = validated_data.get("private_key", credentials.private_key)
+        credentials.private_key = validated_data.get(
+            "private_key", credentials.private_key
+        )
 
         if path_to_public_key:
             public_file_path = "banks/%s/data_providers/%s/%s" % (

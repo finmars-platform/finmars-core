@@ -17,7 +17,7 @@ from poms.csv_import.tests.common_test_data import (
     SCHEME_ACCRUAL_CALCULATION_ENTITIES,
     SCHEME_ACCRUAL_CALCULATION_FIELDS,
     ACCRUAL_CALCULATION,
-    ACCRUAL_CALCULATION_ITEM
+    ACCRUAL_CALCULATION_ITEM,
 )
 
 from poms.instruments.models import AccrualCalculationSchedule, Instrument
@@ -139,7 +139,13 @@ class ImportAccrualCalculationTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
-        self.assertFalse(bool(AccrualCalculationSchedule.objects.filter(accrual_start_date='2017-11-22')))
+        self.assertFalse(
+            bool(
+                AccrualCalculationSchedule.objects.filter(
+                    accrual_start_date="2017-11-22"
+                )
+            )
+        )
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -165,14 +171,26 @@ class ImportAccrualCalculationTest(BaseTestCase):
 
         import_process.process()
         result = import_process.task.result_object["items"][0]
-        self.assertEqual(result["final_inputs"], EXPECTED_RESULT_ACCRUAL_CALCULATION["final_inputs"])
+        self.assertEqual(
+            result["final_inputs"], EXPECTED_RESULT_ACCRUAL_CALCULATION["final_inputs"]
+        )
 
-        accrual = AccrualCalculationSchedule.objects.get(accrual_start_date="2017-11-22")
-        self.assertEqual(accrual.instrument.user_code, "commitment-startup-2-round-a-debt")
+        accrual = AccrualCalculationSchedule.objects.get(
+            accrual_start_date="2017-11-22"
+        )
+        self.assertEqual(
+            accrual.instrument.user_code, "commitment-startup-2-round-a-debt"
+        )
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_run_simple_import_process_missing_fields(self, mock_send_message):
-        self.assertFalse(bool(AccrualCalculationSchedule.objects.filter(accrual_start_date='2017-11-22')))
+        self.assertFalse(
+            bool(
+                AccrualCalculationSchedule.objects.filter(
+                    accrual_start_date="2017-11-22"
+                )
+            )
+        )
         task = self.create_task(remove_instrument=True)
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -190,4 +208,3 @@ class ImportAccrualCalculationTest(BaseTestCase):
 
         with self.assertRaises(AccrualCalculationSchedule.DoesNotExist) as e:
             AccrualCalculationSchedule.objects.get(accrual_start_date="2017-11-22")
-

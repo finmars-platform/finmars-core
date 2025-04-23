@@ -148,7 +148,9 @@ class ScheduleViewSetTest(BaseTestCase):
         test_schedule = self.create_schedule()  # create default schedule
 
         patch_data = {"cron_expr": cron_expr}
-        response = self.client.patch(path=f"{self.url}{test_schedule.id}/", data=patch_data, format="json")
+        response = self.client.patch(
+            path=f"{self.url}{test_schedule.id}/", data=patch_data, format="json"
+        )
         self.assertEqual(response.status_code, 200)
         schedule_data = response.json()
 

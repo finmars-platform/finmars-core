@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Set Master Users Color Palettes'
+    help = "Set Master Users Color Palettes"
 
     def handle(self, *args, **options):
         from poms.users.models import MasterUser

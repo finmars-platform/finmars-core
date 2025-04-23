@@ -73,7 +73,9 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def create_attributes_if_not_exists(self, instance):
         master_user = get_master_user_from_context(self.context)
 
-        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
+        content_type = ContentType.objects.get(
+            app_label=instance._meta.app_label, model=instance._meta.model_name
+        )
 
         attribute_types = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -154,7 +156,9 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
     def calculate_attributes(self, instance):
         master_user = get_master_user_from_context(self.context)
-        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
+        content_type = ContentType.objects.get(
+            app_label=instance._meta.app_label, model=instance._meta.model_name
+        )
 
         attr_types_qs = GenericAttributeType.objects.filter(
             content_type=content_type, master_user=master_user
@@ -227,7 +231,9 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         if not attributes:
             return
 
-        ctype = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
+        ctype = ContentType.objects.get(
+            app_label=instance._meta.app_label, model=instance._meta.model_name
+        )
 
         for attr in attributes:
             attribute_type = attr["attribute_type"]
@@ -701,7 +707,9 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
 
         # attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
 
-        content_type = ContentType.objects.get(app_label=instance._meta.app_label, model=instance._meta.model_name)
+        content_type = ContentType.objects.get(
+            app_label=instance._meta.app_label, model=instance._meta.model_name
+        )
 
         return GenericAttribute.objects.filter(
             content_type=content_type,
@@ -836,7 +844,7 @@ class RecalculateAttributes:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return f'{getattr(self.master_user, "name", None)}'
+        return f"{getattr(self.master_user, 'name', None)}"
 
 
 class RecalculateAttributesSerializer(serializers.Serializer):

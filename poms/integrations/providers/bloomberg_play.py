@@ -3,67 +3,70 @@ import django
 
 django.setup()
 
-from poms.integrations.providers.bloomberg import get_certs_from_file, FakeBloombergDataProvider
+from poms.integrations.providers.bloomberg import (
+    get_certs_from_file,
+    FakeBloombergDataProvider,
+)
 
 import logging
 import os
 import pprint
 from datetime import date
 
-__author__ = 'alyakhov'
+__author__ = "alyakhov"
 
-_l = logging.getLogger('poms.integrations.providers.bloomberg')
+_l = logging.getLogger("poms.integrations.providers.bloomberg")
 
 
 def test_instrument_data(b):
     """
     Test instrument data methods
     """
-    _l.debug('-' * 79)
+    _l.debug("-" * 79)
 
-    instrument_fields = sorted({
-        "CRNCY",
-        "SECURITY_TYP",
-        "ISSUER",
-        "CNTRY_OF_RISK",
-        "INDUSTRY_SECTOR",
-        "INDUSTRY_SUBGROUP",
-        "SECURITY_DES",
-        "ID_ISIN",
-        "ID_CUSIP",
-        "ID_BB_GLOBAL",
-        "MATURITY",
-        "CPN",
-        "CUR_CPN",
-        "CPN_FREQ",
-        "COUPON_FREQUENCY_DESCRIPTION",
-        "CALC_TYP",
-        "CALC_TYP_DES",
-        "DAY_CNT",
-        "DAY_CNT_DES",
-        "INT_ACC_DT",
-        "FIRST_SETTLE_DT",
-        "FIRST_CPN_DT",
-        "OPT_PUT_CALL",
-        "MTY_TYP",
-        "PAYMENT_RANK",
-        "CPN_TYP",
-        "CPN_TYP_SPECIFIC",
-        "ACCRUED_FACTOR",
-        "DAYS_TO_SETTLE",
-        "DES_NOTES",
-
-        "PX_YEST_BID",
-        "PX_YEST_ASK",
-        "PX_YEST_CLOSE",
-
-        "FACTOR_SCHEDULE",
-        "MULTI_CPN_SCHEDULE",
-    })
+    instrument_fields = sorted(
+        {
+            "CRNCY",
+            "SECURITY_TYP",
+            "ISSUER",
+            "CNTRY_OF_RISK",
+            "INDUSTRY_SECTOR",
+            "INDUSTRY_SUBGROUP",
+            "SECURITY_DES",
+            "ID_ISIN",
+            "ID_CUSIP",
+            "ID_BB_GLOBAL",
+            "MATURITY",
+            "CPN",
+            "CUR_CPN",
+            "CPN_FREQ",
+            "COUPON_FREQUENCY_DESCRIPTION",
+            "CALC_TYP",
+            "CALC_TYP_DES",
+            "DAY_CNT",
+            "DAY_CNT_DES",
+            "INT_ACC_DT",
+            "FIRST_SETTLE_DT",
+            "FIRST_CPN_DT",
+            "OPT_PUT_CALL",
+            "MTY_TYP",
+            "PAYMENT_RANK",
+            "CPN_TYP",
+            "CPN_TYP_SPECIFIC",
+            "ACCRUED_FACTOR",
+            "DAYS_TO_SETTLE",
+            "DES_NOTES",
+            "PX_YEST_BID",
+            "PX_YEST_ASK",
+            "PX_YEST_CLOSE",
+            "FACTOR_SCHEDULE",
+            "MULTI_CPN_SCHEDULE",
+        }
+    )
 
     # instrument = 'XS1433454243 Corp'
     # instrument = 'USP7807HAK16 Corp'
-    instrument = 'USP16394AG62 Corp'
+    instrument = "USP16394AG62 Corp"
     # instrument = 'XS0955552178 @BGN Corp'
 
     response = b.get_instrument_sync(instrument, instrument_fields)
@@ -101,17 +104,17 @@ def test_instrument_data(b):
     #     "SECURITY_TYP": "EURO-DOLLAR"
     # }
 
-    _l.debug('response: %s', pprint.pformat(response))
+    _l.debug("response: %s", pprint.pformat(response))
 
 
 def test_pricing_latest(b):
     """
     Test pricing data methods
     """
-    _l.debug('-' * 79)
+    _l.debug("-" * 79)
 
-    instrument1 = {"code": 'XS1433454243', "industry": "Corp"}
-    instrument2 = {"code": 'USL9326VAA46', "industry": "Corp"}
+    instrument1 = {"code": "XS1433454243", "industry": "Corp"}
+    instrument2 = {"code": "USL9326VAA46", "industry": "Corp"}
 
     response = b.get_pricing_latest_sync([instrument1, instrument2])
     # res = {
@@ -134,14 +137,14 @@ def test_pricing_latest(b):
     #         "SECURITY_TYP": "EURO-DOLLAR"
     #     }
     # }
-    _l.debug('response: %s', pprint.pformat(response))
+    _l.debug("response: %s", pprint.pformat(response))
 
 
 def test_pricing_history(b):
     """
     Test pricing data methods
     """
-    _l.debug('-' * 79)
+    _l.debug("-" * 79)
 
     # instrument1 = {"code": 'XS1433454243', "industry": "Corp"}
     # instrument2 = {"code": 'USL9326VAA46', "industry": "Corp"}
@@ -150,13 +153,17 @@ def test_pricing_history(b):
     # instruments = ['XS1076436218 Corp', 'CH0246198037 Corp'] # worked
     # fields = ["PX_ASK", "PX_BID", "PX_CLOSE", ]
 
-    instruments = ['RUBUSD Curncy']
-    fields = ["PX_BID", ]
+    instruments = ["RUBUSD Curncy"]
+    fields = [
+        "PX_BID",
+    ]
 
-    response = b.get_pricing_history_sync(instruments=instruments,
-                                          fields=fields,
-                                          date_from=date(year=2017, month=3, day=1),
-                                          date_to=date(year=2017, month=3, day=2))
+    response = b.get_pricing_history_sync(
+        instruments=instruments,
+        fields=fields,
+        date_from=date(year=2017, month=3, day=1),
+        date_to=date(year=2017, month=3, day=2),
+    )
 
     # res = {
     #     "USL9326VAA46": [
@@ -177,16 +184,18 @@ def test_pricing_history(b):
     #     ]
     # }
 
-    _l.debug('response: %s', pprint.pformat(response))
+    _l.debug("response: %s", pprint.pformat(response))
 
 
 if __name__ == "__main__":
-    p12cert = os.environ['TEST_BLOOMBERG_CERT']
-    password = os.environ['TEST_BLOOMBERG_CERT_PASSWORD']
+    p12cert = os.environ["TEST_BLOOMBERG_CERT"]
+    password = os.environ["TEST_BLOOMBERG_CERT_PASSWORD"]
     cert, key = get_certs_from_file(p12cert, password)
 
     # b = BloombergDataProvider(wsdl="https://service.bloomberg.com/assets/dl/dlws.wsdl", cert=cert, key=key)
-    b = FakeBloombergDataProvider(wsdl="https://service.bloomberg.com/assets/dl/dlws.wsdl", cert=cert, key=key)
+    b = FakeBloombergDataProvider(
+        wsdl="https://service.bloomberg.com/assets/dl/dlws.wsdl", cert=cert, key=key
+    )
     # print(b._bbg_instr('10 20'))
     # print(b._bbg_instr('XS0955552178 @BGN Corp'))
     # b.get_fields()

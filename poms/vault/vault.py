@@ -18,18 +18,24 @@ def remove_trailing_slash_from_keys(data):
 
 
 class FinmarsVault:
-
     def __init__(self, realm_code=None, space_code=None):
-
         self.realm_code = realm_code
         self.space_code = space_code
 
         if self.realm_code:
             self.vault_host = (
-                "https://" + settings.DOMAIN_NAME + "/" + self.realm_code + "/" + self.space_code + "/vault"
+                "https://"
+                + settings.DOMAIN_NAME
+                + "/"
+                + self.realm_code
+                + "/"
+                + self.space_code
+                + "/vault"
             )
         else:
-            self.vault_host = "https://" + settings.DOMAIN_NAME + "/" + self.space_code + "/vault"
+            self.vault_host = (
+                "https://" + settings.DOMAIN_NAME + "/" + self.space_code + "/vault"
+            )
 
         self.auth_token = None
         try:
@@ -39,7 +45,6 @@ class FinmarsVault:
             _l.info(f"Failed to get vault token: {e}")
 
     def get_headers(self):
-
         headers = {"X-Vault-Token": self.auth_token}
 
         return headers
@@ -47,7 +52,6 @@ class FinmarsVault:
     #  GENERAL ACTIONS STARTS
 
     def get_health(self):
-
         url = f"{self.vault_host}/v1/sys/health"  # warning should be no trailing slash
         headers = self.get_headers()
 
@@ -61,7 +65,6 @@ class FinmarsVault:
         return response.json()
 
     def get_status(self):
-
         url = f"{self.vault_host}/v1/sys/seal-status"  # warning should be no trailing slash
         headers = self.get_headers()
 
@@ -75,14 +78,15 @@ class FinmarsVault:
         return response.json()
 
     def init(self):
-
         url = f"{self.vault_host}/v1/sys/init"  # warning should be no trailing slash
         headers = self.get_headers()
 
         data = {"secret_shares": 5, "secret_threshold": 3}
 
         try:
-            response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+            response = requests.post(
+                url, json=data, headers=headers, verify=settings.VERIFY_SSL
+            )
             response.raise_for_status()
             _l.info(f"Vault inited successfully")
         except Exception as e:
@@ -91,7 +95,6 @@ class FinmarsVault:
         return response.json()
 
     def seal(self):
-
         url = f"{self.vault_host}/v1/sys/seal"  # warning should be no trailing slash
         headers = self.get_headers()
 
@@ -103,14 +106,15 @@ class FinmarsVault:
             _l.info(f"Failed to seal: {e}")
 
     def unseal(self, key):
-
         url = f"{self.vault_host}/v1/sys/unseal"  # warning should be no trailing slash
         headers = self.get_headers()
 
         data = {"key": key}
 
         try:
-            response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+            response = requests.post(
+                url, json=data, headers=headers, verify=settings.VERIFY_SSL
+            )
             response.raise_for_status()
             _l.info(f"Vault sealed successfully")
         except Exception as e:
@@ -135,13 +139,14 @@ class FinmarsVault:
             filtered_keys = ["sys", "identity", "cubbyhole"]
 
             filtered_list = [
-                {"engine_name": k, "data": v} for k, v in formatted_data.items() if k not in filtered_keys
+                {"engine_name": k, "data": v}
+                for k, v in formatted_data.items()
+                if k not in filtered_keys
             ]
 
         return filtered_list
 
     def create_engine(self, engine_name):
-
         url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
         headers = self.get_headers()
 
@@ -154,7 +159,9 @@ class FinmarsVault:
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers, verify=settings.VERIFY_SSL)
+            response = requests.post(
+                url, json=payload, headers=headers, verify=settings.VERIFY_SSL
+            )
             response.raise_for_status()
             _l.info(f"Secret engine {engine_name} created successfully")
         except Exception as e:
@@ -185,7 +192,9 @@ class FinmarsVault:
         data = {"data": secret_data, "options": {"cas": 0}}
 
         try:
-            response = requests.post(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
+            response = requests.post(
+                url, headers=headers, json=data, verify=settings.VERIFY_SSL
+            )
             response.raise_for_status()
             _l.info(f"Secret {secret_path} created successfully")
         except Exception as e:
@@ -199,7 +208,6 @@ class FinmarsVault:
         return response.json()
 
     def get_latest_version(self, engine_name, secret_path):
-
         metadata = self.get_secret_metadata(engine_name, secret_path)
 
         version = len(metadata["data"]["versions"])
@@ -219,7 +227,9 @@ class FinmarsVault:
         data = {"data": secret_data, "options": {"cas": version}}
 
         try:
-            response = requests.put(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
+            response = requests.put(
+                url, headers=headers, json=data, verify=settings.VERIFY_SSL
+            )
             response.raise_for_status()
             _l.info(f"Secret {secret_path} updated successfully")
         except Exception as e:

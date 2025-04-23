@@ -203,7 +203,9 @@ class PortfolioFilterSet(FilterSet):
 
 
 class PortfolioViewSet(AbstractModelViewSet):
-    queryset = Portfolio.objects.select_related("master_user", "owner").prefetch_related(
+    queryset = Portfolio.objects.select_related(
+        "master_user", "owner"
+    ).prefetch_related(
         get_attributes_prefetch(),
     )
     serializer_class = PortfolioSerializer
@@ -236,7 +238,9 @@ class PortfolioViewSet(AbstractModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def update(self, request, *args, **kwargs):
         # trigger recalc after book properly
@@ -348,7 +352,9 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = self.get_object()
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
         )
 
         if first_record:
@@ -372,7 +378,9 @@ class PortfolioViewSet(AbstractModelViewSet):
         portfolio = Portfolio.objects.get(user_code=user_code)
 
         first_record = (
-            PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by("transaction_date").first()
+            PortfolioRegisterRecord.objects.filter(portfolio=portfolio)
+            .order_by("transaction_date")
+            .first()
         )
 
         if first_record:
@@ -430,7 +438,9 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
     def calculate_records(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        serializer = PrCalculateRecordsRequestSerializer(data=request.data, context=self.get_serializer_context())
+        serializer = PrCalculateRecordsRequestSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -470,7 +480,9 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         serializer_class=PrCalculatePriceHistoryRequestSerializer,
     )
     def calculate_price_history(self, request, realm_code=None, space_code=None):
-        _l.info(f"{self.__class__.__name__}.calculate_price_history data={request.data}")
+        _l.info(
+            f"{self.__class__.__name__}.calculate_price_history data={request.data}"
+        )
         serializer = PrCalculatePriceHistoryRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -483,9 +495,13 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         )
         task.options_object = {
             "portfolios": serializer.validated_data.get("portfolios"),
-            "date_to": serializer.validated_data["date_to"].strftime(settings.API_DATE_FORMAT),
+            "date_to": serializer.validated_data["date_to"].strftime(
+                settings.API_DATE_FORMAT
+            ),
             "date_from": (
-                serializer.validated_data["date_from"].strftime(settings.API_DATE_FORMAT)
+                serializer.validated_data["date_from"].strftime(
+                    settings.API_DATE_FORMAT
+                )
                 if serializer.validated_data.get("date_from")
                 else None
             ),
@@ -590,7 +606,9 @@ class PortfolioBundleViewSet(AbstractModelViewSet):
         obj = self.get_object()
         queryset = obj.registers.all()
         page = self.paginator.post_paginate_queryset(queryset, request)
-        serializer = PortfolioRegisterSerializer(page, many=True, context=self.get_serializer_context())
+        serializer = PortfolioRegisterSerializer(
+            page, many=True, context=self.get_serializer_context()
+        )
         return self.get_paginated_response(serializer.data)
 
 
@@ -639,7 +657,9 @@ class PortfolioHistoryFilterSet(FilterSet):
 
     portfolio__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Portfolio)
     currency__user_code = ModelExtUserCodeMultipleChoiceFilter(model=Currency)
-    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(model=PricingPolicy)
+    pricing_policy__user_code = ModelExtUserCodeMultipleChoiceFilter(
+        model=PricingPolicy
+    )
 
     date = django_filters.DateFromToRangeFilter()
 
@@ -669,7 +689,9 @@ class PortfolioHistoryViewSet(AbstractModelViewSet):
     )
     def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = CalculatePortfolioHistorySerializer(data=request.data, context=self.get_serializer_context())
+        serializer = CalculatePortfolioHistorySerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -712,7 +734,9 @@ class PortfolioReconcileGroupFilterSet(FilterSet):
 
 
 class PortfolioReconcileGroupViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileGroup.objects.filter(is_deleted=False).order_by("user_code")
+    queryset = PortfolioReconcileGroup.objects.filter(is_deleted=False).order_by(
+        "user_code"
+    )
     serializer_class = PortfolioReconcileGroupSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioReconcileGroupFilterSet
@@ -749,7 +773,9 @@ class PortfolioReconcileHistoryFilterSet(FilterSet):
 
 
 class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
-    queryset = PortfolioReconcileHistory.objects.select_related("portfolio_reconcile_group", "file_report")
+    queryset = PortfolioReconcileHistory.objects.select_related(
+        "portfolio_reconcile_group", "file_report"
+    )
     serializer_class = PortfolioReconcileHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -762,7 +788,9 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """Ignore update data, just return current object"""
-        return Response(SimpleReconcileHistorySerializer(instance=self.get_object()).data)
+        return Response(
+            SimpleReconcileHistorySerializer(instance=self.get_object()).data
+        )
 
     def destroy(self, request, *args, **kwargs):
         history = self.get_object()
@@ -786,7 +814,9 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     )
     def calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -797,10 +827,14 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
             status=CeleryTask.STATUS_INIT,
         )
         task_data = serializer.validated_data
-        reconcile_group: PortfolioReconcileGroup = task_data["portfolio_reconcile_group"]
+        reconcile_group: PortfolioReconcileGroup = task_data[
+            "portfolio_reconcile_group"
+        ]
 
         # Convert dates & groups to scalar values expected in task
-        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
+        task_data["dates"] = [
+            day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]
+        ]
         task_data["portfolio_reconcile_group"] = reconcile_group.user_code
 
         task.options_object = task_data
@@ -832,7 +866,9 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
     )
     def bulk_calculate(self, request, realm_code=None, space_code=None):
         _l.info(f"{self.__class__.__name__}.calculate data={request.data}")
-        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         task = CeleryTask.objects.create(
@@ -845,8 +881,12 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         task_data = serializer.validated_data
 
         # Convert dates & task to scalar values expected in task
-        task_data["dates"] = [day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]]
-        task_data["reconcile_groups"] = [group.user_code for group in task_data["reconcile_groups"]]
+        task_data["dates"] = [
+            day.strftime(settings.API_DATE_FORMAT) for day in task_data["dates"]
+        ]
+        task_data["reconcile_groups"] = [
+            group.user_code for group in task_data["reconcile_groups"]
+        ]
 
         task.options_object = task_data
         task.save()
@@ -876,7 +916,9 @@ class PortfolioReconcileHistoryViewSet(AbstractModelViewSet):
         serializer_class=PortfolioReconcileStatusSerializer,
     )
     def status(self, request, realm_code=None, space_code=None):
-        serializer = self.get_serializer(data=request.query_params, context=self.get_serializer_context())
+        serializer = self.get_serializer(
+            data=request.query_params, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
 
         return Response(
