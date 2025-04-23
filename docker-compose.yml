@@ -37,11 +37,11 @@ services:
       - rabbitmq
 
   backend_migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     env_file:
       - .env
+    environment:
+      - INSTANCE_TYPE=job
     depends_on:
       - db
     command: python manage.py migrate_all_schemes
