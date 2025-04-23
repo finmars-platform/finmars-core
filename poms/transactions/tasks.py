@@ -161,7 +161,9 @@ def recalculate_permissions_transaction(self, instance, *args, **kwargs):
     # return instance
 
 
-@finmars_task(name="transactions.recalculate_permissions_complex_transaction", bind=True)
+@finmars_task(
+    name="transactions.recalculate_permissions_complex_transaction", bind=True
+)
 def recalculate_permissions_complex_transaction(self, instance, *args, **kwargs):
     # DEPRECATED, NEED REFACTOR
     pass

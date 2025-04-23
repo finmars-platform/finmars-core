@@ -36,7 +36,6 @@ class ComplexImportSchemeViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + []
 
 
-
 class ComplexImportViewSet(AbstractModelViewSet):
     parser_classes = (MultiPartParser,)
     queryset = ComplexImport.objects.select_related(

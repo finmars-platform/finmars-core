@@ -94,7 +94,6 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-
         print("TASK: process_bank_file_for_reconcile")
 
         serializer = self.get_serializer(data=request.data)
@@ -109,7 +108,9 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
             res = AsyncResult(signer.unsign(task_id))
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+                celery_task = CeleryTask.objects.get(
+                    master_user=request.user.master_user, task_id=task_id
+                )
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 print("Cant create Celery Task")
@@ -122,7 +123,6 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
                     celery_task.finished_at = datetime_now()
 
             elif res.result:
-
                 if "processed_rows" in res.result:
                     instance.processed_rows = res.result["processed_rows"]
                 if "total_rows" in res.result:
@@ -146,11 +146,13 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
                 celery_task.save()
 
         else:
-
             res = self.celery_task.apply_async(
                 kwargs={
                     "instance": instance,
-                    "context": {"space_code": request.space_code, "realm_code": request.realm_code},
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
                 }
             )
             instance.task_id = signer.sign(f"{res.id}")

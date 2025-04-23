@@ -72,34 +72,34 @@ def cancel_existing_procedures(celery_app):
 
     _l.info(f"Canceled {len(procedures)} procedures ")
 
+
 def schema_exists(schema_name):
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT schema_name
             FROM information_schema.schemata
             WHERE schema_name = %s;
-        """, [schema_name])
+        """,
+            [schema_name],
+        )
         return cursor.fetchone() is not None
 
 
 def set_schema_from_context(context):
-
     if context:
-        if context.get('space_code'):
-
-            if schema_exists(space_code:= context.get('space_code')):
-
+        if context.get("space_code"):
+            if schema_exists(space_code := context.get("space_code")):
                 # space_code = context.get('space_code')
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO {space_code};")
 
             else:
-                raise Exception('No space_code in database schemas')
+                raise Exception("No space_code in database schemas")
         else:
-            raise Exception('No space_code in context')
+            raise Exception("No space_code in context")
     else:
-        raise Exception('No context in kwargs')
-    
+        raise Exception("No context in kwargs")
 
 
 # EXTREMELY IMPORTANT CODE
@@ -109,24 +109,24 @@ def set_schema_from_context(context):
 # ALL TASKS MUST BE PROVIDED WITH CONTEXT WITH space_code
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
-    context = kwargs.get('context')
+    context = kwargs.get("context")
 
-    _l.info(f"task_prerun.task {task} context: {context}" )
+    _l.info(f"task_prerun.task {task} context: {context}")
 
     if context:
-        if context.get('space_code'):
-            space_code = context.get('space_code')
+        if context.get("space_code"):
+            space_code = context.get("space_code")
 
             if schema_exists(space_code):
                 with connection.cursor() as cursor:
                     cursor.execute(f"SET search_path TO {space_code};")
                     _l.info(f"task_prerun.context {space_code}")
             else:
-                raise Exception('No scheme in database')
+                raise Exception("No scheme in database")
         else:
-            raise Exception('No space_code in context')
+            raise Exception("No space_code in context")
     else:
-        raise Exception('No context in kwargs')
+        raise Exception("No context in kwargs")
 
     celery_state.celery_task_id = task_id
     celery_state.task = task
@@ -135,7 +135,6 @@ def set_task_context(task_id, task, kwargs=None, **unused):
 
 @task_postrun.connect
 def cleanup(task_id, **kwargs):
-
     _l.info("cleanup %s" % task_id)
 
     celery_state.celery_task_id = None
@@ -147,14 +146,13 @@ def cleanup(task_id, **kwargs):
     #     cursor.execute("SET search_path TO public;")
 
 
-
 class PerSpaceDatabaseScheduler(DatabaseScheduler):
     def all_as_schedule(self):
-        _l.debug('DatabaseScheduler: Fetching database schedule')
+        _l.debug("DatabaseScheduler: Fetching database schedule")
         schemas = get_all_tenant_schemas()
         s = {}
         for schema in schemas:
-            set_schema_from_context({'space_code': schema})
+            set_schema_from_context({"space_code": schema})
             for model in self.Model.objects.enabled():
                 try:
                     s[model.name] = self.Entry(model, app=self.app)
@@ -165,10 +163,10 @@ class PerSpaceDatabaseScheduler(DatabaseScheduler):
     def schedule_changed(self):
         last = self._last_timestamp
         ts = None
-        
+
         schemas = get_all_tenant_schemas()
         for schema in schemas:
-            set_schema_from_context({'space_code': schema})
+            set_schema_from_context({"space_code": schema})
             try:
                 last_change_in_schema = self.Changes.last_change()
                 if last_change_in_schema:
@@ -177,12 +175,12 @@ class PerSpaceDatabaseScheduler(DatabaseScheduler):
                     else:
                         ts = last_change_in_schema
             except DatabaseError as exc:
-                _l.exception('Database gave error: %r', exc)
+                _l.exception("Database gave error: %r", exc)
                 return False
             except InterfaceError:
                 _l.warning(
-                    'DatabaseScheduler: InterfaceError in schedule_changed(), '
-                    'waiting to retry in next call...'
+                    "DatabaseScheduler: InterfaceError in schedule_changed(), "
+                    "waiting to retry in next call..."
                 )
                 return False
         try:

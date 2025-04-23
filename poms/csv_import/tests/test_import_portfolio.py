@@ -17,7 +17,7 @@ from poms.csv_import.tests.common_test_data import (
     SCHEME_PORTFOLIO_ENTITIES,
     SCHEME_PORTFOLIO_FIELDS,
     PORTFOLIO,
-    PORTFOLIO_ITEM
+    PORTFOLIO_ITEM,
 )
 from poms.portfolios.models import PortfolioType, Portfolio, PortfolioClass
 
@@ -141,7 +141,7 @@ class ImportPortfolioTypeTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_create_and_run_simple_import_process(self, mock_send_message):
-        self.assertFalse(bool(Portfolio.objects.filter(user_code='Test')))
+        self.assertFalse(bool(Portfolio.objects.filter(user_code="Test")))
         task = self.create_task()
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -167,7 +167,9 @@ class ImportPortfolioTypeTest(BaseTestCase):
 
         import_process.process()
         result = import_process.task.result_object["items"][0]
-        self.assertEqual(result["final_inputs"], EXPECTED_RESULT_PORTFOLIO["final_inputs"])
+        self.assertEqual(
+            result["final_inputs"], EXPECTED_RESULT_PORTFOLIO["final_inputs"]
+        )
 
         portfolio = Portfolio.objects.get(user_code="Test")
         self.assertEqual(portfolio.portfolio_type.user_code, "com.finmars.test_01")
@@ -175,7 +177,7 @@ class ImportPortfolioTypeTest(BaseTestCase):
 
     @mock.patch("poms.csv_import.handlers.send_system_message")
     def test_run_simple_import_process_missing_fields(self, mock_send_message):
-        self.assertFalse(bool(Portfolio.objects.filter(user_code='Test')))
+        self.assertFalse(bool(Portfolio.objects.filter(user_code="Test")))
         task = self.create_task(remove_portfolio_type=True)
         import_process = SimpleImportProcess(task_id=task.id)
 
@@ -193,4 +195,3 @@ class ImportPortfolioTypeTest(BaseTestCase):
 
         with self.assertRaises(Portfolio.DoesNotExist) as e:
             Portfolio.objects.get(user_code="Test")
-

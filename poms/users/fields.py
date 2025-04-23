@@ -4,7 +4,10 @@ from rest_framework.fields import CurrentUserDefault
 
 from poms_app import settings
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
+from poms.common.fields import (
+    PrimaryKeyRelatedFilteredField,
+    UserCodeOrPrimaryKeyRelatedField,
+)
 from poms.iam.models import AccessPolicy, Group, Role
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import MasterUser, Member

@@ -424,9 +424,7 @@ class ResourceGroupSerializer(IamModelMetaSerializer):
     members = serializers.PrimaryKeyRelatedField(
         queryset=Member.objects.all(), many=True, required=False
     )
-    members_object = IamMemberSerializer(
-        source="members", many=True, read_only=True
-    )
+    members_object = IamMemberSerializer(source="members", many=True, read_only=True)
 
     class Meta:
         model = ResourceGroup

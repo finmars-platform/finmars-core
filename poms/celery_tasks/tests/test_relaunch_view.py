@@ -31,7 +31,9 @@ class CeleryTaskViewSetTest(BaseTestCase):
 
         completed_tasks = CeleryTask.objects.filter(type="rename_directory_in_storage")
         self.assertEqual(len(completed_tasks), 2)
-        self.assertEqual(completed_tasks[0].options_object, completed_tasks[1].options_object)
+        self.assertEqual(
+            completed_tasks[0].options_object, completed_tasks[1].options_object
+        )
 
     def test__relaunch_with_options(self):
         options = {"options": {"new_name": "t2", "path": "space00000/yk/t2/"}}
@@ -45,4 +47,6 @@ class CeleryTaskViewSetTest(BaseTestCase):
 
         completed_tasks = CeleryTask.objects.filter(type="rename_directory_in_storage")
         self.assertEqual(len(completed_tasks), 2)
-        self.assertNotEqual(completed_tasks[0].options_object, completed_tasks[1].options_object)
+        self.assertNotEqual(
+            completed_tasks[0].options_object, completed_tasks[1].options_object
+        )

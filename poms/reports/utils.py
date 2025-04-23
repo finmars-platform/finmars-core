@@ -64,16 +64,22 @@ def generate_report_unique_hash(app, action, data, master_user, member):
         report_options["allocation_mode"] = _data["allocation_mode"]
 
     if "custom_fields_to_calculate" in _data:
-        report_options["custom_fields_to_calculate"] = _data["custom_fields_to_calculate"]
+        report_options["custom_fields_to_calculate"] = _data[
+            "custom_fields_to_calculate"
+        ]
 
     if "complex_transaction_statuses_filter" in _data:
-        report_options["complex_transaction_statuses_filter"] = _data["complex_transaction_statuses_filter"]
+        report_options["complex_transaction_statuses_filter"] = _data[
+            "complex_transaction_statuses_filter"
+        ]
 
     if "cost_method" in _data:
         report_options["cost_method"] = _data["cost_method"]
 
     if "show_balance_exposure_details" in _data:
-        report_options["show_balance_exposure_details"] = _data["show_balance_exposure_details"]
+        report_options["show_balance_exposure_details"] = _data[
+            "show_balance_exposure_details"
+        ]
 
     if "show_transaction_details" in _data:
         report_options["show_transaction_details"] = _data["show_transaction_details"]
@@ -123,9 +129,13 @@ def generate_report_unique_hash(app, action, data, master_user, member):
         report_options["filters"] = str(_data["filters"])
 
     if "expression_iterations_count" in _data:
-        report_options["expression_iterations_count"] = _data["expression_iterations_count"]
+        report_options["expression_iterations_count"] = _data[
+            "expression_iterations_count"
+        ]
 
-    hash_value = hashlib.md5(json.dumps(report_options, sort_keys=True, default=str).encode()).hexdigest()
+    hash_value = hashlib.md5(
+        json.dumps(report_options, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
     return f"{app}_{action}_{master_user.id}-{member.id}-{hash_value}"
 
@@ -144,9 +154,7 @@ def get_first_transaction():
 
 
 def get_pl_first_date(instance):
-
     if not instance.pl_first_date and instance.period_type:
-
         _l.debug("No pl_first_date, calculating by period_type...")
 
         if instance.period_type == "inception":
@@ -160,16 +168,24 @@ def get_pl_first_date(instance):
                 first_portfolio.first_transaction_date - timedelta(days=1),
             )
         elif instance.period_type == "ytd":
-            instance.pl_first_date = get_last_business_day_of_previous_year(instance.report_date)
+            instance.pl_first_date = get_last_business_day_of_previous_year(
+                instance.report_date
+            )
 
         elif instance.period_type == "qtd":
-            instance.pl_first_date = get_last_business_day_in_previous_quarter(instance.report_date)
+            instance.pl_first_date = get_last_business_day_in_previous_quarter(
+                instance.report_date
+            )
 
         elif instance.period_type == "mtd":
-            instance.pl_first_date = get_last_business_day_of_previous_month(instance.report_date)
+            instance.pl_first_date = get_last_business_day_of_previous_month(
+                instance.report_date
+            )
 
         elif instance.period_type == "daily":
-            instance.pl_first_date = get_last_business_day(instance.report_date - timedelta(days=1))
+            instance.pl_first_date = get_last_business_day(
+                instance.report_date - timedelta(days=1)
+            )
 
     instance.first_transaction_date = get_first_transaction()
 
@@ -183,23 +199,34 @@ def get_pl_first_date(instance):
 
 def transform_to_allowed_portfolios(instance):
     if not len(instance.portfolios):
-        return get_allowed_queryset(instance.member, Portfolio.objects.filter(is_deleted=False))
+        return get_allowed_queryset(
+            instance.member, Portfolio.objects.filter(is_deleted=False)
+        )
     return instance.portfolios
 
 
 def transform_to_allowed_accounts(instance):
     if not len(instance.accounts):
-        return get_allowed_queryset(instance.member, Account.objects.filter(is_deleted=False))
+        return get_allowed_queryset(
+            instance.member, Account.objects.filter(is_deleted=False)
+        )
     return instance.accounts
 
 
 def generate_unique_key(instance, report_type):
-
-    portfolio_user_codes = sorted([portfolio.user_code for portfolio in instance.portfolios])
+    portfolio_user_codes = sorted(
+        [portfolio.user_code for portfolio in instance.portfolios]
+    )
     account_user_codes = sorted([account.user_code for account in instance.accounts])
-    strategy1_user_codes = sorted([strategy.user_code for strategy in instance.strategies1])
-    strategy2_user_codes = sorted([strategy.user_code for strategy in instance.strategies2])
-    strategy3_user_codes = sorted([strategy.user_code for strategy in instance.strategies3])
+    strategy1_user_codes = sorted(
+        [strategy.user_code for strategy in instance.strategies1]
+    )
+    strategy2_user_codes = sorted(
+        [strategy.user_code for strategy in instance.strategies2]
+    )
+    strategy3_user_codes = sorted(
+        [strategy.user_code for strategy in instance.strategies3]
+    )
 
     report_data = {
         "report_type": report_type,

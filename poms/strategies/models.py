@@ -2,7 +2,12 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import TimeStampedModel, FakeDeletableModel, NamedModel, ObjectStateModel
+from poms.common.models import (
+    TimeStampedModel,
+    FakeDeletableModel,
+    NamedModel,
+    ObjectStateModel,
+)
 from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
@@ -213,7 +218,6 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
         permissions = [
             ("manage_strategy2subgroup", "Can manage strategy2 subgroup"),
         ]
-
 
     @property
     def is_default(self):

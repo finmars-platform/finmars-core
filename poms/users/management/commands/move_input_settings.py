@@ -2,10 +2,9 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Move input settings'
+    help = "Move input settings"
 
     def handle(self, *args, **options):
-
         from poms.transactions.models import TransactionTypeInput
 
         inputs = TransactionTypeInput.objects.all()
@@ -13,7 +12,6 @@ class Command(BaseCommand):
         count = 0
 
         for input in inputs:
-
             old_settings = input.settings_old.last()
 
             if old_settings:

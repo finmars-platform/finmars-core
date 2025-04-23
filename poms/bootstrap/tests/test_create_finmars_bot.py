@@ -56,7 +56,7 @@ class CreateFinmarsBotTestCase(BaseTestCase):
 
         member = Member.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
         master_user = MasterUser.objects.using(settings.DB_DEFAULT).get(
-            space_code='space00000'
+            space_code="space00000"
         )
         user = User.objects.using(settings.DB_DEFAULT).get(username=FINMARS_BOT)
 

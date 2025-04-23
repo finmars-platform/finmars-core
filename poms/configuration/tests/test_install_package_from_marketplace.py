@@ -9,14 +9,15 @@ from poms.configuration.tests.common_test_data import *
 from django.contrib.auth.models import User
 
 
-
 class InstallPackageFromMarketplaceTaskTest(BaseTestCase):
     databases = "__all__"
 
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        User.objects.get_or_create(username=FINMARS_BOT, is_staff=True, is_superuser=True)
+        User.objects.get_or_create(
+            username=FINMARS_BOT, is_staff=True, is_superuser=True
+        )
         self.mock_response = mock.Mock()
         self.mock_response.status_code = 200
 

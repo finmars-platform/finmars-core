@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Set Master Users Entity Tooltips'
+    help = "Set Master Users Entity Tooltips"
 
     def handle(self, *args, **options):
         from poms.users.models import MasterUser

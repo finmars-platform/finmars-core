@@ -6,7 +6,7 @@ from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
 from poms.configuration.utils import run_workflow, wait_workflow_until_end
 
-_l = logging.getLogger('poms.pricing')
+_l = logging.getLogger("poms.pricing")
 
 
 def _run_pricing(task, reference_type, objects):
@@ -15,7 +15,9 @@ def _run_pricing(task, reference_type, objects):
     for count, obj in enumerate(objects):
         pricing_policies = obj.pricing_policies.all()
         if options.get("pricing_policies"):
-            pricing_policies = pricing_policies.filter(pricing_policy__user_code__in=options["pricing_policies"])
+            pricing_policies = pricing_policies.filter(
+                pricing_policy__user_code__in=options["pricing_policies"]
+            )
         for schema in pricing_policies:
             payload = schema.options.copy()
             payload["date_from"] = options["date_from"]
@@ -26,17 +28,19 @@ def _run_pricing(task, reference_type, objects):
             # TODO, when instrument whill have reference_dict we can fetch different reference base on provider
 
             try:
-                workflow = schema.target_pricing_schema_user_code + ':run_pricing'
+                workflow = schema.target_pricing_schema_user_code + ":run_pricing"
                 _l.info(f"run_pricing.going to execute workflow {workflow}")
 
                 response_data = run_workflow(workflow, payload, task)
-                #response_data = wait_workflow_until_end(response_data["id"], task)
+                # response_data = wait_workflow_until_end(response_data["id"], task)
 
                 _l.info(f"run_pricing.workflow finished {response_data}")
             except Exception as e:
                 last_exception = e
-                _l.exception(f"Could not execute run_pricing.workflow for instrument {obj.user_code}"
-                             f" and pricing policy {schema.pricing_policy.user_code}")
+                _l.exception(
+                    f"Could not execute run_pricing.workflow for instrument {obj.user_code}"
+                    f" and pricing policy {schema.pricing_policy.user_code}"
+                )
 
             task.status = CeleryTask.STATUS_REQUEST_SENT
             task.update_progress(
@@ -61,7 +65,9 @@ def run_pricing(self, *args, **kwargs):
     objects = instruments_exception = currencies_exception = None
 
     if options.get("instrument_types"):
-        objects = Instrument.objects.filter(instrument_type__user_code__in=options["instrument_types"])
+        objects = Instrument.objects.filter(
+            instrument_type__user_code__in=options["instrument_types"]
+        )
     elif options.get("instruments"):
         objects = Instrument.objects.filter(user_code__in=options["instruments"])
     if objects:

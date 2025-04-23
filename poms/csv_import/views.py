@@ -42,11 +42,9 @@ def utf_8_encoder(unicode_csv_data):
         yield line.encode("utf-8")
 
 
-class SchemeViewSet(
-    AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
-):
+class SchemeViewSet(AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet):
     permission_classes = [IsAuthenticated]
-    filter_backends = AbstractModelViewSet.filter_backends +  [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter,
@@ -119,10 +117,13 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
             queue="backend-background-queue",
         )
 
@@ -170,15 +171,18 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             performed_by="System",
             description=(
                 f"Member {request.user.member.username} started Simple Import "
-                f'(scheme {options_object["scheme_user_code"]})'
+                f"(scheme {options_object['scheme_user_code']})"
             ),
         )
 
         simple_import.apply_async(
-            kwargs={"task_id": celery_task.pk, 'context': {
-                'space_code': celery_task.master_user.space_code,
-                'realm_code': celery_task.master_user.realm_code
-            }},
+            kwargs={
+                "task_id": celery_task.pk,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+            },
             queue="backend-background-queue",
         )
 

@@ -84,7 +84,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         result = request.query_params.get("result")
 
         if result:
-
             result = result.split(",")
 
             for filter_condition in result:
@@ -100,7 +99,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             include_tasks_list = []
 
             for task in queryset:
-
                 if not task.result:
                     continue
 
@@ -109,7 +107,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
                 items = result_object.get("items")
 
                 if items is not None:
-
                     for item in items:
                         if item["status"] in result:
                             include_tasks_list.append(task.pk)
@@ -150,7 +147,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     def update_status(self, request, pk=None, *args, **kwargs):
         task = CeleryTask.objects.get(pk=pk)
         if task.status in (CeleryTask.STATUS_ERROR, CeleryTask.STATUS_CANCELED):
-            response = {"status": "ignored", "error_message": "Task is already finished, update impossible"}
+            response = {
+                "status": "ignored",
+                "error_message": "Task is already finished, update impossible",
+            }
             return Response(response)
 
         serializer = self.get_serializer(data=request.data)
@@ -220,7 +220,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         return Response({"status": "ok"})
 
     @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
-    def abort_transaction_import(self, request, pk=None, realm_code=None, space_code=None):
+    def abort_transaction_import(
+        self, request, pk=None, realm_code=None, space_code=None
+    ):
         from poms.transactions.models import ComplexTransaction
         from poms_app import celery_app
 
@@ -228,10 +230,14 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
-        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list("code", flat=True)
+        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
+            "code", flat=True
+        )
 
         complex_transactions_ids = list(
-            ComplexTransaction.objects.filter(linked_import_task=pk).values_list("id", flat=True)
+            ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
+                "id", flat=True
+            )
         )
 
         options_object = {
@@ -261,13 +267,20 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         _l.info(f"{count} complex transactions were deleted")
 
-        task.notes = f"{count} Transactions were aborted \n" + (", ".join(str(x) for x in codes))
+        task.notes = f"{count} Transactions were aborted \n" + (
+            ", ".join(str(x) for x in codes)
+        )
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
         task.save()
 
         return Response({"status": "ok"})
 
-    @action(detail=True, methods=["post"], url_path="relaunch", serializer_class=CeleryTaskRelaunchSerializer)
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="relaunch",
+        serializer_class=CeleryTaskRelaunchSerializer,
+    )
     def relaunch(self, request, pk=None, realm_code=None, space_code=None):
         from poms_app import celery_app
 
@@ -282,7 +295,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
                 _l.info(f"relaunch - full task name is {full_task_name}")
                 break
         else:
-            err_message = f"Сan't match task {completed_task.type} with any full names of tasks."
+            err_message = (
+                f"Сan't match task {completed_task.type} with any full names of tasks."
+            )
             _l.error(err_message)
             return Response(
                 {

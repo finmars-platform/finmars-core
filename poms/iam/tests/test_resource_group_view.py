@@ -163,7 +163,9 @@ class ResourceGroupViewTest(BaseTestCase):
                 )
             ]
         }
-        response = self.client.patch(f"{self.url}{new_group_id}/", data=update_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{new_group_id}/", data=update_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
 
         group_data = response.json()
@@ -192,7 +194,9 @@ class ResourceGroupViewTest(BaseTestCase):
 
         # remove assignment
         update_data = {"assignments": []}
-        response = self.client.patch(f"{self.url}{rg.id}/", data=update_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{rg.id}/", data=update_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 
@@ -225,7 +229,9 @@ class ResourceGroupViewTest(BaseTestCase):
         # remove assignment
         update_data = group_data.copy()
         update_data["assignments"] = []
-        response = self.client.put(f"{self.url}{rg.id}/", data=update_data, format="json")
+        response = self.client.put(
+            f"{self.url}{rg.id}/", data=update_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 
@@ -265,7 +271,9 @@ class ResourceGroupViewTest(BaseTestCase):
             )
         ]
 
-        response = self.client.put(f"{self.url}{rg.id}/", data=group_data, format="json")
+        response = self.client.put(
+            f"{self.url}{rg.id}/", data=group_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 
@@ -305,7 +313,9 @@ class ResourceGroupViewTest(BaseTestCase):
             )
         ]
 
-        response = self.client.patch(f"{self.url}{rg.id}/", data=group_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{rg.id}/", data=group_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
         updated_group_data = response.json()
 

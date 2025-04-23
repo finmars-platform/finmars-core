@@ -59,7 +59,9 @@ class PortfolioClass(AbstractClassModel):
         verbose_name_plural = gettext_lazy("portfolio classes")
 
 
-class PortfolioType(NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel):
+class PortfolioType(
+    NamedModel, FakeDeletableModel, TimeStampedModel, ConfigurationModel
+):
     """
     Meta Entity, part of Finmars Configuration
     Mostly used for extra fragmentation of Reports
@@ -286,12 +288,16 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
 
     @property
     def is_default(self):
-        return self.master_user.portfolio_id == self.id if self.master_user_id else False
+        return (
+            self.master_user.portfolio_id == self.id if self.master_user_id else False
+        )
 
     def save(self, *args, **kwargs):
         self.calculate_first_transactions_dates()
 
-        cache_key = f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
+        cache_key = (
+            f"{self.master_user.space_code}_serialized_report_portfolio_{self.id}"
+        )
         cache.delete(cache_key)
 
         super().save(*args, **kwargs)
@@ -306,7 +312,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             )
             .first()
         )
-        self.first_transaction_date = first_transaction.accounting_date if first_transaction else None
+        self.first_transaction_date = (
+            first_transaction.accounting_date if first_transaction else None
+        )
 
         first_cash_flow_transaction = (
             Transaction.objects.filter(
@@ -321,7 +329,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
             .first()
         )
         self.first_cash_flow_date = (
-            first_cash_flow_transaction.accounting_date if first_cash_flow_transaction else None
+            first_cash_flow_transaction.accounting_date
+            if first_cash_flow_transaction
+            else None
         )
 
         _l.info(
@@ -338,7 +348,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         DEPRECATED: Try to return the 1st accounting date from PortfolioRegisterRecord
         """
         param = f"transaction__{date_field}"
-        return self.portfolioregisterrecord_set.aggregate(models.Min(param))[f"{param}__min"]
+        return self.portfolioregisterrecord_set.aggregate(models.Min(param))[
+            f"{param}__min"
+        ]
 
     def destroy_reconcile_histories(self):
         """
@@ -346,9 +358,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         and has to be removed.
         """
         groups = PortfolioReconcileGroup.objects.filter(portfolios=self)
-        histories = PortfolioReconcileHistory.objects.filter(portfolio_reconcile_group__in=groups).select_related(
-            "file_report"
-        )
+        histories = PortfolioReconcileHistory.objects.filter(
+            portfolio_reconcile_group__in=groups
+        ).select_related("file_report")
         for history in histories:
             if history.file_report:
                 history.file_report.delete()
@@ -358,7 +370,9 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         _l.info(f"destroy_reconcile_histories of portfolio {self.user_code} succeed")
 
 
-class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel):
+class PortfolioRegister(
+    NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateModel
+):
     """
     Portfolio Register
 
@@ -415,11 +429,16 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, Object
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if self.linked_instrument and not self.linked_instrument.has_linked_with_portfolio:
+        if (
+            self.linked_instrument
+            and not self.linked_instrument.has_linked_with_portfolio
+        ):
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
-        bundle, created = PortfolioBundle.objects.using(settings.DB_DEFAULT).get_or_create(
+        bundle, created = PortfolioBundle.objects.using(
+            settings.DB_DEFAULT
+        ).get_or_create(
             master_user=self.master_user,
             user_code=self.user_code,
             defaults=dict(
@@ -428,12 +447,17 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, TimeStampedModel, Object
             ),
         )
         if created:
-            _l.info(f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created")
+            _l.info(
+                f"PortfolioRegister.save - self={self.id} bundle={bundle.id} created"
+            )
             bundle.registers.set([self])
             bundle.save()
 
     def __str__(self):
-        return f"Portfolio Register {self.portfolio.user_code}. " f"Linked Instrument {self.linked_instrument}"
+        return (
+            f"Portfolio Register {self.portfolio.user_code}. "
+            f"Linked Instrument {self.linked_instrument}"
+        )
 
 
 class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
@@ -515,7 +539,9 @@ class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
     # Should be rename to previous record date
     nav_previous_register_record_day_valuation_currency = models.FloatField(
         default=0.0,
-        verbose_name=gettext_lazy("nav previous register record day valuation currency"),
+        verbose_name=gettext_lazy(
+            "nav previous register record day valuation currency"
+        ),
     )
     nav_previous_business_day_valuation_currency = models.FloatField(
         default=0.0,
@@ -587,7 +613,10 @@ class PortfolioRegisterRecord(TimeStampedModel, ComputedModel):
     #     super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.portfolio_register} {self.transaction_date} " f"{self.transaction_class} {self.cash_amount}"
+        return (
+            f"{self.portfolio_register} {self.transaction_date} "
+            f"{self.transaction_class} {self.cash_amount}"
+        )
 
 
 class PortfolioBundle(NamedModel, TimeStampedModel, ObjectStateModel):
@@ -651,7 +680,9 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         max_length=1024,
         unique=True,
         verbose_name=gettext_lazy("user code"),
-        help_text=gettext_lazy("Unique Code for this object. Used in Configuration and Permissions Logic"),
+        help_text=gettext_lazy(
+            "Unique Code for this object. Used in Configuration and Permissions Logic"
+        ),
     )
     date = models.DateField(
         db_index=True,
@@ -873,7 +904,9 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         from poms.reports.common import PerformanceReport
 
         try:
-            portfolio_register = PortfolioRegister.objects.filter(portfolio=self.portfolio)[0]
+            portfolio_register = PortfolioRegister.objects.filter(
+                portfolio=self.portfolio
+            )[0]
 
             instance = PerformanceReport(
                 master_user=self.master_user,
@@ -902,7 +935,9 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         if days_from_first_transaction == 0:
             return 0
 
-        _l.info(f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}")
+        _l.info(
+            f"get_annualized_return.years_from_first_transaction {days_from_first_transaction}"
+        )
 
         annualized_return = round(
             (1 + self.cumulative_return) ** (365 / days_from_first_transaction) - 1,
@@ -927,18 +962,25 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
         nav = 0
         gav = 0
         for item in self.balance_report.items:
-            if item["market_value"] is not None and round(item["position_size"], settings.ROUND_NDIGITS):
+            if item["market_value"] is not None and round(
+                item["position_size"], settings.ROUND_NDIGITS
+            ):
                 nav = nav + item["market_value"]
 
                 if item["market_value"] > 0:
                     gav = gav + item["market_value"]
             else:
-                self.error_message = f'{self.error_message} {item["name"]} has no market_value\n'
+                self.error_message = (
+                    f"{self.error_message} {item['name']} has no market_value\n"
+                )
                 has_nav_error = True
 
         if has_nav_error:
             _l.info("PortfolioHistory.calculate has_nav_error")
-            self.error_message = self.error_message + " NAV is wrong, some positions has no market value\n"
+            self.error_message = (
+                self.error_message
+                + " NAV is wrong, some positions has no market value\n"
+            )
 
         total = 0
         for item in self.pl_report.items:
@@ -946,12 +988,17 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             if item["total"] is not None:
                 total = total + item["total"]
             else:
-                self.error_message = self.error_message + f'{item["name"]} has no total value\n'
+                self.error_message = (
+                    self.error_message + f"{item['name']} has no total value\n"
+                )
                 _l.info("PortfolioHistory.calculate has_total_error")
                 has_total_error = True
 
         if has_total_error:
-            self.error_message = self.error_message + "Total is wrong, some positions has no total value\n"
+            self.error_message = (
+                self.error_message
+                + "Total is wrong, some positions has no total value\n"
+            )
 
         self.nav = nav
         self.gav = gav
@@ -963,7 +1010,9 @@ class PortfolioHistory(NamedModel, TimeStampedModel, ComputedModel):
             try:
                 self.performance_report = performance_report
 
-                self.cumulative_return = round(self.performance_report.grand_return, settings.ROUND_NDIGITS)
+                self.cumulative_return = round(
+                    self.performance_report.grand_return, settings.ROUND_NDIGITS
+                )
                 self.cash_flow = self.performance_report.grand_cash_flow
                 self.cash_inflow = self.performance_report.grand_cash_inflow
                 self.cash_outflow = self.performance_report.grand_cash_outflow
@@ -1035,7 +1084,9 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         max_length=1024,
         unique=True,
         verbose_name=gettext_lazy("user code"),
-        help_text=gettext_lazy("Unique Code for this object. Used in Configuration and Permissions Logic"),
+        help_text=gettext_lazy(
+            "Unique Code for this object. Used in Configuration and Permissions Logic"
+        ),
     )
     date = models.DateField(
         db_index=True,
@@ -1112,12 +1163,16 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
                     "status": "ok",
                     "message": "ok",
                     "diff": 0,
-                    reference_portfolio["portfolio_object"]["user_code"]: reference_size,
+                    reference_portfolio["portfolio_object"][
+                        "user_code"
+                    ]: reference_size,
                     portfolio["portfolio_object"]["user_code"]: position_size,
                 }
                 # Check for discrepancies
                 if position_size != reference_size:
-                    discrepancy = round(abs(reference_size - position_size), round_digits)
+                    discrepancy = round(
+                        abs(reference_size - position_size), round_digits
+                    )
                     equal_with_precision = discrepancy <= precision
 
                     if equal_with_precision:
@@ -1165,7 +1220,9 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             err_msg = f"No Position portfolio in PortfolioReconcileGroup {self.portfolio_reconcile_group.user_code}"
             return self._finish_as_error(err_msg)
 
-        ecosystem_defaults = EcosystemDefault.objects.filter(master_user=self.master_user).first()
+        ecosystem_defaults = EcosystemDefault.objects.filter(
+            master_user=self.master_user
+        ).first()
         report = Report(master_user=self.master_user)
         report.master_user = self.master_user
         report.member = self.owner
@@ -1182,7 +1239,9 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
         reconcile_result = {}
         for item in builder.items:
             if "portfolio_id" not in item:
-                _l.warning(f"calculate: missing 'portfolio_id' key in builder item {item}")
+                _l.warning(
+                    f"calculate: missing 'portfolio_id' key in builder item {item}"
+                )
                 continue
 
             pid = item["portfolio_id"]
@@ -1255,9 +1314,7 @@ class PortfolioReconcileHistory(NamedModel, TimeStampedModel, ComputedModel):
             master_user=self.master_user,
         )
         file_report.master_user = self.master_user
-        file_report.name = (
-            f"Reconciliation report generated by task {task_id} at {current_time} for {self.user_code}"
-        )
+        file_report.name = f"Reconciliation report generated by task {task_id} at {current_time} for {self.user_code}"
         file_report.file_name = file_name
         file_report.type = "reconciliation_report"
         file_report.notes = "System File"

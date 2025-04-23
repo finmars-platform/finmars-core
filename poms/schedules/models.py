@@ -24,7 +24,9 @@ def validate_crontab(value: str) -> None:
         croniter(value, timezone.now())
 
     except Exception as e:
-        raise ValidationError(gettext_lazy(f"Invalid cron string {value} resulted in {repr(e)}")) from e
+        raise ValidationError(
+            gettext_lazy(f"Invalid cron string {value} resulted in {repr(e)}")
+        ) from e
 
 
 class Schedule(NamedModel, ConfigurationModel):
@@ -59,7 +61,9 @@ class Schedule(NamedModel, ConfigurationModel):
         default="",
         validators=[validate_crontab],
         verbose_name=gettext_lazy("cron expr"),
-        help_text=gettext_lazy('Format is "* * * * *" (minute / hour / day_month / month / day_week)'),
+        help_text=gettext_lazy(
+            'Format is "* * * * *" (minute / hour / day_month / month / day_week)'
+        ),
     )
     last_run_at = models.DateTimeField(
         default=timezone.now,
@@ -107,7 +111,9 @@ class Schedule(NamedModel, ConfigurationModel):
     def __str__(self):
         return self.user_code
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
         from poms.schedules.utils import sync_schedules
 
         if self.is_enabled:
@@ -248,7 +254,8 @@ class ScheduleInstance(TimeStampedModel):
         for procedure in self.schedule.procedures.all():
             try:
                 if (
-                    self.status != ScheduleInstance.STATUS_ERROR or self.schedule.error_handler == "continue"
+                    self.status != ScheduleInstance.STATUS_ERROR
+                    or self.schedule.error_handler == "continue"
                 ) and procedure.order == self.current_processing_procedure_number:
                     self.save()
 
