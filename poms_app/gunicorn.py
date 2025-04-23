@@ -42,6 +42,10 @@ def on_starting(server):
         )
         server.log.info(f"Starting: {cmd}")
         os.system(cmd)
+    elif INSTANCE_TYPE == "job":
+        print("I'm job_instance")
+        server.log.info("Starting job instance")
+        os.system("python /var/app/manage.py migrate_all_schemes")
     else:
         print("I'm unknown_instance")
         server.log.info("Unknown instance type")
