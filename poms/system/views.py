@@ -26,7 +26,6 @@ class EcosystemConfigurationViewSet(AbstractModelViewSet):
     filter_class = SchemeFilterSet
 
 
-
 class IsDefaultFilterSet(FilterSet):
     class Meta:
         model = WhitelabelModel
@@ -38,7 +37,6 @@ class WhitelabelViewSet(AbstractModelViewSet):
     serializer_class = WhitelabelSerializer
     pagination_class = None
     filter_class = IsDefaultFilterSet
-
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

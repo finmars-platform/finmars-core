@@ -19,7 +19,7 @@ class SuperUserOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         if request.method.upper() in SAFE_METHODS:
             return True
-        if hasattr(request.user, 'member'):
+        if hasattr(request.user, "member"):
             return request.user.member.is_superuser
         return False
 
@@ -27,7 +27,7 @@ class SuperUserOrReadOnly(BasePermission):
         if request.method.upper() in SAFE_METHODS:
             return True
 
-        if hasattr(request.user, 'member'):
+        if hasattr(request.user, "member"):
             return request.user.member.is_superuser
         return False
 

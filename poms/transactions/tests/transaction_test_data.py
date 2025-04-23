@@ -115,7 +115,7 @@ TRANSACTION_TYPE_DICT = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "transactions.transactiontype",
@@ -247,7 +247,7 @@ TRANSACTION_TYPE_WITH_INPUTS_DICT = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "transactions.transactiontype",
@@ -603,23 +603,20 @@ TRANSACTION_TYPE_RECALCULATE_DICT = {
         "content_type": "transactions.transactiontypegroup",
         "app_label": "transactions",
         "model_name": "transactiontypegroup",
-        "space_code": "space0xheq"
-    }
+        "space_code": "space0xheq",
+    },
 }
 
 RECALCULATE_PAYLOAD = {
     "transaction_type": 34,
-    "recalculate_inputs": [
-        "input_to_recalculate",
-        "input_to_recalculate2"
-    ],
+    "recalculate_inputs": ["input_to_recalculate", "input_to_recalculate2"],
     "process_mode": "recalculate",
     "values": {
         "input1": 5,
         "input2": 5,
         "input_to_recalculate": 10,
-        "input_to_recalculate2": 5
-    }
+        "input_to_recalculate2": 5,
+    },
 }
 
 EXPECTED_COMPLEX_TRANSACTION = {

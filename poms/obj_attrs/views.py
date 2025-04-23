@@ -179,8 +179,6 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         return content_type
 
     def perform_create(self, serializer):
-
-
         # TODO important objects.get_for_model return cached value
         # from public scheme, it can lead to unexpected behavior
         # ContentType.objects.get_for_model(self.target_model)
@@ -242,10 +240,15 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
             instance.target_model_content_type = self.target_model_content_type
             instance.target_model_serializer = self.target_model_serializer
 
-            res = recalculate_attributes.apply_async(kwargs={"instance": instance, 'context': {
-                'space_code': request.space_code,
-                'realm_code': request.realm_code
-            }})
+            res = recalculate_attributes.apply_async(
+                kwargs={
+                    "instance": instance,
+                    "context": {
+                        "space_code": request.space_code,
+                        "realm_code": request.realm_code,
+                    },
+                }
+            )
 
             instance.task_id = res.id
             instance.task_status = res.status

@@ -35,7 +35,9 @@ from poms.reports.sql_builders.helpers import (
     get_report_fx_rate,
     get_transaction_date_filter_for_initial_position_sql_string,
     get_transaction_filter_sql_string,
-    get_where_expression_for_position_consolidation, get_balance_query_with_pl, get_balance_query,
+    get_where_expression_for_position_consolidation,
+    get_balance_query_with_pl,
+    get_balance_query,
 )
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -219,8 +221,6 @@ class BalanceReportBuilderSql:
 
                 ######################################
 
-
-
                 if instance.calculate_pl:
                     query = get_balance_query_with_pl()
                 else:
@@ -323,55 +323,55 @@ class BalanceReportBuilderSql:
                         result_item["account_cash_id"] = item["account_cash_id"]
 
                     if "strategy1_cash_id" not in item:
-                        result_item[
-                            "strategy1_cash_id"
-                        ] = ecosystem_defaults.strategy1_id
+                        result_item["strategy1_cash_id"] = (
+                            ecosystem_defaults.strategy1_id
+                        )
                     else:
                         result_item["strategy1_cash_id"] = item["strategy1_cash_id"]
 
                     if "strategy2_cash_id" not in item:
-                        result_item[
-                            "strategy2_cash_id"
-                        ] = ecosystem_defaults.strategy2_id
+                        result_item["strategy2_cash_id"] = (
+                            ecosystem_defaults.strategy2_id
+                        )
                     else:
                         result_item["strategy2_cash_id"] = item["strategy2_cash_id"]
 
                     if "strategy3_cash_id" not in item:
-                        result_item[
-                            "strategy3_cash_id"
-                        ] = ecosystem_defaults.strategy3_id
+                        result_item["strategy3_cash_id"] = (
+                            ecosystem_defaults.strategy3_id
+                        )
                     else:
                         result_item["strategy3_cash_id"] = item["strategy3_cash_id"]
 
                     if "account_position_id" not in item:
-                        result_item[
-                            "account_position_id"
-                        ] = ecosystem_defaults.account_id
+                        result_item["account_position_id"] = (
+                            ecosystem_defaults.account_id
+                        )
                     else:
                         result_item["account_position_id"] = item["account_position_id"]
 
                     if "strategy1_position_id" not in item:
-                        result_item[
-                            "strategy1_position_id"
-                        ] = ecosystem_defaults.strategy1_id
+                        result_item["strategy1_position_id"] = (
+                            ecosystem_defaults.strategy1_id
+                        )
                     else:
                         result_item["strategy1_position_id"] = item[
                             "strategy1_position_id"
                         ]
 
                     if "strategy2_position_id" not in item:
-                        result_item[
-                            "strategy2_position_id"
-                        ] = ecosystem_defaults.strategy2_id
+                        result_item["strategy2_position_id"] = (
+                            ecosystem_defaults.strategy2_id
+                        )
                     else:
                         result_item["strategy2_position_id"] = item[
                             "strategy2_position_id"
                         ]
 
                     if "strategy3_position_id" not in item:
-                        result_item[
-                            "strategy3_position_id"
-                        ] = ecosystem_defaults.strategy3_id
+                        result_item["strategy3_position_id"] = (
+                            ecosystem_defaults.strategy3_id
+                        )
                     else:
                         result_item["strategy3_position_id"] = item[
                             "strategy3_position_id"
@@ -812,10 +812,16 @@ class BalanceReportBuilderSql:
         _l.debug("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
-        job = group(build.s(task_id=task.id, context={
-            "realm_code": self.instance.master_user.realm_code,
-            "space_code": self.instance.master_user.space_code
-        }) for task in tasks)
+        job = group(
+            build.s(
+                task_id=task.id,
+                context={
+                    "realm_code": self.instance.master_user.realm_code,
+                    "space_code": self.instance.master_user.space_code,
+                },
+            )
+            for task in tasks
+        )
 
         group_result = job.apply_async()
         # Wait for all tasks to finish and get their results
@@ -887,9 +893,7 @@ class BalanceReportBuilderSql:
     def add_data_items_instruments(self, ids):
         self.instance.item_instruments = (
             Instrument.objects.select_related(
-                "owner",
-                "instrument_type",
-                "instrument_type__instrument_class"
+                "owner", "instrument_type", "instrument_type__instrument_class"
             )
             .prefetch_related(
                 "attributes",
@@ -897,23 +901,25 @@ class BalanceReportBuilderSql:
                 "attributes__classifier",
             )
             .defer(
-                   "accrual_calculation_schedules",
+                "accrual_calculation_schedules",
                 "country",
-                   "factor_schedules",
-                    "pricing_policies",
-                    "event_schedules",
+                "factor_schedules",
+                "pricing_policies",
+                "event_schedules",
                 "pricing_currency",
                 "accrued_currency",
                 "daily_pricing_model",
                 "payment_size_detail",
-                   "identifier", "long_underlying_instrument",
-                   "short_underlying_instrument",
-                   "long_underlying_exposure",
-                   "short_underlying_exposure",
-                   "co_directional_exposure_currency",
-                   "counter_directional_exposure_currency",
-                   "files",
-                   "resource_groups")
+                "identifier",
+                "long_underlying_instrument",
+                "short_underlying_instrument",
+                "long_underlying_exposure",
+                "short_underlying_exposure",
+                "co_directional_exposure_currency",
+                "counter_directional_exposure_currency",
+                "files",
+                "resource_groups",
+            )
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
         )
@@ -942,7 +948,15 @@ class BalanceReportBuilderSql:
         self.instance.item_portfolios = (
             Portfolio.objects.select_related("owner")
             .prefetch_related("attributes")
-            .defer("responsibles", "counterparties", "transaction_types", "accounts", "portfolio_type", "resource_groups", "client")
+            .defer(
+                "responsibles",
+                "counterparties",
+                "transaction_types",
+                "accounts",
+                "portfolio_type",
+                "resource_groups",
+                "client",
+            )
             .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
         )
@@ -2822,23 +2836,23 @@ def build(self, task_id, *args, **kwargs):
                     result_item["account_position_id"] = item["account_position_id"]
 
                 if "strategy1_position_id" not in item:
-                    result_item[
-                        "strategy1_position_id"
-                    ] = ecosystem_defaults.strategy1_id
+                    result_item["strategy1_position_id"] = (
+                        ecosystem_defaults.strategy1_id
+                    )
                 else:
                     result_item["strategy1_position_id"] = item["strategy1_position_id"]
 
                 if "strategy2_position_id" not in item:
-                    result_item[
-                        "strategy2_position_id"
-                    ] = ecosystem_defaults.strategy2_id
+                    result_item["strategy2_position_id"] = (
+                        ecosystem_defaults.strategy2_id
+                    )
                 else:
                     result_item["strategy2_position_id"] = item["strategy2_position_id"]
 
                 if "strategy3_position_id" not in item:
-                    result_item[
-                        "strategy3_position_id"
-                    ] = ecosystem_defaults.strategy3_id
+                    result_item["strategy3_position_id"] = (
+                        ecosystem_defaults.strategy3_id
+                    )
                 else:
                     result_item["strategy3_position_id"] = item["strategy3_position_id"]
 

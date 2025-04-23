@@ -52,9 +52,9 @@ class SystemMessageFilterSet(FilterSet):
 
 
 class SystemMessageViewSet(AbstractModelViewSet):
-    queryset = SystemMessage.objects.select_related("master_user", "linked_event").prefetch_related(
-        "comments", "attachments", "members"
-    )
+    queryset = SystemMessage.objects.select_related(
+        "master_user", "linked_event"
+    ).prefetch_related("comments", "attachments", "members")
     serializer_class = SystemMessageSerializer
 
     filter_class = SystemMessageFilterSet
@@ -92,9 +92,13 @@ class SystemMessageViewSet(AbstractModelViewSet):
             queryset = queryset.exclude(title__icontains="Workflow")
 
         if only_new == "true":
-            queryset = queryset.filter(members__is_read=False, members__member=request.user.member)
+            queryset = queryset.filter(
+                members__is_read=False, members__member=request.user.member
+            )
 
-        queryset = queryset.filter(members__is_pinned=False, members__member=request.user.member)
+        queryset = queryset.filter(
+            members__is_pinned=False, members__member=request.user.member
+        )
 
         if msg_type:
             msg_type = msg_type.split(",")
@@ -109,7 +113,9 @@ class SystemMessageViewSet(AbstractModelViewSet):
             queryset = queryset.filter(action_status__in=action_status)
 
         if query:
-            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+            queryset = queryset.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
 
         if ordering:
             queryset = queryset.order_by(ordering)
@@ -187,10 +193,14 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 )
 
             if is_pinned:
-                queryset = queryset.filter(members__is_pinned=True, members__member=member)
+                queryset = queryset.filter(
+                    members__is_pinned=True, members__member=member
+                )
 
             if query:
-                queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+                queryset = queryset.filter(
+                    Q(title__icontains=query) | Q(description__icontains=query)
+                )
 
             if created_before:
                 queryset = queryset.filter(created_at__lte=created_before)
@@ -492,8 +502,6 @@ class SystemMessageViewSet(AbstractModelViewSet):
 
 
 class NotificationViewSet(ViewSet):
-
-
     def list(self, request, *args, **kwargs):
         _l.debug(f"Original request auth: {request.headers.get('Authorization')}")
         response = forward_get_user_notifications(request)
@@ -525,7 +533,9 @@ class NotificationViewSet(ViewSet):
             )
 
         payload = request.data
-        response = forward_partial_update_notification_to_service(user_code, payload, request)
+        response = forward_partial_update_notification_to_service(
+            user_code, payload, request
+        )
         return Response(response, status=status.HTTP_200_OK)
 
 

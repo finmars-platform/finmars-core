@@ -218,7 +218,7 @@ EXPECTED_INSTRUMENT = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "files": [],
     "meta": {
@@ -327,7 +327,7 @@ EXPECTED_INSTRUMENT_TYPE = {
         "display_name": "finmars_bot",
         "is_owner": True,
         "is_admin": True,
-        "user": 1
+        "user": 1,
     },
     "meta": {
         "content_type": "instruments.instrumenttype",

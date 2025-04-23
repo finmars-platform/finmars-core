@@ -27,7 +27,8 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
     )
 
     client_secrets = serializers.PrimaryKeyRelatedField(
-        many=True, read_only=True,
+        many=True,
+        read_only=True,
     )
     client_secrets_object = serializers.PrimaryKeyRelatedField(
         source="client_secrets", many=True, read_only=True
@@ -47,7 +48,6 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
             "telephone",
             "email",
             "notes",
-
             "portfolios",
             "portfolios_object",
             "client_secrets",
@@ -55,10 +55,10 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         ]
         extra_kwargs = {
             "telephone": {
-                "help_text":(
+                "help_text": (
                     "Telephone number of client (symbol '+' is optional, "
                     "length from 5 to 15 digits)"
-                ) 
+                )
             },
             "email": {
                 "help_text": "Email address of client (example email@outlook.com)"
@@ -77,11 +77,14 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         request = self.context.get("request")
         if request and request.method == "GET":
             self.fields["client_secrets_object"] = ClientSecretLightSerializer(
-                source="client_secrets", many=True, read_only=True,
+                source="client_secrets",
+                many=True,
+                read_only=True,
             )
         else:
             self.fields["client_secrets_object"] = ClientSecretLightSerializer(
-                many=True, required=False,
+                many=True,
+                required=False,
             )
 
     def validate_telephone(self, value):
@@ -98,7 +101,7 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         validator(value)
 
         return value
-    
+
     def validate_client_secrets_object(self, value):
         if value is None:
             return
@@ -123,7 +126,9 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
         created_secrets = []
         for secret_obj in client_secrets_obj:
             secret = ClientSecret.objects.create(
-                client=client, owner=client.owner, **secret_obj,
+                client=client,
+                owner=client.owner,
+                **secret_obj,
             )
             created_secrets.append(secret)
 
@@ -163,9 +168,7 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
     master_user = MasterUserField()
 
     client = serializers.SlugRelatedField(
-        slug_field="user_code",
-        queryset=Client.objects.all(),
-        required=True
+        slug_field="user_code", queryset=Client.objects.all(), required=True
     )
     client_object = serializers.PrimaryKeyRelatedField(
         source="client", read_only=True, many=False
@@ -181,7 +184,6 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
             "portfolio",
             "path_to_secret",
             "notes",
-
             "client",
             "client_object",
         ]

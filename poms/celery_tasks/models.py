@@ -237,7 +237,9 @@ class CeleryTask(TimeStampedModel):
             )
 
     def add_attachment(self, file_report_id):
-        CeleryTaskAttachment.objects.create(celery_task=self, file_report_id=file_report_id)
+        CeleryTaskAttachment.objects.create(
+            celery_task=self, file_report_id=file_report_id
+        )
 
     def mark_task_as_finished(self):
         self.finished_at = now()
@@ -252,11 +254,16 @@ class CeleryTask(TimeStampedModel):
         if self.ttl and not self.expiry_at:
             self.expiry_at = self.created_at + timedelta(seconds=self.ttl)
 
-        if CeleryTask.objects.exclude(type__in=["calculate_balance_report", "calculate_pl_report"]).count() > 3000:
+        if (
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).count()
+            > 3000
+        ):
             _l.warning(f"{log} tasks amount > 1000, delete oldest task")
-            CeleryTask.objects.exclude(type__in=["calculate_balance_report", "calculate_pl_report"]).order_by("id")[
-                0
-            ].delete()
+            CeleryTask.objects.exclude(
+                type__in=["calculate_balance_report", "calculate_pl_report"]
+            ).order_by("id")[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):

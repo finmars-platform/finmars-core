@@ -469,11 +469,14 @@ class TransactionImportProcess(object):
 
                 else:
                     item.status = "error"
-                    item.error_message = "%(error_message)s Can't find relation of [%(transaction_type_input)s](value:%(value)s)"  % {
-                        'error_message': item.error_message,
-                        'transaction_type_input': field.transaction_type_input,
-                        'value': value
-                    }
+                    item.error_message = (
+                        "%(error_message)s Can't find relation of [%(transaction_type_input)s](value:%(value)s)"
+                        % {
+                            "error_message": item.error_message,
+                            "transaction_type_input": field.transaction_type_input,
+                            "value": value,
+                        }
+                    )
                     raise BookException(code=400, error_message=item.error_message)
 
             return v
@@ -880,18 +883,18 @@ class TransactionImportProcess(object):
             for scheme_input in self.scheme.inputs.all():
                 ## passing first column from shema page
                 try:
-                    ## functional by FN-2436: Pass None value to Imported Columns expression when 
-                    ## the field is absent but expected in the data received 
-                    # deepcopy raw_item.source item data remains untouched                  
+                    ## functional by FN-2436: Pass None value to Imported Columns expression when
+                    ## the field is absent but expected in the data received
+                    # deepcopy raw_item.source item data remains untouched
                     names = deepcopy(raw_item)
 
                     if scheme_input.name not in names.keys():
                         names[scheme_input.name] = None
 
-                    conversion_item.conversion_inputs[
-                        scheme_input.name
-                    ] = formula.safe_eval(
-                        scheme_input.name_expr, names=names, context=self.context
+                    conversion_item.conversion_inputs[scheme_input.name] = (
+                        formula.safe_eval(
+                            scheme_input.name_expr, names=names, context=self.context
+                        )
                     )
                 except Exception as e:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -931,9 +934,9 @@ class TransactionImportProcess(object):
                 key_column_name = scheme_input.column_name
 
                 try:
-                    preprocess_item.inputs[
-                        scheme_input.name
-                    ] = preprocess_item.conversion_inputs[scheme_input.name]
+                    preprocess_item.inputs[scheme_input.name] = (
+                        preprocess_item.conversion_inputs[scheme_input.name]
+                    )
 
                 except Exception as e:
                     preprocess_item.inputs[scheme_input.name] = None
@@ -1119,7 +1122,9 @@ class TransactionImportProcess(object):
                         # _l.info("Create checkpoint for %s" % index)
 
                         item.status = "skip"
-                        item.message = f"Selector {rule_value} does not match anything in scheme"
+                        item.message = (
+                            f"Selector {rule_value} does not match anything in scheme"
+                        )
                         try:
                             self.book(item, self.default_rule_scenario)
                             # transaction.savepoint_commit(sid)
@@ -1133,7 +1138,9 @@ class TransactionImportProcess(object):
                         # sid = transaction.savepoint()
 
                         item.status = "skip"
-                        item.message = f"Selector {rule_value} does not match anything in scheme"
+                        item.message = (
+                            f"Selector {rule_value} does not match anything in scheme"
+                        )
 
                         self.book(item, self.default_rule_scenario)
 

@@ -10,7 +10,9 @@ class ExplorerDeleteFolderViewTest(CreateUserMemberMixin, BaseTestCase):
         super().setUp()
         self.init_test_case()
 
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/explorer/delete-folder/"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/explorer/delete-folder/"
+        )
 
         self.storage_patch = mock.patch(
             "poms.explorer.views.storage",
@@ -33,4 +35,6 @@ class ExplorerDeleteFolderViewTest(CreateUserMemberMixin, BaseTestCase):
         response = self.client.post(self.url, {"path": path})
         self.assertEqual(response.status_code, 200)
 
-        self.storage_mock.delete_directory.assert_called_with(f"{self.space_code}{path}")
+        self.storage_mock.delete_directory.assert_called_with(
+            f"{self.space_code}{path}"
+        )

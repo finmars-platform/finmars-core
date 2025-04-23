@@ -89,7 +89,7 @@ excluded_to_track_history_models = [
     "reports.balancereportinstance",
     "reports.plreportinstance",
     "reports.transactionreportinstance",
-    "reports.performancereportinstance"
+    "reports.performancereportinstance",
 ]
 
 
@@ -329,25 +329,30 @@ def deepdiff_to_human_readable(diff):
 
     # _l.info(type(diff))
 
-    values_changed = diff.get('values_changed', {})
+    values_changed = diff.get("values_changed", {})
     for key, details in values_changed.items():
-        field_name = key.split('[')[-1].replace("']", "")
+        field_name = key.split("[")[-1].replace("']", "")
 
-
-        if 'execution_log' not in field_name:  # special case for transaction execution log
-            old_value = details['old_value']
-            new_value = details['new_value']
-            messages.append(f"Value for {field_name} changed from {old_value} to {new_value}.")
+        if (
+            "execution_log" not in field_name
+        ):  # special case for transaction execution log
+            old_value = details["old_value"]
+            new_value = details["new_value"]
+            messages.append(
+                f"Value for {field_name} changed from {old_value} to {new_value}."
+            )
 
     # Handling type_changes
-    type_changes = diff.get('type_changes', {})
+    type_changes = diff.get("type_changes", {})
     for key, details in type_changes.items():
-        field_name = key.split('[')[-1].replace("']", "")
-        old_type = details['old_type']
-        new_type = details['new_type']
-        old_value = details['old_value']
-        new_value = details['new_value']
-        messages.append(f"Type for {field_name} changed from {old_type} ({old_value}) to {new_type} ({new_value}).")
+        field_name = key.split("[")[-1].replace("']", "")
+        old_type = details["old_type"]
+        new_type = details["new_type"]
+        old_value = details["old_value"]
+        new_value = details["new_value"]
+        messages.append(
+            f"Type for {field_name} changed from {old_type} ({old_value}) to {new_type} ({new_value})."
+        )
 
     # Similarly, handle other diff types like type_changes, dictionary_item_added, etc.
 
@@ -527,7 +532,9 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
                 if action != HistoricalRecord.ACTION_RECYCLE_BIN:
                     data = get_serialized_data(sender, instance)
-                    diff, notes = get_notes_for_history_record(user_code, content_type, data)
+                    diff, notes = get_notes_for_history_record(
+                        user_code, content_type, data
+                    )
                 else:
                     data = None
                     diff = None
@@ -595,7 +602,6 @@ def post_delete_action(sender, instance):
 
 
 def add_history_listeners(sender, **kwargs):
-
     try:
         # _l.debug("History listener registered Entity %s" % sender)
 
@@ -615,14 +621,20 @@ def add_history_listeners(sender, **kwargs):
 
 
 def record_history():
-
     _l = logging.getLogger("provision")
 
     to_representation_st = time.perf_counter()
 
-    _l.info('record_history %s' % sys.argv)
+    _l.info("record_history %s" % sys.argv)
 
-    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv or 'migrate_all_schemes' in sys.argv or 'clearsessions' in sys.argv or 'collectstatic' in sys.argv:
+    if (
+        "test" in sys.argv
+        or "makemigrations" in sys.argv
+        or "migrate" in sys.argv
+        or "migrate_all_schemes" in sys.argv
+        or "clearsessions" in sys.argv
+        or "collectstatic" in sys.argv
+    ):
         _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
@@ -635,6 +647,7 @@ def record_history():
         "Record History init time: %s"
         % "{:3.3f}".format(time.perf_counter() - to_representation_st)
     )
+
 
 # TODO refactor this code, HISTORY TEMPORARY DISABLED
 # AFTER FULLY MIGRATE TO REALM INFRASTRUCTURE REFACTOR THIS CODE

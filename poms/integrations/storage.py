@@ -8,12 +8,12 @@ from django.utils.functional import LazyObject
 # DEPRECATED, DELETE SOON
 class ImportFileStorage(LazyObject):
     def _setup(self):
-        clazz = get_storage_class(settings.IMPORT_FILE_STORAGE['BACKEND'])
-        kwargs = settings.IMPORT_FILE_STORAGE['KWARGS'] or {}
+        clazz = get_storage_class(settings.IMPORT_FILE_STORAGE["BACKEND"])
+        kwargs = settings.IMPORT_FILE_STORAGE["KWARGS"] or {}
         self._wrapped = clazz(**kwargs)
 
     def deconstruct(self):
-        return 'poms.integrations.storage.ImportFileStorage', [], {}
+        return "poms.integrations.storage.ImportFileStorage", [], {}
 
 
 import_file_storage = ImportFileStorage()
@@ -28,7 +28,7 @@ class ImportConfigStorage(LazyObject):
         # self._wrapped = clazz(**kwargs)
 
     def deconstruct(self):
-        return 'poms.integrations.storage.ImportConfigStorage', [], {}
+        return "poms.integrations.storage.ImportConfigStorage", [], {}
 
 
 import_config_storage = ImportConfigStorage()

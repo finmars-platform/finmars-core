@@ -8,4 +8,3 @@ class PricingConfig(AppConfig):
 
     def ready(self):
         pass
-

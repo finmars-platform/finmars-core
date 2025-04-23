@@ -4,7 +4,6 @@ from poms.users.models import EcosystemDefault, MasterUser
 
 
 class EcosystemDefaultCacheTest(BaseTestCase):
-
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -19,7 +18,7 @@ class EcosystemDefaultCacheTest(BaseTestCase):
         return cache.get(cache_key)
 
     def check_ed_is_not_in_cache(self):
-        ed_cheched = self.get_ed_from_cache() 
+        ed_cheched = self.get_ed_from_cache()
         self.assertIsNone(ed_cheched)
 
     def check_ed_is_in_cache(self):
@@ -83,7 +82,7 @@ class EcosystemDefaultCacheTest(BaseTestCase):
 
     def test__incorrect_pk(self):
         master_users_pk = [ms.pk for ms in MasterUser.objects.all()]
-        if fake_pk:=self.random_int(10, 15) in master_users_pk:
+        if fake_pk := self.random_int(10, 15) in master_users_pk:
             fake_pk = self.random_int(10, 15)
 
         with self.assertRaises(EcosystemDefault.DoesNotExist):

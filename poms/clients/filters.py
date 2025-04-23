@@ -18,9 +18,7 @@ class ClientsFilterSet(FilterSet):
     last_name = CharFilter()
     telephone = CharFilter()
     email = CharFilter()
-    portfolios = CharFilter(
-        field_name="portfolios__user_code", lookup_expr="icontains"
-    )
+    portfolios = CharFilter(field_name="portfolios__user_code", lookup_expr="icontains")
     client_secrets = CharFilter(
         field_name="client_secrets__user_code", lookup_expr="icontains"
     )
@@ -33,9 +31,7 @@ class ClientsFilterSet(FilterSet):
 class ClientSecretFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
-    client = CharFilter(
-        field_name="client__user_code", lookup_expr="icontains"
-    )
+    client = CharFilter(field_name="client__user_code", lookup_expr="icontains")
     provider = CharFilter()
     portfolio = CharFilter()
     path_to_secret = CharFilter()

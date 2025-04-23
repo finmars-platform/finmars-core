@@ -19,15 +19,16 @@ TIMEZONE_COMMON_CHOICES = sorted(list((k, k) for k in pytz.common_timezones))
 
 import logging
 
-_l = logging.getLogger('poms.auth_tokens')
+_l = logging.getLogger("poms.auth_tokens")
 
 
 class AuthToken(TimeStampedModel):
-    '''
-        Probably Deprecated
-        Since Keycloak integration now in no use
+    """
+    Probably Deprecated
+    Since Keycloak integration now in no use
 
-    '''
+    """
+
     key = models.CharField("Key", max_length=40, db_index=True, unique=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -36,10 +37,20 @@ class AuthToken(TimeStampedModel):
         verbose_name="User",
     )
 
-    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'),
-                                            on_delete=models.SET_NULL)
-    current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
-                                       on_delete=models.SET_NULL)
+    current_master_user = models.ForeignKey(
+        MasterUser,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.SET_NULL,
+    )
+    current_member = models.ForeignKey(
+        Member,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("member"),
+        on_delete=models.SET_NULL,
+    )
 
     class Meta:
         verbose_name = "Token"
@@ -55,20 +66,34 @@ class AuthToken(TimeStampedModel):
 
 
 class AccessLevel(models.TextChoices):
-    READ = 'read', 'Read Only'
-    WRITE = 'write', 'Write Access'
-    ADMIN = 'admin', 'Admin Access'
+    READ = "read", "Read Only"
+    WRITE = "write", "Write Access"
+    ADMIN = "admin", "Admin Access"
 
 
 class PersonalAccessToken(NamedModel):
-    master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'),
-                      on_delete=models.CASCADE)
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
-                      related_name='personal_access_tokens',
-                      on_delete=models.SET_NULL)
+    master_user = models.ForeignKey(
+        MasterUser,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    member = models.ForeignKey(
+        Member,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("member"),
+        related_name="personal_access_tokens",
+        on_delete=models.SET_NULL,
+    )
 
-    token = models.TextField()  # Storing the token; consider encrypting this field in production
-    access_level = models.CharField(max_length=10, choices=AccessLevel.choices, default=AccessLevel.READ)
+    token = (
+        models.TextField()
+    )  # Storing the token; consider encrypting this field in production
+    access_level = models.CharField(
+        max_length=10, choices=AccessLevel.choices, default=AccessLevel.READ
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 

@@ -383,7 +383,10 @@ class BalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -645,7 +648,10 @@ class BalanceReportLightViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -824,12 +830,20 @@ class SummaryViewSet(AbstractViewSet):
                 "metrics": {
                     "nav": report_summary.get_nav(portfolio.id),
                     "pl_daily": report_summary.get_total_pl_daily(portfolio.id),
-                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(portfolio.id),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(
+                        portfolio.id
+                    ),
                     "pl_mtd": report_summary.get_total_pl_mtd(portfolio.id),
-                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(portfolio.id),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(
+                        portfolio.id
+                    ),
                     "pl_ytd": report_summary.get_total_pl_ytd(portfolio.id),
-                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(portfolio.id),
-                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(portfolio.id),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(
+                        portfolio.id
+                    ),
+                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(
+                        portfolio.id
+                    ),
                     "pl_inception_to_date_percent": report_summary.get_total_position_return_pl_inception_to_date(
                         portfolio.id
                     ),
@@ -965,7 +979,10 @@ class PLReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("PL Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "PL Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -990,7 +1007,10 @@ class TransactionReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Transaction Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Transaction Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1015,7 +1035,10 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("PriceHistoryCheckerSql done: %s" % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug(
+            "PriceHistoryCheckerSql done: %s"
+            % "{:3.3f}".format(time.perf_counter() - st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1093,7 +1116,6 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serializer_class=BackendBalanceReportGroupsSerializer,
     )
     def groups(self, request, *args, **kwargs):
-
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -1130,7 +1152,10 @@ class BackendBalanceReportViewSet(AbstractViewSet):
 
         response = Response(serializer.data, status=status.HTTP_200_OK)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return response
 
@@ -1175,7 +1200,10 @@ class BackendBalanceReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1201,10 +1229,11 @@ class BackendPLReportViewSet(AbstractViewSet):
 
         settings, unique_key = generate_unique_key(instance, "pnl")
 
-        _l.info(f"BackendPLReportViewSet.groups.unique_key {unique_key} & {instance.pl_first_date}")
+        _l.info(
+            f"BackendPLReportViewSet.groups.unique_key {unique_key} & {instance.pl_first_date}"
+        )
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
@@ -1213,7 +1242,6 @@ class BackendPLReportViewSet(AbstractViewSet):
             _l.debug("PL report if found, take from cache")
 
         except ObjectDoesNotExist as e:
-
             _l.error(repr(e))
 
             builder = PLReportBuilderSql(instance=instance)
@@ -1224,7 +1252,10 @@ class BackendPLReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1249,21 +1280,22 @@ class BackendPLReportViewSet(AbstractViewSet):
         settings, unique_key = generate_unique_key(instance, "pnl")
 
         try:
-
             if instance.ignore_cache:
                 raise ObjectDoesNotExist
 
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)
 
         except ObjectDoesNotExist:
-
             builder = PLReportBuilderSql(instance=instance)
             instance = builder.build_report()
 
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1316,7 +1348,10 @@ class BackendTransactionReportViewSet(AbstractViewSet):
         serialize_report_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug("Balance Report done: %s" % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug(
+            "Balance Report done: %s"
+            % "{:3.3f}".format(time.perf_counter() - serialize_report_st)
+        )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

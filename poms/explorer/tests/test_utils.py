@@ -87,7 +87,9 @@ class TestMoveFolder(BaseTestCase):
         source_folder = "empty_folder"
         destination_folder = "destination/folder"
 
-        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+        for _ in move_dir(
+            self.storage, source_folder, destination_folder, self.celery_task
+        ):
             pass
 
         self.storage.listdir.assert_called_with(source_folder)
@@ -103,7 +105,9 @@ class TestMoveFolder(BaseTestCase):
             ([], []),
         ]
 
-        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+        for _ in move_dir(
+            self.storage, source_folder, destination_folder, self.celery_task
+        ):
             pass
 
         # Assert the recursive move of subdirectories
@@ -127,7 +131,9 @@ class TestMoveFolder(BaseTestCase):
         self.storage.listdir.return_value = ([], ["file1.txt"])
         self.storage.dir_exists.return_value = True
         self.storage.open.return_value.read.return_value = file_content
-        for _ in move_dir(self.storage, source_folder, destination_folder, self.celery_task):
+        for _ in move_dir(
+            self.storage, source_folder, destination_folder, self.celery_task
+        ):
             pass
 
         # Assert the move of files
@@ -181,7 +187,8 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(file.size, size)
 
         self.assertEqual(
-            StorageObject.objects.filter(is_file=False).count(), 2  # root + d1
+            StorageObject.objects.filter(is_file=False).count(),
+            2,  # root + d1
         )
         directory = StorageObject.objects.filter(is_file=False).last()
         self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
@@ -227,7 +234,8 @@ class CreateUpdateFileParentsTest(BaseTestCase):
         self.assertEqual(file.size, size)
 
         self.assertEqual(
-            StorageObject.objects.filter(is_file=False).count(), 2  # root + d1
+            StorageObject.objects.filter(is_file=False).count(),
+            2,  # root + d1
         )
         directory = StorageObject.objects.filter(is_file=False).last()
         self.assertEqual(directory.path, f"{self.space}/d1{DIR_SUFFIX}")
@@ -238,14 +246,13 @@ class CreateUpdateFileParentsTest(BaseTestCase):
 
 
 class ByChunkTest(BaseTestCase):
-
     @BaseTestCase.cases(
-        ("1", [1,2,3,4,5,6,7,8,9,0], 2, 5),
-        ("2", [1,2,3,4,5,6,7,8,9,0], 3, 4),
-        ("3", [1,2,3,4,5,6,7,8,9,0], 4, 3),
-        ("4", [1,2,3,4,5,6,7,8,9,0], 8, 2),
-        ("5", [1,2,3,4,5,6,7,8,9,0], 10, 1),
-        ("6", [1,2,3,4,5,6,7,8,9,0], 1, 10),
+        ("1", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 2, 5),
+        ("2", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 3, 4),
+        ("3", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 4, 3),
+        ("4", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 8, 2),
+        ("5", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 10, 1),
+        ("6", [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], 1, 10),
     )
     def test_chunks(self, items, chunk_size, result):
         count = sum(1 for _ in by_chunk(items, chunk_size))

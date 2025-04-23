@@ -14,8 +14,8 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.group = self.db_data.create_counterparty_group()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/import/finmars-database/company/"
 
     def test__400(self):

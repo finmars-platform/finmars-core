@@ -267,7 +267,7 @@ class KeycloakMiddleware:
         # Record authentication time
         request.keycloak_auth_time = int((time.perf_counter() - auth_start_time) * 1000)
 
-        print('keycloak_auth_time %s' % request.keycloak_auth_time)
+        print("keycloak_auth_time %s" % request.keycloak_auth_time)
 
 
 class LogRequestsMiddleware:
@@ -334,7 +334,6 @@ class ResponseTimeMiddleware(MiddlewareMixin):
         request.start_time = time.time()
         request.request_id = str(uuid.uuid4())
 
-
     def process_response(self, request, response):
         # Check if we have the start_time attribute to calculate the time
         if hasattr(request, "start_time"):
@@ -344,6 +343,7 @@ class ResponseTimeMiddleware(MiddlewareMixin):
             response["X-Worker"] = socket.gethostname()
 
         return response
+
 
 def schema_exists(schema_name):
     with connection.cursor() as cursor:

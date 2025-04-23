@@ -1,4 +1,3 @@
-
 import logging
 from celery import shared_task
 
@@ -8,9 +7,9 @@ from io import StringIO
 
 _l = logging.getLogger("poms.common")
 
+
 @shared_task(bind=True)
 def apply_migration_to_space(self, realm_code, space_code):
-
     with connection.cursor() as cursor:
         cursor.execute(f"SET search_path TO {space_code};")
 
@@ -37,6 +36,6 @@ def apply_migration_to_space(self, realm_code, space_code):
     # TODO szhitenev
     # Add callback to AUthorizer to notify authorizer that backend completed migrations
     # if success:
-        # send status operational
+    # send status operational
     # if error
-        # send status error
+    # send status error
