@@ -46,8 +46,7 @@ test:
 	$(COMPOSE) exec -i $(SERVICE) python manage.py test --keepdb
 
 lint:
-	$(COMPOSE) exec -i $(SERVICE) ruff format poms
-	$(COMPOSE) exec -i $(SERVICE) ruff poms
+	$(COMPOSE) exec -i $(SERVICE) ruff format
 
 up:
 	$(COMPOSE) up --build
