@@ -24,11 +24,12 @@ EXPECTED_RESPONSE_RECORD = {
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class PortfolioRegisterViewSetTest(BaseTestCase):
     databases = "__all__"
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/"
         self.portfolio = self.db_data.portfolios[BIG]
         self.instrument = self.db_data.instruments["Apple"]
@@ -86,8 +87,8 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/calculate-records/"
 
     def test_check_url(self):
@@ -119,8 +120,8 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/portfolios/portfolio-register/calculate-price-history/"
 
     def test_check_url(self):

@@ -107,7 +107,7 @@ router.register(
     "list_layout_light",
 )
 
-#TODO DEPRECATED delete in 1.15.0-rc
+# TODO DEPRECATED delete in 1.15.0-rc
 router.register(
     "portal-interface-access",
     ui.PortalInterfaceAccessViewSet,

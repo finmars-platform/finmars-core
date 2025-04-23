@@ -37,7 +37,9 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
             },
         )
 
-    def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
+    def create_reconcile_history(
+        self, group: PortfolioReconcileGroup
+    ) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -182,7 +184,9 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
 
         file_report = history.generate_json_report(report)
 
-        expected_name = f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        expected_name = (
+            f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        )
         self.assertEqual(file_report.type, "reconciliation_report")
         self.assertEqual(file_report.content_type, "application/json")
         self.assertEqual(file_report.file_name, expected_name)
@@ -209,13 +213,17 @@ class PortfolioReconcileHistoryTest(BaseTestCase):
 
         file_report = history.generate_json_report([])
 
-        expected_name = f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        expected_name = (
+            f"{history.user_code}_{fake_time}_n{history.linked_task_id}.json"
+        )
         self.assertEqual(file_report.type, "reconciliation_report")
         self.assertEqual(file_report.content_type, "application/json")
         self.assertEqual(file_report.file_name, expected_name)
 
         mock_file_report_instance.upload_file.assert_called_once_with(
             file_name=expected_name,
-            text=json.dumps([{"message": "report has no errors"}], indent=4, default=str),
+            text=json.dumps(
+                [{"message": "report has no errors"}], indent=4, default=str
+            ),
             master_user=history.master_user,
         )

@@ -37,7 +37,6 @@ _l = logging.getLogger("poms.reports")
 
 
 class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
@@ -58,8 +57,12 @@ class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
 
 class ReportGenericAttributeSerializer(serializers.ModelSerializer):
-    attribute_type_object = ReportGenericAttributeTypeSerializer(source="attribute_type", read_only=True)
-    classifier_object = GenericClassifierViewSerializer(source="classifier", read_only=True)
+    attribute_type_object = ReportGenericAttributeTypeSerializer(
+        source="attribute_type", read_only=True
+    )
+    classifier_object = GenericClassifierViewSerializer(
+        source="classifier", read_only=True
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
@@ -105,11 +108,15 @@ class ReportPriceHistorySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesSerializer):
+class ReportCurrencySerializer(
+    ModelWithUserCodeSerializer, ModelWithAttributesSerializer
+):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
 
     class Meta:
         model = Currency
@@ -127,7 +134,9 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
 
 
 class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
-    instrument_class_object = InstrumentClassSerializer(source="instrument_class", read_only=True)
+    instrument_class_object = InstrumentClassSerializer(
+        source="instrument_class", read_only=True
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
@@ -170,12 +179,15 @@ class ReportCountrySerializer(ModelMetaSerializer):
         read_only_fields = fields
 
 
-class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
-
+class ReportInstrumentSerializer(
+    ModelWithAttributesSerializer, ModelWithUserCodeSerializer
+):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
 
     class Meta:
         model = Instrument
@@ -219,7 +231,6 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
 
 class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
@@ -236,11 +247,15 @@ class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class ReportPortfolioSerializer(
+    ModelWithAttributesSerializer, ModelWithUserCodeSerializer
+):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
 
     class Meta:
         model = Portfolio
@@ -271,7 +286,11 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
 
 class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
     transaction_details_expr = ExpressionField(
-        max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, allow_null=True, default='""'
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default='""',
     )
 
     def __init__(self, *args, **kwargs):
@@ -293,12 +312,15 @@ class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
         read_only_fields = fields
 
 
-class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
-
+class ReportAccountSerializer(
+    ModelWithAttributesSerializer, ModelWithUserCodeSerializer
+):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
 
     class Meta:
         model = Account
@@ -327,7 +349,6 @@ class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSe
 
 
 class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
@@ -347,7 +368,6 @@ class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
 
 
 class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
@@ -367,7 +387,6 @@ class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
 
 
 class ReportStrategy3Serializer(ModelWithUserCodeSerializer):
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
@@ -391,7 +410,9 @@ class ReportResponsibleSerializer(ResponsibleSerializer):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
 
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
         self.fields.pop("portfolios")
         self.fields.pop("portfolios_object")
         self.fields.pop("is_default")
@@ -402,7 +423,9 @@ class ReportCounterpartySerializer(CounterpartySerializer):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
 
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
         self.fields.pop("portfolios")
         self.fields.pop("portfolios_object")
         self.fields.pop("is_default")
@@ -413,7 +436,9 @@ class ReportComplexTransactionSerializer(ModelWithAttributesSerializer):
         kwargs.setdefault("read_only", True)
         super().__init__(*args, **kwargs)
 
-        self.fields["attributes"] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields["attributes"] = ReportGenericAttributeSerializer(
+            many=True, required=False, allow_null=True
+        )
 
         for k in list(self.fields.keys()):
             if str(k).endswith("_object"):

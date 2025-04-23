@@ -26,7 +26,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     configuration_code_as_path = "/".join(configuration.configuration_code.split("."))
 
     workflows_dir = (
-            master_user.space_code + "/workflows/" + configuration_code_as_path + "/"
+        master_user.space_code + "/workflows/" + configuration_code_as_path + "/"
     )
 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
@@ -46,7 +46,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
 
 
 def export_configuration_to_directory(
-        source_directory, configuration, master_user, member
+    source_directory, configuration, master_user, member
 ):
     try:
         proxy_user = ProxyUser(member, master_user)
@@ -158,7 +158,6 @@ def export_configuration_to_directory(
 
         _l.info("Exported: integrations.instrumentdownloadscheme")
 
-
         _l.info("Going to export: procedures.expressionprocedure")
 
         save_serialized_entity(
@@ -204,28 +203,28 @@ def export_configuration_to_directory(
             configuration.configuration_code,
             source_directory + "/iam/roles",
             context,
-            )
+        )
 
         save_serialized_entity(
             "iam.group",
             configuration.configuration_code,
             source_directory + "/iam/groups",
             context,
-            )
+        )
 
         save_serialized_entity(
             "iam.accesspolicy",
             configuration.configuration_code,
             source_directory + "/iam/access-policies",
             context,
-            )
+        )
 
         save_serialized_entity(
             "iam.resourcegroup",
             configuration.configuration_code,
             source_directory + "/iam/resource-groups",
             context,
-            )
+        )
 
         _l.info("Going to export: obj_attrs.genericattributetype")
 
@@ -571,7 +570,7 @@ def export_configuration_to_directory(
             source_directory + "/ui/layouts/portfolio-type",
             context,
         )
-        
+
         save_serialized_entity_layout(
             "ui.listlayout",
             configuration.configuration_code,
@@ -579,7 +578,7 @@ def export_configuration_to_directory(
             source_directory + "/ui/layouts/portfolio-reconcile-group",
             context,
         )
-        
+
         save_serialized_entity_layout(
             "ui.listlayout",
             configuration.configuration_code,
@@ -788,7 +787,7 @@ def export_configuration_to_directory(
             source_directory + "/ui/form-layouts/transaction",
             context,
         )
-        
+
         save_serialized_entity_layout(
             "ui.editlayout",
             configuration.configuration_code,
@@ -796,7 +795,7 @@ def export_configuration_to_directory(
             source_directory + "/ui/form-layouts/portfolio-type",
             context,
         )
-        
+
         save_serialized_entity_layout(
             "ui.editlayout",
             configuration.configuration_code,
@@ -804,7 +803,7 @@ def export_configuration_to_directory(
             source_directory + "/ui/form-layouts/portfolio-reconcile-group",
             context,
         )
-        
+
         save_serialized_entity_layout(
             "ui.editlayout",
             configuration.configuration_code,

@@ -9,11 +9,17 @@ class PortfolioDefault:
 
     def set_context(self, serializer_field):
         request = serializer_field.context["request"]
-        self._master_user = request.user.master_user if request.user.is_authenticated else None
+        self._master_user = (
+            request.user.master_user if request.user.is_authenticated else None
+        )
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.portfolio if hasattr(self._master_user, "portfolio") else None
+        return (
+            self._master_user.portfolio
+            if hasattr(self._master_user, "portfolio")
+            else None
+        )
 
 
 class PortfolioField(UserCodeOrPrimaryKeyRelatedField):

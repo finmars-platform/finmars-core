@@ -12,17 +12,19 @@ class ComplexImportContentTypeField(SlugRelatedFilteredField):
     filter_backends = []
 
     def __init__(self, **kwargs):
-        kwargs['slug_field'] = 'model'
+        kwargs["slug_field"] = "model"
         super(ComplexImportContentTypeField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
         try:
-            app_label, model = data.split('.')
+            app_label, model = data.split(".")
             return self.get_queryset().get(app_label=app_label, model=model)
         except ObjectDoesNotExist:
-            self.fail('does_not_exist', slug_name=self.slug_field, value=smart_text(data))
+            self.fail(
+                "does_not_exist", slug_name=self.slug_field, value=smart_text(data)
+            )
         except (TypeError, ValueError):
-            self.fail('invalid')
+            self.fail("invalid")
 
     def to_representation(self, obj):
-        return '%s.%s' % (obj.app_label, obj.model)
+        return "%s.%s" % (obj.app_label, obj.model)

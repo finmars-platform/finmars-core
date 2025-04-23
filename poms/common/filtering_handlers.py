@@ -472,7 +472,9 @@ def add_filter(qs, filter_config):
     if isinstance(values, list) and values:
         value = values[0]
 
-    _l.info(f"add_filter: values={values} value={value} value_type={value_type} key={key}")
+    _l.info(
+        f"add_filter: values={values} value={value} value_type={value_type} key={key}"
+    )
 
     # FIELD FILTERS. Uses same filter types as string filter
     if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:

@@ -135,20 +135,21 @@ def daterange(start_date, end_date):
         yield start_date + timedelta(n)
 
 
-def main_export_journal_to_storage(space_code: str, single_date: datetime, storage) -> int:
-    _l.info('single_date %s' % single_date)
+def main_export_journal_to_storage(
+    space_code: str, single_date: datetime, storage
+) -> int:
+    _l.info("single_date %s" % single_date)
     year, month, day = single_date.year, single_date.month, single_date.day
-
 
     records = HistoricalRecord.objects.filter(created_at__date=single_date)
 
-    _l.info('records count %s' % records.count())
+    _l.info("records count %s" % records.count())
 
     if records.exists():
-        data = serialize('json', records)
+        data = serialize("json", records)
         json_file = ContentFile(data.encode("utf-8"))
-        path = space_code + '/.system/journal'
-        file_name = f'{path}/{year}/{month}/{day}.json'
+        path = space_code + "/.system/journal"
+        file_name = f"{path}/{year}/{month}/{day}.json"
 
         storage.save(file_name, json_file)
 
@@ -173,18 +174,24 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
     try:
         date_from = str_to_date(task.options_object.get("date_from"))
     except Exception as e:
-        if not (first_historical_record:= HistoricalRecord.objects.order_by("created_at").first()):
+        if not (
+            first_historical_record := HistoricalRecord.objects.order_by(
+                "created_at"
+            ).first()
+        ):
             _l.info(f"No records found")
             return
 
-    date_from=first_historical_record.created_at.date()
+    date_from = first_historical_record.created_at.date()
     date_to = str_to_date(task.options_object.get("date_to"))
     space_code = task.master_user.space_code
 
     storage = get_storage()
 
-    total = HistoricalRecord.objects.filter(created_at__range=[date_from, date_to]).count()
-    if not  total:
+    total = HistoricalRecord.objects.filter(
+        created_at__range=[date_from, date_to]
+    ).count()
+    if not total:
         result_object = {
             "message": "No records found",
         }
@@ -201,7 +208,7 @@ def export_journal_to_storage(self, task_id, *args, **kwargs):
 
         if export_count:
             count += export_count
-            
+
             task.update_progress(
                 {
                     "current": count,
@@ -231,13 +238,19 @@ def common_export_journal_to_storage(self, *args, **kwargs):
 
     date_to = (datetime.now() - timedelta(days=days)).date()
 
-    if not (first_historical_record:= HistoricalRecord.objects.order_by("created_at").first()):
+    if not (
+        first_historical_record := HistoricalRecord.objects.order_by(
+            "created_at"
+        ).first()
+    ):
         _l.info(f"No records found")
         return
 
-    date_from=first_historical_record.created_at.date()
+    date_from = first_historical_record.created_at.date()
 
-    total = HistoricalRecord.objects.filter(created_at__range=[date_from, date_to]).count()
+    total = HistoricalRecord.objects.filter(
+        created_at__range=[date_from, date_to]
+    ).count()
     if not total:
         _l.info(f"No records found")
         return
@@ -247,7 +260,7 @@ def common_export_journal_to_storage(self, *args, **kwargs):
 
     for single_date in daterange(date_from, date_to):
         export_count = main_export_journal_to_storage(space_code, single_date, storage)
-            
+
         if export_count:
             _l.info(f"Exported {export_count} records from {single_date}")
             count += export_count

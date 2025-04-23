@@ -8,9 +8,9 @@ WARNING = messages.WARNING
 ERROR = messages.ERROR
 
 LEVELS = (
-    (DEBUG, gettext_lazy('debug')),
-    (INFO, gettext_lazy('info')),
-    (SUCCESS, gettext_lazy('success')),
-    (WARNING, gettext_lazy('warning')),
-    (ERROR, gettext_lazy('error')),
+    (DEBUG, gettext_lazy("debug")),
+    (INFO, gettext_lazy("info")),
+    (SUCCESS, gettext_lazy("success")),
+    (WARNING, gettext_lazy("warning")),
+    (ERROR, gettext_lazy("error")),
 )

@@ -25,7 +25,9 @@ class Command(BaseCommand):
         retry_count = 1
 
         while not i.stats() and retry_count < max_retries:
-            _l.info("Waiting for Celery worker(s) try %s/%s..." % (retry_count, max_retries))
+            _l.info(
+                "Waiting for Celery worker(s) try %s/%s..." % (retry_count, max_retries)
+            )
             time.sleep(5)
             retry_count = retry_count + 1
 

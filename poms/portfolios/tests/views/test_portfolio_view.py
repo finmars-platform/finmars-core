@@ -180,17 +180,14 @@ PORTFOLIO_DATA_FULL = {
         "public_name": "test",
         "notes": "test",
         "deleted_user_code": None,
-        "owner": {
-            "id": 1,
-            "username": "finmars_bot"
-        },
+        "owner": {"id": 1, "username": "finmars_bot"},
         "meta": {
             "content_type": "clients.client",
             "app_label": "clients",
             "model_name": "client",
             "space_code": "space00000",
-            "realm_code": "realm00000"
-        }
+            "realm_code": "realm00000",
+        },
     },
 }
 

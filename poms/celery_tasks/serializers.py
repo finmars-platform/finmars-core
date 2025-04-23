@@ -22,11 +22,12 @@ class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
         from poms.file_reports.serializers import FileReportSerializer
 
         super().__init__(*args, **kwargs)
-        self.fields["file_report_object"] = FileReportSerializer(source="file_report", read_only=True)
+        self.fields["file_report_object"] = FileReportSerializer(
+            source="file_report", read_only=True
+        )
 
 
 def _get_result_stats(instance):
-
     if not hasattr(instance.result_object, "get"):
         return {
             "total_count": None,
@@ -43,7 +44,6 @@ def _get_result_stats(instance):
     }
 
     if instance.result_object.get("items") is not None:
-
         for item in instance.result_object["items"]:
             if item["status"] in ["success", "skip", "error"]:
                 key = f"{item['status']}_count"
@@ -100,7 +100,9 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
         from poms.users.serializers import MemberViewSerializer
 
         super().__init__(*args, **kwargs)
-        self.fields["member_object"] = MemberViewSerializer(source="member", read_only=True)
+        self.fields["member_object"] = MemberViewSerializer(
+            source="member", read_only=True
+        )
 
 
 class CeleryTaskLightSerializer(serializers.ModelSerializer):
@@ -142,11 +144,15 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
         from poms.users.serializers import MemberViewSerializer
 
         super().__init__(*args, **kwargs)
-        self.fields["member_object"] = MemberViewSerializer(source="member", read_only=True)
+        self.fields["member_object"] = MemberViewSerializer(
+            source="member", read_only=True
+        )
 
 
 class CeleryTaskUpdateStatusSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=("success", "error", "timeout", "canceled"))
+    status = serializers.ChoiceField(
+        choices=("success", "error", "timeout", "canceled")
+    )
     result = serializers.JSONField(allow_null=True, required=False)
     error = serializers.CharField(allow_null=True, required=False)
 
@@ -156,10 +162,17 @@ class CeleryWorkerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CeleryWorker
-        fields = ["id", "worker_name", "worker_type", "notes", "memory_limit", "queue", "status"]
+        fields = [
+            "id",
+            "worker_name",
+            "worker_type",
+            "notes",
+            "memory_limit",
+            "queue",
+            "status",
+        ]
 
     def get_status(self, instance):
-
         try:
             return json.loads(instance.status)
         except Exception as e:

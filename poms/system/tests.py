@@ -65,7 +65,7 @@ class WhitelabelViewSetTest(BaseTestCase):
             favicon_url="https://example.com/favicon.png",
             custom_css="body { background-color: #aaa; }",
             is_default=is_default,
-            notes="some notes"
+            notes="some notes",
         )
 
     def test__list(self):
@@ -139,7 +139,7 @@ class WhitelabelViewSetTest(BaseTestCase):
                 "favicon.png", self.image_content, content_type="image/png"
             ),
             "custom_css": "body { background-color: #fff; }",
-            "notes": "some notes"
+            "notes": "some notes",
         }
 
     def validate_response(self, response_json, name: str, configuration_code: str):
@@ -174,7 +174,9 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}favicon.png")
 
         response_json = response.json()
-        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
+        self.validate_response(
+            response_json, request_data["name"], request_data["configuration_code"]
+        )
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
@@ -192,7 +194,9 @@ class WhitelabelViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
+        self.validate_response(
+            response_json, request_data["name"], request_data["configuration_code"]
+        )
         # should be old value
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #aaa; }"
@@ -209,7 +213,9 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.json())
 
         response_json = response.json()
-        self.validate_response(response_json, request_data["name"], request_data["configuration_code"])
+        self.validate_response(
+            response_json, request_data["name"], request_data["configuration_code"]
+        )
         self.assertEqual(
             response_json["custom_css"], "body { background-color: #fff; }"
         )
@@ -329,17 +335,15 @@ class WhitelabelViewSetTest(BaseTestCase):
         self.assertEqual(storage_call_args[0][0], f"{STORAGE_PREFIX}зюфьянка 4.png")
 
         response_json = response.json()
+        self.assertEqual(response_json["theme_css_url"], f"{API_PREFIX}/theme%201.css")
+        self.assertEqual(response_json["logo_dark_url"], f"{API_PREFIX}/dark%202.png")
         self.assertEqual(
-            response_json["theme_css_url"], f"{API_PREFIX}/theme%201.css"
+            response_json["logo_light_url"],
+            f"{API_PREFIX}/%D0%BF%D1%8B%D0%B6%D1%8B%D0%B9%203.png",
         )
         self.assertEqual(
-            response_json["logo_dark_url"], f"{API_PREFIX}/dark%202.png"
-        )
-        self.assertEqual(
-            response_json["logo_light_url"], f"{API_PREFIX}/%D0%BF%D1%8B%D0%B6%D1%8B%D0%B9%203.png"
-        )
-        self.assertEqual(
-            response_json["favicon_url"], f"{API_PREFIX}/%D0%B7%D1%8E%D1%84%D1%8C%D1%8F%D0%BD%D0%BA%D0%B0%204.png"
+            response_json["favicon_url"],
+            f"{API_PREFIX}/%D0%B7%D1%8E%D1%84%D1%8C%D1%8F%D0%BD%D0%BA%D0%B0%204.png",
         )
 
     @BaseTestCase.cases(
@@ -401,7 +405,8 @@ class WhitelabelViewSetTest(BaseTestCase):
         request_data = {
             "company_name": "BAD extension",
             "logo_dark_image": SimpleUploadedFile(
-                "dark 2.txt", self.image_content,
+                "dark 2.txt",
+                self.image_content,
                 content_type="image/png",
             ),
         }

@@ -71,7 +71,9 @@ class CurrencySerializer(
 
         from poms.instruments.serializers import CountrySerializer
 
-        self.fields["country_object"] = CountrySerializer(source="country", read_only=True)
+        self.fields["country_object"] = CountrySerializer(
+            source="country", read_only=True
+        )
 
     def create(self, validated_data):
         pricing_policies = validated_data.pop("pricing_policies", None)
@@ -149,7 +151,9 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
     currency = CurrencyField()
     currency_object = CurrencyViewSerializer(source="currency", read_only=True)
     pricing_policy = PricingPolicyField(allow_null=False)
-    pricing_policy_object = serializers.PrimaryKeyRelatedField(source="pricing_policy", read_only=True)
+    pricing_policy_object = serializers.PrimaryKeyRelatedField(
+        source="pricing_policy", read_only=True
+    )
     fx_rate = FloatEvalField()
     procedure_modified_datetime = ReadOnlyField()
 
@@ -173,7 +177,9 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
 
         super().__init__(*args, **kwargs)
 
-        self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(source="pricing_policy", read_only=True)
+        self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(
+            source="pricing_policy", read_only=True
+        )
 
     def get_unique_together_validators(self):
         return []
@@ -202,7 +208,10 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             section="prices",
             type="success",
             title="New FX rate (manual)",
-            description=(f"{instance.currency.user_code} {str(instance.date)} " f"{str(instance.fx_rate)}",),
+            description=(
+                f"{instance.currency.user_code} {str(instance.date)} "
+                f"{str(instance.fx_rate)}",
+            ),
         )
 
         return instance

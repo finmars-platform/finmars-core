@@ -392,7 +392,7 @@ class BalanceReport(models.Model):
                 "key": "mismatch_account",
                 "name": "Mismatch Account",
                 "value_type": "field",
-            }
+            },
             # endregion Balance report mismatch attributes
         ]
 
@@ -415,35 +415,15 @@ class PLReport(models.Model):
         Returns attributes that front end uses
         """
         return [
-            {
-                "key": "name",
-                "name": "Name",
-                "value_type": 10
-            },
-            {
-                "key": "short_name",
-                "name": "Short name",
-                "value_type": 10
-            },
-            {
-                "key": "user_code",
-                "name": "User code",
-                "value_type": 10
-            },
-            {
-                "key": "item_type_name",
-                "name": "Item Type",
-                "value_type": 10
-            },
-            {
-                "key": "position_size",
-                "name": "Position size",
-                "value_type": 20
-            },
+            {"key": "name", "name": "Name", "value_type": 10},
+            {"key": "short_name", "name": "Short name", "value_type": 10},
+            {"key": "user_code", "name": "User code", "value_type": 10},
+            {"key": "item_type_name", "name": "Item Type", "value_type": 10},
+            {"key": "position_size", "name": "Position size", "value_type": 20},
             {
                 "key": "nominal_position_size",
                 "name": "Nominal Position size",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "pricing_currency",
@@ -451,72 +431,48 @@ class PLReport(models.Model):
                 "value_content_type": "currencies.currency",
                 "value_entity": "currency",
                 "code": "user_code",
-                "value_type": "field"
+                "value_type": "field",
             },
             {
                 "key": "instrument_pricing_currency_fx_rate",
                 "name": "Pricing currency fx rate",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_accrued_currency_fx_rate",
                 "name": "Accrued currency FX rate",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_accrual_object_accrual_size",
                 "name": "Current Payment Size",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_accrual_object_periodicity_object_name",
                 "name": "Current Payment Frequency",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_accrual_object_periodicity_n",
                 "name": "Current Payment Periodicity N",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "date",
-                "name": "Date",
-                "value_type": 40
-            },
-            {
-                "key": "ytm",
-                "name": "YTM",
-                "value_type": 20
-            },
-            {
-                "key": "ytm_at_cost",
-                "name": "YTM at cost",
-                "value_type": 20
-            },
-            {
-                "key": "modified_duration",
-                "name": "Modified duration",
-                "value_type": 20
-            },
-            {
-                "key": "last_notes",
-                "name": "Last notes",
-                "value_type": 10
-            },
-            {
-                "key": "mismatch",
-                "name": "Mismatch",
-                "value_type": 20
-            },
+            {"key": "date", "name": "Date", "value_type": 40},
+            {"key": "ytm", "name": "YTM", "value_type": 20},
+            {"key": "ytm_at_cost", "name": "YTM at cost", "value_type": 20},
+            {"key": "modified_duration", "name": "Modified duration", "value_type": 20},
+            {"key": "last_notes", "name": "Last notes", "value_type": 10},
+            {"key": "mismatch", "name": "Mismatch", "value_type": 20},
             {
                 "key": "gross_cost_price_loc",
                 "name": "Gross cost price (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "net_cost_price_loc",
                 "name": "Net cost price (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "currency",
@@ -524,280 +480,160 @@ class PLReport(models.Model):
                 "value_content_type": "currencies.currency",
                 "value_entity": "currency",
                 "code": "user_code",
-                "value_type": "field"
+                "value_type": "field",
             },
-            {
-                "key": "market_value",
-                "name": "Market value",
-                "value_type": 20
-            },
+            {"key": "market_value", "name": "Market value", "value_type": 20},
             {
                 "key": "market_value_loc",
                 "name": "Market value (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "market_value_percent",
-                "name": "Market value %",
-                "value_type": 20
-            },
-            {
-                "key": "exposure",
-                "name": "Exposure",
-                "value_type": 20
-            },
-            {
-                "key": "exposure_percent",
-                "name": "Exposure %",
-                "value_type": 20
-            },
+            {"key": "market_value_percent", "name": "Market value %", "value_type": 20},
+            {"key": "exposure", "name": "Exposure", "value_type": 20},
+            {"key": "exposure_percent", "name": "Exposure %", "value_type": 20},
             {
                 "key": "exposure_loc",
                 "name": "Exposure (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_principal_price",
                 "name": "Current Price",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "instrument_accrued_price",
                 "name": "Current Accrued",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "instrument_factor",
-                "name": "Factor",
-                "value_type": 20
-            },
-            {
-                "key": "detail",
-                "name": "Transaction Detail",
-                "value_type": 10
-            },
+            {"key": "instrument_factor", "name": "Factor", "value_type": 20},
+            {"key": "detail", "name": "Transaction Detail", "value_type": 10},
             # region Pl report performance attributes
-            {
-                "key": "item_group_name",
-                "name": "Group Name",
-                "value_type": 10
-            },
-            {
-                "key": "item_subtype_name",
-                "name": "Subtype Name",
-                "value_type": 10
-            },
+            {"key": "item_group_name", "name": "Group Name", "value_type": 10},
+            {"key": "item_subtype_name", "name": "Subtype Name", "value_type": 10},
             # region This models needed to facilitate linking to report dates
-            {
-                "key": "pl_first_date",
-                "name": "Date-from",
-                "value_type": 40
-            },
-            {
-                "key": "report_date",
-                "name": "Date-to",
-                "value_type": 40
-            },
+            {"key": "pl_first_date", "name": "Date-from", "value_type": 40},
+            {"key": "report_date", "name": "Date-to", "value_type": 40},
             # endregion This models needed to facilitate linking to report dates
             {
                 "key": "net_position_return",
                 "name": "Net position return",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "net_position_return_loc",
                 "name": "Net position return (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
             {
                 "key": "net_position_return_fixed",
                 "name": "Net position return fixed",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "net_position_return_fixed_loc",
                 "name": "Net position return Fixed (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
-            {
-                "key": "time_invested",
-                "name": "Time invested",
-                "value_type": 20
-            },
-            {
-                "key": "position_return",
-                "name": "Position return",
-                "value_type": 20
-            },
+            {"key": "time_invested", "name": "Time invested", "value_type": 20},
+            {"key": "position_return", "name": "Position return", "value_type": 20},
             {
                 "key": "position_return_loc",
                 "name": "Position return (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
             {
                 "key": "position_return_fixed",
                 "name": "Position Return Fixed",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "position_return_fixed_loc",
                 "name": "Position Return Fixed (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
             {
                 "key": "daily_price_change",
                 "name": "Daily price change",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "mtd_price_change",
-                "name": "MTD price change",
-                "value_type": 20
-            },
-            {
-                "key": "principal_fx",
-                "name": "Principal FX",
-                "value_type": 20
-            },
+            {"key": "mtd_price_change", "name": "MTD price change", "value_type": 20},
+            {"key": "principal_fx", "name": "Principal FX", "value_type": 20},
             {
                 "key": "principal_fx_loc",
                 "name": "Principal FX (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "principal_fixed",
-                "name": "Principal fixed",
-                "value_type": 20
-            },
+            {"key": "principal_fixed", "name": "Principal fixed", "value_type": 20},
             {
                 "key": "principal_fixed_loc",
                 "name": "Principal fixed (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
-            {
-                "key": "carry_fx",
-                "name": "Carry FX",
-                "value_type": 20
-            },
+            {"key": "carry_fx", "name": "Carry FX", "value_type": 20},
             {
                 "key": "carry_fx_loc",
                 "name": "Carry FX (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "carry_fixed",
-                "name": "Carry fixed",
-                "value_type": 20
-            },
+            {"key": "carry_fixed", "name": "Carry fixed", "value_type": 20},
             {
                 "key": "carry_fixed_loc",
                 "name": "Carry fixed (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
-            {
-                "key": "overheads_fx",
-                "name": "Overheads FX",
-                "value_type": 20
-            },
+            {"key": "overheads_fx", "name": "Overheads FX", "value_type": 20},
             {
                 "key": "overheads_fx_loc",
                 "name": "Overheads FX (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "overheads_fixed",
-                "name": "Overheads fixed",
-                "value_type": 20
-            },
+            {"key": "overheads_fixed", "name": "Overheads fixed", "value_type": 20},
             {
                 "key": "overheads_fixed_loc",
                 "name": "Overheads fixed (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "principal",
-                "name": "Principal",
-                "value_type": 20
-            },
-            {
-                "key": "carry",
-                "name": "Carry",
-                "value_type": 20
-            },
-            {
-                "key": "overheads",
-                "name": "Overheads",
-                "value_type": 20
-            },
-            {
-                "key": "total",
-                "name": "Total",
-                "value_type": 20
-            },
+            {"key": "principal", "name": "Principal", "value_type": 20},
+            {"key": "carry", "name": "Carry", "value_type": 20},
+            {"key": "overheads", "name": "Overheads", "value_type": 20},
+            {"key": "total", "name": "Total", "value_type": 20},
             {
                 "key": "principal_loc",
                 "name": "Principal (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "carry_loc",
-                "name": "Carry (Pricing Currency)",
-                "value_type": 20
-            },
+            {"key": "carry_loc", "name": "Carry (Pricing Currency)", "value_type": 20},
             {
                 "key": "overheads_loc",
                 "name": "Overheads (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-            {
-                "key": "total_loc",
-                "name": "Total (Pricing Currency)",
-                "value_type": 20
-            },
-
-            {
-                "key": "total_fx",
-                "name": "Total FX",
-                "value_type": 20
-            },
+            {"key": "total_loc", "name": "Total (Pricing Currency)", "value_type": 20},
+            {"key": "total_fx", "name": "Total FX", "value_type": 20},
             {
                 "key": "total_fx_loc",
                 "name": "Total FX (Pricing Currency)",
-                "value_type": 20
+                "value_type": 20,
             },
-
-            {
-                "key": "total_fixed",
-                "name": "Total fixed",
-                "value_type": 20
-            },
+            {"key": "total_fixed", "name": "Total fixed", "value_type": 20},
             # endregion Pl report performance attributes
             # region Pl report mismatch attributes
-            {
-                "key": "mismatch",
-                "name": "Mismatch",
-                "value_type": 20
-            },
+            {"key": "mismatch", "name": "Mismatch", "value_type": 20},
             {
                 "key": "mismatch_portfolio",
                 "name": "Mismatch Portfolio",
                 "value_content_type": "portfolios.portfolio",
                 "value_entity": "portfolio",
-                "value_type": "field"
+                "value_type": "field",
             },
             {
                 "key": "mismatch_account",
                 "name": "Mismatch Account",
                 "value_content_type": "accounts.account",
                 "value_entity": "account",
-                "value_type": "field"
-            }
+                "value_type": "field",
+            },
             # endregion Pl report mismatch attributes
         ]
 
@@ -968,7 +804,6 @@ class TransactionReport(models.Model):
 
 
 class BalanceReportInstance(TimeStampedModel, NamedModel):
-
     unique_key = models.CharField(
         max_length=32,
         unique=True,
@@ -981,9 +816,7 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
 
     settings = models.TextField(
         verbose_name=gettext_lazy("settings"),
-        help_text=gettext_lazy(
-            "Settings"
-        ),
+        help_text=gettext_lazy("Settings"),
     )
 
     master_user = models.ForeignKey(
@@ -995,7 +828,7 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='balance_report_instances_as_member'
+        related_name="balance_report_instances_as_member",
     )
     report_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("report date")
@@ -1049,7 +882,6 @@ class BalanceReportInstance(TimeStampedModel, NamedModel):
 
 
 class PLReportInstance(TimeStampedModel, NamedModel):
-
     unique_key = models.CharField(
         max_length=32,
         unique=True,
@@ -1062,9 +894,7 @@ class PLReportInstance(TimeStampedModel, NamedModel):
 
     settings = models.TextField(
         verbose_name=gettext_lazy("settings"),
-        help_text=gettext_lazy(
-            "Settings"
-        ),
+        help_text=gettext_lazy("Settings"),
     )
 
     master_user = models.ForeignKey(
@@ -1076,7 +906,7 @@ class PLReportInstance(TimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='pl_report_instances_as_member'
+        related_name="pl_report_instances_as_member",
     )
     report_date = models.DateField(
         db_index=True,
@@ -1141,7 +971,7 @@ class TransactionReportInstance(TimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='transaction_report_instances_as_member'
+        related_name="transaction_report_instances_as_member",
     )
     begin_date = models.DateField(
         db_index=True,
@@ -1190,7 +1020,7 @@ class PerformanceReportInstance(TimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='performance_report_instances_as_member'
+        related_name="performance_report_instances_as_member",
     )
     begin_date = models.DateField(
         db_index=True, verbose_name=gettext_lazy("begin date")
@@ -1447,7 +1277,9 @@ class ReportSummary:
         self.portfolio_user_codes = []
 
         self.portfolio_ids.extend(portfolio.id for portfolio in self.portfolios)
-        self.portfolio_user_codes.extend(portfolio.user_code for portfolio in self.portfolios)
+        self.portfolio_user_codes.extend(
+            portfolio.user_code for portfolio in self.portfolios
+        )
 
     def build_balance(self):
         st = time.perf_counter()
@@ -1491,7 +1323,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1515,7 +1347,7 @@ class ReportSummary:
 
         pl_first_date = get_last_business_day(self.date_to - timedelta(days=1))
 
-        _l.debug('build_pl_daily %s' % pl_first_date)
+        _l.debug("build_pl_daily %s" % pl_first_date)
 
         serializer = PLReportSerializer(
             data={
@@ -1525,7 +1357,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1541,30 +1373,33 @@ class ReportSummary:
             "ReportSummary.build_pl_daily done: %s"
             % "{:3.3f}".format(time.perf_counter() - st)
         )
+
     @property
     def pl_first_date_for_mtd(self):
-
         # If self.date_to is the first day of the month, we subtract one day to get the last day of the previous month.
         # Otherwise, we set the date to the last day of the previous month.
         if self.date_to.day == 1:
             last_day_of_prev_month = self.date_to - timedelta(days=1)
         else:
             # Subtract enough days to get to the first day of the current month and then subtract one more day
-            last_day_of_prev_month = self.date_to - timedelta(days=self.date_to.day-1) - timedelta(days=1)
+            last_day_of_prev_month = (
+                self.date_to - timedelta(days=self.date_to.day - 1) - timedelta(days=1)
+            )
 
         # Check if it's a weekend and adjust accordingly
-        while last_day_of_prev_month.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        while (
+            last_day_of_prev_month.weekday() > 4
+        ):  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
             last_day_of_prev_month -= timedelta(days=1)
 
-        return last_day_of_prev_month.strftime('%Y-%m-%d')
+        return last_day_of_prev_month.strftime("%Y-%m-%d")
 
     def build_pl_mtd(self):
         st = time.perf_counter()
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.debug('pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
-
+        _l.debug("pl_first_date_for_mtd %s" % self.pl_first_date_for_mtd)
 
         serializer = PLReportSerializer(
             data={
@@ -1574,7 +1409,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1598,26 +1433,29 @@ class ReportSummary:
 
     @property
     def pl_first_date_for_ytd(self):
-
         # If self.date_to is January 1st, we subtract one day to get the last day of the previous year.
         # Otherwise, we set the date to December 31st of the previous year.
         if self.date_to.month == 1 and self.date_to.day == 1:
             last_day_of_prev_year = self.date_to - timedelta(days=1)
         else:
-            last_day_of_prev_year = self.date_to.replace(year=self.date_to.year-1, month=12, day=31)
+            last_day_of_prev_year = self.date_to.replace(
+                year=self.date_to.year - 1, month=12, day=31
+            )
 
         # Check if it's a weekend or holiday and adjust accordingly
-        while last_day_of_prev_year.weekday() > 4:  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        while (
+            last_day_of_prev_year.weekday() > 4
+        ):  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
             last_day_of_prev_year -= timedelta(days=1)
 
-        return last_day_of_prev_year.strftime('%Y-%m-%d')
+        return last_day_of_prev_year.strftime("%Y-%m-%d")
 
     def build_pl_ytd(self):
         st = time.perf_counter()
 
         from poms.reports.serializers import PLReportSerializer
 
-        _l.debug('pl_first_date_for_ytd %s' % self.pl_first_date_for_ytd)
+        _l.debug("pl_first_date_for_ytd %s" % self.pl_first_date_for_ytd)
 
         serializer = PLReportSerializer(
             data={
@@ -1627,7 +1465,7 @@ class ReportSummary:
                 "report_currency": self.currency.id,
                 "portfolios": self.portfolio_ids,
                 "cost_method": CostMethod.AVCO,
-                "allocation_mode": self.allocation_mode
+                "allocation_mode": self.allocation_mode,
             },
             context=self.context,
         )
@@ -1695,11 +1533,11 @@ class ReportSummary:
 
         for item in self.pl_report_range.items:
             if (
-                    portfolio_id
-                    and item["portfolio_id"] == portfolio_id
-                    and item["total"]
-                    or not portfolio_id
-                    and item["total"]
+                portfolio_id
+                and item["portfolio_id"] == portfolio_id
+                and item["total"]
+                or not portfolio_id
+                and item["total"]
             ):
                 total = total + item["total"]
 
@@ -1860,68 +1698,81 @@ class ReportSummary:
 
         return position_return
 
-
     def get_daily_performance(self):
-
         from poms.reports.serializers import PerformanceReportSerializer
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "days",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": get_last_business_day(self.date_to - timedelta(days=1)),
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "days",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         from poms.reports.performance_report import PerformanceReportBuilder
+
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
         return performance_report.grand_return
 
     def get_mtd_performance(self):
-
         from poms.reports.serializers import PerformanceReportSerializer
 
-        _l.debug('get_mtd_performance self.pl_first_date_for_mtd %s' % self.pl_first_date_for_mtd)
+        _l.debug(
+            "get_mtd_performance self.pl_first_date_for_mtd %s"
+            % self.pl_first_date_for_mtd
+        )
 
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": self.pl_first_date_for_mtd,
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "months",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": self.pl_first_date_for_mtd,
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "months",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         from poms.reports.performance_report import PerformanceReportBuilder
+
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
         return performance_report.grand_return
 
     def get_ytd_performance(self):
-
         from poms.reports.serializers import PerformanceReportSerializer
-        serializer = PerformanceReportSerializer(data={
-            "begin_date": self.pl_first_date_for_ytd,
-            "end_date": self.date_to,
-            "calculation_type": "time_weighted",
-            "segmentation_type": "months",
-            "registers": self.portfolio_user_codes,
-            "report_currency": self.currency.user_code,
-        }, context=self.context)
+
+        serializer = PerformanceReportSerializer(
+            data={
+                "begin_date": self.pl_first_date_for_ytd,
+                "end_date": self.date_to,
+                "calculation_type": "time_weighted",
+                "segmentation_type": "months",
+                "registers": self.portfolio_user_codes,
+                "report_currency": self.currency.user_code,
+            },
+            context=self.context,
+        )
 
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         from poms.reports.performance_report import PerformanceReportBuilder
+
         builder = PerformanceReportBuilder(instance=instance)
         performance_report = builder.build_report()
 
@@ -1982,11 +1833,10 @@ class ReportSummaryInstance(TimeStampedModel, NamedModel):
         Member,
         verbose_name=gettext_lazy("member"),
         on_delete=models.CASCADE,
-        related_name='report_summary_instances_as_member'
+        related_name="report_summary_instances_as_member",
     )
     date_from = models.DateField(
-        null=True,
-        db_index=True, verbose_name=gettext_lazy("date from")
+        null=True, db_index=True, verbose_name=gettext_lazy("date from")
     )
     date_to = models.DateField(
         null=True,

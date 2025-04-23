@@ -9,5 +9,7 @@ class NotificationMiddleware(object):
             # patch_vary_headers(response, ['Notification-Unread-Count'])
             val = request.COOKIES.get("notification_unread_count")
             if val != new_val:
-                response.set_cookie("notification_unread_count", value=new_val, max_age=60)
+                response.set_cookie(
+                    "notification_unread_count", value=new_val, max_age=60
+                )
         return response

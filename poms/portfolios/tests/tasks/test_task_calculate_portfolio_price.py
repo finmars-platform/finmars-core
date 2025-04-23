@@ -83,7 +83,7 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
         options = {
             "date_from": self.yesterday().strftime(settings.API_DATE_FORMAT),
             "date_to": self.today().strftime(settings.API_DATE_FORMAT),
-            "portfolios": [self.random_string(5)]
+            "portfolios": [self.random_string(5)],
         }
         celery_task = self.create_celery_task(options=options)
 
@@ -99,7 +99,7 @@ class CalculatePortfolioRegisterPriceHistoryTest(BaseTestCase):
         options = {
             "date_from": self.yesterday().strftime(settings.API_DATE_FORMAT),
             "date_to": self.today().strftime(settings.API_DATE_FORMAT),
-            "portfolios": [self.user_code]
+            "portfolios": [self.user_code],
         }
         celery_task = self.create_celery_task(options=options)
 

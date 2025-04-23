@@ -16,7 +16,12 @@ from django.utils import numberformat
 from dateutil import relativedelta
 from pandas.tseries.offsets import BDay, BMonthEnd, BQuarterEnd, BYearEnd
 
-from poms.common.utils import date_now, get_list_of_dates_between_two_dates, isclose, calculate_period_date
+from poms.common.utils import (
+    date_now,
+    get_list_of_dates_between_two_dates,
+    isclose,
+    calculate_period_date,
+)
 from poms.expressions_engine.exceptions import ExpressionEvalError, InvalidExpression
 
 _l = logging.getLogger("poms.formula")
@@ -166,6 +171,7 @@ def _add_days(date, days):
     if not isinstance(days, datetime.timedelta):
         days = datetime.timedelta(days=int(days))
     return date + days
+
 
 def _days_diff(date_1, date_2):
     """
@@ -2607,9 +2613,9 @@ def _safe_get_instrument(evaluator, instrument, identifier_key=None):
             raise ExpressionEvalError() from e
 
         context[("_instrument_get_accrued_price", instrument.pk, None)] = instrument
-        context[
-            ("_instrument_get_accrued_price", None, instrument.user_code)
-        ] = instrument
+        context[("_instrument_get_accrued_price", None, instrument.user_code)] = (
+            instrument
+        )
 
     return instrument
 
@@ -5050,7 +5056,9 @@ def _get_issuer_country_of_ccy(evaluator, currency):
 
         from poms.instruments.serializers import CountrySerializer
 
-        return CountrySerializer(instance=currency.country, context=evaluator.context).data
+        return CountrySerializer(
+            instance=currency.country, context=evaluator.context
+        ).data
 
     except Exception:
         return None

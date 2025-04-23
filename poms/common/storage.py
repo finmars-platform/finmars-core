@@ -399,9 +399,10 @@ class FinmarsAzureStorage(FinmarsStorageFileObjMixin, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                with open(local_path, "wb") as local_file, self.open(
-                    blob.name
-                ) as download_stream:
+                with (
+                    open(local_path, "wb") as local_file,
+                    self.open(blob.name) as download_stream,
+                ):
                     local_file.write(download_stream.read())
 
     def download_directory_as_zip(self, directory_path):
@@ -422,9 +423,10 @@ class FinmarsAzureStorage(FinmarsStorageFileObjMixin, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                with open(local_path, "wb") as local_file, self.open(
-                    blob.name
-                ) as download_stream:
+                with (
+                    open(local_path, "wb") as local_file,
+                    self.open(blob.name) as download_stream,
+                ):
                     local_file.write(download_stream.read())
 
         # Create a zip archive of the temporary local directory
@@ -507,9 +509,10 @@ class FinmarsS3Storage(FinmarsStorageFileObjMixin, S3Boto3Storage):
                     temp_dir, os.path.relpath(obj.key, directory_path)
                 )
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                with open(local_path, "wb") as local_file, self.open(
-                    obj.key
-                ) as s3_file:
+                with (
+                    open(local_path, "wb") as local_file,
+                    self.open(obj.key) as s3_file,
+                ):
                     local_file.write(s3_file.read())
 
         # Create a zip archive of the temporary local directory
