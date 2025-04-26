@@ -1,5 +1,6 @@
 from django.apps import AppConfig
-#DEPRECATED
+# DEPRECATED
+
 
 class ConfigurationSharingConfig(AppConfig):
-    name = 'poms.configuration_sharing'
+    name = "poms.configuration_sharing"

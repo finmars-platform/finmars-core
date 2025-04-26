@@ -4,8 +4,8 @@ from django.utils.translation import gettext_lazy
 
 
 class PhoneNumberValidator(object):
-    code = 'invalid'
-    message = gettext_lazy('Enter a valid phone number.')
+    code = "invalid"
+    message = gettext_lazy("Enter a valid phone number.")
 
     def __init__(self):
         pass
@@ -13,6 +13,7 @@ class PhoneNumberValidator(object):
     def __call__(self, value):
         # raise ValidationError(self.message, code=self.code)
         return True
+
 
 # class UserCodeUniqueValidator(UniqueTogetherValidator):
 #     def __init__(self, *args, **kwargs):

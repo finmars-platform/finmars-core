@@ -9,7 +9,9 @@ class EcosystemDefaultViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/users/ecosystem-default/"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/users/ecosystem-default/"
+        )
 
     def test__list(self):
         response = self.client.get(path=self.url)

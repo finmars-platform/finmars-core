@@ -38,12 +38,16 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
         operation = super().get_operation(operation_keys)
 
-        splitted_dash_operation_keys = [word for item in operation_keys for word in item.split("-")]
+        splitted_dash_operation_keys = [
+            word for item in operation_keys for word in item.split("-")
+        ]
         splitted_underscore_operation_keys = [
             word for item in splitted_dash_operation_keys for word in item.split("_")
         ]
 
-        capitalized_operation_keys = [word.capitalize() for word in splitted_underscore_operation_keys]
+        capitalized_operation_keys = [
+            word.capitalize() for word in splitted_underscore_operation_keys
+        ]
 
         operation.operationId = " ".join(capitalized_operation_keys)
 

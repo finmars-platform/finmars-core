@@ -26,8 +26,7 @@ HEADERS = {
 FINMARS_BOT = "finmars_bot"
 
 
-class BootstrapError(FinmarsBaseException):
-    ...
+class BootstrapError(FinmarsBaseException): ...
 
 
 def get_current_search_path():
@@ -66,7 +65,7 @@ class BootstrapConfig(AppConfig):
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass  # Process terminated or access denied
         _l.info(
-            f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024 ** 2:.2f} MB"
+            f"Total Memory Usage by Gunicorn Workers: {total_memory / 1024**2:.2f} MB"
         )
 
     def ready(self):
@@ -243,9 +242,7 @@ class BootstrapConfig(AppConfig):
         # url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
         url = f"{settings.AUTHORIZER_URL}/api/v2/space/sync/"
 
-        _l.info(
-            f"{log} started, calling api '/space/sync/' " f"with url={url} data={data}"
-        )
+        _l.info(f"{log} started, calling api '/space/sync/' with url={url} data={data}")
 
         try:
             response = requests.post(

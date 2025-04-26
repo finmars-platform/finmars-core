@@ -22,7 +22,7 @@ _l = logging.getLogger("poms.instruments")
 
 @transaction.atomic()
 def calculate_prices_accrued_price(
-        master_user=None, begin_date=None, end_date=None, instruments=None
+    master_user=None, begin_date=None, end_date=None, instruments=None
 ):
     instruments_qs = Instrument.objects.all()
     if master_user:
@@ -33,11 +33,18 @@ def calculate_prices_accrued_price(
         instrument.calculate_prices_accrued_price(begin_date, end_date)
 
 
-@finmars_task(name="instruments.calculate_prices_accrued_price", ignore_result=False, bind=True)
+@finmars_task(
+    name="instruments.calculate_prices_accrued_price", ignore_result=False, bind=True
+)
 @transaction.atomic()
 def calculate_prices_accrued_price_async(
-        self,
-        master_user=None, begin_date=None, end_date=None, instruments=None, *args, **kwargs
+    self,
+    master_user=None,
+    begin_date=None,
+    end_date=None,
+    instruments=None,
+    *args,
+    **kwargs,
 ):
     if begin_date:
         begin_date = date.fromordinal(begin_date)
@@ -90,10 +97,10 @@ def fill_parameters_from_instrument(event_schedule, instrument):
             for parameter in action.data["parameters"]:
                 key = "parameter" + str(parameter["order"])
 
-                result[action.button_position][
-                    key
-                ] = get_calculated_parameter_by_name_from_event(
-                    event_schedule, parameter["event_parameter_name"], instrument
+                result[action.button_position][key] = (
+                    get_calculated_parameter_by_name_from_event(
+                        event_schedule, parameter["event_parameter_name"], instrument
+                    )
                 )
 
     return result
@@ -119,7 +126,7 @@ def only_generate_events_at_date(self, master_user_id, date, *args, **kwargs):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-               and not isclose(item["position_size"], 0.0)
+            and not isclose(item["position_size"], 0.0)
         ]
         if not opened_instrument_items:
             return
@@ -153,7 +160,7 @@ def only_generate_events_at_date(self, master_user_id, date, *args, **kwargs):
             )
 
             if final_date >= date and effective_date - timedelta(
-                    days=event_schedule.notify_in_n_days
+                days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -256,7 +263,7 @@ def only_generate_events_at_date(self, master_user_id, date, *args, **kwargs):
     name="instruments.only_generate_events_at_date_for_single_instrument", bind=True
 )
 def only_generate_events_at_date_for_single_instrument(
-        self, master_user_id, date, instrument_id, *args, **kwargs
+    self, master_user_id, date, instrument_id, *args, **kwargs
 ):
     try:
         date = datetime.date(datetime.strptime(date, "%Y-%m-%d"))
@@ -280,9 +287,9 @@ def only_generate_events_at_date_for_single_instrument(
             item
             for item in instance.items
             if (
-                    item["item_type"] == ReportItem.TYPE_INSTRUMENT
-                    and not isclose(item["position_size"], 0.0)
-                    and item["instrument_id"] == instrument.id
+                item["item_type"] == ReportItem.TYPE_INSTRUMENT
+                and not isclose(item["position_size"], 0.0)
+                and item["instrument_id"] == instrument.id
             )
         ]
         _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
@@ -319,7 +326,7 @@ def only_generate_events_at_date_for_single_instrument(
             )
 
             if final_date >= date and effective_date - timedelta(
-                    days=event_schedule.notify_in_n_days
+                days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -424,8 +431,6 @@ def only_generate_events_at_date_for_single_instrument(
 def generate_events(self, task_id, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
 
-
-
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     # finmars_bot = Member.objects.get(username="finmars_bot")
 
@@ -458,7 +463,7 @@ def generate_events(self, task_id, *args, **kwargs):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-               and not isclose(item["position_size"], 0.0)
+            and not isclose(item["position_size"], 0.0)
         ]
         if not opened_instrument_items:
             return
@@ -491,7 +496,7 @@ def generate_events(self, task_id, *args, **kwargs):
             )
 
             if final_date >= now and effective_date - timedelta(
-                    days=event_schedule.notify_in_n_days
+                days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -652,7 +657,7 @@ def generate_events_do_not_inform_apply_default(self, *args, **kwargs):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-               and not isclose(item["position_size"], 0.0)
+            and not isclose(item["position_size"], 0.0)
         ]
         _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
 
@@ -684,7 +689,7 @@ def generate_events_do_not_inform_apply_default(self, *args, **kwargs):
             )
 
             if final_date >= now and effective_date - timedelta(
-                    days=event_schedule.notify_in_n_days
+                days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -918,8 +923,8 @@ def process_events(self, *args, **kwargs):
                     )
 
             if (
-                    is_apply_default_on_notification_date
-                    or is_apply_default_on_effective_date
+                is_apply_default_on_notification_date
+                or is_apply_default_on_effective_date
             ):
                 action = next(
                     (
@@ -947,10 +952,10 @@ def process_events(self, *args, **kwargs):
                 processed_count = processed_count + 1
 
             if (
-                    is_notify_on_notification_date
-                    or is_notify_on_effective_date
-                    or is_apply_default_on_notification_date
-                    or is_apply_default_on_effective_date
+                is_notify_on_notification_date
+                or is_notify_on_effective_date
+                or is_apply_default_on_notification_date
+                or is_apply_default_on_effective_date
             ):
                 gevent.save()
 

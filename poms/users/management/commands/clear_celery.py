@@ -4,7 +4,8 @@ import time
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-_l = logging.getLogger('provision')
+_l = logging.getLogger("provision")
+
 
 def get_all_tenant_schemas():
     # List to hold tenant schemas
@@ -28,7 +29,7 @@ def get_all_tenant_schemas():
 
 
 class Command(BaseCommand):
-    help = 'Clear celery tasks and procedures'
+    help = "Clear celery tasks and procedures"
 
     def handle(self, *args, **options):
         from poms_app import celery_app
@@ -43,11 +44,11 @@ class Command(BaseCommand):
         current_wait = 0
 
         while not i.stats() and current_wait < max_wait:
-            _l.info('Waiting for Celery worker(s)...')
+            _l.info("Waiting for Celery worker(s)...")
             time.sleep(interval_wait)
             current_wait = current_wait + interval_wait
 
-        _l.info('Celery worker(s) are now available.')
+        _l.info("Celery worker(s) are now available.")
 
         # WARNING Do not delete
         # important, its inits celery listeners for global state
@@ -58,7 +59,6 @@ class Command(BaseCommand):
         from poms.common.celery import cancel_existing_procedures
 
         for schema in get_all_tenant_schemas():
-
             with connection.cursor() as cursor:
                 cursor.execute(f"SET search_path TO {schema};")
 

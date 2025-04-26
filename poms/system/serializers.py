@@ -44,6 +44,7 @@ def validate_image_dimensions(image):
             f" at least {MIN_IMAGE_WIDTH}x{MIN_IMAGE_HEIGHT} pixels"
         )
 
+
 def has_bad_symbols(file_name: str) -> bool:
     return any(c in CHARS_TO_AVOID for c in file_name)
 
@@ -73,7 +74,7 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     logo_dark_url = serializers.URLField(read_only=True)
     logo_light_url = serializers.URLField(read_only=True)
     favicon_url = serializers.URLField(read_only=True)
-    
+
     theme_css_file = serializers.FileField(
         required=False,
         validators=[
@@ -114,19 +115,16 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             "user_code",
             "configuration_code",
             "notes",
-
             "theme_css_url",
             "logo_dark_url",
             "logo_light_url",
             "favicon_url",
             "custom_css",
             "is_default",
-
             "theme_css_file",
             "logo_dark_image",
             "logo_light_image",
             "favicon_image",
-
             "company_name",
             "theme_code",
         ]
@@ -146,7 +144,9 @@ class WhitelabelSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
             - The function assumes that the storage module has a save method
               that takes in a file path and a file object.
         """
-        storage_prefix = f"{self.context['request'].user.master_user.space_code}/{UI_ROOT}"
+        storage_prefix = (
+            f"{self.context['request'].user.master_user.space_code}/{UI_ROOT}"
+        )
 
         params_fields = [
             ("theme_css_file", "theme_css_url"),

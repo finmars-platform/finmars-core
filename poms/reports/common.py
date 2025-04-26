@@ -5,7 +5,7 @@ from poms.common.utils import date_now
 from poms.instruments.models import CostMethod
 from poms.users.models import EcosystemDefault
 
-_l = logging.getLogger('poms.reports')
+_l = logging.getLogger("poms.reports")
 
 
 class BaseReport:
@@ -19,12 +19,12 @@ class BaseReport:
         (MODE_INTERDEPENDENT, "Offsetting (Interdependent - 0/100, 100/0, 50/50)"),
     )
 
-    CALCULATION_GROUP_NO_GROUPING = 'no_grouping'
-    CALCULATION_GROUP_PORTFOLIO = 'portfolio.id'
-    CALCULATION_GROUP_ACCOUNT = 'account.id'
-    CALCULATION_GROUP_STRATEGY1 = 'strategy1'
-    CALCULATION_GROUP_STRATEGY2 = 'strategy2'
-    CALCULATION_GROUP_STRATEGY3 = 'strategy3'
+    CALCULATION_GROUP_NO_GROUPING = "no_grouping"
+    CALCULATION_GROUP_PORTFOLIO = "portfolio.id"
+    CALCULATION_GROUP_ACCOUNT = "account.id"
+    CALCULATION_GROUP_STRATEGY1 = "strategy1"
+    CALCULATION_GROUP_STRATEGY2 = "strategy2"
+    CALCULATION_GROUP_STRATEGY3 = "strategy3"
     CALCULATION_GROUP_CHOICES = (
         (CALCULATION_GROUP_NO_GROUPING, "No Grouping"),
         (CALCULATION_GROUP_PORTFOLIO, "Portfolio"),
@@ -35,7 +35,7 @@ class BaseReport:
     )
 
     def __init__(
-            self, id=None, master_user=None, member=None, task_id=None, task_status=None
+        self, id=None, master_user=None, member=None, task_id=None, task_status=None
     ):
         self.id = id
         self.task_id = task_id
@@ -71,60 +71,57 @@ class Report(BaseReport):
     )
 
     def __init__(
-            self,
-            id=None,
-            master_user=None,
-            member=None,
-            task_id=None,
-            task_status=None,
-            report_instance_name=None,
-            save_report=False,
-            ignore_cache=False,
-            pl_first_date=None,
-            report_type=TYPE_BALANCE,
-            report_date=None,
-            report_currency=None,
-            pricing_policy=None,
-            cost_method=None,
-            calculation_group=BaseReport.CALCULATION_GROUP_NO_GROUPING,
-            portfolio_mode=BaseReport.MODE_INDEPENDENT,
-            account_mode=BaseReport.MODE_INDEPENDENT,
-            strategy1_mode=BaseReport.MODE_INDEPENDENT,
-            strategy2_mode=BaseReport.MODE_INDEPENDENT,
-            strategy3_mode=BaseReport.MODE_INDEPENDENT,
-            allocation_mode=BaseReport.MODE_INDEPENDENT,
-            show_transaction_details=False,
-            show_balance_exposure_details=False,
-            approach_multiplier=0.5,
-            expression_iterations_count=1,
-            allocation_detailing=True,
-            pl_include_zero=True,
-            instruments=None,
-            portfolios=None,
-            accounts=None,
-            accounts_position=None,
-            accounts_cash=None,
-            strategies1=None,
-            strategies2=None,
-            strategies3=None,
-            transaction_classes=None,
-            date_field=None,
-            custom_fields=None,
-            custom_fields_to_calculate=None,
-            calculate_pl=False,
-            only_numbers=False,
-            items=None,
-            execution_time=None,
-            serialization_time=None,
-            frontend_request_options=None,
-            report_instance_id=None,
-
-            page=1,
-            page_size=40,
-            count=0,
-
-            period_type=None,
-
+        self,
+        id=None,
+        master_user=None,
+        member=None,
+        task_id=None,
+        task_status=None,
+        report_instance_name=None,
+        save_report=False,
+        ignore_cache=False,
+        pl_first_date=None,
+        report_type=TYPE_BALANCE,
+        report_date=None,
+        report_currency=None,
+        pricing_policy=None,
+        cost_method=None,
+        calculation_group=BaseReport.CALCULATION_GROUP_NO_GROUPING,
+        portfolio_mode=BaseReport.MODE_INDEPENDENT,
+        account_mode=BaseReport.MODE_INDEPENDENT,
+        strategy1_mode=BaseReport.MODE_INDEPENDENT,
+        strategy2_mode=BaseReport.MODE_INDEPENDENT,
+        strategy3_mode=BaseReport.MODE_INDEPENDENT,
+        allocation_mode=BaseReport.MODE_INDEPENDENT,
+        show_transaction_details=False,
+        show_balance_exposure_details=False,
+        approach_multiplier=0.5,
+        expression_iterations_count=1,
+        allocation_detailing=True,
+        pl_include_zero=True,
+        instruments=None,
+        portfolios=None,
+        accounts=None,
+        accounts_position=None,
+        accounts_cash=None,
+        strategies1=None,
+        strategies2=None,
+        strategies3=None,
+        transaction_classes=None,
+        date_field=None,
+        custom_fields=None,
+        custom_fields_to_calculate=None,
+        calculate_pl=False,
+        only_numbers=False,
+        items=None,
+        execution_time=None,
+        serialization_time=None,
+        frontend_request_options=None,
+        report_instance_id=None,
+        page=1,
+        page_size=40,
+        count=0,
+        period_type=None,
     ):
         super(Report, self).__init__(
             id=id,
@@ -181,8 +178,8 @@ class Report(BaseReport):
         if date_field:
             self.date_field = date_field
         elif (
-                self.report_type == Report.TYPE_BALANCE
-                or self.report_type != Report.TYPE_PL
+            self.report_type == Report.TYPE_BALANCE
+            or self.report_type != Report.TYPE_PL
         ):
             self.date_field = "transaction_date"
         else:
@@ -206,7 +203,9 @@ class Report(BaseReport):
         self.item_instrument_accruals = []
         self.calculate_pl = calculate_pl
 
-        self.frontend_request_options = frontend_request_options  # For Backend Report Calculation
+        self.frontend_request_options = (
+            frontend_request_options  # For Backend Report Calculation
+        )
         self.report_instance_id = report_instance_id  # For Backend Report Calculation
 
         self.page = page
@@ -256,38 +255,37 @@ class ReportItem:
 
 class TransactionReport(BaseReport):
     def __init__(
-            self,
-            id=None,
-            task_id=None,
-            task_status=None,
-            master_user=None,
-            member=None,
-            begin_date=None,
-            end_date=None,
-            period_type=None,
-            portfolios=None,
-            bundle=None,
-            accounts=None,
-            accounts_position=None,
-            accounts_cash=None,
-            strategies1=None,
-            strategies2=None,
-            strategies3=None,
-            custom_fields=None,
-            custom_fields_to_calculate=None,
-            complex_transaction_statuses_filter=None,
-            items=None,
-            date_field=None,
-            depth_level=None,
-            expression_iterations_count=1,
-            filters=None,
-            report_instance_name=None,
-            frontend_request_options=None,
-            report_instance_id=None,
-
-            page=1,
-            page_size=40,
-            count=0
+        self,
+        id=None,
+        task_id=None,
+        task_status=None,
+        master_user=None,
+        member=None,
+        begin_date=None,
+        end_date=None,
+        period_type=None,
+        portfolios=None,
+        bundle=None,
+        accounts=None,
+        accounts_position=None,
+        accounts_cash=None,
+        strategies1=None,
+        strategies2=None,
+        strategies3=None,
+        custom_fields=None,
+        custom_fields_to_calculate=None,
+        complex_transaction_statuses_filter=None,
+        items=None,
+        date_field=None,
+        depth_level=None,
+        expression_iterations_count=1,
+        filters=None,
+        report_instance_name=None,
+        frontend_request_options=None,
+        report_instance_id=None,
+        page=1,
+        page_size=40,
+        count=0,
     ):
         super().__init__(
             id=id,
@@ -312,7 +310,7 @@ class TransactionReport(BaseReport):
         self.custom_fields = custom_fields or []
         self.custom_fields_to_calculate = custom_fields_to_calculate or ""
         self.complex_transaction_statuses_filter = (
-                complex_transaction_statuses_filter or ""
+            complex_transaction_statuses_filter or ""
         )
 
         self.items = items
@@ -343,7 +341,7 @@ class TransactionReport(BaseReport):
         self.frontend_request_options = frontend_request_options
         self.report_instance_id = report_instance_id
 
-        _l.debug('TransactionReport.page %s' % page)
+        _l.debug("TransactionReport.page %s" % page)
 
         self.page = page
         self.page_size = page_size
@@ -392,46 +390,46 @@ class PerformanceReport(BaseReport):
     ADJUSTMENT_TYPE_ANNUALIZED = "annualized"
     ADJUSTMENT_TYPE_CHOICES = (
         (ADJUSTMENT_TYPE_ORIGINAL, "Original"),
-        (ADJUSTMENT_TYPE_ANNUALIZED, "Annualized")
+        (ADJUSTMENT_TYPE_ANNUALIZED, "Annualized"),
     )
 
     def __init__(
-            self,
-            id=None,
-            task_id=None,
-            task_status=None,
-            name=None,
-            report_instance_name=None,
-            save_report=False,
-            calculation_type=None,
-            segmentation_type=None,
-            adjustment_type=None,
-            registers=None,
-            bundle=None,
-            master_user=None,
-            member=None,
-            begin_date=None,
-            end_date=None,
-            report_currency=None,
-            pricing_policy=None,
-            periods=None,
-            portfolio_mode=BaseReport.MODE_INDEPENDENT,
-            account_mode=BaseReport.MODE_INDEPENDENT,
-            strategy1_mode=BaseReport.MODE_INDEPENDENT,
-            strategy2_mode=BaseReport.MODE_INDEPENDENT,
-            strategy3_mode=BaseReport.MODE_INDEPENDENT,
-            cost_method=None,
-            approach_multiplier=0.5,
-            portfolios=None,
-            accounts=None,
-            accounts_position=None,
-            accounts_cash=None,
-            strategies1=None,
-            strategies2=None,
-            strategies3=None,
-            custom_fields=None,
-            items=None,
-            period_type=PERIOD_TYPE_YTD
+        self,
+        id=None,
+        task_id=None,
+        task_status=None,
+        name=None,
+        report_instance_name=None,
+        save_report=False,
+        calculation_type=None,
+        segmentation_type=None,
+        adjustment_type=None,
+        registers=None,
+        bundle=None,
+        master_user=None,
+        member=None,
+        begin_date=None,
+        end_date=None,
+        report_currency=None,
+        pricing_policy=None,
+        periods=None,
+        portfolio_mode=BaseReport.MODE_INDEPENDENT,
+        account_mode=BaseReport.MODE_INDEPENDENT,
+        strategy1_mode=BaseReport.MODE_INDEPENDENT,
+        strategy2_mode=BaseReport.MODE_INDEPENDENT,
+        strategy3_mode=BaseReport.MODE_INDEPENDENT,
+        cost_method=None,
+        approach_multiplier=0.5,
+        portfolios=None,
+        accounts=None,
+        accounts_position=None,
+        accounts_cash=None,
+        strategies1=None,
+        strategies2=None,
+        strategies3=None,
+        custom_fields=None,
+        items=None,
+        period_type=PERIOD_TYPE_YTD,
     ):
         super().__init__(
             id=id,
@@ -491,7 +489,7 @@ class PerformanceReport(BaseReport):
         self.period_type = period_type
 
         if not self.begin_date and not self.period_type:
-            self.period_type = 'ytd'
+            self.period_type = "ytd"
 
     def __str__(self):
         return f"PerformanceReport:{self.id}"

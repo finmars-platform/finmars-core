@@ -191,9 +191,13 @@ def is_root_groups_configuration(groups_types, groups_values):
 
 def format_groups(group_type: str, master_user, content_type) -> str:
     has_attribute_prefix = has_attribute(group_type)
-    attribute_code = group_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    attribute_code = (
+        group_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+    )
     if has_attribute_prefix and not attribute_code:
-        raise ValidationError(f"format_groups: invalid group_type '{group_type}' (no attribute code)")
+        raise ValidationError(
+            f"format_groups: invalid group_type '{group_type}' (no attribute code)"
+        )
     if has_attribute_prefix:
         attribute_type = GenericAttributeType.objects.get(
             user_code__exact=attribute_code,
@@ -215,7 +219,9 @@ def handle_groups(
 ):
     start_time = time.time()
 
-    groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
+    groups_types = list(
+        map(lambda x: format_groups(x, master_user, content_type), groups_types)
+    )
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     if is_root_groups_configuration(groups_types, groups_values):
@@ -233,8 +239,12 @@ def handle_groups(
             )
 
     else:
-        Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
-        query_set = filter_items_for_group(query_set, groups_types, groups_values, content_type_key, Model)
+        Model = apps.get_model(
+            app_label=content_type.app_label, model_name=content_type.model
+        )
+        query_set = filter_items_for_group(
+            query_set, groups_types, groups_values, content_type_key, Model
+        )
 
         if is_digit_attribute(groups_types[-1]):
             query_set = get_last_dynamic_attr_group(
@@ -266,7 +276,9 @@ def count_groups(
 ):
     start_time = time.time()
 
-    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
+    Model = apps.get_model(
+        app_label=content_type.app_label, model_name=content_type.model
+    )
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
     for item in query_set:
@@ -274,10 +286,14 @@ def count_groups(
         index = 0
         for groups_type in groups_types:
             has_attribute_prefix = has_attribute(groups_type)
-            attribute_code = groups_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+            attribute_code = (
+                groups_type.split(ATTRIBUTE_PREFIX)[1] if has_attribute_prefix else None
+            )
             if has_attribute_prefix:
                 if not attribute_code:
-                    raise ValidationError(f"Invalid attribute code {groups_type} for attribute type")
+                    raise ValidationError(
+                        f"Invalid attribute code {groups_type} for attribute type"
+                    )
 
                 attribute_type = GenericAttributeType.objects.get(
                     user_code__exact=attribute_code,
@@ -294,7 +310,9 @@ def count_groups(
 
                 result = []
                 if attr_type_q != Q():
-                    result = Model.objects.filter(q & attr_type_q).values_list("id", flat=True)
+                    result = Model.objects.filter(q & attr_type_q).values_list(
+                        "id", flat=True
+                    )
 
                 key = "id__in"
                 if len(result):
@@ -362,7 +380,9 @@ def count_groups(
         item["items_count_raw"] = count_cs.count()
         count_cs = handle_filters(count_cs, filter_settings, master_user, content_type)
         if global_table_search:
-            count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
+            count_cs = handle_global_table_search(
+                count_cs, global_table_search, Model, content_type
+            )
         item["items_count"] = count_cs.count()
 
     _l.info(f"count_groups {groups_types} took {str(time.time() - start_time)} secs")

@@ -163,3 +163,7 @@ migrate_legacy_base.py
 migrate_legacy_*.py
 backend_*.sql
 api_docs
+
+postgres_data/
+rabbitmq_data/
+redis_data/

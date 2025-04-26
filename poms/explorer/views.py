@@ -74,8 +74,8 @@ class ContextMixin:
             context.update(
                 {
                     "storage": storage,
-                    "space_code": 'space00000',
-                    "realm_code": 'realm00000',
+                    "space_code": "space00000",
+                    "realm_code": "realm00000",
                 },
             )
         return context
@@ -109,7 +109,11 @@ class ExplorerViewSet(AbstractViewSet):
 
         directories, files = storage.listdir(path)
 
-        members_usernames = set(Member.objects.exclude(user=request.user).values_list("user__username", flat=True))
+        members_usernames = set(
+            Member.objects.exclude(user=request.user).values_list(
+                "user__username", flat=True
+            )
+        )
 
         results = [
             {
@@ -117,7 +121,9 @@ class ExplorerViewSet(AbstractViewSet):
                 "name": dir_name,
             }
             for dir_name in directories
-            if path == f"{space_code}/" and dir_name not in members_usernames or path != f"{space_code}/"
+            if path == f"{space_code}/"
+            and dir_name not in members_usernames
+            or path != f"{space_code}/"
         ]
         for file in files:
             created_at = storage.get_created_time(f"{path}/{file}")
@@ -453,7 +459,9 @@ class DownloadViewSet(AbstractViewSet):
         try:
             with storage.open(path, "rb") as file:
                 response = FileResponse(file, content_type="application/octet-stream")
-                response["Content-Disposition"] = f'attachment; filename="{os.path.basename(path)}"'
+                response["Content-Disposition"] = (
+                    f'attachment; filename="{os.path.basename(path)}"'
+                )
 
         except Exception as e:
             _l.error(f"DownloadViewSet failed due to {repr(e)}")
@@ -549,7 +557,6 @@ class SyncViewSet(ContextMixin, AbstractViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
-
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,

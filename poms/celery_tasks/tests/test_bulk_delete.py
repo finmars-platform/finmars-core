@@ -52,9 +52,13 @@ class BulkDeleteTestCase(BaseTestCase):
         self.complex_transaction.is_deleted = True
         self.complex_transaction.save()
 
-        with mock.patch("poms.transactions.models.ComplexTransaction.delete",
-                        ProtectedError("there are protected objects", [])), \
-             self.assertRaises(RuntimeError):
+        with (
+            mock.patch(
+                "poms.transactions.models.ComplexTransaction.delete",
+                ProtectedError("there are protected objects", []),
+            ),
+            self.assertRaises(RuntimeError),
+        ):
             bulk_delete(
                 task_id=self.celery_task.id,
                 kwargs={

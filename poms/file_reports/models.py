@@ -66,7 +66,9 @@ class FileReport(models.Model):
                 )
 
             else:  # local/test mode
-                print(f"file '{file_name}' content '{text}' saved to storage '{file_url}'")
+                print(
+                    f"file '{file_name}' content '{text}' saved to storage '{file_url}'"
+                )
 
         except Exception as e:
             _l.error(f"upload_file {file_name} {file_url} error {repr(e)}")
@@ -109,7 +111,9 @@ class FileReport(models.Model):
                     result = f.read()
 
             except Exception as e:
-                _l.error(f"Cant open file {self.file_name} {self.file_url} due to {repr(e)}")
+                _l.error(
+                    f"Cant open file {self.file_name} {self.file_url} due to {repr(e)}"
+                )
 
         else:  # local mode
             with open(self.file_name, "rt") as f:

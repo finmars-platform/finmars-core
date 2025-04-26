@@ -62,19 +62,25 @@ def get_scheme_content_types():
     ]
 
     return [
-        ContentType.objects.get(app_label=model._meta.app_label, model=model._meta.model_name).pk
+        ContentType.objects.get(
+            app_label=model._meta.app_label, model=model._meta.model_name
+        ).pk
         for model in models
     ]
 
 
 def scheme_content_type_choices():
-    queryset = ContentType.objects.filter(pk__in=get_scheme_content_types()).order_by("app_label", "model")
-    return [(f"{c.app_label}.{c.model}", c.model_class()._meta.verbose_name) for c in queryset]
+    queryset = ContentType.objects.filter(pk__in=get_scheme_content_types()).order_by(
+        "app_label", "model"
+    )
+    return [
+        (f"{c.app_label}.{c.model}", c.model_class()._meta.verbose_name)
+        for c in queryset
+    ]
 
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-
         kwargs["choices"] = lazy(scheme_content_type_choices, list)
 
         super().__init__(*args, **kwargs)

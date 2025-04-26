@@ -30,10 +30,7 @@ class PriceHistoryModeltTest(BaseTestCase):
         self.pricing_history.refresh_from_db()
         self.assertIn(self.err_msg, self.pricing_history.error_message)
 
-    @BaseTestCase.cases(
-        ("none", None),
-        ("auto_calculate", AUTO_CALCULATE)
-    )
+    @BaseTestCase.cases(("none", None), ("auto_calculate", AUTO_CALCULATE))
     def test__reset_error_message_when_calculate_accrued_price(self, signal):
         self.prepare_test()
 
@@ -42,10 +39,7 @@ class PriceHistoryModeltTest(BaseTestCase):
 
         self.assertFalse(self.err_msg in self.pricing_history.error_message)
 
-    @BaseTestCase.cases(
-        ("none", None),
-        ("auto_calculate", AUTO_CALCULATE)
-    )
+    @BaseTestCase.cases(("none", None), ("auto_calculate", AUTO_CALCULATE))
     def test__reset_error_message_when_calculate_factor(self, signal):
         self.prepare_test()
 

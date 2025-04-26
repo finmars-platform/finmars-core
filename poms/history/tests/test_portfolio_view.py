@@ -12,7 +12,9 @@ class HistoryRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/history/historical-record"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/history/historical-record"
+        )
 
     def _create_history_record(self):
         content_type = ContentType.objects.using(settings.DB_DEFAULT).first()
@@ -39,7 +41,9 @@ class HistoryRecordViewSetTest(BaseTestCase):
 
     def test_export(self):
         with mock.patch("poms_app.celery_app.send_task") as send_task:
-            response = self.client.post(f"{self.url}/export/", data={"date_to": "2020-01-01"})
+            response = self.client.post(
+                f"{self.url}/export/", data={"date_to": "2020-01-01"}
+            )
 
             self.assertEqual(response.status_code, 200, response.content)
 
@@ -50,7 +54,10 @@ class HistoryRecordViewSetTest(BaseTestCase):
                 "history.export_journal_to_storage",
                 kwargs={
                     "task_id": task_id,
-                    "context": {"realm_code": self.realm_code, "space_code": self.space_code},
+                    "context": {
+                        "realm_code": self.realm_code,
+                        "space_code": self.space_code,
+                    },
                 },
                 queue="backend-background-queue",
             )

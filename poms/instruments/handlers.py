@@ -95,7 +95,10 @@ class InstrumentTypeProcess(object):
             master_user_pk=self.instrument_type.master_user.pk
         )
 
-        self.instrument_object = {"instrument_type": instrument_type.id, "identifier": {}}
+        self.instrument_object = {
+            "instrument_type": instrument_type.id,
+            "identifier": {},
+        }
         self.fill_instrument_with_instrument_type_defaults()
         self.set_pricing_policies()
 
@@ -108,36 +111,36 @@ class InstrumentTypeProcess(object):
             # Set system attributes
 
             if self.instrument_type.payment_size_detail:
-                self.instrument_object[
-                    "payment_size_detail"
-                ] = self.instrument_type.payment_size_detail_id
+                self.instrument_object["payment_size_detail"] = (
+                    self.instrument_type.payment_size_detail_id
+                )
             else:
                 self.instrument_object["payment_size_detail"] = None
 
             if self.instrument_type.pricing_condition:
-                self.instrument_object[
-                    "pricing_condition"
-                ] = self.instrument_type.pricing_condition_id
+                self.instrument_object["pricing_condition"] = (
+                    self.instrument_type.pricing_condition_id
+                )
             else:
                 self.instrument_object["pricing_condition"] = None
 
             if self.instrument_type.accrued_currency:
-                self.instrument_object[
-                    "accrued_currency"
-                ] = self.instrument_type.accrued_currency_id
+                self.instrument_object["accrued_currency"] = (
+                    self.instrument_type.accrued_currency_id
+                )
             else:
-                self.instrument_object[
-                    "accrued_currency"
-                ] = self.ecosystem_default.currency.pk
+                self.instrument_object["accrued_currency"] = (
+                    self.ecosystem_default.currency.pk
+                )
 
             if self.instrument_type.pricing_currency:
-                self.instrument_object[
-                    "pricing_currency"
-                ] = self.instrument_type.pricing_currency_id
+                self.instrument_object["pricing_currency"] = (
+                    self.instrument_type.pricing_currency_id
+                )
             else:
-                self.instrument_object[
-                    "pricing_currency"
-                ] = self.ecosystem_default.currency.pk
+                self.instrument_object["pricing_currency"] = (
+                    self.ecosystem_default.currency.pk
+                )
 
             # self.instrument_object["instrument_type_pricing_policies"] = []
             #
@@ -148,116 +151,116 @@ class InstrumentTypeProcess(object):
 
             self.instrument_object["default_price"] = self.instrument_type.default_price
             self.instrument_object["maturity_date"] = self.instrument_type.maturity_date
-            self.instrument_object[
-                "maturity_price"
-            ] = self.instrument_type.maturity_price
+            self.instrument_object["maturity_price"] = (
+                self.instrument_type.maturity_price
+            )
 
-            self.instrument_object[
-                "accrued_multiplier"
-            ] = self.instrument_type.accrued_multiplier
-            self.instrument_object[
-                "price_multiplier"
-            ] = self.instrument_type.price_multiplier
+            self.instrument_object["accrued_multiplier"] = (
+                self.instrument_type.accrued_multiplier
+            )
+            self.instrument_object["price_multiplier"] = (
+                self.instrument_type.price_multiplier
+            )
 
-            self.instrument_object[
-                "default_accrued"
-            ] = self.instrument_type.default_accrued
-            self.instrument_object[
-                "reference_for_pricing"
-            ] = self.instrument_type.reference_for_pricing
-            self.instrument_object[
-                "pricing_condition"
-            ] = self.instrument_type.pricing_condition_id
-            self.instrument_object[
-                "position_reporting"
-            ] = self.instrument_type.position_reporting
+            self.instrument_object["default_accrued"] = (
+                self.instrument_type.default_accrued
+            )
+            self.instrument_object["reference_for_pricing"] = (
+                self.instrument_type.reference_for_pricing
+            )
+            self.instrument_object["pricing_condition"] = (
+                self.instrument_type.pricing_condition_id
+            )
+            self.instrument_object["position_reporting"] = (
+                self.instrument_type.position_reporting
+            )
 
             if self.instrument_type.exposure_calculation_model:
-                self.instrument_object[
-                    "exposure_calculation_model"
-                ] = self.instrument_type.exposure_calculation_model_id
+                self.instrument_object["exposure_calculation_model"] = (
+                    self.instrument_type.exposure_calculation_model_id
+                )
             else:
                 self.instrument_object["exposure_calculation_model"] = None
 
             try:
-                self.instrument_object[
-                    "long_underlying_instrument"
-                ] = Instrument.objects.get(
-                    master_user=self.instrument_type.master_user,
-                    user_code=self.instrument_type.long_underlying_instrument,
-                ).pk
+                self.instrument_object["long_underlying_instrument"] = (
+                    Instrument.objects.get(
+                        master_user=self.instrument_type.master_user,
+                        user_code=self.instrument_type.long_underlying_instrument,
+                    ).pk
+                )
             except Exception as e:
                 _l.info("Could not set long_underlying_instrument, fallback to default")
-                self.instrument_object[
-                    "long_underlying_instrument"
-                ] = self.ecosystem_default.instrument.pk
+                self.instrument_object["long_underlying_instrument"] = (
+                    self.ecosystem_default.instrument.pk
+                )
 
-            self.instrument_object[
-                "underlying_long_multiplier"
-            ] = self.instrument_type.underlying_long_multiplier
+            self.instrument_object["underlying_long_multiplier"] = (
+                self.instrument_type.underlying_long_multiplier
+            )
 
-            self.instrument_object[
-                "short_underlying_instrument"
-            ] = self.instrument_type.short_underlying_instrument
+            self.instrument_object["short_underlying_instrument"] = (
+                self.instrument_type.short_underlying_instrument
+            )
 
             try:
-                self.instrument_object[
-                    "short_underlying_instrument"
-                ] = Instrument.objects.get(
-                    master_user=self.instrument_type.master_user,
-                    user_code=self.instrument_type.short_underlying_instrument,
-                ).pk
+                self.instrument_object["short_underlying_instrument"] = (
+                    Instrument.objects.get(
+                        master_user=self.instrument_type.master_user,
+                        user_code=self.instrument_type.short_underlying_instrument,
+                    ).pk
+                )
             except Exception as e:
                 _l.info(
                     f"Could not set short_underlying_instrument {repr(e)}, "
                     f"fallback to default"
                 )
-                self.instrument_object[
-                    "short_underlying_instrument"
-                ] = self.ecosystem_default.instrument.pk
+                self.instrument_object["short_underlying_instrument"] = (
+                    self.ecosystem_default.instrument.pk
+                )
 
-            self.instrument_object[
-                "underlying_short_multiplier"
-            ] = self.instrument_type.underlying_short_multiplier
+            self.instrument_object["underlying_short_multiplier"] = (
+                self.instrument_type.underlying_short_multiplier
+            )
 
-            self.instrument_object[
-                "long_underlying_exposure"
-            ] = self.instrument_type.long_underlying_exposure_id
-            self.instrument_object[
-                "short_underlying_exposure"
-            ] = self.instrument_type.short_underlying_exposure_id
+            self.instrument_object["long_underlying_exposure"] = (
+                self.instrument_type.long_underlying_exposure_id
+            )
+            self.instrument_object["short_underlying_exposure"] = (
+                self.instrument_type.short_underlying_exposure_id
+            )
 
             try:
-                self.instrument_object[
-                    "co_directional_exposure_currency"
-                ] = Currency.objects.get(
-                    master_user=self.instrument_type.master_user,
-                    user_code=self.instrument_type.co_directional_exposure_currency,
-                ).pk
+                self.instrument_object["co_directional_exposure_currency"] = (
+                    Currency.objects.get(
+                        master_user=self.instrument_type.master_user,
+                        user_code=self.instrument_type.co_directional_exposure_currency,
+                    ).pk
+                )
             except Exception as e:
                 _l.info(
                     f"Could not set co_directional_exposure_currency, {repr(e)} "
                     f"fallback to default"
                 )
-                self.instrument_object[
-                    "co_directional_exposure_currency"
-                ] = self.ecosystem_default.currency.pk
+                self.instrument_object["co_directional_exposure_currency"] = (
+                    self.ecosystem_default.currency.pk
+                )
 
             try:
-                self.instrument_object[
-                    "counter_directional_exposure_currency"
-                ] = Currency.objects.get(
-                    master_user=self.instrument_type.master_user,
-                    user_code=self.instrument_type.counter_directional_exposure_currency,
-                ).pk
+                self.instrument_object["counter_directional_exposure_currency"] = (
+                    Currency.objects.get(
+                        master_user=self.instrument_type.master_user,
+                        user_code=self.instrument_type.counter_directional_exposure_currency,
+                    ).pk
+                )
             except Exception as e:
                 _l.info(
                     f"Could not set counter_directional_exposure_currency {repr(e)}, "
                     f"fallback to default"
                 )
-                self.instrument_object[
-                    "counter_directional_exposure_currency"
-                ] = self.ecosystem_default.currency.pk
+                self.instrument_object["counter_directional_exposure_currency"] = (
+                    self.ecosystem_default.currency.pk
+                )
 
             # Set attributes
             self.instrument_object["attributes"] = []

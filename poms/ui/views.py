@@ -80,7 +80,9 @@ from poms.ui.serializers import (
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 import logging
+
 _l = logging.getLogger("poms.ui")
+
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
