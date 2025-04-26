@@ -29,7 +29,6 @@ EXPECTED_ECOSYSTEM_RESPONSE_DATA = {
     "pricing_condition": 1,
     "payment_size_detail": 7,
     "periodicity": 13,
-
     "accrual_calculation_model_object": {
         "id": 100,
         "user_code": "DAY_COUNT_SIMPLE",

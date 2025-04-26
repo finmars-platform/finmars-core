@@ -61,7 +61,9 @@ class HistoricalRecordFilterSet(FilterSet):
 
 
 class HistoricalRecordViewSet(AbstractModelViewSet):
-    queryset = HistoricalRecord.objects.select_related("master_user", "member", "content_type")
+    queryset = HistoricalRecord.objects.select_related(
+        "master_user", "member", "content_type"
+    )
     serializer_class = HistoricalRecordSerializer
 
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -76,11 +78,18 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
 
     ordering_fields = ["created_at", "user_code", "member"]
 
-    @action(detail=False, methods=["post"], url_path="export", serializer_class=ExportJournalSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="export",
+        serializer_class=ExportJournalSerializer,
+    )
     def export(self, request, realm_code=None, space_code=None):
         from poms_app import celery_app
 
-        serializer = ExportJournalSerializer(data=request.data, context=self.get_serializer_context())
+        serializer = ExportJournalSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
         options_object = {}
 
@@ -98,7 +107,10 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
             "history.export_journal_to_storage",
             kwargs={
                 "task_id": task.id,
-                "context": {"realm_code": task.master_user.realm_code, "space_code": task.master_user.space_code},
+                "context": {
+                    "realm_code": task.master_user.realm_code,
+                    "space_code": task.master_user.space_code,
+                },
             },
             queue="backend-background-queue",
         )
@@ -121,7 +133,11 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
 
         for item in items:
             result["results"].append(
-                {"key": item["content_type__app_label"] + "." + item["content_type__model"]}
+                {
+                    "key": item["content_type__app_label"]
+                    + "."
+                    + item["content_type__model"]
+                }
             )
 
         return Response(result)

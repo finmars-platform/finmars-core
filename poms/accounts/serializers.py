@@ -136,7 +136,6 @@ class AccountViewSerializer(ModelWithUserCodeSerializer):
 
 
 class AccountTypeEvalSerializer(ModelWithUserCodeSerializer):
-
     class Meta:
         model = AccountType
         fields = [

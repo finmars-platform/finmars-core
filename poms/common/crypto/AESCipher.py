@@ -47,10 +47,10 @@ class AESCipher:
         return text[:-pad]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cipher = AESCipher(get_random_bytes(16))
     text = "hello server!"
     encrypt = cipher.encrypt(text)
-    print('AES Main encrypted:\n%s' % encrypt)
+    print("AES Main encrypted:\n%s" % encrypt)
     decrypt = cipher.decrypt(encrypt)
-    print('AES Main decrypt:\n%s' % decrypt)
+    print("AES Main decrypt:\n%s" % decrypt)

@@ -85,7 +85,9 @@ class PortfolioFirstTransactionViewSetTest(BaseTestCase):
         return PortfolioRegisterRecord.objects.create(**prr_data)
 
     def get_portfolio_by_id(self):
-        response = self.client.get(path=f"{self.url}?portfolio={self.portfolio.user_code}")
+        response = self.client.get(
+            path=f"{self.url}?portfolio={self.portfolio.user_code}"
+        )
         self.assertEqual(response.status_code, 200, response.content)
 
         return response.json()

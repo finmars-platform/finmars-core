@@ -2,8 +2,8 @@ from poms.common.common_base_test import BaseTestCase
 
 from poms.transactions.utils import generate_user_fields, MAX_TEXT, MAX_DATE, MAX_NUMBER
 
-class TestUtils(BaseTestCase):
 
+class TestUtils(BaseTestCase):
     def test_default_length(self):
         fields = generate_user_fields()
         self.assertEqual(len(fields), MAX_TEXT + MAX_NUMBER + MAX_DATE)

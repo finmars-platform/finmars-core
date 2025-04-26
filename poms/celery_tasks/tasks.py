@@ -55,7 +55,9 @@ def remove_old_tasks(self, *args, **kwargs):
 @finmars_task(name="celery_tasks.auto_cancel_task_by_ttl")
 def auto_cancel_task_by_ttl(*args, **kwargs):
     try:
-        tasks = CeleryTask.objects.filter(status=CeleryTask.STATUS_PENDING, expiry_at__lte=now())
+        tasks = CeleryTask.objects.filter(
+            status=CeleryTask.STATUS_PENDING, expiry_at__lte=now()
+        )
 
         for task in tasks:
             if not task.notes:
@@ -76,7 +78,9 @@ def auto_cancel_task_by_ttl(*args, **kwargs):
             description=str(e),
         )
 
-        _l.error(f"auto_cancel_task_by_ttl.exception {repr(e)} {traceback.format_exc()}")
+        _l.error(
+            f"auto_cancel_task_by_ttl.exception {repr(e)} {traceback.format_exc()}"
+        )
 
 
 @finmars_task(name="celery_tasks.check_for_died_workers")
@@ -149,12 +153,18 @@ def bulk_delete(self, task_id, *args, **kwargs):
         }
     )
 
-    to_be_deleted_queryset = content_type.model_class().objects.filter(id__in=options_object["ids"])
+    to_be_deleted_queryset = content_type.model_class().objects.filter(
+        id__in=options_object["ids"]
+    )
 
     last_exception = None
     for count, instance in enumerate(to_be_deleted_queryset, start=1):
         try:
-            if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete") and not instance.is_deleted:
+            if (
+                hasattr(instance, "is_deleted")
+                and hasattr(instance, "fake_delete")
+                and not instance.is_deleted
+            ):
                 instance.fake_delete()
             else:
                 instance.delete()
@@ -250,7 +260,9 @@ def import_item(item, context):
         raise ValueError("Meta is not found. Could not process JSON")
 
     if meta["content_type"] == "transactions.complextransaction":
-        transaction_type = TransactionType.objects.get(user_code=item["transaction_type"])
+        transaction_type = TransactionType.objects.get(
+            user_code=item["transaction_type"]
+        )
 
         values = {}
 
@@ -272,8 +284,10 @@ def import_item(item, context):
 
                 content_type = get_content_type_by_name(content_type_key)
                 with contextlib.suppress(Exception):
-                    values[input["transaction_type_input"]] = content_type.model_class().objects.get(
-                        user_code=input["value_relation"]
+                    values[input["transaction_type_input"]] = (
+                        content_type.model_class().objects.get(
+                            user_code=input["value_relation"]
+                        )
                     )
 
         process_instance = TransactionTypeProcess(

@@ -109,7 +109,10 @@ class ByIdFilterBackend(AbstractRelatedFilterBackend):
 
 class ByIsDeletedFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if getattr(view, "has_feature_is_deleted", False) and getattr(view, "action", "") == "list":
+        if (
+            getattr(view, "has_feature_is_deleted", False)
+            and getattr(view, "action", "") == "list"
+        ):
             value = request.query_params.get("is_deleted", None)
             if value is None:
                 is_deleted = value in (True, "True", "true", "1")
@@ -119,7 +122,10 @@ class ByIsDeletedFilterBackend(BaseFilterBackend):
 
 class ByIsEnabledFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if getattr(view, "has_feature_is_enabled", False) and getattr(view, "action", "") == "list":
+        if (
+            getattr(view, "has_feature_is_enabled", False)
+            and getattr(view, "action", "") == "list"
+        ):
             value = request.query_params.get("is_enabled", None)
             if value is None:
                 is_enabled = value in (True, "True", "true", "1")
@@ -169,13 +175,17 @@ def get_q_obj_for_attribute_type(attribute_type, group_value):
         q = q & Q(**{f"{field_key}": group_value})
 
     else:
-        _l.error(f"Attribute with invalid value_type passed: {attribute_type.value_type}")
+        _l.error(
+            f"Attribute with invalid value_type passed: {attribute_type.value_type}"
+        )
         return q
 
     return q
 
 
-def filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model=None):
+def filter_items_for_group(
+    queryset, groups_types, groups_values, content_type_key, model=None
+):
     """
     :param queryset:
     :type queryset: object
@@ -224,13 +234,21 @@ def _filter_queryset_for_attribute(self_obj, request, queryset, view):
     else:
         return queryset
 
-    content_type = ContentType.objects.get(app_label=model._meta.app_label, model=model._meta.model_name)
+    content_type = ContentType.objects.get(
+        app_label=model._meta.app_label, model=model._meta.model_name
+    )
 
     content_type_key = f"{content_type.app_label}.{content_type.model}"
 
-    groups_types = list(map(lambda x: self_obj.format_groups(x, master_user, content_type), groups_types))
+    groups_types = list(
+        map(
+            lambda x: self_obj.format_groups(x, master_user, content_type), groups_types
+        )
+    )
 
-    return filter_items_for_group(queryset, groups_types, groups_values, content_type_key, model)
+    return filter_items_for_group(
+        queryset, groups_types, groups_values, content_type_key, model
+    )
 
 
 class GroupsAttributeFilter(BaseFilterBackend):
@@ -363,10 +381,19 @@ class OrderingPostFilter(BaseFilterBackend):
 
         elif valid_fields == "__all__":
             # View explicitly allows filtering on any model field
-            valid_fields = [(field.name, field.verbose_name) for field in queryset.model._meta.fields]
-            valid_fields += [(key, key.title().split("__")) for key in queryset.query.annotations.keys()]
+            valid_fields = [
+                (field.name, field.verbose_name)
+                for field in queryset.model._meta.fields
+            ]
+            valid_fields += [
+                (key, key.title().split("__"))
+                for key in queryset.query.annotations.keys()
+            ]
         else:
-            valid_fields = [(item, item) if isinstance(item, string_types) else item for item in valid_fields]
+            valid_fields = [
+                (item, item) if isinstance(item, string_types) else item
+                for item in valid_fields
+            ]
 
         return valid_fields
 
@@ -386,8 +413,8 @@ class OrderingPostFilter(BaseFilterBackend):
         for key, label in self.get_valid_fields(queryset, view):
             options.extend(
                 [
-                    (key, f'{label} - {_("ascending")}'),
-                    (f"-{key}", f'{label} - {_("descending")}'),
+                    (key, f"{label} - {_('ascending')}"),
+                    (f"-{key}", f"{label} - {_('descending')}"),
                 ]
             )
         return {
@@ -409,7 +436,10 @@ class EntitySpecificFilter(BaseFilterBackend):
             is_inactive = False
             is_active = False
 
-            if "ev_options" in request.data and "entity_filters" in request.data["ev_options"]:
+            if (
+                "ev_options" in request.data
+                and "entity_filters" in request.data["ev_options"]
+            ):
                 if "disabled" in request.data["ev_options"]["entity_filters"]:
                     is_disabled = True
 
@@ -456,11 +486,20 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
             show_booked = False
             show_ignored = False
 
-            if "ev_options" in request.data and "complex_transaction_filters" in request.data["ev_options"]:
-                if "booked" in request.data["ev_options"]["complex_transaction_filters"]:
+            if (
+                "ev_options" in request.data
+                and "complex_transaction_filters" in request.data["ev_options"]
+            ):
+                if (
+                    "booked"
+                    in request.data["ev_options"]["complex_transaction_filters"]
+                ):
                     show_booked = True
 
-                if "ignored" in request.data["ev_options"]["complex_transaction_filters"]:
+                if (
+                    "ignored"
+                    in request.data["ev_options"]["complex_transaction_filters"]
+                ):
                     show_ignored = True
 
             if not show_booked and show_ignored:
@@ -492,7 +531,10 @@ class GlobalTableSearchFilter(django_filters.CharFilter):
             return qs
 
         # Create a Q object for each text field you want to search in
-        queries = [Q(**{f"{field_name}__icontains": value}) for field_name in self.get_text_fields(qs.model)]
+        queries = [
+            Q(**{f"{field_name}__icontains": value})
+            for field_name in self.get_text_fields(qs.model)
+        ]
 
         # Combine the Q objects using OR operator
         query = queries.pop()
@@ -523,6 +565,7 @@ class FinmarsFilterBackend(DjangoFilterBackend):
     """
     Fixing problem in openapi inspecting filters with choices implemented as functools.partial
     """
+
     def get_schema_operation_parameters(self, view):
         try:
             queryset = view.get_queryset()
@@ -547,7 +590,9 @@ class FinmarsFilterBackend(DjangoFilterBackend):
                 },
             }
             if field.extra and "choices" in field.extra:
-                if callable(field.extra["choices"]):  # fix case when 'choices' is callable function
+                if callable(
+                    field.extra["choices"]
+                ):  # fix case when 'choices' is callable function
                     parameter["schema"]["enum"] = field.extra["choices"]()
                 else:
                     parameter["schema"]["enum"] = [c[0] for c in field.extra["choices"]]

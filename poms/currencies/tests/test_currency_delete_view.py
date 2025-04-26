@@ -7,8 +7,8 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
         self.url = f"/{self.realm_code}/{self.space_code}/api/v1/currencies/currency"
 
     def test_detail_delete_main_currencies(self):
@@ -32,7 +32,7 @@ class CurrencyDeleteViewSetTest(BaseTestCase):
 
     def test_bulk_delete(self):
         currencies = Currency.objects.all()
-        ids_tuples = currencies.values_list('id', flat=True)
+        ids_tuples = currencies.values_list("id", flat=True)
         ids_list = list(ids_tuples)
 
         data = {"ids": ids_list}

@@ -8,16 +8,17 @@ from poms.expressions_engine.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import datetime_now
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
-_l = getLogger('poms.obj_attrs')
+_l = getLogger("poms.obj_attrs")
 
 
 def get_attributes_as_obj(instance, target_model_content_type):
     result = {}
 
-    attributes = GenericAttribute.objects.filter(object_id=instance.id, content_type=target_model_content_type)
+    attributes = GenericAttribute.objects.filter(
+        object_id=instance.id, content_type=target_model_content_type
+    )
 
     for attribute in attributes:
-
         attribute_type = attribute.attribute_type
 
         if attribute_type.value_type == 10:
@@ -38,7 +39,13 @@ def get_attributes_as_obj(instance, target_model_content_type):
     return result
 
 
-def get_json_objs(target_model, target_model_serializer, target_model_content_type, master_user, context):
+def get_json_objs(
+    target_model,
+    target_model_serializer,
+    target_model_content_type,
+    master_user,
+    context,
+):
     result = {}
 
     instances = target_model.objects.filter(master_user=master_user)
@@ -48,88 +55,90 @@ def get_json_objs(target_model, target_model_serializer, target_model_content_ty
 
         result[instance.id] = serializer.data
 
-        result[instance.id]['attributes'] = get_attributes_as_obj(instance, target_model_content_type)
+        result[instance.id]["attributes"] = get_attributes_as_obj(
+            instance, target_model_content_type
+        )
 
     return result
 
 
-@finmars_task(name='obj_attrs.recalculate_attributes', bind=True)
+@finmars_task(name="obj_attrs.recalculate_attributes", bind=True)
 def recalculate_attributes(self, instance, *args, **kwargs):
-    _l.debug('recalculate_attributes: instance', instance)
+    _l.debug("recalculate_attributes: instance", instance)
     # _l.debug('recalculate_attributes: context', context)
 
-    attribute_type = GenericAttributeType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
+    attribute_type = GenericAttributeType.objects.get(
+        id=instance.attribute_type_id, master_user=instance.master_user
+    )
 
     attributes = GenericAttribute.objects.filter(
-        attribute_type=attribute_type,
-        content_type=instance.target_model_content_type)
+        attribute_type=attribute_type, content_type=instance.target_model_content_type
+    )
 
-    _l.debug('recalculate_attributes: attributes len %s' % len(attributes))
-    _l.debug('recalculate_attributes: attribute_type.expr %s' % attribute_type.expr)
+    _l.debug("recalculate_attributes: attributes len %s" % len(attributes))
+    _l.debug("recalculate_attributes: attribute_type.expr %s" % attribute_type.expr)
 
-    _l.debug('self task id %s' % self.request.id)
+    _l.debug("self task id %s" % self.request.id)
 
-    celery_task = CeleryTask.objects.create(master_user=instance.master_user,
-                                            member=instance.member,
-                                            started_at=datetime_now(),
-                                            task_status='P',
-                                            verbose_name='User Attributes Recalculation',
-                                            task_type='attribute_recalculation', celery_task_id=self.request.id)
+    celery_task = CeleryTask.objects.create(
+        master_user=instance.master_user,
+        member=instance.member,
+        started_at=datetime_now(),
+        task_status="P",
+        verbose_name="User Attributes Recalculation",
+        task_type="attribute_recalculation",
+        celery_task_id=self.request.id,
+    )
 
     celery_task.save()
 
-    context = {
-        'master_user': instance.master_user,
-        'member': instance.member
-    }
+    context = {"master_user": instance.master_user, "member": instance.member}
 
-    json_objs = get_json_objs(instance.target_model,
-                              instance.target_model_serializer,
-                              instance.target_model_content_type,
-
-                              instance.master_user,
-                              context)
+    json_objs = get_json_objs(
+        instance.target_model,
+        instance.target_model_serializer,
+        instance.target_model_content_type,
+        instance.master_user,
+        context,
+    )
 
     total = len(attributes)
     current = 0
 
     for attr in attributes:
-
         data = json_objs[attr.object_id]
 
         # _l.debug('data %s' % data)
 
         try:
-            executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context=context)
+            executed_expression = safe_eval(
+                attribute_type.expr, names={"this": data}, context=context
+            )
         except (ExpressionEvalError, TypeError, Exception, KeyError):
-            executed_expression = 'Invalid Expression'
+            executed_expression = "Invalid Expression"
 
         # print('executed_expression %s' % executed_expression)
 
         if attr.attribute_type.value_type == GenericAttributeType.STRING:
-
-            if executed_expression == 'Invalid Expression':
+            if executed_expression == "Invalid Expression":
                 attr.value_string = None
             else:
                 attr.value_string = executed_expression
 
         if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
-
-            if executed_expression == 'Invalid Expression':
+            if executed_expression == "Invalid Expression":
                 attr.value_float = None
             else:
                 attr.value_float = executed_expression
 
         if attr.attribute_type.value_type == GenericAttributeType.DATE:
-
-            if executed_expression == 'Invalid Expression':
+            if executed_expression == "Invalid Expression":
                 attr.value_date = None
             else:
                 attr.value_date = executed_expression
 
         if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-
-            if executed_expression == 'Invalid Expression':
+            if executed_expression == "Invalid Expression":
                 attr.classifier = None
             else:
                 attr.classifier = executed_expression
@@ -138,13 +147,10 @@ def recalculate_attributes(self, instance, *args, **kwargs):
 
         current = current + 1
 
-        celery_task.data = {
-            "total_rows": total,
-            "processed_rows": current
-        }
+        celery_task.data = {"total_rows": total, "processed_rows": current}
 
         celery_task.save()
 
-    celery_task.task_status = 'D'
+    celery_task.task_status = "D"
 
     celery_task.save()

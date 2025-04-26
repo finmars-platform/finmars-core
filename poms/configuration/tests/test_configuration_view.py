@@ -35,9 +35,11 @@ class ConfigurationViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.realm_code = 'realm00000'
-        self.space_code = 'space00000'
-        self.url = f"/{self.realm_code}/{self.space_code}/api/v1/configuration/configuration/"
+        self.realm_code = "realm00000"
+        self.space_code = "space00000"
+        self.url = (
+            f"/{self.realm_code}/{self.space_code}/api/v1/configuration/configuration/"
+        )
 
     def test__list(self):
         response = self.client.get(path=self.url)

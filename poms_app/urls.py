@@ -48,3 +48,11 @@ if settings.SERVER_TYPE == "local":
     urlpatterns += [
         re_path(r"^dev/auth/", include("rest_framework.urls", namespace="rest_framework")),
     ]
+
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
+
+if settings.SERVER_TYPE == "development":
+    urlpatterns += [path('<slug:realm_code>/<slug:space_code>/sentry-debug/', trigger_error)]

@@ -5,9 +5,12 @@ from rest_framework import serializers
 from poms.celery_tasks.models import CeleryTask
 from poms.file_reports.serializers import FileReportSerializer
 from poms.integrations.models import ComplexTransactionImportScheme
-from poms.transaction_import.models import TransactionImportResult, TransactionImportProcessItem
+from poms.transaction_import.models import (
+    TransactionImportResult,
+    TransactionImportProcessItem,
+)
 
-_l = logging.getLogger('poms.transaction_import')
+_l = logging.getLogger("poms.transaction_import")
 
 
 class TransactionImportBookedTransactionSerializer(serializers.Serializer):
@@ -43,14 +46,23 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
 
     class Meta:
         model = TransactionImportProcessItem
-        fields = ['row_number', 'status', 'error_message', 'message', 'raw_inputs', 'inputs',
-                  'processed_rule_scenarios']
+        fields = [
+            "row_number",
+            "status",
+            "error_message",
+            "message",
+            "raw_inputs",
+            "inputs",
+            "processed_rule_scenarios",
+        ]
 
     def to_representation(self, instance):
-        data = super(TransactionImportProcessItemSerializer, self).to_representation(instance)
+        data = super(TransactionImportProcessItemSerializer, self).to_representation(
+            instance
+        )
 
-        for key, value in data['inputs'].items():
-            data['inputs'][key] = str(value)
+        for key, value in data["inputs"].items():
+            data["inputs"][key] = str(value)
 
         return data
 
@@ -58,13 +70,21 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
 class TransactionImportCeleryTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = CeleryTask
-        fields = ['id', 'status', 'type']
+        fields = ["id", "status", "type"]
 
 
 class TransactionImportSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'name', 'user_code', 'delimiter', 'error_handler', 'missing_data_handler', 'book_uniqueness_settings']
+        fields = [
+            "id",
+            "name",
+            "user_code",
+            "delimiter",
+            "error_handler",
+            "missing_data_handler",
+            "book_uniqueness_settings",
+        ]
 
 
 class TransactionImportResultSerializer(serializers.Serializer):
@@ -81,4 +101,13 @@ class TransactionImportResultSerializer(serializers.Serializer):
 
     class Meta:
         model = TransactionImportResult
-        fields = ['task', 'scheme', 'file_name', 'total_rows', 'items', 'processed_rows', 'error_message', 'reports']
+        fields = [
+            "task",
+            "scheme",
+            "file_name",
+            "total_rows",
+            "items",
+            "processed_rows",
+            "error_message",
+            "reports",
+        ]

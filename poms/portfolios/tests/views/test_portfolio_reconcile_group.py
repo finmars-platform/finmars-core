@@ -53,7 +53,9 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
             },
         }
 
-    def create_reconcile_history(self, group: PortfolioReconcileGroup) -> PortfolioReconcileHistory:
+    def create_reconcile_history(
+        self, group: PortfolioReconcileGroup
+    ) -> PortfolioReconcileHistory:
         return PortfolioReconcileHistory.objects.create(
             master_user=self.master_user,
             owner=self.member,
@@ -107,7 +109,9 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         group_id = group_data["id"]
 
         patch_data = {"params": {"only_errors": True}}
-        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{group_id}/", data=patch_data, format="json"
+        )
         self.assertEqual(response.status_code, 200, response.content)
 
     def test_try_update_portfolios(self):
@@ -119,7 +123,9 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         patch_data = {
             "portfolios": [self.portfolio_1.user_code, self.portfolio_2.user_code],
         }
-        response = self.client.patch(f"{self.url}{group_id}/", data=patch_data, format="json")
+        response = self.client.patch(
+            f"{self.url}{group_id}/", data=patch_data, format="json"
+        )
         self.assertEqual(response.status_code, 400, response.content)
 
     def test_delete(self):
@@ -225,12 +231,14 @@ class PortfolioReconcileGroupViewTest(BaseTestCase):
         self.assertIsNotNone(group)
         self.assertTrue(group.is_deleted)
 
-        self.assertIsNone(PortfolioReconcileHistory.objects.filter(id=history.id).first())
+        self.assertIsNone(
+            PortfolioReconcileHistory.objects.filter(id=history.id).first()
+        )
         self.assertIsNone(FileReport.objects.filter(id=file_report.id).first())
 
-    def test_try_create_with_invalid_user_code(self):
-        create_data = self.create_data()
-        create_data["user_code"] = "7quwyteuqywte"
-
-        response = self.client.post(self.url, data=create_data, format="json")
-        self.assertEqual(response.status_code, 400, response.content)
+    # def test_try_create_with_invalid_user_code(self):
+    #     create_data = self.create_data()
+    #     create_data["user_code"] = "7quwyteuqywte"
+    #
+    #     response = self.client.post(self.url, data=create_data, format="json")
+    #     self.assertEqual(response.status_code, 400, response.content)

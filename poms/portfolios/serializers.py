@@ -70,7 +70,9 @@ class PortfolioTypeSerializer(
 ):
     master_user = MasterUserField()
 
-    portfolio_class_object = PortfolioClassSerializer(source="portfolio_class", read_only=True)
+    portfolio_class_object = PortfolioClassSerializer(
+        source="portfolio_class", read_only=True
+    )
 
     class Meta:
         model = PortfolioType
@@ -118,8 +120,12 @@ class PortfolioPortfolioRegisterSerializer(
     valuation_currency = CurrencyField(default=CurrencyDefault())
     valuation_pricing_policy = PricingPolicyField()
 
-    valuation_currency_object = serializers.PrimaryKeyRelatedField(source="valuation_currency", read_only=True)
-    linked_instrument_object = serializers.PrimaryKeyRelatedField(source="linked_instrument", read_only=True)
+    valuation_currency_object = serializers.PrimaryKeyRelatedField(
+        source="valuation_currency", read_only=True
+    )
+    linked_instrument_object = serializers.PrimaryKeyRelatedField(
+        source="linked_instrument", read_only=True
+    )
     valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(
         source="valuation_pricing_policy", read_only=True
     )
@@ -178,7 +184,9 @@ class PortfolioSerializer(
     first_transaction = serializers.SerializerMethodField(read_only=True)
     first_transaction_date = serializers.ReadOnlyField()
     first_cash_flow_date = serializers.ReadOnlyField()
-    portfolio_type_object = PortfolioTypeSerializer(source="portfolio_type", read_only=True)
+    portfolio_type_object = PortfolioTypeSerializer(
+        source="portfolio_type", read_only=True
+    )
     client = serializers.PrimaryKeyRelatedField(
         queryset=Client.objects.all(),
         required=False,
@@ -229,7 +237,9 @@ class PortfolioSerializer(
 
         super().__init__(*args, **kwargs)
 
-        self.fields["accounts_object"] = AccountViewSerializer(source="accounts", many=True, read_only=True)
+        self.fields["accounts_object"] = AccountViewSerializer(
+            source="accounts", many=True, read_only=True
+        )
         self.fields["responsibles_object"] = ResponsibleViewSerializer(
             source="responsibles", many=True, read_only=True
         )
@@ -239,7 +249,9 @@ class PortfolioSerializer(
         self.fields["transaction_types_object"] = TransactionTypeViewSerializer(
             source="transaction_types", many=True, read_only=True
         )
-        self.fields["client_object"] = ClientsSerializer(source="client", many=False, read_only=True)
+        self.fields["client_object"] = ClientsSerializer(
+            source="client", many=False, read_only=True
+        )
 
     def create_register_if_not_exists(self, instance):
         master_user = instance.master_user
@@ -252,11 +264,15 @@ class PortfolioSerializer(
             )
 
         except Exception:
-            ecosystem_default = EcosystemDefault.cache.get_cache(master_user_pk=master_user.pk)
+            ecosystem_default = EcosystemDefault.cache.get_cache(
+                master_user_pk=master_user.pk
+            )
 
             # TODO maybe create new instr instead of existing?
             try:
-                new_instrument = Instrument.objects.get(master_user=master_user, user_code=instance.user_code)
+                new_instrument = Instrument.objects.get(
+                    master_user=master_user, user_code=instance.user_code
+                )
             except Exception:
                 new_linked_instrument = {
                     "name": instance.name,
@@ -284,7 +300,9 @@ class PortfolioSerializer(
                 instrument_object["user_code"] = new_linked_instrument["user_code"]
                 instrument_object["public_name"] = new_linked_instrument["public_name"]
 
-                serializer = InstrumentSerializer(data=instrument_object, context=self.context)
+                serializer = InstrumentSerializer(
+                    data=instrument_object, context=self.context
+                )
 
                 is_valid = serializer.is_valid(raise_exception=True)
 
@@ -293,7 +311,9 @@ class PortfolioSerializer(
 
                 new_instrument = serializer.instance
 
-            _l.info(f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}")
+            _l.info(
+                f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}"
+            )
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
@@ -392,9 +412,15 @@ class PortfolioRegisterSerializer(
     valuation_currency = CurrencyField(default=CurrencyDefault())
     valuation_pricing_policy = PricingPolicyField()
 
-    valuation_currency_object = serializers.PrimaryKeyRelatedField(source="valuation_currency", read_only=True)
-    portfolio_object = serializers.PrimaryKeyRelatedField(source="portfolio", read_only=True)
-    linked_instrument_object = serializers.PrimaryKeyRelatedField(source="linked_instrument", read_only=True)
+    valuation_currency_object = serializers.PrimaryKeyRelatedField(
+        source="valuation_currency", read_only=True
+    )
+    portfolio_object = serializers.PrimaryKeyRelatedField(
+        source="portfolio", read_only=True
+    )
+    linked_instrument_object = serializers.PrimaryKeyRelatedField(
+        source="linked_instrument", read_only=True
+    )
     valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(
         source="valuation_pricing_policy", read_only=True
     )
@@ -430,7 +456,9 @@ class PortfolioRegisterSerializer(
         self.fields["valuation_currency_object"] = CurrencyViewSerializer(
             source="valuation_currency", read_only=True
         )
-        self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
         self.fields["linked_instrument_object"] = InstrumentViewSerializer(
             source="linked_instrument", read_only=True
         )
@@ -442,9 +470,13 @@ class PortfolioRegisterSerializer(
     def create(self, validated_data):
         instance = super().create(validated_data)
 
-        new_linked_instrument = self.context["request"].data.get("new_linked_instrument")
+        new_linked_instrument = self.context["request"].data.get(
+            "new_linked_instrument"
+        )
         if new_linked_instrument and ("name" in new_linked_instrument):
-            _l.info(f"{self.__class__.__name__}.create new_linked_instrument={new_linked_instrument}")
+            _l.info(
+                f"{self.__class__.__name__}.create new_linked_instrument={new_linked_instrument}"
+            )
             self.create_new_instrument(
                 instance.master_user,
                 new_linked_instrument,
@@ -488,8 +520,12 @@ class PortfolioRegisterSerializer(
         instrument_object["has_linked_with_portfolio"] = True
         instrument_object["pricing_currency"] = instance.valuation_currency_id
         instrument_object["accrued_currency"] = instance.valuation_currency_id
-        instrument_object["co_directional_exposure_currency"] = instance.valuation_currency_id
-        instrument_object["counter_directional_exposure_currency"] = instance.valuation_currency_id
+        instrument_object["co_directional_exposure_currency"] = (
+            instance.valuation_currency_id
+        )
+        instrument_object["counter_directional_exposure_currency"] = (
+            instance.valuation_currency_id
+        )
 
         serializer = InstrumentSerializer(
             data=instrument_object,
@@ -542,21 +578,27 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["cash_currency_object"] = CurrencyViewSerializer(source="cash_currency", read_only=True)
+        self.fields["cash_currency_object"] = CurrencyViewSerializer(
+            source="cash_currency", read_only=True
+        )
         self.fields["valuation_currency_object"] = CurrencyViewSerializer(
             source="valuation_currency", read_only=True
         )
         self.fields["transaction_class_object"] = TransactionClassSerializer(
             source="transaction_class", read_only=True
         )
-        self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
         # self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
         #     source="complex_transaction", read_only=True
         # )
         self.fields["portfolio_register_object"] = PortfolioRegisterViewSerializer(
             source="portfolio_register", read_only=True
         )
-        self.fields["instrument_object"] = InstrumentViewSerializer(source="instrument", read_only=True)
+        self.fields["instrument_object"] = InstrumentViewSerializer(
+            source="instrument", read_only=True
+        )
         self.fields["valuation_pricing_policy_object"] = PricingPolicySerializer(
             source="valuation_pricing_policy", read_only=True
         )
@@ -594,7 +636,9 @@ class PortfolioBundleSerializer(
         ]
 
 
-class PortfolioEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioEvalSerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
 
     class Meta:
@@ -617,7 +661,9 @@ class PortfolioEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
 def belongs_to_model(field: str, model: Type[models.Model]) -> bool:
     model_fields = model._meta.get_fields()
-    field_names = [field.name for field in model_fields if field.is_relation is False]  # Exclude relation fields
+    field_names = [
+        field.name for field in model_fields if field.is_relation is False
+    ]  # Exclude relation fields
     return field in field_names
 
 
@@ -698,7 +744,9 @@ class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
         return attrs
 
 
-class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioHistorySerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
     portfolio = PortfolioField(required=True)
     currency = CurrencyField(default=CurrencyDefault())
@@ -747,9 +795,15 @@ class PortfolioHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStamp
 
         super().__init__(*args, **kwargs)
 
-        self.fields["currency_object"] = CurrencyViewSerializer(source="currency", read_only=True)
-        self.fields["portfolio_object"] = PortfolioViewSerializer(source="portfolio", read_only=True)
-        self.fields["pricing_policy_object"] = PricingPolicySerializer(source="pricing_policy", read_only=True)
+        self.fields["currency_object"] = CurrencyViewSerializer(
+            source="currency", read_only=True
+        )
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
+        self.fields["pricing_policy_object"] = PricingPolicySerializer(
+            source="pricing_policy", read_only=True
+        )
 
 
 class CalculatePortfolioHistorySerializer(serializers.Serializer):
@@ -796,7 +850,9 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
         default=PortfolioHistory.PERFORMANCE_METHOD_MODIFIED_DIETZ,
         choices=PortfolioHistory.PERFORMANCE_METHOD_CHOICES,
     )
-    benchmark = serializers.CharField(required=False, default="sp_500", initial="sp_500")
+    benchmark = serializers.CharField(
+        required=False, default="sp_500", initial="sp_500"
+    )
 
 
 class ParamsSerializer(serializers.Serializer):
@@ -830,10 +886,14 @@ class ReconcilePortfolioField(PortfolioField):
         return getattr(obj, "user_code")
 
 
-class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioReconcileGroupSerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
     params = ParamsSerializer()
-    portfolios = serializers.ListSerializer(child=ReconcilePortfolioField(required=True))
+    portfolios = serializers.ListSerializer(
+        child=ReconcilePortfolioField(required=True)
+    )
     user_code = UserCodeField()
 
     class Meta:
@@ -853,11 +913,17 @@ class PortfolioReconcileGroupSerializer(ModelWithUserCodeSerializer, ModelWithTi
             raise serializers.ValidationError({"portfolios": "Duplicated portfolios"})
 
         if len(portfolios) != 2:
-            raise serializers.ValidationError({"portfolios": "Must me exactly 2 portfolios"})
+            raise serializers.ValidationError(
+                {"portfolios": "Must me exactly 2 portfolios"}
+            )
 
-        portfolio_classes = [p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type]
+        portfolio_classes = [
+            p.portfolio_type.portfolio_class_id for p in portfolios if p.portfolio_type
+        ]
         if len(set(portfolio_classes)) < 2:
-            raise serializers.ValidationError({"portfolios": "Portfolios must be of different classes"})
+            raise serializers.ValidationError(
+                {"portfolios": "Portfolios must be of different classes"}
+            )
 
         return attrs
 
@@ -896,9 +962,13 @@ HISTORY_FIELDS = [
 ]
 
 
-class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class PortfolioReconcileHistorySerializer(
+    ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+):
     master_user = MasterUserField()
-    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
+    portfolio_reconcile_group = serializers.CharField(
+        source="portfolio_reconcile_group.user_code"
+    )
     portfolio_reconcile_group_object = PortfolioReconcileGroupSerializer(
         source="portfolio_reconcile_group", read_only=True
     )
@@ -912,8 +982,12 @@ class PortfolioReconcileHistorySerializer(ModelWithUserCodeSerializer, ModelWith
 
 class SimpleReconcileHistorySerializer(serializers.ModelSerializer):
     # Simple model serializer (do not use request, user, master_user & owner fields)
-    portfolio_reconcile_group = serializers.CharField(source="portfolio_reconcile_group.user_code")
-    portfolio_reconcile_group_object = SimplePortfolioReconcileGroupSerializer(source="portfolio_reconcile_group")
+    portfolio_reconcile_group = serializers.CharField(
+        source="portfolio_reconcile_group.user_code"
+    )
+    portfolio_reconcile_group_object = SimplePortfolioReconcileGroupSerializer(
+        source="portfolio_reconcile_group"
+    )
     file_report = FileReportSerializer()
 
     class Meta:
@@ -939,7 +1013,9 @@ class CalculateReconcileHistorySerializer(serializers.Serializer):
 class BulkCalculateReconcileHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    reconcile_groups = serializers.ListField(child=PortfolioReconcileGroupField(), required=True)
+    reconcile_groups = serializers.ListField(
+        child=PortfolioReconcileGroupField(), required=True
+    )
     dates = serializers.ListField(child=serializers.DateField(), required=True)
 
     @staticmethod
@@ -984,7 +1060,11 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
             return ReconcileStatus.ERROR.value
 
         first_string = strings[0]
-        return first_string if all(s == first_string for s in strings) else ReconcileStatus.ERROR.value
+        return (
+            first_string
+            if all(s == first_string for s in strings)
+            else ReconcileStatus.ERROR.value
+        )
 
     def check_reconciliation_date(self, validated_data: dict) -> dict:
         result = {}
@@ -1012,8 +1092,13 @@ class PortfolioReconcileStatusSerializer(serializers.Serializer):
                 result[portfolio.user_code] = portfolio_result
                 continue
 
-            history_objects = SimpleReconcileHistorySerializer(histories, many=True).data
-            all_statuses = {history["user_code"]: self.reconcile_status(history) for history in history_objects}
+            history_objects = SimpleReconcileHistorySerializer(
+                histories, many=True
+            ).data
+            all_statuses = {
+                history["user_code"]: self.reconcile_status(history)
+                for history in history_objects
+            }
             final_status = self.final_status(all_statuses.values())
             result[portfolio.user_code] = {
                 "final_status": final_status,

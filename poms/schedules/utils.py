@@ -17,7 +17,9 @@ def handle_schedules(using=settings.DB_DEFAULT):
 
     for schedule in schedules:
         try:
-            periodic_task = PeriodicTask.objects.using(using).get(name=schedule.user_code)
+            periodic_task = PeriodicTask.objects.using(using).get(
+                name=schedule.user_code
+            )
         except PeriodicTask.DoesNotExist:
             periodic_task = PeriodicTask(name=schedule.user_code)
 

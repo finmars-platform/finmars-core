@@ -31,9 +31,7 @@ def default_empty_list():
 
 name_validator = RegexValidator(
     regex=r"\A[a-zA-Z0-9_]+\Z",
-    message=(
-        "Invalid name. May only contain letters, digits, or underscores."
-    ),
+    message=("Invalid name. May only contain letters, digits, or underscores."),
 )
 
 
@@ -91,7 +89,9 @@ class SlugRelatedFilteredField(SlugRelatedField):
 
 class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
     default_error_messages = {
-        "does_not_exist": _("Object with user_code or id that equals {value} does not exist."),
+        "does_not_exist": _(
+            "Object with user_code or id that equals {value} does not exist."
+        ),
         "invalid": _("Invalid value."),
     }
 
@@ -125,8 +125,9 @@ class UserCodeField(CharField):
     def to_internal_value(self, data: str) -> str:
         validated_data = super().to_internal_value(data)
 
-        if validated_data and not validated_data[0].isalpha():
-            raise ValidationError("user_code must start with a letter")
+        # 2025-04-23 sz discuss later
+        # if validated_data and not validated_data[0].isalpha():
+        #     raise ValidationError("user_code must start with a letter")
 
         return validated_data
 

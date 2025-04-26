@@ -21,13 +21,15 @@ class TaskFilter(BaseFilterBackend):
 
 class AbstractMappingObjectPermissionFilter(BaseFilterBackend):
     content_object_model = None
-    master_user_path = 'master_user'
+    master_user_path = "master_user"
 
     def filter_queryset(self, request, queryset, view):
         return queryset
 
 
-class InstrumentTypeMappingObjectPermissionFilter(AbstractMappingObjectPermissionFilter):
+class InstrumentTypeMappingObjectPermissionFilter(
+    AbstractMappingObjectPermissionFilter
+):
     content_object_model = InstrumentType
 
 
@@ -35,7 +37,9 @@ class AccountTypeMappingObjectPermissionFilter(AbstractMappingObjectPermissionFi
     content_object_model = AccountType
 
 
-class InstrumentAttributeValueMappingObjectPermissionFilter(AbstractMappingObjectPermissionFilter):
+class InstrumentAttributeValueMappingObjectPermissionFilter(
+    AbstractMappingObjectPermissionFilter
+):
     content_object_model = GenericAttributeType
 
 
