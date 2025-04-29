@@ -1,8 +1,6 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     env_file:
       - .env
     volumes:
@@ -12,7 +10,7 @@ services:
       - db
       - rabbitmq
       - redis
-      - backend_migration
+      - migration
     ports:
       - "8080:8080"
 
@@ -36,7 +34,7 @@ services:
       - db
       - rabbitmq
 
-  backend_migration:
+  migration:
     build: .
     env_file:
       - .env
@@ -44,7 +42,6 @@ services:
       - INSTANCE_TYPE=job
     depends_on:
       - db
-    command: python manage.py migrate_all_schemes
 
   db:
     image: postgres:13-alpine
