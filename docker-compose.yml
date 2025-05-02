@@ -6,11 +6,6 @@ services:
     volumes:
       - ./poms:/var/app/poms
     restart: always
-    depends_on:
-      - db
-      - rabbitmq
-      - redis
-      - migration
     ports:
       - "8080:8080"
 
@@ -19,20 +14,16 @@ services:
     env_file:
       - .env
     environment:
+      - DJANGO_SETTINGS_MODULE=poms_app.settings
       - INSTANCE_TYPE=worker
-    depends_on:
-      - db
-      - rabbitmq
 
   scheduler:
     build: .
     env_file:
       - .env
     environment:
+      - DJANGO_SETTINGS_MODULE=poms_app.settings
       - INSTANCE_TYPE=beat
-    depends_on:
-      - db
-      - rabbitmq
 
   migration:
     build: .
@@ -40,8 +31,6 @@ services:
       - .env
     environment:
       - INSTANCE_TYPE=job
-    depends_on:
-      - db
 
 volumes:
   postgres_data:

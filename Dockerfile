@@ -18,7 +18,7 @@ RUN mkdir -p \
     /var/app/finmars_data \
     /var/log/celery \
     /var/log/finmars/backend && \
-    chmod 777 /var/app/finmars_data
+    chmod 777 /var/app/finmars_data /var/log/finmars/
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
