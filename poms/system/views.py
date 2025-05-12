@@ -33,10 +33,14 @@ class IsDefaultFilterSet(FilterSet):
 
 
 class WhitelabelViewSet(AbstractModelViewSet):
-    queryset = WhitelabelModel.objects
     serializer_class = WhitelabelSerializer
     pagination_class = None
     filter_class = IsDefaultFilterSet
+
+    def get_queryset(self):
+        if not WhitelabelModel.objects.exists():
+            return WhitelabelModel.objects.none()
+        return WhitelabelModel.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

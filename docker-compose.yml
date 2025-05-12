@@ -14,7 +14,7 @@ services:
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=poms_app.settings
+      - DJANGO_SETTINGS_MODULE=poms_app.settings # remove after change manage.py location
       - INSTANCE_TYPE=worker
 
   scheduler:
@@ -22,7 +22,7 @@ services:
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=poms_app.settings
+      - DJANGO_SETTINGS_MODULE=poms_app.settings # remove after change manage.py location
       - INSTANCE_TYPE=beat
 
   migration:
