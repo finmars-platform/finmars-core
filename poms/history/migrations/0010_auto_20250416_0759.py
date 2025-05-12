@@ -27,14 +27,15 @@ def create_crontab_task(apps, schema_editor):
         day_of_month='*',
         month_of_year='*',
     )
+    full_task_name = task_name.format(schema_name)
 
-    PeriodicTask.objects.update_or_create(
-        name=task_name.format(schema_name),
-        defaults={
-            'crontab': schedule,
-            'task': 'history.common_export_journal_to_storage',
-            "kwargs": json.dumps({"context": {"space_code": schema_name}}),
-        }
+    PeriodicTask.objects.filter(name=full_task_name).delete()
+    PeriodicTask.objects.create(
+        name=full_task_name,
+        crontab=schedule,
+        task='history.common_export_journal_to_storage',
+        kwargs=json.dumps({"context": {"space_code": schema_name}}),
+        enabled=True
     )
 
 def remove_crontab_task(apps, schema_editor):

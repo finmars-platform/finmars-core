@@ -167,3 +167,5 @@ api_docs
 postgres_data/
 rabbitmq_data/
 redis_data/
+
+*.sql
