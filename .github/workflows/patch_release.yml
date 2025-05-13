@@ -1,4 +1,4 @@
-name: Manual Release
+name: Manual Patch Release
 
 on:
   workflow_dispatch:
@@ -29,9 +29,7 @@ jobs:
         run: |
           latest_tag=${{ steps.get_tag.outputs.latest_tag }}
           IFS='-' read -r version suffix <<< "$latest_tag"
-          IFS='.' read -r major minor patch labels <<< "$version"
-          minor=$((minor + 1))
-          new_version="$major.$minor.0-stable"
+          new_version="$version-stable"
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
       - name: Create new tag

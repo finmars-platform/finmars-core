@@ -3,7 +3,7 @@ name: CI Versioning & Build
 on:
   push:
     branches:
-      - main
+      - '*'
 
 permissions:
   contents: write 
@@ -42,19 +42,20 @@ jobs:
         run: git fetch --tags
 
       - name: Get latest version
-        id: get_version
+        id: get_tag
         run: |
           latest_tag=$(git tag --sort=-v:refname | head -n1)
-          echo "Latest verion: $latest_tag"
-          echo "version=$latest_tag" >> $GITHUB_OUTPUT
+          echo "Latest tag: $latest_tag"
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
 
       - name: Calculate new patch version
         id: bump_patch
         run: |
-          version=${{ steps.get_version.outputs.version }}
-          IFS='.' read -r major minor patch <<< "${version#v}"
+          latest_tag=${{ steps.get_tag.outputs.latest_tag }}
+          IFS='-' read -r version suffix <<< "$latest_tag"
+          IFS='.' read -r major minor patch <<< "${version}"
           patch=$((patch + 1))
-          new_version="$major.$minor.$patch"
+          new_version="$major.$minor.$patch-rc"
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
       - name: Create tag
