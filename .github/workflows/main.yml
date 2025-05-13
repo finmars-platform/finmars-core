@@ -78,3 +78,12 @@ jobs:
 
       - name: Some build
         run: echo "Some build ${{ needs.versioning.outputs.version }}"
+
+      - name: Log in to Docker Registry
+        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin git.finmars.com:5050
+
+      - name: Build and push image
+        run: |
+          TAG="${{ needs.versioning.outputs.new_version }}"
+          docker build --pull --no-cache -t ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG .
+          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG

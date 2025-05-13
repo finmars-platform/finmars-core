@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   versioning:
-    name: Bump Minor Version
+    name: Bump Patch Version
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
