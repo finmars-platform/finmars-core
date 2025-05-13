@@ -1,0 +1,79 @@
+name: CI Versioning & Build
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write 
+
+jobs:
+  lint:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Some linters
+        run: echo "Some linters"
+
+
+  test:
+    name: Run Python Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Some tests
+        run: echo "Some tests"
+
+  versioning:
+    name: Bump Patch Version
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch tags
+        run: git fetch --tags
+
+      - name: Get latest version
+        id: get_version
+        run: |
+          latest_tag=$(git tag --sort=-v:refname | head -n1)
+          echo "Latest verion: $latest_tag"
+          echo "version=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Calculate new patch version
+        id: bump_patch
+        run: |
+          version=${{ steps.get_version.outputs.version }}
+          IFS='.' read -r major minor patch <<< "${version#v}"
+          patch=$((patch + 1))
+          new_version="$major.$minor.$patch"
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.bump_patch.outputs.new_version }}
+          git push origin ${{ steps.bump_patch.outputs.new_version }}
+
+    outputs:
+      version: ${{ steps.bump_patch.outputs.new_version }}
+
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: versioning
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Some build
+        run: echo "Some build ${{ needs.versioning.outputs.version }}"
