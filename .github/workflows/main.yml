@@ -68,22 +68,20 @@ jobs:
     outputs:
       new_version: ${{ steps.bump_patch.outputs.new_version }}
 
-  build:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
+  release:
     needs: versioning
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ needs.versioning.outputs.new_version }}
+    secrets:
+      CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
+      CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
+      CI_REGISTRY_IMAGE: ${{ secrets.CI_REGISTRY_IMAGE }}
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Some build
-        run: echo "Some build ${{ needs.versioning.outputs.new_version }}"
-
-      - name: Log in to Docker Registry
-        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin git.finmars.com:5050
-
-      - name: Build and push image
-        run: |
-          TAG="${{ needs.versioning.outputs.new_version }}"
-          docker build --pull --no-cache -t ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG .
-          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG
+  publish:
+    needs: [release, versioning]
+    uses: ./.github/workflows/publish_version.yml
+    with:
+      version: ${{ needs.versioning.outputs.new_version }}
+      build_number: ${{ github.run_number }}
+      notes: ${{ github.event.head_commit.message }}
