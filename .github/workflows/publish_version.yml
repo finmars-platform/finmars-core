@@ -1,0 +1,42 @@
+name: Publish Version Info
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      build_number:
+        required: true
+        type: string
+      notes:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Publish Version Info on License Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push version info
+        run: |
+          TAG="${{ inputs.version }}"
+          if [[ "$TAG" == *"-rc" ]]; then
+              CHANNEL="rc"
+          elif [[ "$TAG" == *"-stable" ]]; then
+              CHANNEL="stable"
+          else
+              CHANNEL="unknown"
+          fi
+
+          JSON_PAYLOAD="{ \"app\": \"backend\", \"version\": \"$TAG\", \"build_number\": ${{ inputs.build_number }}, \"notes\": \"${{ inputs.notes }}\", \"channel\": \"$CHANNEL\" }"
+
+          echo "Sending: $JSON_PAYLOAD"
+          status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
+
+          if [[ "$status_code" -ne "201" ]]; then
+            echo "Publish version failed, http status: $status_code"
+            exit 6
+          fi
+
+          echo "Publish version succeeded."
