@@ -1,0 +1,51 @@
+name: Docker workflow
+
+on:
+  workflow_call:
+    inputs:
+      tag_latest:
+        required: false
+        type: boolean
+        default: false
+      version:
+        required: true
+        type: string
+    secrets:
+      CI_REGISTRY_USER:
+        required: true
+      CI_REGISTRY_PASSWORD:
+        required: true
+      CI_REGISTRY_IMAGE:
+        required: true
+
+jobs:
+  release:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Registry
+        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin git.finmars.com:5050
+
+      - name: Build image
+        run: |
+          TAG="${{ inputs.version }}"
+          docker build --pull --no-cache -t ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG .
+
+      - name: Push image
+        run: |
+          TAG="${{ inputs.version }}"
+          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG
+
+      - name: Tag image as latest
+        if: inputs.tag_latest == true
+        run: |
+          TAG="${{ inputs.version }}"
+          docker tag ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG ${{ secrets.CI_REGISTRY_IMAGE }}:latest
+
+      - name: Push latest image
+        if: inputs.tag_latest == true
+        run: |
+          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:latest
