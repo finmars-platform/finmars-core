@@ -2,10 +2,10 @@
 import os
 import sys
 
+sys.setrecursionlimit(10000)
+
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
-
-    sys.setrecursionlimit(10000)
 
     try:
         from django.core.management import execute_from_command_line
