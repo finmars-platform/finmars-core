@@ -68,7 +68,7 @@ jobs:
     outputs:
       new_version: ${{ steps.bump_patch.outputs.new_version }}
 
-  build:
+  release:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     needs: versioning
@@ -76,14 +76,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Some build
-        run: echo "Some build ${{ needs.versioning.outputs.new_version }}"
-
       - name: Log in to Docker Registry
         run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin git.finmars.com:5050
 
-      - name: Build and push image
+      - name: Build image
         run: |
           TAG="${{ needs.versioning.outputs.new_version }}"
           docker build --pull --no-cache -t ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG .
+
+      - name: Push image
+        run: |
+          TAG="${{ needs.versioning.outputs.new_version }}"
           docker push ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG
+
+  publish:
+    name: Publish Version Info on License Server
+    runs-on: ubuntu-latest
+    needs: [release, versioning]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push version info
+        run: |
+          TAG="${{ needs.versioning.outputs.new_version }}"
+          if [[ "$TAG" == *"-rc" ]]; then
+              CHANNEL="rc"
+          elif [[ "$TAG" == *"-stable" ]]; then
+              CHANNEL="stable"
+          else
+              CHANNEL="unknown"
+          fi
+
+          NOTES="${{ github.event.head_commit.message }}"
+          JSON_PAYLOAD="{ \"app\": \"backend\", \"version\": \"$TAG\", \"build_number\": ${{ github.run_number }}, \"notes\": \"$NOTES\", \"channel\": \"$CHANNEL\" }"
+
+          echo "Sending: $JSON_PAYLOAD"
+          status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
+
+          if [[ "$status_code" -ne "201" ]]; then
+            echo "Publish version failed, http status: $status_code"
+            exit 6
+          fi
+
+          echo "Publish version succeeded."
