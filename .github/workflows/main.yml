@@ -3,10 +3,12 @@ name: CI Versioning & Build
 on:
   push:
     branches:
-      - '*'
+      - main
 
 permissions:
   contents: write 
+
+
 
 jobs:
   lint:
@@ -19,16 +21,8 @@ jobs:
       - name: Some linters
         run: echo "Some linters"
 
-
   test:
-    name: Run Python Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Some tests
-        run: echo "Some tests"
+    uses: ./.github/workflows/tests.yml
 
   versioning:
     name: Bump Patch Version

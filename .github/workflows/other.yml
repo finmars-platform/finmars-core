@@ -1,0 +1,20 @@
+name: CI for all commits
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  lint:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Some linters
+        run: echo "Some linters"
+
+  test:
+    uses: ./.github/workflows/tests.yml
