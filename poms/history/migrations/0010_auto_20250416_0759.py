@@ -19,7 +19,6 @@ def create_crontab_task(apps, schema_editor):
 
     schema_name = get_current_schema_name(apps, schema_editor)
     
-    # Run every day at 12:30 AM
     schedule, created = CrontabSchedule.objects.get_or_create(
         minute='*',
         hour='4',
@@ -53,5 +52,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_crontab_task, remove_crontab_task),
+        # migrations.RunPython(create_crontab_task, remove_crontab_task),
     ]
