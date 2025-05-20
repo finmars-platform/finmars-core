@@ -58,5 +58,3 @@ jobs:
     uses: ./.github/workflows/publish_version.yml
     with:
       version: ${{ needs.versioning.outputs.new_version }}
-      build_number: ${{ github.run_number }}
-      notes: ${{ github.event.head_commit.message }}
