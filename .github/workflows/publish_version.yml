@@ -28,8 +28,8 @@ jobs:
           else
               CHANNEL="unknown"
           fi
-
-          JSON_PAYLOAD="{ \"app\": \"backend\", \"version\": \"$TAG\", \"build_number\": ${{ inputs.build_number }}, \"notes\": \"${{ inputs.notes }}\", \"channel\": \"$CHANNEL\" }"
+          NOTES=$(echo "${{ inputs.notes }}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-+|-+$//g')
+          JSON_PAYLOAD="{ \"app\": \"backend\", \"version\": \"$TAG\", \"build_number\": ${{ inputs.build_number }}, \"notes\": \"$\NOTES", \"channel\": \"$CHANNEL\" }"
 
           echo "Sending: $JSON_PAYLOAD"
           status_code=$(curl -o /dev/null -s -w "%{http_code}" -X POST https://license.finmars.com/api/v1/version/ -H "Content-Type: application/json" -d "$JSON_PAYLOAD")
