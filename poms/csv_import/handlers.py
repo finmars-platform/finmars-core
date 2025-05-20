@@ -9,7 +9,7 @@ from functools import reduce
 from logging import getLogger
 from operator import or_
 from tempfile import NamedTemporaryFile
-from typing import Optional
+from typing import Any, Optional
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -1528,7 +1528,7 @@ class SimpleImportProcess:
 
         return result
 
-    def import_item(self, item):
+    def import_item(self, item: dict[str, Any]):
         from poms.instruments.handlers import InstrumentTypeProcess
 
         content_type_key = (
@@ -1691,7 +1691,7 @@ class SimpleImportProcess:
 
                 if "make a unique set" in str(e.__dict__):
                     item.status = "skip"
-                    item.error_message = f"{item.error_message} ==== Skipped due to uniqueness constraint violation"
+                    item.error_message = " "
 
                 else:
                     item.status = "error"
