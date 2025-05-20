@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   versioning:
-    name: Bump Minor Version
+    name: Bump Patch Version
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -42,12 +42,21 @@ jobs:
     outputs:
       version: ${{ steps.bump_patch.outputs.new_version }}
 
-  build:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
+  release:
     needs: versioning
-    steps:
-      - uses: actions/checkout@v4
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ needs.versioning.outputs.new_version }}
+      tag_latest: true
+    secrets:
+      CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
+      CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
+      CI_REGISTRY_IMAGE: ${{ secrets.CI_REGISTRY_IMAGE }}
 
-      - name: Some build
-        run: echo "Some build ${{ needs.versioning.outputs.version }}"
+  publish:
+    needs: [release, versioning]
+    uses: ./.github/workflows/publish_version.yml
+    with:
+      version: ${{ needs.versioning.outputs.new_version }}
+      build_number: ${{ github.run_number }}
+      notes: ${{ github.event.head_commit.message }}
