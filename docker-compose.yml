@@ -7,7 +7,7 @@ services:
       - ./poms:/var/app/poms
     restart: always
     ports:
-      - "8080:8080"
+      - "8000:8080"
 
   worker:
     build: .
