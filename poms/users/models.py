@@ -1240,6 +1240,8 @@ class Member(FakeDeletableModel):
         default="active",
     )
 
+    public_key = models.TextField(null=True, blank=True, verbose_name="public key")  # PEM format
+
     @property
     def data(self):
         if not self.json_data:
@@ -1303,6 +1305,20 @@ class Member(FakeDeletableModel):
             return " ".join([self.first_name, self.last_name])
         else:
             return self.username
+
+
+class MasterUserSymmetricKey(models.Model):
+    master_user = models.ForeignKey(
+        MasterUser,
+        on_delete=models.CASCADE,
+        related_name="symmetric_keys"
+    )
+    member = models.ForeignKey(
+        Member,
+        on_delete=models.CASCADE,
+        related_name="workspace_keys"
+    )
+    encrypted_key = models.BinaryField(help_text="Store AES key encrypted by member public key")
 
 
 class OtpToken(models.Model):

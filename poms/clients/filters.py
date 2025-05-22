@@ -15,9 +15,13 @@ class ClientsFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     first_name = CharFilter()
+    first_name_hash = CharFilter()
     last_name = CharFilter()
+    last_name_hash = CharFilter()
     telephone = CharFilter()
+    telephone_hash = CharFilter()
     email = CharFilter()
+    email_hash = CharFilter()
     portfolios = CharFilter(field_name="portfolios__user_code", lookup_expr="icontains")
     client_secrets = CharFilter(
         field_name="client_secrets__user_code", lookup_expr="icontains"

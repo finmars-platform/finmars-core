@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
+import base64
 
 from poms_app import settings
 
@@ -100,3 +101,18 @@ class RoleField(UserCodeOrPrimaryKeyRelatedField):
 
 class AccessPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = AccessPolicy.objects.all()
+
+
+class Base64BinaryField(serializers.Field):
+    def to_representation(self, value):
+        if value is None:
+            return None
+        return base64.b64encode(value).decode('utf-8')
+
+    def to_internal_value(self, data):
+        if data is None:
+            return None
+        try:
+            return base64.b64decode(data)
+        except Exception as e:
+            raise serializers.ValidationError('Invalid Base64-encoded data.')
