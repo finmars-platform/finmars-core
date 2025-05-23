@@ -318,3 +318,11 @@ basename="import_csv",
 * `main` - Start when PR merge in `main` branch. Increment patch version and publish release candidate image.
 * `release` - Start manually from `main` branch. Increment minor version and publish stable image
 * `patch_release` - Start manually from `main` branch. Publish current version stable image 
+
+
+# First start
+
+1) make generate-env
+2) make import-sql (fror demo or restore db from dump)
+3) make migrate
+4) make up
