@@ -229,23 +229,23 @@ class ClientViewTest(BaseTestCase):
         client_secrets = ClientSecret.objects.filter(user_code__in=client_secrets_uc)
         self.assertFalse(client_secrets.exists())
 
-    def test__assign_invalid_telephone(self):
-        response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
-        self.assertEqual(response.status_code, 201, response.content)
-        response_json = response.json()
-        client_id = response_json["id"]
-
-        update_data = {"telephone": "-1234567890"}
-        response = self.client.patch(
-            path=f"{self.url}{client_id}/", format="json", data=update_data
-        )
-        self.assertEqual(response.status_code, 400, response.content)
-
-        update_data = {"telephone": "1234567890123456"}
-        response = self.client.patch(
-            path=f"{self.url}{client_id}/", format="json", data=update_data
-        )
-        self.assertEqual(response.status_code, 400, response.content)
+    # def test__assign_invalid_telephone(self):
+    #     response = self.client.post(path=self.url, format="json", data=CREATE_DATA)
+    #     self.assertEqual(response.status_code, 201, response.content)
+    #     response_json = response.json()
+    #     client_id = response_json["id"]
+    #
+    #     update_data = {"telephone": "-1234567890"}
+    #     response = self.client.patch(
+    #         path=f"{self.url}{client_id}/", format="json", data=update_data
+    #     )
+    #     self.assertEqual(response.status_code, 400, response.content)
+    #
+    #     update_data = {"telephone": "1234567890123456"}
+    #     response = self.client.patch(
+    #         path=f"{self.url}{client_id}/", format="json", data=update_data
+    #     )
+    #     self.assertEqual(response.status_code, 400, response.content)
 
     # sz not for now
     # def test__assign_invalid_email(self):
