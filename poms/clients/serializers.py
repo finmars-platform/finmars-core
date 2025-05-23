@@ -57,17 +57,17 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
             "client_secrets",
             "client_secrets_object",
         ]
-        extra_kwargs = {
-            "telephone": {
-                "help_text": (
-                    "Telephone number of client (symbol '+' is optional, "
-                    "length from 5 to 15 digits)"
-                )
-            },
-            "email": {
-                "help_text": "Email address of client (example email@outlook.com)"
-            },
-        }
+        # extra_kwargs = {
+        #     "telephone": {
+        #         "help_text": (
+        #             "Telephone number of client (symbol '+' is optional, "
+        #             "length from 5 to 15 digits)"
+        #         )
+        #     },
+        #     "email": {
+        #         "help_text": "Email address of client (example email@outlook.com)"
+        #     },
+        # }
 
     def __init__(self, *args, **kwargs):
         from poms.portfolios.serializers import PortfolioViewSerializer
@@ -91,20 +91,20 @@ class ClientsSerializer(ModelWithUserCodeSerializer):
                 required=False,
             )
 
-    def validate_telephone(self, value):
-        if value is None:
-            return
-
-        validator = RegexValidator(
-            regex=r"^\+?\d{5,15}$",
-            message=(
-                "Enter a valid telephone number, vadil format is +123456 "
-                "(symbol '+' is optional, length from 5 to 15 digits)"
-            ),
-        )
-        validator(value)
-
-        return value
+    # def validate_telephone(self, value):
+    #     if value is None:
+    #         return
+    #
+    #     validator = RegexValidator(
+    #         regex=r"^\+?\d{5,15}$",
+    #         message=(
+    #             "Enter a valid telephone number, vadil format is +123456 "
+    #             "(symbol '+' is optional, length from 5 to 15 digits)"
+    #         ),
+    #     )
+    #     validator(value)
+    #
+    #     return value
 
     def validate_client_secrets_object(self, value):
         if value is None:
