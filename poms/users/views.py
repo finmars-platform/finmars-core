@@ -76,7 +76,7 @@ from poms.users.models import (
     Member,
     OtpToken,
     ResetPasswordToken,
-    UsercodePrefix,
+    UsercodePrefix, MasterUserSymmetricKey,
 )
 from poms.users.permissions import (
     IsCurrentMasterUser,
@@ -98,7 +98,7 @@ from poms.users.serializers import (
     UserRegisterSerializer,
     UserSerializer,
     UserSetPasswordSerializer,
-    UserUnsubscribeSerializer,
+    UserUnsubscribeSerializer, MasterUserSymmetricKeySerializer,
 )
 from poms.users.tasks import clone_master_user
 
@@ -1042,6 +1042,28 @@ class MemberViewSet(AbstractModelViewSet):
         )
 
         return Response({"status": "ok"})
+
+
+class MasterUserSymmetricKeyFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = MasterUserSymmetricKey
+        fields = []
+
+
+class MasterUserSymmetricKeyViewSet(AbstractModelViewSet):
+    queryset = MasterUserSymmetricKey.objects.select_related("member")
+    serializer_class = MasterUserSymmetricKeySerializer
+    permission_classes = AbstractModelViewSet.permission_classes + []
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = MasterUserSymmetricKeyFilterSet
+    ordering_fields = [
+
+    ]
+    pagination_class = BigPagination
 
 
 class UsercodePrefixFilterSet(FilterSet):

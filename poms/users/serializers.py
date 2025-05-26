@@ -44,7 +44,7 @@ from poms.users.fields import (
     HiddenMemberField,
     MasterUserField,
     MemberField,
-    RoleField,
+    RoleField, Base64BinaryField,
 )
 from poms.users.models import (
     TIMEZONE_CHOICES,
@@ -53,7 +53,7 @@ from poms.users.models import (
     Member,
     OtpToken,
     UsercodePrefix,
-    UserProfile,
+    UserProfile, MasterUserSymmetricKey,
 )
 from poms.users.utils import (
     get_master_user_from_context,
@@ -728,6 +728,18 @@ class MemberSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop("username", None)
         return super().update(instance, validated_data)
+
+
+class MasterUserSymmetricKeySerializer(serializers.ModelSerializer):
+
+    member_object = MemberSerializer(many=True, read_only=True, source="member")
+
+    encrypted_key = Base64BinaryField()
+
+    class Meta:
+        model = MasterUserSymmetricKey
+        fields = ['id', 'master_user', 'member', 'encrypted_key', 'member_object']
+        read_only_fields = ['id']
 
 
 class MemberViewSerializer(serializers.ModelSerializer):

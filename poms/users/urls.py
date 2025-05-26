@@ -10,6 +10,7 @@ router.register(
     "ping",
 )
 router.register(r"user", users.UserViewSet, "user")
+router.register(r"symmetric-key", users.MasterUserSymmetricKeyViewSet, "symmetrickey")
 router.register(r"master-user", users.MasterUserViewSet, "masteruser")
 router.register(  # Deprecated at all, no light-method needed
     r"master-user-light",

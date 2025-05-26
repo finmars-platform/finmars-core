@@ -12,29 +12,49 @@ class Client(NamedModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-    first_name = models.CharField(
-        max_length=255,
+    first_name = models.TextField(
         blank=True,
         null=True,
         help_text="First name of client",
     )
-    last_name = models.CharField(
-        max_length=255,
+    first_name_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="SHA-256 hash of the first name",
+    )
+    last_name = models.TextField(
         blank=True,
         null=True,
         help_text="Last name of client",
     )
-    telephone = models.CharField(
-        max_length=255,
+    last_name_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="SHA-256 hash of the last name",
+    )
+    telephone = models.TextField(
         blank=True,
         null=True,
         help_text="Telephone number of client",
     )
-    email = models.EmailField(
-        max_length=255,
+    telephone_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="SHA-256 hash of the telephone number",
+    )
+    email = models.TextField(
         blank=True,
         null=True,
         help_text="Email address of client",
+    )
+    email_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text="SHA-256 hash of the email address",
     )
 
     class Meta(NamedModel.Meta):
