@@ -25,8 +25,10 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY data ./data
+COPY templates ./templates
 COPY finmars_standardized_errors ./finmars_standardized_errors
-COPY healthcheck ./healthcheck    
+COPY healthcheck ./healthcheck
+COPY logstash ./logstash
 COPY poms_app ./poms_app
 COPY poms ./poms
 COPY manage.py ./
