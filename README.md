@@ -14,6 +14,13 @@ It gives you easy tools to create reports, dashboards, and PDFs without writing 
 You can add extra features from our open marketplace — just pick what you need and plug it in.  
 Finmars runs in your web browser, so you and your team can use it from anywhere.
 
+<p align="center">
+  <img src="https://github.com/finmars-platform/finmars-core/blob/main/finmars-misc/dashboard.png" width="270" />
+  <img src="https://github.com/finmars-platform/finmars-core/blob/main/finmars-misc/report.png" width="270" />
+  <img src="https://github.com/finmars-platform/finmars-core/blob/main/finmars-misc/book.png" width="270" />
+  <img src="https://github.com/finmars-platform/finmars-core/blob/main/finmars-misc/matrix.png" width="270" />
+</p>
+
 ## Community Edition
 
 To install and to start using Finmars please refer [Getting Started Community Edition](https://docs.finmars.com/shelves/community-edition).
