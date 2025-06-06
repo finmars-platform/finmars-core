@@ -1,3 +1,11 @@
+<p align="center">
+  <p align="center">
+    <a href="https://finmars.io/?utm_source=github&utm_medium=logo" target="_blank">
+      <img src="https://github.com/finmars-platform/finmars-core/blob/main/finmars-misc/logo_white_bg.png" alt="Finmars" height="84" />
+    </a>
+  </p>
+</p>
+
 # Open Source Finance Management Platform
 
 Finmars is a **free, open-source** platform to help you manage all your money and investments in one place.  You can pull in data from many accounts and see it together.  
