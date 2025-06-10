@@ -5,6 +5,7 @@ from logging import getLogger
 from celery import current_app
 from celery.result import AsyncResult
 
+from django.conf import settings
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -376,6 +377,9 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="create-worker")
     def create_worker(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         worker = self.get_object()
         worker.create_worker(request.realm_code)
 
@@ -383,6 +387,9 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="start")
     def start(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         worker = self.get_object()
         worker.start(request.realm_code)
 
@@ -390,6 +397,9 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="stop")
     def stop(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         worker = self.get_object()
         worker.stop(request.realm_code)
 
@@ -397,6 +407,9 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="restart")
     def restart(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         worker = self.get_object()
         worker.restart(request.realm_code)
 
@@ -404,12 +417,18 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["GET"], url_path="status")
     def status(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         worker = self.get_object()
         worker.get_status(request.realm_code)
 
         return Response({"status": "ok"})
 
     def destroy(self, request, *args, **kwargs):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         with contextlib.suppress(Exception):
             instance = self.get_object()
             self.perform_destroy(instance, request)
@@ -417,5 +436,8 @@ class CeleryWorkerViewSet(AbstractApiView, ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, instance, request, *args, **kwargs):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         instance.delete_worker(request.realm_code)
         return super().perform_destroy(instance)
