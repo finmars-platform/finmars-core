@@ -836,3 +836,7 @@ NOTIFICATION_SERVICE_DOMAIN_NAME = ENV_STR(
 
 # TODO: - change the URL to the actual URL of the notification service
 NOTIFICATION_SERVICE_BASE_URL = f"https://{DOMAIN_NAME}/{REALM_CODE}/{{space_code}}/notification-service/api/v1/"
+
+EDITION_TYPE = ENV_STR("EDITION_TYPE", "entreprise")
+ADMIN_USERNAME = ENV_STR("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = ENV_STR("ADMIN_PASSWORD", "password")

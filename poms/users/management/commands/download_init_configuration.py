@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
         _l.info("Celery worker(s) are now available.")
 
-        if not settings.AUTHORIZER_URL:
+        if not settings.AUTHORIZER_URL and settings.EDITION_TYPE != "community":
             _l.error("Authorizer url is not set!")
             return
 

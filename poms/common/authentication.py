@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 import time
 
 import jwt
@@ -14,6 +16,10 @@ from poms.common.keycloak import KeycloakConnect
 
 _l = logging.getLogger("poms.common")
 
+def generate_random_string(N):
+    return "".join(
+        random.choice(string.ascii_lowercase + string.digits) for _ in range(N)
+    )
 
 def get_access_token(request):
     auth = get_authorization_header(request).split()
@@ -88,6 +94,8 @@ class KeycloakAuthentication(TokenAuthentication):
         return self.authenticate_credentials(token, request)
 
     def authenticate_credentials(self, key, request=None):
+        from poms.users.models import MasterUser, Member
+
         auth_start_time = time.perf_counter()
         """
         Validate user Berarer token in keycloak
@@ -113,16 +121,35 @@ class KeycloakAuthentication(TokenAuthentication):
             msg = _("Invalid or expired token.")
             raise exceptions.AuthenticationFailed(msg)
 
-        user_model = get_user_model()
-
-        # user = user_model.objects.get(username=userinfo['preferred_username'])
+        logging.info(f"userinfo: {userinfo}")
 
         try:
             user = User.objects.get(username=userinfo["preferred_username"])
         except Exception as e:
-            # _l.error("User not found %s" % e)
+            if settings.EDITION_TYPE != "community" or settings.ADMIN_USERNAME != userinfo["preferred_username"]:
+                _l.error("User not found %s" % e)
+                raise exceptions.AuthenticationFailed(e)
 
-            raise exceptions.AuthenticationFailed(e)
+            user = User.objects.create_superuser(
+                    username=userinfo["preferred_username"],
+                    password=settings.ADMIN_PASSWORD,
+                )
+            logging.info(f"user: {user}")
+
+            master_user = MasterUser.objects.all().first()
+            if not master_user:
+                master_user = MasterUser.objects.create(
+                    name="Finmars",
+                    space_code="space00000",
+                    realm_code=settings.REALM_CODE,
+                )
+            logging.info(f"master_user: {master_user}")
+
+            member = Member.objects.get_or_create(
+                user=user, master_user=master_user, 
+                defaults=dict(is_owner=True, is_admin=True, username=user.username),
+            )
+            logging.info(f"member: {member}")
 
             # Security hole, we should not create user on a fly
             # Was in use when we have poor invites implementation

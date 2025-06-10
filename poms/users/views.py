@@ -888,6 +888,9 @@ class MemberViewSet(AbstractModelViewSet):
         return super().get_object()
 
     def create(self, request, *args, **kwargs):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -933,6 +936,9 @@ class MemberViewSet(AbstractModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -996,6 +1002,9 @@ class MemberViewSet(AbstractModelViewSet):
             raise ValidationError("Could not remove owner rights from yourself")
 
     def destroy(self, request, *args, **kwargs):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         if self.get_object().username == "finmars_bot":
             raise PermissionDenied()
 
@@ -1010,6 +1019,9 @@ class MemberViewSet(AbstractModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, instance, request):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         if instance.is_owner:
             raise PermissionDenied()
 
@@ -1024,6 +1036,9 @@ class MemberViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=["put"], url_path="send-invite")
     def send_invite(self, request, pk=None, realm_code=None, space_code=None):
+        if settings.EDITION_TYPE == "community":
+            raise PermissionDenied("Community edition does not support this feature")
+
         member = self.get_object()
 
         if not member.is_deleted and member.status != Member.STATUS_INVITE_DECLINED:
