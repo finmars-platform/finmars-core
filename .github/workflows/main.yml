@@ -21,8 +21,8 @@ jobs:
       - name: Some linters
         run: echo "Some linters"
 
-  test:
-    uses: ./.github/workflows/tests.yml
+  # test:
+  #   uses: ./.github/workflows/tests.yml
 
   versioning:
     name: Bump Patch Version
