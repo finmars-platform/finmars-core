@@ -108,6 +108,7 @@ class BootstrapConfig(AppConfig):
         current_space_code = get_current_search_path()
 
         _l.info(f"bootstrap: Current search path: {current_space_code}")
+        _l.error(f"bootstrap: EDITION_TYPE: {settings.EDITION_TYPE}")
 
         # Do not disable bootstrap code, it's important to be executed on every startup
         if "test" not in sys.argv and "public" not in current_space_code:
@@ -223,65 +224,77 @@ class BootstrapConfig(AppConfig):
 
         log = "sync_space_data"
 
-        if not settings.AUTHORIZER_URL:
-            _l.info(f"{log} exited, AUTHORIZER_URL is not defined")
-            return
-
         current_space_code = get_current_search_path()
 
-        # Probably its a Legacy space
-        # Remove that in 1.9.0
-        if "public" in current_space_code:
-            current_space_code = settings.BASE_API_URL
+        # TODO improve logic for Community Edition
+        owner_username = settings.ADMIN_USERNAME
+        owner_email = os.environ.get("ADMIN_EMAIL", 'admin@finmars.com')
+        master_user_name = 'Local'
+        backend_status = None
+        old_backup_name = None
 
-        data = {
-            "base_api_url": current_space_code,
-            "space_code": current_space_code,
-            "realm_code": settings.REALM_CODE,
-        }
-        # url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
-        url = f"{settings.AUTHORIZER_URL}/api/v2/space/sync/"
+        base_api_url = 'space00000'
 
-        _l.info(f"{log} started, calling api '/space/sync/' with url={url} data={data}")
+        if settings.AUTHORIZER_URL and settings.EDITION_TYPE == 'entreprise':
 
-        try:
-            response = requests.post(
-                url=url,
-                data=json.dumps(data),
-                headers=HEADERS,
-                verify=settings.VERIFY_SSL,
-            )
-
-            _l.info(
-                f"{log} api '/space/sync/' responded with "
-                f"status_code={response.status_code} text={response.text}"
-            )
-
-            response.raise_for_status()
-            response_data = response.json()
-
-            owner_username = response_data["owner"]["username"]
-            owner_email = response_data["owner"]["email"]
-            master_user_name = response_data["name"]
-            backend_status = response_data["status"]
-            old_backup_name = response_data.get("old_backup_name")
-
-            base_api_url = response_data["base_api_url"]
+            _l.info(f"Making API Call to Authorizer")
 
             # Probably its a Legacy space
             # Remove that in 1.9.0
             if "public" in current_space_code:
                 current_space_code = settings.BASE_API_URL
 
-            if base_api_url != current_space_code:
-                raise ValueError(
-                    f"received {base_api_url} != expected {current_space_code}"
+            data = {
+                "base_api_url": current_space_code,
+                "space_code": current_space_code,
+                "realm_code": settings.REALM_CODE,
+            }
+            # url = f"{settings.AUTHORIZER_URL}/backend-master-user-data/"
+            url = f"{settings.AUTHORIZER_URL}/api/v2/space/sync/"
+
+            _l.info(f"{log} started, calling api '/space/sync/' with url={url} data={data}")
+
+            try:
+                response = requests.post(
+                    url=url,
+                    data=json.dumps(data),
+                    headers=HEADERS,
+                    verify=settings.VERIFY_SSL,
                 )
 
-        except Exception as e:
-            err_msg = f"{log} call to 'backend-master-user-data' resulted in {repr(e)}"
-            _l.error(err_msg)
-            raise BootstrapError("fatal", message=err_msg) from e
+                _l.info(
+                    f"{log} api '/space/sync/' responded with "
+                    f"status_code={response.status_code} text={response.text}"
+                )
+
+                response.raise_for_status()
+                response_data = response.json()
+
+                owner_username = response_data["owner"]["username"]
+                owner_email = response_data["owner"]["email"]
+                master_user_name = response_data["name"]
+                backend_status = response_data["status"]
+                old_backup_name = response_data.get("old_backup_name")
+
+                base_api_url = response_data["base_api_url"]
+
+                # Probably its a Legacy space
+                # Remove that in 1.9.0
+                if "public" in current_space_code:
+                    current_space_code = settings.BASE_API_URL
+
+                if base_api_url != current_space_code:
+                    raise ValueError(
+                        f"received {base_api_url} != expected {current_space_code}"
+                    )
+
+            except Exception as e:
+                err_msg = f"{log} call to 'backend-master-user-data' resulted in {repr(e)}"
+                _l.error(err_msg)
+                raise BootstrapError("fatal", message=err_msg) from e
+
+
+        # Non-Authorizer related bootstrap logic goes below
 
         try:
             user, created = User.objects.using(settings.DB_DEFAULT).get_or_create(
