@@ -548,7 +548,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
         token.key = ecosystem_defaults.license_key  # replace the random DRF key
         token.save()
 
-        headers['Authorization'] = 'Token ' + token.key
+        headers['X-License'] = token.key
 
     if "^" in options_object["version"]:  # latest
         data = {"configuration_code": options_object["configuration_code"]}
