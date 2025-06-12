@@ -1138,6 +1138,15 @@ class EcosystemDefault(CacheModel):
         verbose_name=gettext_lazy("pricing condition"),
     )
 
+    license_key = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        editable=False,
+        verbose_name=gettext_lazy("License Key"),
+        help_text="License Key (For Marketplace Access and Finmars Activation)"
+    )
+
 
 class Member(FakeDeletableModel):
     DO_NOT_NOTIFY = 1

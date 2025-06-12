@@ -6,6 +6,8 @@ import os
 import traceback
 from datetime import date
 
+from rest_framework.authtoken.models import Token
+
 import requests
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
@@ -35,6 +37,7 @@ from poms.configuration.utils import (
     wait_workflow_until_end,
 )
 from poms.file_reports.models import FileReport
+from poms.users.models import EcosystemDefault
 from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
@@ -514,6 +517,10 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
+    ecosystem_defaults = EcosystemDefault.cache.get_cache(
+        master_user_pk=task.master_user.pk
+    )
+
     _l.info(
         f"install_configuration_from_marketplace started: task.id={task.id} "
         f"options={task.options_object}"
@@ -531,6 +538,17 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
 
     headers = {}
     # headers['Authorization'] = 'Token ' + access_token
+
+
+    if ecosystem_defaults.license_key:
+
+        _l.info(f"license_key found. add to headers request to marketplace")
+
+        token, created = Token.objects.get_or_create(user=task.member.user)
+        token.key = ecosystem_defaults.license_key  # replace the random DRF key
+        token.save()
+
+        headers['Authorization'] = 'Token ' + token.key
 
     if "^" in options_object["version"]:  # latest
         data = {"configuration_code": options_object["configuration_code"]}

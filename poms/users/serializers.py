@@ -465,6 +465,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             "pricing_condition",
             "payment_size_detail",
             "periodicity",
+
+            "license_key"
         ]
 
     def __init__(self, *args, **kwargs):

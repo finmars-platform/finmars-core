@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "poms.explorer",
     "crispy_forms",
     "rest_framework",
+    "rest_framework.authtoken",
     "rest_framework_swagger",
     "corsheaders",
     "django_celery_results",
