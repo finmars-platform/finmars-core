@@ -431,6 +431,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
     pricing_policy = PricingPolicyField()
     transaction_type = TransactionTypeField()
     periodicity = PeriodicityField()
+    license_key = serializers.CharField(max_length=255)
+
 
     class Meta:
         model = EcosystemDefault
