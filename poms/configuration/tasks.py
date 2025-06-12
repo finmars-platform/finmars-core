@@ -544,11 +544,7 @@ def install_configuration_from_marketplace(self, *args, **kwargs):
 
         _l.info(f"license_key found. add to headers request to marketplace")
 
-        token, created = Token.objects.get_or_create(user=task.member.user)
-        token.key = ecosystem_defaults.license_key  # replace the random DRF key
-        token.save()
-
-        headers['X-License'] = token.key
+        headers['X-License'] = ecosystem_defaults.license_key
 
     if "^" in options_object["version"]:  # latest
         data = {"configuration_code": options_object["configuration_code"]}
