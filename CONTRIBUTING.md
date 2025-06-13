@@ -7,8 +7,9 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Contributor License Agreement
 All contributions to this project require a signed [Contributor License Agreement](./CLA.MD) (the “CLA”). By submitting a pull request, you confirm that:
-•	You have read and understood the CLA.
-•	You have agreed to be bound by the CLA by signing the CLA or otherwise accepting its terms.
+1.	You have read and understood the CLA.
+2.	You have agreed to be bound by the CLA by signing the CLA or otherwise accepting its terms.
+   
 Pull requests without a valid CLA will not be reviewed or merged.
 
 
