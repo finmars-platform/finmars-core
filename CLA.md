@@ -4,7 +4,7 @@
 (the "Contributor") and Finmars SCSA existing in Luxembourg (the
 "Project Owner") and applies in addition to the European Union Public
 License version 1.2 (EUPL‑1.2) governing the Community Edition (see
-LICENSE.md).**
+[LICENSE.md](./LICENSE.md)).**
 
 By entering into this Agreement, including by way of signing the
 Agreement or by making a Contribution, You grant the Project, the
