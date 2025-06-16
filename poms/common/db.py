@@ -10,7 +10,7 @@ def get_all_tenant_schemas():
     sql = """
         SELECT schema_name
         FROM information_schema.schemata
-        WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+        WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')
         AND schema_name NOT LIKE 'pg_toast%'
         AND schema_name NOT LIKE 'pg_temp_%'
         """
