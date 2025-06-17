@@ -427,9 +427,9 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroyModelMixinExt):
 
     @action(detail=True, methods=["get"], url_path="ping")
     def ping(self, request, pk=None, realm_code=None, space_code=None):
-        try:
-            layout = self.get_object()
+        layout = self.get_object()
 
+        try:
             return Response(
                 {
                     "id": layout.id,
