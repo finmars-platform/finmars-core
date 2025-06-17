@@ -453,15 +453,21 @@ class DownloadViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
 
         path = f"{request.space_code}/{serializer.validated_data['path']}"
+        file_size = storage.size(path)
+        _l.info(f"Downloading file {path} with size {file_size} bytes")
 
         # TODO validate path that either public/import/system or user home directory
 
         try:
-            with storage.open(path, "rb") as file:
-                response = FileResponse(file, content_type="application/octet-stream")
-                response["Content-Disposition"] = (
-                    f'attachment; filename="{os.path.basename(path)}"'
-                )
+            response = FileResponse(
+                storage.open(path, "rb"), 
+                content_type="application/octet-stream",
+                as_attachment=True,
+                filename=os.path.basename(path)
+            )
+            if file_size:
+                response["Content-Length"] = file_size
+            return response
 
         except Exception as e:
             _l.error(f"DownloadViewSet failed due to {repr(e)}")
@@ -469,9 +475,7 @@ class DownloadViewSet(AbstractViewSet):
             return Response(
                 ResponseSerializer(result).data,
                 status=status.HTTP_400_BAD_REQUEST,
-            )
-        else:
-            return response
+            )            
 
 
 class MoveViewSet(ContextMixin, AbstractViewSet):
