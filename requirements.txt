@@ -46,7 +46,7 @@ django-timezone-field==7.1
 django-tinymce==4.1.0
 django_debug_toolbar==3.8.1
 djangorestframework==3.15.2
-djangorestframework-simplejwt==4.8.0
+djangorestframework-simplejwt==5.5.0
 docutils==0.21.2
 drf-yasg==1.21.10
 ecdsa==0.19.1
@@ -95,7 +95,7 @@ pyasn1==0.4.8
 pycparser==2.22
 pycryptodome==3.19.1
 Pygments==2.19.1
-PyJWT==2.10.1
+PyJWT==2.6.0
 Pympler==1.1
 PyNaCl==1.5.0
 pyOpenSSL==25.0.0
