@@ -1,13 +1,18 @@
-FROM python:3.12-bookworm
+FROM python:3.12-alpine
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    htop \
-    nfs-common \
-    postgresql-client \
-    supervisor \
-    vim \
-    wget && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache \
+    build-base \
+    python3-dev \
+    postgresql-dev \
+    musl-dev \
+    openssl-dev \
+    libffi-dev \
+    gcc \
+    libc-dev \
+    linux-headers \
+    openssl-dev \
+    # (and cargo rustc if you see a Rust error) \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/app
 
@@ -15,10 +20,12 @@ RUN mkdir -p \
     /var/app-data/import/configs/ \
     /var/app-data/import/files/ \
     /var/app-data/media/ \
+    /var/app/static \
+    /var/app/log \
     /var/app/finmars_data \
     /var/log/celery \
     /var/log/finmars/backend && \
-    chmod 777 /var/app/finmars_data /var/log/finmars/
+    chmod 777 /var/app/finmars_data /var/log/finmars/ /var/app/log/
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
@@ -35,6 +42,19 @@ COPY manage.py ./
 
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
+
+# Node and npm use a non-root user provided by the base Node image
+# Creating a new user "finmars" for running the application
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    finmars
+
+RUN chown -R finmars:finmars /var/log/finmars
+RUN chown -R finmars:finmars /var/app/static
+
+# Change to non-root privilege
+USER finmars
 
 EXPOSE 8080
 
