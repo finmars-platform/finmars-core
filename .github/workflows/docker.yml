@@ -27,25 +27,31 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Log in to Docker Registry
-        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin git.finmars.com:5050
+        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.CI_REGISTRY_USER }}" --password-stdin
 
-      - name: Build image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Build and push image with attestations
         run: |
           TAG="${{ inputs.version }}"
-          docker build --pull --no-cache -t ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG .
-
-      - name: Push image
-        run: |
-          TAG="${{ inputs.version }}"
-          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG
-
-      - name: Tag image as latest
+          docker buildx build \
+            --push \
+            --platform linux/amd64 \
+            --tag ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG \
+            --sbom=true \
+            --provenance=true \
+            --pull \
+            --no-cache \
+            .
+        
+      - name: Tag and push as latest (with attestations)
         if: inputs.tag_latest == true
         run: |
           TAG="${{ inputs.version }}"
-          docker tag ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG ${{ secrets.CI_REGISTRY_IMAGE }}:latest
-
-      - name: Push latest image
-        if: inputs.tag_latest == true
-        run: |
-          docker push ${{ secrets.CI_REGISTRY_IMAGE }}:latest
+          # Re-tag using buildx to maintain attestations
+          docker buildx imagetools create \
+            --tag ${{ secrets.CI_REGISTRY_IMAGE }}:latest \
+            ${{ secrets.CI_REGISTRY_IMAGE }}:$TAG
