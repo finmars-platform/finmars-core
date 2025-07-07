@@ -251,6 +251,9 @@ class CsvImportSchemeSerializer(
                 "public_name",
                 "notes",
                 "portfolio_type",
+                "register_currency",
+                "register_pricing_policy",
+                "register_instrument_type"
             ],
             "portfolios.portfoliotype": [
                 "name",
