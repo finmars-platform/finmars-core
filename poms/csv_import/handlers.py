@@ -116,11 +116,6 @@ RELATION_FIELDS_MAP = {
     "portfolio_type": PortfolioType,
     "accrual_calculation_model": AccrualCalculationModel,
     "periodicity": Periodicity,
-
-    "register_currency": Currency,
-    "register_pricing_policy": PricingPolicy,
-    "register_instrument_type": InstrumentType
-
 }
 
 
@@ -1271,7 +1266,7 @@ class SimpleImportProcess:
                             )
 
                             if not item.error_message:
-                                item.error_message = ""
+                                item.error_message = None
 
                             item.error_message = f"{item.error_message}%s: %s, " % (
                                 entity_field.attribute_user_code,
@@ -1343,7 +1338,7 @@ class SimpleImportProcess:
                                 )
 
                                 if not item.error_message:
-                                    item.error_message = ""
+                                    item.error_message = None
 
                                 item.error_message = f"{item.error_message}%s: %s, " % (
                                     entity_field.attribute_user_code,
@@ -1458,22 +1453,20 @@ class SimpleImportProcess:
         for entity_field in all_entity_fields_models:
             key = entity_field.system_property_key
 
-            if key in result_item:
+            if key in relation_fields_map and isinstance(result_item[key], str):
+                try:
+                    result_item[key] = (
+                        relation_fields_map[key]
+                        .objects.get(user_code=result_item[key])
+                        .id
+                    )
+                except Exception as e:
+                    result_item[key] = None
 
-                if key in relation_fields_map and isinstance(result_item[key], str):
-                    try:
-                        result_item[key] = (
-                            relation_fields_map[key]
-                            .objects.get(user_code=result_item[key])
-                            .id
-                        )
-                    except Exception as e:
-                        result_item[key] = None
+                    if not item.error_message:
+                        item.error_message = None
 
-                        if not item.error_message:
-                            item.error_message = ""
-
-                        item.error_message = f"{item.error_message} {key}: {e}, "
+                    item.error_message = f"{item.error_message} {key}: {e}, "
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1509,7 +1502,7 @@ class SimpleImportProcess:
                     _l.error(f"get_final_inputs.error {repr(e)}")
 
                     if not item.error_message:
-                        item.error_message = ""
+                        item.error_message = None
 
                     if entity_field.system_property_key:
                         item.error_message = f"{item.error_message}%s: %s, " % (
@@ -1589,7 +1582,7 @@ class SimpleImportProcess:
 
                 except Exception as e:
                     if not item.error_message:
-                        item.error_message = ""
+                        item.error_message = None
 
                     item.error_message = (
                         f"{item.error_message} Post script error: {repr(e)}, "
@@ -1673,7 +1666,7 @@ class SimpleImportProcess:
                             )
                         except Exception as e:
                             if not item.error_message:
-                                item.error_message = ""
+                                item.error_message = None
 
                             item.error_message = (
                                 f"{item.error_message} Post script error: {repr(e)}, "
@@ -1701,9 +1694,6 @@ class SimpleImportProcess:
                     item.error_message = " "
 
                 else:
-
-                    _l.info("traceback %s" % traceback.format_exc())
-
                     item.status = "error"
                     item.error_message = (
                         f"{item.error_message} ==== Create Exception {e}"
