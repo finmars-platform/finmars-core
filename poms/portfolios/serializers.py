@@ -24,7 +24,7 @@ from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.fields import (
     CostMethodField,
     PricingPolicyField,
-    SystemPricingPolicyDefault,
+    SystemPricingPolicyDefault, InstrumentTypeField,
 )
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import CostMethod, Instrument, InstrumentType
@@ -197,6 +197,12 @@ class PortfolioSerializer(
         many=False,
     )
 
+
+    register_currency = CurrencyField(required=False, allow_null=True)
+    register_pricing_policy = PricingPolicyField(required=False, allow_null=True)
+    register_instrument_type = InstrumentTypeField(required=False, allow_null=True)
+
+
     class Meta:
         model = Portfolio
         fields = [
@@ -218,6 +224,11 @@ class PortfolioSerializer(
             "portfolio_type_object",
             "client",
             "client_object",
+
+            "register_currency",
+            "register_pricing_policy",
+            "register_instrument_type"
+
         ]
 
     def get_first_transaction(self, instance: Portfolio) -> dict:
@@ -253,7 +264,7 @@ class PortfolioSerializer(
             source="client", many=False, read_only=True
         )
 
-    def create_register_if_not_exists(self, instance):
+    def create_register_if_not_exists(self, instance, register_currency=None, register_pricing_policy=None, register_instrument_type=None):
         master_user = instance.master_user
 
         try:
@@ -283,13 +294,19 @@ class PortfolioSerializer(
                     "identifier": {},
                 }
 
-                try:
-                    instrument_type = InstrumentType.objects.get(
-                        master_user=master_user,
-                        user_code=new_linked_instrument["instrument_type"],
-                    )
-                except Exception:
-                    instrument_type = ecosystem_default.instrument_type
+                instrument_type = None
+
+                if register_instrument_type:
+                    instrument_type = register_instrument_type
+
+                else:
+                    try:
+                        instrument_type = InstrumentType.objects.get(
+                            master_user=master_user,
+                            user_code=new_linked_instrument["instrument_type"],
+                        )
+                    except Exception:
+                        instrument_type = ecosystem_default.instrument_type
 
                 process = InstrumentTypeProcess(instrument_type=instrument_type)
 
@@ -315,11 +332,14 @@ class PortfolioSerializer(
                 f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}"
             )
 
+            valuation_currency = register_currency or ecosystem_default.currency
+            valuation_pricing_policy = register_pricing_policy or ecosystem_default.pricing_policy
+
             PortfolioRegister.objects.create(
                 master_user=master_user,
                 owner=instance.owner,
-                valuation_pricing_policy=ecosystem_default.pricing_policy,
-                valuation_currency=ecosystem_default.currency,
+                valuation_pricing_policy=valuation_pricing_policy,
+                valuation_currency=valuation_currency,
                 portfolio=instance,
                 user_code=instance.user_code,
                 linked_instrument=new_instrument,
@@ -330,16 +350,23 @@ class PortfolioSerializer(
             )
 
     def create(self, validated_data):
+
+        # take them out so Django won’t try to set them on the model
+        register_currency = validated_data.pop("register_currency", None)
+        register_pricing_policy = validated_data.pop("register_pricing_policy", None)
+        register_instrument_type = validated_data.pop("register_instrument_type", None)
+
         instance = super().create(validated_data)
 
-        self.create_register_if_not_exists(instance)
+        self.create_register_if_not_exists(instance, register_currency, register_pricing_policy, register_instrument_type)
 
         return instance
 
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
 
-        self.create_register_if_not_exists(instance)
+        # 2025-06-07 SZ do not create registers for existing portfolios
+        # self.create_register_if_not_exists(instance)
 
         return instance
 

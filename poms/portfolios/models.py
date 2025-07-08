@@ -200,6 +200,33 @@ class Portfolio(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMod
         verbose_name=gettext_lazy("client"),
     )
 
+    register_currency = models.ForeignKey(
+        "currencies.Currency",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("register currency"),
+        help_text="Configure Currency of Default Portfolio Register",
+        on_delete=models.SET_NULL,
+    )
+
+    register_pricing_policy = models.ForeignKey(
+        "instruments.PricingPolicy",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("register pricing policy"),
+        help_text="Configure Pricing Policy of Default Portfolio Register",
+        on_delete=models.SET_NULL,
+    )
+
+    register_instrument_type = models.ForeignKey(
+        "instruments.InstrumentType",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("register instrument type"),
+        help_text="Configure Instrument Type of Default Portfolio Register",
+        on_delete=models.SET_NULL,
+    )
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio")
         verbose_name_plural = gettext_lazy("portfolios")
