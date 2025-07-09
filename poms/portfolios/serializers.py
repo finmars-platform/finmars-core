@@ -19,6 +19,7 @@ from poms.common.serializers import (
     PomsClassSerializer,
 )
 from poms.currencies.fields import CurrencyDefault, CurrencyField
+from poms.currencies.serializers import CurrencyViewSerializer
 from poms.file_reports.serializers import FileReportSerializer
 from poms.iam.serializers import ModelWithResourceGroupSerializer
 from poms.instruments.fields import (
@@ -199,6 +200,7 @@ class PortfolioSerializer(
 
 
     register_currency = CurrencyField(required=False, allow_null=True)
+    register_currency_object = CurrencyViewSerializer(source="register_currency", read_only=True)
     register_pricing_policy = PricingPolicyField(required=False, allow_null=True)
     register_instrument_type = InstrumentTypeField(required=False, allow_null=True)
 
@@ -226,6 +228,7 @@ class PortfolioSerializer(
             "client_object",
 
             "register_currency",
+            "register_currency_object",
             "register_pricing_policy",
             "register_instrument_type"
 
@@ -331,6 +334,9 @@ class PortfolioSerializer(
             _l.info(
                 f"{self.__class__.__name__}.create_register_if_not_exists new_instrument={new_instrument}"
             )
+
+            _l.info('register_currency %s' % register_currency)
+            _l.info('register_pricing_policy %s' % register_pricing_policy)
 
             valuation_currency = register_currency or ecosystem_default.currency
             valuation_pricing_policy = register_pricing_policy or ecosystem_default.pricing_policy
