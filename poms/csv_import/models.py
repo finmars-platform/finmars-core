@@ -354,7 +354,7 @@ class SimpleImportProcessItem(object):
     def __init__(
         self,
         status="init",
-        error_message="",
+        error_message=None,
         message="",
         processed_rule_scenarios=None,
         imported_items=None,

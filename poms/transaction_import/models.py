@@ -46,7 +46,7 @@ class TransactionImportProcessItem(object):
     def __init__(
         self,
         status="init",
-        error_message="",
+        error_message=None,
         message="",
         processed_rule_scenarios=None,
         booked_transactions=None,
