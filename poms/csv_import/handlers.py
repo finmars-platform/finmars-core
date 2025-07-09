@@ -116,6 +116,10 @@ RELATION_FIELDS_MAP = {
     "portfolio_type": PortfolioType,
     "accrual_calculation_model": AccrualCalculationModel,
     "periodicity": Periodicity,
+
+    "register_currency": Currency,
+    "register_pricing_policy": PricingPolicy,
+    "register_instrument_type": InstrumentType
 }
 
 
@@ -1265,8 +1269,10 @@ class SimpleImportProcess:
                                 f"item {item} e {e}"
                             )
 
+                            item.status = "error"
+                            
                             if not item.error_message:
-                                item.error_message = None
+                                item.error_message = ""
 
                             item.error_message = f"{item.error_message}%s: %s, " % (
                                 entity_field.attribute_user_code,
@@ -1337,8 +1343,10 @@ class SimpleImportProcess:
                                     f" - item {item} e {e}"
                                 )
 
+                                item.status = "error"
+
                                 if not item.error_message:
-                                    item.error_message = None
+                                    item.error_message = ""
 
                                 item.error_message = f"{item.error_message}%s: %s, " % (
                                     entity_field.attribute_user_code,
@@ -1453,20 +1461,24 @@ class SimpleImportProcess:
         for entity_field in all_entity_fields_models:
             key = entity_field.system_property_key
 
-            if key in relation_fields_map and isinstance(result_item[key], str):
-                try:
-                    result_item[key] = (
-                        relation_fields_map[key]
-                        .objects.get(user_code=result_item[key])
-                        .id
-                    )
-                except Exception as e:
-                    result_item[key] = None
+            if key in result_item:
 
-                    if not item.error_message:
-                        item.error_message = None
+                if key in relation_fields_map and isinstance(result_item[key], str):
+                    try:
+                        result_item[key] = (
+                            relation_fields_map[key]
+                            .objects.get(user_code=result_item[key])
+                            .id
+                        )
+                    except Exception as e:
+                        result_item[key] = None
 
-                    item.error_message = f"{item.error_message} {key}: {e}, "
+                        item.status = "error"
+
+                        if not item.error_message:
+                            item.error_message = ""
+
+                        item.error_message = f"{item.error_message} {key}: {e}, "
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1501,8 +1513,10 @@ class SimpleImportProcess:
                 except Exception as e:
                     _l.error(f"get_final_inputs.error {repr(e)}")
 
+                    item.status = "error"
+
                     if not item.error_message:
-                        item.error_message = None
+                        item.error_message = ""
 
                     if entity_field.system_property_key:
                         item.error_message = f"{item.error_message}%s: %s, " % (
@@ -1581,8 +1595,10 @@ class SimpleImportProcess:
                     )
 
                 except Exception as e:
+                    item.status = "error"
+
                     if not item.error_message:
-                        item.error_message = None
+                        item.error_message = ""
 
                     item.error_message = (
                         f"{item.error_message} Post script error: {repr(e)}, "
@@ -1665,8 +1681,10 @@ class SimpleImportProcess:
                                 context=self.context,
                             )
                         except Exception as e:
+                            item.status = "error"
+
                             if not item.error_message:
-                                item.error_message = None
+                                item.error_message = ""
 
                             item.error_message = (
                                 f"{item.error_message} Post script error: {repr(e)}, "
@@ -1676,6 +1694,7 @@ class SimpleImportProcess:
 
                 except Exception as e:
                     item.status = "error"
+
                     item.error_message = (
                         f"{item.error_message} ==== Overwrite Exception {e}"
                     )
@@ -1691,9 +1710,11 @@ class SimpleImportProcess:
 
                 if "make a unique set" in str(e.__dict__):
                     item.status = "skip"
-                    item.error_message = " "
+                    item.error_message = None
 
                 else:
+                    _l.info("traceback %s" % traceback.format_exc())
+                
                     item.status = "error"
                     item.error_message = (
                         f"{item.error_message} ==== Create Exception {e}"
@@ -1914,10 +1935,7 @@ class SimpleImportProcess:
 
                 else:
                     self.items[item_index].status = "skip"
-                    self.items[item_index].error_message = (
-                        f"{self.items[item_index].error_message}"
-                        f"==== Skip (Overwrite disabled)"
-                    )
+                    self.items[item_index].error_message = None
 
                     # self.items[item_index].status = "error"
                     # self.items[item_index].error_message = (

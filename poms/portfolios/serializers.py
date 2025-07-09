@@ -352,9 +352,9 @@ class PortfolioSerializer(
     def create(self, validated_data):
 
         # take them out so Django won’t try to set them on the model
-        register_currency = validated_data.pop("register_currency", None)
-        register_pricing_policy = validated_data.pop("register_pricing_policy", None)
-        register_instrument_type = validated_data.pop("register_instrument_type", None)
+        register_currency = validated_data.get("register_currency", None)
+        register_pricing_policy = validated_data.get("register_pricing_policy", None)
+        register_instrument_type = validated_data.get("register_instrument_type", None)
 
         instance = super().create(validated_data)
 
