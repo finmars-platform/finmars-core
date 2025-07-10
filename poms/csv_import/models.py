@@ -308,7 +308,7 @@ class SimpleImportResult(object):
         self.processed_rows = processed_rows
 
         self.file_path = file_path
-        self.items = items
+        self.items = items if items else []
         self.errors = errors
         self.error_message = error_message
         self.reports = reports
