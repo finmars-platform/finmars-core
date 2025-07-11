@@ -16,7 +16,7 @@ from poms.common.filters import (
     EntitySpecificFilter,
     GroupsAttributeFilter,
     ModelExtUserCodeMultipleChoiceFilter,
-    NoOpFilter,
+    NoOpFilter, CharExactFilter,
 )
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
@@ -399,9 +399,15 @@ class PortfolioRegisterFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     user_code = CharFilter()
+    user_code__exact = CharExactFilter(label="User Code (Exact)")
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
+
+    portfolio__user_code = CharExactFilter(label="Portfolio User Code (Exact)")
+
+    valuation_currency__user_code = CharExactFilter(label="Valuation Currency User Code (Exact)")
+    valuation_pricing_policy__user_code = CharExactFilter(label="Valuation Pricing Policy User Code (Exact)")
 
     class Meta:
         model = PortfolioRegister
@@ -494,7 +500,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             status=CeleryTask.STATUS_PENDING,
         )
         task.options_object = {
-            "portfolios": serializer.validated_data.get("portfolios"),
+            "portfolio_registers": serializer.validated_data.get("portfolio_registers"),
             "date_to": serializer.validated_data["date_to"].strftime(
                 settings.API_DATE_FORMAT
             ),
