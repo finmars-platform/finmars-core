@@ -756,13 +756,16 @@ class FirstTransactionDateResponseSerializer(serializers.Serializer):
 
 
 class PrCalculateRecordsRequestSerializer(serializers.Serializer):
-    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+
+    date_from = serializers.DateField(required=False)
+
+    portfolio_registers = serializers.ListField(child=serializers.CharField(), required=False)
 
 
 class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
     date_from = serializers.DateField(required=False)
     date_to = serializers.DateField(required=False)
-    portfolios = serializers.ListField(child=serializers.CharField(), required=False)
+    portfolio_registers = serializers.ListField(child=serializers.CharField(), required=False)
 
     def validate(self, attrs: dict) -> dict:
         date_to = attrs.get("date_to") or timezone_today() - timedelta(days=1)

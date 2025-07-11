@@ -170,11 +170,15 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         _l.info(f"{log} master_user={master_user}")
 
-        portfolio_user_codes = task.options_object.get("portfolios", [])
-        if portfolio_user_codes:
+        portfolio_registers_user_codes = task.options_object.get("portfolio_registers", [])
+
+        date_from = task.options_object.get("date_from", None)
+
+
+        if portfolio_registers_user_codes:
             portfolio_registers = PortfolioRegister.objects.filter(
                 master_user_id=master_user,
-                portfolio__user_code__in=portfolio_user_codes,
+                user_code__in=portfolio_registers_user_codes,
             )
 
         else:
@@ -193,26 +197,55 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
             portfolio_registers_map[item.portfolio_id].append(item)
 
-        # from oldest to newest
-        transactions = Transaction.objects.filter(
-            master_user=master_user,
-            portfolio_id__in=portfolio_ids,
-            is_deleted=False,
-            is_canceled=False,  # important update PLAT-1661
-            transaction_class_id__in=[
-                TransactionClass.CASH_INFLOW,
-                TransactionClass.CASH_OUTFLOW,
-            ],
-        ).order_by("accounting_date")
 
-        PortfolioRegisterRecord.objects.filter(
-            master_user=master_user,
-            portfolio_id__in=portfolio_ids,
-            transaction_class_id__in=[
-                TransactionClass.CASH_INFLOW,
-                TransactionClass.CASH_OUTFLOW,
-            ],
-        ).delete()
+
+        if date_from:
+
+            # from oldest to newest
+            transactions = Transaction.objects.filter(
+                master_user=master_user,
+                portfolio_id__in=portfolio_ids,
+                is_deleted=False,
+                is_canceled=False,  # important update PLAT-1661
+                accounting_date__gte=date_from,
+                transaction_class_id__in=[
+                    TransactionClass.CASH_INFLOW,
+                    TransactionClass.CASH_OUTFLOW,
+                ],
+            ).order_by("accounting_date")
+
+            PortfolioRegisterRecord.objects.filter(
+                master_user=master_user,
+                portfolio_id__in=portfolio_ids,
+                transaction_date__gte=date_from,
+                transaction_class_id__in=[
+                    TransactionClass.CASH_INFLOW,
+                    TransactionClass.CASH_OUTFLOW,
+                ],
+            ).delete()
+
+        else:
+
+            # from oldest to newest
+            transactions = Transaction.objects.filter(
+                master_user=master_user,
+                portfolio_id__in=portfolio_ids,
+                is_deleted=False,
+                is_canceled=False,  # important update PLAT-1661
+                transaction_class_id__in=[
+                    TransactionClass.CASH_INFLOW,
+                    TransactionClass.CASH_OUTFLOW,
+                ],
+            ).order_by("accounting_date")
+
+            PortfolioRegisterRecord.objects.filter(
+                master_user=master_user,
+                portfolio_id__in=portfolio_ids,
+                transaction_class_id__in=[
+                    TransactionClass.CASH_INFLOW,
+                    TransactionClass.CASH_OUTFLOW,
+                ],
+            ).delete()
 
         count = 0
         total = len(transactions)
@@ -536,7 +569,7 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
 
     date_to = task.options_object.get("date_to")
     date_from = task.options_object.get("date_from")
-    portfolios_user_codes = task.options_object.get("portfolios")
+    portfolio_registers_user_codes = task.options_object.get("portfolio_registers")
     master_user = task.master_user
 
     # convert date's string to a date object
@@ -549,10 +582,10 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
         date_from = datetime.strptime(date_from, settings.API_DATE_FORMAT).date()
 
     # convert portfolios user_code, to portfolio_register objects
-    if portfolios_user_codes:
+    if portfolio_registers_user_codes:
         portfolio_registers = PortfolioRegister.objects.filter(
             master_user=master_user,
-            portfolio__user_code__in=portfolios_user_codes,
+            user_code__in=portfolio_registers_user_codes,
         )
     else:
         portfolio_registers = PortfolioRegister.objects.filter(master_user=master_user)

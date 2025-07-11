@@ -10,14 +10,14 @@ EXPECTED_RESPONSE_PRICES = {
     "task_id": 1,
     "task_status": "P",
     "task_type": "calculate_portfolio_register_price_history",
-    "task_options": {"date_to": "2023-09-13", "portfolios": ["x1", "y2", "z3"]},
+    "task_options": {"date_to": "2023-09-13", "portfolio_registers": ["x1", "y2", "z3"]},
 }
 
 EXPECTED_RESPONSE_RECORD = {
     "task_id": 2,
     "task_status": "P",
     "task_type": "calculate_portfolio_register_record",
-    "task_options": {"portfolios": ["x1", "y2", "z3"]},
+    "task_options": {"portfolio_registers": ["x1", "y2", "z3"]},
 }
 
 
@@ -103,7 +103,7 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
         )
 
     def test__validate_portfolios(self):
-        request_data = dict(portfolios=["a1", "b2", "c3"])
+        request_data = dict(portfolio_registers=["a1", "b2", "c3"])
 
         response = self.client.post(path=self.url, data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
@@ -136,7 +136,7 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
         )
 
     def test__validate_portfolios(self):
-        request_data = dict(portfolios=["x1", "y2", "z3"])
+        request_data = dict(portfolio_registers=["x1", "y2", "z3"])
 
         response = self.client.post(path=self.url, data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
@@ -144,7 +144,7 @@ class PortfolioRegisterCalculatePriceHistoryActionTest(BaseTestCase):
         response_json = response.json()
 
         self.assertEqual(
-            response_json["task_options"]["portfolios"], request_data["portfolios"]
+            response_json["task_options"]["portfolio_registers"], request_data["portfolio_registers"]
         )
 
     @BaseTestCase.cases(
