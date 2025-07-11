@@ -27,7 +27,7 @@ from poms.common.filters import (
     CharFilter,
     GroupsAttributeFilter,
     ModelExtMultipleChoiceFilter,
-    NoOpFilter,
+    NoOpFilter, CharExactFilter,
 )
 from poms.common.mixins import (
     BulkModelMixin,
@@ -972,7 +972,11 @@ class ImportCompanyDatabaseViewSet(AbstractViewSet):
 class ComplexTransactionImportSchemeFilterSet(FilterSet):
     id = NoOpFilter()
     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-    scheme_name = CharFilter()
+    # scheme_name = CharFilter()
+
+    user_code__exact = CharExactFilter(label="User Code (Exact)", field_name="user_code")
+
+    configuration_code__exact = CharExactFilter(label="Configuration Code (Exact)", field_name="configuration_code")
 
     class Meta:
         model = ComplexTransactionImportScheme
@@ -983,7 +987,7 @@ class ComplexTransactionImportSchemeViewSet(
     AbstractModelViewSet, UpdateModelMixinExt, ModelViewSet
 ):
     permission_classes = [IsAuthenticated]
-    filter_backends = [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter,

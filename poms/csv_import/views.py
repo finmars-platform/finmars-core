@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import CharFilter, GroupsAttributeFilter, AttributeFilter
+from poms.common.filters import CharFilter, GroupsAttributeFilter, AttributeFilter, CharExactFilter
 from poms.common.views import AbstractAsyncViewSet, AbstractModelViewSet
 from poms.csv_import.tasks import simple_import
 from poms.users.filters import OwnerByMasterUserFilter
@@ -31,6 +31,10 @@ _l = getLogger("poms.csv_import")
 class SchemeFilterSet(FilterSet):
     user_code = CharFilter()
     content_type = SchemeContentTypeFilter(field_name="content_type")
+
+    user_code__exact = CharExactFilter(label="User Code (Exact)", field_name="user_code")
+
+    configuration_code__exact = CharExactFilter(label="Configuration Code (Exact)", field_name="configuration_code")
 
     class Meta:
         model = CsvImportScheme
