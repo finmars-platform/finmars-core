@@ -1511,28 +1511,7 @@ class SimpleImportProcess:
                         result[entity_field.attribute_user_code] = value
 
                 except Exception as e:
-                    _l.error(f"get_final_inputs.error {repr(e)}")
-
-                    item.status = "error"
-
-                    if not item.error_message:
-                        item.error_message = ""
-
-                    if entity_field.system_property_key:
-                        item.error_message = f"{item.error_message}%s: %s, " % (
-                            entity_field.system_property_key,
-                            str(e),
-                        )
-
-                        result[entity_field.system_property_key] = None
-
-                    elif entity_field.attribute_user_code:
-                        item.error_message = f"{item.error_message}%s: %s, " % (
-                            entity_field.attribute_user_code,
-                            str(e),
-                        )
-
-                        result[entity_field.attribute_user_code] = None
+                    _l.warning(f"get_final_inputs.error {repr(e)}")
 
             elif entity_field.system_property_key:
                 result[entity_field.system_property_key] = None
