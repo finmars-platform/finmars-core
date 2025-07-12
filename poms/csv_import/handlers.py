@@ -1471,16 +1471,8 @@ class SimpleImportProcess:
                             .id
                         )
                     except Exception as e:
+                        _l.warning(f"{key} {result_item[key]}: {e}")
                         result_item[key] = None
-
-                        item.status = "error"
-
-                        if not item.error_message:
-                            item.error_message = ""
-
-                        item.error_message = f"{item.error_message} {key}: {e}, "
-
-        # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
         return result_item
 
