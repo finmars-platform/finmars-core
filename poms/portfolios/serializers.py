@@ -363,7 +363,13 @@ class PortfolioSerializer(
 
         with transaction.atomic():
             instance = super().create(validated_data)
-            self.create_register_if_not_exists(instance, register_currency, register_pricing_policy, register_instrument_type)
+
+            try:
+                self.create_register_if_not_exists(instance, register_currency, register_pricing_policy, register_instrument_type)
+            except Exception as e:
+                _l.error(f"Failed to create register: {e}")
+                raise
+
             return instance
 
     def update(self, instance, validated_data):
