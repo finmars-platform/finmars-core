@@ -659,18 +659,21 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
 
         total = sum(len(item["dates"]) for item in result.values())
 
-        # Init calculation
-        pricing_policies = list(PricingPolicy.objects.filter(master_user=master_user))
         for item in result.values():
             portfolio_register = portfolio_register_map[
                 item["portfolio_register_object"]["user_code"]
             ]
 
-            true_pricing_policy = portfolio_register.valuation_pricing_policy
-
             _l.info(
                 f"{log} calculate {portfolio_register} for {len(item['dates'])} days"
             )
+
+            PriceHistory.objects.filter(
+                instrument=portfolio_register.linked_instrument,
+                date__gte=item['date_from'],
+                date__lte=item['date_to'],
+                pricing_policy=portfolio_register.valuation_pricing_policy,
+            ).delete()
 
             for day in item["dates"]:
                 pr_record = (
@@ -685,13 +688,13 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
                     continue
 
                 price_histories = []  # price history objects to be updated
-                for pricing_policy in pricing_policies:
-                    price_history, _ = PriceHistory.objects.get_or_create(
-                        instrument=portfolio_register.linked_instrument,
-                        date=day,
-                        pricing_policy=pricing_policy,
-                    )
-                    price_histories.append(price_history)
+
+                price_history, _ = PriceHistory.objects.get_or_create(
+                    instrument=portfolio_register.linked_instrument,
+                    date=day,
+                    pricing_policy=portfolio_register.valuation_pricing_policy,
+                )
+                price_histories.append(price_history)
 
                 try:
                     balance_report = calculate_simple_balance_report(
@@ -717,7 +720,7 @@ def calculate_portfolio_register_price_history(self, task_id: int, *args, **kwar
                     cash_flow = calculate_cash_flow(
                         master_user,
                         day,
-                        true_pricing_policy,
+                        portfolio_register.valuation_pricing_policy,
                         portfolio_register,
                     )
                     principal_price = nav / pr_record.rolling_shares_of_the_day
@@ -882,6 +885,15 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):
     )
 
     count = 1
+
+    PortfolioHistory.objects.filter(
+        portfolio=portfolio,
+        currency=currency,
+        pricing_policy=pricing_policy,
+        period_type=period_type,
+        cost_method=cost_method,
+        performance_method=performance_method,
+        date__gte=calculation_period_date_from).delete()
 
     for d in dates:
         task.update_progress(

@@ -1824,7 +1824,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         face_value = 100  # probably self.default_price
         calendar = ql.TARGET()
 
-        if self.maturity_date:
+        if self.maturity_date and str(maturity_date) != '9999-12-31':
             _l.info(
                 f"get_quantlib_bond.self.type maturity_date {type(self.maturity_date)}"
             )
@@ -2988,7 +2988,7 @@ class PriceHistory(TimeStampedModel):
         )
 
     def handle_err(self, err_msg: str):
-        _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
+        # _l.error(f"PriceHistory.{err_msg} trace {traceback.format_exc()}")
 
         if not self.error_message:
             self.error_message = err_msg

@@ -501,7 +501,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             status=CeleryTask.STATUS_PENDING,
         )
         task.options_object = {
-            "portfolio_registers": serializer.validated_data.get("portfolio_registers"),
+            "portfolio_registers": serializer.validated_data.get("portfolio_registers", []),
             "date_to": serializer.validated_data["date_to"].strftime(
                 settings.API_DATE_FORMAT
             ),
