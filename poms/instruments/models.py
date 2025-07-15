@@ -1824,7 +1824,7 @@ class Instrument(NamedModel, FakeDeletableModel, TimeStampedModel, ObjectStateMo
         face_value = 100  # probably self.default_price
         calendar = ql.TARGET()
 
-        if self.maturity_date and str(maturity_date) != '9999-12-31':
+        if self.maturity_date and str(self.maturity_date) != '9999-12-31':
             _l.info(
                 f"get_quantlib_bond.self.type maturity_date {type(self.maturity_date)}"
             )

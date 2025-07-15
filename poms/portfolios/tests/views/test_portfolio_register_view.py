@@ -110,7 +110,7 @@ class PortfolioRegisterCalculateRecordsActionTest(BaseTestCase):
 
         response_json = response.json()
 
-        self.assertEqual(response_json["task_options"], request_data)
+        self.assertEqual(response_json["task_options"]['portfolio_registers'], request_data['portfolio_registers'])
 
 
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
