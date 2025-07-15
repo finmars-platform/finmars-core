@@ -17,7 +17,7 @@ from poms.common.utils import (
     get_last_business_day_of_previous_month,
     get_last_business_day_of_previous_year,
     get_list_of_business_days_between_two_dates,
-    get_list_of_dates_between_two_dates,
+    get_list_of_dates_between_two_dates, get_closest_bday_of_yesterday,
 )
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import CostMethod, PricingPolicy
@@ -174,6 +174,11 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
 
         date_from = task.options_object.get("date_from", None)
 
+        date_to = task.options_object.get("date_to", None)
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
 
         if portfolio_registers_user_codes:
             portfolio_registers = PortfolioRegister.objects.filter(
@@ -208,6 +213,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                 is_deleted=False,
                 is_canceled=False,  # important update PLAT-1661
                 accounting_date__gte=date_from,
+                accounting_date__lte=date_to,
                 transaction_class_id__in=[
                     TransactionClass.CASH_INFLOW,
                     TransactionClass.CASH_OUTFLOW,
@@ -218,6 +224,7 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
                 master_user=master_user,
                 portfolio_id__in=portfolio_ids,
                 transaction_date__gte=date_from,
+                transaction_date__lte=date_to,
                 transaction_class_id__in=[
                     TransactionClass.CASH_INFLOW,
                     TransactionClass.CASH_OUTFLOW,
@@ -241,6 +248,8 @@ def calculate_portfolio_register_record(self, task_id, *args, **kwargs):
             PortfolioRegisterRecord.objects.filter(
                 master_user=master_user,
                 portfolio_id__in=portfolio_ids,
+                accounting_date__gte=date_from,
+                transaction_date__lte=date_to,
                 transaction_class_id__in=[
                     TransactionClass.CASH_INFLOW,
                     TransactionClass.CASH_OUTFLOW,

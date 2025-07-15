@@ -456,6 +456,7 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
             type="calculate_portfolio_register_record",
             status=CeleryTask.STATUS_PENDING,
         )
+
         task.options_object = serializer.validated_data
         task.save()
 

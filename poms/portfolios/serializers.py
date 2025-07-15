@@ -764,6 +764,7 @@ class FirstTransactionDateResponseSerializer(serializers.Serializer):
 class PrCalculateRecordsRequestSerializer(serializers.Serializer):
 
     date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
 
     portfolio_registers = serializers.ListField(child=serializers.CharField(), required=False)
 
