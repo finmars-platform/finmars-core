@@ -764,8 +764,19 @@ class FirstTransactionDateResponseSerializer(serializers.Serializer):
 class PrCalculateRecordsRequestSerializer(serializers.Serializer):
 
     date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
 
     portfolio_registers = serializers.ListField(child=serializers.CharField(), required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        date_to = attrs.get("date_to") or timezone_today() - timedelta(days=1)
+        attrs["date_to"] = date_to
+
+        date_from = attrs.get("date_from")
+        if date_from and date_to and (date_from > date_to):
+            raise ValidationError("date_from must be <= date_to")
+
+        return attrs
 
 
 class PrCalculatePriceHistoryRequestSerializer(serializers.Serializer):
@@ -846,6 +857,7 @@ class PortfolioHistorySerializer(
         )
 
 
+
 class CalculatePortfolioHistorySerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -893,6 +905,16 @@ class CalculatePortfolioHistorySerializer(serializers.Serializer):
     benchmark = serializers.CharField(
         required=False, default="sp_500", initial="sp_500"
     )
+
+    def validate(self, attrs: dict) -> dict:
+        date = attrs.get("date") or timezone_today() - timedelta(days=1)
+        attrs["date"] = date
+
+        calculation_period_date_from = attrs.get("calculation_period_date_from")
+        if calculation_period_date_from and date and (calculation_period_date_from > date):
+            raise ValidationError("calculation_period_date_from must be <= date")
+
+        return attrs
 
 
 class ParamsSerializer(serializers.Serializer):

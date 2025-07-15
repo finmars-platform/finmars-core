@@ -63,9 +63,10 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
 
   rabbitmq:
-    image: rabbitmq
+    image: rabbitmq:4.1-management-alpine
     ports:
       - "5672:5672"
+      - "15672:15672"  # HTTP management port
     stdin_open: true
     tty: true
 
