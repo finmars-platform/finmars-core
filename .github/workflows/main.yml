@@ -8,8 +8,6 @@ on:
 permissions:
   contents: write 
 
-
-
 jobs:
   lint:
     name: Lint Python Code

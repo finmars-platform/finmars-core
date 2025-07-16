@@ -2,6 +2,7 @@ import logging
 import traceback
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from django.db import transaction
 from django.db.models import Q
@@ -10,7 +11,7 @@ from django.utils import timezone
 from poms import notifications
 from poms.celery_tasks import finmars_task
 from poms.common.utils import date_now, isclose
-from poms.instruments.models import EventSchedule, GeneratedEvent, Instrument
+from poms.instruments.models import EventSchedule, GeneratedEvent, Instrument, PriceHistory
 from poms.reports.common import Report, ReportItem
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -979,3 +980,67 @@ def process_events(self, *args, **kwargs):
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
         raise RuntimeError(err_msg) from e
+
+
+@finmars_task(name="instruments.calculate_pricehistory", bind=True)
+def calculate_pricehistory(self, task_id: int, data: dict[str, Any], *args, **kwargs):
+    from poms.celery_tasks.models import CeleryTask
+
+    celery_task = CeleryTask.objects.get(id=task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
+
+    date_from = data["date_from"]
+    date_to = data["date_to"]
+    instruments = data.get("instruments", [])
+    pricing_policies = data.get("pricing_policies", [])
+
+    queryset = PriceHistory.objects.select_related(
+        "instrument",
+        "instrument__instrument_type",
+        "instrument__instrument_type__instrument_class",
+        "pricing_policy",
+    )
+
+    queryset = queryset.filter(
+        date__gte=date_from,
+        date__lte=date_to,
+    )
+
+    if instruments:
+        queryset = queryset.filter(instrument__user_code__in=instruments)
+
+    if pricing_policies:
+        queryset = queryset.filter(pricing_policy__user_code__in=pricing_policies)
+
+    total = queryset.count()
+
+    _l.info("Start calculate price_history for %s pieces", total)
+
+    try:
+        for count, price_history in enumerate(queryset):
+            price_history.run_auto_calculation()
+            celery_task.update_progress(
+                {
+                    "current": count,
+                    "total": total,
+                    "percent": round((count / total) * 100),
+                    "description": f"price_history {price_history.id} was calculated",
+                }
+            )
+
+        celery_task.status = CeleryTask.STATUS_DONE
+        celery_task.mark_task_as_finished()
+
+    except Exception as e:
+        err_msg = f"calculate_pricehistory exception {repr(e)} {traceback.format_exc()}"
+        _l.error(err_msg)
+
+        celery_task.status = CeleryTask.STATUS_ERROR
+        celery_task.error_message = err_msg
+        raise RuntimeError(err_msg) from e
+
+    finally:
+        _l.info("Calculation for price_history was compleated")
+        celery_task.save()

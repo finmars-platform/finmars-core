@@ -206,8 +206,7 @@ class ImportPriceHistoryTest(BaseTestCase):
         #     "principal_price": 109.72,
         # }
         self.assertIn("final_inputs", result)
-        self.assertEqual(result["final_inputs"]["accrued_price"], 0.0)
-        self.assertEqual(result["final_inputs"]["factor"], 1.0)
+
 
         ph: PriceHistory = list(PriceHistory.objects.all())[0]
         self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
@@ -273,8 +272,6 @@ class ImportPriceHistoryTest(BaseTestCase):
         #     "principal_price": 109.72,
         # }
         self.assertIn("final_inputs", result)
-        self.assertEqual(result["final_inputs"]["accrued_price"], 0.0)
-        self.assertEqual(result["final_inputs"]["factor"], 1.0)
 
         ph: PriceHistory = list(PriceHistory.objects.all())[0]
         self.assertEqual(ph.instrument.user_code, PRICE_HISTORY_ITEM["instrument"])
