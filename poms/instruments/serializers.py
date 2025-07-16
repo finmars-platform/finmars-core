@@ -1875,6 +1875,26 @@ class PriceHistoryRecalculateSerializer(PriceHistorySerializer):
         return attrs
 
 
+class PriceHistoryCalculateSerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=True)
+    date_to = serializers.DateField(required=True)
+    instruments = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
+    pricing_policies = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
+
+    def validate(self, attrs):
+        if attrs["date_from"] > attrs["date_to"]:
+            raise serializers.ValidationError("`date_from` must be earlier than `date_to`.")
+        return attrs
+    
+
 class GeneratedEventSerializer(serializers.ModelSerializer):
     status_date = DateTimeTzAwareField(read_only=True)
     is_need_reaction = serializers.BooleanField(read_only=True)

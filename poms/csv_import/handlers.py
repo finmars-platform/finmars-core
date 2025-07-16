@@ -1687,6 +1687,10 @@ class SimpleImportProcess:
                     _l.info("traceback %s" % traceback.format_exc())
                 
                     item.status = "error"
+                    
+                    if not item.error_message:
+                        item.error_message = ""
+
                     item.error_message = (
                         f"{item.error_message} ==== Create Exception {e}"
                     )
@@ -1764,11 +1768,6 @@ class SimpleImportProcess:
 
         for item_index in batch_indexes:
             errors = None
-            if self.scheme.content_type.model == "pricehistory":
-                errors = self.calculate_pricehistory_null_fields(
-                    model=self.scheme.content_type.model,
-                    final_inputs=self.items[item_index].final_inputs,
-                )
             result_item = {
                 key: self.items[item_index].final_inputs[key]
                 for key, value in self.items[item_index].final_inputs.items()

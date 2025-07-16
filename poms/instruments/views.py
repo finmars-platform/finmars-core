@@ -99,6 +99,7 @@ from poms.instruments.serializers import (
     LongUnderlyingExposureSerializer,
     PaymentSizeDetailSerializer,
     PeriodicitySerializer,
+    PriceHistoryCalculateSerializer,
     PriceHistoryRecalculateSerializer,
     PriceHistorySerializer,
     PricingConditionSerializer,
@@ -107,6 +108,7 @@ from poms.instruments.serializers import (
     ShortUnderlyingExposureSerializer,
 )
 from poms.instruments.tasks import (
+    calculate_pricehistory,
     calculate_prices_accrued_price,
     generate_events,
     generate_events_do_not_inform_apply_default,
@@ -1793,6 +1795,44 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(instance=instance)
 
         return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="calculate",
+        permission_classes=[IsAuthenticated],
+        serializer_class=PriceHistoryCalculateSerializer,
+    )
+    def calculate(self, request, *args, **kwargs):
+        from poms.celery_tasks.models import CeleryTask
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Calculate pricehistory",
+            type="calculate_pricehistory",
+        )
+
+        current_task = calculate_pricehistory.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+                "context": {
+                    "space_code": celery_task.master_user.space_code,
+                    "realm_code": celery_task.master_user.realm_code,
+                },
+                "data": validated_data,
+            }
+        )
+        return Response(
+            {
+                "success": True,
+                "task_id": current_task.id,
+            }
+        )
 
 
 class GeneratedEventFilterSet(FilterSet):
