@@ -1830,7 +1830,7 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         return Response(
             {
                 "success": True,
-                "task_id": current_task.id,
+                "task_id": celery_task.id,
             }
         )
 

@@ -2139,8 +2139,8 @@ class SimpleImportProcess:
 
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items_batches DONE")
 
-        if filter_for_async_functions_eval:
-            self._create_celery_task(filter_for_async_functions_eval)
+        # if filter_for_async_functions_eval:
+        #     self._create_celery_task(filter_for_async_functions_eval)
 
     def _create_celery_task(self, filter_for_async_functions_eval):
         celery_task = CeleryTask.objects.create(
