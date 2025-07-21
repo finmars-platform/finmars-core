@@ -1,3 +1,4 @@
+import json
 import logging
 import traceback
 from collections import defaultdict
@@ -983,7 +984,7 @@ def process_events(self, *args, **kwargs):
 
 
 @finmars_task(name="instruments.calculate_pricehistory", bind=True)
-def calculate_pricehistory(self, task_id: int, data: dict[str, Any], *args, **kwargs):
+def calculate_pricehistory(self, task_id: int, *args, **kwargs) -> str:
     from poms.celery_tasks.models import CeleryTask
 
     celery_task = CeleryTask.objects.get(id=task_id)
@@ -991,6 +992,7 @@ def calculate_pricehistory(self, task_id: int, data: dict[str, Any], *args, **kw
     celery_task.status = CeleryTask.STATUS_PENDING
     celery_task.save()
 
+    data = celery_task.options_object
     date_from = data["date_from"]
     date_to = data["date_to"]
     instruments = data.get("instruments", [])
@@ -1018,9 +1020,21 @@ def calculate_pricehistory(self, task_id: int, data: dict[str, Any], *args, **kw
 
     _l.info("Start calculate price_history for %s pieces", total)
 
-    try:
-        for count, price_history in enumerate(queryset):
+    result: dict[str, Any] = {"items": []}
+    has_error = False
+
+    for count, price_history in enumerate(queryset):
+        try:
             price_history.run_auto_calculation()
+
+            err_msg = None
+            status = "success"
+        except Exception as e:
+            status = "error"
+            err_msg = repr(e)
+            _l.warning(f"calculate_pricehistory exception {repr(e)} {traceback.format_exc()}")
+            has_error = True
+        finally:
             celery_task.update_progress(
                 {
                     "current": count,
@@ -1029,18 +1043,11 @@ def calculate_pricehistory(self, task_id: int, data: dict[str, Any], *args, **kw
                     "description": f"price_history {price_history.id} was calculated",
                 }
             )
+            result["items"].append({"status": status, "id": price_history.id, "error_message": err_msg})
 
-        celery_task.status = CeleryTask.STATUS_DONE
-        celery_task.mark_task_as_finished()
+    result["error_message"] = "calculate_pricehistory error" if has_error else None
+    celery_task.status = CeleryTask.STATUS_ERROR if has_error else CeleryTask.STATUS_DONE
 
-    except Exception as e:
-        err_msg = f"calculate_pricehistory exception {repr(e)} {traceback.format_exc()}"
-        _l.error(err_msg)
-
-        celery_task.status = CeleryTask.STATUS_ERROR
-        celery_task.error_message = err_msg
-        raise RuntimeError(err_msg) from e
-
-    finally:
-        _l.info("Calculation for price_history was compleated")
-        celery_task.save()
+    _l.info("Calculation for price_history was compleated")
+    celery_task.save()
+    return json.dumps(result)
