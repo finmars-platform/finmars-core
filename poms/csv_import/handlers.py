@@ -1994,7 +1994,14 @@ class SimpleImportProcess:
             f" {len(filter_for_async_functions_eval)} "
         )
 
+        self.handle_successful_items_by_batch_import(batch_indexes)
         return batch_rows_count
+
+    def handle_successful_items_by_batch_import(self, batch_indexes: list[int]):
+        for item_index in batch_indexes:
+
+            self.items[item_index].status = "success"
+            self.items[item_index].message = f"Item Imported {self.scheme.content_type.model}"
 
     def handle_successful_item_import(self, item, serializer):
         item.status = "success"
@@ -2138,40 +2145,6 @@ class SimpleImportProcess:
         self.result.items = self.items
 
         _l.info(f"SimpleImportProcess.Task {self.task}. process_items_batches DONE")
-
-        # if filter_for_async_functions_eval:
-        #     self._create_celery_task(filter_for_async_functions_eval)
-
-    def _create_celery_task(self, filter_for_async_functions_eval):
-        celery_task = CeleryTask.objects.create(
-            master_user=self.master_user,
-            member=self.member,
-            notes="Final updates initiated by bulk_insert data procedure instance %s",
-            verbose_name="Simple Import Final updates for bulk insert",
-            type="csv_import.simple_import_bulk_insert_final_updates_procedure",
-        )
-        options_object = {
-            "scheme_id": self.scheme.id,
-            "filter_for_async_functions_eval": filter_for_async_functions_eval,
-        }
-        celery_task.options_object = options_object
-        celery_task.save()
-
-        _l.info(
-            f"SimpleImportProcess.Task {self.task}. Add task for async methods of "
-            f"batches items {len(filter_for_async_functions_eval)}"
-        )
-
-        simple_import_bulk_insert_final_updates_procedure.apply_async(
-            kwargs={
-                "task_id": celery_task.pk,
-                "context": {
-                    "space_code": celery_task.master_user.space_code,
-                    "realm_code": celery_task.master_user.realm_code,
-                },
-            },
-            queue="backend-background-queue",
-        )
 
     def process(self):
         error_flag = False
