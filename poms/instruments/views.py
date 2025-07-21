@@ -1815,16 +1815,16 @@ class PriceHistoryViewSet(AbstractModelViewSet):
             member=request.user.member,
             verbose_name="Calculate pricehistory",
             type="calculate_pricehistory",
+            options_object=validated_data
         )
 
-        current_task = calculate_pricehistory.apply_async(
+        calculate_pricehistory.apply_async(
             kwargs={
                 "task_id": celery_task.id,
                 "context": {
                     "space_code": celery_task.master_user.space_code,
                     "realm_code": celery_task.master_user.realm_code,
                 },
-                "data": validated_data,
             }
         )
         return Response(

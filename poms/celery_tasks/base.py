@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
@@ -91,16 +92,16 @@ class BaseTask(_Task):
         else:
             try:
                 if self.is_valid_json(retval):
-                    self.finmars_task.result_object = json.loads(
+                    result_object = self.finmars_task.result_object = json.loads(
                         retval
                     )  ## TODO strange logic, probably refactor # but we can pass only string in celery
                 else:
                     result_object = {
                         "message": f"Task {task_id} returned result is not JSON"
                     }
-                    self.finmars_task.result_object = result_object
-            except Exception:
-                pass
+                self.finmars_task.result_object = result_object
+            except Exception as err:
+                logger.error(f"update task error {repr(err)} {traceback.format_exc()}")
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()
