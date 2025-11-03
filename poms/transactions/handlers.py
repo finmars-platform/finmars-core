@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account
+from poms.clients.models import Client
 from poms.common.utils import date_now, format_float, format_float_to_2
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
@@ -46,8 +47,9 @@ from poms.transactions.models import (
     TransactionType,
     TransactionTypeInput,
 )
-from poms.transactions.utils import generate_user_fields
+from poms.transactions.utils import _read_json_text, generate_user_fields
 from poms.users.models import EcosystemDefault
+from poms.vault.models import VaultRecord
 
 _l = logging.getLogger("poms.transactions")
 
@@ -164,6 +166,9 @@ class TransactionTypeProcess:
         if complex_transaction and not complex_transaction_status:
             self.complex_transaction_status = complex_transaction.status_id
 
+        if self.clear_execution_log:
+            self.complex_transaction.execution_log = ""
+
         self._context = context
         self._context["transaction_type"] = self.transaction_type
         self._id_seq = 0
@@ -177,9 +182,6 @@ class TransactionTypeProcess:
             self.values = values
             for i in range(10):
                 self.values[f"phantom_instrument_{i}"] = None
-
-        if self.clear_execution_log:
-            self.complex_transaction.execution_log = ""
 
         self.complex_transaction.owner = self.member
         # self.complex_transaction.save()  # it will create empty transaction in db!
@@ -267,6 +269,10 @@ class TransactionTypeProcess:
                     return EventClass.objects.get(user_code=value)
                 elif issubclass(model_class, NotificationClass):
                     return NotificationClass.objects.get(user_code=value)
+                elif issubclass(model_class, Client):
+                    return Client.objects.get(user_code=value)
+                elif issubclass(model_class, VaultRecord):
+                    return VaultRecord.objects.get(user_code=value)
             except Exception:
                 _l.debug(f"Could not find default value relation {value}")
                 return None
@@ -305,6 +311,10 @@ class TransactionTypeProcess:
                     return EventClass.objects.get(user_code=obj.value_relation)
                 elif issubclass(model_class, NotificationClass):
                     return NotificationClass.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, Client):
+                    return Client.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, VaultRecord):
+                    return VaultRecord.objects.get(user_code=obj.value_relation)
             except Exception:
                 _l.error(f"Could not find default value relation {obj.value_relation} ")
                 return None
@@ -340,6 +350,9 @@ class TransactionTypeProcess:
                     TransactionTypeInput.SELECTOR,
                 ):
                     value = ci.value_string
+                elif i.value_type == TransactionTypeInput.JSON:
+                    value = _read_json_text(ci.value_string)
+                    _l.info("JSON read: %r type=%s", value, type(value).__name__ if value is not None else None)
                 elif i.value_type == TransactionTypeInput.NUMBER:
                     value = ci.value_float
                 elif i.value_type == TransactionTypeInput.DATE:
@@ -353,7 +366,7 @@ class TransactionTypeProcess:
                 if value is not None:
                     self.values[i.name] = value
 
-        # _l.debug('self.inputs %s' % self.inputs)
+        # _l.debug('before self.values %s' % self.values)
 
         self.record_execution_progress("==== COMPLEX TRANSACTION VALUES ====", self.values)
 
@@ -415,6 +428,8 @@ class TransactionTypeProcess:
                     _l.debug(f"Value is not set. No Context. No Default. input {i.name} ")
 
         self.record_execution_progress("==== CALCULATED INPUTS ====")
+
+        # _l.info("check values %s" % self.values)
 
         for key, value in self.values.items():
             self.record_execution_progress(f"Key: {key}. Value: {value}. Type: {type(self.values[key]).__name__}")
@@ -2215,13 +2230,26 @@ class TransactionTypeProcess:
             ci.complex_transaction = self.complex_transaction
             ci.transaction_type_input = ti
 
-            if ti.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
-            ):
+            if ti.value_type in (TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR):
                 if val is None:
                     val = ""
                 ci.value_string = val
+            elif ti.value_type == TransactionTypeInput.JSON:
+                # val may be dict/list OR already a JSON string
+                if val is None:
+                    ci.value_string = ""
+                elif isinstance(val, dict):
+                    ci.value_string = json.dumps(val, ensure_ascii=False, separators=(",", ":"))
+                elif isinstance(val, str):
+                    # keep if it is valid JSON; else wrap it as JSON string
+                    try:
+                        json.loads(val)
+                        ci.value_string = val
+                    except json.JSONDecodeError:
+                        ci.value_string = json.dumps(val, ensure_ascii=False)
+                else:
+                    # numbers, bools, etc. -> store valid JSON
+                    ci.value_string = json.dumps(val, ensure_ascii=False)
             elif ti.value_type == TransactionTypeInput.NUMBER:
                 if val is None:
                     val = 0.0
@@ -2249,8 +2277,20 @@ class TransactionTypeProcess:
             "transactions": trns,
         }
 
+        # do not remove, somehow json inputs are always strings, which leads to impossiblity to address by keys
+        for i in self.inputs:
+            if i.value_type == TransactionTypeInput.JSON:
+                val = self.values.get(i.name)
+                if isinstance(val, str):
+                    try:
+                        self.values[i.name] = json.loads(val)
+                    except json.JSONDecodeError:
+                        _l.error("execute_user_fields_expressions decode error")
+
         for key, value in self.values.items():
             names[key] = value
+
+        # _l.info('before names %s' % names)
 
         self.record_execution_progress("Calculating User Fields")
 

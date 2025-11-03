@@ -3,6 +3,7 @@ import logging
 import traceback
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+from math import isclose
 from typing import Any
 
 from django.db import transaction
@@ -11,7 +12,7 @@ from django.utils import timezone
 
 from poms import notifications
 from poms.celery_tasks import finmars_task
-from poms.common.utils import date_now, isclose
+from poms.common.utils import date_now
 from poms.instruments.models import EventSchedule, GeneratedEvent, Instrument, PriceHistory
 from poms.reports.common import Report, ReportItem
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql

@@ -1448,12 +1448,12 @@ class CalcPeriodDateViewSet(AbstractViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        date = serializer.validated_data["date"]
+        input_date = serializer.validated_data["date"]
         frequency = serializer.validated_data["frequency"]
         shift = serializer.validated_data["shift"]
         is_only_bday = serializer.validated_data["is_only_bday"]
         start = serializer.validated_data["start"]
-        dates = calculate_period_date(date, frequency, shift, is_only_bday, start)
+        dates = calculate_period_date(input_date, frequency, shift, is_only_bday, start)
 
         return Response({"result": dates}, status=status.HTTP_200_OK)
 
@@ -1481,10 +1481,10 @@ class LastBusinessDayViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        date = serializer.validated_data["date"]
-        date = get_last_business_day(date, True)
+        input_date = serializer.validated_data["date"]
+        input_date = get_last_business_day(input_date, True)
 
-        return Response({"result": date}, status=status.HTTP_200_OK)
+        return Response({"result": input_date}, status=status.HTTP_200_OK)
 
 
 class IsBusinessDayViewSet(AbstractViewSet):
@@ -1493,9 +1493,9 @@ class IsBusinessDayViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        date = serializer.validated_data["date"]
+        input_date = serializer.validated_data["date"]
 
-        return Response({"result": is_business_day(date)}, status=status.HTTP_200_OK)
+        return Response({"result": is_business_day(input_date)}, status=status.HTTP_200_OK)
 
 
 class LastDayOfMonthViewSet(AbstractViewSet):
@@ -1504,7 +1504,7 @@ class LastDayOfMonthViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        date = serializer.validated_data["date"]
-        date = last_day_of_month(date)
+        input_date = serializer.validated_data["date"]
+        input_date = last_day_of_month(input_date)
 
-        return Response({"result": date}, status=status.HTTP_200_OK)
+        return Response({"result": input_date}, status=status.HTTP_200_OK)

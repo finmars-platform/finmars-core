@@ -125,7 +125,7 @@ class ExpressionSerializer(serializers.Serializer):
 class SplitDateRangeSerializer(serializers.Serializer):
     start_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
     end_date = serializers.DateField(required=True, format=API_DATE_FORMAT)
-    frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
+    frequency = serializers.CharField(required=True, max_length=1, help_text=f"{', '.join(VALID_FREQUENCY)}")
     is_only_bday = serializers.BooleanField(required=True)
 
     def validate(self, data):
@@ -134,7 +134,7 @@ class SplitDateRangeSerializer(serializers.Serializer):
         frequency = data.get("frequency")
 
         if start_date > end_date:
-            raise serializers.ValidationError("Start date cannot be after end date.")
+            raise serializers.ValidationError("start_date can't be after end_date.")
 
         if frequency not in VALID_FREQUENCY:
             raise serializers.ValidationError(
@@ -150,7 +150,7 @@ class PickDatesFromRangeSerializer(SplitDateRangeSerializer):
 
 class CalcPeriodDateSerializer(serializers.Serializer):
     date = serializers.DateField(required=True, format=API_DATE_FORMAT)
-    frequency = serializers.CharField(required=True, max_length=1, help_text="D (dayly), W, M, Q, Y, C")
+    frequency = serializers.CharField(required=True, max_length=1, help_text=f"{', '.join(VALID_FREQUENCY)}")
     is_only_bday = serializers.BooleanField(required=True)
     shift = serializers.IntegerField(required=True)
     start = serializers.BooleanField(required=True)

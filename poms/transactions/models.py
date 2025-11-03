@@ -3,7 +3,7 @@ import logging
 import time
 import traceback
 from datetime import date
-from math import isnan
+from math import isclose, isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -20,7 +20,7 @@ from poms.common.models import (
     NamedModel,
     TimeStampedModel,
 )
-from poms.common.utils import date_now, isclose
+from poms.common.utils import date_now
 from poms.configuration.models import ConfigurationModel
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
@@ -1023,6 +1023,7 @@ class TransactionTypeInput(models.Model):
     RELATION = 100
     SELECTOR = 110
     BUTTON = 120
+    JSON = 130
     TYPES = (
         (NUMBER, gettext_lazy("Number")),
         (STRING, gettext_lazy("String")),
@@ -1030,6 +1031,7 @@ class TransactionTypeInput(models.Model):
         (RELATION, gettext_lazy("Relation")),
         (SELECTOR, gettext_lazy("Selector")),
         (BUTTON, gettext_lazy("Button")),
+        (JSON, gettext_lazy("JSON")),
     )
 
     transaction_type = models.ForeignKey(
