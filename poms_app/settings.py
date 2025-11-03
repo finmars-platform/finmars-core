@@ -834,7 +834,6 @@ if SERVER_TYPE != "local":
         profiles_sample_rate=1.0,
     )
 
-
 INSTRUMENT_TYPE_PREFIX = ENV_STR(
     "INSTRUMENT_TYPE_PREFIX", "com.finmars.standard-instrument-type"
 )
