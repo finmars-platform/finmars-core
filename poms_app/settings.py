@@ -825,7 +825,6 @@ REDOC_SETTINGS = {
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
 SENTRY_DSN = ENV_STR("SENTRY_DSN", "https://bbc302cc7bd5bbb2719b030ace26222a@sentry.finmars.com/2")
-
 if SERVER_TYPE != "local":
     sentry_sdk.init(
         dsn=SENTRY_DSN,
