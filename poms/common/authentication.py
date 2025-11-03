@@ -111,7 +111,7 @@ class KeycloakAuthentication(TokenAuthentication):
         #     raise exceptions.AuthenticationFailed(msg)
         try:
             userinfo = self.keycloak.userinfo(key)
-        except Exception:
+        except Exception as e:
             msg = _("Invalid or expired token.")
             raise exceptions.AuthenticationFailed(msg) from e  # noqa: F821
 

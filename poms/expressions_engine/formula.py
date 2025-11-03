@@ -761,6 +761,8 @@ def _get_supported_models_serializer_class():
         AccountEvalSerializer,
         AccountTypeEvalSerializer,
     )
+    from poms.clients.models import Client
+    from poms.clients.serializers import ClientSerializer
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import (
         CounterpartyEvalSerializer,
@@ -807,6 +809,8 @@ def _get_supported_models_serializer_class():
     )
     from poms.users.models import Member
     from poms.users.serializers import MemberSerializer
+    from poms.vault.models import VaultRecord
+    from poms.vault.serializers import VaultRecordSerializer
 
     return {
         Account: AccountEvalSerializer,
@@ -833,6 +837,8 @@ def _get_supported_models_serializer_class():
         Member: MemberSerializer,
         Country: CountrySerializer,
         AccrualCalculationSchedule: AccrualCalculationScheduleSerializer,
+        Client: ClientSerializer,
+        VaultRecord: VaultRecordSerializer,
     }
 
 

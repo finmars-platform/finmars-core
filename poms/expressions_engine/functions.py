@@ -7,6 +7,7 @@ import random
 import re
 import traceback
 import uuid
+from math import isclose
 
 from dateutil import relativedelta
 from django.contrib.contenttypes.models import ContentType
@@ -18,7 +19,6 @@ from poms.common.utils import (
     calculate_period_date,
     date_now,
     get_list_of_dates_between_two_dates,
-    isclose,
 )
 from poms.expressions_engine.exceptions import ExpressionEvalError, InvalidExpression
 

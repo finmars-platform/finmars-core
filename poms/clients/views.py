@@ -2,7 +2,7 @@ from rest_framework.decorators import action
 
 from poms.clients.filters import ClientSecretFilterSet, ClientsFilterSet
 from poms.clients.models import Client, ClientSecret
-from poms.clients.serializers import ClientSecretSerializer, ClientsSerializer
+from poms.clients.serializers import ClientSecretSerializer, ClientSerializer
 from poms.common.views import AbstractModelViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -15,7 +15,7 @@ class ClientsViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     filterset_class = ClientsFilterSet
-    serializer_class = ClientsSerializer
+    serializer_class = ClientSerializer
     ordering_fields = [
         "user_code",
         "name",
@@ -27,7 +27,7 @@ class ClientsViewSet(AbstractModelViewSet):
         detail=False,
         methods=["get"],
         url_path="light",
-        serializer_class=ClientsSerializer,
+        serializer_class=ClientSerializer,
     )
     def list_light(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

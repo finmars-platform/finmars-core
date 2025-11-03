@@ -168,4 +168,6 @@ postgres_data/
 rabbitmq_data/
 redis_data/
 
+finmars-core.iml
+
 *.sql
