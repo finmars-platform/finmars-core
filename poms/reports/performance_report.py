@@ -187,7 +187,7 @@ class PerformanceReportBuilder:
                 table = self.build_time_weighted(period["date_from"], period["date_to"])
 
                 for key, value in table.items():  # noqa: B007
-                    period["items"].append(table[key])
+                    period["items"].append(value)
 
                 period = self.calculate_time_weighted_total_values(period)  # noqa: PLW2901
 
@@ -456,7 +456,7 @@ class PerformanceReportBuilder:
                 }
 
         for key, value in result_obj.items():  # noqa: B007
-            result.append(result_obj[key])
+            result.append(value)
 
         # _l.debug("result %s" % result)
 
@@ -612,7 +612,7 @@ class PerformanceReportBuilder:
         previous_date = None
 
         for key, value in table.items():  # noqa: B007
-            item_date = table[key]
+            item_date = value
 
             _l.debug("performance.table.key %s", key)
             _l.debug("performance.table.previous_date %s", previous_date)
@@ -763,7 +763,7 @@ class PerformanceReportBuilder:
         previous_date = None
 
         for key, value in table.items():  # noqa: B007
-            item_date = table[key]
+            item_date = value
 
             for _key, _value in item_date["portfolios"].items():
                 item = item_date["portfolios"][_key]

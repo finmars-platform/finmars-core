@@ -1,11 +1,8 @@
 import calendar
 import contextlib
-import copy
 import datetime
 import logging
-import math
 from datetime import timedelta
-from http import HTTPStatus
 
 import pandas as pd
 
@@ -15,45 +12,48 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import connection, router
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
-from rest_framework.views import exception_handler
 
 from poms_app import settings
 
 _l = logging.getLogger("poms.common")
 
-VALID_FREQUENCY = {"D", "W", "M", "Q", "Y", "C"}
-
-FORWARD = 1
-
-calc_shift_date_map = {
-    "D": lambda date: pd.Timestamp(date) - pd.offsets.Day(0),
-    "W": lambda date: pd.Timestamp(date) - pd.offsets.Week(weekday=0),
-    "M": lambda date: pd.Timestamp(date) - pd.offsets.MonthBegin(1),
-    "Q": lambda date: pd.Timestamp(date) - pd.offsets.QuarterBegin(startingMonth=1),
-    "Y": lambda date: pd.Timestamp(date) - pd.offsets.YearBegin(1),
-    "ED": lambda date: pd.Timestamp(date) + pd.offsets.Day(0),
-    "EW": lambda date: pd.Timestamp(date) + pd.DateOffset(days=6) if date.weekday() != 6 else date,
-    "EM": lambda date: pd.Timestamp(date) + pd.offsets.MonthEnd(0),
-    "EQ": lambda date: pd.Timestamp(date) + pd.offsets.QuarterEnd(startingMonth=3),
-    "EY": lambda date: pd.Timestamp(date) + pd.offsets.YearEnd(1),
+VALID_FREQUENCY = {
+    "D",  # Daily
+    "W",  # Weekly
+    "M",  # Monthly
+    "Q",  # Quarterly
+    "HY",  # Half-Yearly (1st or 2nd half of the calendar year)
+    "Y",  # Yearly
+    "C",  # Custom period - no changes
 }
-
+calc_shift_date_map = {
+    "D": lambda day: pd.Timestamp(day),
+    "W": lambda day: pd.Timestamp(day) - pd.DateOffset(days=day.weekday()),
+    "M": lambda day: pd.Timestamp(day).replace(day=1),
+    "Q": lambda day: pd.Timestamp(f"{day.year}-{((day.month - 1) // 3) * 3 + 1:02d}-01"),
+    "HY": lambda day: pd.Timestamp(f"{day.year}-{1 if day.month <= 6 else 7:02d}-01"),
+    "Y": lambda day: pd.Timestamp(f"{day.year}-01-01"),
+    "ED": lambda day: pd.Timestamp(day),
+    "EW": lambda day: pd.Timestamp(day) - pd.DateOffset(days=day.weekday()) + pd.DateOffset(days=6),
+    "EM": lambda day: (pd.Timestamp(day).replace(day=1) + pd.offsets.MonthEnd(0)),
+    "EQ": lambda day: pd.Timestamp(f"{day.year}-{((day.month - 1) // 3) * 3 + 3:02d}-01") + pd.offsets.MonthEnd(0),
+    "EHY": lambda day: pd.Timestamp(f"{day.year}-{6 if day.month <= 6 else 12:02d}-01") + pd.offsets.MonthEnd(0),
+    "EY": lambda day: pd.Timestamp(f"{day.year}-12-31"),
+}
 frequency_map = {
     "D": lambda shift=1: pd.offsets.Day(shift),
     "W": lambda shift=1: pd.offsets.Week(shift),
     "M": lambda shift=1: pd.offsets.MonthBegin(shift),
     "Q": lambda shift=1: pd.offsets.QuarterBegin(n=shift, startingMonth=1),
+    "HY": lambda shift=1: pd.offsets.MonthBegin(shift * 6),
     "Y": lambda shift=1: pd.offsets.YearBegin(shift),
     "ED": lambda shift=1: pd.offsets.Day(shift),
     "EW": lambda shift=1: pd.offsets.Week(shift),
     "EM": lambda shift=1: pd.offsets.MonthEnd(shift),
     "EQ": lambda shift=1: pd.offsets.QuarterEnd(n=shift, startingMonth=3),
+    "EHY": lambda shift=1: pd.offsets.MonthEnd(shift * 6),
     "EY": lambda shift=1: pd.offsets.YearEnd(shift),
 }
-
-
-def force_qs_evaluation(qs):
-    list(qs)
 
 
 def db_class_check_data(model, verbosity, using):
@@ -90,25 +90,6 @@ def date_yesterday():
 
 def datetime_now():
     return now()
-
-
-try:
-    isclose = math.isclose
-except AttributeError:
-    try:
-        import numpy
-
-        isclose = numpy.isclose
-    except ImportError:
-        numpy = None
-
-        def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-            # TODO: maybe incorrect!
-            return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-def iszero(v):
-    return isclose(v, 0.0)
 
 
 class sfloat(float):
@@ -178,55 +159,6 @@ def add_view_and_manage_permissions():
             )
 
 
-def delete_keys_from_dict(dict_del, the_keys):
-    """
-    Delete the keys present in the lst_keys from the dictionary.
-    Loops recursively over nested dictionaries.
-    """
-    # make sure the_keys is a set to get O(1) lookups
-    if type(the_keys) is not set:
-        the_keys = set(the_keys)
-    for k, v in dict_del.items():
-        if k in the_keys:
-            del dict_del[k]
-
-        if isinstance(v, dict):
-            delete_keys_from_dict(v, the_keys)
-    return dict_del
-
-
-def recursive_callback(dict, callback, prop="children"):
-    callback(dict)
-
-    # print(dict)
-
-    if prop in dict:
-        for item in dict[prop]:
-            recursive_callback(item, callback)
-
-
-class MemorySavingQuerysetIterator:
-    def __init__(self, queryset, max_obj_num=1000):
-        self._base_queryset = queryset
-        self._generator = self._setup()
-        self.max_obj_num = max_obj_num
-
-    def _setup(self):
-        for i in range(0, self._base_queryset.count(), self.max_obj_num):
-            # By making a copy of the queryset and using that to actually access
-            # the object, we ensure that there are only `max_obj_num` objects in
-            # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[i : i + self.max_obj_num]
-            # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
-            yield from smaller_queryset.iterator()
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        return self._generator.next()
-
-
 def format_float(val):
     # 0.000050000892 -> 0.0000500009
     # 0.005623 -> 0.005623
@@ -237,7 +169,6 @@ def format_float(val):
     except ValueError:
         return val
 
-    # return float(format(round(val, 10), '.10f').rstrip("0").rstrip('.'))
     return round(val, 10)
 
 
@@ -262,21 +193,6 @@ def get_content_type_by_name(name):
     return ContentType.objects.get(app_label=app_label_title, model=model_title)
 
 
-def convert_name_to_key(name: str) -> str:
-    return name.strip().lower().replace(" ", "_")
-
-
-def check_if_last_day_of_month(to_date: datetime.date) -> bool:
-    """
-    Checks if date is the last day of month
-    :param to_date:
-    :return: bool
-    """
-    delta = datetime.timedelta(days=1)
-    next_day = to_date + delta
-    return to_date.month != next_day.month
-
-
 def get_first_transaction(portfolio_instance) -> object:
     """
     Get first transaction of portfolio
@@ -298,44 +214,6 @@ def str_to_date(d):
         d = datetime.datetime.strptime(d, settings.API_DATE_FORMAT).date()
 
     return d
-
-
-def finmars_exception_handler(exc, context):
-    """Custom API exception handler."""
-
-    # Call REST framework's default exception handler first,
-    # to get the standard error response.
-    response = exception_handler(exc, context)
-
-    if response is not None:
-        # Using the description's of the HTTPStatus class as error message.
-        http_code_to_message = {v.value: v.description for v in HTTPStatus}
-
-        error_payload = {
-            "error": {
-                "url": context["request"].build_absolute_uri(),
-                "status_code": 0,
-                "message": "",
-                "details": [],
-                "datetime": datetime.datetime.strftime(
-                    now(),
-                    f"{settings.API_DATE_FORMAT} %H:%M:%S",
-                ),
-                "realm_code": context["request"].realm_code,
-                "space_code": context["request"].space_code,
-            }
-        }
-
-        status_code = response.status_code
-
-        error = error_payload["error"]
-        error["status_code"] = status_code
-        error["message"] = http_code_to_message[status_code]
-        error["details"] = response.data
-
-        response.data = error_payload
-
-    return response
 
 
 def get_serializer(content_type_key):
@@ -517,34 +395,31 @@ def compare_versions(version1, version2):
     return 0
 
 
-def is_newer_version(version1, version2):
-    return compare_versions(version1, version2) > 0
-
-
 # region Dates
-def is_business_day(date):
-    return bool(len(pd.bdate_range(date, date)))
+def is_business_day(date_obj: pd.Timestamp | datetime.date | datetime.datetime) -> bool:
+    """Check if a date is a business day (Monday=0 to Friday=4)."""
+    return date_obj.weekday() < 5
 
 
-def get_last_business_day(date, to_string=False):
+def get_last_business_day(day: datetime.date | str, to_string=False) -> str | datetime.date:
     """
     Returns the previous business day of the given date.
-    :param date:
+    :param day:
     :param to_string:
     :return:
     """
 
-    if not isinstance(date, datetime.date):
-        date = datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+    if not isinstance(day, datetime.date):
+        day = datetime.datetime.strptime(day, settings.API_DATE_FORMAT).date()
 
-    weekday = datetime.date.weekday(date)
+    weekday = datetime.date.weekday(day)
     if weekday > 4:  # if it's Saturday or Sunday
-        date = date - datetime.timedelta(days=weekday - 4)
+        day = day - datetime.timedelta(days=weekday - 4)
 
-    return date.strftime(settings.API_DATE_FORMAT) if to_string else date
+    return day.strftime(settings.API_DATE_FORMAT) if to_string else day
 
 
-def last_day_of_month(any_day):
+def last_day_of_month(any_day: datetime.date) -> datetime.date:
     # Day 28 exists in every month. 4 days later, it's always next month
     next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
     # subtracting the number of the current day brings us back one month
@@ -752,18 +627,18 @@ def get_last_business_day_in_previous_quarter(date):
 
 
 def shift_to_bday(date, shift):
-    shift = FORWARD if shift > 0 else -1
+    shift = 1 if shift > 0 else -1
     while not is_business_day(date):
         date += datetime.timedelta(days=shift)
 
     return date
 
 
-def get_validated_date(date) -> datetime.date:
-    if not isinstance(date, datetime.date):
-        return datetime.datetime.strptime(date, settings.API_DATE_FORMAT).date()
+def get_validated_date(day: datetime.date | str) -> datetime.date:
+    if not isinstance(day, datetime.date):
+        return datetime.datetime.strptime(day, settings.API_DATE_FORMAT).date()
 
-    return date
+    return day
 
 
 def split_date_range(
@@ -771,20 +646,40 @@ def split_date_range(
     end_date: str | datetime.date,
     frequency: str,
     is_only_bday: bool,
-) -> list[tuple[str]]:
+) -> list[tuple]:
     """
-    :param start_date: Start date in YYYY-MM-DD format.
-    :param end_date: End date in YYYY-MM-DD format.
-    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    Splits a date range into subperiods with a given frequency.
+
+    :param start_date: Start date in YYYY-MM-DD format (string) or datetime.date object
+    :param end_date: End date in YYYY-MM-DD format (string) or datetime.date object
+    :param frequency: "D" - (daily) / "W" - (weekly) / "M" - (monthly) / "Q" - (quarterly) /
+                      "HY" - (half-yearly) / "Y" - (yearly) / "C" - (custom).
     :param is_only_bday: Whether to adjust the dates to business days.
-    :return: A list of tuples[str], each containing the start and end of a frequency.
+    :return: A list of string tuples, each containing the start and end of a period.
     """
+    # Validate frequency
+    if frequency not in VALID_FREQUENCY:
+        raise ValueError(f"Invalid frequency '{frequency}'. Valid options: {VALID_FREQUENCY}")
+
+    # Handle "C" frequency to return always list with one tuple
     if frequency == "C":
-        return [start_date, end_date]
+        start_str: str = start_date if isinstance(start_date, str) else start_date.strftime(settings.API_DATE_FORMAT)
+        end_str: str = end_date if isinstance(end_date, str) else end_date.strftime(settings.API_DATE_FORMAT)
+        return [(start_str, end_str)]
 
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
+
+    # Preserve original requested range for overlap filtering
+    original_start_date = start_date
+    original_end_date = end_date
+    ts_range_start = pd.Timestamp(original_start_date)
+    ts_range_end = pd.Timestamp(original_end_date)
+
+    # Validate date range
+    if start_date > end_date:
+        raise ValueError(f"start_date ({start_date}) must be <= end_date ({end_date})")
+
     freq_start = frequency
     freq_end = f"E{frequency}"
 
@@ -801,6 +696,10 @@ def split_date_range(
             sd = shift_to_bday(sd, 1)  # noqa: PLW2901
             ed = shift_to_bday(ed, -1)
 
+        # Skip periods that do not overlap the originally requested range
+        if ed < ts_range_start or sd > ts_range_end:
+            continue
+
         sd_str = str(sd.strftime(settings.API_DATE_FORMAT))
         ed_str = str(ed.strftime(settings.API_DATE_FORMAT))
         date_pair: tuple = (sd_str, ed_str)
@@ -809,18 +708,24 @@ def split_date_range(
     return date_pairs
 
 
-def shift_to_week_boundary(date, sdate, edate, start: bool, freq: str):
+def shift_to_week_boundary(
+    input_date: datetime.date,
+    sdate: datetime.date,
+    edate: datetime.date,
+    start: bool,
+    freq: str,
+) -> datetime.date:
     """
     Changes the day to the beginning/end of the week,
     taking into account the boundaries of the range
     """
-    if (start and date > sdate) or (not start and date < edate):
-        date = calc_shift_date_map[freq](date)
+    if (start and input_date > sdate) or (not start and input_date < edate):
+        input_date = calc_shift_date_map[freq](input_date)
 
-    return date
+    return input_date
 
 
-def pick_dates_from_range(
+def pick_dates_from_range(  # noqa: PLR0912
     start_date: str | datetime.date,
     end_date: str | datetime.date,
     frequency: str,
@@ -828,51 +733,78 @@ def pick_dates_from_range(
     start: bool,
 ) -> list[str]:
     """
+    Generates a list of dates from a range with a given frequency.
+
     :param start_date: Start date in YYYY-MM-DD format.
     :param end_date: End date in YYYY-MM-DD format.
-    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    :param frequency: "D" - (daily) / "W" - (weekly) / "M" - (monthly) / "Q" - (quarterly) /
+                      "HY" - (half-yearly) / "Y" - (yearly) / "C" - (custom).
     :param is_only_bday: Whether to adjust the dates to business days.
-    :param start: The beginning of frequency, if False end of frequency.
-    :return: A list, containing the start or end of a each frequency.
+    :param start: The beginning of frequency, if False, then end of frequency.
+    :return: A list, containing the start or end of each frequency.
     """
+    # Validate frequency
+    if frequency not in VALID_FREQUENCY:
+        raise ValueError(f"Invalid frequency '{frequency}'. Valid options: {VALID_FREQUENCY}")
+
+    # Handle "C" frequency - return dates as strings
     if frequency == "C":
-        return [start_date, end_date]
+        start_str = start_date if isinstance(start_date, str) else start_date.strftime(settings.API_DATE_FORMAT)
+        end_str = end_date if isinstance(end_date, str) else end_date.strftime(settings.API_DATE_FORMAT)
+        return [start_str, end_str]
 
     start_date = get_validated_date(start_date)
     end_date = get_validated_date(end_date)
+
+    # Validate date range
+    if start_date > end_date:
+        raise ValueError(f"start_date ({start_date}) must be less than or equal to end_date ({end_date})")
+
+    # Preserve the original start_date for incomplete period handling
+    original_start_date = start_date
+
     frequency = frequency if start else f"E{frequency}"
 
-    dates = pd.date_range(start=start_date, end=end_date, freq=frequency_map[frequency]())
+    # Align the start_date to the period boundary for proper date range generation
+    # Skip alignment for weekly frequency as it has special handling via shift_to_week_boundary
+    if "W" not in frequency:
+        aligned_start_date = calc_shift_date_map[frequency](start_date)
+    else:
+        aligned_start_date = start_date
+
+    dates = pd.date_range(start=aligned_start_date, end=end_date, freq=frequency_map[frequency]())
     dates = [d.date() for d in dates]
 
-    # don't meets conditions
-    if not len(dates):
-        return []
+    # Filter out dates that are before the original start date
+    dates = [d for d in dates if d >= original_start_date]
 
     # pd.date_range - adds dates that fall completely within
-    # the frequency. Adding in list uneven areas of date
-    if start and start_date != dates[0]:
-        dates.insert(0, start_date)
-    if not start and end_date != dates[-1]:
-        dates.append(end_date)
+    # the frequency range. Adding dates from incomplete periods at the start/end
+    # the frequency. Adding in the list uneven areas of date
+    if dates:
+        if start and original_start_date != dates[0]:
+            dates.insert(0, original_start_date)
+        if not start and end_date != dates[-1]:
+            dates.append(end_date)
 
     pick_dates: list[str] = []
-    for date in dates:
+    for day in dates:
         if "W" in frequency:
-            date = shift_to_week_boundary(date, start_date, end_date, start, frequency)  # noqa: PLW2901
+            day = shift_to_week_boundary(day, original_start_date, end_date, start, frequency)  # noqa: PLW2901
 
         if is_only_bday:
-            if "D" in frequency and not is_business_day(date):
+            # For daily frequency, skip non-business days entirely
+            if "D" in frequency and not is_business_day(day):
                 continue
 
-            if not is_business_day(date):
+            # For other frequencies, shift to the nearest business day
+            if "D" not in frequency and not is_business_day(day):
                 if start:
-                    date = shift_to_bday(date, 1)  # noqa: PLW2901
+                    day = shift_to_bday(day, 1)  # noqa: PLW2901
                 else:
-                    date = shift_to_bday(date, -1)  # noqa: PLW2901
+                    day = shift_to_bday(day, -1)  # noqa: PLW2901
 
-        date_str = str(date.strftime(settings.API_DATE_FORMAT))
+        date_str = day.strftime(settings.API_DATE_FORMAT)
         if date_str not in pick_dates:
             pick_dates.append(date_str)
 
@@ -880,7 +812,7 @@ def pick_dates_from_range(
 
 
 def calculate_period_date(
-    date: str | datetime.date,
+    input_date: str | datetime.date,
     frequency: str,
     shift: int,
     is_only_bday=False,
@@ -890,31 +822,42 @@ def calculate_period_date(
     Calculates the start or end date of a certain time period,
     with the possibility of shifting forward or backward by several periods.
 
-    :param date: A string in YYYY-MM-DD ISO format representing the current date.
-    :param frequency: "D" - (dayly) / "W" - (weekly) / "M" - (monthly) /
-    "Q" - (quarterly) / "Y" - (yearly) / "C" - (custom - without changes).
+    :param input_date: A string in YYYY-MM-DD ISO format representing the current date.
+    :param frequency: "D" - (daily) / "W" - (weekly) / "M" - (monthly) / "Q" - (quarterly) /
+                      "HY" - (half-yearly) / "Y" - (yearly) / "C" - (custom).
     :param shift: Indicating how many periods to shift (-N for backward, +N for forward).
     :param is_only_bday: Whether to adjust the dates to business days.
-    :param start: The beginning of frequency, if False end of frequency.
+    :param start: The beginning of frequency, if False, then end of frequency.
     :return: The calculated date in YYYY-MM-DD format.
     """
+    input_date: datetime.date = get_validated_date(input_date)
+
+    # Validate frequency
+    if frequency not in VALID_FREQUENCY:
+        raise ValueError(f"Invalid frequency '{frequency}'. Valid options: {VALID_FREQUENCY}")
+
     if frequency == "C":
-        return date
+        return input_date.strftime(settings.API_DATE_FORMAT)
 
     frequency = frequency if start else f"E{frequency}"
-    date = get_validated_date(date)
-    if "W" in frequency:
-        date = calc_shift_date_map[frequency](date)
 
-    date = date + frequency_map[frequency](shift)
+    # Special handling for shift=0: should return start/end of the current period
+    if shift == 0:
+        input_date = calc_shift_date_map[frequency](input_date)
+    else:
+        # For non-zero shifts, apply transformation only for weekly frequencies (preserve original logic)
+        if "W" in frequency:
+            input_date = calc_shift_date_map[frequency](input_date)
 
-    if is_only_bday and not is_business_day(date):
+        input_date = input_date + frequency_map[frequency](shift)
+
+    if is_only_bday and not is_business_day(input_date):
         if start:
-            date = shift_to_bday(date, 1)
+            input_date = shift_to_bday(input_date, 1)
         else:
-            date = shift_to_bday(date, -1)
+            input_date = shift_to_bday(input_date, -1)
 
-    return str(date.strftime(settings.API_DATE_FORMAT))
+    return input_date.strftime(settings.API_DATE_FORMAT)
 
 
 # endregion Dates

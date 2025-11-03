@@ -223,7 +223,7 @@ class PortfolioSerializer(
 
     def __init__(self, *args, **kwargs):
         from poms.accounts.serializers import AccountViewSerializer
-        from poms.clients.serializers import ClientsSerializer
+        from poms.clients.serializers import ClientSerializer
         from poms.counterparties.serializers import (
             CounterpartyViewSerializer,
             ResponsibleViewSerializer,
@@ -242,7 +242,7 @@ class PortfolioSerializer(
         self.fields["transaction_types_object"] = TransactionTypeViewSerializer(
             source="transaction_types", many=True, read_only=True
         )
-        self.fields["client_object"] = ClientsSerializer(source="client", many=False, read_only=True)
+        self.fields["client_object"] = ClientSerializer(source="client", many=False, read_only=True)
 
     def create_register_if_not_exists(
         self, instance, register_currency=None, register_pricing_policy=None, register_instrument_type=None

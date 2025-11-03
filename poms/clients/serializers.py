@@ -16,7 +16,7 @@ from poms.users.utils import (
 )
 
 
-class ClientsSerializer(ModelWithUserCodeSerializer):
+class ClientSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     portfolios = serializers.PrimaryKeyRelatedField(queryset=Portfolio.objects.all(), many=True, required=False)
@@ -180,7 +180,7 @@ class ClientSecretSerializer(ModelMetaSerializer, ModelOwnerSerializer):
         super().__init__(*args, **kwargs)
         self.fields["user_code"] = UserCodeField()
         self.fields["deleted_user_code"] = UserCodeField(read_only=True)
-        self.fields["client_object"] = ClientsSerializer(source="client", many=False, read_only=True)
+        self.fields["client_object"] = ClientSerializer(source="client", many=False, read_only=True)
 
     def create(self, validated_data):
         instance = super().create(validated_data)

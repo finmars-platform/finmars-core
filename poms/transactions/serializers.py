@@ -11,6 +11,7 @@ from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountDefault, AccountField
 from poms.accounts.models import Account
+from poms.clients.models import Client
 from poms.common.fields import ExpressionField, name_validator
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import (
@@ -70,6 +71,7 @@ from poms.strategies.fields import (
 )
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.fields import (
+    CharOrJSONField,
     ReadOnlyContentTypeField,
     TransactionTypeGroupField,
     TransactionTypeInputContentTypeField,
@@ -101,6 +103,7 @@ from poms.transactions.models import (
 )
 from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.utils import get_member_from_context
+from poms.vault.models import VaultRecord
 
 _l = logging.getLogger("poms.transactions")
 
@@ -4216,6 +4219,8 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
 class TransactionTypeProcessValuesSerializer(serializers.Serializer):
     def __init__(self, **kwargs):  # noqa: PLR0912, PLR0915
         from poms.accounts.serializers import AccountViewSerializer
+        from poms.clients.fields import ClientField
+        from poms.clients.serializers import ClientSerializer
         from poms.counterparties.serializers import (
             CounterpartyViewSerializer,
             ResponsibleViewSerializer,
@@ -4236,6 +4241,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             Strategy2ViewSerializer,
             Strategy3ViewSerializer,
         )
+        from poms.vault.fields import VaultRecordField
+        from poms.vault.serializers import VaultRecordSerializer
 
         super().__init__(**kwargs)
 
@@ -4247,10 +4254,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             field = None
             field_object = None
 
-            if i.value_type in (
-                TransactionTypeInput.STRING,
-                TransactionTypeInput.SELECTOR,
-            ):
+            if i.value_type in (TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR):
                 field = serializers.CharField(
                     required=False,
                     allow_blank=True,
@@ -4258,7 +4262,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                     label=i.name,
                     help_text=i.verbose_name,
                 )
-
+            elif i.value_type == TransactionTypeInput.JSON:
+                field = CharOrJSONField(required=False, allow_null=True)
             elif i.value_type == TransactionTypeInput.NUMBER:
                 field = serializers.FloatField(
                     required=False,
@@ -4456,6 +4461,26 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                         help_text=i.verbose_name,
                     )
                     field_object = EventScheduleSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, Client):
+                    field = ClientField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+
+                    field_object = ClientSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, VaultRecord):
+                    field = VaultRecordField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+
+                    field_object = VaultRecordSerializer(source=name, read_only=True)
 
             elif i.value_type == TransactionTypeInput.BUTTON:
                 field = serializers.JSONField(allow_null=True, required=False)
@@ -4710,6 +4735,7 @@ class ComplexTransactionViewOnly:
             if i.value_type in (
                 TransactionTypeInput.STRING,
                 TransactionTypeInput.SELECTOR,
+                TransactionTypeInput.JSON,
             ):
                 value = ci.value_string
             elif i.value_type == TransactionTypeInput.NUMBER:
@@ -4762,6 +4788,10 @@ class ComplexTransactionViewOnly:
                 return EventClass.objects.get(user_code=obj.value_relation)
             elif issubclass(model_class, NotificationClass):
                 return NotificationClass.objects.get(user_code=obj.value_relation)
+            elif issubclass(model_class, Client):
+                return Client.objects.get(user_code=obj.value_relation)
+            elif issubclass(model_class, VaultRecord):
+                return VaultRecord.objects.get(user_code=obj.value_relation)
 
         except Exception:
             _l.info(f"Could not find default value relation {obj.value_relation} ")

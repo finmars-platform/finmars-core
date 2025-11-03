@@ -3,7 +3,7 @@ import logging
 import traceback
 from bisect import bisect_left
 from datetime import date, datetime, timedelta
-from math import isnan
+from math import isclose, isnan
 from typing import Optional
 
 import QuantLib as ql
@@ -33,7 +33,7 @@ from poms.common.models import (
     ObjectStateModel,
     TimeStampedModel,
 )
-from poms.common.utils import date_now, isclose
+from poms.common.utils import date_now
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.expressions_engine import formula
