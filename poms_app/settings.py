@@ -10,10 +10,8 @@ from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import gettext_lazy
 
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
-
 from poms_app.utils import ENV_BOOL, ENV_INT, ENV_STR
 
 
@@ -162,6 +160,7 @@ MIDDLEWARE = [
     'django.middleware.gzip.GZipMiddleware',
 
     "poms.common.middleware.RealmAndSpaceMiddleware",  # do not delete, required for all requests
+    "poms.common.middleware.SentryContextMiddleware",  # adds realm/space/domain to Sentry
 
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -630,7 +629,7 @@ CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d
 # The default is the number of CPUs available on your system.
 CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 1)
 
-CELERY_TASK_TIME_LIMIT = ENV_INT('CELERY_TASK_TIME_LIMIT', 86400)
+CELERY_TASK_TIME_LIMIT = ENV_INT('CELERY_TASK_TIME_LIMIT', 90000)
 CELERY_TASK_SOFT_TIME_LIMIT = ENV_INT('CELERY_TASK_SOFT_TIME_LIMIT', 86400)
 
 CELERY_BROKER_TRANSPORT_OPTIONS = {
@@ -639,6 +638,10 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_TASK_DEFAULT_DELIVERY_MODE = ENV_STR("CELERY_TASK_DEFAULT_DELIVERY_MODE", "persistent")
 
 CELERY_WORKER_PREFETCH_MULTIPLIER = ENV_INT("CELERY_WORKER_PREFETCH_MULTIPLIER", 1)
+
+CELERY_TASK_SEND_SENT_EVENT = ENV_BOOL("CELERY_TASK_SEND_SENT_EVENT", True)
+CELERY_TASK_ACKS_LATE = ENV_BOOL("CELERY_TASK_ACKS_LATE", True)
+CELERY_TASK_REJECT_ON_WORKER_LOST = ENV_BOOL("CELERY_TASK_REJECT_ON_WORKER_LOST", True)
 
 CELERY_SEND_EVENTS = ENV_BOOL("CELERY_SEND_EVENTS", True)
 CELERY_WORKER_SEND_TASK_EVENTS = ENV_BOOL("CELERY_WORKER_SEND_TASK_EVENTS", True)
@@ -822,20 +825,13 @@ REDOC_SETTINGS = {
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
 
 SENTRY_DSN = ENV_STR("SENTRY_DSN", "https://bbc302cc7bd5bbb2719b030ace26222a@sentry.finmars.com/2")
-
-# SENTRY
 if SERVER_TYPE != "local":
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration()],
         environment=SERVER_TYPE,
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        # We recommend adjusting this value in production.
         traces_sample_rate=1.0,
-        # If you wish to associate users to errors (assuming you are using
-        # django.contrib.auth) you may enable sending PII data.
         send_default_pii=True,
+        profiles_sample_rate=1.0,
     )
 
 INSTRUMENT_TYPE_PREFIX = ENV_STR(
