@@ -824,6 +824,16 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):  # noqa: P
 
     count = 1
 
+    # Bound the delete by BOTH ends of the recalculation window. Without
+    # `date__lte=date` the filter drops every PortfolioHistory row from
+    # `calculation_period_date_from` to the end of the table (including
+    # future dates the caller never asked for) while the loop below only
+    # recomputes `calculation_period_date_from..date`. A narrow recompute
+    # (e.g. df=2026-07-01 dt=2026-07-10) would silently wipe every later
+    # date and leave a gap. Observed 2026-08-18 on space0uph9: a manual
+    # recompute over 07-01..07-10 wiped 07-11..08-13 for all portfolios;
+    # only the subsequent nightly T-22 schedules refilled 07-24..onward,
+    # leaving 07-11..07-23 permanently empty until noticed.
     PortfolioHistory.objects.filter(
         portfolio=portfolio,
         currency=currency,
@@ -832,6 +842,7 @@ def calculate_portfolio_history(self, task_id: int, *args, **kwargs):  # noqa: P
         cost_method=cost_method,
         performance_method=performance_method,
         date__gte=calculation_period_date_from,
+        date__lte=date,
     ).delete()
 
     for d in dates:
