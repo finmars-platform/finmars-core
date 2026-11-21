@@ -1066,16 +1066,13 @@ class PerformanceReportBuilder:
                     # 2024-05-27
                     # we never count initial cash flow to total cashflow
                     # initial cash cash is baseline that we calculate performance based on
+                    # Preserve totals already accumulated from other registers.
                     if record.transaction_date == date_from:
                         # transaction at the start of period is not weighed
                         time_weight = 0
-                        grand_cash_flow = 0
-                        grand_cash_flow_weighted = 0
                         # total_nav += record_cash_flow
                     elif record.transaction_date == self.instance.first_transaction_date:
                         time_weight = 0
-                        grand_cash_flow = 0
-                        grand_cash_flow_weighted = 0
                     else:
                         time_weight = (date_to_n - (date_n - 1)) / (date_to_n - date_from_n)
                         grand_cash_flow += record_cash_flow
