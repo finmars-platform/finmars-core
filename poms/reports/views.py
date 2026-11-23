@@ -47,6 +47,7 @@ from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.utils import (
+    bypass_pl_report_cache,
     generate_unique_key,
     get_pl_first_date,
     transform_to_allowed_accounts,
@@ -1204,7 +1205,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         _l.info(f"BackendPLReportViewSet.groups.unique_key {unique_key} & {instance.pl_first_date}")
 
         try:
-            if instance.ignore_cache:
+            if bypass_pl_report_cache(instance):
                 raise ObjectDoesNotExist
 
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)  # noqa: F841
@@ -1247,7 +1248,7 @@ class BackendPLReportViewSet(AbstractViewSet):
         settings, unique_key = generate_unique_key(instance, "pnl")
 
         try:
-            if instance.ignore_cache:
+            if bypass_pl_report_cache(instance):
                 raise ObjectDoesNotExist
 
             pnl_report_instance = PLReportInstance.objects.get(unique_key=unique_key)  # noqa: F841
