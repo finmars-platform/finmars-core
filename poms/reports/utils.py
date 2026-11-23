@@ -191,6 +191,11 @@ def transform_to_allowed_accounts(instance):
     return instance.accounts
 
 
+def bypass_pl_report_cache(instance):
+    """Do not reuse a cached P&L response for a bundle-derived selection."""
+    return instance.ignore_cache or getattr(instance, "_bundle_report", False)
+
+
 def generate_unique_key(instance, report_type):
     portfolio_user_codes = sorted([portfolio.user_code for portfolio in instance.portfolios])
     account_user_codes = sorted([account.user_code for account in instance.accounts])

@@ -55,6 +55,7 @@ from poms.reports.common import PerformanceReport, Report, TransactionReport
 from poms.reports.fields import (
     BalanceReportCustomFieldField,
     PLReportCustomFieldField,
+    ReportBundleField,
     ReportCurrencyField,
     ReportPricingPolicyField,
     TransactionReportCustomFieldField,
@@ -76,7 +77,7 @@ from poms.reports.serializers_helpers import (
     serialize_report_item_instrument,
     serialize_transaction_report_item,
 )
-from poms.reports.utils import generate_unique_key
+from poms.reports.utils import bypass_pl_report_cache, generate_unique_key
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import (
     Strategy1ViewSerializer,
@@ -334,6 +335,16 @@ class ReportSerializer(ReportSerializerWithLogs):
         allow_null=True,
         allow_empty=True,
     )
+    bundle = ReportBundleField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+        help_text=(
+            "Select a portfolio bundle instead of an explicit portfolio list. "
+            "The response contains the resolved portfolios; send the bundle again to refresh its membership. "
+            "Use an integer ID if a numeric user code is ambiguous."
+        ),
+    )
     accounts = AccountField(
         many=True,
         required=False,
@@ -500,10 +511,40 @@ class ReportSerializer(ReportSerializerWithLogs):
         if not attrs.get("cost_method", None):
             attrs["cost_method"] = CostMethod.objects.get(pk=CostMethod.AVCO)
 
+        bundle = attrs.get("bundle")
+        if bundle is not None:
+            if attrs.get("portfolios"):
+                raise ValidationError({"bundle": "Pass either 'bundle' or 'portfolios', not both."})
+            attrs["portfolios"] = self.get_bundle_portfolios(bundle, attrs["master_user"])
+
         return attrs
 
+    def get_bundle_portfolios(self, bundle, master_user):
+        """Resolve a bundle using the same portfolio field as an explicit selection."""
+        if bundle.master_user_id != master_user.id:
+            raise ValidationError({"bundle": "Bundle is not available."})
+
+        registers = list(bundle.registers.select_related("portfolio").order_by("id"))
+        if not registers or any(
+            register.is_deleted
+            or register.master_user_id != master_user.id
+            or register.portfolio.is_deleted
+            or register.portfolio.master_user_id != master_user.id
+            for register in registers
+        ):
+            raise ValidationError({"bundle": "Bundle has no valid portfolio selection."})
+
+        portfolio_ids = list(dict.fromkeys(register.portfolio_id for register in registers))
+        try:
+            return self.fields["portfolios"].run_validation(portfolio_ids)
+        except ValidationError:
+            raise ValidationError({"bundle": "Bundle contains unavailable portfolios."}) from None
+
     def create(self, validated_data):
-        return Report(**validated_data)
+        bundle = validated_data.pop("bundle", None)
+        instance = Report(**validated_data)
+        instance._bundle_report = bundle is not None
+        return instance
 
     def _extract_names(self, item, data):
         names = item.copy()
@@ -1795,7 +1836,7 @@ class BackendPLReportGroupsSerializer(PLReportSerializer):
         _l.info(f"pnl.serializer {instance.pl_first_date}")
 
         report_instance = None
-        if instance.ignore_cache:
+        if bypass_pl_report_cache(instance):
             data = super().to_representation(instance)
 
             # full_items = helper_service.convert_report_items_to_full_items(data)
@@ -1927,7 +1968,7 @@ class BackendPLReportItemsSerializer(PLReportSerializer):
         settings, unique_key = generate_unique_key(instance, "pnl")
 
         report_instance = None
-        if instance.ignore_cache:
+        if bypass_pl_report_cache(instance):
             data = super().to_representation(instance)
 
             # full_items = helper_service.convert_report_items_to_full_items(data)
